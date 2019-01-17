@@ -29,41 +29,19 @@ import com.nimbusds.oauth2.sdk.auth.Secret;
 import com.nimbusds.oauth2.sdk.id.ClientID;
 import org.slf4j.LoggerFactory;
 
-import java.net.MalformedURLException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
 public class PublicClientApplication extends ClientApplicationBase {
-    /**
-     * Constructor to create the client application with the address of the authority.
-     *
-     * @param clientId Client ID (Application ID) of the application as registered
-     *                 in the application registration portal (portal.azure.com)
-     * @param authority         URL of the authenticating authority
-     * @throws MalformedURLException thrown if URL is invalid
-     */
-    public PublicClientApplication(String authority, String clientId)
-            throws MalformedURLException {
-        super(authority, clientId);
+
+    private PublicClientApplication(Builder builder){
+        super(builder);
 
         log = LoggerFactory.getLogger(PublicClientApplication.class);
 
         initClientAuthentication(clientId);
-    }
-
-    /**
-     * Constructor to create the client application with the address of the authority.
-     *
-     * @param clientId Client ID (Application ID) of the application as registered
-     *                 in the application registration portal (portal.azure.com)
-     * @throws MalformedURLException thrown if URL is invalid
-     */
-    public PublicClientApplication(String clientId)
-            throws MalformedURLException {
-        this(DEFAULT_AUTHORITY, clientId);
     }
 
     private void initClientAuthentication(String clientId){
@@ -144,12 +122,9 @@ public class PublicClientApplication extends ClientApplicationBase {
         };
 
         CompletableFuture<DeviceCode> future =
-                service != null ? CompletableFuture.supplyAsync(supplier, service)
+                executorService != null ? CompletableFuture.supplyAsync(supplier, executorService)
                         : CompletableFuture.supplyAsync(supplier);
         return future;
-        /*
-        return service.submit(
-                new AcquireDeviceCodeCallable(this, clientId, scopes));*/
     }
 
     private void validateDeviceCodeRequestInput(String scopes) {
@@ -183,5 +158,26 @@ public class PublicClientApplication extends ClientApplicationBase {
                 new MsalDeviceCodeAuthorizationGrant(deviceCode, deviceCode.getScopes());
 
         return this.acquireToken(deviceCodeGrant, clientAuthentication);
+    }
+
+    public static class Builder extends ClientApplicationBase.Builder<Builder>{
+        /**
+         * Constructor to create instance of Builder of PublicClientApplication
+         * @param clientId Client ID (Application ID) of the application as registered
+         *                 in the application registration portal (portal.azure.com)
+         */
+        public Builder(String clientId){
+            super(clientId);
+        }
+
+        @Override public PublicClientApplication build() {
+
+            return new PublicClientApplication(this);
+        }
+
+        @Override protected Builder self()
+        {
+            return this;
+        }
     }
 }

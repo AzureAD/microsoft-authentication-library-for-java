@@ -38,6 +38,7 @@ import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.powermock.api.easymock.PowerMock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.testng.PowerMockTestCase;
 import org.slf4j.Logger;
 import org.testng.Assert;
 import org.testng.IObjectFactory;
@@ -56,7 +57,7 @@ import static com.microsoft.aad.msal4j.TestConfiguration.ADFS_TENANT_ENDPOINT;
 
 @Test(groups = { "checkin" })
 @PrepareForTest({HttpHelper.class, PublicClientApplication.class })
-public class DeviceCodeFlowTest {
+public class DeviceCodeFlowTest extends PowerMockTestCase {
     private PublicClientApplication app = null;
 
     @ObjectFactory
@@ -87,7 +88,8 @@ public class DeviceCodeFlowTest {
     public void deviceCodeFlowTest() throws Exception {
         app = PowerMock.createPartialMock(PublicClientApplication.class,
                 new String[] { "acquireTokenCommon" },
-                AAD_TENANT_ENDPOINT, AAD_CLIENT_ID);
+                new PublicClientApplication.Builder(TestConfiguration.AAD_CLIENT_ID)
+                        .authority(TestConfiguration.AAD_TENANT_ENDPOINT));
 
         Capture<ClientDataHttpHeaders> capturedClientDataHttpHeaders = Capture.newInstance();
 
@@ -151,11 +153,14 @@ public class DeviceCodeFlowTest {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "Invalid authority type. Device Flow is not supported by ADFS authority")
+            expectedExceptionsMessageRegExp = "Unsupported authority type")
     public void executeAcquireDeviceCode_AdfsAuthorityUsed_IllegalArgumentExceptionThrown()
             throws Exception {
-        app = new PublicClientApplication(ADFS_TENANT_ENDPOINT, "client_id");
-        app.setValidateAuthority(false);
+
+        app = new PublicClientApplication.Builder("client_id")
+                .authority(ADFS_TENANT_ENDPOINT)
+                .validateAuthority(false).build();
+
         app.acquireDeviceCode(AAD_RESOURCE_ID);
     }
 

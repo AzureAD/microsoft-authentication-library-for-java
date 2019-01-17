@@ -26,23 +26,13 @@ package com.microsoft.aad.msal4j;
 import java.util.concurrent.Callable;
 
 abstract class MsalCallable<T> implements Callable<T> {
-    //AuthenticationContext context;
     ClientDataHttpHeaders headers;
-    AuthenticationCallback<T> callback;
+
     ClientApplicationBase clientApplication;
 
-    /*
-    MsalCallable(AuthenticationContext context, AuthenticationCallback<T> callback) {
-        this.context = context;
-        this.callback = callback;
-    }
-*/
-    //==================================================================================================================
-    MsalCallable(ClientApplicationBase clientApplication/*, AuthenticationCallback<T> callback*/) {
+    MsalCallable(ClientApplicationBase clientApplication) {
         this.clientApplication = clientApplication;
-        this.callback = callback;
     }
-    //==================================================================================================================
 
     abstract T execute() throws Exception;
 
@@ -51,22 +41,16 @@ abstract class MsalCallable<T> implements Callable<T> {
 
     @Override
     public T call() throws Exception {
-        T result = null;
+        T result;
         try {
             result = execute();
 
             logResult(result, headers);
-            if (callback != null) {
-                callback.onSuccess(result);
-            }
         } catch (final Exception ex) {
             clientApplication.log.error(LogHelper.createMessage("Execution of " + this.getClass() + " failed.",
                     this.headers.getHeaderCorrelationIdValue()), ex);
-            if (callback != null) {
-                callback.onFailure(ex);
-            } else {
-                throw ex;
-            }
+
+            throw ex;
         }
         return result;
     }

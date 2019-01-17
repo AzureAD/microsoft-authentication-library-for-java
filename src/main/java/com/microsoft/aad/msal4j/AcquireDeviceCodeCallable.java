@@ -30,15 +30,16 @@ class AcquireDeviceCodeCallable extends MsalCallable<DeviceCode> {
     AcquireDeviceCodeCallable(PublicClientApplication clientApplication,
                               String clientId, String scopes) {
         super(clientApplication);
-        this.headers = new ClientDataHttpHeaders(clientApplication.correlationId);
+        this.headers = new ClientDataHttpHeaders(clientApplication.getCorrelationId());
         this.clientId = clientId;
         this.scopes = scopes;
     }
 
     DeviceCode execute() throws Exception {
         clientApplication.authenticationAuthority.doInstanceDiscovery(clientApplication.isValidateAuthority(),
-                headers.getReadonlyHeaderMap(), clientApplication.proxy, clientApplication.sslSocketFactory);
+                headers.getReadonlyHeaderMap(), clientApplication.getProxy(), clientApplication.getSslSocketFactory());
         return DeviceCodeRequest.execute(clientApplication.authenticationAuthority.getDeviceCodeEndpoint(),
-                clientId, scopes, headers.getReadonlyHeaderMap(), clientApplication.proxy, clientApplication.sslSocketFactory);
+                clientId, scopes, headers.getReadonlyHeaderMap(), clientApplication.getProxy(),
+                clientApplication.getSslSocketFactory());
     }
 }

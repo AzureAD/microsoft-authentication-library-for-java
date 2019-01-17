@@ -35,6 +35,7 @@ import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URI;
 import java.net.URL;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
@@ -47,169 +48,72 @@ import java.util.function.Supplier;
 abstract public class ClientApplicationBase {
     protected Logger log;
     protected ClientAuthentication clientAuthentication;
+    protected String clientId;
+    private String authority;
+    protected AuthenticationAuthority authenticationAuthority;
+    private boolean validateAuthority;
+    private String correlationId;
+    private boolean logPii;
+    protected ExecutorService executorService;
+    private Proxy proxy;
+    private SSLSocketFactory sslSocketFactory;
+
+    public static String DEFAULT_AUTHORITY = "https://login.microsoftonline.com/common/";
 
     /**
-     * Constructor to create the client application with the address of the authority.
-     *
-     * @param authority URL of the authenticating authority
-     * @param clientId Client ID (Application ID) of the application as registered
-     *                 in the application registration portal (portal.azure.com)
-     * @throws MalformedURLException thrown if URL is invalid
-     */
-    protected ClientApplicationBase(String authority, String clientId)
-            throws MalformedURLException {
-
-        validateNotBlank("authority", authority);
-        validateNotBlank("clientId", clientId);
-
-        this.authority = this.canonicalizeUri(authority);
-        this.clientId = clientId;
-
-        authenticationAuthority = new AuthenticationAuthority(new URL(authority));
-
-        if(authenticationAuthority.detectAuthorityType() != AuthorityType.AAD){
-            validateAuthority = false;
-        }
-    }
-
-    final AuthenticationAuthority authenticationAuthority;
-
-    protected Proxy proxy;
-
-    /**
-     * Returns Proxy configuration
+     * Returns Proxy configuration to be used by the context for all network communication.
      *
      * @return Proxy Object
      */
-    public Proxy getProxy() {
-        return proxy;
-    }
+    public Proxy getProxy() { return proxy; }
 
     /**
-     * Sets Proxy configuration to be used by the context for all network
-     * communication. Default is null and system defined properties if any,
-     * would be used.
-     *
-     * @param proxy
-     *            Proxy configuration object
-     */
-    public void setProxy(Proxy proxy) {
-        this.proxy = proxy;
-    }
-
-    SSLSocketFactory sslSocketFactory;
-
-    /**
-     * Returns SSLSocketFactory configuration object.
+     * Returns SSLSocketFactory to be used by the context for all network communication.
      *
      * @return SSLSocketFactory object
      */
-    public SSLSocketFactory getSslSocketFactory() {
-        return sslSocketFactory;
-    }
 
-    /**
-     * Sets SSLSocketFactory object to be used by the context.
-     *
-     * @param sslSocketFactory The SSL factory object to set
-     */
-    public void setSslSocketFactory(SSLSocketFactory sslSocketFactory) {
-        this.sslSocketFactory = sslSocketFactory;
-    }
-
-    protected ExecutorService service;
-
-    /**
-     * Sets ExecutorService to be used to execute the requests.
-     * Developer is responsible for maintaining the lifecycle of the ExecutorService.
-     *
-     * @param executorService object
-     */
-    public void setExecutorService(ExecutorService executorService) {
-
-        validateNotNull("service", service);
-        this.service = executorService;
-    }
-
-    protected boolean logPii = false;
-    protected static String DEFAULT_AUTHORITY = "https://login.microsoftonline.com/common/";
+    public SSLSocketFactory getSslSocketFactory() { return sslSocketFactory; }
 
     /**
      * Gets the URL of the authority, or security token service (STS) from which MSAL will acquire security tokens
-     * The return value of this property is either the value provided by the developer in the constructor of the application,
+     * The return value of this property is either the value provided by the developer,
      * or otherwise the value of the DEFAULT_AUTHORITY {@link ClientApplicationBase#DEFAULT_AUTHORITY}
-     */
-    private String authority;
-
-    /**
-     * Authority associated with the client application instance
      *
      * @return String value
      */
-    public String getAuthority() {
-        return this.authority;
-    }
+    public String getAuthority() { return this.authority; }
 
     /**
      * Gets the Client ID (Application ID) of the application as registered in the application registration portal
      * (portal.azure.com) and as passed in the constructor of the application
      */
-    protected String clientId;
-
-    protected String correlationId;
+    public String getClientId() { return this.clientId; }
 
     /**
-     * Set optional correlation id to be used by the API. If not provided, the API generates a random id.
+     * Returns logPii - boolean value, which determines
+     * whether Pii (personally identifiable information) will be logged in
      *
-     * @param correlationId String value
+     * @return boolean value of logPii
      */
-    public void setCorrelationId(final String correlationId) {
-        this.correlationId = correlationId;
-    }
+    public boolean isLogPii() { return logPii; }
 
     /**
-     * Returns the correlation id configured by the user or generated by the API in case the user does not provide one.
+     * Returns the correlation id configured by the user or generated by the API(random UUID)
+     * in case the user does not provide one.
      *
      * @return String value of the correlation id
      */
-    public String getCorrelationId() {
-        return correlationId;
-    }
+    public String getCorrelationId() { return correlationId; }
 
     /**
-     * A boolean value telling the application if the authority needs to be verified against a list of known authorities.
-     * The default value is true.
-     */
-    private boolean validateAuthority = true;
-
-    /**
-     * Sets validateAuthority boolean value for the client application instance
-     *
-     * @param validateAuthority
-     */
-    public void setValidateAuthority(boolean validateAuthority)
-    {
-        if (authenticationAuthority.authorityType != AuthorityType.AAD && validateAuthority) {
-            throw new IllegalArgumentException(
-                    AuthenticationErrorMessage.UNSUPPORTED_AUTHORITY_VALIDATION);
-        }
-        this.validateAuthority = validateAuthority;
-    }
-
-    /**
-     * Returns validateAuthority boolean value for the client application instance
+     * Returns a boolean value telling the application if the authority needs to be verified
+     * against a list of known authorities.
      *
      * @return boolean value
      */
     public boolean isValidateAuthority() {
         return this.validateAuthority;
-    }
-
-    private String canonicalizeUri(String authority) {
-        if (!authority.endsWith("/")) {
-            authority += "/";
-        }
-        return authority;
     }
 
     protected CompletableFuture<AuthenticationResult> acquireToken(
@@ -235,21 +139,18 @@ abstract public class ClientApplicationBase {
         };
 
         CompletableFuture<AuthenticationResult> future =
-                service != null ? CompletableFuture.supplyAsync(supplier, service)
+                executorService != null ? CompletableFuture.supplyAsync(supplier, executorService)
                                 : CompletableFuture.supplyAsync(supplier);
         return future;
-
-        //return service.submit(
-          //      new AcquireTokenCallable(this, authGrant, clientAuth, callback));
     }
 
-    protected void validateNotBlank(String name, String value) {
+    protected static void validateNotBlank(String name, String value) {
         if (StringHelper.isBlank(value)) {
             throw new IllegalArgumentException(name + " is null or empty");
         }
     }
 
-    protected void validateNotNull(String name, Object obj) {
+    protected static void validateNotNull(String name, Object obj) {
         if (obj == null) {
             throw new IllegalArgumentException(name + " is null");
         }
@@ -268,7 +169,7 @@ abstract public class ClientApplicationBase {
      *         {@link AuthenticationResult} of the call. It contains Access
      *         Token, Refresh Token and the Access Token's expiration time.
      */
-    public Future<AuthenticationResult> acquireTokenByAuthorizationCode(String authorizationCode,
+    public CompletableFuture<AuthenticationResult> acquireTokenByAuthorizationCode(String authorizationCode,
                                                                         URI redirectUri, String scopes)
     {
         validateNotBlank("authorizationCode", authorizationCode);
@@ -288,11 +189,11 @@ abstract public class ClientApplicationBase {
      * @param redirectUri (also known as Reply URI or Reply URL),
      *                    is the URI at which Azure AD will contact back the application with the tokens.
      *                    This redirect URI needs to be registered in the app registration portal.
-     * @return A {@link Future} object representing the
+     * @return A {@link CompletableFuture} object representing the
      *         {@link AuthenticationResult} of the call. It contains Access
      *         Token, Refresh Token and the Access Token's expiration time.
      */
-    public Future<AuthenticationResult> acquireTokenByAuthorizationCode(String authorizationCode, URI redirectUri)
+    public CompletableFuture<AuthenticationResult> acquireTokenByAuthorizationCode(String authorizationCode, URI redirectUri)
     {
         return acquireTokenByAuthorizationCode(authorizationCode, redirectUri, null);
     }
@@ -304,11 +205,11 @@ abstract public class ClientApplicationBase {
      * @param refreshToken
      *            Refresh Token to use in the refresh flow.
      * @param scopes scopes of the access request
-     * @return A {@link Future} object representing the
+     * @return A {@link CompletableFuture} object representing the
      *         {@link AuthenticationResult} of the call. It contains Access
      *         Token, Refresh Token and the Access Token's expiration time.
      */
-    public Future<AuthenticationResult> acquireTokenByRefreshToken(String refreshToken, String scopes) {
+    public CompletableFuture<AuthenticationResult> acquireTokenByRefreshToken(String refreshToken, String scopes) {
         validateNotBlank("refreshToken", refreshToken);
 
         final MsalOAuthAuthorizationGrant authGrant = new MsalOAuthAuthorizationGrant(
@@ -325,7 +226,6 @@ abstract public class ClientApplicationBase {
                     headers.getHeaderCorrelationIdValue()));
         }
 
-
         this.authenticationAuthority.doInstanceDiscovery(validateAuthority,
                 headers.getReadonlyHeaderMap(), this.proxy,
                 this.sslSocketFactory);
@@ -336,5 +236,139 @@ abstract public class ClientApplicationBase {
         AuthenticationResult result = request
                 .executeOAuthRequestAndProcessResponse();
         return result;
+    }
+
+    abstract static class Builder<T extends Builder<T>> {
+        // Required parameters
+        private String clientId;
+
+        // Optional parameters - initialized to default values
+        private String authority = DEFAULT_AUTHORITY;
+        private AuthenticationAuthority authenticationAuthority;
+        private boolean validateAuthority = true;
+        private String correlationId = UUID.randomUUID().toString().replace("-", "");
+        private boolean logPii = false;
+        private ExecutorService executorService;
+        private Proxy proxy;
+        private SSLSocketFactory sslSocketFactory;
+
+        /**
+         * Constructor to create instance of Builder of client application
+         * @param clientId Client ID (Application ID) of the application as registered
+         *                 in the application registration portal (portal.azure.com)
+         */
+        public Builder(String clientId){
+            validateNotBlank("clientId", clientId);
+            this.clientId = clientId;
+        }
+
+        abstract T self();
+
+        /**
+         * Set URL of the authenticating authority or security token service (STS) from which MSAL
+         * will acquire security tokens.
+         * The default value is {@link ClientApplicationBase#DEFAULT_AUTHORITY}
+         * @throws MalformedURLException
+         */
+        public T authority(String val) throws MalformedURLException {
+            authority = canonicalizeUri(val);
+            authenticationAuthority = new AuthenticationAuthority(new URL(authority));
+
+            if(authenticationAuthority.detectAuthorityType() != AuthorityType.AAD){
+                throw new IllegalArgumentException("Unsupported authority type");
+            }
+            return self();
+        }
+
+        /**
+         * Set a boolean value telling the application if the authority needs to be verified
+         * against a list of known authorities.
+         * The default value is true.
+         */
+        public T validateAuthority(boolean val)
+        {
+            validateAuthority = val;
+            return self();
+        }
+
+        /**
+         *  Set optional correlation id to be used by the API.
+         *  If not provided, the API generates a random UUID.
+         */
+        public T correlationId(String val)
+        {
+            validateNotBlank("correlationId", val);
+
+            correlationId = val;
+            return self();
+        }
+
+        /**
+         * Set logPii - boolean value, which determines
+         * whether Pii (personally identifiable information) will be logged in.
+         * The default value is false.
+         */
+        public T logPii(boolean val)
+        {
+            logPii = val;
+            return self();
+        }
+
+        /**
+         *  Sets ExecutorService to be used to execute the requests.
+         *  Developer is responsible for maintaining the lifecycle of the ExecutorService.
+         */
+        public T executorService(ExecutorService val)
+        {
+            validateNotNull("executorService", val);
+
+            executorService = val;
+            return self();
+        }
+
+        /**
+         * Sets Proxy configuration to be used by the client application for all network communication.
+         * Default is null and system defined properties if any, would be used.
+         */
+        public T proxy(Proxy val)
+        {
+            validateNotNull("proxy", val);
+
+            proxy = val;
+            return self();
+        }
+
+        /**
+         * Sets SSLSocketFactory to be used by the client application for all network communication.
+         *
+         */
+        public T sslSocketFactory(SSLSocketFactory val)
+        {
+            validateNotNull("sslSocketFactory", val);
+
+            sslSocketFactory = val;
+            return self();
+        }
+
+        abstract ClientApplicationBase build();
+
+        private String canonicalizeUri(String authority) {
+            if (!authority.endsWith("/")) {
+                authority += "/";
+            }
+            return authority;
+        }
+    }
+
+    ClientApplicationBase(Builder<?> builder) {
+        clientId = builder.clientId;
+        authority = builder.authority;
+        authenticationAuthority = builder.authenticationAuthority;
+        validateAuthority = builder.validateAuthority;
+        correlationId = builder.correlationId;
+        logPii = builder.logPii;
+        executorService = builder.executorService;
+        proxy = builder.proxy;
+        sslSocketFactory = builder.sslSocketFactory;
     }
 }

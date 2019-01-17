@@ -21,14 +21,51 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-public class TestData {
+package com.microsoft.aad.msal4jsample;
 
-    final static String AUTHORITY = "https://login.microsoftonline.com/TenantId/";
-    final static String PUBLIC_CLIENT_ID = "";
+/**
+ * @author Azure Active Directory Contributor
+ *
+ */
+public abstract class DirectoryObject {
+	
+	public DirectoryObject() {
+		super();
+	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public abstract String getObjectId();
+	
+	/**
+	 * @param objectId
+	 */
+	public abstract void setObjectId(String objectId);
 
-    final static String GRAPH_DEFAULT_SCOPE = "https://graph.windows.net/.default";
+	/**
+	 * 
+	 * @return
+	 */
+	public abstract String getObjectType();
 
-    final static String USER_NAME = "";
-    final static String USER_PASSWORD= "";
+	/**
+	 * 
+	 * @param objectType
+	 */
+	public abstract void setObjectType(String objectType);
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public abstract String getDisplayName();
+
+	/**
+	 * 
+	 * @param displayName
+	 */
+	public abstract void setDisplayName(String displayName);
 
 }

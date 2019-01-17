@@ -32,44 +32,18 @@ import com.nimbusds.oauth2.sdk.auth.Secret;
 import com.nimbusds.oauth2.sdk.id.ClientID;
 import org.slf4j.LoggerFactory;
 
-import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 
 public class ConfidentialClientApplication extends ClientApplicationBase {
-    /**
-     * Constructor to create the client application with the address of the authority.
-     *
-     * @param authority         URL of the authenticating authority
-     * @param clientId Client ID (Application ID) of the application as registered
-     *                 in the application registration portal (portal.azure.com)
-     * @param clientCredential The client credential to use for token acquisition.
-     * @throws MalformedURLException thrown if URL is invalid
-     */
-    public ConfidentialClientApplication(String authority, String clientId, IClientCredential clientCredential)
-            throws MalformedURLException {
 
-        super(authority, clientId);
+    private ConfidentialClientApplication(ConfidentialClientApplication.Builder builder){
+        super(builder);
 
         log = LoggerFactory.getLogger(ConfidentialClientApplication.class);
 
-        initClientAuthentication(clientCredential);
-    }
-
-    /**
-     * Constructor to create the client application with the address of the authority.
-     *
-     * @param clientId Client ID (Application ID) of the application as registered
-     *                 in the application registration portal (portal.azure.com)
-     * @param clientCredential The client credential to use for token acquisition.
-     * @throws MalformedURLException thrown if URL is invalid
-     */
-    public ConfidentialClientApplication(String clientId, IClientCredential clientCredential)
-            throws MalformedURLException {
-        this(DEFAULT_AUTHORITY, clientId, clientCredential);
+        initClientAuthentication(builder.clientCredential);
     }
 
     private void initClientAuthentication(IClientCredential clientCredential){
@@ -155,6 +129,32 @@ public class ConfidentialClientApplication extends ClientApplicationBase {
         }
         catch (final Exception e) {
             throw new AuthenticationException(e);
+        }
+    }
+
+    public static class Builder extends ClientApplicationBase.Builder<Builder>{
+
+        private IClientCredential clientCredential;
+
+        /**
+         * Constructor to create instance of Builder of ConfidentialClientApplication
+         * @param clientId Client ID (Application ID) of the application as registered
+         *                 in the application registration portal (portal.azure.com)
+         * @param clientCredential The client credential to use for token acquisition.
+         */
+        public Builder(String clientId, IClientCredential clientCredential){
+            super(clientId);
+            this.clientCredential = clientCredential;
+        }
+
+        @Override public ConfidentialClientApplication build() {
+
+            return new ConfidentialClientApplication(this);
+        }
+
+        @Override protected ConfidentialClientApplication.Builder self()
+        {
+            return this;
         }
     }
 }

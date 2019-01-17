@@ -28,6 +28,7 @@ import org.easymock.EasyMock;
 import org.powermock.api.easymock.PowerMock;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.Assert;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -55,9 +56,9 @@ import static org.testng.Assert.*;
 
 @PowerMockIgnore({"javax.net.ssl.*"})
 @Test(groups = { "checkin" })
-@PrepareForTest({ PublicClientApplicationTest.class, AuthenticationCallback.class,
+@PrepareForTest({ ConfidentialClientApplication.class,
         AsymmetricKeyCredential.class, UserDiscoveryRequest.class })
-public class ConfidentialClientApplicationTest {
+public class ConfidentialClientApplicationTest extends PowerMockTestCase {
 
     private ConfidentialClientApplication app = null;
 
@@ -65,8 +66,10 @@ public class ConfidentialClientApplicationTest {
     public void testAcquireTokenAuthCode_ClientCredential() throws Exception {
         app = PowerMock.createPartialMock(ConfidentialClientApplication.class,
                 new String[] { "acquireTokenCommon" },
-                TestConfiguration.AAD_TENANT_ENDPOINT, TestConfiguration.AAD_CLIENT_ID,
-                ClientCredentialFactory.create(TestConfiguration.AAD_CLIENT_SECRET));
+                new ConfidentialClientApplication.Builder(TestConfiguration.AAD_CLIENT_ID,
+                ClientCredentialFactory.create(TestConfiguration.AAD_CLIENT_SECRET))
+                        .authority(TestConfiguration.AAD_TENANT_ENDPOINT)
+        );
 
         PowerMock.expectPrivate(app, "acquireTokenCommon",
                 EasyMock.isA(MsalOAuthAuthorizationGrant.class),
@@ -102,8 +105,8 @@ public class ConfidentialClientApplicationTest {
 
         app = PowerMock.createPartialMock(ConfidentialClientApplication.class,
                 new String[] { "acquireTokenCommon" },
-                TestConfiguration.AAD_TENANT_ENDPOINT,
-                TestConfiguration.AAD_CLIENT_ID, clientCredential);
+                new ConfidentialClientApplication.Builder(TestConfiguration.AAD_CLIENT_ID, clientCredential)
+                        .authority(TestConfiguration.AAD_TENANT_ENDPOINT));
 
         PowerMock.expectPrivate(app, "acquireTokenCommon",
                 EasyMock.isA(MsalOAuthAuthorizationGrant.class),
@@ -141,8 +144,8 @@ public class ConfidentialClientApplicationTest {
 
         app = PowerMock.createPartialMock(ConfidentialClientApplication.class,
                 new String[] { "acquireTokenCommon" },
-                TestConfiguration.AAD_TENANT_ENDPOINT,
-                TestConfiguration.AAD_CLIENT_ID, clientCredential);
+                new ConfidentialClientApplication.Builder(TestConfiguration.AAD_CLIENT_ID, clientCredential)
+                        .authority(TestConfiguration.AAD_TENANT_ENDPOINT));
 
         PowerMock.expectPrivate(app, "acquireTokenCommon",
                 EasyMock.isA(MsalOAuthAuthorizationGrant.class),
@@ -161,26 +164,6 @@ public class ConfidentialClientApplicationTest {
         PowerMock.verifyAll();
         PowerMock.resetAll(app);
     }
-
-    /*
-    @Test
-    public void testFailedAcquireTokenRequest_ExecuteCallback()
-            throws Throwable {
-        app = new ConfidentialClientApplication(TestConfiguration.AAD_UNKNOWN_TENANT_ENDPOINT,
-                "client_id", ClientCredentialFactory.create("clientSecret"), service);
-        AuthenticationCallback ac = PowerMock
-                .createMock(AuthenticationCallback.class);
-        ac.onFailure(EasyMock.isA(Throwable.class));
-        EasyMock.expectLastCall();
-        PowerMock.replay(ac);
-        Future<AuthenticationResult> result = app.acquireTokenByRefreshToken(
-                "refresh", "scope", ac);
-        try {
-            result.get();
-        } catch (ExecutionException ee) {
-            throw ee.getCause();
-        }
-    }*/
 
     static String getThumbPrint(final byte[] der)
             throws NoSuchAlgorithmException, CertificateEncodingException {

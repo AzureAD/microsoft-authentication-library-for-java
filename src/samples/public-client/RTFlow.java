@@ -38,7 +38,9 @@ public class RTFlow {
     private static AuthenticationResult getAccessTokenFromUserCredentials()
             throws Exception {
 
-        PublicClientApplication app = new PublicClientApplication(TestData.AUTHORITY, TestData.PUBLIC_CLIENT_ID);
+        PublicClientApplication app = new PublicClientApplication.Builder(TestData.PUBLIC_CLIENT_ID)
+                .authority(TestData.AUTHORITY)
+                .build();
 
         Future<AuthenticationResult> future = app.acquireToken
                 (TestData.GRAPH_DEFAULT_SCOPE, TestData.USER_NAME, TestData.USER_PASSWORD);

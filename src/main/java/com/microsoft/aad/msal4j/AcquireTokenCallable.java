@@ -45,7 +45,7 @@ class AcquireTokenCallable extends MsalCallable<AuthenticationResult> {
         this.authGrant = authGrant;
         this.clientAuth = clientAuth;
 
-        String correlationId = clientApplication.correlationId;
+        String correlationId = clientApplication.getCorrelationId();
         if (StringHelper.isBlank(correlationId) &&
                 authGrant instanceof MsalDeviceCodeAuthorizationGrant) {
             correlationId = ((MsalDeviceCodeAuthorizationGrant) authGrant).getCorrelationId();
@@ -80,7 +80,7 @@ class AcquireTokenCallable extends MsalCallable<AuthenticationResult> {
             if (!StringHelper.isBlank(result.getRefreshToken())) {
                 String refreshTokenHash = this.computeSha256Hash(result
                         .getRefreshToken());
-                if(clientApplication.logPii){
+                if(clientApplication.isLogPii()){
                     clientApplication.log.debug(LogHelper.createMessage(String
                                     .format("Access Token with hash '%s' and Refresh Token with hash '%s' returned",
                                             accessTokenHash, refreshTokenHash),
@@ -92,7 +92,7 @@ class AcquireTokenCallable extends MsalCallable<AuthenticationResult> {
                 }
             }
             else {
-                if(clientApplication.logPii){
+                if(clientApplication.isLogPii()){
                     clientApplication.log.debug(LogHelper.createMessage(String
                                     .format("Access Token with hash '%s' returned",
                                             accessTokenHash),
@@ -130,13 +130,13 @@ class AcquireTokenCallable extends MsalCallable<AuthenticationResult> {
         UserDiscoveryResponse userDiscoveryResponse = UserDiscoveryRequest.execute(
                 clientApplication.authenticationAuthority.getUserRealmEndpoint(grant.getUsername()),
                 this.headers.getReadonlyHeaderMap(),
-                clientApplication.proxy,
-                clientApplication.sslSocketFactory);
+                clientApplication.getProxy(),
+                clientApplication.getSslSocketFactory());
         if (userDiscoveryResponse.isAccountFederated()) {
             WSTrustResponse response = WSTrustRequest.execute(
                     userDiscoveryResponse.getFederationMetadataUrl(),
                     grant.getUsername(), grant.getPassword().getValue(), userDiscoveryResponse.getCloudAudienceUrn(),
-                    clientApplication.proxy, clientApplication.sslSocketFactory, clientApplication.logPii);
+                    clientApplication.getProxy(), clientApplication.getSslSocketFactory(), clientApplication.isLogPii());
 
             AuthorizationGrant updatedGrant = null;
             if (response.isTokenSaml2()) {
@@ -167,8 +167,8 @@ class AcquireTokenCallable extends MsalCallable<AuthenticationResult> {
         UserDiscoveryResponse userRealmResponse = UserDiscoveryRequest.execute(
                 userRealmEndpoint, 
                 this.headers.getReadonlyHeaderMap(),
-                clientApplication.proxy,
-                clientApplication.sslSocketFactory);
+                clientApplication.getProxy(),
+                clientApplication.getSslSocketFactory());
 
         if (userRealmResponse.isAccountFederated() &&
                 "WSTrust".equalsIgnoreCase(userRealmResponse.getFederationProtocol())) {
@@ -178,8 +178,8 @@ class AcquireTokenCallable extends MsalCallable<AuthenticationResult> {
             // Discover the policy for authentication using the Metadata Exchange Url.
             // Get the WSTrust Token (Web Service Trust Token)
             WSTrustResponse wsTrustResponse = WSTrustRequest.execute
-                    (mexURL, cloudAudienceUrn, clientApplication.proxy,
-                            clientApplication.sslSocketFactory, clientApplication.logPii);
+                    (mexURL, cloudAudienceUrn, clientApplication.getProxy(),
+                            clientApplication.getSslSocketFactory(), clientApplication.isLogPii());
 
             if (wsTrustResponse.isTokenSaml2()) {
                 updatedGrant = new SAML2BearerGrant(

@@ -158,13 +158,14 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
     @Test
     public void oAuthRequest_for_acquireTokenByUserAssertion() throws Exception {
         ConfidentialClientApplication app =
-                new ConfidentialClientApplication(AUTHORITY, CLIENT_ID,
-                        ClientCredentialFactory.create(CLIENT_SECRET));
+                new ConfidentialClientApplication.Builder(CLIENT_ID, ClientCredentialFactory.create(CLIENT_SECRET))
+                .authority(AUTHORITY)
+                .validateAuthority(false).build();
+
         try {
             // Using UserAssertion as Authorization Grants
             Future<AuthenticationResult> future =
                     app.acquireTokenOnBehalfOf(SCOPES, new UserAssertion(jwt));
-            app.setValidateAuthority(false);
             future.get();
         }
         catch (ExecutionException ex){
@@ -205,9 +206,9 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
 
             IClientCredential clientCredential = ClientCredentialFactory.create(key, cert);
 
-            ConfidentialClientApplication app = new ConfidentialClientApplication(AUTHORITY, CLIENT_ID,
-                    clientCredential);
-            app.setValidateAuthority(false);
+            ConfidentialClientApplication app = new ConfidentialClientApplication.Builder(CLIENT_ID, clientCredential)
+                    .authority(AUTHORITY)
+                    .validateAuthority(false).build();
 
             // Using UserAssertion as Authorization Grants
             Future<AuthenticationResult> future =
@@ -251,9 +252,11 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
             final X509Certificate cert = (X509Certificate) keystore
                     .getCertificate(alias);
 
-            ConfidentialClientApplication app = new ConfidentialClientApplication(AUTHORITY, CLIENT_ID,
-                            ClientCredentialFactory.create(key, cert));
-            app.setValidateAuthority(false);
+            ConfidentialClientApplication app =
+                    new ConfidentialClientApplication.Builder(CLIENT_ID, ClientCredentialFactory.create(key, cert))
+                            .authority(AUTHORITY)
+                            .validateAuthority(false)
+                            .build();
 
             // Using ClientAssertion for Client Authentication and as the authorization grant
             Future<AuthenticationResult> future = app.acquireToken(SCOPES);

@@ -21,14 +21,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-public class TestData {
+package com.microsoft.aad.msal4jsample;
 
-    final static String AUTHORITY = "https://login.microsoftonline.com/TenantId/";
-    final static String PUBLIC_CLIENT_ID = "";
+public final class AuthParameterNames {
 
-    final static String GRAPH_DEFAULT_SCOPE = "https://graph.windows.net/.default";
+    private AuthParameterNames() {
+    }
 
-    final static String USER_NAME = "";
-    final static String USER_PASSWORD= "";
-
+    public static String ERROR = "error";
+    public static String ERROR_DESCRIPTION = "error_description";
+    public static String ERROR_URI = "error_uri";
+    public static String ID_TOKEN = "id_token";
+    public static String CODE = "code";
 }

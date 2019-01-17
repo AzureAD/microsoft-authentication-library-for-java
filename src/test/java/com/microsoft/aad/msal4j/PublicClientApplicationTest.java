@@ -50,6 +50,7 @@ import org.easymock.EasyMock;
 import org.powermock.api.easymock.PowerMock;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.Assert;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -57,16 +58,18 @@ import org.testng.annotations.Test;
 
 @PowerMockIgnore({"javax.net.ssl.*"})
 @Test(groups = { "checkin" })
-@PrepareForTest({ PublicClientApplicationTest.class, AuthenticationCallback.class,
-        AsymmetricKeyCredential.class, UserDiscoveryRequest.class })
-public class PublicClientApplicationTest {
+@PrepareForTest({ PublicClientApplication.class,
+        AsymmetricKeyCredential.class, UserDiscoveryRequest.class})
+public class PublicClientApplicationTest extends PowerMockTestCase {
 
     private PublicClientApplication app = null;
 
     public void testAcquireToken_Username_Password() throws Exception {
         app = PowerMock.createPartialMock(PublicClientApplication.class,
                 new String[] { "acquireTokenCommon" },
-                TestConfiguration.AAD_TENANT_ENDPOINT, TestConfiguration.AAD_CLIENT_ID);
+                new PublicClientApplication.Builder(TestConfiguration.AAD_CLIENT_ID)
+                        .authority(TestConfiguration.AAD_TENANT_ENDPOINT));
+
         PowerMock.expectPrivate(app, "acquireTokenCommon",
                 EasyMock.isA(MsalOAuthAuthorizationGrant.class),
                 EasyMock.isA(ClientAuthentication.class),

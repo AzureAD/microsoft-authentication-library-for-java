@@ -20,33 +20,39 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+
 import com.microsoft.aad.msal4j.AuthenticationResult;
-import com.microsoft.aad.msal4j.DeviceCode;
 import com.microsoft.aad.msal4j.PublicClientApplication;
 
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 
-public class DeviceCodeFlow {
+public class UsernamePasswordFlowAsync {
+
     public static void main(String args[]) throws Exception {
-        AuthenticationResult result = getAccessTokenByDeviceCodeGrant();
-
-        System.out.println("Access Token - " + result.getAccessToken());
-        System.out.println("Refresh Token - " + result.getRefreshToken());
-        System.out.println("ID Token - " + result.getIdToken());
+        getAccessTokenFromUserCredentials();
     }
 
-    private static AuthenticationResult getAccessTokenByDeviceCodeGrant() throws Exception {
+    private static void getAccessTokenFromUserCredentials() throws Exception {
         PublicClientApplication app = new PublicClientApplication.Builder(TestData.PUBLIC_CLIENT_ID)
                 .authority(TestData.AUTHORITY)
                 .build();
 
-        Future<DeviceCode> deviceCodeFuture = app.acquireDeviceCode(TestData.GRAPH_DEFAULT_SCOPE);
-        DeviceCode deviceCode = deviceCodeFuture.get();
+        CompletableFuture<AuthenticationResult> future = app.acquireToken
+                (TestData.GRAPH_DEFAULT_SCOPE, TestData.USER_NAME, TestData.USER_PASSWORD);
 
-        Future<AuthenticationResult> futureAuthenticationResult = app.acquireTokenByDeviceCode(deviceCode);
+        future.handle((res, ex) -> {
+            if(ex != null) {
+                System.out.println("Oops! We have an exception - " + ex.getMessage());
+                return "Unknown!";
+            }
+            System.out.println("Returned ok - " + res);
 
-        AuthenticationResult result = futureAuthenticationResult.get();
+            System.out.println("Access Token - " + res.getAccessToken());
+            System.out.println("Refresh Token - " + res.getRefreshToken());
+            System.out.println("ID Token - " + res.getIdToken());
+            return res;
+        });
 
-        return result;
+        Thread.sleep(3000);
     }
 }
