@@ -37,7 +37,7 @@ public class UsernamePasswordFlowAsync {
                 .authority(TestData.AUTHORITY)
                 .build();
 
-        CompletableFuture<AuthenticationResult> future = app.acquireToken
+        CompletableFuture<AuthenticationResult> future = app.acquireTokenByUsernamePassword
                 (TestData.GRAPH_DEFAULT_SCOPE, TestData.USER_NAME, TestData.USER_PASSWORD);
 
         future.handle((res, ex) -> {

@@ -42,7 +42,7 @@ public class RTFlow {
                 .authority(TestData.AUTHORITY)
                 .build();
 
-        Future<AuthenticationResult> future = app.acquireToken
+        Future<AuthenticationResult> future = app.acquireTokenByUsernamePassword
                 (TestData.GRAPH_DEFAULT_SCOPE, TestData.USER_NAME, TestData.USER_PASSWORD);
         AuthenticationResult result = future.get();
 

@@ -28,21 +28,12 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 import javax.net.ssl.SSLSocketFactory;
-import java.io.FileInputStream;
-import java.net.MalformedURLException;
 import java.net.Proxy;
-import java.net.URI;
-import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
 import java.security.cert.CertificateEncodingException;
-import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
@@ -52,8 +43,6 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 @PowerMockIgnore({"javax.net.ssl.*"})
@@ -93,7 +82,7 @@ public class PublicClientApplicationTest extends PowerMockTestCase {
 
         PowerMock.replay(app, response, UserDiscoveryRequest.class);
         Future<AuthenticationResult> result =
-                app.acquireToken("scopes", "username", "password");
+                app.acquireTokenByUsernamePassword("scopes", "username", "password");
 
         AuthenticationResult ar = result.get();
         Assert.assertNotNull(ar);

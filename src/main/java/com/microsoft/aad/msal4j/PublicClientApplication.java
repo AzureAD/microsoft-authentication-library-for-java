@@ -64,7 +64,7 @@ public class PublicClientApplication extends ClientApplicationBase {
      *         {@link AuthenticationResult} of the call. It contains Access
      *         Token, Refresh Token and the Access Token's expiration time.
      */
-    public CompletableFuture<AuthenticationResult> acquireToken(String scopes, String username, String password) {
+    public CompletableFuture<AuthenticationResult> acquireTokenByUsernamePassword(String scopes, String username, String password) {
         validateNotBlank("scopes", scopes);
         validateNotBlank("username", username);
 
@@ -83,7 +83,7 @@ public class PublicClientApplication extends ClientApplicationBase {
      *         {@link AuthenticationResult} of the call. It contains Access
      *         Token, Refresh Token and the Access Token's expiration time.
      */
-    public CompletableFuture<AuthenticationResult> acquireToken(String scopes, String username) {
+    public CompletableFuture<AuthenticationResult> acquireTokenByKerberosAuth(String scopes, String username) {
         validateNotBlank("scopes", scopes);
         validateNotBlank("username", username);
 
