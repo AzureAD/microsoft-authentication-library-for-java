@@ -41,7 +41,7 @@ public class IntegratedAuthFlow {
                 .build();
 
         Future<AuthenticationResult> futureAuthenticationResult =
-                    app.acquireToken(TestData.GRAPH_DEFAULT_SCOPE, TestData.USER_NAME);
+                    app.acquireTokenByKerberosAuth(TestData.GRAPH_DEFAULT_SCOPE, TestData.USER_NAME);
 
         AuthenticationResult result = futureAuthenticationResult.get();
 
