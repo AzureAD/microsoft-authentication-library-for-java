@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Experimental and not fully vetted bug patterns -->
+    <Match>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+    <Match>
+        <Bug pattern="XXE_DOCUMENT"/>
+    </Match>
+    <Match>
+        <Bug pattern="XPATH_INJECTION"/>
+    </Match>
+    <Match>
+        <Bug pattern="FORMAT_STRING_MANIPULATION"/>
+    </Match>
+    <Match>
+        <Bug pattern="WEAK_MESSAGE_DIGEST_SHA1"/>
+    </Match>
+    <Match>
+        <Bug pattern="DM_DEFAULT_ENCODING"/>
+    </Match>
+    <Match>
+        <Bug pattern="DM_CONVERT_CASE"/>
+    </Match>
+    <Match>
+        <Bug pattern="REC_CATCH_EXCEPTION"/>
+    </Match>
+</FindBugsFilter>
