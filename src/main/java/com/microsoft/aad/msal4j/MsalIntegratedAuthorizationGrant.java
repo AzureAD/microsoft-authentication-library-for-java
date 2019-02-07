@@ -24,16 +24,17 @@
 package com.microsoft.aad.msal4j;
 
 import java.util.Map;
+import java.util.Set;
 
 public class MsalIntegratedAuthorizationGrant extends AbstractMsalAuthorizationGrant {
 
-    private final String resource;
+    private Set<String> scopes;
 
     private final String userName;
 
-    MsalIntegratedAuthorizationGrant(String userName, String resource){
+    MsalIntegratedAuthorizationGrant(String userName, Set<String> scopes){
         this.userName = userName;
-        this.resource = resource;
+        this.scopes = scopes;
     }
 
     @Override
@@ -41,8 +42,8 @@ public class MsalIntegratedAuthorizationGrant extends AbstractMsalAuthorizationG
         return null;
     }
 
-    public String getResource() {
-        return resource;
+    public Set<String> getScope() {
+        return scopes;
     }
 
     public String getUserName() {

@@ -26,6 +26,7 @@ package com.microsoft.aad.msal4j;
 import java.net.Proxy;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -112,7 +113,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         PowerMock.replay(HttpHelper.class);
 
-        Future<DeviceCode> result = app.acquireDeviceCode(AAD_RESOURCE_ID);
+        Future<DeviceCode> result = app.acquireDeviceCode(Collections.singleton(AAD_RESOURCE_ID));
         DeviceCode deviceCode = result.get();
 
         // validate HTTP GET request used to get device code
@@ -161,7 +162,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
                 .authority(ADFS_TENANT_ENDPOINT)
                 .validateAuthority(false).build();
 
-        app.acquireDeviceCode(AAD_RESOURCE_ID);
+        app.acquireDeviceCode(Collections.singleton(AAD_RESOURCE_ID));
     }
 
     @Test

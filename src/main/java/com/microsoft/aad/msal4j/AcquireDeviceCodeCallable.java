@@ -23,16 +23,18 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.util.Set;
+
 class AcquireDeviceCodeCallable extends MsalCallable<DeviceCode> {
     private String clientId;
     private String scopes;
 
     AcquireDeviceCodeCallable(PublicClientApplication clientApplication,
-                              String clientId, String scopes) {
+                              String clientId, Set<String> scopes) {
         super(clientApplication);
         this.headers = new ClientDataHttpHeaders(clientApplication.getCorrelationId());
         this.clientId = clientId;
-        this.scopes = scopes;
+        this.scopes = String.join(" ", scopes);
     }
 
     DeviceCode execute() throws Exception {

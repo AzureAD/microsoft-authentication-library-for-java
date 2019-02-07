@@ -63,7 +63,7 @@ class AcquireTokenCallable extends MsalCallable<AuthenticationResult> {
             MsalIntegratedAuthorizationGrant integratedAuthGrant = (MsalIntegratedAuthorizationGrant) authGrant;
             authGrant = new MsalOAuthAuthorizationGrant(
                     getAuthorizationGrantIntegrated(integratedAuthGrant.getUserName()),
-                    integratedAuthGrant.getResource());
+                    integratedAuthGrant.getScope());
         }
 
         return clientApplication.acquireTokenCommon(this.authGrant, this.clientAuth, this.headers);
