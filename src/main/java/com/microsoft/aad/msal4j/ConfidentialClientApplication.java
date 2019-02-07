@@ -87,7 +87,7 @@ public class ConfidentialClientApplication extends ClientApplicationBase {
      *         Token and the Access Token's expiration time. Refresh Token
      *         property will be null for this overload.
      */
-    public CompletableFuture<AuthenticationResult> acquireToken(final String scopes) {
+    public CompletableFuture<AuthenticationResult> acquireTokenForClient(String scopes) {
         validateNotBlank("scopes", scopes);
 
         MsalOAuthAuthorizationGrant authGrant = new MsalOAuthAuthorizationGrant(

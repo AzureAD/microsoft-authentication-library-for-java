@@ -160,17 +160,18 @@ abstract public class ClientApplicationBase {
      * Acquires security token from the authority using an authorization code
      * previously received.
      *
+     * @param scopes scopes of the access request
      * @param authorizationCode The authorization code received from service authorization endpoint.
      * @param redirectUri (also known as Reply URI or Reply URL),
      *                    is the URI at which Azure AD will contact back the application with the tokens.
      *                    This redirect URI needs to be registered in the app registration portal.
-     * @param scopes scopes of the access request
      * @return A {@link Future} object representing the
      *         {@link AuthenticationResult} of the call. It contains Access
      *         Token, Refresh Token and the Access Token's expiration time.
      */
-    public CompletableFuture<AuthenticationResult> acquireTokenByAuthorizationCode(String authorizationCode,
-                                                                        URI redirectUri, String scopes)
+    public CompletableFuture<AuthenticationResult> acquireTokenByAuthorizationCode(String scopes,
+                                                                                   String authorizationCode,
+                                                                                   URI redirectUri)
     {
         validateNotBlank("authorizationCode", authorizationCode);
         validateNotBlank("redirectUri", authorizationCode);
@@ -179,23 +180,6 @@ abstract public class ClientApplicationBase {
                 new AuthorizationCodeGrant(new AuthorizationCode(authorizationCode), redirectUri), scopes);
 
         return this.acquireToken(authGrant, clientAuthentication);
-    }
-
-    /**
-     * Acquires security token from the authority using an authorization code
-     * previously received.
-     *
-     * @param authorizationCode The authorization code received from service authorization endpoint.
-     * @param redirectUri (also known as Reply URI or Reply URL),
-     *                    is the URI at which Azure AD will contact back the application with the tokens.
-     *                    This redirect URI needs to be registered in the app registration portal.
-     * @return A {@link CompletableFuture} object representing the
-     *         {@link AuthenticationResult} of the call. It contains Access
-     *         Token, Refresh Token and the Access Token's expiration time.
-     */
-    public CompletableFuture<AuthenticationResult> acquireTokenByAuthorizationCode(String authorizationCode, URI redirectUri)
-    {
-        return acquireTokenByAuthorizationCode(authorizationCode, redirectUri, null);
     }
 
     /**

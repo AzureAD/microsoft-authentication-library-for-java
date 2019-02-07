@@ -266,7 +266,7 @@ public class BasicFilter implements Filter {
             ConfidentialClientApplication app = createClientApplication();
 
             Future<AuthenticationResult> future = app
-                    .acquireTokenByAuthorizationCode(authCode, new URI(currentUri), null);
+                    .acquireTokenByAuthorizationCode(null, authCode, new URI(currentUri));
 
             result = future.get();
         } catch (ExecutionException e) {

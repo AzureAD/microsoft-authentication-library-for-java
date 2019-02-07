@@ -30,14 +30,9 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import javax.net.ssl.SSLSocketFactory;
 import java.io.FileInputStream;
-import java.net.MalformedURLException;
-import java.net.Proxy;
 import java.net.URI;
 import java.security.KeyStore;
 import java.security.MessageDigest;
@@ -46,10 +41,6 @@ import java.security.PrivateKey;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import static org.testng.Assert.*;
@@ -80,8 +71,8 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
                         false));
         PowerMock.replay(app);
         Future<AuthenticationResult> result = app
-                .acquireTokenByAuthorizationCode("auth_code", new URI(
-                                TestConfiguration.AAD_DEFAULT_REDIRECT_URI), null);
+                .acquireTokenByAuthorizationCode(null, "auth_code",
+                        new URI(TestConfiguration.AAD_DEFAULT_REDIRECT_URI));
         AuthenticationResult ar = result.get();
         Assert.assertNotNull(ar);
         PowerMock.verifyAll();
@@ -118,9 +109,8 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
 
         PowerMock.replay(app);
         Future<AuthenticationResult> result = app
-                .acquireTokenByAuthorizationCode("auth_code", new URI(
-                                TestConfiguration.AAD_DEFAULT_REDIRECT_URI),
-                        null);
+                .acquireTokenByAuthorizationCode(null, "auth_code",
+                        new URI(TestConfiguration.AAD_DEFAULT_REDIRECT_URI));
         AuthenticationResult ar = result.get();
         Assert.assertNotNull(ar);
         PowerMock.verifyAll();
@@ -155,7 +145,7 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
                         new Date().getTime(), null, null, false));
 
         PowerMock.replay(app);
-        final Future<AuthenticationResult> result = app.acquireToken(
+        final Future<AuthenticationResult> result = app.acquireTokenForClient(
                 TestConfiguration.AAD_RESOURCE_ID);
         final AuthenticationResult ar = result.get();
         assertNotNull(ar);

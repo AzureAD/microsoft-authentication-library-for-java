@@ -47,8 +47,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import com.nimbusds.jose.JOSEException;
@@ -63,7 +61,6 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -259,7 +256,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
                             .build();
 
             // Using ClientAssertion for Client Authentication and as the authorization grant
-            Future<AuthenticationResult> future = app.acquireToken(SCOPES);
+            Future<AuthenticationResult> future = app.acquireTokenForClient(SCOPES);
 
             future.get();
         }
