@@ -1,5 +1,3 @@
-//----------------------------------------------------------------------
-//
 // Copyright (c) Microsoft Corporation.
 // All rights reserved.
 //
@@ -22,13 +20,23 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-//
-//------------------------------------------------------------------------------
 
-package lapapi;
+package com.microsoft.aad.msal4j;
 
-public enum KeyVaultAuthenticationType {
-    ClientCertificate,
-    ClientSecret,
-    UserCredential;
+import lapapi.LabUserProvider;
+import org.openqa.selenium.WebDriver;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+@Test(groups = "integration-tests")
+public class UsernamePasswordIT {
+
+    private LabUserProvider labUserProvider;
+    private static final String[] scopes = {"User.Read"};
+    private WebDriver seleniumDriver;
+
+    @BeforeClass
+    public void setUp(){
+        labUserProvider = new LabUserProvider();
+    }
 }

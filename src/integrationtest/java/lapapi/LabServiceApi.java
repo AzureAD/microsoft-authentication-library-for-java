@@ -31,29 +31,28 @@ import com.google.gson.Gson;
 import org.testng.util.Strings;
 
 import javax.net.ssl.HttpsURLConnection;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LabServiceApi{
+class LabServiceApi{
 
-    private final KeyVaultSecretsProvider keyVault;
-
-    public LabServiceApi(KeyVaultSecretsProvider keyVault){
-        this.keyVault = keyVault;
-    }
-
-    public LabResponse getLabResponseFromApi(UserQuery query) throws LabUserNotFoundException,
-            IOException{
-
-        String result =  sendRequestToLab(query);
-
+    LabResponse getLabResponse(UserQuery query) throws LabUserNotFoundException{
+        String result;
+        try {
+            result = sendRequestToLab(query);
+        } catch(Exception ex){
+            throw new UnsupportedOperationException("Error sending request to lab: " + ex.getMessage());
+        }
         if(Strings.isNullOrEmpty(result)){
             throw new LabUserNotFoundException(query,
-                    "No lab user with specified parameter exists");
+                    "Lab response is null or empty. No lab user with specified parameter exists");
         }
         Gson gson = new Gson();
         LabResponse labResponse = gson.fromJson(result, LabResponse.class);
@@ -67,10 +66,10 @@ public class LabServiceApi{
     private String sendRequestToLab(UserQuery query) throws LabUserNotFoundException, IOException {
         Map<String, String> queryMap = createLabQuery(query);
 
-        URL labUrl = buildUrl(queryMap);
+        final URL labUrl = buildUrl(queryMap);
         HttpsURLConnection conn = (HttpsURLConnection) labUrl.openConnection();
-        conn.setReadTimeout(5000);
-        conn.setConnectTimeout(8000);
+        conn.setReadTimeout(15000);
+        conn.setConnectTimeout(15000);
 
         StringBuilder content;
         try(BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()))){
@@ -85,7 +84,7 @@ public class LabServiceApi{
         return content.toString();
     }
 
-    private Map<String, String> createLabQuery(UserQuery query) throws MalformedURLException{
+    private Map<String, String> createLabQuery(UserQuery query) {
         Map<String, String> queryMap = new HashMap<String, String>();
 
         queryMap.put(LabConstants.MOBILE_APP_MANAGEMENT_WITH_CONDITIONAL_ACCESS,
@@ -106,32 +105,33 @@ public class LabServiceApi{
                 LabConstants.FALSE);
 
         queryMap.put(LabConstants.FEDERATED_USER, (query.isFederatedUser() ?
-                LabConstants.TRUE:
+                LabConstants.TRUE :
                 LabConstants.FALSE));
 
-        if(query.getFederationProvider() != null){
+        if (query.getFederationProvider() != null) {
             queryMap.put(LabConstants.FEDERATION_PROVIDER, query.getFederationProvider().toString());
         }
 
-        if(query.getLicenses() != null && !query.getLicenses().isEmpty()){
+        if (query.getLicenses() != null && !query.getLicenses().isEmpty()) {
             queryMap.put(LabConstants.LICENSE, query.getLicenses().toArray().toString());
         }
 
-        if(query.getUserType() != null){
+        if (query.getUserType() != null) {
             queryMap.put(LabConstants.USERTYPE, query.getUserType().toString());
         }
 
-        B2CIdentityProvider b2CIdentityProvider = query.getB2CIdentityProvider();
-        switch (b2CIdentityProvider){
-            case LOCAL:
-                queryMap.put(LabConstants.B2C_PROVIDER, LabConstants.B2C_LOCAL);
-                break;
-            case GOOGLE:
-                queryMap.put(LabConstants.B2C_PROVIDER, LabConstants.B2C_GOOGLE);
-                break;
-            case FACEBOOK:
-                queryMap.put(LabConstants.B2C_PROVIDER, LabConstants.B2C_FACEBOOK);
-                break;
+        if (query.getB2CIdentityProvider() != null) {
+            switch (query.getB2CIdentityProvider()) {
+                case LOCAL:
+                    queryMap.put(LabConstants.B2C_PROVIDER, LabConstants.B2C_LOCAL);
+                    break;
+                case GOOGLE:
+                    queryMap.put(LabConstants.B2C_PROVIDER, LabConstants.B2C_GOOGLE);
+                    break;
+                case FACEBOOK:
+                    queryMap.put(LabConstants.B2C_PROVIDER, LabConstants.B2C_FACEBOOK);
+                    break;
+            }
         }
         return queryMap;
     }
@@ -139,26 +139,21 @@ public class LabServiceApi{
     private URL buildUrl(Map<String, String> queryMap) throws MalformedURLException,
             UnsupportedOperationException {
         String queryParameters;
-        URL labUrl;
-        try {
-             queryParameters =  queryMap.entrySet().stream()
-                    .map(p -> encodeUTF8(p.getKey()) + "=" + encodeUTF8(p.getValue()))
-                    .reduce((p1, p2) -> p1 + "&" + p2)
-                    .orElse("");
 
-            String urlString = LabConstants.LAB_ENDPOINT + "?" + queryParameters;
-            labUrl = new URL(urlString);
-        } catch (MalformedURLException e){
-            throw new MalformedURLException();
-        }
-        return labUrl;
+        queryParameters = queryMap.entrySet().stream()
+                .map(p -> encodeUTF8(p.getKey()) + "=" + encodeUTF8(p.getValue()))
+                .reduce((p1, p2) -> p1 + "&" + p2)
+                .orElse("");
+
+        String urlString = LabConstants.LAB_ENDPOINT + "?" + queryParameters;
+        return new URL(urlString);
     }
 
-    private String encodeUTF8(String s) throws UnsupportedOperationException {
+    private String encodeUTF8(String s){
         try {
             return URLEncoder.encode(s, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new UnsupportedOperationException(e);
+        } catch(UnsupportedEncodingException e) {
+            throw new IllegalArgumentException("Error: cannot encode query parameter " + s );
         }
     }
 }

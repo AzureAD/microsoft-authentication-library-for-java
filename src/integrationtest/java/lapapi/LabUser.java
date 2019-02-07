@@ -28,7 +28,6 @@
 package lapapi;
 
 import com.google.gson.annotations.SerializedName;
-
 import java.util.Set;
 import java.util.UUID;
 
@@ -67,7 +66,7 @@ public class LabUser {
     private FederationProvider federationProvider;
 
     @SerializedName("tenantId")
-    private String currentTenantId;
+    private String tenantId;
 
     @SerializedName("hometenantId")
     private String homeTenantId;
@@ -161,12 +160,12 @@ public class LabUser {
         this.federationProvider = federationProvider;
     }
 
-    public String getCurrentTenantId() {
-        return currentTenantId;
+    public String getTenantId() {
+        return tenantId;
     }
 
-    public void setCurrentTenantId(String currentTenantId) {
-        this.currentTenantId = currentTenantId;
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
     }
 
     public String getHomeTenantId() {
@@ -212,22 +211,21 @@ public class LabUser {
     public void initializeHomeUser(){
         homeUser = new LabUser();
 
-        homeUser.setObjectId(getObjectId());
-        homeUser.setUserType(getUserType());
-        homeUser.setCredentialUrl(getCredentialUrl());
-        homeUser.setHomeUser(getHomeUser());
-        homeUser.setIsExternal(getIsExternal());
-        homeUser.setMfa(isMfa());
-        homeUser.setMam(isMam());
-        homeUser.setLicenses(getLicenses());
-        homeUser.setFederated(isFederated());
-        homeUser.setFederationProvider(getFederationProvider());
-        homeUser.setHomeTenantId(getHomeTenantId());
-        homeUser.setHomeUpn(getHomeUpn());
-        homeUser.setCurrentTenantId(getCurrentTenantId());
-        homeUser.setUpn(getUpn());
-        homeUser.setHomeUpn(getHomeUpn());
-        homeUser.setB2CIdentityProvider(getB2CIdentityProvider());
+        homeUser.ObjectId = ObjectId;
+        homeUser.userType = userType;
+        homeUser.credentialUrl = credentialUrl;
+        homeUser.homeUser = homeUser;
+        homeUser.isExternal = isExternal;
+        homeUser.isMfa = isMfa;
+        homeUser.isMam = isMam;
+        homeUser.licenses = licenses;
+        homeUser.isFederated = isFederated;
+        homeUser.federationProvider = federationProvider;
+        homeUser.homeTenantId = homeTenantId;
+        homeUser.homeUpn = homeUpn;
+        homeUser.tenantId = homeTenantId;
+        homeUser.upn = homeUpn;
+        homeUser.b2CIdentityProvider = b2CIdentityProvider;
     }
 
 }

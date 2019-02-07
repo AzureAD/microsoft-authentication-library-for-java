@@ -47,6 +47,5 @@ public class LabConstants {
     public final static String TRUE = "true";
     public final static String FALSE = "false";
 
-    public final static String BETA_ENDPOINT = "http://api.msidlab.com/api/userbeta";
-    public final static String LAB_ENDPOINT = "http://api.msidlab.com/api/user";
+    public final static String LAB_ENDPOINT = "https://api.msidlab.com/api/user";
 }
