@@ -68,8 +68,8 @@ class LabServiceApi{
 
         final URL labUrl = buildUrl(queryMap);
         HttpsURLConnection conn = (HttpsURLConnection) labUrl.openConnection();
-        conn.setReadTimeout(15000);
-        conn.setConnectTimeout(15000);
+        conn.setReadTimeout(30000);
+        conn.setConnectTimeout(30000);
 
         StringBuilder content;
         try(BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()))){

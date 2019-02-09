@@ -23,20 +23,109 @@
 
 package com.microsoft.aad.msal4j;
 
+import lapapi.FederationProvider;
+import lapapi.LabResponse;
 import lapapi.LabUserProvider;
-import org.openqa.selenium.WebDriver;
+import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import java.net.MalformedURLException;
+import java.util.Arrays;
+import java.util.concurrent.ExecutionException;
 
 @Test(groups = "integration-tests")
 public class UsernamePasswordIT {
 
     private LabUserProvider labUserProvider;
-    private static final String[] scopes = {"User.Read"};
-    private WebDriver seleniumDriver;
+    private static final String authority = "https://login.microsoftonline.com/organizations/";
+    private static final String scopes = "https://graph.windows.net/.default";
 
     @BeforeClass
-    public void setUp(){
+    public void setUp() {
         labUserProvider = new LabUserProvider();
     }
+
+    @Test
+    public void acquireTokenWithManagedUsernamePasswordAsync() throws MalformedURLException,
+            InterruptedException, ExecutionException {
+
+        LabResponse labResponse = labUserProvider.getDefaultUser();
+        char[] password = labUserProvider.getUserPassword(labResponse.getUser()).toCharArray();
+        PublicClientApplication pca = new PublicClientApplication.Builder(
+                labResponse.getAppId()).
+                authority(authority).
+                build();
+        AuthenticationResult result = pca.acquireTokenByUsernamePassword(
+                scopes,
+                labResponse.getUser().getUpn(),
+                password.toString()).get();
+
+        Arrays.fill(password, '*');
+
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.getAccessToken());
+        Assert.assertNotNull(result.getIdToken());
+        // TODO AuthenticationResult should have an getAccountInfo API
+        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+    }
+
+    @Test
+    public void acquireTokenWithFederatedUsernamePasswordAsync() throws MalformedURLException,
+            InterruptedException, ExecutionException{
+        LabResponse labResponse = labUserProvider.getAdfsUser(
+                FederationProvider.ADFSV4,
+                true);
+        char[] password = labUserProvider.getUserPassword(labResponse.getUser()).toCharArray();
+
+        PublicClientApplication pca = new PublicClientApplication.Builder(
+                labResponse.getAppId()).
+                authority(authority).
+                build();
+
+        AuthenticationResult result = pca.acquireTokenByUsernamePassword(
+                scopes,
+                labResponse.getUser().getUpn(),
+                password.toString()).get();
+
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.getAccessToken());
+        Assert.assertNotNull(result.getIdToken());
+    }
+
+    @Test(expectedExceptions = AuthenticationException.class)
+    public void AcquireTokenWithManagedUsernameIncorrectPassword() throws MalformedURLException,
+            InterruptedException, ExecutionException {
+        LabResponse labResponse = labUserProvider.getDefaultUser();
+        char[] password = labUserProvider.getUserPassword(labResponse.getUser()).toCharArray();
+        password[password.length + 1] = 'x';
+
+        PublicClientApplication pca = new PublicClientApplication.Builder(
+                labResponse.getAppId()).
+                authority(authority).
+                build();
+        AuthenticationResult result = pca.acquireTokenByUsernamePassword(
+                scopes,
+                labResponse.getUser().getUpn(),
+                password.toString()).get();
+    }
+
+    @Test(expectedExceptions = AuthenticationException.class)
+    public void AcquireTokenWithFederatedUsernameIncorrectPassword() throws Exception{
+        LabResponse labResponse = labUserProvider.getAdfsUser(
+                FederationProvider.ADFSV4,
+                true);
+        char[] password = labUserProvider.getUserPassword(labResponse.getUser()).toCharArray();
+        password[password.length + 1] = 'x';
+
+        PublicClientApplication pca = new PublicClientApplication.Builder(
+                labResponse.getAppId()).
+                authority(authority).
+                build();
+        AuthenticationResult result = pca.acquireTokenByUsernamePassword(
+                scopes,
+                labResponse.getUser().getUpn(),
+                password.toString()).get();
+    }
+
 }

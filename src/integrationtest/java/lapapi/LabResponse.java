@@ -31,7 +31,7 @@ import com.google.gson.annotations.SerializedName;
 
 public class LabResponse{
 
-    @SerializedName("AppId")
+    @SerializedName("AppID")
     private String appId;
     @SerializedName("Users")
     private LabUser user;

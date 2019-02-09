@@ -27,13 +27,21 @@
 
 package lapapi;
 
+import com.google.gson.annotations.SerializedName;
+
 public enum FederationProvider {
     UNKNOWN(0),
+    @SerializedName("none")
     NONE(1),
+    @SerializedName("ADFSv2")
     ADFSV2(2),
+    @SerializedName("ADFSv3")
     ADFSV3(3),
+    @SerializedName("ADFSv4")
     ADFSV4(4),
+    @SerializedName("PingFederatev83")
     PINGFEDERATEV83(5),
+    @SerializedName("Shibboleth")
     SHIBBOLETH(6);
 
     private final int labId;

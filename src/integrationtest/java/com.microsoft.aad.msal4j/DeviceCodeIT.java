@@ -9,8 +9,13 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import org.testng.util.Strings;
+
+import java.util.concurrent.ExecutionException;
 
 @Test(groups = "integration-tests")
 public class DeviceCodeIT {
@@ -18,7 +23,7 @@ public class DeviceCodeIT {
     private final static Logger LOG = LoggerFactory.getLogger(DeviceCodeIT.class);
 
     private LabUserProvider labUserProvider;
-    private static final String[] scopes = {"User.Read"};
+    private static final String scopes = "User.Read";
     private WebDriver seleniumDriver;
 
     @BeforeClass
@@ -27,14 +32,21 @@ public class DeviceCodeIT {
         seleniumDriver = SeleniumExtensions.createDefaultWebDriver();
     }
 
-
     @Test
-    public void DeviceCodeFlowTest(){
+    public void DeviceCodeFlowTest() throws InterruptedException, ExecutionException {
         LabResponse labResponse = labUserProvider.getDefaultUser();
 
         LOG.info("Calling acquireTokenWithDeviceCodeAsync");
-        String password = labUserProvider.getUserPassword(labResponse.getUser());
+        PublicClientApplication pca = new PublicClientApplication.Builder(
+                labResponse.getAppId()).
+                build();
 
+        DeviceCode deviceCode = pca.acquireDeviceCode(scopes).get();
+        runAutomatedDeviceCodeFlow(deviceCode, labResponse.getUser());
+        AuthenticationResult result = pca.acquireTokenByDeviceCode(deviceCode).get();
+
+        Assert.assertNotNull(result);
+        Assert.assertTrue(Strings.isNullOrEmpty(result.getAccessToken()));
     }
 
     private void runAutomatedDeviceCodeFlow(DeviceCode deviceCode, LabUser user){
@@ -52,6 +64,13 @@ public class DeviceCodeIT {
         } catch(Exception e){
             LOG.error("Browser automation failed: " + e.getMessage());
             throw e;
+        }
+    }
+
+    @AfterClass
+    public void cleanUp(){
+        if( seleniumDriver != null){
+            seleniumDriver.close();
         }
     }
 }

@@ -28,6 +28,7 @@
 package lapapi;
 
 public enum B2CIdentityProvider {
+    //TODO add @seralizedNames
     NONE(0),
     LOCAL(1),
     FACEBOOK(2),

@@ -26,9 +26,7 @@ package Infrastructure;
 import lapapi.FederationProvider;
 import lapapi.LabUser;
 import org.openqa.selenium.By;
-import org.openqa.selenium.OutputType;
 import org.openqa.selenium.StaleElementReferenceException;
-import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -37,7 +35,6 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.util.concurrent.TimeUnit;
 
 public class SeleniumExtensions {
@@ -47,12 +44,14 @@ public class SeleniumExtensions {
     private SeleniumExtensions(){}
 
     public static WebDriver createDefaultWebDriver(){
+        //TODO find better place for chromedriver.exe
+        System.setProperty("webdriver.chrome.driver", "C:\\Java\\microsoft-authentication-library-for-java\\src\\integrationtest\\resources\\chromedriver.exe");
         ChromeOptions options = new ChromeOptions();
 
         //no visual rendering, remove when debugging
         options.addArguments("headless");
 
-        ChromeDriver driver = new ChromeDriver(options);
+        ChromeDriver driver = new ChromeDriver(new ChromeOptions());
         driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
 
         return driver;
@@ -96,10 +95,5 @@ public class SeleniumExtensions {
         LOG.info("Loggin in ... Entering password");
         waitForElementToBeVisibleAndEnable(driver, new By.ById(fields.getPasswordSigInButtonId())).
                 click();
-    }
-
-    public static void saveScreenShot(WebDriver driver, ){
-        File screenshot = ((TakesScreenshot)driver).getScreenshotAs(OutputType.FILE);
-        
     }
 }
