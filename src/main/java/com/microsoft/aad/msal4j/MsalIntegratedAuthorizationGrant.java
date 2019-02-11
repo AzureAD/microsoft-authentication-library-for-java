@@ -42,7 +42,7 @@ public class MsalIntegratedAuthorizationGrant extends AbstractMsalAuthorizationG
         return null;
     }
 
-    public Set<String> getScope() {
+    public Set<String> getScopes() {
         return scopes;
     }
 
