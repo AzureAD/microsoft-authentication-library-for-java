@@ -24,10 +24,12 @@
 import com.microsoft.aad.msal4j.AuthenticationResult;
 import com.microsoft.aad.msal4j.PublicClientApplication;
 
+import java.util.Collections;
 import java.util.concurrent.Future;
 
 public class IntegratedAuthFlow {
     public static void main(String args[]) throws Exception {
+
         AuthenticationResult result = getAccessTokenByIntegratedAuth();
 
         System.out.println("Access Token - " + result.getAccessToken());
@@ -41,7 +43,7 @@ public class IntegratedAuthFlow {
                 .build();
 
         Future<AuthenticationResult> futureAuthenticationResult =
-                    app.acquireTokenByKerberosAuth(TestData.GRAPH_DEFAULT_SCOPE, TestData.USER_NAME);
+                    app.acquireTokenByKerberosAuth(Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE), TestData.USER_NAME);
 
         AuthenticationResult result = futureAuthenticationResult.get();
 

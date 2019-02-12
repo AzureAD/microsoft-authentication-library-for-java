@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 public class ConfidentialClientApplication extends ClientApplicationBase {
@@ -87,8 +88,8 @@ public class ConfidentialClientApplication extends ClientApplicationBase {
      *         Token and the Access Token's expiration time. Refresh Token
      *         property will be null for this overload.
      */
-    public CompletableFuture<AuthenticationResult> acquireTokenForClient(String scopes) {
-        validateNotBlank("scopes", scopes);
+    public CompletableFuture<AuthenticationResult> acquireTokenForClient(Set<String> scopes) {
+        validateNotEmpty("scopes", scopes);
 
         MsalOAuthAuthorizationGrant authGrant = new MsalOAuthAuthorizationGrant(
                 new ClientCredentialsGrant(), scopes);
@@ -109,17 +110,17 @@ public class ConfidentialClientApplication extends ClientApplicationBase {
      *         property will be null for this overload.
      * @throws AuthenticationException {@link AuthenticationException}
      */
-    public CompletableFuture<AuthenticationResult> acquireTokenOnBehalfOf(String scopes, UserAssertion userAssertion) {
+    public CompletableFuture<AuthenticationResult> acquireTokenOnBehalfOf(Set<String> scopes, UserAssertion userAssertion) {
         validateNotNull("userAssertion", userAssertion);
-        validateNotBlank("scopes", scopes);
+        validateNotEmpty("scopes", scopes);
 
         return acquireTokenOnBehalfOf(scopes, userAssertion, clientAuthentication);
     }
 
     private CompletableFuture<AuthenticationResult> acquireTokenOnBehalfOf
-            (String scopes, UserAssertion userAssertion, ClientAuthentication clientAuthentication) {
+            (Set<String> scopes, UserAssertion userAssertion, ClientAuthentication clientAuthentication) {
         Map<String, String> params = new HashMap<>();
-        params.put("scope", scopes);
+        params.put("scope", String.join(" ", scopes));
         params.put("requested_token_use", "on_behalf_of");
         try {
             MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(

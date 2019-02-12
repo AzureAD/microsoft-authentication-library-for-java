@@ -24,6 +24,7 @@ import com.microsoft.aad.msal4j.AuthenticationResult;
 import com.microsoft.aad.msal4j.DeviceCode;
 import com.microsoft.aad.msal4j.PublicClientApplication;
 
+import java.util.Collections;
 import java.util.concurrent.Future;
 
 public class DeviceCodeFlow {
@@ -40,7 +41,7 @@ public class DeviceCodeFlow {
                 .authority(TestData.AUTHORITY)
                 .build();
 
-        Future<DeviceCode> deviceCodeFuture = app.acquireDeviceCode(TestData.GRAPH_DEFAULT_SCOPE);
+        Future<DeviceCode> deviceCodeFuture = app.acquireDeviceCode(Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE));
         DeviceCode deviceCode = deviceCodeFuture.get();
 
         Future<AuthenticationResult> futureAuthenticationResult = app.acquireTokenByDeviceCode(deviceCode);

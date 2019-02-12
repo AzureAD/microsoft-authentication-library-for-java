@@ -24,6 +24,7 @@
 import com.microsoft.aad.msal4j.AuthenticationResult;
 import com.microsoft.aad.msal4j.PublicClientApplication;
 
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
 public class UsernamePasswordFlowAsync {
@@ -38,7 +39,7 @@ public class UsernamePasswordFlowAsync {
                 .build();
 
         CompletableFuture<AuthenticationResult> future = app.acquireTokenByUsernamePassword
-                (TestData.GRAPH_DEFAULT_SCOPE, TestData.USER_NAME, TestData.USER_PASSWORD);
+                (Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE), TestData.USER_NAME, TestData.USER_PASSWORD);
 
         future.handle((res, ex) -> {
             if(ex != null) {

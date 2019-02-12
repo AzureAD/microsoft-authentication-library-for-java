@@ -28,6 +28,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.HashSet;
 
 import com.nimbusds.oauth2.sdk.*;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
@@ -57,7 +58,7 @@ public class AdalTokenRequestTest extends AbstractAdalTests {
         AuthorizationGrant ag = new AuthorizationCodeGrant(
                 new AuthorizationCode("code"),
                 new URI("http://my.redirect.com"));
-        MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(ag, (String) null);
+        MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(ag, new HashSet<>());
 
         AdalTokenRequest request = PowerMock.createPartialMock(
                 AdalTokenRequest.class, new String[]{"toOAuthRequest"},
@@ -102,8 +103,7 @@ public class AdalTokenRequestTest extends AbstractAdalTests {
         final AuthorizationGrant ag = new AuthorizationCodeGrant(
                 new AuthorizationCode("code"),
                 new URI("http://my.redirect.com"));
-        final MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(ag,
-                (String) null);
+        final MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(ag, new HashSet<>());
         final ClientDataHttpHeaders cdhh = new ClientDataHttpHeaders("corr-id");
         final AdalTokenRequest request = new AdalTokenRequest(null, ca, grant,
                 cdhh.getReadonlyHeaderMap(), null, null);
@@ -120,7 +120,7 @@ public class AdalTokenRequestTest extends AbstractAdalTests {
                 new AuthorizationCode("code"),
                 new URI("http://my.redirect.com"));
         final MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(ag,
-                (String) null);
+                new HashSet<>());
         final ClientDataHttpHeaders cdhh = new ClientDataHttpHeaders("corr-id");
         final AdalTokenRequest request = new AdalTokenRequest(new URL(
                 "http://login.windows.net"), ca, grant,
@@ -138,7 +138,7 @@ public class AdalTokenRequestTest extends AbstractAdalTests {
                 new AuthorizationCode("code"),
                 new URI("http://my.redirect.com"));
         final MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(ag,
-                (String) null);
+                new HashSet<>());
         final ClientDataHttpHeaders cdhh = new ClientDataHttpHeaders("corr-id");
         final AdalTokenRequest request = new AdalTokenRequest(new URL(
                 "http://login.windows.net"), ca, grant,
@@ -159,8 +159,7 @@ public class AdalTokenRequestTest extends AbstractAdalTests {
         final AuthorizationGrant ag = new AuthorizationCodeGrant(
                 new AuthorizationCode("code"),
                 new URI("http://my.redirect.com"));
-        final MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(ag,
-                (String) null);
+        final MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(ag, new HashSet<>());
         final AdalTokenRequest request = new AdalTokenRequest(new URL(
                 "http://login.windows.net"), null, grant, null, null, null);
         Assert.assertNotNull(request);
@@ -175,8 +174,7 @@ public class AdalTokenRequestTest extends AbstractAdalTests {
         final AuthorizationGrant ag = new AuthorizationCodeGrant(
                 new AuthorizationCode("code"),
                 new URI("http://my.redirect.com"));
-        final MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(ag,
-                (String) null);
+        final MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(ag, new HashSet<>());
 
         final AdalTokenRequest request = PowerMock.createPartialMock(
                 AdalTokenRequest.class, new String[] { "toOAuthRequest" },
@@ -224,8 +222,7 @@ public class AdalTokenRequestTest extends AbstractAdalTests {
         final AuthorizationGrant ag = new AuthorizationCodeGrant(
                 new AuthorizationCode("code"),
                 new URI("http://my.redirect.com"));
-        final MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(ag,
-                (String) null);
+        final MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(ag, new HashSet<>());
 
         final AdalTokenRequest request = PowerMock.createPartialMock(
                 AdalTokenRequest.class, new String[] { "toOAuthRequest" },

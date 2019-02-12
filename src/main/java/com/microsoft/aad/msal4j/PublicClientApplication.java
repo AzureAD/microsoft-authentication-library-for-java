@@ -29,6 +29,7 @@ import com.nimbusds.oauth2.sdk.auth.Secret;
 import com.nimbusds.oauth2.sdk.id.ClientID;
 import org.slf4j.LoggerFactory;
 
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Future;
@@ -64,8 +65,9 @@ public class PublicClientApplication extends ClientApplicationBase {
      *         {@link AuthenticationResult} of the call. It contains Access
      *         Token, Refresh Token and the Access Token's expiration time.
      */
-    public CompletableFuture<AuthenticationResult> acquireTokenByUsernamePassword(String scopes, String username, String password) {
-        validateNotBlank("scopes", scopes);
+    public CompletableFuture<AuthenticationResult> acquireTokenByUsernamePassword(Set<String> scopes,
+                                                                                  String username, String password) {
+        validateNotEmpty("scopes", scopes);
         validateNotBlank("username", username);
 
         return this.acquireToken(new MsalOAuthAuthorizationGrant(
@@ -83,8 +85,8 @@ public class PublicClientApplication extends ClientApplicationBase {
      *         {@link AuthenticationResult} of the call. It contains Access
      *         Token, Refresh Token and the Access Token's expiration time.
      */
-    public CompletableFuture<AuthenticationResult> acquireTokenByKerberosAuth(String scopes, String username) {
-        validateNotBlank("scopes", scopes);
+    public CompletableFuture<AuthenticationResult> acquireTokenByKerberosAuth(Set<String> scopes, String username) {
+        validateNotEmpty("scopes", scopes);
         validateNotBlank("username", username);
 
         return this.acquireToken
@@ -100,7 +102,7 @@ public class PublicClientApplication extends ClientApplicationBase {
      * message which should be displayed to the user.
      * @throws AuthenticationException thrown if the device code is not acquired successfully
      */
-    public CompletableFuture<DeviceCode> acquireDeviceCode(final String scopes) {
+    public CompletableFuture<DeviceCode> acquireDeviceCode(Set<String> scopes) {
         validateDeviceCodeRequestInput(scopes);
 
         Supplier<DeviceCode> supplier = () ->
@@ -127,8 +129,8 @@ public class PublicClientApplication extends ClientApplicationBase {
         return future;
     }
 
-    private void validateDeviceCodeRequestInput(String scopes) {
-        validateNotBlank("scopes", scopes);
+    private void validateDeviceCodeRequestInput(Set<String> scopes) {
+        validateNotEmpty("scopes", scopes);
 
         if (AuthorityType.ADFS.equals(authenticationAuthority.getAuthorityType())){
             throw new IllegalArgumentException(

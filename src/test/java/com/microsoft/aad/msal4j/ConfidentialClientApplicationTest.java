@@ -40,6 +40,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+import java.util.Collections;
 import java.util.Date;
 import java.util.concurrent.Future;
 
@@ -145,8 +146,8 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
                         new Date().getTime(), null, null, false));
 
         PowerMock.replay(app);
-        final Future<AuthenticationResult> result = app.acquireTokenForClient(
-                TestConfiguration.AAD_RESOURCE_ID);
+        final Future<AuthenticationResult> result = app.acquireTokenForClient
+                (Collections.singleton(TestConfiguration.AAD_RESOURCE_ID));
         final AuthenticationResult ar = result.get();
         assertNotNull(ar);
         assertFalse(StringHelper.isBlank(result.get().getAccessToken()));
