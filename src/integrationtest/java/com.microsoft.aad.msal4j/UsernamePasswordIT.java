@@ -30,10 +30,6 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.net.MalformedURLException;
-import java.util.Arrays;
-import java.util.concurrent.ExecutionException;
-
 @Test(groups = "integration-tests")
 public class UsernamePasswordIT {
 
@@ -47,77 +43,90 @@ public class UsernamePasswordIT {
     }
 
     @Test
-    public void acquireTokenWithManagedUsernamePasswordAsync() throws MalformedURLException,
-            InterruptedException, ExecutionException {
+    public void acquireTokenWithUsernamePassword_Managed() throws Exception {
 
         LabResponse labResponse = labUserProvider.getDefaultUser();
-        char[] password = labUserProvider.getUserPassword(labResponse.getUser()).toCharArray();
-        PublicClientApplication pca = new PublicClientApplication.Builder(
-                labResponse.getAppId()).
-                authority(authority).
-                build();
-        AuthenticationResult result = pca.acquireTokenByUsernamePassword(
-                scopes,
-                labResponse.getUser().getUpn(),
-                password.toString()).get();
-
-        Arrays.fill(password, '*');
+        String password = labUserProvider.getUserPassword(labResponse.getUser());
+        AuthenticationResult result = acquireTokenCommon(labResponse, password);
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.getAccessToken());
+        Assert.assertNotNull(result.getRefreshToken());
         Assert.assertNotNull(result.getIdToken());
         // TODO AuthenticationResult should have an getAccountInfo API
         // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
     }
 
     @Test
-    public void acquireTokenWithFederatedUsernamePasswordAsync() throws MalformedURLException,
-            InterruptedException, ExecutionException{
+    public void acquireTokenWithUsernamePassword_ADFSv4() throws Exception{
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV4,
                 true);
-        char[] password = labUserProvider.getUserPassword(labResponse.getUser()).toCharArray();
-
-        PublicClientApplication pca = new PublicClientApplication.Builder(
-                labResponse.getAppId()).
-                authority(authority).
-                build();
-
-        AuthenticationResult result = pca.acquireTokenByUsernamePassword(
-                scopes,
-                labResponse.getUser().getUpn(),
-                password.toString()).get();
+        String password = labUserProvider.getUserPassword(labResponse.getUser());
+        AuthenticationResult result = acquireTokenCommon(labResponse, password);
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.getAccessToken());
+        Assert.assertNotNull(result.getRefreshToken());
         Assert.assertNotNull(result.getIdToken());
+        // TODO AuthenticationResult should have an getAccountInfo API
+        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+    }
+
+    @Test
+    public void acquireTokenWithUsernamePassword_ADFSv3() throws Exception{
+        LabResponse labResponse = labUserProvider.getAdfsUser(
+                FederationProvider.ADFSV3,
+                true);
+        String password = labUserProvider.getUserPassword(labResponse.getUser());
+        AuthenticationResult result = acquireTokenCommon(labResponse, password);
+
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.getAccessToken());
+        Assert.assertNotNull(result.getRefreshToken());
+        Assert.assertNotNull(result.getIdToken());
+        // TODO AuthenticationResult should have an getAccountInfo API
+        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+    }
+
+    @Test
+    public void acquireTokenWithUsernamePassword_ADFSv2() throws Exception{
+        LabResponse labResponse = labUserProvider.getAdfsUser(
+                FederationProvider.ADFSV2,
+                true);
+        String password = labUserProvider.getUserPassword(labResponse.getUser());
+        AuthenticationResult result = acquireTokenCommon(labResponse, password);
+
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.getAccessToken());
+        Assert.assertNotNull(result.getRefreshToken());
+        Assert.assertNotNull(result.getIdToken());
+        // TODO AuthenticationResult should have an getAccountInfo API
+        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
     }
 
     @Test(expectedExceptions = AuthenticationException.class)
-    public void AcquireTokenWithManagedUsernameIncorrectPassword() throws MalformedURLException,
-            InterruptedException, ExecutionException {
+    public void AcquireTokenWithManagedUsernameIncorrectPassword() throws Exception{
         LabResponse labResponse = labUserProvider.getDefaultUser();
-        char[] password = labUserProvider.getUserPassword(labResponse.getUser()).toCharArray();
-        password[password.length + 1] = 'x';
+        String password = labUserProvider.getUserPassword(labResponse.getUser());
+        password = password + "xxx";
 
-        PublicClientApplication pca = new PublicClientApplication.Builder(
-                labResponse.getAppId()).
-                authority(authority).
-                build();
-        AuthenticationResult result = pca.acquireTokenByUsernamePassword(
-                scopes,
-                labResponse.getUser().getUpn(),
-                password.toString()).get();
+        acquireTokenCommon(labResponse, password);
     }
 
     @Test(expectedExceptions = AuthenticationException.class)
-    public void AcquireTokenWithFederatedUsernameIncorrectPassword() throws Exception{
+    public void acquireTokenWithFederatedUsernameIncorrectPassword() throws Exception{
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV4,
                 true);
-        char[] password = labUserProvider.getUserPassword(labResponse.getUser()).toCharArray();
-        password[password.length + 1] = 'x';
+        String password = labUserProvider.getUserPassword(labResponse.getUser());
+        password = password + "xxx";
 
+        acquireTokenCommon(labResponse, password);
+    }
+
+    public AuthenticationResult acquireTokenCommon(LabResponse labResponse, String password)
+            throws Exception{
         PublicClientApplication pca = new PublicClientApplication.Builder(
                 labResponse.getAppId()).
                 authority(authority).
@@ -126,6 +135,8 @@ public class UsernamePasswordIT {
                 scopes,
                 labResponse.getUser().getUpn(),
                 password.toString()).get();
+
+        return result;
     }
 
 }

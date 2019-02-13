@@ -49,9 +49,9 @@ public class SeleniumExtensions {
         ChromeOptions options = new ChromeOptions();
 
         //no visual rendering, remove when debugging
-        options.addArguments("headless");
+        options.addArguments("--headless");
 
-        ChromeDriver driver = new ChromeDriver(new ChromeOptions());
+        ChromeDriver driver = new ChromeDriver(options);
         driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
 
         return driver;
@@ -89,8 +89,10 @@ public class SeleniumExtensions {
         }
 
         LOG.info("Loggin in ... Entering password");
-        waitForElementToBeVisibleAndEnable(driver, new By.ById(fields.getPasswordInputId())).
-                sendKeys(user.getPassword());
+
+        By by = new By.ById(fields.getPasswordInputId());
+        String password = user.getPassword();
+        waitForElementToBeVisibleAndEnable(driver, by).sendKeys(user.getPassword());
 
         LOG.info("Loggin in ... Entering password");
         waitForElementToBeVisibleAndEnable(driver, new By.ById(fields.getPasswordSigInButtonId())).

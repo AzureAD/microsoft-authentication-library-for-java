@@ -15,6 +15,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.testng.util.Strings;
 
+import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 
 @Test(groups = "integration-tests")
@@ -24,6 +25,7 @@ public class DeviceCodeIT {
 
     private LabUserProvider labUserProvider;
     private static final String scopes = "User.Read";
+    private static final String authority = "https://login.microsoftonline.com/organizations/";
     private WebDriver seleniumDriver;
 
     @BeforeClass
@@ -33,12 +35,15 @@ public class DeviceCodeIT {
     }
 
     @Test
-    public void DeviceCodeFlowTest() throws InterruptedException, ExecutionException {
+    public void DeviceCodeFlowTest() throws MalformedURLException, InterruptedException,
+            ExecutionException {
         LabResponse labResponse = labUserProvider.getDefaultUser();
+        labUserProvider.getUserPassword(labResponse.getUser());
 
         LOG.info("Calling acquireTokenWithDeviceCodeAsync");
         PublicClientApplication pca = new PublicClientApplication.Builder(
                 labResponse.getAppId()).
+                authority(authority).
                 build();
 
         DeviceCode deviceCode = pca.acquireDeviceCode(scopes).get();
@@ -46,7 +51,7 @@ public class DeviceCodeIT {
         AuthenticationResult result = pca.acquireTokenByDeviceCode(deviceCode).get();
 
         Assert.assertNotNull(result);
-        Assert.assertTrue(Strings.isNullOrEmpty(result.getAccessToken()));
+        Assert.assertTrue(!Strings.isNullOrEmpty(result.getAccessToken()));
     }
 
     private void runAutomatedDeviceCodeFlow(DeviceCode deviceCode, LabUser user){
