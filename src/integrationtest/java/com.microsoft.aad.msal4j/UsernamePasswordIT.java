@@ -134,7 +134,7 @@ public class UsernamePasswordIT {
         AuthenticationResult result = pca.acquireTokenByUsernamePassword(
                 scopes,
                 labResponse.getUser().getUpn(),
-                password.toString()).get();
+                password).get();
 
         return result;
     }

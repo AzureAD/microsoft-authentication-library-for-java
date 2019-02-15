@@ -17,8 +17,6 @@ public class RefreshTokenIT {
     private LabUserProvider labUserProvider;
     private static final String authority = "https://login.microsoftonline.com/organizations/";
     private static final String scopes = "https://graph.windows.net/.default";
-    //TODO What happens when you try to acquire token with RT from wrong scopes
-    private static final String wrongScopes = "";
     private String refreshToken;
     private PublicClientApplication pca;
 
@@ -51,11 +49,13 @@ public class RefreshTokenIT {
         Assert.assertNotNull(result.getIdToken());
     }
 
-    @Test(expectedExceptions = AuthenticationException.class)
-    public void acquireTokenWithRefreshToken_WrongScopes() throws Exception {
-        AuthenticationResult result = pca.acquireTokenByRefreshToken(
-                refreshToken,
-                wrongScopes).get();
-
-    }
+//    @Test
+//    public void acquireTokenWithRefreshToken_WrongScopes() throws Exception {
+//
+//        String wrongScopes = "https://graph.windows.net/customer.write";
+//
+//        AuthenticationResult result = pca.acquireTokenByRefreshToken(
+//                refreshToken,
+//                wrongScopes).get();
+//    }
 }

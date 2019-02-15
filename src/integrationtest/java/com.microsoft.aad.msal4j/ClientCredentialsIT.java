@@ -1,40 +1,36 @@
 package com.microsoft.aad.msal4j;
 
-import lapapi.FederationProvider;
 import lapapi.LabResponse;
 import lapapi.LabUserProvider;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.net.MalformedURLException;
-import java.util.concurrent.ExecutionException;
-
-@Test(groups="integration-tests")
-public class IntegratedAuthenticationIT {
+@Test(groups = "integration-tests")
+public class ClientCredentialsIT {
 
     private LabUserProvider labUserProvider;
     private static final String authority = "https://login.microsoftonline.com/organizations/";
     private static final String scopes = "https://graph.windows.net/.default";
 
     @BeforeClass
-    public void setUp() {
+    private void setup(){
         labUserProvider = new LabUserProvider();
     }
 
     @Test
-    public void acquireTokenWithIntegratedWindowsAuthentication() throws MalformedURLException,
-            InterruptedException, ExecutionException {
-
-        LabResponse labResponse = labUserProvider.getAdfsUser(FederationProvider.ADFSV3,true);
+    public void acquireTokenClientCredentials_ClientSecret() throws Exception{
+        LabResponse labResponse = labUserProvider.getDefaultUser();
         String password = labUserProvider.getUserPassword(labResponse.getUser());
-        PublicClientApplication pca = new PublicClientApplication.Builder(
-                labResponse.getAppId()).
-                authority(authority).
+        IClientCredential clientCredential = ClientCredentialFactory.create(password);
+
+
+        ConfidentialClientApplication cca = new ConfidentialClientApplication.Builder(
+                labResponse.getAppId(),
+                clientCredential).authority(authority).
                 build();
-        AuthenticationResult result = pca.acquireTokenByKerberosAuth(
-                scopes,
-                labResponse.getUser().getUpn()).get();
+
+        AuthenticationResult result = cca.acquireTokenForClient(scopes).get();
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.getAccessToken());
@@ -42,6 +38,17 @@ public class IntegratedAuthenticationIT {
         Assert.assertNotNull(result.getIdToken());
         // TODO AuthenticationResult should have an getAccountInfo API
         // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+
+    }
+
+    @Test
+    public void acquireTokenClientCredentials_AsymetricKeyCredential(){
+
+    }
+
+    @Test
+    public void acquireTokenClientCredentials_ClientAssertion(){
+
     }
 
 }
