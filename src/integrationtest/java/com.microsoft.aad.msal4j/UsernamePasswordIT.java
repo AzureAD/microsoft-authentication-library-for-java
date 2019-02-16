@@ -35,7 +35,7 @@ public class UsernamePasswordIT {
 
     private LabUserProvider labUserProvider;
     private static final String authority = "https://login.microsoftonline.com/organizations/";
-    private static final String scopes = "https://graph.windows.net/.default";
+    private static final String scopes = "User.Read";
 
     @BeforeClass
     public void setUp() {
@@ -105,26 +105,6 @@ public class UsernamePasswordIT {
         // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
     }
 
-    @Test(expectedExceptions = AuthenticationException.class)
-    public void AcquireTokenWithManagedUsernameIncorrectPassword() throws Exception{
-        LabResponse labResponse = labUserProvider.getDefaultUser();
-        String password = labUserProvider.getUserPassword(labResponse.getUser());
-        password = password + "xxx";
-
-        acquireTokenCommon(labResponse, password);
-    }
-
-    @Test(expectedExceptions = AuthenticationException.class)
-    public void acquireTokenWithFederatedUsernameIncorrectPassword() throws Exception{
-        LabResponse labResponse = labUserProvider.getAdfsUser(
-                FederationProvider.ADFSV4,
-                true);
-        String password = labUserProvider.getUserPassword(labResponse.getUser());
-        password = password + "xxx";
-
-        acquireTokenCommon(labResponse, password);
-    }
-
     public AuthenticationResult acquireTokenCommon(LabResponse labResponse, String password)
             throws Exception{
         PublicClientApplication pca = new PublicClientApplication.Builder(
@@ -135,7 +115,6 @@ public class UsernamePasswordIT {
                 scopes,
                 labResponse.getUser().getUpn(),
                 password).get();
-
         return result;
     }
 

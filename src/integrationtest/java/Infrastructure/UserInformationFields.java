@@ -28,34 +28,34 @@ import lapapi.LabUser;
 import lapapi.UserType;
 import org.testng.util.Strings;
 
-public class UserInformationFields {
+class UserInformationFields {
     private final LabUser labUser;
     private String passwordInputId;
     private String passwordSigInButtonId;
 
-    public UserInformationFields(LabUser labUser){
+    UserInformationFields(LabUser labUser){
         this.labUser = labUser;
     }
 
-    public String getPasswordInputId() {
+    String getPasswordInputId() {
         if(Strings.isNullOrEmpty(passwordInputId)){
             determineFieldIds();
         }
         return passwordInputId;
     }
 
-    public String getPasswordSigInButtonId() {
+    String getPasswordSigInButtonId() {
         if(Strings.isNullOrEmpty(passwordSigInButtonId)){
             determineFieldIds();
         }
         return passwordSigInButtonId;
     }
 
-    public String getAadSignInButtonId() {
+    String getAadSignInButtonId() {
         return UiTestConstants.WEBSUBMITID;
     }
 
-    public String getAadUserNameInputId() {
+    String getAadUserNameInputId() {
         return UiTestConstants.WEBUPNINPUTID;
     }
 
@@ -68,6 +68,7 @@ public class UserInformationFields {
             }
             passwordInputId = UiTestConstants.ADFSV4WEBPASSWORDID;
             passwordSigInButtonId = UiTestConstants.ADFSV4WEBSUBMITID;
+            return;
         }
         if(labUser.getUserType() == UserType.B2C){
             determineFieldIds();

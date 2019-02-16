@@ -24,7 +24,6 @@ public class ClientCredentialsIT {
         String password = labUserProvider.getUserPassword(labResponse.getUser());
         IClientCredential clientCredential = ClientCredentialFactory.create(password);
 
-
         ConfidentialClientApplication cca = new ConfidentialClientApplication.Builder(
                 labResponse.getAppId(),
                 clientCredential).authority(authority).

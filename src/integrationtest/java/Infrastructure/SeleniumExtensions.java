@@ -49,7 +49,7 @@ public class SeleniumExtensions {
         ChromeOptions options = new ChromeOptions();
 
         //no visual rendering, remove when debugging
-        //options.addArguments("--headless");
+        options.addArguments("--headless");
 
         ChromeDriver driver = new ChromeDriver(options);
         driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
@@ -82,7 +82,7 @@ public class SeleniumExtensions {
         LOG.info("Loggin in ... Clicking <Next> after username");
         driver.findElement(new By.ById(fields.getAadSignInButtonId())).click();
 
-        if (user.getFederationProvider() == FederationProvider.ADFSV2){
+        if (user.getFederationProvider() == FederationProvider.ADFSV2 && user.isFederated()){
             LOG.info("Loggin in ... ADFS-V2 - Entering the username in ADFSv2 form");
             driver.findElement(new By.ById(UiTestConstants.ADFSV2WEBUSERNAMEINPUTID)).
                     sendKeys(user.getUpn());

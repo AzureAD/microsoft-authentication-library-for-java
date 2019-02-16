@@ -56,12 +56,14 @@ public class DeviceCodeIT {
 
     private void runAutomatedDeviceCodeFlow(DeviceCode deviceCode, LabUser user){
         try{
-            seleniumDriver.navigate().to(deviceCode.getVerificationUrl());
-            seleniumDriver.findElement(new By.ById("code")).sendKeys(deviceCode.getUserCode());
 
+            LOG.info("Loggin in ... Entering device code");
+            seleniumDriver.navigate().to(deviceCode.getVerificationUrl());
+            seleniumDriver.findElement(new By.ById("otc")).sendKeys(deviceCode.getUserCode());
+            LOG.info("Loggin in ... click continue");
            WebElement continueBtn = SeleniumExtensions.waitForElementToBeVisibleAndEnable(
                    seleniumDriver,
-                   new By.ById("continueBtn")
+                   new By.ById("idSIButton9")
            );
             continueBtn.click();
 

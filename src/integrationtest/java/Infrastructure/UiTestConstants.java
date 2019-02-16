@@ -38,9 +38,6 @@ public class UiTestConstants {
     public final static String ACQUIRETOKENSILENTBUTTONID = "acquireTokenSilent_button";
     public final static String CLIENTIDENTRYID = "clientIdEntry";
     public final static String RESOURCEENTRYID = "resourceEntry";
-    public final static String PROMPTBEHAVIORENTRYID = "promptBehaviorEntry";
-    public final static String PROMPTBEHAVIORAUTO = "auto";
-    public final static String PROMPTBEHAVIORALWAYS = "always";
     public final static String SECONDPAGEID = "secondPage";
     public final static String CLEARCACHEID = "clearCache";
     public final static String SAVEID = "saveButton";
