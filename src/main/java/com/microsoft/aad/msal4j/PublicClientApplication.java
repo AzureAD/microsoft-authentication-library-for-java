@@ -30,10 +30,9 @@ import com.nimbusds.oauth2.sdk.id.ClientID;
 import org.slf4j.LoggerFactory;
 
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.Future;
-import java.util.function.Supplier;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 public class PublicClientApplication extends ClientApplicationBase {
 
@@ -76,7 +75,7 @@ public class PublicClientApplication extends ClientApplicationBase {
     }
 
     /**
-     * Acquires a security token using integrated authentication flow.
+     * Acquires a security token using Windows integrated authentication flow.
      *
      * @param scopes scopes of the access request
      * @param username
@@ -85,7 +84,7 @@ public class PublicClientApplication extends ClientApplicationBase {
      *         {@link AuthenticationResult} of the call. It contains Access
      *         Token, Refresh Token and the Access Token's expiration time.
      */
-    public CompletableFuture<AuthenticationResult> acquireTokenByKerberosAuth(Set<String> scopes, String username) {
+    public CompletableFuture<AuthenticationResult> acquireTokenByWindowsIntegratedAuth(Set<String> scopes, String username) {
         validateNotEmpty("scopes", scopes);
         validateNotBlank("username", username);
 
@@ -94,38 +93,42 @@ public class PublicClientApplication extends ClientApplicationBase {
     }
 
     /**
-     * Acquires a device code from the authority
+     * Acquires security token from the authority using an device code flow.
+     *
+     * Flow is designed for devices that do not have access to a browser or have input constraints.
+     * The authorization server issues DeviceCode object with verification code, an end-user code
+     * and the end-user verification URI. DeviceCode is provided through deviceCodeConsumer callback.
+     * End-user should be instructed to use another device to connect to the authorization server to approve the access request.
+     *
+     * Since the client cannot receive incoming requests, it polls the authorization server repeatedly
+     * until the end-user completes the approval process.
      *
      * @param scopes scopes of the access request
-     * @return A {@link Future} object representing the {@link DeviceCode} of the call.
-     * It contains device code, user code, its expiration date,
-     * message which should be displayed to the user.
-     * @throws AuthenticationException thrown if the device code is not acquired successfully
+     * @param deviceCodeConsumer
+     * @return A {@link CompletableFuture} object representing the {@link AuthenticationResult} of the call.
+     * It contains AccessToken, Refresh Token and the Access Token's expiration time.
+     * @throws AuthenticationException thrown if authorization is pending or another error occurred.
+     *                                 If the errorCode of the exception is AdalErrorCode.AUTHORIZATION_PENDING,
+     *                                 the call needs to be retried until the AccessToken is returned.
+     *                                 DeviceCode.interval - The minimum amount of time in seconds that the client
+     *                                 SHOULD wait between polling requests to the token endpoint
      */
-    public CompletableFuture<DeviceCode> acquireDeviceCode(Set<String> scopes) {
+    public CompletableFuture<AuthenticationResult> acquireTokenDeviceCodeFlow(Set<String> scopes,
+                                                                              Consumer<DeviceCode> deviceCodeConsumer)
+    {
         validateDeviceCodeRequestInput(scopes);
 
-        Supplier<DeviceCode> supplier = () ->
-        {
-            AcquireDeviceCodeCallable callable =
-                    new AcquireDeviceCodeCallable(this, clientId, scopes);
+        AtomicReference<CompletableFuture<AuthenticationResult>> futureReference = new AtomicReference<>();
 
-            DeviceCode result;
-            try {
-                result = callable.execute();
-                callable.logResult(result, callable.headers);
-            } catch (Exception ex) {
-                log.error(LogHelper.createMessage("Execution of " + this.getClass() + " failed.",
-                        callable.headers.getHeaderCorrelationIdValue()), ex);
+        AcquireTokenDeviceCodeFlowSupplier supplier =
+                new AcquireTokenDeviceCodeFlowSupplier
+                        (this, clientAuthentication, scopes, deviceCodeConsumer, futureReference);
 
-                throw new CompletionException(ex);
-            }
-            return result;
-        };
-
-        CompletableFuture<DeviceCode> future =
+        CompletableFuture<AuthenticationResult> future =
                 executorService != null ? CompletableFuture.supplyAsync(supplier, executorService)
                         : CompletableFuture.supplyAsync(supplier);
+        futureReference.set(future);
+
         return future;
     }
 
@@ -136,30 +139,6 @@ public class PublicClientApplication extends ClientApplicationBase {
             throw new IllegalArgumentException(
                     "Invalid authority type. Device Flow is not supported by ADFS authority");
         }
-    }
-
-    /**
-     * Acquires security token from the authority using an device code previously received.
-     *
-     * @param deviceCode The device code result received from calling acquireDeviceCode.
-     * @return A {@link CompletableFuture} object representing the {@link AuthenticationResult} of the call.
-     * It contains AccessToken, Refresh Token and the Access Token's expiration time.
-     * @throws AuthenticationException thrown if authorization is pending or another error occurred.
-     *                                 If the errorCode of the exception is AdalErrorCode.AUTHORIZATION_PENDING,
-     *                                 the call needs to be retried until the AccessToken is returned.
-     *                                 DeviceCode.interval - The minimum amount of time in seconds that the client
-     *                                 SHOULD wait between polling requests to the token endpoint
-     */
-    public CompletableFuture<AuthenticationResult> acquireTokenByDeviceCode(DeviceCode deviceCode)
-            throws AuthenticationException {
-
-        validateNotNull("deviceCode", deviceCode);
-        validateNotBlank("deviceCode.getScopes()", deviceCode.getScopes());
-
-        final MsalDeviceCodeAuthorizationGrant deviceCodeGrant =
-                new MsalDeviceCodeAuthorizationGrant(deviceCode, deviceCode.getScopes());
-
-        return this.acquireToken(deviceCodeGrant, clientAuthentication);
     }
 
     public static class Builder extends ClientApplicationBase.Builder<Builder>{

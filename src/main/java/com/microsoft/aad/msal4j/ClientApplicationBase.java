@@ -37,11 +37,7 @@ import java.net.URI;
 import java.net.URL;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.function.Supplier;
+import java.util.concurrent.*;
 
 /**
  * Abstract class containing common API methods and properties.
@@ -121,29 +117,14 @@ abstract public class ClientApplicationBase {
             final AbstractMsalAuthorizationGrant authGrant,
             final ClientAuthentication clientAuth) {
 
-        Supplier<AuthenticationResult> supplier = () ->
-        {
-            AcquireTokenCallable callable =
-                    new AcquireTokenCallable(this, authGrant, clientAuth);
-
-            AuthenticationResult result;
-            try {
-                result = callable.execute();
-                callable.logResult(result, callable.headers);
-            } catch (Exception ex) {
-                log.error(LogHelper.createMessage("Execution of " + this.getClass() + " failed.",
-                        callable.headers.getHeaderCorrelationIdValue()), ex);
-
-                throw new CompletionException(ex);
-            }
-            return result;
-        };
+        AcquireTokenSupplier supplier = new AcquireTokenSupplier(this, authGrant, clientAuth);
 
         CompletableFuture<AuthenticationResult> future =
                 executorService != null ? CompletableFuture.supplyAsync(supplier, executorService)
                                 : CompletableFuture.supplyAsync(supplier);
         return future;
     }
+
 
     protected static void validateNotBlank(String name, String value) {
         if (StringHelper.isBlank(value)) {

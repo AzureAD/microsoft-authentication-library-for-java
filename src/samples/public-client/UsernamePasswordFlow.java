@@ -27,7 +27,7 @@ import com.microsoft.aad.msal4j.PublicClientApplication;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
-public class UsernamePasswordFlowAsync {
+public class UsernamePasswordFlow {
 
     public static void main(String args[]) throws Exception {
         getAccessTokenFromUserCredentials();
@@ -54,6 +54,6 @@ public class UsernamePasswordFlowAsync {
             return res;
         });
 
-        Thread.sleep(3000);
+        future.join();
     }
 }
