@@ -125,7 +125,6 @@ abstract public class ClientApplicationBase {
         return future;
     }
 
-
     protected static void validateNotBlank(String name, String value) {
         if (StringHelper.isBlank(value)) {
             throw new IllegalArgumentException(name + " is null or empty");
