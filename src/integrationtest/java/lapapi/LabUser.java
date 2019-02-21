@@ -33,8 +33,6 @@ import java.util.UUID;
 
 public class LabUser {
 
-    public LabUser(){}
-
     @SerializedName("objectId")
     private UUID ObjectId;
 
@@ -227,5 +225,4 @@ public class LabUser {
         homeUser.upn = homeUpn;
         homeUser.b2CIdentityProvider = b2CIdentityProvider;
     }
-
 }

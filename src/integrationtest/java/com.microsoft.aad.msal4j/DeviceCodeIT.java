@@ -18,14 +18,12 @@ import org.testng.util.Strings;
 import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 
-@Test(groups = "integration-tests")
+@Test
 public class DeviceCodeIT {
 
     private final static Logger LOG = LoggerFactory.getLogger(DeviceCodeIT.class);
 
     private LabUserProvider labUserProvider;
-    private static final String scopes = "User.Read";
-    private static final String authority = "https://login.microsoftonline.com/organizations/";
     private WebDriver seleniumDriver;
 
     @BeforeClass
@@ -40,13 +38,12 @@ public class DeviceCodeIT {
         LabResponse labResponse = labUserProvider.getDefaultUser();
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        LOG.info("Calling acquireTokenWithDeviceCodeAsync");
         PublicClientApplication pca = new PublicClientApplication.Builder(
                 labResponse.getAppId()).
-                authority(authority).
+                authority(TestConstants.AUTHORITY_ORGANIZATIONS).
                 build();
 
-        DeviceCode deviceCode = pca.acquireDeviceCode(scopes).get();
+        DeviceCode deviceCode = pca.acquireDeviceCode(TestConstants.GRAPH_DEFAULT_SCOPE).get();
         runAutomatedDeviceCodeFlow(deviceCode, labResponse.getUser());
         AuthenticationResult result = pca.acquireTokenByDeviceCode(deviceCode).get();
 
@@ -61,16 +58,15 @@ public class DeviceCodeIT {
             seleniumDriver.navigate().to(deviceCode.getVerificationUrl());
             seleniumDriver.findElement(new By.ById("otc")).sendKeys(deviceCode.getUserCode());
             LOG.info("Loggin in ... click continue");
-           WebElement continueBtn = SeleniumExtensions.waitForElementToBeVisibleAndEnable(
+            WebElement continueBtn = SeleniumExtensions.waitForElementToBeVisibleAndEnable(
                    seleniumDriver,
-                   new By.ById("idSIButton9")
-           );
+                   new By.ById("idSIButton9"));
             continueBtn.click();
 
             SeleniumExtensions.performLogin(seleniumDriver, user);
         } catch(Exception e){
             LOG.error("Browser automation failed: " + e.getMessage());
-            throw e;
+            throw new RuntimeException("Browser automation failed: " + e.getMessage());
         }
     }
 

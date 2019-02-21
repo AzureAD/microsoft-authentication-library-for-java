@@ -27,8 +27,6 @@
 
 package lapapi;
 
-import com.sun.javaws.exceptions.InvalidArgumentException;
-
 public class LabUserNotFoundException extends IllegalArgumentException {
 
     private UserQuery parameters;

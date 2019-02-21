@@ -27,7 +27,7 @@
 
 package Infrastructure;
 
-public class UiTestConstants {
+public class SeleniumConstants {
     // Resources
     public final static String MSGRAPH = "https://graph.microsoft.com";
     public final static String EXCHANGE = "https://outlook.office365.com/";

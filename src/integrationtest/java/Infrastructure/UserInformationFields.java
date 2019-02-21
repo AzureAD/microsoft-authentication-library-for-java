@@ -52,46 +52,46 @@ class UserInformationFields {
     }
 
     String getAadSignInButtonId() {
-        return UiTestConstants.WEBSUBMITID;
+        return SeleniumConstants.WEBSUBMITID;
     }
 
     String getAadUserNameInputId() {
-        return UiTestConstants.WEBUPNINPUTID;
+        return SeleniumConstants.WEBUPNINPUTID;
     }
 
     private void determineFieldIds(){
         if(labUser.isFederated()){
             if(labUser.getFederationProvider() == FederationProvider.ADFSV2){
-                passwordInputId = UiTestConstants.ADFSV2WEBPASSWORDINPUTID;
-                passwordSigInButtonId = UiTestConstants.ADFSV2WEBSUBMITBUTTONID;
+                passwordInputId = SeleniumConstants.ADFSV2WEBPASSWORDINPUTID;
+                passwordSigInButtonId = SeleniumConstants.ADFSV2WEBSUBMITBUTTONID;
                 return;
             }
-            passwordInputId = UiTestConstants.ADFSV4WEBPASSWORDID;
-            passwordSigInButtonId = UiTestConstants.ADFSV4WEBSUBMITID;
+            passwordInputId = SeleniumConstants.ADFSV4WEBPASSWORDID;
+            passwordSigInButtonId = SeleniumConstants.ADFSV4WEBSUBMITID;
             return;
         }
         if(labUser.getUserType() == UserType.B2C){
             determineFieldIds();
             return;
         }
-        passwordInputId = UiTestConstants.WEBPASSWORDID;
-        passwordSigInButtonId = UiTestConstants.WEBSUBMITID;
+        passwordInputId = SeleniumConstants.WEBPASSWORDID;
+        passwordSigInButtonId = SeleniumConstants.WEBSUBMITID;
     }
 
 
     private void determinB2cFieldIds(){
         switch(labUser.getB2CIdentityProvider()){
             case LOCAL:
-                passwordSigInButtonId = UiTestConstants.B2CWEBPASSWORDID;
-                passwordInputId = UiTestConstants.B2CWEBSUBMITID;
+                passwordSigInButtonId = SeleniumConstants.B2CWEBPASSWORDID;
+                passwordInputId = SeleniumConstants.B2CWEBSUBMITID;
                 break;
             case FACEBOOK:
-                passwordSigInButtonId = UiTestConstants.B2CWEBPASSWORDFACEBOOKID;
-                passwordInputId = UiTestConstants.B2CFACEBOOKSUBMITID;
+                passwordSigInButtonId = SeleniumConstants.B2CWEBPASSWORDFACEBOOKID;
+                passwordInputId = SeleniumConstants.B2CFACEBOOKSUBMITID;
                 break;
             case GOOGLE:
-                passwordSigInButtonId = UiTestConstants.B2CWEBPASSWORDGOOGLEID;
-                passwordInputId = UiTestConstants.B2CGOOGLESIGNINID;
+                passwordSigInButtonId = SeleniumConstants.B2CWEBPASSWORDGOOGLEID;
+                passwordInputId = SeleniumConstants.B2CGOOGLESIGNINID;
                 break;
         }
     }

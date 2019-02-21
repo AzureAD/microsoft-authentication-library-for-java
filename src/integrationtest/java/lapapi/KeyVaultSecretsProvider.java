@@ -27,104 +27,77 @@
 
 package lapapi;
 
-import com.microsoft.aad.adal4j.AsymmetricKeyCredential;
-import com.microsoft.aad.adal4j.AuthenticationContext;
-import com.microsoft.aad.adal4j.AuthenticationResult;
+import com.microsoft.aad.msal4j.AuthenticationResult;
+import com.microsoft.aad.msal4j.ClientCredentialFactory;
+import com.microsoft.aad.msal4j.ConfidentialClientApplication;
+import com.microsoft.aad.msal4j.IClientCredential;
+import com.microsoft.aad.msal4j.TestConstants;
 import com.microsoft.azure.keyvault.KeyVaultClient;
 import com.microsoft.azure.keyvault.authentication.KeyVaultCredentials;
+import sun.plugin.dom.exception.InvalidStateException;
 
-import javax.naming.ServiceUnavailableException;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 class KeyVaultSecretsProvider {
 
     private KeyVaultClient keyVaultClient;
     private final static String CLIENT_ID = "55e7e5af-ca53-482d-9aa3-5cb1cc8eecb5";
-    private final static String RESOURCE = "https://vault.azure.net";
     private final static String CERTIFICATE_ALIAS = "JavaAutomationRunner";
     private final static String KEYSTORE_TYPE = "Windows-MY";
     private final static String KEYSTORE_PROVIDER = "SunMSCAPI";
-    private final static String AUTHORITY = "https://login.microsoftonline.com/microsoft.onmicrosoft.com";
 
     KeyVaultSecretsProvider(){
         keyVaultClient = getAuthenticatedKeyVaultClient();
     }
 
-    String getLabUserPassword(String secretUrl){
+    String getSecret(String secretUrl){
         return keyVaultClient.getSecret(secretUrl).value();
     }
 
     private KeyVaultClient getAuthenticatedKeyVaultClient() {
-
-        return new KeyVaultClient(new KeyVaultCredentials() {
-
+        return new KeyVaultClient(
+                new KeyVaultCredentials() {
             @Override
             public String doAuthenticate(String authorization, String resource, String scope) {
-                String accessToken;
-                try {
-                    accessToken = requestAccessTokenForAutomation();
-                } catch (Exception e){
-                    throw new RuntimeException("Error getting access token for KeyVault: " +
-                            e.getMessage());
-                }
-                return accessToken;
+                return requestAccessTokenForAutomation();
             }
         });
     }
 
-    private String requestAccessTokenForAutomation()throws ServiceUnavailableException {
-        ExecutorService service = null;
-        AuthenticationContext context;
+    private String requestAccessTokenForAutomation() {
         AuthenticationResult result;
-
         try{
-            service = Executors.newFixedThreadPool(1);
-            context = new AuthenticationContext(AUTHORITY, false, service);
-            AsymmetricKeyCredential credential = getClientCredentialFromKeyStore();
+            ConfidentialClientApplication cca = new ConfidentialClientApplication.Builder(
+                    CLIENT_ID, getClientCredentialFromKeyStore()).
+                    authority(TestConstants.AUTHORITY_MICROSOFT).
+                    build();
+             result = cca.acquireTokenForClient(TestConstants.KEYVAULT_DEFAULT_SCOPE).get();
 
-            Future<com.microsoft.aad.adal4j.AuthenticationResult> future =
-                    context.acquireToken(RESOURCE, credential, null );
-            result = future.get();
         } catch(Exception e){
             throw new RuntimeException("Error acquiring token from Azure AD: " + e.getMessage());
-        } finally {
-            service.shutdown();
         }
-
         if(result != null){
             return result.getAccessToken();
         } else {
-            throw new ServiceUnavailableException("Authentication result is null");
+            throw new InvalidStateException("Authentication result is null");
         }
     }
 
-    private AsymmetricKeyCredential getClientCredentialFromKeyStore() throws
-            NoSuchProviderException, KeyStoreException, IOException, NoSuchAlgorithmException,
-            CertificateException, UnrecoverableKeyException{
-        KeyStore keystore = KeyStore.getInstance(KEYSTORE_TYPE, KEYSTORE_PROVIDER);
-        keystore.load(null, null);
+    private IClientCredential getClientCredentialFromKeyStore() {
+        PrivateKey key;
+        X509Certificate publicCertificate;
+        try {
+            KeyStore keystore = KeyStore.getInstance(KEYSTORE_TYPE, KEYSTORE_PROVIDER);
+            keystore.load(null, null);
 
-        PrivateKey key = (PrivateKey)keystore.getKey(CERTIFICATE_ALIAS, null);
-        X509Certificate publicCertificate = (X509Certificate)keystore.getCertificate(
-                CERTIFICATE_ALIAS);
-
-        return AsymmetricKeyCredential.create(
-                CLIENT_ID,
-                key,
-                publicCertificate);
-    }
+            key = (PrivateKey) keystore.getKey(CERTIFICATE_ALIAS, null);
+            publicCertificate = (X509Certificate) keystore.getCertificate(
+                    CERTIFICATE_ALIAS);
+        } catch (Exception e){
+            throw new RuntimeException("Error getting certificate from keystore: " + e.getMessage());
+        }
+        return ClientCredentialFactory.create(key, publicCertificate);
+   }
 }

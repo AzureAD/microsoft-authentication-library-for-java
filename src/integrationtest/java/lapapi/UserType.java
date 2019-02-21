@@ -27,9 +27,14 @@
 
 package lapapi;
 
+import com.google.gson.annotations.SerializedName;
+
 public enum UserType {
+    @SerializedName("member")
     MEMBER(0),
+    @SerializedName("guest")
     GUEST(1),
+    @SerializedName("b2c")
     B2C(2);
 
     private int labId;

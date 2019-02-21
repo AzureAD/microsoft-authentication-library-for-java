@@ -30,12 +30,10 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-@Test(groups = "integration-tests")
+@Test()
 public class UsernamePasswordIT {
 
     private LabUserProvider labUserProvider;
-    private static final String authority = "https://login.microsoftonline.com/organizations/";
-    private static final String scopes = "User.Read";
 
     @BeforeClass
     public void setUp() {
@@ -109,10 +107,10 @@ public class UsernamePasswordIT {
             throws Exception{
         PublicClientApplication pca = new PublicClientApplication.Builder(
                 labResponse.getAppId()).
-                authority(authority).
+                authority(TestConstants.AUTHORITY_ORGANIZATIONS).
                 build();
         AuthenticationResult result = pca.acquireTokenByUsernamePassword(
-                scopes,
+                TestConstants.GRAPH_DEFAULT_SCOPE,
                 labResponse.getUser().getUpn(),
                 password).get();
         return result;

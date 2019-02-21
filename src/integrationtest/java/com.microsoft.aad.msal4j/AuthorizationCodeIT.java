@@ -24,13 +24,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Test
 public class AuthorizationCodeIT {
 
     private final static Logger LOG = LoggerFactory.getLogger(AuthorizationCodeIT.class);
 
     private LabUserProvider labUserProvider;
-    private static final String authority = "https://login.microsoftonline.com/organizations/";
-    private static final String scopes = "https://graph.windows.net/.default";
     private WebDriver seleniumDriver;
     private TcpListener tcpListener;
     private BlockingQueue<String> queue;
@@ -180,32 +179,38 @@ public class AuthorizationCodeIT {
         try {
             PublicClientApplication pca = new PublicClientApplication.Builder(
                     labResponse.getAppId()).
-                    authority(authority).
+                    authority(TestConstants.AUTHORITY_ORGANIZATIONS).
                     build();
             result = pca.acquireTokenByAuthorizationCode(
-                    scopes,
+                    TestConstants.GRAPH_DEFAULT_SCOPE,
                     authCode,
-                    new URI("http://localhost:" + tcpListener.getPort())).get();
+                    new URI(TestConstants.LOCALHOST + tcpListener.getPort())).get();
         } catch(Exception e){
-            LOG.error("Error acquiring token with authCode" + e.getMessage());
+            LOG.error("Error acquiring token with authCode: " + e.getMessage());
+            throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
         }
         return result;
     }
 
     private String acquireAuthorizationCodeAutomated(LabResponse labUserData){
         startTcpListener();
+
+        String code;
         try {
             // Wait for TCP listener to be up and running
             TimeUnit.SECONDS.sleep(5);
-        } catch(InterruptedException e){
-            LOG.error(e.getMessage());
+            runSeleniumAutomatedLogin(labUserData);
+            String authServerResponse = getResponseFromTcpListener();
+            code =  parseServerResponse(authServerResponse);
+        } catch(Exception e){
+            LOG.error("Error running automated selenium login: " + e.getMessage());
+            throw new RuntimeException("Error running automated selenium login: " + e.getMessage());
         }
-        runSeleniumAutomatedLogin(labUserData);
-        String authServerResponse = getResponseFromTcpListener();
-        return parseServerResponse(authServerResponse);
+        return code;
     }
 
-    private void runSeleniumAutomatedLogin(LabResponse labUserData){
+    private void runSeleniumAutomatedLogin(LabResponse labUserData) throws
+            UnsupportedEncodingException{
         String url = buildAuthenticationCodeURL(labUserData.getAppId());
         seleniumDriver.navigate().to(url);
         SeleniumExtensions.performLogin(seleniumDriver, labUserData.getUser());
@@ -224,11 +229,12 @@ public class AuthorizationCodeIT {
 
             if (Strings.isNullOrEmpty(response)){
                 LOG.error("Server response is null");
-                throw new RuntimeException("Server response is null");
+                throw new IllegalStateException("Server response is null");
             }
-        } catch(InterruptedException e){
+        } catch(Exception e){
             LOG.error("Error reading from server response queue: " + e.getMessage());
-            throw new RuntimeException();
+            throw new RuntimeException("Error reading from server response queue: " +
+                    e.getMessage());
         }
         return response;
     }
@@ -240,27 +246,23 @@ public class AuthorizationCodeIT {
         Matcher matcher = pattern.matcher(serverResponse);
 
         if(!matcher.find()){
-            LOG.error("No authorization code in server reponse: " + serverResponse);
-            throw new RuntimeException("No authorization code in server response");
+            LOG.error("No authorization code in server response: " + serverResponse);
+            throw new IllegalStateException("No authorization code in server response: " +
+                    serverResponse);
         }
-
         return matcher.group(1);
     }
 
-    private String buildAuthenticationCodeURL(String appId) {
+    private String buildAuthenticationCodeURL(String appId) throws UnsupportedEncodingException{
         String redirectUrl;
         int portNumber = tcpListener.getPort();
-        try {
-            redirectUrl = authority + "oauth2/v2.0/authorize?" +
-                    "response_type=code&" +
-                    "response_mode=query&" +
-                    "&client_id=" + appId +
-                    "&redirect_uri=" + URLEncoder.encode("http://localhost:" + portNumber, "UTF-8") +
-                    "&scope=" + URLEncoder.encode("openid offline_access profile " + scopes, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            LOG.debug(e.getMessage());
-            throw new RuntimeException();
-        }
+        redirectUrl = TestConstants.AUTHORITY_ORGANIZATIONS + "oauth2/v2.0/authorize?" +
+                "response_type=code&" +
+                "response_mode=query&" +
+                "&client_id=" + appId +
+                "&redirect_uri=" + URLEncoder.encode(TestConstants.LOCALHOST + portNumber, "UTF-8") +
+                "&scope=" + URLEncoder.encode("openid offline_access profile " + TestConstants.GRAPH_DEFAULT_SCOPE, "UTF-8");
+
         return redirectUrl;
     }
 

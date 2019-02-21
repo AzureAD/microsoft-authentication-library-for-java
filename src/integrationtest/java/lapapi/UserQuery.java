@@ -137,33 +137,4 @@ public class UserQuery {
     public B2CIdentityProvider getB2CIdentityProvider() {
         return b2CIdentityProvider;
     }
-
-    public static UserQuery defaultUserQuery() {
-        return new Builder().
-                isMamUser(false).
-                isMfaUser(false).
-                isFederatedUser(false).
-                build();
-    }
-
-    public static UserQuery b2cLocalAccountUserQuery(){
-        return new Builder().
-                userType(UserType.B2C).
-                b2CIdentityProvider(B2CIdentityProvider.LOCAL).
-                build();
-    }
-
-    public static UserQuery b2cFacebookUserQuery(){
-        return new Builder().
-                userType(UserType.B2C).
-                b2CIdentityProvider(B2CIdentityProvider.FACEBOOK).
-                build();
-    }
-
-    public static UserQuery b2cGoogleUserQuery(){
-        return new Builder().
-                userType(UserType.B2C).
-                b2CIdentityProvider(B2CIdentityProvider.GOOGLE).
-                build();
-    }
 }

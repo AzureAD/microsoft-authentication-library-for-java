@@ -30,58 +30,25 @@ package lapapi;
 import com.google.gson.Gson;
 import org.testng.util.Strings;
 
-import javax.net.ssl.HttpsURLConnection;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
-class LabServiceApi{
+class LabService {
 
     LabResponse getLabResponse(UserQuery query) throws LabUserNotFoundException{
         String result;
         try {
-            result = sendRequestToLab(query);
+            Map<String, String> queryMap = createLabQuery(query);
+            result = HttpClientHelper.sendRequestToLab(queryMap);
         } catch(Exception ex){
-            throw new UnsupportedOperationException("Error sending request to lab: " + ex.getMessage());
+            throw new RuntimeException("Error sending request to lab: " +
+                    ex.getMessage());
         }
         if(Strings.isNullOrEmpty(result)){
             throw new LabUserNotFoundException(query,
                     "Lab response is null or empty. No lab user with specified parameter exists");
         }
-        Gson gson = new Gson();
-        LabResponse labResponse = gson.fromJson(result, LabResponse.class);
-        LabUser labUser = labResponse.getUser();
-
-        if(labUser.getHomeTenantId() != null && labUser.getHomeUpn() != null){
-            labUser.initializeHomeUser();
-        }
-        return labResponse;
-    }
-    private String sendRequestToLab(UserQuery query) throws LabUserNotFoundException, IOException {
-        Map<String, String> queryMap = createLabQuery(query);
-
-        final URL labUrl = buildUrl(queryMap);
-        HttpsURLConnection conn = (HttpsURLConnection) labUrl.openConnection();
-        conn.setReadTimeout(30000);
-        conn.setConnectTimeout(30000);
-
-        StringBuilder content;
-        try(BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()))){
-            String inputLine;
-            content = new StringBuilder();
-            while((inputLine = in.readLine()) != null){
-                content.append(inputLine);
-            }
-        }
-
-        conn.disconnect();
-        return content.toString();
+        return deserializeLabResponse(result);
     }
 
     private Map<String, String> createLabQuery(UserQuery query) {
@@ -136,24 +103,14 @@ class LabServiceApi{
         return queryMap;
     }
 
-    private URL buildUrl(Map<String, String> queryMap) throws MalformedURLException,
-            UnsupportedOperationException {
-        String queryParameters;
+    private LabResponse deserializeLabResponse(String result){
+        Gson gson = new Gson();
+        LabResponse labResponse = gson.fromJson(result, LabResponse.class);
+        LabUser labUser = labResponse.getUser();
 
-        queryParameters = queryMap.entrySet().stream()
-                .map(p -> encodeUTF8(p.getKey()) + "=" + encodeUTF8(p.getValue()))
-                .reduce((p1, p2) -> p1 + "&" + p2)
-                .orElse("");
-
-        String urlString = LabConstants.LAB_ENDPOINT + "?" + queryParameters;
-        return new URL(urlString);
-    }
-
-    private String encodeUTF8(String s){
-        try {
-            return URLEncoder.encode(s, "UTF-8");
-        } catch(UnsupportedEncodingException e) {
-            throw new IllegalArgumentException("Error: cannot encode query parameter " + s );
+        if(labUser.getHomeTenantId() != null && labUser.getHomeUpn() != null){
+            labUser.initializeHomeUser();
         }
+        return labResponse;
     }
 }

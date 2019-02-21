@@ -12,12 +12,11 @@ import org.testng.annotations.Test;
 import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 
-@Test(groups="integration-tests")
+@Test()
 public class IntegratedAuthenticationIT {
     private final static Logger LOG = LoggerFactory.getLogger(IntegratedAuthenticationIT.class);
 
     private LabUserProvider labUserProvider;
-    private static final String authority = "https://login.microsoftonline.com/organizations/";
     private static final String scopes = "https://graph.windows.net/.default";
 
     @BeforeClass
@@ -80,7 +79,7 @@ public class IntegratedAuthenticationIT {
         try{
             PublicClientApplication pca = new PublicClientApplication.Builder(
                     labResponse.getAppId()).
-                    authority(authority).
+                    authority(TestConstants.AUTHORITY_ORGANIZATIONS).
                     build();
             result = pca.acquireTokenByKerberosAuth(
                     scopes,

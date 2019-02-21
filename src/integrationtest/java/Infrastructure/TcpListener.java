@@ -16,7 +16,6 @@ public class TcpListener {
 
     private final static Logger LOG = LoggerFactory.getLogger(SeleniumExtensions.class);
 
-    private Thread serverThread;
     private BlockingQueue<String> queue;
     private int port;
 
@@ -39,7 +38,8 @@ public class TcpListener {
                 throw new RuntimeException();
             }
         };
-        serverThread = new Thread(serverTask);
+
+        Thread serverThread = new Thread(serverTask);
         serverThread.start();
     }
 

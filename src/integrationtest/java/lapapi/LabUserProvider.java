@@ -28,30 +28,27 @@
 package lapapi;
 
 import org.testng.util.Strings;
-import sun.plugin.dom.exception.InvalidStateException;
-
 import java.util.HashMap;
 import java.util.Map;
 
 public class LabUserProvider {
     private final KeyVaultSecretsProvider keyVaultSecretsProvider;
-    private final LabServiceApi labService;
+    private final LabService labService;
     private Map<UserQuery, LabResponse> userCache;
 
     public LabUserProvider(){
         keyVaultSecretsProvider = new KeyVaultSecretsProvider();
-        labService = new LabServiceApi();
+        labService = new LabService();
         userCache = new HashMap<>();
     }
 
     public LabResponse getDefaultUser() {
-
         UserQuery query =  new UserQuery.Builder().
                 isMamUser(false).
                 isMfaUser(false).
                 isFederatedUser(false).
                 build();
-        return getLabUserData(query);
+        return getLabUser(query);
     }
 
     public LabResponse getAdfsUser(FederationProvider federationProvider, boolean federated){
@@ -61,8 +58,7 @@ public class LabUserProvider {
                 isFederatedUser(federated).
                 federationProvider(federationProvider).
                 build();
-
-        return getLabUserData(query);
+        return getLabUser(query);
     }
 
     public LabResponse getB2cUser(B2CIdentityProvider b2CIdentityProvider) {
@@ -70,7 +66,16 @@ public class LabUserProvider {
                 userType(UserType.B2C).
                 b2CIdentityProvider(b2CIdentityProvider).
                 build();
-        return getLabUserData(query);
+        return getLabUser(query);
+    }
+
+    private LabResponse getLabUser(UserQuery userQuery){
+        if(userCache.containsKey(userQuery)){
+            return userCache.get(userQuery);
+        }
+        LabResponse response = labService.getLabResponse(userQuery);
+        userCache.put(userQuery, response);
+        return response;
     }
 
     public String getUserPassword(LabUser user){
@@ -78,28 +83,14 @@ public class LabUserProvider {
             return user.getPassword();
         }
         if(Strings.isNullOrEmpty(user.getCredentialUrl())){
-            throw new IllegalArgumentException("Test setup: LabUser credential URL cannot be null");
+            throw new IllegalArgumentException("LabUser credential URL cannot be null");
         }
         try{
-            String password = keyVaultSecretsProvider.getLabUserPassword(user.getCredentialUrl());
+            String password = keyVaultSecretsProvider.getSecret(user.getCredentialUrl());
             user.setPassword(password);
             return password;
         } catch (Exception e){
-            throw new InvalidStateException("Test setup: Cannot get the user password: " + e.getMessage());
+            throw new RuntimeException("Error getting LabUser password: " + e.getMessage());
         }
-    }
-
-    private LabResponse getLabUserData(UserQuery userQuery){
-        if(userCache.containsKey(userQuery)){
-            return userCache.get(userQuery);
-        }
-
-        LabResponse user = labService.getLabResponse(userQuery);
-        if(user == null){
-            throw new LabUserNotFoundException(userQuery, "Found no users for the given query");
-        }
-
-        userCache.put(userQuery, user);
-        return user;
     }
 }

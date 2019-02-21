@@ -41,11 +41,11 @@ public class LabConstants {
     public final static String B2C_LOCAL = "local";
     public final static String B2C_FACEBOOK = "facebook";
     public final static String B2C_GOOGLE = "google";
-    public final static String USER_CONTAINS = "usercontains";
-    public final static String APP_NAME = "AppName";
 
     public final static String TRUE = "true";
     public final static String FALSE = "false";
 
     public final static String LAB_ENDPOINT = "https://api.msidlab.com/api/user";
+    public final static String APP_ID_URL = "https://msidlabs.vault.azure.net/secrets/LabVaultAppID/4032a45f48dc424d8edd445a42d25960";
+    public final static String APP_PASSWORD_URL = "https://msidlabs.vault.azure.net/secrets/LabVaultAppSecret/c2be68b1f01d4861819d6afde2ec71e3";
 }
