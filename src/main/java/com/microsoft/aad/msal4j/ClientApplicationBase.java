@@ -35,6 +35,7 @@ import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URI;
 import java.net.URL;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -156,6 +157,12 @@ abstract public class ClientApplicationBase {
         }
     }
 
+    protected static void validateNotEmpty(String name, Set<String> set) {
+        if (set == null || set.isEmpty()) {
+            throw new IllegalArgumentException(name + " is null or empty");
+        }
+    }
+
     /**
      * Acquires security token from the authority using an authorization code
      * previously received.
@@ -169,7 +176,7 @@ abstract public class ClientApplicationBase {
      *         {@link AuthenticationResult} of the call. It contains Access
      *         Token, Refresh Token and the Access Token's expiration time.
      */
-    public CompletableFuture<AuthenticationResult> acquireTokenByAuthorizationCode(String scopes,
+    public CompletableFuture<AuthenticationResult> acquireTokenByAuthorizationCode(Set<String> scopes,
                                                                                    String authorizationCode,
                                                                                    URI redirectUri)
     {
@@ -193,7 +200,7 @@ abstract public class ClientApplicationBase {
      *         {@link AuthenticationResult} of the call. It contains Access
      *         Token, Refresh Token and the Access Token's expiration time.
      */
-    public CompletableFuture<AuthenticationResult> acquireTokenByRefreshToken(String refreshToken, String scopes) {
+    public CompletableFuture<AuthenticationResult> acquireTokenByRefreshToken(String refreshToken, Set<String> scopes) {
         validateNotBlank("refreshToken", refreshToken);
 
         final MsalOAuthAuthorizationGrant authGrant = new MsalOAuthAuthorizationGrant(

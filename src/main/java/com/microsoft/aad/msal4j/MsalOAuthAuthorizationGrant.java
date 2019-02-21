@@ -26,6 +26,7 @@ package com.microsoft.aad.msal4j;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import com.nimbusds.oauth2.sdk.AuthorizationGrant;
 
@@ -43,12 +44,13 @@ class MsalOAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
         params.put(SCOPE_PARAM_NAME, COMMON_SCOPES_PARAM);
     }
 
-    MsalOAuthAuthorizationGrant(final AuthorizationGrant grant, final String scopes) {
+    MsalOAuthAuthorizationGrant(final AuthorizationGrant grant, Set<String> scopes) {
         this();
         this.grant = grant;
 
-        if (!StringHelper.isBlank(scopes)) {
-            params.put(SCOPE_PARAM_NAME, params.get(SCOPE_PARAM_NAME) + SCOPES_DELIMITER + scopes);
+        String scopesStr = scopes != null ? String.join(" ", scopes) : null;
+        if (!StringHelper.isBlank(scopesStr)) {
+            params.put(SCOPE_PARAM_NAME, params.get(SCOPE_PARAM_NAME) + SCOPES_DELIMITER + scopesStr);
         }
     }
 

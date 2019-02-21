@@ -24,6 +24,7 @@
 import com.microsoft.aad.msal4j.AuthenticationResult;
 import com.microsoft.aad.msal4j.PublicClientApplication;
 
+import java.util.Collections;
 import java.util.concurrent.Future;
 
 public class RTFlow {
@@ -43,10 +44,11 @@ public class RTFlow {
                 .build();
 
         Future<AuthenticationResult> future = app.acquireTokenByUsernamePassword
-                (TestData.GRAPH_DEFAULT_SCOPE, TestData.USER_NAME, TestData.USER_PASSWORD);
+                (Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE), TestData.USER_NAME, TestData.USER_PASSWORD);
         AuthenticationResult result = future.get();
 
-        future = app.acquireTokenByRefreshToken(result.getRefreshToken(), TestData.GRAPH_DEFAULT_SCOPE);
+        future = app.acquireTokenByRefreshToken(result.getRefreshToken(),
+                Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE));
         result = future.get();
 
         return result;

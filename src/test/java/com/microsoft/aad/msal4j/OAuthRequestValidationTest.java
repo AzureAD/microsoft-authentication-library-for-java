@@ -40,12 +40,7 @@ import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -162,7 +157,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
         try {
             // Using UserAssertion as Authorization Grants
             Future<AuthenticationResult> future =
-                    app.acquireTokenOnBehalfOf(SCOPES, new UserAssertion(jwt));
+                    app.acquireTokenOnBehalfOf(Collections.singleton(SCOPES), new UserAssertion(jwt));
             future.get();
         }
         catch (ExecutionException ex){
@@ -209,7 +204,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
 
             // Using UserAssertion as Authorization Grants
             Future<AuthenticationResult> future =
-                    app.acquireTokenOnBehalfOf(SCOPES, new UserAssertion(jwt));
+                    app.acquireTokenOnBehalfOf(Collections.singleton(SCOPES), new UserAssertion(jwt));
             future.get();
         }
         catch (ExecutionException ex){
@@ -256,7 +251,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
                             .build();
 
             // Using ClientAssertion for Client Authentication and as the authorization grant
-            Future<AuthenticationResult> future = app.acquireTokenForClient(SCOPES);
+            Future<AuthenticationResult> future = app.acquireTokenForClient(Collections.singleton(SCOPES));
 
             future.get();
         }

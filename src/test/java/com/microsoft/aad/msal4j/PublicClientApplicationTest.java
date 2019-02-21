@@ -32,6 +32,7 @@ import java.net.Proxy;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateEncodingException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -82,7 +83,7 @@ public class PublicClientApplicationTest extends PowerMockTestCase {
 
         PowerMock.replay(app, response, UserDiscoveryRequest.class);
         Future<AuthenticationResult> result =
-                app.acquireTokenByUsernamePassword("scopes", "username", "password");
+                app.acquireTokenByUsernamePassword(Collections.singleton("scopes"), "username", "password");
 
         AuthenticationResult ar = result.get();
         Assert.assertNotNull(ar);
