@@ -8,6 +8,8 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import java.util.concurrent.ExecutionException;
+
 
 @Test()
 public class RefreshTokenIT {
@@ -21,7 +23,7 @@ public class RefreshTokenIT {
     @BeforeTest
     public void setUp() throws Exception {
         labUserProvider = new LabUserProvider();
-        LabResponse labResponse = labUserProvider.getDefaultUser();
+        LabResponse labResponse = labUserProvider.getDefaultUser(false);
         String password = labUserProvider.getUserPassword(labResponse.getUser());
         pca = new PublicClientApplication.Builder(
                 labResponse.getAppId()).
@@ -45,5 +47,13 @@ public class RefreshTokenIT {
         Assert.assertNotNull(result.getAccessToken());
         Assert.assertNotNull(result.getRefreshToken());
         Assert.assertNotNull(result.getIdToken());
+    }
+
+    // todo Update test once we start bubbling up exceptions
+    @Test(expectedExceptions = ExecutionException.class)
+    public void acquireTokenWithRefreshToken_WrongScopes() throws Exception{
+        AuthenticationResult result = pca.acquireTokenByRefreshToken(
+                refreshToken,
+                TestConstants.KEYVAULT_DEFAULT_SCOPE).get();
     }
 }

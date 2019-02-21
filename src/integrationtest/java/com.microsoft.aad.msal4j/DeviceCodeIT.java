@@ -35,7 +35,7 @@ public class DeviceCodeIT {
     @Test
     public void DeviceCodeFlowTest() throws MalformedURLException, InterruptedException,
             ExecutionException {
-        LabResponse labResponse = labUserProvider.getDefaultUser();
+        LabResponse labResponse = labUserProvider.getDefaultUser(false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
         PublicClientApplication pca = new PublicClientApplication.Builder(

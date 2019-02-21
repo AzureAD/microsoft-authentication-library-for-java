@@ -35,6 +35,7 @@ public class UserQuery {
     private final boolean isMfaUser;
     private final boolean isFederatedUser;
     private final boolean isExternalUser;
+    private final boolean useBetaEndpoint;
     private final Set<String> licenses;
     private final UserType userType;
     private final FederationProvider federationProvider;
@@ -45,6 +46,7 @@ public class UserQuery {
         private boolean isMfaUser = false;
         private boolean isFederatedUser = false;
         private boolean isExternalUser = false;
+        private boolean useBetaEndpoint = false;
         private Set<String> licenses;
         private UserType userType;
         private FederationProvider federationProvider;
@@ -67,6 +69,10 @@ public class UserQuery {
 
         public Builder isExternalUser(boolean val){
             isExternalUser = val;
+            return this;
+        }
+        public Builder useBetaEnpoint(boolean val){
+            useBetaEndpoint = val;
             return this;
         }
 
@@ -100,6 +106,7 @@ public class UserQuery {
         this.isMfaUser = builder.isMfaUser;
         this.isFederatedUser = builder.isFederatedUser;
         this.isExternalUser = builder.isExternalUser;
+        this.useBetaEndpoint = builder.useBetaEndpoint;
         this.licenses = builder.licenses;
         this.userType = builder.userType;
         this.federationProvider = builder.federationProvider;
@@ -136,5 +143,9 @@ public class UserQuery {
 
     public B2CIdentityProvider getB2CIdentityProvider() {
         return b2CIdentityProvider;
+    }
+
+    public boolean useBetaEndpoint(){
+        return useBetaEndpoint;
     }
 }

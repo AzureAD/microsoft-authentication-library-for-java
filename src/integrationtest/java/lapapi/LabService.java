@@ -39,7 +39,7 @@ class LabService {
         String result;
         try {
             Map<String, String> queryMap = createLabQuery(query);
-            result = HttpClientHelper.sendRequestToLab(queryMap);
+            result = HttpClientHelper.sendRequestToLab(queryMap, query.useBetaEndpoint());
         } catch(Exception ex){
             throw new RuntimeException("Error sending request to lab: " +
                     ex.getMessage());

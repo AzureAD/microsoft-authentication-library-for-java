@@ -43,7 +43,24 @@ public class UsernamePasswordIT {
     @Test
     public void acquireTokenWithUsernamePassword_Managed() throws Exception {
 
-        LabResponse labResponse = labUserProvider.getDefaultUser();
+        LabResponse labResponse = labUserProvider.getDefaultUser(false);
+        String password = labUserProvider.getUserPassword(labResponse.getUser());
+        AuthenticationResult result = acquireTokenCommon(labResponse, password);
+
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.getAccessToken());
+        Assert.assertNotNull(result.getRefreshToken());
+        Assert.assertNotNull(result.getIdToken());
+        // TODO AuthenticationResult should have an getAccountInfo API
+        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+    }
+
+    @Test
+    public void acquireTokenWithUsernamePassword_ADFSv2019() throws Exception{
+        LabResponse labResponse = labUserProvider.getAdfsUser(
+                FederationProvider.ADFSv2019,
+                true,
+                true);
         String password = labUserProvider.getUserPassword(labResponse.getUser());
         AuthenticationResult result = acquireTokenCommon(labResponse, password);
 
@@ -59,7 +76,8 @@ public class UsernamePasswordIT {
     public void acquireTokenWithUsernamePassword_ADFSv4() throws Exception{
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV4,
-                true);
+                true,
+                false);
         String password = labUserProvider.getUserPassword(labResponse.getUser());
         AuthenticationResult result = acquireTokenCommon(labResponse, password);
 
@@ -75,7 +93,8 @@ public class UsernamePasswordIT {
     public void acquireTokenWithUsernamePassword_ADFSv3() throws Exception{
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV3,
-                true);
+                true,
+                false);
         String password = labUserProvider.getUserPassword(labResponse.getUser());
         AuthenticationResult result = acquireTokenCommon(labResponse, password);
 
@@ -91,7 +110,8 @@ public class UsernamePasswordIT {
     public void acquireTokenWithUsernamePassword_ADFSv2() throws Exception{
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV2,
-                true);
+                true,
+                false);
         String password = labUserProvider.getUserPassword(labResponse.getUser());
         AuthenticationResult result = acquireTokenCommon(labResponse, password);
 

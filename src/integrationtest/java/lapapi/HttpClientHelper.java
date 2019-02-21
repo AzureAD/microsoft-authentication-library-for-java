@@ -39,9 +39,9 @@ import java.util.Map;
 
 class HttpClientHelper {
 
-    static String sendRequestToLab( Map<String, String> queryMap) throws IOException {
-
-        final URL labUrl = buildUrl(queryMap);
+    static String sendRequestToLab( Map<String, String> queryMap, boolean useBetaEndpoint) throws
+            IOException {
+        final URL labUrl = buildUrl(queryMap, useBetaEndpoint);
         HttpsURLConnection conn = (HttpsURLConnection) labUrl.openConnection();
         conn.setReadTimeout(30000);
         conn.setConnectTimeout(30000);
@@ -58,16 +58,18 @@ class HttpClientHelper {
         return content.toString();
     }
 
-    private static URL buildUrl(Map<String, String> queryMap) throws MalformedURLException,
-            UnsupportedOperationException {
+    private static URL buildUrl(Map<String, String> queryMap, boolean useBetaEndpoint) throws
+            MalformedURLException, UnsupportedOperationException {
         String queryParameters;
-
         queryParameters = queryMap.entrySet().stream()
                 .map(p -> encodeUTF8(p.getKey()) + "=" + encodeUTF8(p.getValue()))
                 .reduce((p1, p2) -> p1 + "&" + p2)
                 .orElse("");
 
-        String urlString = LabConstants.LAB_ENDPOINT + "?" + queryParameters;
+        String labEndpoint = (useBetaEndpoint)?
+                LabConstants.LAB_BETA_ENDPOINT :
+                LabConstants.LAB_ENDPOINT;
+        String urlString = labEndpoint + "?" + queryParameters;
         return new URL(urlString);
     }
 

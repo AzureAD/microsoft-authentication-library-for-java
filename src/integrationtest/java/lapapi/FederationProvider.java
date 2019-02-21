@@ -36,8 +36,8 @@ public enum FederationProvider {
     ADFSV3(3),
     @SerializedName("ADFSv4")
     ADFSV4(4),
-    //todo add ADFS2019
-
+    @SerializedName("ADFSv2019")
+    ADFSv2019(5),
     @SerializedName("PingFederatev83")
     PINGFEDERATEV83(5),
     @SerializedName("Shibboleth")

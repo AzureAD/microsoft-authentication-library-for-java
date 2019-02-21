@@ -51,7 +51,45 @@ public class AuthorizationCodeIT {
 
     @Test
     public void acquireTokenWithAuthorizationCode_ManagedUser(){
-        LabResponse labResponse = labUserProvider.getDefaultUser();
+        LabResponse labResponse = labUserProvider.getDefaultUser(false);
+        labUserProvider.getUserPassword(labResponse.getUser());
+
+        String authCode = acquireAuthorizationCodeAutomated(labResponse);
+        AuthenticationResult result = acquireTokenInteractive(labResponse, authCode);
+
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.getAccessToken());
+        Assert.assertNotNull(result.getRefreshToken());
+        Assert.assertNotNull(result.getIdToken());
+        // TODO AuthenticationResult should have an getAccountInfo API
+        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+    }
+
+    @Test
+    public void acquireTokenWithAuthorizationCode_ADFSv2019_Federated(){
+        LabResponse labResponse = labUserProvider.getAdfsUser(
+                FederationProvider.ADFSv2019,
+                true,
+                true);
+        labUserProvider.getUserPassword(labResponse.getUser());
+
+        String authCode = acquireAuthorizationCodeAutomated(labResponse);
+        AuthenticationResult result = acquireTokenInteractive(labResponse, authCode);
+
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.getAccessToken());
+        Assert.assertNotNull(result.getRefreshToken());
+        Assert.assertNotNull(result.getIdToken());
+        // TODO AuthenticationResult should have an getAccountInfo API
+        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+    }
+
+    @Test
+    public void acquireTokenWithAuthorizationCode_ADFSv2019_NotFederated(){
+        LabResponse labResponse = labUserProvider.getAdfsUser(
+                FederationProvider.ADFSv2019,
+                false,
+                true);
         labUserProvider.getUserPassword(labResponse.getUser());
 
         String authCode = acquireAuthorizationCodeAutomated(labResponse);
@@ -69,7 +107,8 @@ public class AuthorizationCodeIT {
     public void acquireTokenWithAuthorizationCode_ADFSv4_Federated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV4,
-                true);
+                true,
+                false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
         String authCode = acquireAuthorizationCodeAutomated(labResponse);
@@ -87,6 +126,7 @@ public class AuthorizationCodeIT {
     public void acquireTokenWithAuthorizationCode_ADFSv4_NotFederated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV4,
+                false,
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
@@ -105,7 +145,8 @@ public class AuthorizationCodeIT {
     public void acquireTokenWithAuthorizationCode_ADFSv3_Federated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV3,
-                true);
+                true,
+                false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
         String authCode = acquireAuthorizationCodeAutomated(labResponse);
@@ -123,6 +164,7 @@ public class AuthorizationCodeIT {
     public void acquireTokenWithAuthorizationCode_ADFSv3_NotFederated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV3,
+                false,
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
@@ -141,7 +183,8 @@ public class AuthorizationCodeIT {
     public void acquireTokenWithAuthorizationCode_ADFSv2_Federated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV2,
-                true);
+                true,
+                false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
         String authCode = acquireAuthorizationCodeAutomated(labResponse);
@@ -159,6 +202,7 @@ public class AuthorizationCodeIT {
     public void acquireTokenWithAuthorizationCode_ADFSv2_NotFederated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV2,
+                false,
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 

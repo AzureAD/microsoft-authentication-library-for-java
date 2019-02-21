@@ -42,29 +42,35 @@ public class LabUserProvider {
         userCache = new HashMap<>();
     }
 
-    public LabResponse getDefaultUser() {
+    public LabResponse getDefaultUser(boolean useBetaEndpoint) {
         UserQuery query =  new UserQuery.Builder().
                 isMamUser(false).
                 isMfaUser(false).
                 isFederatedUser(false).
+                useBetaEnpoint(useBetaEndpoint).
                 build();
         return getLabUser(query);
     }
 
-    public LabResponse getAdfsUser(FederationProvider federationProvider, boolean federated){
+    public LabResponse getAdfsUser(FederationProvider federationProvider,
+                                   boolean federated,
+                                   boolean useBetaEndpoint){
         UserQuery query = new UserQuery.Builder().
                 isMamUser(false).
                 isMfaUser(false).
                 isFederatedUser(federated).
                 federationProvider(federationProvider).
+                useBetaEnpoint(useBetaEndpoint).
                 build();
         return getLabUser(query);
     }
 
-    public LabResponse getB2cUser(B2CIdentityProvider b2CIdentityProvider) {
+    public LabResponse getB2cUser(B2CIdentityProvider b2CIdentityProvider,
+                                  boolean useBetaEndpoint){
         UserQuery query = new UserQuery.Builder().
                 userType(UserType.B2C).
                 b2CIdentityProvider(b2CIdentityProvider).
+                useBetaEnpoint(useBetaEndpoint).
                 build();
         return getLabUser(query);
     }
