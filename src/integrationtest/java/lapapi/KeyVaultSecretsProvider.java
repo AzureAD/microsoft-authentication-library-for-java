@@ -34,11 +34,11 @@ import com.microsoft.aad.msal4j.IClientCredential;
 import com.microsoft.aad.msal4j.TestConstants;
 import com.microsoft.azure.keyvault.KeyVaultClient;
 import com.microsoft.azure.keyvault.authentication.KeyVaultCredentials;
-import sun.plugin.dom.exception.InvalidStateException;
 
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
+import java.util.Collections;
 
 class KeyVaultSecretsProvider {
 
@@ -73,7 +73,9 @@ class KeyVaultSecretsProvider {
                     CLIENT_ID, getClientCredentialFromKeyStore()).
                     authority(TestConstants.AUTHORITY_MICROSOFT).
                     build();
-             result = cca.acquireTokenForClient(TestConstants.KEYVAULT_DEFAULT_SCOPE).get();
+             result = cca.acquireTokenForClient(
+                     Collections.singleton(TestConstants.KEYVAULT_DEFAULT_SCOPE)).
+                     get();
 
         } catch(Exception e){
             throw new RuntimeException("Error acquiring token from Azure AD: " + e.getMessage());
@@ -81,7 +83,7 @@ class KeyVaultSecretsProvider {
         if(result != null){
             return result.getAccessToken();
         } else {
-            throw new InvalidStateException("Authentication result is null");
+            throw new NullPointerException("Authentication result is null");
         }
     }
 

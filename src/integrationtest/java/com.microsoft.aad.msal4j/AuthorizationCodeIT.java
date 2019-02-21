@@ -5,6 +5,7 @@ import Infrastructure.TcpListener;
 import lapapi.FederationProvider;
 import lapapi.LabResponse;
 import lapapi.LabUserProvider;
+import lapapi.NationalCloud;
 import org.openqa.selenium.WebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +19,7 @@ import org.testng.util.Strings;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -51,7 +53,9 @@ public class AuthorizationCodeIT {
 
     @Test
     public void acquireTokenWithAuthorizationCode_ManagedUser(){
-        LabResponse labResponse = labUserProvider.getDefaultUser(false);
+        LabResponse labResponse = labUserProvider.getDefaultUser(
+                NationalCloud.AZURE_CLOUD,
+                false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
         String authCode = acquireAuthorizationCodeAutomated(labResponse);
@@ -226,9 +230,10 @@ public class AuthorizationCodeIT {
                     authority(TestConstants.AUTHORITY_ORGANIZATIONS).
                     build();
             result = pca.acquireTokenByAuthorizationCode(
-                    TestConstants.GRAPH_DEFAULT_SCOPE,
+                    Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
                     authCode,
-                    new URI(TestConstants.LOCALHOST + tcpListener.getPort())).get();
+                    new URI(TestConstants.LOCALHOST + tcpListener.getPort())).
+                    get();
         } catch(Exception e){
             LOG.error("Error acquiring token with authCode: " + e.getMessage());
             throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
@@ -239,18 +244,17 @@ public class AuthorizationCodeIT {
     private String acquireAuthorizationCodeAutomated(LabResponse labUserData){
         startTcpListener();
 
-        String code;
+        String authServerResponse;
         try {
             // Wait for TCP listener to be up and running
             TimeUnit.SECONDS.sleep(5);
             runSeleniumAutomatedLogin(labUserData);
-            String authServerResponse = getResponseFromTcpListener();
-            code =  parseServerResponse(authServerResponse);
+            authServerResponse = getResponseFromTcpListener();
         } catch(Exception e){
             LOG.error("Error running automated selenium login: " + e.getMessage());
             throw new RuntimeException("Error running automated selenium login: " + e.getMessage());
         }
-        return code;
+        return parseServerResponse(authServerResponse);
     }
 
     private void runSeleniumAutomatedLogin(LabResponse labUserData) throws
@@ -273,7 +277,7 @@ public class AuthorizationCodeIT {
 
             if (Strings.isNullOrEmpty(response)){
                 LOG.error("Server response is null");
-                throw new IllegalStateException("Server response is null");
+                throw new NullPointerException("Server response is null");
             }
         } catch(Exception e){
             LOG.error("Error reading from server response queue: " + e.getMessage());

@@ -26,9 +26,12 @@ package com.microsoft.aad.msal4j;
 import lapapi.FederationProvider;
 import lapapi.LabResponse;
 import lapapi.LabUserProvider;
+import lapapi.NationalCloud;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import java.util.Collections;
 
 @Test()
 public class UsernamePasswordIT {
@@ -43,7 +46,9 @@ public class UsernamePasswordIT {
     @Test
     public void acquireTokenWithUsernamePassword_Managed() throws Exception {
 
-        LabResponse labResponse = labUserProvider.getDefaultUser(false);
+        LabResponse labResponse = labUserProvider.getDefaultUser(
+                NationalCloud.AZURE_CLOUD,
+                false);
         String password = labUserProvider.getUserPassword(labResponse.getUser());
         AuthenticationResult result = acquireTokenCommon(labResponse, password);
 
@@ -130,9 +135,10 @@ public class UsernamePasswordIT {
                 authority(TestConstants.AUTHORITY_ORGANIZATIONS).
                 build();
         AuthenticationResult result = pca.acquireTokenByUsernamePassword(
-                TestConstants.GRAPH_DEFAULT_SCOPE,
+                Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
                 labResponse.getUser().getUpn(),
-                password).get();
+                password).
+                get();
         return result;
     }
 

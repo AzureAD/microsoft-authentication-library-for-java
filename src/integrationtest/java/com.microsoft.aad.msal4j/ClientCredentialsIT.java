@@ -13,6 +13,10 @@ import java.security.PrivateKey;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Collection;
+import java.util.Collections;
+
+import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 
 @Test
 public class ClientCredentialsIT {
@@ -31,7 +35,9 @@ public class ClientCredentialsIT {
                 authority(TestConstants.AUTHORITY_MICROSOFT).
                 build();
 
-        AuthenticationResult result = cca.acquireTokenForClient(TestConstants.KEYVAULT_DEFAULT_SCOPE).get();
+        AuthenticationResult result = cca.acquireTokenForClient(
+                Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                .get();
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.getAccessToken());
@@ -52,7 +58,9 @@ public class ClientCredentialsIT {
                 authority(TestConstants.AUTHORITY_MICROSOFT).
                 build();
 
-        AuthenticationResult result = cca.acquireTokenForClient(TestConstants.KEYVAULT_DEFAULT_SCOPE).get();
+        AuthenticationResult result = cca.acquireTokenForClient(
+                Collections.singleton(KEYVAULT_DEFAULT_SCOPE)).
+                get();
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.getAccessToken());

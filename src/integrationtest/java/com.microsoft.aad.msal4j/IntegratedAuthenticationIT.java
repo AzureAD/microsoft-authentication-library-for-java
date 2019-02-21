@@ -9,6 +9,8 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.Collections;
+
 @Test()
 public class IntegratedAuthenticationIT {
     private final static Logger LOG = LoggerFactory.getLogger(IntegratedAuthenticationIT.class);
@@ -21,13 +23,13 @@ public class IntegratedAuthenticationIT {
     }
 
     @Test
-    public void acquireTokenWithIntegratedWindowsAuthentication_ADFSv2019() {
+    public void acquireTokenWithIntegratedWindowsAuthentication_ADFSv2019() throws Exception{
 
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSv2019,
                 true,
                 true);
-
+        labUserProvider.getUserPassword(labResponse.getUser());
         AuthenticationResult result = acquireTokenWithIntegratedWindowsAuthentication(labResponse);
 
         Assert.assertNotNull(result);
@@ -39,13 +41,14 @@ public class IntegratedAuthenticationIT {
     }
 
     @Test
-    public void acquireTokenWithIntegratedWindowsAuthentication_ADFSv4() {
+    public void acquireTokenWithIntegratedWindowsAuthentication_ADFSv4() throws Exception{
 
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV4,
                 true,
                 false);
 
+        labUserProvider.getUserPassword(labResponse.getUser());
         AuthenticationResult result = acquireTokenWithIntegratedWindowsAuthentication(labResponse);
 
         Assert.assertNotNull(result);
@@ -57,7 +60,7 @@ public class IntegratedAuthenticationIT {
     }
 
     @Test
-    public void acquireTokenWithIntegratedWindowsAuthentication_ADFSv3() {
+    public void acquireTokenWithIntegratedWindowsAuthentication_ADFSv3() throws Exception{
 
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV3,
@@ -75,7 +78,7 @@ public class IntegratedAuthenticationIT {
     }
 
     @Test
-    public void acquireTokenWithIntegratedWindowsAuthentication_ADFSv2() {
+    public void acquireTokenWithIntegratedWindowsAuthentication_ADFSv2() throws Exception{
 
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV2,
@@ -93,20 +96,17 @@ public class IntegratedAuthenticationIT {
     }
 
     private AuthenticationResult acquireTokenWithIntegratedWindowsAuthentication(
-            LabResponse labResponse){
+            LabResponse labResponse) throws Exception{
         AuthenticationResult result;
-        try{
-            PublicClientApplication pca = new PublicClientApplication.Builder(
-                    labResponse.getAppId()).
-                    authority(TestConstants.AUTHORITY_ORGANIZATIONS).
-                    build();
-            result = pca.acquireTokenByKerberosAuth(
-                    TestConstants.GRAPH_DEFAULT_SCOPE,
-                    labResponse.getUser().getUpn()).get();
-        } catch(Exception e){
-            LOG.error("Error acquiring token: " + e.getMessage());
-            throw new RuntimeException(e.getMessage());
-        }
+
+        PublicClientApplication pca = new PublicClientApplication.Builder(
+                labResponse.getAppId()).
+                authority(TestConstants.AUTHORITY_ORGANIZATIONS).
+                build();
+        result = pca.acquireTokenByKerberosAuth(
+                Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                labResponse.getUser().getUpn()).
+                get();
         return result;
     }
 }

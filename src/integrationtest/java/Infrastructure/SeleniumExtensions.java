@@ -45,7 +45,7 @@ public class SeleniumExtensions {
 
     public static WebDriver createDefaultWebDriver(){
         //TODO find better place for chromedriver.exe
-        System.setProperty("webdriver.chrome.driver", "C:\\Java\\microsoft-authentication-library-for-java\\src\\integrationtest\\resources\\chromedriver.exe");
+        System.setProperty("webdriver.chrome.driver", "src\\integrationtest\\resources\\chromedriver.exe");
         ChromeOptions options = new ChromeOptions();
 
         //no visual rendering, remove when debugging

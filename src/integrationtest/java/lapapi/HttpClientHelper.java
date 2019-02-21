@@ -43,8 +43,8 @@ class HttpClientHelper {
             IOException {
         final URL labUrl = buildUrl(queryMap, useBetaEndpoint);
         HttpsURLConnection conn = (HttpsURLConnection) labUrl.openConnection();
-        conn.setReadTimeout(30000);
-        conn.setConnectTimeout(30000);
+        conn.setReadTimeout(20000);
+        conn.setConnectTimeout(20000);
 
         StringBuilder content;
         try(BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()))){

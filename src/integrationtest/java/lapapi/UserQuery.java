@@ -40,6 +40,7 @@ public class UserQuery {
     private final UserType userType;
     private final FederationProvider federationProvider;
     private final B2CIdentityProvider b2CIdentityProvider;
+    private final NationalCloud nationalCloud;
 
     public static class Builder {
         private boolean isMamUser = false;
@@ -51,6 +52,7 @@ public class UserQuery {
         private UserType userType;
         private FederationProvider federationProvider;
         private B2CIdentityProvider b2CIdentityProvider;
+        private NationalCloud nationalCloud;
 
         public Builder isMamUser(boolean val){
             isMamUser = val;
@@ -96,6 +98,11 @@ public class UserQuery {
             return this;
         }
 
+        public Builder nationalCloud(NationalCloud val){
+            nationalCloud = val;
+            return this;
+        }
+
         public UserQuery build(){
             return new UserQuery(this);
         }
@@ -111,6 +118,7 @@ public class UserQuery {
         this.userType = builder.userType;
         this.federationProvider = builder.federationProvider;
         this.b2CIdentityProvider = builder.b2CIdentityProvider;
+        this.nationalCloud = builder.nationalCloud;
     }
 
     public FederationProvider getFederationProvider() {
@@ -147,5 +155,9 @@ public class UserQuery {
 
     public boolean useBetaEndpoint(){
         return useBetaEndpoint;
+    }
+
+    public NationalCloud getNationalCloud(){
+        return nationalCloud;
     }
 }

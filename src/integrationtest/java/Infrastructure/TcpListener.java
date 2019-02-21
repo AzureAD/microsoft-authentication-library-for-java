@@ -35,7 +35,7 @@ public class TcpListener {
 
             } catch (IOException e) {
                 LOG.error("Unable to process client request: " + e.getMessage());
-                throw new RuntimeException();
+                throw new RuntimeException("Unable to process client request: " + e.getMessage());
             }
         };
 
@@ -61,7 +61,7 @@ public class TcpListener {
                 queue.put(builder.toString());
             } catch (Exception e) {
                 LOG.error("Error reading response from socket: " + e.getMessage());
-                throw new RuntimeException();
+                throw new RuntimeException("Error reading response from socket: " + e.getMessage());
             }
 
             try {

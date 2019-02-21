@@ -42,11 +42,12 @@ public class LabUserProvider {
         userCache = new HashMap<>();
     }
 
-    public LabResponse getDefaultUser(boolean useBetaEndpoint) {
+    public LabResponse getDefaultUser(NationalCloud cloud, boolean useBetaEndpoint) {
         UserQuery query =  new UserQuery.Builder().
                 isMamUser(false).
                 isMfaUser(false).
                 isFederatedUser(false).
+                nationalCloud(cloud).
                 useBetaEnpoint(useBetaEndpoint).
                 build();
         return getLabUser(query);

@@ -4,6 +4,7 @@ import Infrastructure.SeleniumExtensions;
 import lapapi.LabResponse;
 import lapapi.LabUser;
 import lapapi.LabUserProvider;
+import lapapi.NationalCloud;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -15,8 +16,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.testng.util.Strings;
 
-import java.net.MalformedURLException;
-import java.util.concurrent.ExecutionException;
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 @Test
 public class DeviceCodeIT {
@@ -33,9 +34,10 @@ public class DeviceCodeIT {
     }
 
     @Test
-    public void DeviceCodeFlowTest() throws MalformedURLException, InterruptedException,
-            ExecutionException {
-        LabResponse labResponse = labUserProvider.getDefaultUser(false);
+    public void DeviceCodeFlowTest() throws Exception {
+        LabResponse labResponse = labUserProvider.getDefaultUser(
+                NationalCloud.AZURE_CLOUD,
+                false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
         PublicClientApplication pca = new PublicClientApplication.Builder(
@@ -43,8 +45,11 @@ public class DeviceCodeIT {
                 authority(TestConstants.AUTHORITY_ORGANIZATIONS).
                 build();
 
-        DeviceCode deviceCode = pca.acquireDeviceCode(TestConstants.GRAPH_DEFAULT_SCOPE).get();
+        DeviceCode deviceCode = pca.acquireDeviceCode(
+                Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE)).
+                get();
         runAutomatedDeviceCodeFlow(deviceCode, labResponse.getUser());
+        TimeUnit.SECONDS.sleep(1);
         AuthenticationResult result = pca.acquireTokenByDeviceCode(deviceCode).get();
 
         Assert.assertNotNull(result);
