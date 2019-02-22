@@ -70,15 +70,15 @@ public class AcquireTokenDeviceCodeFlowSupplier extends AuthenticationResultSupp
         long expirationTimeInSeconds =
                 TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) + deviceCode.getExpiresIn();
 
-        AcquireTokenSupplier acquireTokenSupplier =
-                new AcquireTokenSupplier(clientApplication, deviceCodeGrant, clientAuth);
+        AcquireTokenByAuthorisationGrantSupplier acquireTokenByAuthorisationGrantSupplier =
+                new AcquireTokenByAuthorisationGrantSupplier(clientApplication, deviceCodeGrant, clientAuth);
 
         while (TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) < expirationTimeInSeconds) {
             if(futureReference.get().isCancelled()){
                 throw new InterruptedException("Acquire token Device Code Flow was interrupted");
             }
             try {
-                return acquireTokenSupplier.execute();
+                return acquireTokenByAuthorisationGrantSupplier.execute();
             }
             catch (AuthenticationException ex) {
                 if (ex.getErrorCode().equals(AUTHORIZATION_PENDING))

@@ -31,13 +31,13 @@ import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import org.apache.commons.codec.binary.Base64;;
 import java.net.URLEncoder;
 
-public class AcquireTokenSupplier extends AuthenticationResultSupplier {
+public class AcquireTokenByAuthorisationGrantSupplier extends AuthenticationResultSupplier {
 
     private AbstractMsalAuthorizationGrant authGrant;
     private ClientAuthentication clientAuth;
 
-    AcquireTokenSupplier(ClientApplicationBase clientApplication,
-                         AbstractMsalAuthorizationGrant authGrant, ClientAuthentication clientAuth) {
+    AcquireTokenByAuthorisationGrantSupplier(ClientApplicationBase clientApplication,
+                                             AbstractMsalAuthorizationGrant authGrant, ClientAuthentication clientAuth) {
         super(clientApplication);
         this.authGrant = authGrant;
         this.clientAuth = clientAuth;

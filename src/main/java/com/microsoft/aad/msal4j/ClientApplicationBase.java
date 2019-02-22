@@ -117,7 +117,7 @@ abstract public class ClientApplicationBase {
             final AbstractMsalAuthorizationGrant authGrant,
             final ClientAuthentication clientAuth) {
 
-        AcquireTokenSupplier supplier = new AcquireTokenSupplier(this, authGrant, clientAuth);
+        AcquireTokenByAuthorisationGrantSupplier supplier = new AcquireTokenByAuthorisationGrantSupplier(this, authGrant, clientAuth);
 
         CompletableFuture<AuthenticationResult> future =
                 executorService != null ? CompletableFuture.supplyAsync(supplier, executorService)

@@ -124,7 +124,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
             Assert.assertNotNull(deviceCode.getVerificationUrl(), "https://aka.ms/devicelogin");
             Assert.assertNotNull(deviceCode.getExpiresIn(), "900");
             Assert.assertNotNull(deviceCode.getInterval(), "5");
-            Assert.assertNotNull(deviceCode.getMessage(), "To sign in, use a web browser" +
+            Assert.assertEquals(deviceCode.getMessage(), "To sign in, use a web browser" +
                     " to open the page https://aka.ms/devicelogin and enter the code DW83JNP2P to authenticate.");
             Assert.assertNotNull(deviceCode.getCorrelationId());
 

@@ -84,7 +84,7 @@ public class PublicClientApplication extends ClientApplicationBase {
      *         {@link AuthenticationResult} of the call. It contains Access
      *         Token, Refresh Token and the Access Token's expiration time.
      */
-    public CompletableFuture<AuthenticationResult> acquireTokenByWindowsIntegratedAuth(Set<String> scopes, String username) {
+    public CompletableFuture<AuthenticationResult> acquireTokenByIntegratedWindowsAuth(Set<String> scopes, String username) {
         validateNotEmpty("scopes", scopes);
         validateNotBlank("username", username);
 

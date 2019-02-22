@@ -27,7 +27,7 @@ import com.microsoft.aad.msal4j.PublicClientApplication;
 import java.util.Collections;
 import java.util.concurrent.Future;
 
-public class IntegratedAuthFlow {
+public class IntegratedWindowsAuthFlow {
     public static void main(String args[]) throws Exception {
 
         AuthenticationResult result = getAccessTokenByIntegratedAuth();
@@ -43,7 +43,7 @@ public class IntegratedAuthFlow {
                 .build();
 
         Future<AuthenticationResult> futureAuthenticationResult =
-                    app.acquireTokenByWindowsIntegratedAuth(Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE), TestData.USER_NAME);
+                    app.acquireTokenByIntegratedWindowsAuth(Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE), TestData.USER_NAME);
 
         AuthenticationResult result = futureAuthenticationResult.get();
 
