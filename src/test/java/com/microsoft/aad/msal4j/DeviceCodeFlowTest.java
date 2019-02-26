@@ -134,7 +134,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         PowerMock.replay(app);
 
         AuthenticationResult authResult =
-                app.acquireTokenDeviceCodeFlow(Collections.singleton(AAD_RESOURCE_ID), deviceCodeConsumer).get();
+                app.acquireTokenByDeviceCodeFlow(Collections.singleton(AAD_RESOURCE_ID), deviceCodeConsumer).get();
 
         // validate HTTP GET request used to get device code
         URL url = new URL(capturedUrl.getValue());
@@ -166,7 +166,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
                 .authority(ADFS_TENANT_ENDPOINT)
                 .validateAuthority(false).build();
 
-        app.acquireTokenDeviceCodeFlow(Collections.singleton(AAD_RESOURCE_ID), (DeviceCode deviceCode) -> {});
+        app.acquireTokenByDeviceCodeFlow(Collections.singleton(AAD_RESOURCE_ID), (DeviceCode deviceCode) -> {});
     }
 
     @Test

@@ -26,7 +26,6 @@ import com.microsoft.aad.msal4j.PublicClientApplication;
 
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 public class DeviceCodeFlow {
@@ -44,7 +43,7 @@ public class DeviceCodeFlow {
         };
 
         CompletableFuture<AuthenticationResult> future =
-                app.acquireTokenDeviceCodeFlow(Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE), deviceCodeConsumer);
+                app.acquireTokenByDeviceCodeFlow(Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE), deviceCodeConsumer);
 
         future.handle((res, ex) -> {
             if(ex != null) {

@@ -113,8 +113,8 @@ public class PublicClientApplication extends ClientApplicationBase {
      *                                 DeviceCode.interval - The minimum amount of time in seconds that the client
      *                                 SHOULD wait between polling requests to the token endpoint
      */
-    public CompletableFuture<AuthenticationResult> acquireTokenDeviceCodeFlow(Set<String> scopes,
-                                                                              Consumer<DeviceCode> deviceCodeConsumer)
+    public CompletableFuture<AuthenticationResult> acquireTokenByDeviceCodeFlow(Set<String> scopes,
+                                                                                Consumer<DeviceCode> deviceCodeConsumer)
     {
         validateDeviceCodeRequestInput(scopes);
 
