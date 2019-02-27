@@ -30,7 +30,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import com.nimbusds.oauth2.sdk.http.CommonContentTypes;
@@ -51,7 +52,6 @@ import javax.net.ssl.SSLSocketFactory;
 import static com.microsoft.aad.msal4j.TestConfiguration.AAD_CLIENT_ID;
 import static com.microsoft.aad.msal4j.TestConfiguration.AAD_HOST_NAME;
 import static com.microsoft.aad.msal4j.TestConfiguration.AAD_RESOURCE_ID;
-import static com.microsoft.aad.msal4j.TestConfiguration.AAD_TENANT_ENDPOINT;
 import static com.microsoft.aad.msal4j.TestConfiguration.AAD_TENANT_NAME;
 import static com.microsoft.aad.msal4j.TestConfiguration.ADFS_TENANT_ENDPOINT;
 
@@ -113,8 +113,28 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         PowerMock.replay(HttpHelper.class);
 
-        Future<DeviceCode> result = app.acquireDeviceCode(Collections.singleton(AAD_RESOURCE_ID));
-        DeviceCode deviceCode = result.get();
+        AtomicReference<String> deviceCodeCorrelationId = new AtomicReference<>();
+
+        Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) ->{
+
+            // validate returned Device Code object
+            Assert.assertNotNull(deviceCode);
+            Assert.assertNotNull(deviceCode.getUserCode(), "DW83JNP2P");
+            Assert.assertNotNull(deviceCode.getDeviceCode(), "DAQABAAEAAADRNYRQ3dhRFEeqWvq-yi6QodK2pb1iAA");
+            Assert.assertNotNull(deviceCode.getVerificationUrl(), "https://aka.ms/devicelogin");
+            Assert.assertNotNull(deviceCode.getExpiresIn(), "900");
+            Assert.assertNotNull(deviceCode.getInterval(), "5");
+            Assert.assertEquals(deviceCode.getMessage(), "To sign in, use a web browser" +
+                    " to open the page https://aka.ms/devicelogin and enter the code DW83JNP2P to authenticate.");
+            Assert.assertNotNull(deviceCode.getCorrelationId());
+
+            deviceCodeCorrelationId.set(deviceCode.getCorrelationId());
+        };
+
+        PowerMock.replay(app);
+
+        AuthenticationResult authResult =
+                app.acquireTokenByDeviceCodeFlow(Collections.singleton(AAD_RESOURCE_ID), deviceCodeConsumer).get();
 
         // validate HTTP GET request used to get device code
         URL url = new URL(capturedUrl.getValue());
@@ -129,25 +149,9 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         Assert.assertEquals(getQueryMap(url.getQuery()), expectedQueryParams);
 
-        // validate returned Device Code object
-        Assert.assertNotNull(deviceCode);
-        Assert.assertNotNull(deviceCode.getUserCode(), "DW83JNP2P");
-        Assert.assertNotNull(deviceCode.getDeviceCode(), "DAQABAAEAAADRNYRQ3dhRFEeqWvq-yi6QodK2pb1iAA");
-        Assert.assertNotNull(deviceCode.getVerificationUrl(), "https://aka.ms/devicelogin");
-        Assert.assertNotNull(deviceCode.getExpiresIn(), "900");
-        Assert.assertNotNull(deviceCode.getInterval(), "5");
-        Assert.assertNotNull(deviceCode.getMessage(), "To sign in, use a web browser" +
-                " to open the page https://aka.ms/devicelogin and enter the code DW83JNP2P to authenticate.");
-        Assert.assertNotNull(deviceCode.getCorrelationId());
-
-        PowerMock.replay(app);
-
-        Future<AuthenticationResult> authResult = app.acquireTokenByDeviceCode(deviceCode);
-        authResult.get();
-
         // make sure same correlation id is used for acquireDeviceCode and acquireTokenByDeviceCode calls
         Assert.assertEquals(capturedClientDataHttpHeaders.getValue().getReadonlyHeaderMap().
-                get(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME), deviceCode.getCorrelationId());
+                get(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME), deviceCodeCorrelationId.get());
         Assert.assertNotNull(authResult);
 
         PowerMock.verify();
@@ -162,7 +166,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
                 .authority(ADFS_TENANT_ENDPOINT)
                 .validateAuthority(false).build();
 
-        app.acquireDeviceCode(Collections.singleton(AAD_RESOURCE_ID));
+        app.acquireTokenByDeviceCodeFlow(Collections.singleton(AAD_RESOURCE_ID), (DeviceCode deviceCode) -> {});
     }
 
     @Test

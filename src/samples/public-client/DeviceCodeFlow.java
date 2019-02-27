@@ -25,29 +25,40 @@ import com.microsoft.aad.msal4j.DeviceCode;
 import com.microsoft.aad.msal4j.PublicClientApplication;
 
 import java.util.Collections;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 public class DeviceCodeFlow {
     public static void main(String args[]) throws Exception {
-        AuthenticationResult result = getAccessTokenByDeviceCodeGrant();
-
-        System.out.println("Access Token - " + result.getAccessToken());
-        System.out.println("Refresh Token - " + result.getRefreshToken());
-        System.out.println("ID Token - " + result.getIdToken());
+        getAccessTokenByDeviceCodeGrant();
     }
 
-    private static AuthenticationResult getAccessTokenByDeviceCodeGrant() throws Exception {
+    private static void getAccessTokenByDeviceCodeGrant() throws Exception {
         PublicClientApplication app = new PublicClientApplication.Builder(TestData.PUBLIC_CLIENT_ID)
                 .authority(TestData.AUTHORITY)
                 .build();
 
-        Future<DeviceCode> deviceCodeFuture = app.acquireDeviceCode(Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE));
-        DeviceCode deviceCode = deviceCodeFuture.get();
+        Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
+            System.out.println(deviceCode.getMessage());
+        };
 
-        Future<AuthenticationResult> futureAuthenticationResult = app.acquireTokenByDeviceCode(deviceCode);
+        CompletableFuture<AuthenticationResult> future =
+                app.acquireTokenByDeviceCodeFlow(Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE), deviceCodeConsumer);
 
-        AuthenticationResult result = futureAuthenticationResult.get();
+        future.handle((res, ex) -> {
+            if(ex != null) {
+                System.out.println("Oops! We have an exception of type - " + ex.getClass());
+                System.out.println("message - " + ex.getMessage());
+                return "Unknown!";
+            }
+            System.out.println("Returned ok - " + res);
 
-        return result;
+            System.out.println("Access Token - " + res.getAccessToken());
+            System.out.println("Refresh Token - " + res.getRefreshToken());
+            System.out.println("ID Token - " + res.getIdToken());
+            return res;
+        });
+
+        future.join();
     }
 }

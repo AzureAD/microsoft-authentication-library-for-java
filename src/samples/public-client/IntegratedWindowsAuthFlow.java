@@ -21,27 +21,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package com.microsoft.aad.msal4j;
+import com.microsoft.aad.msal4j.AuthenticationResult;
+import com.microsoft.aad.msal4j.PublicClientApplication;
 
-import java.util.Set;
+import java.util.Collections;
+import java.util.concurrent.Future;
 
-class AcquireDeviceCodeCallable extends MsalCallable<DeviceCode> {
-    private String clientId;
-    private String scopes;
+public class IntegratedWindowsAuthFlow {
+    public static void main(String args[]) throws Exception {
 
-    AcquireDeviceCodeCallable(PublicClientApplication clientApplication,
-                              String clientId, Set<String> scopes) {
-        super(clientApplication);
-        this.headers = new ClientDataHttpHeaders(clientApplication.getCorrelationId());
-        this.clientId = clientId;
-        this.scopes = String.join(" ", scopes);
+        AuthenticationResult result = getAccessTokenByIntegratedAuth();
+
+        System.out.println("Access Token - " + result.getAccessToken());
+        System.out.println("Refresh Token - " + result.getRefreshToken());
+        System.out.println("ID Token - " + result.getIdToken());
     }
 
-    DeviceCode execute() throws Exception {
-        clientApplication.authenticationAuthority.doInstanceDiscovery(clientApplication.isValidateAuthority(),
-                headers.getReadonlyHeaderMap(), clientApplication.getProxy(), clientApplication.getSslSocketFactory());
-        return DeviceCodeRequest.execute(clientApplication.authenticationAuthority.getDeviceCodeEndpoint(),
-                clientId, scopes, headers.getReadonlyHeaderMap(), clientApplication.getProxy(),
-                clientApplication.getSslSocketFactory());
+    private static AuthenticationResult getAccessTokenByIntegratedAuth() throws Exception {
+        PublicClientApplication app = new PublicClientApplication.Builder(TestData.PUBLIC_CLIENT_ID)
+                .authority(TestData.AUTHORITY)
+                .build();
+
+        Future<AuthenticationResult> futureAuthenticationResult =
+                    app.acquireTokenByIntegratedWindowsAuth(Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE), TestData.USER_NAME);
+
+        AuthenticationResult result = futureAuthenticationResult.get();
+
+        return result;
     }
 }
