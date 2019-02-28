@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
 import org.testng.util.Strings;
 
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 @Test
 public class DeviceCodeIT {
@@ -45,12 +45,13 @@ public class DeviceCodeIT {
                 authority(TestConstants.AUTHORITY_ORGANIZATIONS).
                 build();
 
-        DeviceCode deviceCode = pca.acquireDeviceCode(
-                Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE)).
-                get();
-        runAutomatedDeviceCodeFlow(deviceCode, labResponse.getUser());
-        TimeUnit.SECONDS.sleep(1);
-        AuthenticationResult result = pca.acquireTokenByDeviceCode(deviceCode).get();
+        Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
+            runAutomatedDeviceCodeFlow(deviceCode, labResponse.getUser());
+        };
+
+        AuthenticationResult result = pca.acquireTokenByDeviceCodeFlow(
+                Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                deviceCodeConsumer).get();
 
         Assert.assertNotNull(result);
         Assert.assertTrue(!Strings.isNullOrEmpty(result.getAccessToken()));
