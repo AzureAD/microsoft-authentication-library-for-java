@@ -34,7 +34,7 @@ public class AuthorizationCodeIT {
     private LabUserProvider labUserProvider;
     private WebDriver seleniumDriver;
     private TcpListener tcpListener;
-    private BlockingQueue<String> queue;
+    private BlockingQueue<String> AuthorizationCodeQueue;
 
     @BeforeClass
     public void setUpLapUserProvider() {
@@ -44,8 +44,8 @@ public class AuthorizationCodeIT {
     @AfterMethod
     public void cleanUp(){
        seleniumDriver.quit();
-       if(queue != null){
-           queue.clear();
+       if(AuthorizationCodeQueue != null){
+           AuthorizationCodeQueue.clear();
        }
        tcpListener.close();
     }
@@ -62,13 +62,13 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        acquireTokenCommon(labResponse);
+        assertAcquireTokenCommon(labResponse);
     }
 
     @Test
     public void acquireTokenWithAuthorizationCode_MSA() {
         LabResponse labResponse = labUserProvider.getMsaUser();
-        acquireTokenCommon(labResponse);
+        assertAcquireTokenCommon(labResponse);
     }
 
     @Test
@@ -79,7 +79,7 @@ public class AuthorizationCodeIT {
                 true);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        acquireTokenCommon(labResponse);
+        assertAcquireTokenCommon(labResponse);
     }
 
     @Test
@@ -90,7 +90,7 @@ public class AuthorizationCodeIT {
                 true);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        acquireTokenCommon(labResponse);
+        assertAcquireTokenCommon(labResponse);
     }
 
     @Test
@@ -101,7 +101,7 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        acquireTokenCommon(labResponse);
+        assertAcquireTokenCommon(labResponse);
     }
 
     @Test
@@ -112,7 +112,7 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        acquireTokenCommon(labResponse);
+        assertAcquireTokenCommon(labResponse);
     }
 
     @Test
@@ -123,7 +123,7 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        acquireTokenCommon(labResponse);
+        assertAcquireTokenCommon(labResponse);
     }
 
     @Test
@@ -134,7 +134,7 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        acquireTokenCommon(labResponse);
+        assertAcquireTokenCommon(labResponse);
     }
 
     @Test
@@ -145,7 +145,7 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        acquireTokenCommon(labResponse);
+        assertAcquireTokenCommon(labResponse);
     }
 
     @Test
@@ -156,10 +156,10 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        acquireTokenCommon(labResponse);
+        assertAcquireTokenCommon(labResponse);
     }
 
-    private void acquireTokenCommon(LabResponse labResponse){
+    private void assertAcquireTokenCommon(LabResponse labResponse){
         String authCode = acquireAuthorizationCodeAutomated(labResponse);
         AuthenticationResult result = acquireTokenInteractive(labResponse, authCode);
 
@@ -173,7 +173,7 @@ public class AuthorizationCodeIT {
 
     private AuthenticationResult acquireTokenInteractive(LabResponse labResponse,
                                                                 String authCode){
-        AuthenticationResult result = null;
+        AuthenticationResult result;
         try {
             PublicClientApplication pca = new PublicClientApplication.Builder(
                     labResponse.getAppId()).
@@ -192,14 +192,20 @@ public class AuthorizationCodeIT {
     }
 
     private String acquireAuthorizationCodeAutomated(LabResponse labUserData){
-        startTcpListener();
+        BlockingQueue<Boolean> tcpStartUpNotificationQueue = new LinkedBlockingQueue<>();
+        startTcpListener(tcpStartUpNotificationQueue);
 
         String authServerResponse;
         try {
-            // Wait for TCP listener to be up and running
-            TimeUnit.SECONDS.sleep(2);
+            Boolean tcpListenerStarted = tcpStartUpNotificationQueue.poll(
+                    30,
+                    TimeUnit.SECONDS);
+            if (tcpListenerStarted == null || !tcpListenerStarted){
+                throw new RuntimeException("Could not start TCP listener");
+            }
             runSeleniumAutomatedLogin(labUserData);
             authServerResponse = getResponseFromTcpListener();
+
         } catch(Exception e){
             LOG.error("Error running automated selenium login: " + e.getMessage());
             throw new RuntimeException("Error running automated selenium login: " + e.getMessage());
@@ -214,26 +220,23 @@ public class AuthorizationCodeIT {
         SeleniumExtensions.performLogin(seleniumDriver, labUserData.getUser());
     }
 
-    private void startTcpListener(){
-        queue = new LinkedBlockingQueue<>();
-        tcpListener = new TcpListener(queue);
+    private void startTcpListener(BlockingQueue<Boolean> tcpStartUpNotifierQueue){
+        AuthorizationCodeQueue = new LinkedBlockingQueue<>();
+        tcpListener = new TcpListener(AuthorizationCodeQueue, tcpStartUpNotifierQueue);
         tcpListener.startServer();
     }
 
     private String getResponseFromTcpListener(){
         String response;
         try {
-            response = queue.poll(20, TimeUnit.SECONDS);
-            if (response == null){
-                System.out.println("response is null");
-            }
+            response = AuthorizationCodeQueue.poll(20, TimeUnit.SECONDS);
             if (Strings.isNullOrEmpty(response)){
                 LOG.error("Server response is null");
                 throw new NullPointerException("Server response is null");
             }
         } catch(Exception e){
-            LOG.error("Error reading from server response queue: " + e.getMessage());
-            throw new RuntimeException("Error reading from server response queue: " +
+            LOG.error("Error reading from server response AuthorizationCodeQueue: " + e.getMessage());
+            throw new RuntimeException("Error reading from server response AuthorizationCodeQueue: " +
                     e.getMessage());
         }
         return response;

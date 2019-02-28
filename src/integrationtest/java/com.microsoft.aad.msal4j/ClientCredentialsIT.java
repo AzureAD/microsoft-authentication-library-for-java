@@ -24,7 +24,7 @@ public class ClientCredentialsIT {
     public void acquireTokenClientCredentials_AsymmetricKeyCredential() throws Exception{
         String clientId = "55e7e5af-ca53-482d-9aa3-5cb1cc8eecb5";
         IClientCredential credential = getCertificateFromKeyStore();
-        acquireTokenCommon(clientId, credential);
+        assertAcquireTokenCommon(clientId, credential);
     }
 
     @Test
@@ -34,10 +34,10 @@ public class ClientCredentialsIT {
         final String password = appProvider.getDefaultLabPassword();
         IClientCredential credential = ClientCredentialFactory.create(password);
 
-        acquireTokenCommon(clientId, credential);
+        assertAcquireTokenCommon(clientId, credential);
     }
 
-    private void acquireTokenCommon(String clientId, IClientCredential credential) throws Exception{
+    private void assertAcquireTokenCommon(String clientId, IClientCredential credential) throws Exception{
         ConfidentialClientApplication cca = new ConfidentialClientApplication.Builder(
                 clientId, credential).
                 authority(TestConstants.AUTHORITY_MICROSOFT).

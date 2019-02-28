@@ -44,10 +44,7 @@ public class SeleniumExtensions {
     private SeleniumExtensions(){}
 
     public static WebDriver createDefaultWebDriver(){
-        //TODO find better place for chromedriver.exe
-        System.setProperty("webdriver.chrome.driver", "src\\integrationtest\\resources\\chromedriver.exe");
         ChromeOptions options = new ChromeOptions();
-
         //no visual rendering, remove when debugging
         options.addArguments("--headless");
 

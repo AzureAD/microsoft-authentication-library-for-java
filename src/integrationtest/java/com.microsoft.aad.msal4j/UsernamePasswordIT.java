@@ -50,7 +50,7 @@ public class UsernamePasswordIT {
                 NationalCloud.AZURE_CLOUD,
                 false);
         String password = labUserProvider.getUserPassword(labResponse.getUser());
-        acquireTokenCommon(labResponse, password);
+        assertAcquireTokenCommon(labResponse, password);
     }
 
     @Test
@@ -60,7 +60,7 @@ public class UsernamePasswordIT {
                 true,
                 true);
         String password = labUserProvider.getUserPassword(labResponse.getUser());
-        acquireTokenCommon(labResponse, password);
+        assertAcquireTokenCommon(labResponse, password);
     }
 
     @Test
@@ -70,7 +70,7 @@ public class UsernamePasswordIT {
                 true,
                 false);
         String password = labUserProvider.getUserPassword(labResponse.getUser());
-        acquireTokenCommon(labResponse, password);
+        assertAcquireTokenCommon(labResponse, password);
     }
 
     @Test
@@ -80,7 +80,7 @@ public class UsernamePasswordIT {
                 true,
                 false);
         String password = labUserProvider.getUserPassword(labResponse.getUser());
-        acquireTokenCommon(labResponse, password);
+        assertAcquireTokenCommon(labResponse, password);
     }
 
     @Test
@@ -90,10 +90,10 @@ public class UsernamePasswordIT {
                 true,
                 false);
         String password = labUserProvider.getUserPassword(labResponse.getUser());
-        acquireTokenCommon(labResponse, password);
+        assertAcquireTokenCommon(labResponse, password);
     }
 
-    public void acquireTokenCommon(LabResponse labResponse, String password)
+    public void assertAcquireTokenCommon(LabResponse labResponse, String password)
             throws Exception{
         PublicClientApplication pca = new PublicClientApplication.Builder(
                 labResponse.getAppId()).

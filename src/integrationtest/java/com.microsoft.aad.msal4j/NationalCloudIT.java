@@ -42,20 +42,20 @@ public class NationalCloudIT {
 
     @Test
     public void acquireTokenWithUsernamePassword_AzureGermany() throws Exception {
-        acquireTokenCommonTest(NationalCloud.GERMAN_CLOUD);
+        assertAcquireTokenCommon(NationalCloud.GERMAN_CLOUD);
     }
 
     @Test
     public void acquireTokenWithUsernamePassword_AzureChina() throws Exception {
-        acquireTokenCommonTest(NationalCloud.CHINA_CLOUD);
+        assertAcquireTokenCommon(NationalCloud.CHINA_CLOUD);
     }
 
     @Test
     public void acquireTokenWithUsernamePassword_AzureGovernment() throws Exception {
-        acquireTokenCommonTest(NationalCloud.GOVERNMENT_CLOUD);
+        assertAcquireTokenCommon(NationalCloud.GOVERNMENT_CLOUD);
     }
 
-    private void acquireTokenCommonTest(NationalCloud cloud) throws Exception{
+    private void assertAcquireTokenCommon(NationalCloud cloud) throws Exception{
         LabResponse labResponse = labUserProvider.getDefaultUser(
                 cloud,
                 false);

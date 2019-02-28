@@ -1,7 +1,5 @@
 package com.microsoft.aad.msal4j;
 
-import java.util.Collections;
-
 public class TestConstants {
     public final static String KEYVAULT_DEFAULT_SCOPE = "https://vault.azure.net/.default";
     public final static String GRAPH_DEFAULT_SCOPE = "https://graph.windows.net/.default";

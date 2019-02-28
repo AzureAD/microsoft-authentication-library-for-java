@@ -14,21 +14,26 @@ public class TcpListener implements AutoCloseable{
 
     private final static Logger LOG = LoggerFactory.getLogger(SeleniumExtensions.class);
 
-    private BlockingQueue<String> queue;
+    private BlockingQueue<String> authorizationCodeQueue;
+    private BlockingQueue<Boolean> tcpStartUpNotificationQueue;
     private int port;
     private Thread serverThread;
-    public TcpListener(BlockingQueue<String> queue){
-        this.queue = queue;
+
+
+    public TcpListener(BlockingQueue<String> authorizationCodeQueue,
+                       BlockingQueue<Boolean> tcpStartUpNotificationQueue){
+        this.authorizationCodeQueue = authorizationCodeQueue;
+        this.tcpStartUpNotificationQueue = tcpStartUpNotificationQueue;
     }
 
     public void startServer(){
-
         Runnable serverTask = () -> {
             try(ServerSocket serverSocket = new ServerSocket(0)) {
                 port = serverSocket.getLocalPort();
+                tcpStartUpNotificationQueue.put(Boolean.TRUE);
                 Socket clientSocket = serverSocket.accept();
                 new ClientTask(clientSocket).run();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 LOG.error("Unable to process client request: " + e.getMessage());
                 throw new RuntimeException("Unable to process client request: " + e.getMessage());
             }
@@ -55,7 +60,7 @@ public class TcpListener implements AutoCloseable{
                     builder.append(line);
                     line = in.readLine();
                 }
-                queue.put(builder.toString());
+                authorizationCodeQueue.put(builder.toString());
             } catch (Exception e) {
                 LOG.error("Error reading response from socket: " + e.getMessage());
                 throw new RuntimeException("Error reading response from socket: " + e.getMessage());
