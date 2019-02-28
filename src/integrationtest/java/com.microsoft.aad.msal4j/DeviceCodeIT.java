@@ -29,7 +29,7 @@ public class DeviceCodeIT {
 
     @BeforeClass
     public void setUp(){
-        labUserProvider = new LabUserProvider();
+        labUserProvider = LabUserProvider.getInstance();
         seleniumDriver = SeleniumExtensions.createDefaultWebDriver();
     }
 

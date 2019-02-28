@@ -36,6 +36,11 @@ public class LabResponse{
     @SerializedName("Users")
     private LabUser user;
 
+    public LabResponse(String appId, LabUser user){
+        this.appId = appId;
+        this.user = user;
+    }
+
     public String getAppId() {
         return appId;
     }

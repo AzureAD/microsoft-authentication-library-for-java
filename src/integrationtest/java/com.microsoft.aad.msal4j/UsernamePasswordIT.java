@@ -40,7 +40,7 @@ public class UsernamePasswordIT {
 
     @BeforeClass
     public void setUp() {
-        labUserProvider = new LabUserProvider();
+        labUserProvider = LabUserProvider.getInstance();
     }
 
     @Test
@@ -50,14 +50,7 @@ public class UsernamePasswordIT {
                 NationalCloud.AZURE_CLOUD,
                 false);
         String password = labUserProvider.getUserPassword(labResponse.getUser());
-        AuthenticationResult result = acquireTokenCommon(labResponse, password);
-
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.getAccessToken());
-        Assert.assertNotNull(result.getRefreshToken());
-        Assert.assertNotNull(result.getIdToken());
-        // TODO AuthenticationResult should have an getAccountInfo API
-        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+        acquireTokenCommon(labResponse, password);
     }
 
     @Test
@@ -67,14 +60,7 @@ public class UsernamePasswordIT {
                 true,
                 true);
         String password = labUserProvider.getUserPassword(labResponse.getUser());
-        AuthenticationResult result = acquireTokenCommon(labResponse, password);
-
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.getAccessToken());
-        Assert.assertNotNull(result.getRefreshToken());
-        Assert.assertNotNull(result.getIdToken());
-        // TODO AuthenticationResult should have an getAccountInfo API
-        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+        acquireTokenCommon(labResponse, password);
     }
 
     @Test
@@ -84,14 +70,7 @@ public class UsernamePasswordIT {
                 true,
                 false);
         String password = labUserProvider.getUserPassword(labResponse.getUser());
-        AuthenticationResult result = acquireTokenCommon(labResponse, password);
-
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.getAccessToken());
-        Assert.assertNotNull(result.getRefreshToken());
-        Assert.assertNotNull(result.getIdToken());
-        // TODO AuthenticationResult should have an getAccountInfo API
-        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+        acquireTokenCommon(labResponse, password);
     }
 
     @Test
@@ -101,14 +80,7 @@ public class UsernamePasswordIT {
                 true,
                 false);
         String password = labUserProvider.getUserPassword(labResponse.getUser());
-        AuthenticationResult result = acquireTokenCommon(labResponse, password);
-
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.getAccessToken());
-        Assert.assertNotNull(result.getRefreshToken());
-        Assert.assertNotNull(result.getIdToken());
-        // TODO AuthenticationResult should have an getAccountInfo API
-        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+        acquireTokenCommon(labResponse, password);
     }
 
     @Test
@@ -118,17 +90,10 @@ public class UsernamePasswordIT {
                 true,
                 false);
         String password = labUserProvider.getUserPassword(labResponse.getUser());
-        AuthenticationResult result = acquireTokenCommon(labResponse, password);
-
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.getAccessToken());
-        Assert.assertNotNull(result.getRefreshToken());
-        Assert.assertNotNull(result.getIdToken());
-        // TODO AuthenticationResult should have an getAccountInfo API
-        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+        acquireTokenCommon(labResponse, password);
     }
 
-    public AuthenticationResult acquireTokenCommon(LabResponse labResponse, String password)
+    public void acquireTokenCommon(LabResponse labResponse, String password)
             throws Exception{
         PublicClientApplication pca = new PublicClientApplication.Builder(
                 labResponse.getAppId()).
@@ -139,7 +104,12 @@ public class UsernamePasswordIT {
                 labResponse.getUser().getUpn(),
                 password).
                 get();
-        return result;
-    }
 
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.getAccessToken());
+        Assert.assertNotNull(result.getRefreshToken());
+        Assert.assertNotNull(result.getIdToken());
+        // TODO AuthenticationResult should have an getAccountInfo API
+        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+    }
 }

@@ -9,37 +9,32 @@ import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-public class TcpListener {
+public class TcpListener implements AutoCloseable{
 
     private final static Logger LOG = LoggerFactory.getLogger(SeleniumExtensions.class);
 
     private BlockingQueue<String> queue;
     private int port;
-
+    private Thread serverThread;
     public TcpListener(BlockingQueue<String> queue){
         this.queue = queue;
     }
 
     public void startServer(){
-        final ExecutorService clientProcessingPool = Executors.newFixedThreadPool(2);
 
         Runnable serverTask = () -> {
-            try {
-                ServerSocket serverSocket = new ServerSocket(0);
+            try(ServerSocket serverSocket = new ServerSocket(0)) {
                 port = serverSocket.getLocalPort();
                 Socket clientSocket = serverSocket.accept();
-                clientProcessingPool.submit(new ClientTask(clientSocket));
-
+                new ClientTask(clientSocket).run();
             } catch (IOException e) {
                 LOG.error("Unable to process client request: " + e.getMessage());
                 throw new RuntimeException("Unable to process client request: " + e.getMessage());
             }
         };
 
-        Thread serverThread = new Thread(serverTask);
+        serverThread = new Thread(serverTask);
         serverThread.start();
     }
 
@@ -55,24 +50,30 @@ public class TcpListener {
             StringBuilder builder = new StringBuilder();
             try(BufferedReader in = new BufferedReader(
                     new InputStreamReader(clientSocket.getInputStream()))) {
-                while(in.ready()){
-                   builder.append(in.readLine());
+                String line = in.readLine();
+                while(!line.equals("")){
+                    builder.append(line);
+                    line = in.readLine();
                 }
                 queue.put(builder.toString());
             } catch (Exception e) {
                 LOG.error("Error reading response from socket: " + e.getMessage());
                 throw new RuntimeException("Error reading response from socket: " + e.getMessage());
-            }
-
-            try {
-                clientSocket.close();
-            } catch (IOException e) {
-                LOG.error("Error closing socket: " + e.getMessage());
+            } finally {
+                try {
+                    clientSocket.close();
+                } catch (IOException e) {
+                    LOG.error("Error closing socket: " + e.getMessage());
+                }
             }
         }
     }
 
     public int getPort() {
         return port;
+    }
+
+    public void close(){
+        serverThread.interrupt();
     }
 }

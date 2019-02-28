@@ -14,13 +14,12 @@ import java.util.concurrent.ExecutionException;
 @Test()
 public class RefreshTokenIT {
 
-    private LabUserProvider labUserProvider;
     private String refreshToken;
     private PublicClientApplication pca;
 
     @BeforeTest
     public void setUp() throws Exception {
-        labUserProvider = new LabUserProvider();
+        LabUserProvider labUserProvider = LabUserProvider.getInstance();
         LabResponse labResponse = labUserProvider.getDefaultUser(
                 NationalCloud.AZURE_CLOUD,
                 false);

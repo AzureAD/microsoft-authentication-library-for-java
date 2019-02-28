@@ -38,12 +38,16 @@ public class AuthorizationCodeIT {
 
     @BeforeClass
     public void setUpLapUserProvider() {
-        labUserProvider = new LabUserProvider();
+        labUserProvider = LabUserProvider.getInstance();
     }
 
     @AfterMethod
-    public void cleanUpBrowser(){
+    public void cleanUp(){
        seleniumDriver.quit();
+       if(queue != null){
+           queue.clear();
+       }
+       tcpListener.close();
     }
 
     @BeforeMethod
@@ -58,15 +62,13 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        String authCode = acquireAuthorizationCodeAutomated(labResponse);
-        AuthenticationResult result = acquireTokenInteractive(labResponse, authCode);
+        acquireTokenCommon(labResponse);
+    }
 
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.getAccessToken());
-        Assert.assertNotNull(result.getRefreshToken());
-        Assert.assertNotNull(result.getIdToken());
-        // TODO AuthenticationResult should have an getAccountInfo API
-        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+    @Test
+    public void acquireTokenWithAuthorizationCode_MSA() {
+        LabResponse labResponse = labUserProvider.getMsaUser();
+        acquireTokenCommon(labResponse);
     }
 
     @Test
@@ -77,15 +79,7 @@ public class AuthorizationCodeIT {
                 true);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        String authCode = acquireAuthorizationCodeAutomated(labResponse);
-        AuthenticationResult result = acquireTokenInteractive(labResponse, authCode);
-
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.getAccessToken());
-        Assert.assertNotNull(result.getRefreshToken());
-        Assert.assertNotNull(result.getIdToken());
-        // TODO AuthenticationResult should have an getAccountInfo API
-        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+        acquireTokenCommon(labResponse);
     }
 
     @Test
@@ -96,15 +90,7 @@ public class AuthorizationCodeIT {
                 true);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        String authCode = acquireAuthorizationCodeAutomated(labResponse);
-        AuthenticationResult result = acquireTokenInteractive(labResponse, authCode);
-
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.getAccessToken());
-        Assert.assertNotNull(result.getRefreshToken());
-        Assert.assertNotNull(result.getIdToken());
-        // TODO AuthenticationResult should have an getAccountInfo API
-        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+        acquireTokenCommon(labResponse);
     }
 
     @Test
@@ -115,15 +101,7 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        String authCode = acquireAuthorizationCodeAutomated(labResponse);
-        AuthenticationResult result = acquireTokenInteractive(labResponse, authCode);
-
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.getAccessToken());
-        Assert.assertNotNull(result.getRefreshToken());
-        Assert.assertNotNull(result.getIdToken());
-        // TODO AuthenticationResult should have an getAccountInfo API
-        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+        acquireTokenCommon(labResponse);
     }
 
     @Test
@@ -134,15 +112,7 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        String authCode = acquireAuthorizationCodeAutomated(labResponse);
-        AuthenticationResult result = acquireTokenInteractive(labResponse, authCode);
-
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.getAccessToken());
-        Assert.assertNotNull(result.getRefreshToken());
-        Assert.assertNotNull(result.getIdToken());
-        // TODO AuthenticationResult should have an getAccountInfo API
-        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+        acquireTokenCommon(labResponse);
     }
 
     @Test
@@ -153,15 +123,7 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        String authCode = acquireAuthorizationCodeAutomated(labResponse);
-        AuthenticationResult result = acquireTokenInteractive(labResponse, authCode);
-
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.getAccessToken());
-        Assert.assertNotNull(result.getRefreshToken());
-        Assert.assertNotNull(result.getIdToken());
-        // TODO AuthenticationResult should have an getAccountInfo API
-        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+        acquireTokenCommon(labResponse);
     }
 
     @Test
@@ -172,15 +134,7 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        String authCode = acquireAuthorizationCodeAutomated(labResponse);
-        AuthenticationResult result = acquireTokenInteractive(labResponse, authCode);
-
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.getAccessToken());
-        Assert.assertNotNull(result.getRefreshToken());
-        Assert.assertNotNull(result.getIdToken());
-        // TODO AuthenticationResult should have an getAccountInfo API
-        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+        acquireTokenCommon(labResponse);
     }
 
     @Test
@@ -191,15 +145,7 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        String authCode = acquireAuthorizationCodeAutomated(labResponse);
-        AuthenticationResult result = acquireTokenInteractive(labResponse, authCode);
-
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.getAccessToken());
-        Assert.assertNotNull(result.getRefreshToken());
-        Assert.assertNotNull(result.getIdToken());
-        // TODO AuthenticationResult should have an getAccountInfo API
-        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+        acquireTokenCommon(labResponse);
     }
 
     @Test
@@ -210,6 +156,10 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
+        acquireTokenCommon(labResponse);
+    }
+
+    private void acquireTokenCommon(LabResponse labResponse){
         String authCode = acquireAuthorizationCodeAutomated(labResponse);
         AuthenticationResult result = acquireTokenInteractive(labResponse, authCode);
 
@@ -247,7 +197,7 @@ public class AuthorizationCodeIT {
         String authServerResponse;
         try {
             // Wait for TCP listener to be up and running
-            TimeUnit.SECONDS.sleep(5);
+            TimeUnit.SECONDS.sleep(2);
             runSeleniumAutomatedLogin(labUserData);
             authServerResponse = getResponseFromTcpListener();
         } catch(Exception e){
@@ -273,8 +223,10 @@ public class AuthorizationCodeIT {
     private String getResponseFromTcpListener(){
         String response;
         try {
-            response = queue.poll(15, TimeUnit.SECONDS);
-
+            response = queue.poll(20, TimeUnit.SECONDS);
+            if (response == null){
+                System.out.println("response is null");
+            }
             if (Strings.isNullOrEmpty(response)){
                 LOG.error("Server response is null");
                 throw new NullPointerException("Server response is null");
@@ -313,6 +265,4 @@ public class AuthorizationCodeIT {
 
         return redirectUrl;
     }
-
-
 }

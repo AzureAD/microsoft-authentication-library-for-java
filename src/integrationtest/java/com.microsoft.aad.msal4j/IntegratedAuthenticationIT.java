@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import sun.net.www.protocol.http.AuthenticationInfo;
 
 import java.util.Collections;
 
@@ -19,7 +20,7 @@ public class IntegratedAuthenticationIT {
 
     @BeforeClass
     public void setUp() {
-        labUserProvider = new LabUserProvider();
+        labUserProvider = LabUserProvider.getInstance();
     }
 
     @Test
@@ -30,14 +31,8 @@ public class IntegratedAuthenticationIT {
                 true,
                 true);
         labUserProvider.getUserPassword(labResponse.getUser());
-        AuthenticationResult result = acquireTokenWithIntegratedWindowsAuthentication(labResponse);
+        acquireTokenCommon(labResponse);
 
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.getAccessToken());
-        Assert.assertNotNull(result.getRefreshToken());
-        Assert.assertNotNull(result.getIdToken());
-        // TODO AuthenticationResult should have an getAccountInfo API
-        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
     }
 
     @Test
@@ -49,14 +44,7 @@ public class IntegratedAuthenticationIT {
                 false);
 
         labUserProvider.getUserPassword(labResponse.getUser());
-        AuthenticationResult result = acquireTokenWithIntegratedWindowsAuthentication(labResponse);
-
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.getAccessToken());
-        Assert.assertNotNull(result.getRefreshToken());
-        Assert.assertNotNull(result.getIdToken());
-        // TODO AuthenticationResult should have an getAccountInfo API
-        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+        acquireTokenCommon(labResponse);
     }
 
     @Test
@@ -67,14 +55,7 @@ public class IntegratedAuthenticationIT {
                 true,
                 false);
 
-        AuthenticationResult result = acquireTokenWithIntegratedWindowsAuthentication(labResponse);
-
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.getAccessToken());
-        Assert.assertNotNull(result.getRefreshToken());
-        Assert.assertNotNull(result.getIdToken());
-        // TODO AuthenticationResult should have an getAccountInfo API
-        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+        acquireTokenCommon(labResponse);
     }
 
     @Test
@@ -85,28 +66,23 @@ public class IntegratedAuthenticationIT {
                 true,
                 false);
 
-        AuthenticationResult result = acquireTokenWithIntegratedWindowsAuthentication(labResponse);
+        acquireTokenCommon(labResponse);
+    }
+
+    private void acquireTokenCommon(
+            LabResponse labResponse) throws Exception{
+        PublicClientApplication pca = new PublicClientApplication.Builder(
+                labResponse.getAppId()).
+                authority(TestConstants.AUTHORITY_ORGANIZATIONS).
+                build();
+        AuthenticationResult result = pca.acquireTokenByKerberosAuth(
+                Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                labResponse.getUser().getUpn()).
+                get();
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.getAccessToken());
         Assert.assertNotNull(result.getRefreshToken());
         Assert.assertNotNull(result.getIdToken());
-        // TODO AuthenticationResult should have an getAccountInfo API
-        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
-    }
-
-    private AuthenticationResult acquireTokenWithIntegratedWindowsAuthentication(
-            LabResponse labResponse) throws Exception{
-        AuthenticationResult result;
-
-        PublicClientApplication pca = new PublicClientApplication.Builder(
-                labResponse.getAppId()).
-                authority(TestConstants.AUTHORITY_ORGANIZATIONS).
-                build();
-        result = pca.acquireTokenByKerberosAuth(
-                Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-                labResponse.getUser().getUpn()).
-                get();
-        return result;
     }
 }

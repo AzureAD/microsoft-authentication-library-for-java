@@ -84,7 +84,7 @@ public class SeleniumExtensions {
 
         if (user.getFederationProvider() == FederationProvider.ADFSV2 && user.isFederated()){
             LOG.info("Loggin in ... ADFS-V2 - Entering the username in ADFSv2 form");
-            driver.findElement(new By.ById(SeleniumConstants.ADFSV2WEBUSERNAMEINPUTID)).
+            driver.findElement(new By.ById(SeleniumConstants.ADFSV2_WEB_USERNAME_INPUT_ID)).
                     sendKeys(user.getUpn());
         }
 

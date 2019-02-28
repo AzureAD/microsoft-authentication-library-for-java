@@ -32,14 +32,24 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class LabUserProvider {
+
+    private static LabUserProvider instance;
+
     private final KeyVaultSecretsProvider keyVaultSecretsProvider;
     private final LabService labService;
     private Map<UserQuery, LabResponse> userCache;
 
-    public LabUserProvider(){
+    private LabUserProvider(){
         keyVaultSecretsProvider = new KeyVaultSecretsProvider();
         labService = new LabService();
         userCache = new HashMap<>();
+    }
+
+    public static synchronized LabUserProvider getInstance(){
+        if(instance == null){
+            instance = new LabUserProvider();
+        }
+        return instance;
     }
 
     public LabResponse getDefaultUser(NationalCloud cloud, boolean useBetaEndpoint) {
@@ -74,6 +84,18 @@ public class LabUserProvider {
                 useBetaEnpoint(useBetaEndpoint).
                 build();
         return getLabUser(query);
+    }
+
+    // MSA users are not exposed in lab users API. Have to get them directly from keyvault.
+    public LabResponse getMsaUser(){
+        String userName =  keyVaultSecretsProvider.getSecret(LabConstants.USER_MSA_USERNAME_URL);
+        String password = keyVaultSecretsProvider.getSecret(LabConstants.USER_MSA_PASSWORD_URL);
+
+        LabUser user = new LabUser();
+        user.setUpn(userName);
+        user.setPassword(password);
+
+        return new LabResponse(LabConstants.MSA_APP_ID, user);
     }
 
     private LabResponse getLabUser(UserQuery userQuery){

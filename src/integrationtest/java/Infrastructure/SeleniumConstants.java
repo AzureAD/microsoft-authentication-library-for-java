@@ -28,79 +28,35 @@
 package Infrastructure;
 
 public class SeleniumConstants {
-    // Resources
-    public final static String MSGRAPH = "https://graph.microsoft.com";
-    public final static String EXCHANGE = "https://outlook.office365.com/";
 
-    //MSAL test app
-    public final static String ACQUIRETOKENBUTTONID = "acquireToken_button";
-    public final static String ACQUIRETOKENWITHPROMPTBEHAVIORALWAYSID = "acquireTokenPromptBehaviorAlways";
-    public final static String ACQUIRETOKENSILENTBUTTONID = "acquireTokenSilent_button";
-    public final static String CLIENTIDENTRYID = "clientIdEntry";
-    public final static String RESOURCEENTRYID = "resourceEntry";
-    public final static String SECONDPAGEID = "secondPage";
-    public final static String CLEARCACHEID = "clearCache";
-    public final static String SAVEID = "saveButton";
-    public final static String WEBUPNINPUTID = "i0116";
-    public final static String ADFSV4WEBPASSWORDID = "passwordInput";
-    public final static String ADFSV4WEBSUBMITID = "submitButton";
-    public final static String WEBPASSWORDID = "i0118";
-    public final static String WEBSUBMITID = "idSIButton9";
-    public final static String TESTRESULTID = "testResult";
-    public final static String TESTRESULTSUCCESSFULMESSAGE = "Result: Success";
-    public final static String TESTRESULTFAILUREMESSAGE = "Result: Failure";
-    public final static String CLEARALLCACHEID = "ClearAllCache";
-
-    public final static String DEFAULTSCOPE = "User.Read";
-    public final static String ACQUIREPAGEID = "AcquirePage";
-    public final static String CACHEPAGEID = "CachePage";
-    public final static String SETTINGSPAGEID = "SettingsPage";
-    public final static String LOGPAGEID = "LogPage";
-    public final static String ACQUIREPAGEANDROIDID = "Acquire";
-    public final static String CACHEPAGEANDROIDID = "Cache";
-    public final static String SETTINGSPAGEANDROIDID = "Settings";
-    public final static String LOGPAGEANDROIDID = "Log";
-    public final static String SCOPESENTRYID = "scopesList";
-    public final static String UIBEHAVIORPICKERID = "uiBehavior";
-    public final static String SELECTUSER = "userList";
-    public final static String USERNOTSELECTED = "not selected";
-    public final static String USERMISSINGFROMRESPONSE = "Missing from the token response";
-    public final static String REDIRECTURIONANDROID = "urn:ietf:wg:oauth:2.0:oob";
-    public final static String REDIRECTURIENTRYID = "redirectUriEntry";
+    public final static String WEB_UPN_INPUT_ID = "i0116";
+    public final static String ADFSV4_WEB_PASSWORD_ID = "passwordInput";
+    public final static String ADFSV4_WEB_SUBMIT_ID = "submitButton";
+    public final static String WEB_PASSWORD_ID = "i0118";
+    public final static String WEB_SUBMIT_ID = "idSIButton9";
 
     // ADFSv2 fields
-    public final static String ADFSV2WEBUSERNAMEINPUTID = "ContentPlaceHolder1_UsernameTextBox";
-    public final static String ADFSV2WEBPASSWORDINPUTID = "ContentPlaceHolder1_PasswordTextBox";
-    public final static String ADFSV2WEBSUBMITBUTTONID = "ContentPlaceHolder1_SubmitButton";
+    public final static String ADFSV2_WEB_USERNAME_INPUT_ID = "ContentPlaceHolder1_UsernameTextBox";
+    public final static String ADFSV2_WEB_PASSWORD_INPUT_ID = "ContentPlaceHolder1_PasswordTextBox";
+    public final static String ADFSV2_WEB_SUBMIT_BUTTON_ID = "ContentPlaceHolder1_SubmitButton";
 
     //MSAL B2C
-    public final static String AUTHORITYPICKERID = "b2cAuthorityPicker";
-    public final static String WEBUPNB2CLOCALINPUTID = "logonIdentifier";
-    public final static String B2CWEBSUBMITID = "next";
-    public final static String B2CWEBPASSWORDID = "password";
-    public final static String B2CLOGINAUTHORITY = "b2clogin.com";
-    public final static String MICROSOFTONLINEAUTHORITY = "login.microsoftonline.com";
-    public final static String NONB2CAUTHORITY = "non-b2c authority";
-    public final static String B2CEDITPROFILEAUTHORITY = "Edit profile policy authority";
-    public final static String FACEBOOKACCOUNTID = "FacebookExchange";
-    public final static String WEBUPNB2CFACEBOOKINPUTID = "m_login_email";
-    public final static String B2CWEBPASSWORDFACEBOOKID = "m_login_password";
-    public final static String B2CFACEBOOKSUBMITID = "u_0_5";
-    public final static String GOOGLEACCOUNTID = "GoogleExchange";
-    public final static String WEBUPNB2CGOOGLEINPUTID = "Email";
-    public final static String B2CWEBPASSWORDGOOGLEID = "Passwd";
-    public final static String B2CGOOGLENEXTID = "next";
-    public final static String B2CGOOGLESIGNINID = "signIn";
-    public final static String B2CEDITPROFILECONTINUEID = "continue";
-
-    // these should match the product enum values
-    public final static String UIBEHAVIORCONSENT = "consent";
-    public final static String UIBEHAVIORSELECTACCOUNT = "select_account";
-    public final static String UIBEHAVIORLOGIN = "login";
-    public final static String UIBEHAVIORNOPROMPT = "no_prompt";
-
-    // Test Constants
-    public final static int RESULTCHECKPOLLIINTERVAL = 1000;
-    public final static int MAXIMUMRESULTCHECKRETRYATTEMPTS = 20;
-
+    public final static String AUTHORITY_PICKER_ID = "b2cAuthorityPicker";
+    public final static String WEB_UPN_B2C_LOCAL_INPUT_ID = "logonIdentifier";
+    public final static String B2C_WEB_SUBMIT_ID = "next";
+    public final static String B2C_WEB_PASSWORD_ID = "password";
+    public final static String B2C_LOGIN_AUTHORITY = "b2clogin.com";
+    public final static String MICROSOFT_ONLINE_AUTHORITY = "login.microsoftonline.com";
+    public final static String NON_B2C_AUTHORITY = "non-b2c authority";
+    public final static String B2C_EDIT_PROFILE_AUTHORITY = "Edit profile policy authority";
+    public final static String FACEBOOK_ACCOUNT_ID = "FacebookExchange";
+    public final static String WEB_UPN_B2C_FACEBOOK_INPUT_ID = "m_login_email";
+    public final static String B2C_WEB_PASSWORD_FACEBOOK_ID = "m_login_password";
+    public final static String B2C_FACEBOOK_SUBMIT_ID = "u_0_5";
+    public final static String GOOGLE_ACCOUNT_ID = "GoogleExchange";
+    public final static String WEB_UPN_B2C_GOOGLE_INPUT_ID = "Email";
+    public final static String B2C_WEB_PASSWORD_GOOGLE_ID = "Passwd";
+    public final static String B2C_GOOGLE_NEXT_ID = "next";
+    public final static String B2C_GOOGLE_SIGNIN_ID = "signIn";
+    public final static String B2C_EDIT_PROFILE_CONTINUE_ID = "continue";
 }
