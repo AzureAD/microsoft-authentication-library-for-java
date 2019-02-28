@@ -28,19 +28,16 @@ import com.nimbusds.oauth2.sdk.AuthorizationGrant;
 import com.nimbusds.oauth2.sdk.ResourceOwnerPasswordCredentialsGrant;
 import com.nimbusds.oauth2.sdk.SAML2BearerGrant;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
-import org.apache.commons.codec.binary.Base64;
-
-import java.io.UnsupportedEncodingException;
+import org.apache.commons.codec.binary.Base64;;
 import java.net.URLEncoder;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
-class AcquireTokenCallable extends MsalCallable<AuthenticationResult> {
+public class AcquireTokenByAuthorisationGrantSupplier extends AuthenticationResultSupplier {
+
     private AbstractMsalAuthorizationGrant authGrant;
     private ClientAuthentication clientAuth;
 
-    AcquireTokenCallable(ClientApplicationBase clientApplication,
-                         AbstractMsalAuthorizationGrant authGrant, ClientAuthentication clientAuth) {
+    AcquireTokenByAuthorisationGrantSupplier(ClientApplicationBase clientApplication,
+                                             AbstractMsalAuthorizationGrant authGrant, ClientAuthentication clientAuth) {
         super(clientApplication);
         this.authGrant = authGrant;
         this.clientAuth = clientAuth;
@@ -67,51 +64,6 @@ class AcquireTokenCallable extends MsalCallable<AuthenticationResult> {
         }
 
         return clientApplication.acquireTokenCommon(this.authGrant, this.clientAuth, this.headers);
-    }
-
-    @Override
-    void logResult(AuthenticationResult result, ClientDataHttpHeaders headers)
-            throws NoSuchAlgorithmException, UnsupportedEncodingException {
-
-        if (!StringHelper.isBlank(result.getAccessToken())) {
-
-            String accessTokenHash = this.computeSha256Hash(result
-                    .getAccessToken());
-            if (!StringHelper.isBlank(result.getRefreshToken())) {
-                String refreshTokenHash = this.computeSha256Hash(result
-                        .getRefreshToken());
-                if(clientApplication.isLogPii()){
-                    clientApplication.log.debug(LogHelper.createMessage(String
-                                    .format("Access Token with hash '%s' and Refresh Token with hash '%s' returned",
-                                            accessTokenHash, refreshTokenHash),
-                            headers.getHeaderCorrelationIdValue()));
-                }
-                else{
-                    clientApplication.log.debug(LogHelper.createMessage("Access Token and Refresh Token were returned",
-                            headers.getHeaderCorrelationIdValue()));
-                }
-            }
-            else {
-                if(clientApplication.isLogPii()){
-                    clientApplication.log.debug(LogHelper.createMessage(String
-                                    .format("Access Token with hash '%s' returned",
-                                            accessTokenHash),
-                            headers.getHeaderCorrelationIdValue()));
-                }
-                else{
-                    clientApplication.log.debug(LogHelper.createMessage("Access Token was returned",
-                            headers.getHeaderCorrelationIdValue()));
-                }
-            }
-        }
-    }
-
-    private String computeSha256Hash(String input)
-            throws NoSuchAlgorithmException, UnsupportedEncodingException {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        digest.update(input.getBytes("UTF-8"));
-        byte[] hash = digest.digest();
-        return Base64.encodeBase64URLSafeString(hash);
     }
 
     /**
@@ -165,7 +117,7 @@ class AcquireTokenCallable extends MsalCallable<AuthenticationResult> {
 
         // Get the realm information
         UserDiscoveryResponse userRealmResponse = UserDiscoveryRequest.execute(
-                userRealmEndpoint, 
+                userRealmEndpoint,
                 this.headers.getReadonlyHeaderMap(),
                 clientApplication.getProxy(),
                 clientApplication.getSslSocketFactory());
