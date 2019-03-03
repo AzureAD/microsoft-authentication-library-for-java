@@ -34,6 +34,7 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.util.Strings;
 
 import java.util.concurrent.TimeUnit;
 
@@ -44,18 +45,25 @@ public class SeleniumExtensions {
     private SeleniumExtensions(){}
 
     public static WebDriver createDefaultWebDriver(){
+
         ChromeOptions options = new ChromeOptions();
         //no visual rendering, remove when debugging
         options.addArguments("--headless");
 
+        // sets location where chromedriver.exe is installed
+        String chromeDriverPath = System.getenv("ChromeWebDriver");
+        if(!Strings.isNullOrEmpty(chromeDriverPath)) {
+            System.setProperty("webdriver.chrome.driver", chromeDriverPath);
+        }
+
         ChromeDriver driver = new ChromeDriver(options);
-        driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 
         return driver;
     }
 
     public static WebElement waitForElementToBeVisibleAndEnable(WebDriver driver, By by){
-        WebDriverWait webDriverWait = new WebDriverWait(driver, 10);
+        WebDriverWait webDriverWait = new WebDriverWait(driver, 15);
         return webDriverWait.until((dr) ->
         {
             try {

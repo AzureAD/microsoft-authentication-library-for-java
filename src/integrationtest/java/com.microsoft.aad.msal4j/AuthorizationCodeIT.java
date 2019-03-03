@@ -229,7 +229,7 @@ public class AuthorizationCodeIT {
     private String getResponseFromTcpListener(){
         String response;
         try {
-            response = AuthorizationCodeQueue.poll(20, TimeUnit.SECONDS);
+            response = AuthorizationCodeQueue.poll(30, TimeUnit.SECONDS);
             if (Strings.isNullOrEmpty(response)){
                 LOG.error("Server response is null");
                 throw new NullPointerException("Server response is null");
