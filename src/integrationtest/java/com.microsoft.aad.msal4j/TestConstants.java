@@ -8,4 +8,5 @@ public class TestConstants {
     public final static String AUTHORITY_MICROSOFT = "https://login.microsoftonline.com/microsoft.onmicrosoft.com";
 
     public final static String LOCALHOST = "http://localhost:";
+    public final static String LOCAL_FLAG_ENV_VAR = "MSAL_JAVA_RUN_LOCAL";
 }

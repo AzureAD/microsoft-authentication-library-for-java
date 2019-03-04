@@ -7,11 +7,9 @@
 	<packaging>jar</packaging>
 	<name>msal4j</name>
 	<description>
-    Azure active directory library for Java gives you the ability to add Windows Azure Active Directory 
-    authentication to your web application with just a few lines of additional code. Using our ADAL SDKs you 
-    can quickly and easily extend your existing application to all the employees that use Windows Azure 
-    AD and Active Directory on-premises using Active Directory Federation Services, including Office365 
-    customers.
+    Microsoft Authentication Library for Java gives you the ability to obtain tokens from Azure AD v2 (work and school
+		accounts, MSA) and Azure AD B2C, gaining access to Microsoft Cloud API and any other API secured by Microsoft
+		identities
   </description>
 	<url>https://github.com/AzureAD/azure-activedirectory-library-for-java</url>
 	<developers>
@@ -27,7 +25,7 @@
 	</licenses>
 	<inceptionYear>2013</inceptionYear>
 	<scm>
-		<url>https://github.com/AzureAD/azure-activedirectory-library-for-java.git</url>
+		<url>https://github.com/AzureAD/microsoft-authentication-library-for-java</url>
 	</scm>
 
 	<properties>
@@ -137,6 +135,16 @@
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
 			<version>26.0-jre</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.0.13</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.6</version>
 		</dependency>
 	</dependencies>
 

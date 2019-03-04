@@ -1,7 +1,7 @@
 package com.microsoft.aad.msal4j;
 
-import Infrastructure.SeleniumExtensions;
-import Infrastructure.TcpListener;
+import infrastructure.SeleniumExtensions;
+import infrastructure.TcpListener;
 import lapapi.FederationProvider;
 import lapapi.LabResponse;
 import lapapi.LabUserProvider;
@@ -205,8 +205,11 @@ public class AuthorizationCodeIT {
             }
             runSeleniumAutomatedLogin(labUserData);
             authServerResponse = getResponseFromTcpListener();
-
         } catch(Exception e){
+            if(!Strings.isNullOrEmpty(
+                    System.getenv(TestConstants.LOCAL_FLAG_ENV_VAR))){
+                SeleniumExtensions.takeScreenShot(seleniumDriver);
+            }
             LOG.error("Error running automated selenium login: " + e.getMessage());
             throw new RuntimeException("Error running automated selenium login: " + e.getMessage());
         }

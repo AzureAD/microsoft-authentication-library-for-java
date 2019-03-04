@@ -21,12 +21,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package Infrastructure;
+package infrastructure;
 
 import lapapi.FederationProvider;
 import lapapi.LabUser;
+import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.By;
+import org.openqa.selenium.OutputType;
 import org.openqa.selenium.StaleElementReferenceException;
+import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -34,8 +37,8 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.util.Strings;
 
+import java.io.File;
 import java.util.concurrent.TimeUnit;
 
 public class SeleniumExtensions {
@@ -45,16 +48,9 @@ public class SeleniumExtensions {
     private SeleniumExtensions(){}
 
     public static WebDriver createDefaultWebDriver(){
-
         ChromeOptions options = new ChromeOptions();
         //no visual rendering, remove when debugging
         options.addArguments("--headless");
-
-        // sets location where chromedriver.exe is installed
-        String chromeDriverPath = System.getenv("ChromeWebDriver");
-        if(!Strings.isNullOrEmpty(chromeDriverPath)) {
-            System.setProperty("webdriver.chrome.driver", chromeDriverPath);
-        }
 
         ChromeDriver driver = new ChromeDriver(options);
         driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
@@ -101,5 +97,17 @@ public class SeleniumExtensions {
         LOG.info("Loggin in ... click submit");
         waitForElementToBeVisibleAndEnable(driver, new By.ById(fields.getPasswordSigInButtonId())).
                 click();
+    }
+
+    public static void takeScreenShot(WebDriver driver){
+        String file = System.getenv("BUILD_STAGINGDIRECTORY");
+        File destination = new File(file + "" + "/SeleniumError.png");
+        File scrFile = ((TakesScreenshot)driver).getScreenshotAs(OutputType.FILE);
+        try {
+            FileUtils.copyFile(scrFile, destination);
+            LOG.info("Screenshot can be found at: " + destination.getPath());
+        } catch(Exception exception){
+            LOG.error("Error taking screenshot: " + exception.getMessage());
+        }
     }
 }

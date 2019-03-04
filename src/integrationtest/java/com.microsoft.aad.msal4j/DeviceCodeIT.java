@@ -1,6 +1,6 @@
 package com.microsoft.aad.msal4j;
 
-import Infrastructure.SeleniumExtensions;
+import infrastructure.SeleniumExtensions;
 import lapapi.LabResponse;
 import lapapi.LabUser;
 import lapapi.LabUserProvider;
@@ -58,19 +58,34 @@ public class DeviceCodeIT {
     }
 
     private void runAutomatedDeviceCodeFlow(DeviceCode deviceCode, LabUser user){
+        boolean isRunningLocally = !Strings.isNullOrEmpty(
+                System.getenv(TestConstants.LOCAL_FLAG_ENV_VAR));
+        LOG.info("Device code running locally: " + isRunningLocally);
         try{
-
+            String deviceCodeFormId;
+            String continueButtonId;
+            if(isRunningLocally){
+                deviceCodeFormId = "otc";
+                continueButtonId = "idSIButton9";
+            } else {
+                deviceCodeFormId = "code";
+                continueButtonId = "continueBtn";
+            }
             LOG.info("Loggin in ... Entering device code");
             seleniumDriver.navigate().to(deviceCode.getVerificationUrl());
-            seleniumDriver.findElement(new By.ById("otc")).sendKeys(deviceCode.getUserCode());
+            seleniumDriver.findElement(new By.ById(deviceCodeFormId)).sendKeys(deviceCode.getUserCode());
+
             LOG.info("Loggin in ... click continue");
             WebElement continueBtn = SeleniumExtensions.waitForElementToBeVisibleAndEnable(
                    seleniumDriver,
-                   new By.ById("idSIButton9"));
+                   new By.ById(continueButtonId));
             continueBtn.click();
 
             SeleniumExtensions.performLogin(seleniumDriver, user);
         } catch(Exception e){
+            if(!isRunningLocally){
+                SeleniumExtensions.takeScreenShot(seleniumDriver);
+            }
             LOG.error("Browser automation failed: " + e.getMessage());
             throw new RuntimeException("Browser automation failed: " + e.getMessage());
         }

@@ -25,7 +25,7 @@
 //
 //------------------------------------------------------------------------------
 
-package Infrastructure;
+package infrastructure;
 
 public class SeleniumConstants {
 
