@@ -65,13 +65,6 @@ public class AuthorizationCodeIT {
         assertAcquireTokenCommon(labResponse);
     }
 
-    // @Test
-    // Temp disabling test while selenium problem on build server is solved
-    public void acquireTokenWithAuthorizationCode_MSA() {
-        LabResponse labResponse = labUserProvider.getMsaUser();
-        assertAcquireTokenCommon(labResponse);
-    }
-
     @Test
     public void acquireTokenWithAuthorizationCode_ADFSv2019_Federated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
@@ -82,7 +75,7 @@ public class AuthorizationCodeIT {
 
         assertAcquireTokenCommon(labResponse);
     }
-
+    
     @Test
     public void acquireTokenWithAuthorizationCode_ADFSv2019_NotFederated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
