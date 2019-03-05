@@ -11,7 +11,7 @@
 		accounts, MSA) and Azure AD B2C, gaining access to Microsoft Cloud API and any other API secured by Microsoft
 		identities
   </description>
-	<url>https://github.com/AzureAD/azure-activedirectory-library-for-java</url>
+	<url>https://github.com/AzureAD/microsoft-authentication-library-for-java</url>
 	<developers>
 		<developer>
 			<id>msopentech</id>
