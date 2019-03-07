@@ -143,6 +143,10 @@ abstract public class ClientApplicationBase {
         }
     }
 
+    protected RequestContext getRequestContext(){
+        return new RequestContext(clientId);
+    }
+
     /**
      * Acquires security token from the authority using an authorization code
      * previously received.
