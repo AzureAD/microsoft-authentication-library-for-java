@@ -37,20 +37,15 @@ public class MsalDeviceCodeAuthorizationGrant extends AbstractMsalAuthorizationG
 
     protected String correlationId;
 
-    public String getCorrelationId() {
-        return correlationId;
-    }
-
     /**
      *  Create a new device code grant object from a device code and a resource.
      *
-     * @param deviceCode  The device code.
      * @param scopes    The resource for which the device code was acquired.
      */
-    MsalDeviceCodeAuthorizationGrant(final DeviceCode deviceCode, final String scopes) {
+    MsalDeviceCodeAuthorizationGrant(DeviceCode deviceCode, final String scopes) {
         this.deviceCode = deviceCode;
-        this.scopes = scopes;
         this.correlationId = deviceCode.getCorrelationId();
+        this.scopes = scopes;
     }
 
     /**
@@ -67,5 +62,9 @@ public class MsalDeviceCodeAuthorizationGrant extends AbstractMsalAuthorizationG
         outParams.put("client_info", "1");
 
         return outParams;
+    }
+
+    public String getCorrelationId() {
+        return correlationId;
     }
 }

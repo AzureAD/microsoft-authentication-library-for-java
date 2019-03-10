@@ -23,41 +23,30 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.nimbusds.oauth2.sdk.AuthorizationGrant;
+import com.nimbusds.oauth2.sdk.JWTBearerGrant;
+
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-import com.nimbusds.oauth2.sdk.AuthorizationGrant;
-
 class MsalOAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
 
-    private AuthorizationGrant grant = null;
+    private AuthorizationGrant grant;
     private final Map<String, String> params;
 
-    /**
-     * init standard scopes
-     */
-    private MsalOAuthAuthorizationGrant() {
-        params = new LinkedHashMap<>();
-
-        params.put(SCOPE_PARAM_NAME, COMMON_SCOPES_PARAM);
-    }
 
     MsalOAuthAuthorizationGrant(final AuthorizationGrant grant, Set<String> scopes) {
-        this();
         this.grant = grant;
-
-        String scopesStr = scopes != null ? String.join(" ", scopes) : null;
-        if (!StringHelper.isBlank(scopesStr)) {
-            params.put(SCOPE_PARAM_NAME, params.get(SCOPE_PARAM_NAME) + SCOPES_DELIMITER + scopesStr);
-        }
+        this.params = convertScopesToParameters(scopes);
     }
 
     MsalOAuthAuthorizationGrant(final AuthorizationGrant grant,
                                 final Map<String, String> params) {
-        this();
         this.grant = grant;
+
+        this.params = initializeStandardParamaters();
         if(params != null){
             this.params.putAll(params);
         }
@@ -70,6 +59,29 @@ class MsalOAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
         outParams.putAll(grant.toParameters());
 
         return Collections.unmodifiableMap(outParams);
+    }
+
+
+    private Map<String, String> convertScopesToParameters(Set<String> scopes){
+        Map<String, String> parameters = initializeStandardParamaters();
+
+        String scopesStr = scopes != null ? String.join(" ", scopes) : null;
+        if (!StringHelper.isBlank(scopesStr)) {
+            parameters.put(SCOPE_PARAM_NAME, parameters.get(SCOPE_PARAM_NAME) + SCOPES_DELIMITER + scopesStr);
+        }
+
+        if(grant instanceof JWTBearerGrant){
+            parameters.put("requested_token_use", "on_behalf_of");
+        }
+        return parameters;
+    }
+
+
+    private Map<String, String> initializeStandardParamaters(){
+        Map<String, String> parameters = new LinkedHashMap<>();
+        parameters.put(SCOPE_PARAM_NAME, COMMON_SCOPES_PARAM);
+
+        return parameters;
     }
 
     AuthorizationGrant getAuthorizationGrant() {

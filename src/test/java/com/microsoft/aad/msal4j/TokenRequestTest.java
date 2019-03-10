@@ -23,14 +23,10 @@
 
 package com.microsoft.aad.msal4j;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.HashSet;
-
-import com.nimbusds.oauth2.sdk.*;
+import com.nimbusds.oauth2.sdk.ErrorObject;
+import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.oauth2.sdk.SerializeException;
+import com.nimbusds.oauth2.sdk.TokenErrorResponse;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import com.nimbusds.oauth2.sdk.auth.ClientSecretPost;
 import com.nimbusds.oauth2.sdk.auth.Secret;
@@ -45,9 +41,16 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Collections;
+
 @Test(groups = { "checkin" })
 @PrepareForTest(TokenErrorResponse.class)
-public class AdalTokenRequestTest extends AbstractAdalTests {
+public class TokenRequestTest extends AbstractAdalTests {
 
     @Test
     public void executeOAuthRequest_SCBadRequestErrorInteractionRequired_AdalClaimsChallengeExceptionThrown()
@@ -55,14 +58,18 @@ public class AdalTokenRequestTest extends AbstractAdalTests {
             ParseException, AuthenticationException, IOException,
             java.text.ParseException, URISyntaxException {
 
-        AuthorizationGrant ag = new AuthorizationCodeGrant(
-                new AuthorizationCode("code"),
-                new URI("http://my.redirect.com"));
-        MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(ag, new HashSet<>());
+        final ClientAuthentication ca = new ClientSecretPost(
+                new ClientID("id"), new Secret("secret"));
+        final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
+                Collections.singleton("default-scope"),
+                "code",
+                new URI("http://my.redirect.com"),
+                ca,
+                new RequestContext("id", "corr-id"));
 
-        AdalTokenRequest request = PowerMock.createPartialMock(
-                AdalTokenRequest.class, new String[]{"toOAuthRequest"},
-                new URL("http://login.windows.net"), null, grant, null, null, null);
+        TokenRequest request = PowerMock.createPartialMock(
+                TokenRequest.class, new String[]{"toOAuthRequest"},
+                new URL("http://login.windows.net"), acr, null);
         AdalOAuthRequest adalOAuthHttpRequest = PowerMock
                 .createMock(AdalOAuthRequest.class);
 
@@ -100,13 +107,15 @@ public class AdalTokenRequestTest extends AbstractAdalTests {
             URISyntaxException {
         final ClientAuthentication ca = new ClientSecretPost(
                 new ClientID("id"), new Secret("secret"));
-        final AuthorizationGrant ag = new AuthorizationCodeGrant(
-                new AuthorizationCode("code"),
-                new URI("http://my.redirect.com"));
-        final MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(ag, new HashSet<>());
-        final ClientDataHttpHeaders cdhh = new ClientDataHttpHeaders("corr-id");
-        final AdalTokenRequest request = new AdalTokenRequest(null, ca, grant,
-                cdhh.getReadonlyHeaderMap(), null, null);
+        final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
+                Collections.singleton("default-scope"),
+                "code",
+                new URI("http://my.redirect.com"),
+                ca,
+                new RequestContext("id", "corr-id"));
+
+        final ServiceBundle sb = new ServiceBundle(null, null, null);
+        final TokenRequest request = new TokenRequest(null, acr, sb);
         Assert.assertNotNull(request);
         request.executeOAuthRequestAndProcessResponse();
     }
@@ -116,15 +125,16 @@ public class AdalTokenRequestTest extends AbstractAdalTests {
             URISyntaxException {
         final ClientAuthentication ca = new ClientSecretPost(
                 new ClientID("id"), new Secret("secret"));
-        final AuthorizationGrant ag = new AuthorizationCodeGrant(
-                new AuthorizationCode("code"),
-                new URI("http://my.redirect.com"));
-        final MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(ag,
-                new HashSet<>());
-        final ClientDataHttpHeaders cdhh = new ClientDataHttpHeaders("corr-id");
-        final AdalTokenRequest request = new AdalTokenRequest(new URL(
-                "http://login.windows.net"), ca, grant,
-                cdhh.getReadonlyHeaderMap(), null, null);
+        final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
+                Collections.singleton("default-scope"),
+                "code",
+                new URI("http://my.redirect.com"),
+                ca,
+                new RequestContext("id", "corr-id"));
+        final TokenRequest request = new TokenRequest(
+                new URL("http://login.windows.net"),
+                acr,
+                new ServiceBundle(null, null, null));
         Assert.assertNotNull(request);
     }
 
@@ -134,21 +144,22 @@ public class AdalTokenRequestTest extends AbstractAdalTests {
             URISyntaxException {
         final ClientAuthentication ca = new ClientSecretPost(
                 new ClientID("id"), new Secret("secret"));
-        final AuthorizationGrant ag = new AuthorizationCodeGrant(
-                new AuthorizationCode("code"),
-                new URI("http://my.redirect.com"));
-        final MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(ag,
-                new HashSet<>());
-        final ClientDataHttpHeaders cdhh = new ClientDataHttpHeaders("corr-id");
-        final AdalTokenRequest request = new AdalTokenRequest(new URL(
-                "http://login.windows.net"), ca, grant,
-                cdhh.getReadonlyHeaderMap(), null, null);
+        final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
+                Collections.singleton("default-scope"),
+                "code",
+                new URI("http://my.redirect.com"),
+                ca,
+                new RequestContext("id", "corr-id"));
+        final TokenRequest request = new TokenRequest(
+                new URL("http://login.windows.net"),
+                acr,
+                new ServiceBundle(null, null, null));
         Assert.assertNotNull(request);
         final AdalOAuthRequest req = request.toOAuthRequest();
         Assert.assertNotNull(req);
         Assert.assertEquals(
                 "corr-id",
-                cdhh.getReadonlyHeaderMap().get(
+                req.getReadOnlyExtraHeaderParameters().get(
                         ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME));
     }
 
@@ -156,12 +167,18 @@ public class AdalTokenRequestTest extends AbstractAdalTests {
     public void testToOAuthRequestNullCorrelationId_NullClientAuth()
             throws MalformedURLException, SerializeException,
             URISyntaxException {
-        final AuthorizationGrant ag = new AuthorizationCodeGrant(
-                new AuthorizationCode("code"),
-                new URI("http://my.redirect.com"));
-        final MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(ag, new HashSet<>());
-        final AdalTokenRequest request = new AdalTokenRequest(new URL(
-                "http://login.windows.net"), null, grant, null, null, null);
+        final ClientAuthentication ca = new ClientSecretPost(
+                new ClientID("id"), new Secret("secret"));
+        final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
+                Collections.singleton("default-scope"),
+                "code",
+                new URI("http://my.redirect.com"),
+                ca,
+                new RequestContext("id", "corr-id"));
+        final TokenRequest request = new TokenRequest(
+                new URL("http://login.windows.net"),
+                acr,
+                new ServiceBundle(null, null, null));
         Assert.assertNotNull(request);
         final AdalOAuthRequest req = request.toOAuthRequest();
         Assert.assertNotNull(req);
@@ -171,14 +188,18 @@ public class AdalTokenRequestTest extends AbstractAdalTests {
     public void testExecuteOAuth_Success() throws SerializeException,
             ParseException, AuthenticationException, IOException,
             java.text.ParseException, URISyntaxException {
-        final AuthorizationGrant ag = new AuthorizationCodeGrant(
-                new AuthorizationCode("code"),
-                new URI("http://my.redirect.com"));
-        final MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(ag, new HashSet<>());
+        final ClientAuthentication ca = new ClientSecretPost(
+                new ClientID("id"), new Secret("secret"));
+        final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
+                Collections.singleton("default-scope"),
+                "code",
+                new URI("http://my.redirect.com"),
+                ca,
+                new RequestContext("id", "corr-id"));
 
-        final AdalTokenRequest request = PowerMock.createPartialMock(
-                AdalTokenRequest.class, new String[] { "toOAuthRequest" },
-                new URL("http://login.windows.net"), null, grant, null, null, null);
+        final TokenRequest request = PowerMock.createPartialMock(
+                TokenRequest.class, new String[] { "toOAuthRequest" },
+                new URL("http://login.windows.net"), acr, null);
         final AdalOAuthRequest adalOAuthHttpRequest = PowerMock
                 .createMock(AdalOAuthRequest.class);
         final HTTPResponse httpResponse = PowerMock
@@ -219,14 +240,18 @@ public class AdalTokenRequestTest extends AbstractAdalTests {
     public void testExecuteOAuth_Failure() throws SerializeException,
             ParseException, AuthenticationException, IOException,
             java.text.ParseException, URISyntaxException {
-        final AuthorizationGrant ag = new AuthorizationCodeGrant(
-                new AuthorizationCode("code"),
-                new URI("http://my.redirect.com"));
-        final MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(ag, new HashSet<>());
+        final ClientAuthentication ca = new ClientSecretPost(
+                new ClientID("id"), new Secret("secret"));
+        final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
+                Collections.singleton("default-scope"),
+                "code",
+                new URI("http://my.redirect.com"),
+                ca,
+                new RequestContext("id", "corr-id"));
 
-        final AdalTokenRequest request = PowerMock.createPartialMock(
-                AdalTokenRequest.class, new String[] { "toOAuthRequest" },
-                new URL("http://login.windows.net"), null, grant, null, null, null);
+        final TokenRequest request = PowerMock.createPartialMock(
+                TokenRequest.class, new String[] { "toOAuthRequest" },
+                new URL("http://login.windows.net"), acr, null);
         final AdalOAuthRequest adalOAuthHttpRequest = PowerMock
                 .createMock(AdalOAuthRequest.class);
         final HTTPResponse httpResponse = PowerMock

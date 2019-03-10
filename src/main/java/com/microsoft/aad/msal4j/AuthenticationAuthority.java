@@ -23,14 +23,12 @@
 
 package com.microsoft.aad.msal4j;
 
-import javax.net.ssl.SSLSocketFactory;
-import java.net.Proxy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Represents Authentication Authority responsible for issuing access tokens.
@@ -72,12 +70,10 @@ class AuthenticationAuthority {
     private boolean instanceDiscoveryCompleted;
 
     private final URL authorityUrl;
-    //private final boolean validateAuthority;
 
     AuthenticationAuthority(final URL authorityUrl) {
         this.authorityUrl = authorityUrl;
         this.authorityType = detectAuthorityType();
-        //this.validateAuthority = validateAuthority;
         validateAuthorityUrl();
         setupAuthorityProperties();
     }
@@ -125,7 +121,7 @@ class AuthenticationAuthority {
     }
 
     void doInstanceDiscovery(boolean validateAuthority, final Map<String, String> headers,
-            final Proxy proxy, final SSLSocketFactory sslSocketFactory)
+            final ServiceBundle serviceBundle)
             throws Exception {
 
         // instance discovery should be executed only once per context instance.
@@ -135,8 +131,7 @@ class AuthenticationAuthority {
                 // if authority must be validated and dynamic discovery request
                 // as a fall back is success
                 if (validateAuthority
-                        && !doDynamicInstanceDiscovery(validateAuthority, headers, proxy,
-                                sslSocketFactory)) {
+                        && !doDynamicInstanceDiscovery(validateAuthority, headers, serviceBundle)) {
                     throw new AuthenticationException(
                             AuthenticationErrorMessage.AUTHORITY_NOT_IN_VALID_LIST);
                 }
@@ -151,12 +146,18 @@ class AuthenticationAuthority {
     }
 
     boolean doDynamicInstanceDiscovery(boolean validateAuthority, final Map<String, String> headers,
-            final Proxy proxy, final SSLSocketFactory sslSocketFactory)
+            ServiceBundle serviceBundle)
             throws Exception {
-        final String json = HttpHelper.executeHttpGet(log,
-                instanceDiscoveryEndpoint, headers, proxy, sslSocketFactory);
+
+        final String json = HttpHelper.executeHttpGet(
+                log,
+                instanceDiscoveryEndpoint,
+                headers,
+                serviceBundle);
+
         final InstanceDiscoveryResponse discoveryResponse = JsonHelper
                 .convertJsonToObject(json, InstanceDiscoveryResponse.class);
+
         return !StringHelper.isBlank(discoveryResponse
                 .getTenantDiscoveryEndpoint());
     }
@@ -211,11 +212,6 @@ class AuthenticationAuthority {
     }
 
     void validateAuthorityUrl() {
-        /*if (authorityType != AuthorityType.AAD && validateAuthority) {
-            throw new IllegalArgumentException(
-                    AuthenticationErrorMessage.UNSUPPORTED_AUTHORITY_VALIDATION);
-        }*/
-
         if (!this.authorityUrl.getProtocol().equalsIgnoreCase("https")) {
             throw new IllegalArgumentException(
                     AuthenticationErrorMessage.AUTHORITY_URI_INSECURE);

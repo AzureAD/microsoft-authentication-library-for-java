@@ -23,58 +23,55 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
-
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 import static com.microsoft.aad.msal4j.AdalErrorCode.AUTHORIZATION_PENDING;
 
 public class AcquireTokenDeviceCodeFlowSupplier extends AuthenticationResultSupplier {
 
-    private ClientAuthentication clientAuth;
-    private String scopes;
-    private Consumer<DeviceCode> deviceCodeConsumer;
-    private AtomicReference<CompletableFuture<AuthenticationResult>> futureReference;
+    private DeviceCodeRequest deviceCodeRequest;
 
-    AcquireTokenDeviceCodeFlowSupplier(PublicClientApplication clientApplication, ClientAuthentication clientAuth,
-                                       Set<String> scopes, Consumer<DeviceCode> deviceCodeConsumer,
-                                       AtomicReference<CompletableFuture<AuthenticationResult>> futureReference)
-    {
-        super(clientApplication);
-        this.headers = new ClientDataHttpHeaders(clientApplication.getCorrelationId());
-        this.clientAuth = clientAuth;
-        this.scopes = String.join(" ", scopes);
-        this.deviceCodeConsumer = deviceCodeConsumer;
-
-        this.futureReference = futureReference;
+    AcquireTokenDeviceCodeFlowSupplier(PublicClientApplication clientApplication,
+                                       DeviceCodeRequest deviceCodeRequest) {
+        super(clientApplication, deviceCodeRequest.getHeaders());
+        this.deviceCodeRequest = deviceCodeRequest;
     }
 
     AuthenticationResult execute() throws Exception {
+        doInstanceDiscovery();
+        DeviceCode deviceCode = getDeviceCode();
+        return acquireTokenWithDeviceCode(deviceCode);
+    }
 
-        clientApplication.authenticationAuthority.doInstanceDiscovery(clientApplication.isValidateAuthority(),
-                headers.getReadonlyHeaderMap(), clientApplication.getProxy(), clientApplication.getSslSocketFactory());
+    private void doInstanceDiscovery() throws Exception{
+        clientApplication.authenticationAuthority.doInstanceDiscovery(
+                clientApplication.isValidateAuthority(),
+                deviceCodeRequest.getHeaders().getReadonlyHeaderMap(),
+                clientApplication.getServiceBundle());
+    }
 
-        DeviceCode deviceCode = DeviceCodeRequest.execute(clientApplication.authenticationAuthority.getDeviceCodeEndpoint(),
-                clientAuth.getClientID().toString(), scopes, headers.getReadonlyHeaderMap(), clientApplication.getProxy(),
-                clientApplication.getSslSocketFactory());
+    private DeviceCode getDeviceCode() throws Exception{
+        DeviceCode deviceCode = deviceCodeRequest.acquireDeviceCode(
+                clientApplication.authenticationAuthority.getDeviceCodeEndpoint(),
+                deviceCodeRequest.getClientAuthentication().getClientID().toString(),
+                deviceCodeRequest.getHeaders().getReadonlyHeaderMap(),
+                clientApplication.getServiceBundle());
 
-        deviceCodeConsumer.accept(deviceCode);
+        deviceCodeRequest.getDeviceCodeConsumer().accept(deviceCode);
 
-        MsalDeviceCodeAuthorizationGrant deviceCodeGrant =
-                new MsalDeviceCodeAuthorizationGrant(deviceCode, deviceCode.getScopes());
+        return deviceCode;
+    }
 
-        long expirationTimeInSeconds =
-                TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) + deviceCode.getExpiresIn();
+    private AuthenticationResult acquireTokenWithDeviceCode(DeviceCode deviceCode) throws Exception {
+        deviceCodeRequest.createAuthenticationGrant(deviceCode);
 
-        AcquireTokenByAuthorisationGrantSupplier acquireTokenByAuthorisationGrantSupplier =
-                new AcquireTokenByAuthorisationGrantSupplier(clientApplication, deviceCodeGrant, clientAuth);
+        long expirationTimeInSeconds = getCurrentSystemTimeInSeconds() + deviceCode.getExpiresIn();
 
-        while (TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) < expirationTimeInSeconds) {
-            if(futureReference.get().isCancelled()){
+        AcquireTokenByAuthorizationGrantSupplier acquireTokenByAuthorisationGrantSupplier =
+                new AcquireTokenByAuthorizationGrantSupplier(clientApplication, deviceCodeRequest);
+
+        while (getCurrentSystemTimeInSeconds() < expirationTimeInSeconds) {
+            if(deviceCodeRequest.getFutureReference().get().isCancelled()){
                 throw new InterruptedException("Acquire token Device Code Flow was interrupted");
             }
             try {
@@ -91,4 +88,9 @@ public class AcquireTokenDeviceCodeFlowSupplier extends AuthenticationResultSupp
         }
         throw new AuthenticationException("Expired Device code");
     }
+
+    private Long getCurrentSystemTimeInSeconds(){
+        return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+    }
+
 }

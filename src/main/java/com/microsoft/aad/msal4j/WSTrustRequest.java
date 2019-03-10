@@ -23,8 +23,11 @@
 
 package com.microsoft.aad.msal4j;
 
-import javax.net.ssl.SSLSocketFactory;
-import java.net.Proxy;
+import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -33,11 +36,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.UUID;
-
-import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 class WSTrustRequest {
 
@@ -48,7 +46,7 @@ class WSTrustRequest {
     final static String DEFAULT_APPLIES_TO = "urn:federation:MicrosoftOnline";
 
     static WSTrustResponse execute(String username, String password, String cloudAudienceUrn, BindingPolicy policy,
-                                   Proxy proxy, SSLSocketFactory sslSocketFactory) throws Exception {
+                                   ServiceBundle serviceBundle) throws Exception {
 
         Map<String, String> headers = new HashMap<String, String>();
         headers.put("Content-Type", "application/soap+xml; charset=utf-8");
@@ -69,15 +67,15 @@ class WSTrustRequest {
                 policy.getVersion(), cloudAudienceUrn).toString();
       
         String response = HttpHelper.executeHttpPost(log, policy.getUrl(),
-                body, headers, proxy, sslSocketFactory);
+                body, headers, serviceBundle);
 
         return WSTrustResponse.parse(response, policy.getVersion());
     }
 
     static WSTrustResponse execute(String url, String username, String password, String cloudAudienceUrn,
-                                   Proxy proxy, SSLSocketFactory sslSocketFactory, boolean logPii) throws Exception {
+                                   ServiceBundle serviceBundle, boolean logPii) throws Exception {
 
-        String mexResponse = HttpHelper.executeHttpGet(log, url, proxy, sslSocketFactory);
+        String mexResponse = HttpHelper.executeHttpGet(log, url, serviceBundle);
 
         BindingPolicy policy = MexParser.getWsTrustEndpointFromMexResponse(mexResponse, logPii);
 
@@ -85,13 +83,12 @@ class WSTrustRequest {
             throw new AuthenticationException("WsTrust endpoint not found in metadata document");
         }
 
-        return execute(username, password, cloudAudienceUrn, policy, proxy, sslSocketFactory);
+        return execute(username, password, cloudAudienceUrn, policy,serviceBundle);
     }
 
-    static WSTrustResponse execute(String mexURL, String cloudAudienceUrn, Proxy proxy,
-                                   SSLSocketFactory sslSocketFactory, boolean logPii) throws Exception {
+    static WSTrustResponse execute(String mexURL, String cloudAudienceUrn, ServiceBundle serviceBundle, boolean logPii) throws Exception {
 
-        String mexResponse = HttpHelper.executeHttpGet(log, mexURL, proxy, sslSocketFactory);
+        String mexResponse = HttpHelper.executeHttpGet(log, mexURL, serviceBundle);
 
         BindingPolicy policy = MexParser.getPolicyFromMexResponseForIntegrated(mexResponse, logPii);
 
@@ -99,7 +96,7 @@ class WSTrustRequest {
             throw new AuthenticationException("WsTrust endpoint not found in metadata document");
         }
 
-        return execute(null, null, cloudAudienceUrn, policy, proxy, sslSocketFactory);
+        return execute(null, null, cloudAudienceUrn, policy, serviceBundle);
     }
 
     static StringBuilder buildMessage(String address, String username,

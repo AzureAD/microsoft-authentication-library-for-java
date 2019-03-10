@@ -33,11 +33,12 @@ import java.util.function.Supplier;
 
 abstract class AuthenticationResultSupplier implements Supplier<AuthenticationResult> {
 
-    ClientDataHttpHeaders headers;
     ClientApplicationBase clientApplication;
+    private ClientDataHttpHeaders headers;
 
-    AuthenticationResultSupplier(ClientApplicationBase clientApplication) {
+    AuthenticationResultSupplier(ClientApplicationBase clientApplication, ClientDataHttpHeaders headers) {
         this.clientApplication = clientApplication;
+        this.headers = headers;
     }
 
     abstract AuthenticationResult execute() throws Exception;

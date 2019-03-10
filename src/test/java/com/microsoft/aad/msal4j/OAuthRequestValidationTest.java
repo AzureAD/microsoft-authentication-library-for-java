@@ -23,8 +23,20 @@
 
 package com.microsoft.aad.msal4j;
 
-import static org.powermock.api.support.membermodification.MemberMatcher.method;
-import static org.powermock.api.support.membermodification.MemberModifier.replace;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
+import org.apache.commons.lang3.StringUtils;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.testng.PowerMockTestCase;
+import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import java.io.FileInputStream;
 import java.io.UnsupportedEncodingException;
@@ -40,24 +52,18 @@ import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.JWSSigner;
-import com.nimbusds.jose.crypto.RSASSASigner;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.SignedJWT;
-import org.apache.commons.lang3.StringUtils;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.testng.PowerMockTestCase;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import static org.powermock.api.support.membermodification.MemberMatcher.method;
+import static org.powermock.api.support.membermodification.MemberModifier.replace;
 
 @PowerMockIgnore({"javax.net.ssl.*"})
 @PrepareForTest(com.microsoft.aad.msal4j.AdalOAuthRequest.class)
@@ -222,10 +228,10 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
         Assert.assertFalse(StringUtils.isEmpty(queryParams.get("client_assertion")));
 
         // to do validate scopes
-        Assert.assertEquals(SCOPES, queryParams.get("scope"));
-
-        Assert.assertEquals(CLIENT_ASSERTION_TYPE_JWT, queryParams.get("client_assertion_type"));
-        Assert.assertEquals(ON_BEHALF_OF_USE_JWT, queryParams.get("requested_token_use"));
+        //TODO for OBO tests, should query params include default scopes?
+        Assert.assertEquals( queryParams.get("scope"), SCOPES);
+        Assert.assertEquals( queryParams.get("client_assertion_type"), CLIENT_ASSERTION_TYPE_JWT);
+        Assert.assertEquals( queryParams.get("requested_token_use"), ON_BEHALF_OF_USE_JWT);
     }
 
     @Test

@@ -23,48 +23,32 @@
 
 package com.microsoft.aad.msal4j;
 
-import javax.net.ssl.SSLSocketFactory;
-import java.io.IOException;
-import java.net.Proxy;
-import java.net.URL;
-import java.util.Map;
-
-import com.nimbusds.oauth2.sdk.ErrorObject;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.nimbusds.oauth2.sdk.ErrorObject;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.SerializeException;
 import com.nimbusds.oauth2.sdk.TokenErrorResponse;
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import com.nimbusds.oauth2.sdk.http.CommonContentTypes;
 import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import com.nimbusds.oauth2.sdk.util.URLUtils;
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens;
 
-/**
- * Extension for TokenRequest to support additional header values like
- * correlation id.
- */
-class AdalTokenRequest {
+import java.io.IOException;
+import java.net.URL;
+import java.util.Map;
+
+class TokenRequest {
 
     private final URL uri;
-    private final ClientAuthentication clientAuth;
-    private final AbstractMsalAuthorizationGrant grant;
-    private final Map<String, String> headerMap;
-    private final Proxy proxy;
-    private final SSLSocketFactory sslSocketFactory;
+    private final MsalRequest msalRequest;
+    private final ServiceBundle serviceBundle;
 
-    AdalTokenRequest(final URL uri, final ClientAuthentication clientAuth,
-            final AbstractMsalAuthorizationGrant authzGrant,
-            final Map<String, String> headerMap, final Proxy proxy,
-            final SSLSocketFactory sslSocketFactory) {
-        this.clientAuth = clientAuth;
-        this.grant = authzGrant;
+    TokenRequest(final URL uri, MsalRequest msalRequest ,final ServiceBundle serviceBundle) {
         this.uri = uri;
-        this.headerMap = headerMap;
-        this.proxy = proxy;
-        this.sslSocketFactory = sslSocketFactory;
+        this.serviceBundle = serviceBundle;
+        this.msalRequest = msalRequest;
     }
 
     /**
@@ -80,14 +64,14 @@ class AdalTokenRequest {
             throws ParseException, AuthenticationException, SerializeException,
             IOException, java.text.ParseException {
 
-        AuthenticationResult result = null;
-        HTTPResponse httpResponse = null;
+        AuthenticationResult result;
+        HTTPResponse httpResponse;
         final AdalOAuthRequest adalOAuthHttpRequest = this.toOAuthRequest();
         httpResponse = adalOAuthHttpRequest.send();
 
         if (httpResponse.getStatusCode() == HTTPResponse.SC_OK) {
-            final AdalAccessTokenResponse response = AdalAccessTokenResponse
-                    .parseHttpResponse(httpResponse);
+            final AdalAccessTokenResponse response =
+                    AdalAccessTokenResponse.parseHttpResponse(httpResponse);
 
             OIDCTokens tokens = response.getOIDCTokens();
             String refreshToken = null;
@@ -97,20 +81,20 @@ class AdalTokenRequest {
 
             UserInfo info = null;
             if (tokens.getIDToken() != null) {
-                info = UserInfo.createFromIdTokenClaims(tokens.getIDToken()
-                        .getJWTClaimsSet());
+                info = UserInfo.createFromIdTokenClaims(tokens.getIDToken().getJWTClaimsSet());
             }
 
-            result = new AuthenticationResult(tokens.getAccessToken()
-                    .getType().getValue(),
+            result = new AuthenticationResult(
+                    tokens.getAccessToken().getType().getValue(),
                     tokens.getAccessToken().getValue(), refreshToken,
                     tokens.getAccessToken().getLifetime(),
-                    tokens.getIDTokenString(), info,
+                    tokens.getIDTokenString(),
+                    info,
                     !StringHelper.isBlank(response.getScope()));
         } else {
-            final TokenErrorResponse errorResponse = TokenErrorResponse
-                    .parse(httpResponse);
+            final TokenErrorResponse errorResponse = TokenErrorResponse.parse(httpResponse);
             ErrorObject errorObject = errorResponse.getErrorObject();
+
             if(AdalErrorCode.AUTHORIZATION_PENDING.toString()
                     .equals(errorObject.getCode())){
                 throw new AuthenticationException(AdalErrorCode.AUTHORIZATION_PENDING,
@@ -118,17 +102,15 @@ class AdalTokenRequest {
             }
 
             if(HTTPResponse.SC_BAD_REQUEST == errorObject.getHTTPStatusCode() &&
-                    AdalErrorCode.INTERACTION_REQUIRED.toString()
-                            .equals(errorObject.getCode())){
-                throw new AdalClaimsChallengeException(errorResponse.toJSONObject()
-                        .toJSONString(), getClaims(httpResponse.getContent()));
+                    AdalErrorCode.INTERACTION_REQUIRED.toString().equals(errorObject.getCode())){
+                throw new AdalClaimsChallengeException(
+                        errorResponse.toJSONObject().toJSONString(),
+                        getClaims(httpResponse.getContent()));
             }
             else {
-                throw new AuthenticationException(errorResponse.toJSONObject()
-                        .toJSONString());
+                throw new AuthenticationException(errorResponse.toJSONObject().toJSONString());
             }
         }
-
         return result;
     }
 
@@ -152,13 +134,17 @@ class AdalTokenRequest {
         }
 
         final AdalOAuthRequest httpRequest = new AdalOAuthRequest(
-                HTTPRequest.Method.POST, this.uri, headerMap, this.proxy,
-                this.sslSocketFactory);
+                HTTPRequest.Method.POST,
+                this.uri,
+                msalRequest.getHeaders().getReadonlyHeaderMap(),
+                this.serviceBundle);
         httpRequest.setContentType(CommonContentTypes.APPLICATION_URLENCODED);
-        final Map<String, String> params = this.grant.toParameters();
+
+        final Map<String, String> params = msalRequest.getMsalAuthorizationGrant().toParameters();
         httpRequest.setQuery(URLUtils.serializeParameters(params));
-        if (this.clientAuth != null) {
-            this.clientAuth.applyTo(httpRequest);
+
+        if (msalRequest.getClientAuthentication() != null) {
+            msalRequest.getClientAuthentication().applyTo(httpRequest);
         }
 
         return httpRequest;
