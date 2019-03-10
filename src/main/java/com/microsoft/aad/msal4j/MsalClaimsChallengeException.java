@@ -23,30 +23,30 @@
 
 package com.microsoft.aad.msal4j;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
+/**
+ * The exception type thrown when a claims challenge error occurs during token acquisition.
+ */
+public class MsalClaimsChallengeException extends AuthenticationException {
 
-import org.powermock.modules.testng.PowerMockTestCase;
+    /**
+     * Constructor
+     *
+     * @param message string error message
+     * @param claims claims challenge returned from the STS
+     */
+    public MsalClaimsChallengeException(String message, String claims) {
+        super(message);
 
-public class AbstractAdalTests extends PowerMockTestCase {
+        this.claims = claims;
+    }
 
-    public void beforeClass() throws IOException {
+    private final String claims;
 
-        Properties prop = new Properties();
-        InputStream input = null;
-
-        try {
-
-            input = new FileInputStream(this.getClass()
-                    .getResource(TestConfiguration.AAD_CERTIFICATE_PATH)
-                    .getFile());
-            prop.getProperty("database");
-        } finally {
-            if (input != null) {
-                input.close();
-            }
-        }
+    /**
+     *
+     * @return claims challenge value
+     */
+    public String getClaims() {
+        return claims;
     }
 }

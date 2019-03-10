@@ -6,6 +6,7 @@ import com.google.common.base.Strings;
 import java.util.UUID;
 
 class RequestContext {
+
     private String telemetryRequestId;
     private String clientId;
     private String correlationId;
@@ -32,6 +33,7 @@ class RequestContext {
     public String getCorrelationId(){
         return correlationId;
     }
+
     private String generateNewCorrelationId(){
         return UUID.randomUUID().toString();
     }

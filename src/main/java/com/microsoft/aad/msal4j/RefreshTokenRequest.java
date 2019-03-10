@@ -6,7 +6,7 @@ import com.nimbusds.oauth2.sdk.token.RefreshToken;
 
 import java.util.Set;
 
-public class RefreshTokenRequest extends MsalRequest {
+class RefreshTokenRequest extends MsalRequest {
 
     RefreshTokenRequest(String refreshToken,
                         Set<String> scopes,

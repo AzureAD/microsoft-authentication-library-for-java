@@ -4,8 +4,9 @@ import javax.net.ssl.SSLSocketFactory;
 import java.net.Proxy;
 import java.util.concurrent.ExecutorService;
 
-public class ServiceBundle {
-    protected ExecutorService executorService;
+class ServiceBundle {
+
+    private ExecutorService executorService;
     private Proxy proxy;
     private SSLSocketFactory sslSocketFactory;
 
@@ -26,8 +27,4 @@ public class ServiceBundle {
     public SSLSocketFactory getSslSocketFactory() {
         return sslSocketFactory;
     }
-
-
-
-
 }

@@ -6,7 +6,7 @@ import com.nimbusds.oauth2.sdk.auth.Secret;
 
 import java.util.Set;
 
-public class UserNamePasswordRequest extends MsalRequest{
+class UserNamePasswordRequest extends MsalRequest{
 
     UserNamePasswordRequest(String username,
                             String password,

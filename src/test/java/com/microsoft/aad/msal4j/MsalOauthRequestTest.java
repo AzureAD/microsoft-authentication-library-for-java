@@ -42,12 +42,12 @@ import java.net.URL;
 import static org.testng.Assert.assertNotNull;
 
 @Test(groups = { "checkin" })
-@PrepareForTest({ AdalOAuthRequest.class })
-public class AdalOAuthRequestTest extends AbstractAdalTests {
+@PrepareForTest({ MsalOauthRequest.class })
+public class MsalOauthRequestTest extends AbstractMsalTests {
 
     @Test
     public void testConstructor() throws MalformedURLException {
-        final AdalOAuthRequest request = new AdalOAuthRequest(Method.POST,
+        final MsalOauthRequest request = new MsalOauthRequest(Method.POST,
                 new URL("http://login.windows.net"), null, null);
         assertNotNull(request);
     }
@@ -57,7 +57,7 @@ public class AdalOAuthRequestTest extends AbstractAdalTests {
     public void testCreateResponseContentTypeParsingFailure()
             throws Exception {
 
-        final AdalOAuthRequest request = new AdalOAuthRequest(Method.GET,
+        final MsalOauthRequest request = new MsalOauthRequest(Method.GET,
                 new URL("https://" + TestConfiguration.AAD_HOST_NAME), null, null);
         final HttpURLConnection conn = PowerMock
                 .createMock(HttpURLConnection.class);
@@ -73,7 +73,7 @@ public class AdalOAuthRequestTest extends AbstractAdalTests {
     @Test
     public void testCreateResponseLocationNull()
             throws Exception {
-        final AdalOAuthRequest request = new AdalOAuthRequest(Method.GET,
+        final MsalOauthRequest request = new MsalOauthRequest(Method.GET,
                 new URL("https://" + TestConfiguration.AAD_HOST_NAME), null, null);
         final HttpURLConnection conn = PowerMock
                 .createMock(HttpURLConnection.class);
@@ -102,7 +102,7 @@ public class AdalOAuthRequestTest extends AbstractAdalTests {
 
     @Test
     public void testCreateResponse() throws Exception {
-        final AdalOAuthRequest request = new AdalOAuthRequest(Method.GET,
+        final MsalOauthRequest request = new MsalOauthRequest(Method.GET,
                 new URL("https://" + TestConfiguration.AAD_HOST_NAME), null, null);
         final HttpURLConnection conn = PowerMock
                 .createMock(HttpURLConnection.class);
@@ -133,7 +133,7 @@ public class AdalOAuthRequestTest extends AbstractAdalTests {
     
     @Test
     public void testCreateResponseFor404() throws Exception {
-        final AdalOAuthRequest request = new AdalOAuthRequest(Method.GET,
+        final MsalOauthRequest request = new MsalOauthRequest(Method.GET,
                 new URL("https://" + TestConfiguration.AAD_HOST_NAME), null, null);
         final HttpURLConnection conn = PowerMock
                 .createMock(HttpURLConnection.class);

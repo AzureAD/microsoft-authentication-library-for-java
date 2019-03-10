@@ -34,8 +34,7 @@ public class MsalDeviceCodeAuthorizationGrant extends AbstractMsalAuthorizationG
 
     private final DeviceCode deviceCode;
     private final String scopes;
-
-    protected String correlationId;
+    private String correlationId;
 
     /**
      *  Create a new device code grant object from a device code and a resource.

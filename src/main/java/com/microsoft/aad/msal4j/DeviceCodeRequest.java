@@ -35,9 +35,20 @@ class DeviceCodeRequest extends MsalRequest {
                                  Map<String, String> clientDataHeaders,
                                  ServiceBundle serviceBundle) throws Exception {
 
-        Map<String, String> headers = new HashMap<>(clientDataHeaders);
-        headers.put("Accept", "application/json");
+        String urlWithQueryParams = createQueryParamsAndAppendToURL(url, clientId);
+        Map<String, String> headers = appendToHeaders(clientDataHeaders);
 
+        final String json = HttpHelper.executeHttpGet(log, urlWithQueryParams, headers, serviceBundle);
+
+        return parseJsonToDeviceCodeAndSetParameters(json, headers, clientId);
+    }
+
+    void createAuthenticationGrant(DeviceCode deviceCode){
+        setMsalAuthorizationGrant(new MsalDeviceCodeAuthorizationGrant(
+                deviceCode, deviceCode.getScopes()));
+    }
+
+    private String createQueryParamsAndAppendToURL(String url, String clientId){
         Map<String, String> queryParameters = new HashMap<>();
         queryParameters.put("client_id", clientId);
 
@@ -47,7 +58,20 @@ class DeviceCodeRequest extends MsalRequest {
         queryParameters.put("scope", scopesParam);
 
         url = url + "?" + URLUtils.serializeParameters(queryParameters);
-        final String json = HttpHelper.executeHttpGet(log, url, headers, serviceBundle);
+        return url;
+    }
+
+    private  Map<String, String> appendToHeaders(Map<String, String> clientDataHeaders){
+        Map<String, String> headers = new HashMap<>(clientDataHeaders);
+        headers.put("Accept", "application/json");
+
+        return headers;
+    }
+
+    private DeviceCode parseJsonToDeviceCodeAndSetParameters(
+            String json,
+            Map<String, String > headers,
+            String clientId){
 
         DeviceCode result;
         result = JsonHelper.convertJsonToObject(json, DeviceCode.class);
@@ -59,11 +83,6 @@ class DeviceCodeRequest extends MsalRequest {
         return result;
     }
 
-    void createAuthenticationGrant(DeviceCode deviceCode){
-        setMsalAuthorizationGrant(new MsalDeviceCodeAuthorizationGrant(
-                deviceCode, deviceCode.getScopes()));
-    }
-
     AtomicReference<CompletableFuture<AuthenticationResult>> getFutureReference() {
         return futureReference;
     }
@@ -72,7 +91,7 @@ class DeviceCodeRequest extends MsalRequest {
         return deviceCodeConsumer;
     }
 
-    public String getScopes() {
+    String getScopes() {
         return scopes;
     }
 }

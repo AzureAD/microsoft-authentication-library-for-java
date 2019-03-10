@@ -169,12 +169,12 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
     public void executeAcquireDeviceCode_AuthenticaionPendingErrorReturned_AuthenticationExceptionThrown()
             throws Exception {
 
-        TokenRequest request = PowerMock.createPartialMock(
-                TokenRequest.class, new String[]{"toOAuthRequest"},
+        TokenEndpointRequest request = PowerMock.createPartialMock(
+                TokenEndpointRequest.class, new String[]{"toOAuthRequest"},
                 new URL("http://login.windows.net"), null, null);
 
-        AdalOAuthRequest adalOAuthHttpRequest = PowerMock
-                .createMock(AdalOAuthRequest.class);
+        MsalOauthRequest msalOauthHttpRequest = PowerMock
+                .createMock(MsalOauthRequest.class);
 
         HTTPResponse httpResponse = new HTTPResponse(HTTPResponse.SC_BAD_REQUEST);
 
@@ -190,16 +190,16 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         httpResponse.setContent(content);
         httpResponse.setContentType(CommonContentTypes.APPLICATION_JSON);
 
-        EasyMock.expect(request.toOAuthRequest()).andReturn(adalOAuthHttpRequest).times(1);
-        EasyMock.expect(adalOAuthHttpRequest.send()).andReturn(httpResponse).times(1);
+        EasyMock.expect(request.toOAuthRequest()).andReturn(msalOauthHttpRequest).times(1);
+        EasyMock.expect(msalOauthHttpRequest.send()).andReturn(httpResponse).times(1);
 
-        PowerMock.replay(request, adalOAuthHttpRequest);
+        PowerMock.replay(request, msalOauthHttpRequest);
 
         try {
             request.executeOAuthRequestAndProcessResponse();
             Assert.fail("Expected AuthenticationException was not thrown");
         } catch (AuthenticationException ex) {
-            Assert.assertEquals(ex.getErrorCode(), AdalErrorCode.AUTHORIZATION_PENDING);
+            Assert.assertEquals(ex.getErrorCode(), MsalErrorCode.AUTHORIZATION_PENDING);
         }
         PowerMock.verifyAll();
     }

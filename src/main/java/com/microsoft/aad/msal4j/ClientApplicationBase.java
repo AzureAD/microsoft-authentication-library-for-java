@@ -169,12 +169,12 @@ abstract public class ClientApplicationBase {
         return this.InitializeRequest(refreshTokenRequest);
     }
 
-    protected CompletableFuture<AuthenticationResult> InitializeRequest(
+    CompletableFuture<AuthenticationResult> InitializeRequest(
             MsalRequest msalRequest) {
 
         AuthenticationResultSupplier supplier = getAuthenticationResultSupplier(msalRequest);
 
-        ExecutorService executorService= serviceBundle.getExecutorService();
+        ExecutorService executorService = serviceBundle.getExecutorService();
         CompletableFuture<AuthenticationResult> future = executorService != null ?
                         CompletableFuture.supplyAsync(supplier, executorService) :
                         CompletableFuture.supplyAsync(supplier);
@@ -192,11 +192,11 @@ abstract public class ClientApplicationBase {
 
         this.authenticationAuthority.doInstanceDiscovery(
                 validateAuthority,
-                 headers.getReadonlyHeaderMap(),
+                headers.getReadonlyHeaderMap(),
                 this.serviceBundle);
 
         URL url = new URL(this.authenticationAuthority.getTokenUri());
-        TokenRequest request = new TokenRequest(
+        TokenEndpointRequest request = new TokenEndpointRequest(
                 url,
                 msalRequest,
                 serviceBundle);
@@ -204,7 +204,7 @@ abstract public class ClientApplicationBase {
         return request.executeOAuthRequestAndProcessResponse();
     }
 
-    protected AuthenticationResultSupplier getAuthenticationResultSupplier(MsalRequest msalRequest){
+    private AuthenticationResultSupplier getAuthenticationResultSupplier(MsalRequest msalRequest){
 
         AuthenticationResultSupplier supplier;
         if(msalRequest instanceof DeviceCodeRequest){
@@ -237,7 +237,7 @@ abstract public class ClientApplicationBase {
         }
     }
 
-    protected ServiceBundle getServiceBundle(){
+    ServiceBundle getServiceBundle(){
         return serviceBundle;
     }
 

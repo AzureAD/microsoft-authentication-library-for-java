@@ -3,9 +3,10 @@ package com.microsoft.aad.msal4j;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 
 abstract class MsalRequest {
+
     private final ClientAuthentication clientAuthentication;
     private AbstractMsalAuthorizationGrant msalAuthorizationGrant;
-    private RequestContext requestContext;
+    private final RequestContext requestContext;
     ClientDataHttpHeaders headers;
 
     protected MsalRequest(AbstractMsalAuthorizationGrant msalAuthorizationGrant,
@@ -36,9 +37,6 @@ abstract class MsalRequest {
     void setMsalAuthorizationGrant(AbstractMsalAuthorizationGrant msalAuthorizationGrant){
         this.msalAuthorizationGrant = msalAuthorizationGrant;
     }
-
-
-
 }
 
 

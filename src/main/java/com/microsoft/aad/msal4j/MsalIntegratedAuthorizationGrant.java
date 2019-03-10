@@ -29,7 +29,6 @@ import java.util.Set;
 public class MsalIntegratedAuthorizationGrant extends AbstractMsalAuthorizationGrant {
 
     private Set<String> scopes;
-
     private final String userName;
 
     MsalIntegratedAuthorizationGrant(String userName, Set<String> scopes){

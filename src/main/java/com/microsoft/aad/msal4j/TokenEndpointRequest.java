@@ -39,13 +39,13 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Map;
 
-class TokenRequest {
+class TokenEndpointRequest {
 
     private final URL uri;
     private final MsalRequest msalRequest;
     private final ServiceBundle serviceBundle;
 
-    TokenRequest(final URL uri, MsalRequest msalRequest ,final ServiceBundle serviceBundle) {
+    TokenEndpointRequest(final URL uri, MsalRequest msalRequest , final ServiceBundle serviceBundle) {
         this.uri = uri;
         this.serviceBundle = serviceBundle;
         this.msalRequest = msalRequest;
@@ -66,12 +66,12 @@ class TokenRequest {
 
         AuthenticationResult result;
         HTTPResponse httpResponse;
-        final AdalOAuthRequest adalOAuthHttpRequest = this.toOAuthRequest();
-        httpResponse = adalOAuthHttpRequest.send();
+        final MsalOauthRequest msalOauthHttpRequest = this.toOAuthRequest();
+        httpResponse = msalOauthHttpRequest.send();
 
         if (httpResponse.getStatusCode() == HTTPResponse.SC_OK) {
-            final AdalAccessTokenResponse response =
-                    AdalAccessTokenResponse.parseHttpResponse(httpResponse);
+            final MsalAccessTokenResponse response =
+                    MsalAccessTokenResponse.parseHttpResponse(httpResponse);
 
             OIDCTokens tokens = response.getOIDCTokens();
             String refreshToken = null;
@@ -95,15 +95,15 @@ class TokenRequest {
             final TokenErrorResponse errorResponse = TokenErrorResponse.parse(httpResponse);
             ErrorObject errorObject = errorResponse.getErrorObject();
 
-            if(AdalErrorCode.AUTHORIZATION_PENDING.toString()
+            if(MsalErrorCode.AUTHORIZATION_PENDING.toString()
                     .equals(errorObject.getCode())){
-                throw new AuthenticationException(AdalErrorCode.AUTHORIZATION_PENDING,
+                throw new AuthenticationException(MsalErrorCode.AUTHORIZATION_PENDING,
                         errorObject.getDescription());
             }
 
             if(HTTPResponse.SC_BAD_REQUEST == errorObject.getHTTPStatusCode() &&
-                    AdalErrorCode.INTERACTION_REQUIRED.toString().equals(errorObject.getCode())){
-                throw new AdalClaimsChallengeException(
+                    MsalErrorCode.INTERACTION_REQUIRED.toString().equals(errorObject.getCode())){
+                throw new MsalClaimsChallengeException(
                         errorResponse.toJSONObject().toJSONString(),
                         getClaims(httpResponse.getContent()));
             }
@@ -127,13 +127,13 @@ class TokenRequest {
      * @return
      * @throws SerializeException
      */
-    AdalOAuthRequest toOAuthRequest() throws SerializeException {
+    MsalOauthRequest toOAuthRequest() throws SerializeException {
 
         if (this.uri == null) {
             throw new SerializeException("The endpoint URI is not specified");
         }
 
-        final AdalOAuthRequest httpRequest = new AdalOAuthRequest(
+        final MsalOauthRequest httpRequest = new MsalOauthRequest(
                 HTTPRequest.Method.POST,
                 this.uri,
                 msalRequest.getHeaders().getReadonlyHeaderMap(),

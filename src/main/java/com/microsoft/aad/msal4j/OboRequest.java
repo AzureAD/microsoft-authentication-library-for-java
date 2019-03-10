@@ -25,8 +25,6 @@ class OboRequest extends MsalRequest {
         }catch(Exception e){
             throw new AuthenticationException(e);
         }
-
         return new MsalOAuthAuthorizationGrant(jWTBearerGrant, scopes);
-
     }
 }

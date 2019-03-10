@@ -50,10 +50,10 @@ import java.util.Collections;
 
 @Test(groups = { "checkin" })
 @PrepareForTest(TokenErrorResponse.class)
-public class TokenRequestTest extends AbstractAdalTests {
+public class TokenEndpointRequestTest extends AbstractMsalTests {
 
     @Test
-    public void executeOAuthRequest_SCBadRequestErrorInteractionRequired_AdalClaimsChallengeExceptionThrown()
+    public void executeOAuthRequest_SCBadRequestErrorInteractionRequired_MsalClaimsChallengeExceptionThrown()
             throws SerializeException,
             ParseException, AuthenticationException, IOException,
             java.text.ParseException, URISyntaxException {
@@ -67,11 +67,11 @@ public class TokenRequestTest extends AbstractAdalTests {
                 ca,
                 new RequestContext("id", "corr-id"));
 
-        TokenRequest request = PowerMock.createPartialMock(
-                TokenRequest.class, new String[]{"toOAuthRequest"},
+        TokenEndpointRequest request = PowerMock.createPartialMock(
+                TokenEndpointRequest.class, new String[]{"toOAuthRequest"},
                 new URL("http://login.windows.net"), acr, null);
-        AdalOAuthRequest adalOAuthHttpRequest = PowerMock
-                .createMock(AdalOAuthRequest.class);
+        MsalOauthRequest msalOauthHttpRequest = PowerMock
+                .createMock(MsalOauthRequest.class);
 
         HTTPResponse httpResponse = new HTTPResponse(HTTPResponse.SC_BAD_REQUEST);
 
@@ -87,15 +87,15 @@ public class TokenRequestTest extends AbstractAdalTests {
         httpResponse.setContent(content);
         httpResponse.setContentType(CommonContentTypes.APPLICATION_JSON);
 
-        EasyMock.expect(request.toOAuthRequest()).andReturn(adalOAuthHttpRequest).times(1);
-        EasyMock.expect(adalOAuthHttpRequest.send()).andReturn(httpResponse).times(1);
+        EasyMock.expect(request.toOAuthRequest()).andReturn(msalOauthHttpRequest).times(1);
+        EasyMock.expect(msalOauthHttpRequest.send()).andReturn(httpResponse).times(1);
 
-        PowerMock.replay(request, adalOAuthHttpRequest);
+        PowerMock.replay(request, msalOauthHttpRequest);
 
         try {
             request.executeOAuthRequestAndProcessResponse();
-            Assert.fail("Expected AdalClaimsChallengeException was not thrown");
-        } catch (AdalClaimsChallengeException ex) {
+            Assert.fail("Expected MsalClaimsChallengeException was not thrown");
+        } catch (MsalClaimsChallengeException ex) {
             Assert.assertEquals(claims.replace("\\", ""), ex.getClaims());
         }
         PowerMock.verifyAll();
@@ -115,7 +115,7 @@ public class TokenRequestTest extends AbstractAdalTests {
                 new RequestContext("id", "corr-id"));
 
         final ServiceBundle sb = new ServiceBundle(null, null, null);
-        final TokenRequest request = new TokenRequest(null, acr, sb);
+        final TokenEndpointRequest request = new TokenEndpointRequest(null, acr, sb);
         Assert.assertNotNull(request);
         request.executeOAuthRequestAndProcessResponse();
     }
@@ -131,7 +131,7 @@ public class TokenRequestTest extends AbstractAdalTests {
                 new URI("http://my.redirect.com"),
                 ca,
                 new RequestContext("id", "corr-id"));
-        final TokenRequest request = new TokenRequest(
+        final TokenEndpointRequest request = new TokenEndpointRequest(
                 new URL("http://login.windows.net"),
                 acr,
                 new ServiceBundle(null, null, null));
@@ -150,12 +150,12 @@ public class TokenRequestTest extends AbstractAdalTests {
                 new URI("http://my.redirect.com"),
                 ca,
                 new RequestContext("id", "corr-id"));
-        final TokenRequest request = new TokenRequest(
+        final TokenEndpointRequest request = new TokenEndpointRequest(
                 new URL("http://login.windows.net"),
                 acr,
                 new ServiceBundle(null, null, null));
         Assert.assertNotNull(request);
-        final AdalOAuthRequest req = request.toOAuthRequest();
+        final MsalOauthRequest req = request.toOAuthRequest();
         Assert.assertNotNull(req);
         Assert.assertEquals(
                 "corr-id",
@@ -175,12 +175,12 @@ public class TokenRequestTest extends AbstractAdalTests {
                 new URI("http://my.redirect.com"),
                 ca,
                 new RequestContext("id", "corr-id"));
-        final TokenRequest request = new TokenRequest(
+        final TokenEndpointRequest request = new TokenEndpointRequest(
                 new URL("http://login.windows.net"),
                 acr,
                 new ServiceBundle(null, null, null));
         Assert.assertNotNull(request);
-        final AdalOAuthRequest req = request.toOAuthRequest();
+        final MsalOauthRequest req = request.toOAuthRequest();
         Assert.assertNotNull(req);
     }
 
@@ -197,16 +197,16 @@ public class TokenRequestTest extends AbstractAdalTests {
                 ca,
                 new RequestContext("id", "corr-id"));
 
-        final TokenRequest request = PowerMock.createPartialMock(
-                TokenRequest.class, new String[] { "toOAuthRequest" },
+        final TokenEndpointRequest request = PowerMock.createPartialMock(
+                TokenEndpointRequest.class, new String[] { "toOAuthRequest" },
                 new URL("http://login.windows.net"), acr, null);
-        final AdalOAuthRequest adalOAuthHttpRequest = PowerMock
-                .createMock(AdalOAuthRequest.class);
+        final MsalOauthRequest msalOauthHttpRequest = PowerMock
+                .createMock(MsalOauthRequest.class);
         final HTTPResponse httpResponse = PowerMock
                 .createMock(HTTPResponse.class);
         EasyMock.expect(request.toOAuthRequest())
-                .andReturn(adalOAuthHttpRequest).times(1);
-        EasyMock.expect(adalOAuthHttpRequest.send()).andReturn(httpResponse)
+                .andReturn(msalOauthHttpRequest).times(1);
+        EasyMock.expect(msalOauthHttpRequest.send()).andReturn(httpResponse)
                 .times(1);
         EasyMock.expect(httpResponse.getStatusCode()).andReturn(200).times(1);
         EasyMock.expect(httpResponse.getContentAsJSONObject())
@@ -217,7 +217,7 @@ public class TokenRequestTest extends AbstractAdalTests {
         httpResponse.ensureStatusCode(200);
         EasyMock.expectLastCall();
 
-        PowerMock.replay(request, adalOAuthHttpRequest, httpResponse);
+        PowerMock.replay(request, msalOauthHttpRequest, httpResponse);
 
         final AuthenticationResult result = request
                 .executeOAuthRequestAndProcessResponse();
@@ -249,16 +249,16 @@ public class TokenRequestTest extends AbstractAdalTests {
                 ca,
                 new RequestContext("id", "corr-id"));
 
-        final TokenRequest request = PowerMock.createPartialMock(
-                TokenRequest.class, new String[] { "toOAuthRequest" },
+        final TokenEndpointRequest request = PowerMock.createPartialMock(
+                TokenEndpointRequest.class, new String[] { "toOAuthRequest" },
                 new URL("http://login.windows.net"), acr, null);
-        final AdalOAuthRequest adalOAuthHttpRequest = PowerMock
-                .createMock(AdalOAuthRequest.class);
+        final MsalOauthRequest msalOauthHttpRequest = PowerMock
+                .createMock(MsalOauthRequest.class);
         final HTTPResponse httpResponse = PowerMock
                 .createMock(HTTPResponse.class);
         EasyMock.expect(request.toOAuthRequest())
-                .andReturn(adalOAuthHttpRequest).times(1);
-        EasyMock.expect(adalOAuthHttpRequest.send()).andReturn(httpResponse)
+                .andReturn(msalOauthHttpRequest).times(1);
+        EasyMock.expect(msalOauthHttpRequest.send()).andReturn(httpResponse)
                 .times(1);
         EasyMock.expect(httpResponse.getStatusCode()).andReturn(402).times(1);
 
@@ -286,14 +286,14 @@ public class TokenRequestTest extends AbstractAdalTests {
         EasyMock.expect(errorResponse.toJSONObject()).andReturn(jsonObj)
                 .times(1);
 
-        PowerMock.replay(request, adalOAuthHttpRequest, httpResponse,
+        PowerMock.replay(request, msalOauthHttpRequest, httpResponse,
                 TokenErrorResponse.class, errorObject, jsonObj, errorResponse);
         try {
             request.executeOAuthRequestAndProcessResponse();
             PowerMock.verifyAll();
         }
         finally {
-            PowerMock.reset(request, adalOAuthHttpRequest, httpResponse,
+            PowerMock.reset(request, msalOauthHttpRequest, httpResponse,
                     TokenErrorResponse.class, jsonObj, errorResponse);
         }
     }

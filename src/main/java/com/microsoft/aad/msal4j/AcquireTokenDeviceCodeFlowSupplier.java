@@ -25,9 +25,9 @@ package com.microsoft.aad.msal4j;
 
 import java.util.concurrent.TimeUnit;
 
-import static com.microsoft.aad.msal4j.AdalErrorCode.AUTHORIZATION_PENDING;
+import static com.microsoft.aad.msal4j.MsalErrorCode.AUTHORIZATION_PENDING;
 
-public class AcquireTokenDeviceCodeFlowSupplier extends AuthenticationResultSupplier {
+class AcquireTokenDeviceCodeFlowSupplier extends AuthenticationResultSupplier {
 
     private DeviceCodeRequest deviceCodeRequest;
 
@@ -44,18 +44,18 @@ public class AcquireTokenDeviceCodeFlowSupplier extends AuthenticationResultSupp
     }
 
     private void doInstanceDiscovery() throws Exception{
-        clientApplication.authenticationAuthority.doInstanceDiscovery(
-                clientApplication.isValidateAuthority(),
+        this.clientApplication.authenticationAuthority.doInstanceDiscovery(
+                this.clientApplication.isValidateAuthority(),
                 deviceCodeRequest.getHeaders().getReadonlyHeaderMap(),
-                clientApplication.getServiceBundle());
+                this.clientApplication.getServiceBundle());
     }
 
     private DeviceCode getDeviceCode() throws Exception{
         DeviceCode deviceCode = deviceCodeRequest.acquireDeviceCode(
-                clientApplication.authenticationAuthority.getDeviceCodeEndpoint(),
+                this.clientApplication.authenticationAuthority.getDeviceCodeEndpoint(),
                 deviceCodeRequest.getClientAuthentication().getClientID().toString(),
                 deviceCodeRequest.getHeaders().getReadonlyHeaderMap(),
-                clientApplication.getServiceBundle());
+                this.clientApplication.getServiceBundle());
 
         deviceCodeRequest.getDeviceCodeConsumer().accept(deviceCode);
 
@@ -68,7 +68,9 @@ public class AcquireTokenDeviceCodeFlowSupplier extends AuthenticationResultSupp
         long expirationTimeInSeconds = getCurrentSystemTimeInSeconds() + deviceCode.getExpiresIn();
 
         AcquireTokenByAuthorizationGrantSupplier acquireTokenByAuthorisationGrantSupplier =
-                new AcquireTokenByAuthorizationGrantSupplier(clientApplication, deviceCodeRequest);
+                new AcquireTokenByAuthorizationGrantSupplier(
+                        this.clientApplication,
+                        deviceCodeRequest);
 
         while (getCurrentSystemTimeInSeconds() < expirationTimeInSeconds) {
             if(deviceCodeRequest.getFutureReference().get().isCancelled()){
@@ -92,5 +94,4 @@ public class AcquireTokenDeviceCodeFlowSupplier extends AuthenticationResultSupp
     private Long getCurrentSystemTimeInSeconds(){
         return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     }
-
 }

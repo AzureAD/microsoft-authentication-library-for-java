@@ -23,20 +23,35 @@
 
 package com.microsoft.aad.msal4j;
 
-public enum AdalErrorCode {
+import com.nimbusds.oauth2.sdk.AuthorizationCode;
+import com.nimbusds.oauth2.sdk.AuthorizationCodeGrant;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
-    UNKNOWN ("unknown"),
-    AUTHORIZATION_PENDING ("authorization_pending"),
-    INTERACTION_REQUIRED ("interaction_required");
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 
-    private String errorCode;
+/**
+ *
+ */
+public class MsalOauthAuthorizatonGrantTest {
 
-    AdalErrorCode(String errorCode){
-        this.errorCode = errorCode;
+    @Test
+    public void testConstructor() {
+        final MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(null,
+                new HashMap<String, String>());
+        Assert.assertNotNull(grant);
     }
 
-    @Override
-    public String toString(){
-        return errorCode;
+    @Test
+    public void testToParameters() throws URISyntaxException {
+        final MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(
+                new AuthorizationCodeGrant(new AuthorizationCode("grant"),
+                        new URI("http://microsoft.com")),
+                (Map<String, String>) null);
+        Assert.assertNotNull(grant);
+        Assert.assertNotNull(grant.toParameters());
     }
 }

@@ -32,22 +32,18 @@ import com.nimbusds.openid.connect.sdk.OIDCTokenResponse;
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens;
 import net.minidev.json.JSONObject;
 
-
-/**
- * 
- */
-class AdalAccessTokenResponse extends OIDCTokenResponse {
+class MsalAccessTokenResponse extends OIDCTokenResponse {
 
     private String scope;
 
-    AdalAccessTokenResponse(final AccessToken accessToken,
+    MsalAccessTokenResponse(final AccessToken accessToken,
                             final RefreshToken refreshToken, final String idToken) {
         super(new OIDCTokens(idToken, accessToken, refreshToken));
     }
 
-    AdalAccessTokenResponse(final AccessToken accessToken,
-            final RefreshToken refreshToken, final String idToken,
-            final String scope) {
+    MsalAccessTokenResponse(final AccessToken accessToken,
+                            final RefreshToken refreshToken, final String idToken,
+                            final String scope) {
         this(accessToken, refreshToken, idToken);
         this.scope = scope;
     }
@@ -62,7 +58,7 @@ class AdalAccessTokenResponse extends OIDCTokenResponse {
      * @return
      * @throws ParseException
      */
-    static AdalAccessTokenResponse parseHttpResponse(
+    static MsalAccessTokenResponse parseHttpResponse(
             final HTTPResponse httpResponse) throws ParseException {
 
         httpResponse.ensureStatusCode(HTTPResponse.SC_OK);
@@ -78,7 +74,7 @@ class AdalAccessTokenResponse extends OIDCTokenResponse {
      * @return
      * @throws ParseException
      */
-    static AdalAccessTokenResponse parseJsonObject(final JSONObject jsonObject)
+    static MsalAccessTokenResponse parseJsonObject(final JSONObject jsonObject)
             throws ParseException {
 
         final AccessToken accessToken = AccessToken.parse(jsonObject);
@@ -97,7 +93,7 @@ class AdalAccessTokenResponse extends OIDCTokenResponse {
             scopeValue = JSONObjectUtils.getString(jsonObject, "scope");
         }
 
-        return new AdalAccessTokenResponse(accessToken, refreshToken,
+        return new MsalAccessTokenResponse(accessToken, refreshToken,
                 idTokenValue, scopeValue);
     }
 }

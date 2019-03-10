@@ -35,7 +35,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Test(groups = { "checkin" })
-public class AdalAccessTokenResponseTest extends AbstractAdalTests {
+public class MsalAccessTokenResponseTest extends AbstractMsalTests {
 
     private final String idToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6Ik5HVEZ2ZEstZnl0aEV1THdqcHdBSk9NOW4tQSJ9."
             + "eyJhdWQiOiIyMTZlZjgxZC1mM2IyLTQ3ZDQtYWQyMS1hNGRmNDliNTZkZWUiLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5l"
@@ -52,7 +52,7 @@ public class AdalAccessTokenResponseTest extends AbstractAdalTests {
 
     @Test
     public void testConstructor() throws ParseException {
-        final AdalAccessTokenResponse response = new AdalAccessTokenResponse(
+        final MsalAccessTokenResponse response = new MsalAccessTokenResponse(
                 new BearerAccessToken("access_token"), new RefreshToken(
                         "refresh_token"), idToken);
         Assert.assertNotNull(response);
@@ -65,7 +65,7 @@ public class AdalAccessTokenResponseTest extends AbstractAdalTests {
     @Test
     public void testParseJsonObject()
             throws com.nimbusds.oauth2.sdk.ParseException {
-        final AdalAccessTokenResponse response = AdalAccessTokenResponse
+        final MsalAccessTokenResponse response = MsalAccessTokenResponse
                 .parseJsonObject(JSONObjectUtils
                         .parseJSONObject(TestConfiguration.HTTP_RESPONSE_FROM_AUTH_CODE));
         Assert.assertNotNull(response);
@@ -78,7 +78,7 @@ public class AdalAccessTokenResponseTest extends AbstractAdalTests {
 
     @Test
     public void testEmptyIdToken() throws ParseException {
-        final AdalAccessTokenResponse response = new AdalAccessTokenResponse(
+        final MsalAccessTokenResponse response = new MsalAccessTokenResponse(
                 new BearerAccessToken(idToken), new RefreshToken(
                         "refresh_token"), "");
 

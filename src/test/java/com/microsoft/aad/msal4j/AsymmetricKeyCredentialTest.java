@@ -26,7 +26,6 @@ package com.microsoft.aad.msal4j;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
-import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.PrivateKey;
 import java.security.interfaces.RSAPrivateKey;
@@ -37,7 +36,7 @@ import org.testng.annotations.Test;
 
 @Test(groups = { "checkin" })
 @PrepareForTest({ RSAPrivateKey.class })
-public class AsymmetricKeyCredentialTest extends AbstractAdalTests {
+public class AsymmetricKeyCredentialTest extends AbstractMsalTests {
 
     @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "PrivateKey is null or empty")
     public void testNullKey() {

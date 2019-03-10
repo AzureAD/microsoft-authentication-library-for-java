@@ -44,10 +44,10 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
 
-class AdalOAuthRequest extends HTTPRequest {
+class MsalOauthRequest extends HTTPRequest {
 
     private final Map<String, String> extraHeaderParams;
-    private final Logger log = LoggerFactory.getLogger(AdalOAuthRequest.class);
+    private final Logger log = LoggerFactory.getLogger(MsalOauthRequest.class);
     private final ServiceBundle serviceBundle;
 
     /**
@@ -55,8 +55,8 @@ class AdalOAuthRequest extends HTTPRequest {
      * @param method
      * @param url
      */
-    AdalOAuthRequest(final Method method, final URL url,
-            final Map<String, String> extraHeaderParams, final ServiceBundle serviceBundle) {
+    MsalOauthRequest(final Method method, final URL url,
+                     final Map<String, String> extraHeaderParams, final ServiceBundle serviceBundle) {
         super(method, url);
         this.extraHeaderParams = extraHeaderParams;
         this.serviceBundle = serviceBundle;

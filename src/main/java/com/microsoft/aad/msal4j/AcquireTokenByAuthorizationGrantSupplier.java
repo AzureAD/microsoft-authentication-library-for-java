@@ -31,9 +31,7 @@ import org.apache.commons.codec.binary.Base64;
 
 import java.net.URLEncoder;
 
-;
-
-public class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSupplier {
+class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSupplier {
 
     private MsalRequest msalRequest;
 
@@ -58,7 +56,7 @@ public class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResu
                             integratedAuthGrant.getUserName()), integratedAuthGrant.getScopes()));
         }
 
-        return clientApplication.acquireTokenCommon(msalRequest);
+        return this.clientApplication.acquireTokenCommon(msalRequest);
     }
 
     private MsalOAuthAuthorizationGrant processPasswordGrant(
@@ -67,14 +65,13 @@ public class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResu
         if (!(authGrant.getAuthorizationGrant() instanceof ResourceOwnerPasswordCredentialsGrant)) {
             return authGrant;
         }
-
         ResourceOwnerPasswordCredentialsGrant grant =
                 (ResourceOwnerPasswordCredentialsGrant) authGrant.getAuthorizationGrant();
 
         UserDiscoveryResponse userDiscoveryResponse = UserDiscoveryRequest.execute(
-                clientApplication.authenticationAuthority.getUserRealmEndpoint(grant.getUsername()),
+                this.clientApplication.authenticationAuthority.getUserRealmEndpoint(grant.getUsername()),
                  msalRequest.getHeaders().getReadonlyHeaderMap(),
-                clientApplication.getServiceBundle());
+                this.clientApplication.getServiceBundle());
 
         if (userDiscoveryResponse.isAccountFederated()) {
             WSTrustResponse response = WSTrustRequest.execute(
@@ -82,8 +79,8 @@ public class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResu
                     grant.getUsername(),
                     grant.getPassword().getValue(),
                     userDiscoveryResponse.getCloudAudienceUrn(),
-                    clientApplication.getServiceBundle(),
-                    clientApplication.isLogPii());
+                    this.clientApplication.getServiceBundle(),
+                    this.clientApplication.isLogPii());
 
             AuthorizationGrant updatedGrant;
             if (response.isTokenSaml2()) {
@@ -105,17 +102,18 @@ public class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResu
     private AuthorizationGrant getAuthorizationGrantIntegrated(String userName) throws Exception {
         AuthorizationGrant updatedGrant;
 
-        String userRealmEndpoint = clientApplication.authenticationAuthority.
+        String userRealmEndpoint = this.clientApplication.authenticationAuthority.
                 getUserRealmEndpoint(URLEncoder.encode(userName, "UTF-8"));
 
         // Get the realm information
         UserDiscoveryResponse userRealmResponse = UserDiscoveryRequest.execute(
                 userRealmEndpoint,
                 msalRequest.getHeaders().getReadonlyHeaderMap(),
-                clientApplication.getServiceBundle());
+                this.clientApplication.getServiceBundle());
 
         if (userRealmResponse.isAccountFederated() &&
                 "WSTrust".equalsIgnoreCase(userRealmResponse.getFederationProtocol())) {
+
             String mexURL = userRealmResponse.getFederationMetadataUrl();
             String cloudAudienceUrn = userRealmResponse.getCloudAudienceUrn();
 
@@ -124,16 +122,18 @@ public class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResu
             WSTrustResponse wsTrustResponse = WSTrustRequest.execute(
                     mexURL,
                     cloudAudienceUrn,
-                    clientApplication.getServiceBundle(),
-                    clientApplication.isLogPii());
+                    this.clientApplication.getServiceBundle(),
+                    this.clientApplication.isLogPii());
 
             if (wsTrustResponse.isTokenSaml2()) {
-                updatedGrant = new SAML2BearerGrant(
-                        new Base64URL(Base64.encodeBase64String(wsTrustResponse.getToken().getBytes("UTF-8"))));
+                updatedGrant =
+                        new SAML2BearerGrant(new Base64URL(Base64.encodeBase64String(
+                                        wsTrustResponse.getToken().getBytes("UTF-8"))));
             }
             else {
-                updatedGrant = new SAML11BearerGrant(
-                        new Base64URL(Base64.encodeBase64String(wsTrustResponse.getToken().getBytes())));
+                updatedGrant =
+                        new SAML11BearerGrant(new Base64URL(Base64.encodeBase64String(
+                                wsTrustResponse.getToken().getBytes())));
             }
         }
         else if (userRealmResponse.isAccountManaged()) {

@@ -66,7 +66,7 @@ import static org.powermock.api.support.membermodification.MemberMatcher.method;
 import static org.powermock.api.support.membermodification.MemberModifier.replace;
 
 @PowerMockIgnore({"javax.net.ssl.*"})
-@PrepareForTest(com.microsoft.aad.msal4j.AdalOAuthRequest.class)
+@PrepareForTest(MsalOauthRequest.class)
 public class OAuthRequestValidationTest extends PowerMockTestCase {
 
     private final static String AUTHORITY = "https://loginXXX.windows.net/path/";
@@ -94,11 +94,11 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
 
     @BeforeMethod
     public void init() {
-        replace(method(com.microsoft.aad.msal4j.AdalOAuthRequest.class, "send")).
+        replace(method(MsalOauthRequest.class, "send")).
                 with(new InvocationHandler() {
                     @Override
                     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                        OAuthRequestValidationTest.query = ((AdalOAuthRequest) proxy).getQuery();
+                        OAuthRequestValidationTest.query = ((MsalOauthRequest) proxy).getQuery();
                         throw new AuthenticationException("");
                     }
                 });
