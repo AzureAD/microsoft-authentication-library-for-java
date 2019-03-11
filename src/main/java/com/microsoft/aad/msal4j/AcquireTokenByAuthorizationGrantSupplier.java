@@ -70,7 +70,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
 
         UserDiscoveryResponse userDiscoveryResponse = UserDiscoveryRequest.execute(
                 this.clientApplication.authenticationAuthority.getUserRealmEndpoint(grant.getUsername()),
-                 msalRequest.getHeaders().getReadonlyHeaderMap(),
+                msalRequest.getHeaders().getReadonlyHeaderMap(),
                 this.clientApplication.getServiceBundle());
 
         if (userDiscoveryResponse.isAccountFederated()) {

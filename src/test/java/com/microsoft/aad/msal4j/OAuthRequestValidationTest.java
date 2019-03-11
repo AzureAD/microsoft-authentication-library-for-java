@@ -75,6 +75,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
     private final static String CLIENT_SECRET = "ClientPassword";
 
     private final static String SCOPES = "https://SomeResource.azure.net";
+    private final static String DEFAULT_SCOPES = "openid profile offline_access";
 
     private final static String GRANT_TYPE_JWT = "urn:ietf:params:oauth:grant-type:jwt-bearer";
     private final static String CLIENT_ASSERTION_TYPE_JWT = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
@@ -227,9 +228,8 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
         // validate Client Authentication query params
         Assert.assertFalse(StringUtils.isEmpty(queryParams.get("client_assertion")));
 
-        // to do validate scopes
-        //TODO for OBO tests, should query params include default scopes?
-        Assert.assertEquals( queryParams.get("scope"), SCOPES);
+        // validate scopes
+        Assert.assertEquals( queryParams.get("scope"),DEFAULT_SCOPES + " " + SCOPES );
         Assert.assertEquals( queryParams.get("client_assertion_type"), CLIENT_ASSERTION_TYPE_JWT);
         Assert.assertEquals( queryParams.get("requested_token_use"), ON_BEHALF_OF_USE_JWT);
     }
@@ -277,8 +277,8 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
         Assert.assertEquals(CLIENT_ASSERTION_TYPE_JWT, queryParams.get("client_assertion_type"));
 
 
-        // to do validate scopes
-        Assert.assertEquals("openid profile offline_access https://SomeResource.azure.net", queryParams.get("scope"));
+        // validate scopes
+        Assert.assertEquals( queryParams.get("scope"), DEFAULT_SCOPES + " " + SCOPES);
     }
 }
 
