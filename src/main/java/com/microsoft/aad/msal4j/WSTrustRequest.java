@@ -39,8 +39,7 @@ import java.util.UUID;
 
 class WSTrustRequest {
 
-    private final static Logger log = LoggerFactory
-            .getLogger(WSTrustRequest.class);
+    private final static Logger log = LoggerFactory.getLogger(WSTrustRequest.class);
 
     private final static int MAX_EXPECTED_MESSAGE_SIZE = 1024;
     final static String DEFAULT_APPLIES_TO = "urn:federation:MicrosoftOnline";

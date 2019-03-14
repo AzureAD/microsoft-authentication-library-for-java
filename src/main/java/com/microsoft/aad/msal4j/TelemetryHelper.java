@@ -5,16 +5,17 @@ class TelemetryHelper implements AutoCloseable{
     private Event eventToEnd;
     private String requestId;
     private String clientId;
-    private boolean shouldFlush;
     private ITelemetry telemetry;
 
-    TelemetryHelper(ITelemetry telemetry, String requestId, String clientId, Event event,
-                           boolean shouldFlush){
+    TelemetryHelper(ITelemetry telemetry,
+                    String requestId,
+                    String clientId,
+                    Event event) {
+
         this.telemetry = telemetry;
         this.requestId = requestId;
         this.clientId = clientId;
         this.eventToEnd = event;
-        this.shouldFlush = shouldFlush;
 
         if(telemetry != null){
             telemetry.startEvent(requestId, event);
@@ -24,9 +25,7 @@ class TelemetryHelper implements AutoCloseable{
     public void close(){
         if(telemetry != null) {
             telemetry.stopEvent(requestId, eventToEnd);
-            if (shouldFlush) {
-                telemetry.flush(requestId, clientId);
-            }
+            telemetry.flush(requestId, clientId);
         }
     }
 

@@ -22,7 +22,7 @@ class ApiEvent extends Event{
     private Boolean logPii;
 
     public ApiEvent(Boolean logPii){
-        super(EVENT_NAME_PREFIX);
+        super(TelemetryConstants.API_EVENT_NAME_KEY);
         this.logPii = logPii;
     }
 
@@ -74,7 +74,7 @@ class ApiEvent extends Event{
         this.put(IS_CONFIDENTIAL_CLIENT_KEY, String.valueOf(isConfidentialClient).toLowerCase(Locale.ROOT));
     }
 
-    public void setApiErrorCode(String apiErrorCode){
-        this.put(API_ERROR_CODE_KEY, apiErrorCode);
+    public void setApiErrorCode(MsalErrorCode apiErrorCode){
+        this.put(API_ERROR_CODE_KEY, apiErrorCode.toString());
     }
 }

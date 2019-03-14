@@ -23,6 +23,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.google.common.base.Strings;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.nimbusds.oauth2.sdk.ErrorObject;
@@ -41,12 +42,12 @@ import java.util.Map;
 
 class TokenEndpointRequest {
 
-    private final URL uri;
+    private final URL url;
     private final MsalRequest msalRequest;
     private final ServiceBundle serviceBundle;
 
-    TokenEndpointRequest(final URL uri, MsalRequest msalRequest , final ServiceBundle serviceBundle) {
-        this.uri = uri;
+    TokenEndpointRequest(final URL url, MsalRequest msalRequest, final ServiceBundle serviceBundle) {
+        this.url = url;
         this.serviceBundle = serviceBundle;
         this.msalRequest = msalRequest;
     }
@@ -64,54 +65,96 @@ class TokenEndpointRequest {
             throws ParseException, AuthenticationException, SerializeException,
             IOException, java.text.ParseException {
 
-        AuthenticationResult result;
-        HTTPResponse httpResponse;
-        final MsalOauthRequest msalOauthHttpRequest = this.toOAuthRequest();
-        httpResponse = msalOauthHttpRequest.send();
+        HttpEvent httpEvent = new HttpEvent();
+        httpEvent.setHttpPath(url);
+        httpEvent.setQueryParameters(url.getQuery());
 
-        if (httpResponse.getStatusCode() == HTTPResponse.SC_OK) {
-            final MsalAccessTokenResponse response =
-                    MsalAccessTokenResponse.parseHttpResponse(httpResponse);
+        try(TelemetryHelper telemetryHelper = serviceBundle.getTelemetryManager().createTelemetryHelper(
+                msalRequest.getRequestContext().getTelemetryRequestId(),
+                msalRequest.getClientAuthentication().getClientID().toString(),
+                httpEvent)){
 
-            OIDCTokens tokens = response.getOIDCTokens();
-            String refreshToken = null;
-            if (tokens.getRefreshToken() != null) {
-                refreshToken = tokens.getRefreshToken().getValue();
+            AuthenticationResult result;
+            HTTPResponse httpResponse;
+            final MsalOauthRequest msalOauthHttpRequest = this.toOAuthRequest();
+            httpResponse = msalOauthHttpRequest.send();
+
+            httpEvent.setHttpResponseStatus(httpResponse.getStatusCode());
+            httpEvent.setHttpMethod("POST");
+            httpEvent.setUserAgent(httpResponse.getHeader("User-Agent"));
+
+            if(!Strings.isNullOrEmpty(httpResponse.getHeader("x-ms-request-id"))){
+                httpEvent.setRequestIdHeader(httpResponse.getHeader("x-ms-request-id"));
             }
 
-            UserInfo info = null;
-            if (tokens.getIDToken() != null) {
-                info = UserInfo.createFromIdTokenClaims(tokens.getIDToken().getJWTClaimsSet());
+            if(!Strings.isNullOrEmpty(httpResponse.getHeader("x-ms-clitelem"))){
+                XmsClientTelemetryInfo xmsClientTelemetryInfo =
+                        XmsClientTelemetryInfo.parseXmsTelemetryInfo(
+                                httpResponse.getHeader("x-ms-clitelem"));
+                if(xmsClientTelemetryInfo != null){
+                    httpEvent.setTokenAge(xmsClientTelemetryInfo.getTokenAge());
+                    httpEvent.setSpeInfo(xmsClientTelemetryInfo.getSpeInfo());
+                    httpEvent.setServerErrorCode(xmsClientTelemetryInfo.getServerErrorCode());
+                    httpEvent.setSubServerErrorCode(xmsClientTelemetryInfo.getServerSubErrorCode());
+                }
             }
 
-            result = new AuthenticationResult(
-                    tokens.getAccessToken().getType().getValue(),
-                    tokens.getAccessToken().getValue(), refreshToken,
-                    tokens.getAccessToken().getLifetime(),
-                    tokens.getIDTokenString(),
-                    info,
-                    !StringHelper.isBlank(response.getScope()));
-        } else {
-            final TokenErrorResponse errorResponse = TokenErrorResponse.parse(httpResponse);
-            ErrorObject errorObject = errorResponse.getErrorObject();
+            if (httpResponse.getStatusCode() == HTTPResponse.SC_OK) {
+                final MsalAccessTokenResponse response =
+                        MsalAccessTokenResponse.parseHttpResponse(httpResponse);
 
-            if(MsalErrorCode.AUTHORIZATION_PENDING.toString()
-                    .equals(errorObject.getCode())){
-                throw new AuthenticationException(MsalErrorCode.AUTHORIZATION_PENDING,
-                        errorObject.getDescription());
-            }
+                OIDCTokens tokens = response.getOIDCTokens();
+                String refreshToken = null;
+                if (tokens.getRefreshToken() != null) {
+                    refreshToken = tokens.getRefreshToken().getValue();
+                }
 
-            if(HTTPResponse.SC_BAD_REQUEST == errorObject.getHTTPStatusCode() &&
-                    MsalErrorCode.INTERACTION_REQUIRED.toString().equals(errorObject.getCode())){
-                throw new MsalClaimsChallengeException(
-                        errorResponse.toJSONObject().toJSONString(),
-                        getClaims(httpResponse.getContent()));
+                UserInfo info = null;
+                if (tokens.getIDToken() != null) {
+                    info = UserInfo.createFromIdTokenClaims(tokens.getIDToken().getJWTClaimsSet());
+                }
+
+                result = new AuthenticationResult(
+                        tokens.getAccessToken().getType().getValue(),
+                        tokens.getAccessToken().getValue(), refreshToken,
+                        tokens.getAccessToken().getLifetime(),
+                        tokens.getIDTokenString(),
+                        info,
+                        !StringHelper.isBlank(response.getScope()));
+
+            } else {
+                final TokenErrorResponse errorResponse = TokenErrorResponse.parse(httpResponse);
+                ErrorObject errorObject = errorResponse.getErrorObject();
+
+                if(MsalErrorCode.AUTHORIZATION_PENDING.toString()
+                        .equals(errorObject.getCode())){
+
+                    httpEvent.setOauthErrorCode(MsalErrorCode.AUTHORIZATION_PENDING.toString());
+
+                    throw new AuthenticationException(MsalErrorCode.AUTHORIZATION_PENDING,
+                            errorObject.getDescription());
+                }
+
+                if(HTTPResponse.SC_BAD_REQUEST == errorObject.getHTTPStatusCode() &&
+                        MsalErrorCode.INTERACTION_REQUIRED.toString().equals(errorObject.getCode())){
+
+                    httpEvent.setOauthErrorCode(MsalErrorCode.INTERACTION_REQUIRED.toString());
+
+                    throw new MsalClaimsChallengeException(
+                            errorResponse.toJSONObject().toJSONString(),
+                            getClaims(httpResponse.getContent()));
+                }
+                else {
+                    String telemetryErrorCode = Strings.isNullOrEmpty(errorObject.getCode()) ?
+                            MsalErrorCode.UNKNOWN.toString() :
+                            errorObject.getCode();
+
+                    httpEvent.setOauthErrorCode(telemetryErrorCode);
+                    throw new AuthenticationException(errorResponse.toJSONObject().toJSONString());
+                }
             }
-            else {
-                throw new AuthenticationException(errorResponse.toJSONObject().toJSONString());
-            }
+            return result;
         }
-        return result;
     }
 
     private String getClaims(String httpResponseContentStr) {
@@ -129,13 +172,13 @@ class TokenEndpointRequest {
      */
     MsalOauthRequest toOAuthRequest() throws SerializeException {
 
-        if (this.uri == null) {
+        if (this.url == null) {
             throw new SerializeException("The endpoint URI is not specified");
         }
 
         final MsalOauthRequest httpRequest = new MsalOauthRequest(
                 HTTPRequest.Method.POST,
-                this.uri,
+                this.url,
                 msalRequest.getHeaders().getReadonlyHeaderMap(),
                 this.serviceBundle);
         httpRequest.setContentType(CommonContentTypes.APPLICATION_URLENCODED);

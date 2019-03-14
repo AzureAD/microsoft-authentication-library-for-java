@@ -30,10 +30,16 @@ import javax.net.ssl.SSLSocketFactory;
 import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
 /**
  * Abstract class containing common API methods and properties.
@@ -50,6 +56,7 @@ abstract public class ClientApplicationBase {
     private String correlationId;
     private boolean logPii;
     private ServiceBundle serviceBundle;
+    private Consumer<List<HashMap<String,String>>> telemetryConsumer;
 
     /**
      * Returns Proxy configuration to be used by the context for all network communication.
@@ -67,6 +74,16 @@ abstract public class ClientApplicationBase {
     public SSLSocketFactory getSslSocketFactory() {
         return this.serviceBundle.getSslSocketFactory();
     }
+
+    /**
+     * Returns registered telemetry consumer that will receive telemetry events emited by the library.
+     *
+     * @return TelemetryConsumer object
+     */
+    public Consumer<List<HashMap<String,String>>> getTelemetryConsumer(){
+        return this.telemetryConsumer;
+    }
+
 
     /**
      * Gets the URL of the authority, or security token service (STS) from which MSAL will acquire security tokens
@@ -172,12 +189,32 @@ abstract public class ClientApplicationBase {
     CompletableFuture<AuthenticationResult> InitializeRequest(
             MsalRequest msalRequest) {
 
-        AuthenticationResultSupplier supplier = getAuthenticationResultSupplier(msalRequest);
+        ApiEvent apiEvent = initializeApiEvent(msalRequest);
+        CompletableFuture<AuthenticationResult> future;
 
-        ExecutorService executorService = serviceBundle.getExecutorService();
-        CompletableFuture<AuthenticationResult> future = executorService != null ?
+        try(TelemetryHelper telemetryHelper = serviceBundle.getTelemetryManager().createTelemetryHelper(
+                msalRequest.getRequestContext().getTelemetryRequestId(),
+                msalRequest.getClientAuthentication().getClientID().toString(),
+                apiEvent)){
+                try {
+                AuthenticationResultSupplier supplier = getAuthenticationResultSupplier(msalRequest);
+
+                ExecutorService executorService = serviceBundle.getExecutorService();
+                future = executorService != null ?
                         CompletableFuture.supplyAsync(supplier, executorService) :
                         CompletableFuture.supplyAsync(supplier);
+
+                apiEvent.setTenantId(future.thenApply(result ->
+                        result.getUserInfo().getTenantId()).toString());
+                // TODO set AccountId
+                //apiEvent.setAccountId(future.thenApply(result -> result.));
+                apiEvent.setWasSuccesful(true);
+
+            } catch (AuthenticationException e){
+                apiEvent.setApiErrorCode(e.getErrorCode());
+                throw e;
+            }
+        }
         return future;
     }
 
@@ -219,6 +256,33 @@ abstract public class ClientApplicationBase {
         return supplier;
     }
 
+    private ApiEvent initializeApiEvent(MsalRequest msalRequest){
+        ApiEvent apiEvent = new ApiEvent(logPii);
+        msalRequest.getRequestContext().setTelemetryRequestId(serviceBundle.getTelemetryManager().generateRequestId());
+        // TODO set apiIds
+        apiEvent.setApiId(0);
+        apiEvent.setCorrelationId(msalRequest.getRequestContext().getCorrelationId());
+        apiEvent.setRequestId(msalRequest.getRequestContext().getTelemetryRequestId());
+        apiEvent.setWasSuccesful(false);
+
+        if(this instanceof ConfidentialClientApplication){
+            apiEvent.setIsConfidentialClient(true);
+        } else {
+            apiEvent.setIsConfidentialClient(false);
+        }
+
+        try {
+            if (authenticationAuthority != null) {
+                apiEvent.setAuthority(new URI(authenticationAuthority.getAuthority()));
+                apiEvent.setAuthorityType(authenticationAuthority.getAuthorityType().toString());
+            }
+        } catch (URISyntaxException e){
+            log.warn("Error setting telemetry authority information");
+        }
+
+        return apiEvent;
+    }
+
     protected static void validateNotBlank(String name, String value) {
         if (StringHelper.isBlank(value)) {
             throw new IllegalArgumentException(name + " is null or empty");
@@ -254,6 +318,8 @@ abstract public class ClientApplicationBase {
         private ExecutorService executorService;
         private Proxy proxy;
         private SSLSocketFactory sslSocketFactory;
+        private Consumer<List<HashMap<String,String>>> telemetryConsumer;
+        private Boolean onlySendFailureTelemetry = false;
 
         /**
          * Constructor to create instance of Builder of client application
@@ -288,8 +354,7 @@ abstract public class ClientApplicationBase {
          * against a list of known authorities.
          * The default value is true.
          */
-        public T validateAuthority(boolean val)
-        {
+        public T validateAuthority(boolean val) {
             validateAuthority = val;
             return self();
         }
@@ -298,8 +363,7 @@ abstract public class ClientApplicationBase {
          *  Set optional correlation id to be used by the API.
          *  If not provided, the API generates a random UUID.
          */
-        public T correlationId(String val)
-        {
+        public T correlationId(String val) {
             validateNotBlank("correlationId", val);
 
             correlationId = val;
@@ -311,8 +375,7 @@ abstract public class ClientApplicationBase {
          * whether Pii (personally identifiable information) will be logged in.
          * The default value is false.
          */
-        public T logPii(boolean val)
-        {
+        public T logPii(boolean val) {
             logPii = val;
             return self();
         }
@@ -321,8 +384,7 @@ abstract public class ClientApplicationBase {
          *  Sets ExecutorService to be used to execute the requests.
          *  Developer is responsible for maintaining the lifecycle of the ExecutorService.
          */
-        public T executorService(ExecutorService val)
-        {
+        public T executorService(ExecutorService val) {
             validateNotNull("executorService", val);
 
             executorService = val;
@@ -333,8 +395,7 @@ abstract public class ClientApplicationBase {
          * Sets Proxy configuration to be used by the client application for all network communication.
          * Default is null and system defined properties if any, would be used.
          */
-        public T proxy(Proxy val)
-        {
+        public T proxy(Proxy val) {
             validateNotNull("proxy", val);
 
             proxy = val;
@@ -345,11 +406,23 @@ abstract public class ClientApplicationBase {
          * Sets SSLSocketFactory to be used by the client application for all network communication.
          *
          */
-        public T sslSocketFactory(SSLSocketFactory val)
-        {
+        public T sslSocketFactory(SSLSocketFactory val) {
             validateNotNull("sslSocketFactory", val);
 
             sslSocketFactory = val;
+            return self();
+        }
+
+        public T telemetryConsumer(Consumer<List<HashMap<String,String>>> val){
+            validateNotNull("telemetryConsumer", val);
+
+            telemetryConsumer = val;
+            return self();
+        }
+
+        public T onlySendFailureTelemetry(Boolean val){
+
+            onlySendFailureTelemetry = val;
             return self();
         }
 
@@ -370,7 +443,11 @@ abstract public class ClientApplicationBase {
         validateAuthority = builder.validateAuthority;
         correlationId = builder.correlationId;
         logPii = builder.logPii;
-        // Telemetry will also go into serviceBundle
-        serviceBundle = new ServiceBundle(builder.executorService, builder.proxy, builder.sslSocketFactory);
+        telemetryConsumer = builder.telemetryConsumer;
+        serviceBundle = new ServiceBundle(
+                builder.executorService,
+                builder.proxy,
+                builder.sslSocketFactory,
+                new TelemetryManager(telemetryConsumer, builder.onlySendFailureTelemetry));
     }
 }

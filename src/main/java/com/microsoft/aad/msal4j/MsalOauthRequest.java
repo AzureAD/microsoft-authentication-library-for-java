@@ -45,9 +45,9 @@ import java.util.Collections;
 import java.util.Map;
 
 class MsalOauthRequest extends HTTPRequest {
+    private final Logger log = LoggerFactory.getLogger(MsalOauthRequest.class);
 
     private final Map<String, String> extraHeaderParams;
-    private final Logger log = LoggerFactory.getLogger(MsalOauthRequest.class);
     private final ServiceBundle serviceBundle;
 
     /**

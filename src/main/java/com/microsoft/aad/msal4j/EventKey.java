@@ -1,5 +1,7 @@
 package com.microsoft.aad.msal4j;
 
+import java.util.Objects;
+
 class EventKey {
     private String requestId;
     private String eventName;
@@ -23,7 +25,15 @@ class EventKey {
         if(!(obj instanceof EventKey)) return false;
         if(obj == this) return true;
 
-        return requestId.equalsIgnoreCase(((EventKey) obj).requestId) &&
-                eventName.equalsIgnoreCase(((EventKey) obj).eventName);
+        EventKey eventKey = (EventKey) obj;
+        return Objects.equals(requestId, eventKey.getRequestId()) &&
+                Objects.equals(eventName, eventKey.getEventName());
     }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(requestId, eventName);
+    }
+
 }

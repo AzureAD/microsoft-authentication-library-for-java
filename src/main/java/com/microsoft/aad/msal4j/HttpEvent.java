@@ -2,7 +2,7 @@ package com.microsoft.aad.msal4j;
 
 import com.google.common.base.Strings;
 
-import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Locale;
 
@@ -26,7 +26,7 @@ class HttpEvent extends Event{
         super(TelemetryConstants.HTTP_EVENT_NAME_KEY);
     }
 
-    public void setHttpPath(URI httpPath){
+    public void setHttpPath(URL httpPath){
         this.put(HTTP_PATH_KEY, scrubTenant(httpPath));
     }
 
@@ -46,7 +46,7 @@ class HttpEvent extends Event{
         this.put(RESPONSE_CODE_KEY, httpResponseStatus.toString().toLowerCase());
     }
 
-    public void setHTTpMethod(String httpMethod){
+    public void setHttpMethod(String httpMethod){
         this.put(HTTP_METHOD_KEY, httpMethod);
     }
 

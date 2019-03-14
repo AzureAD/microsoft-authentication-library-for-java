@@ -5,52 +5,50 @@ import com.google.common.base.Strings;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 class TelemetryManager implements ITelemetryManager, ITelemetry{
 
-    final ConcurrentHashMap<String, List<Event>> completedEvents = new ConcurrentHashMap<>();
-    final ConcurrentHashMap<EventKey, Event> eventsInProgress = new ConcurrentHashMap<>();
-    final ConcurrentHashMap<String, ConcurrentHashMap<String, Integer>> eventCount =
+    private final ConcurrentHashMap<String, List<Event>> completedEvents = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<EventKey, Event> eventsInProgress = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, ConcurrentHashMap<String, Integer>> eventCount =
             new ConcurrentHashMap<>();
+
     private boolean onlySendFailureTelemetry;
+    private Consumer<List<HashMap<String,String>>>  telemetryConsumer;
 
-    ITelemetryCallback callback;
-
-
-    public TelemetryManager(ITelemetryCallback callback, boolean onlySendFailureTelemetry){
-        this.callback = callback;
+    public TelemetryManager(Consumer<List<HashMap<String,String>>> telemetryConsumer,
+                            boolean onlySendFailureTelemetry){
+        this.telemetryConsumer= telemetryConsumer;
         this.onlySendFailureTelemetry = onlySendFailureTelemetry;
     }
 
     public TelemetryHelper createTelemetryHelper(String requestId, String clientId,
-                                                 Event eventToStart, boolean shouldFlush){
-        return new TelemetryHelper(this, requestId, clientId, eventToStart, shouldFlush);
+                                                 Event eventToStart){
+        return new TelemetryHelper(this, requestId, clientId, eventToStart);
     }
 
     public String generateRequestId(){
         return UUID.randomUUID().toString();
     }
 
-    private boolean hasCallback(){
-        return callback != null;
-    }
-
     @Override
     public void startEvent(String requestId, Event eventToStart) {
-        if(hasCallback() && !Strings.isNullOrEmpty(requestId)){
+        if(hasConsumer() && !Strings.isNullOrEmpty(requestId)){
             eventsInProgress.put(new EventKey(requestId, eventToStart), eventToStart);
         }
     }
 
     @Override
     public void stopEvent(String requestId, Event eventToStop){
-        if(!hasCallback() || Strings.isNullOrEmpty(requestId)) return;
+        if(!hasConsumer() || Strings.isNullOrEmpty(requestId)) return;
 
         EventKey eventKey = new EventKey(requestId, eventToStop);
 
@@ -75,7 +73,7 @@ class TelemetryManager implements ITelemetryManager, ITelemetry{
 
     @Override
     public void flush(String requestId, String clientId){
-        if(!hasCallback()){
+        if(!hasConsumer()){
             return;
         }
 
@@ -98,9 +96,9 @@ class TelemetryManager implements ITelemetryManager, ITelemetry{
         if(eventsToFlush.size() <= 0){
             return;
         }
-
         eventsToFlush.add(0, new DefaultEvent(clientId, eventCountToFlush));
-        callback.onTelemetryCallback(eventsToFlush);
+
+        telemetryConsumer.accept(Collections.unmodifiableList(eventsToFlush));
     }
 
     private Collection<Event> collateOrphanedEvents(String requestId){
@@ -119,7 +117,12 @@ class TelemetryManager implements ITelemetryManager, ITelemetry{
                 requestId, new ConcurrentHashMap<String, Integer>(){
                     { put(eventName, 0); }
                 });
-        eventNameCount.put(eventName, eventNameCount.get(eventName) + 1);
+
+        eventNameCount.put(eventName, eventNameCount.getOrDefault(eventName, 0) + 1);
         eventCount.put(requestId,eventNameCount);
+    }
+
+    private boolean hasConsumer(){
+        return telemetryConsumer != null;
     }
 }

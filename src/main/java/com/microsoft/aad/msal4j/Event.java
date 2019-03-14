@@ -1,10 +1,13 @@
 package com.microsoft.aad.msal4j;
 
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,13 +39,24 @@ abstract class Event extends HashMap<String, String>{
         this.put(ELAPSED_TIME_KEY, Long.toString(duration));
     }
 
-    static String scrubTenant(URI uri){
+    static String scrubTenant(URL url){
+
+        URI uri;
+        try {
+            uri = url.toURI();
+        } catch(URISyntaxException e){
+            return null;
+        }
         if(!uri.isAbsolute()){
             throw new IllegalArgumentException("Requires an absolute URI");
         }
+        if(!Arrays.asList(AuthenticationAuthority.getTrustedHostList()).contains(uri.getHost())){
+            return null;
+        }
+
         //TODO should be updated when B2C is added, since tenant could be in different place
         String[] segment = uri.getPath().split("/");
-        if(segment.length >= 1){
+        if(segment.length >= 2){
             segment[1] = TENANT_PLACEHOLDER;
         }
 

@@ -26,7 +26,6 @@ package com.microsoft.aad.msal4j;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 final class ClientDataHttpHeaders {
 
@@ -50,16 +49,12 @@ final class ClientDataHttpHeaders {
     private final String headerValues;
     private final Map<String, String> headerMap = new HashMap<String, String>();
 
-    private static String generateCorrelationId(){
-    return UUID.randomUUID().toString();
-}
-
     ClientDataHttpHeaders(final String correlationId) {
         if (!StringHelper.isBlank(correlationId)) {
             this.correlationIdHeaderValue = correlationId;
         }
         else {
-            this.correlationIdHeaderValue = generateCorrelationId();
+            this.correlationIdHeaderValue = RequestContext.generateNewCorrelationId();
         }
         this.headerValues = initHeaderMap();
     }

@@ -34,7 +34,7 @@ class RequestContext {
         return correlationId;
     }
 
-    private String generateNewCorrelationId(){
+    static String generateNewCorrelationId(){
         return UUID.randomUUID().toString();
     }
 }

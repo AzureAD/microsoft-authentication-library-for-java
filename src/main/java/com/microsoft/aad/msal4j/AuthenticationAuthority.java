@@ -116,6 +116,10 @@ class AuthenticationAuthority {
         return selfSignedJwtAudience;
     }
 
+    static String[] getTrustedHostList() {
+        return TRUSTED_HOST_LIST;
+    }
+
     void setSelfSignedJwtAudience(final String selfSignedJwtAudience) {
         this.selfSignedJwtAudience = selfSignedJwtAudience;
     }
