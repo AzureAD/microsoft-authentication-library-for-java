@@ -15,9 +15,9 @@ class RefreshTokenRequest extends MsalRequest {
         super(createAuthenticationGrant(refreshToken, scopes), clientAuthentication, requestContext);
     }
 
-    private static AbstractMsalAuthorizationGrant createAuthenticationGrant(String refreshToken,
-                                                                            Set<String > scopes){
+    private static MsalAuthorizationGrant createAuthenticationGrant(String refreshToken,
+                                                                    Set<String > scopes){
         RefreshTokenGrant refreshTokenGrant = new RefreshTokenGrant(new RefreshToken(refreshToken));
-        return new MsalOAuthAuthorizationGrant(refreshTokenGrant, scopes);
+        return new OauthAuthorizationGrant(refreshTokenGrant, scopes);
     }
 }

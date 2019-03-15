@@ -44,10 +44,10 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
 
-class MsalOauthRequest extends HTTPRequest {
+class OauthHttpRequest extends HTTPRequest {
 
     private final Map<String, String> extraHeaderParams;
-    private final Logger log = LoggerFactory.getLogger(MsalOauthRequest.class);
+    private final Logger log = LoggerFactory.getLogger(OauthHttpRequest.class);
     private final ServiceBundle serviceBundle;
 
     /**
@@ -55,7 +55,7 @@ class MsalOauthRequest extends HTTPRequest {
      * @param method
      * @param url
      */
-    MsalOauthRequest(final Method method, final URL url,
+    OauthHttpRequest(final Method method, final URL url,
                      final Map<String, String> extraHeaderParams, final ServiceBundle serviceBundle) {
         super(method, url);
         this.extraHeaderParams = extraHeaderParams;

@@ -62,7 +62,7 @@ public class PublicClientApplication extends ClientApplicationBase {
                 clientAuthentication,
                 new RequestContext(clientId, this.getCorrelationId()));
 
-        return this.InitializeRequest(userNamePasswordRequest);
+        return this.executeRequest(userNamePasswordRequest);
     }
 
     /**
@@ -82,14 +82,14 @@ public class PublicClientApplication extends ClientApplicationBase {
         validateNotEmpty("scopes", scopes);
         validateNotBlank("username", username);
 
-        IntegratedWindowsAuthRequest integratedWindowsAuthRequest =
-                new IntegratedWindowsAuthRequest(
+        IntegratedWindowsAuthenticationRequest integratedWindowsAuthenticationRequest =
+                new IntegratedWindowsAuthenticationRequest(
                         username,
                         scopes,
                         clientAuthentication,
                         new RequestContext(clientId, this.getCorrelationId()));
 
-        return this.InitializeRequest(integratedWindowsAuthRequest);
+        return this.executeRequest(integratedWindowsAuthenticationRequest);
     }
 
     /**
@@ -108,7 +108,7 @@ public class PublicClientApplication extends ClientApplicationBase {
      * @return A {@link CompletableFuture} object representing the {@link AuthenticationResult} of the call.
      * It contains AccessToken, Refresh Token and the Access Token's expiration time.
      * @throws AuthenticationException thrown if authorization is pending or another error occurred.
-     *                                 If the errorCode of the exception is MsalErrorCode.AUTHORIZATION_PENDING,
+     *                                 If the errorCode of the exception is AuthenticationErrorCode.AUTHORIZATION_PENDING,
      *                                 the call needs to be retried until the AccessToken is returned.
      *                                 DeviceCode.interval - The minimum amount of time in seconds that the client
      *                                 SHOULD wait between polling requests to the token endpoint
@@ -129,7 +129,7 @@ public class PublicClientApplication extends ClientApplicationBase {
                 clientAuthentication,
                 new RequestContext(clientId, this.getCorrelationId()));
 
-        CompletableFuture<AuthenticationResult> future = InitializeRequest(deviceCodeRequest);
+        CompletableFuture<AuthenticationResult> future = executeRequest(deviceCodeRequest);
         futureReference.set(future);
         return future;
     }

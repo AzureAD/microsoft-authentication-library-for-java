@@ -40,14 +40,14 @@ public class MsalOauthAuthorizatonGrantTest {
 
     @Test
     public void testConstructor() {
-        final MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(null,
+        final OauthAuthorizationGrant grant = new OauthAuthorizationGrant(null,
                 new HashMap<String, String>());
         Assert.assertNotNull(grant);
     }
 
     @Test
     public void testToParameters() throws URISyntaxException {
-        final MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(
+        final OauthAuthorizationGrant grant = new OauthAuthorizationGrant(
                 new AuthorizationCodeGrant(new AuthorizationCode("grant"),
                         new URI("http://microsoft.com")),
                 (Map<String, String>) null);

@@ -18,7 +18,7 @@ class AuthorizationCodeRequest extends MsalRequest {
         super(createMsalGrant(authorizationCode, redirectUri, scopes), clientAuthentication, requestContext);
     }
 
-    private static AbstractMsalAuthorizationGrant createMsalGrant(
+    private static MsalAuthorizationGrant createMsalGrant(
             String authorizationCode,
             URI redirectUri,
             Set<String> scopes){
@@ -26,7 +26,6 @@ class AuthorizationCodeRequest extends MsalRequest {
         AuthorizationGrant authorizationGrant = new AuthorizationCodeGrant(
                 new AuthorizationCode(authorizationCode), redirectUri);
 
-        return new MsalOAuthAuthorizationGrant(authorizationGrant, scopes);
+        return new OauthAuthorizationGrant(authorizationGrant, scopes);
     }
-
 }

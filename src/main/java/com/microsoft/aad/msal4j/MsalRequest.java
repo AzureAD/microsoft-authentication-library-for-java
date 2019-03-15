@@ -5,11 +5,11 @@ import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 abstract class MsalRequest {
 
     private final ClientAuthentication clientAuthentication;
-    private AbstractMsalAuthorizationGrant msalAuthorizationGrant;
+    private MsalAuthorizationGrant msalAuthorizationGrant;
     private final RequestContext requestContext;
     ClientDataHttpHeaders headers;
 
-    protected MsalRequest(AbstractMsalAuthorizationGrant msalAuthorizationGrant,
+    protected MsalRequest(MsalAuthorizationGrant msalAuthorizationGrant,
                           ClientAuthentication clientAuthentication,
                           RequestContext requestContext){
         this.msalAuthorizationGrant = msalAuthorizationGrant;
@@ -22,7 +22,7 @@ abstract class MsalRequest {
         return clientAuthentication;
     }
 
-    AbstractMsalAuthorizationGrant getMsalAuthorizationGrant(){
+    MsalAuthorizationGrant getMsalAuthorizationGrant(){
         return msalAuthorizationGrant;
     }
 
@@ -34,7 +34,7 @@ abstract class MsalRequest {
         return headers;
     }
 
-    void setMsalAuthorizationGrant(AbstractMsalAuthorizationGrant msalAuthorizationGrant){
+    void setMsalAuthorizationGrant(MsalAuthorizationGrant msalAuthorizationGrant){
         this.msalAuthorizationGrant = msalAuthorizationGrant;
     }
 }

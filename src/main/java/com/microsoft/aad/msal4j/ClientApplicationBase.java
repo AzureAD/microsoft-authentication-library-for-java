@@ -130,7 +130,6 @@ abstract public class ClientApplicationBase {
 
         validateNotBlank("authorizationCode", authorizationCode);
         validateNotBlank("redirectUri", authorizationCode);
-        validateNotEmpty("scopes", scopes);
 
         AuthorizationCodeRequest authorizationCodeRequest =
                 new AuthorizationCodeRequest(
@@ -140,7 +139,7 @@ abstract public class ClientApplicationBase {
                         clientAuthentication,
                         new RequestContext(clientId, correlationId));
 
-        return this.InitializeRequest(authorizationCodeRequest);
+        return this.executeRequest(authorizationCodeRequest);
     }
 
     /**
@@ -166,10 +165,10 @@ abstract public class ClientApplicationBase {
                 clientAuthentication,
                 new RequestContext(clientId, correlationId));
 
-        return this.InitializeRequest(refreshTokenRequest);
+        return this.executeRequest(refreshTokenRequest);
     }
 
-    CompletableFuture<AuthenticationResult> InitializeRequest(
+    CompletableFuture<AuthenticationResult> executeRequest(
             MsalRequest msalRequest) {
 
         AuthenticationResultSupplier supplier = getAuthenticationResultSupplier(msalRequest);
@@ -201,14 +200,14 @@ abstract public class ClientApplicationBase {
                 msalRequest,
                 serviceBundle);
 
-        return request.executeOAuthRequestAndProcessResponse();
+        return request.executeOauthRequestAndProcessResponse();
     }
 
     private AuthenticationResultSupplier getAuthenticationResultSupplier(MsalRequest msalRequest){
 
         AuthenticationResultSupplier supplier;
         if(msalRequest instanceof DeviceCodeRequest){
-            supplier = new AcquireTokenDeviceCodeFlowSupplier(
+            supplier = new AcquireTokenByDeviceCodeFlowSupplier(
                     (PublicClientApplication) this,
                     (DeviceCodeRequest) msalRequest);
         } else {

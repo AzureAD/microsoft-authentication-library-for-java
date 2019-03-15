@@ -56,7 +56,7 @@ public class ConfidentialClientApplication extends ClientApplicationBase {
                         clientAuthentication,
                         new RequestContext(clientId, this.getCorrelationId()));
 
-        return this.InitializeRequest(clientCredentialRequest);
+        return this.executeRequest(clientCredentialRequest);
     }
 
     /**
@@ -93,7 +93,7 @@ public class ConfidentialClientApplication extends ClientApplicationBase {
                 clientAuthentication,
                 new RequestContext(clientId, this.getCorrelationId()));
 
-        return this.InitializeRequest(oboRequest);
+        return this.executeRequest(oboRequest);
     }
 
     private ConfidentialClientApplication(Builder builder){
