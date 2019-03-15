@@ -23,7 +23,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import org.easymock.EasyMock;
 import org.powermock.api.easymock.PowerMock;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
@@ -44,7 +43,9 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.concurrent.Future;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 @PowerMockIgnore({"javax.net.ssl.*"})
 @Test(groups = { "checkin" })
@@ -64,15 +65,13 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
         );
 
         PowerMock.expectPrivate(app, "acquireTokenCommon",
-                EasyMock.isA(MsalOAuthAuthorizationGrant.class),
-                EasyMock.isA(ClientAuthentication.class),
-                EasyMock.isA(ClientDataHttpHeaders.class)).andReturn(
+                EasyMock.isA(MsalRequest.class)).andReturn(
                 new AuthenticationResult("bearer", "accessToken",
                         "refreshToken", new Date().getTime(), "idToken", null,
                         false));
         PowerMock.replay(app);
         Future<AuthenticationResult> result = app
-                .acquireTokenByAuthorizationCode(null, "auth_code",
+                .acquireTokenByAuthorizationCode(Collections.singleton("default-scope"), "auth_code",
                         new URI(TestConfiguration.AAD_DEFAULT_REDIRECT_URI));
         AuthenticationResult ar = result.get();
         Assert.assertNotNull(ar);
@@ -101,16 +100,14 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
                         .authority(TestConfiguration.AAD_TENANT_ENDPOINT));
 
         PowerMock.expectPrivate(app, "acquireTokenCommon",
-                EasyMock.isA(MsalOAuthAuthorizationGrant.class),
-                EasyMock.isA(ClientAuthentication.class),
-                EasyMock.isA(ClientDataHttpHeaders.class)).andReturn(
+                EasyMock.isA(MsalRequest.class)).andReturn(
                 new AuthenticationResult("bearer", "accessToken",
                         "refreshToken", new Date().getTime(), "idToken", null,
                         false));
 
         PowerMock.replay(app);
         Future<AuthenticationResult> result = app
-                .acquireTokenByAuthorizationCode(null, "auth_code",
+                .acquireTokenByAuthorizationCode(Collections.singleton("default-scope"), "auth_code",
                         new URI(TestConfiguration.AAD_DEFAULT_REDIRECT_URI));
         AuthenticationResult ar = result.get();
         Assert.assertNotNull(ar);
@@ -139,9 +136,7 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
                         .authority(TestConfiguration.AAD_TENANT_ENDPOINT));
 
         PowerMock.expectPrivate(app, "acquireTokenCommon",
-                EasyMock.isA(MsalOAuthAuthorizationGrant.class),
-                EasyMock.isA(ClientAuthentication.class),
-                EasyMock.isA(ClientDataHttpHeaders.class)).andReturn(
+                EasyMock.isA(MsalRequest.class)).andReturn(
                 new AuthenticationResult("bearer", "accessToken", null,
                         new Date().getTime(), null, null, false));
 

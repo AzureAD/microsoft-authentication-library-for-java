@@ -23,17 +23,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import java.net.Proxy;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import com.nimbusds.oauth2.sdk.http.CommonContentTypes;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import org.easymock.Capture;
@@ -47,7 +36,14 @@ import org.testng.IObjectFactory;
 import org.testng.annotations.ObjectFactory;
 import org.testng.annotations.Test;
 
-import javax.net.ssl.SSLSocketFactory;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import static com.microsoft.aad.msal4j.TestConfiguration.AAD_CLIENT_ID;
 import static com.microsoft.aad.msal4j.TestConfiguration.AAD_HOST_NAME;
@@ -92,12 +88,10 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
                 new PublicClientApplication.Builder(TestConfiguration.AAD_CLIENT_ID)
                         .authority(TestConfiguration.AAD_TENANT_ENDPOINT));
 
-        Capture<ClientDataHttpHeaders> capturedClientDataHttpHeaders = Capture.newInstance();
+        Capture<MsalRequest> capturedMsalRequest = Capture.newInstance();
 
         PowerMock.expectPrivate(app, "acquireTokenCommon",
-                EasyMock.isA(MsalDeviceCodeAuthorizationGrant.class),
-                EasyMock.isA(ClientAuthentication.class),
-                EasyMock.capture(capturedClientDataHttpHeaders)).andReturn(
+                EasyMock.capture(capturedMsalRequest)).andReturn(
                 new AuthenticationResult("bearer", "accessToken",
                         "refreshToken", new Date().getTime(), "idToken", null,
                         false));
@@ -108,7 +102,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         EasyMock.expect(
                 HttpHelper.executeHttpGet(EasyMock.isA(Logger.class), EasyMock.capture(capturedUrl),
-                        EasyMock.isA(Map.class), EasyMock.isNull(Proxy.class), EasyMock.isNull(SSLSocketFactory.class)))
+                        EasyMock.isA(Map.class), EasyMock.isA(ServiceBundle.class)))
                 .andReturn(deviceCodeJsonResponse);
 
         PowerMock.replay(HttpHelper.class);
@@ -119,11 +113,11 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
             // validate returned Device Code object
             Assert.assertNotNull(deviceCode);
-            Assert.assertNotNull(deviceCode.getUserCode(), "DW83JNP2P");
-            Assert.assertNotNull(deviceCode.getDeviceCode(), "DAQABAAEAAADRNYRQ3dhRFEeqWvq-yi6QodK2pb1iAA");
-            Assert.assertNotNull(deviceCode.getVerificationUrl(), "https://aka.ms/devicelogin");
-            Assert.assertNotNull(deviceCode.getExpiresIn(), "900");
-            Assert.assertNotNull(deviceCode.getInterval(), "5");
+            Assert.assertEquals(deviceCode.getUserCode(), "DW83JNP2P");
+            Assert.assertEquals(deviceCode.getDeviceCode(), "DAQABAAEAAADRNYRQ3dhRFEeqWvq-yi6QodK2pb1iAA");
+            Assert.assertEquals(deviceCode.getVerificationUrl(), "https://aka.ms/devicelogin");
+            Assert.assertEquals(deviceCode.getExpiresIn(), 900);
+            Assert.assertEquals(deviceCode.getInterval(), 5);
             Assert.assertEquals(deviceCode.getMessage(), "To sign in, use a web browser" +
                     " to open the page https://aka.ms/devicelogin and enter the code DW83JNP2P to authenticate.");
             Assert.assertNotNull(deviceCode.getCorrelationId());
@@ -144,13 +138,15 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         Map<String, String> expectedQueryParams = new HashMap<>();
         expectedQueryParams.put("client_id", AAD_CLIENT_ID);
-        expectedQueryParams.put("scope", URLEncoder.encode(AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM +
-                AbstractMsalAuthorizationGrant.SCOPES_DELIMITER + AAD_RESOURCE_ID));
+        expectedQueryParams.put("scope", URLEncoder.encode(MsalAuthorizationGrant.COMMON_SCOPES_PARAM +
+                MsalAuthorizationGrant.SCOPES_DELIMITER + AAD_RESOURCE_ID));
 
         Assert.assertEquals(getQueryMap(url.getQuery()), expectedQueryParams);
 
         // make sure same correlation id is used for acquireDeviceCode and acquireTokenByDeviceCode calls
-        Assert.assertEquals(capturedClientDataHttpHeaders.getValue().getReadonlyHeaderMap().
+
+        Map<String, String > headers = capturedMsalRequest.getValue().getHeaders().getReadonlyHeaderMap();
+        Assert.assertEquals(capturedMsalRequest.getValue().getHeaders().getReadonlyHeaderMap().
                 get(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME), deviceCodeCorrelationId.get());
         Assert.assertNotNull(authResult);
 
@@ -173,12 +169,12 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
     public void executeAcquireDeviceCode_AuthenticaionPendingErrorReturned_AuthenticationExceptionThrown()
             throws Exception {
 
-        AdalTokenRequest request = PowerMock.createPartialMock(
-                AdalTokenRequest.class, new String[]{"toOAuthRequest"},
-                new URL("http://login.windows.net"), null, null, null, null, null);
+        TokenEndpointRequest request = PowerMock.createPartialMock(
+                TokenEndpointRequest.class, new String[]{"toOauthHttpRequest"},
+                new URL("http://login.windows.net"), null, null);
 
-        AdalOAuthRequest adalOAuthHttpRequest = PowerMock
-                .createMock(AdalOAuthRequest.class);
+        OauthHttpRequest msalOauthHttpRequest = PowerMock
+                .createMock(OauthHttpRequest.class);
 
         HTTPResponse httpResponse = new HTTPResponse(HTTPResponse.SC_BAD_REQUEST);
 
@@ -194,16 +190,16 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         httpResponse.setContent(content);
         httpResponse.setContentType(CommonContentTypes.APPLICATION_JSON);
 
-        EasyMock.expect(request.toOAuthRequest()).andReturn(adalOAuthHttpRequest).times(1);
-        EasyMock.expect(adalOAuthHttpRequest.send()).andReturn(httpResponse).times(1);
+        EasyMock.expect(request.toOauthHttpRequest()).andReturn(msalOauthHttpRequest).times(1);
+        EasyMock.expect(msalOauthHttpRequest.send()).andReturn(httpResponse).times(1);
 
-        PowerMock.replay(request, adalOAuthHttpRequest);
+        PowerMock.replay(request, msalOauthHttpRequest);
 
         try {
-            request.executeOAuthRequestAndProcessResponse();
+            request.executeOauthRequestAndProcessResponse();
             Assert.fail("Expected AuthenticationException was not thrown");
         } catch (AuthenticationException ex) {
-            Assert.assertEquals(ex.getErrorCode(), AdalErrorCode.AUTHORIZATION_PENDING);
+            Assert.assertEquals(ex.getErrorCode(), AuthenticationErrorCode.AUTHORIZATION_PENDING);
         }
         PowerMock.verifyAll();
     }

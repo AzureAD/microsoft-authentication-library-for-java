@@ -39,7 +39,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = { "checkin" })
 @PrepareForTest(JWTClaimsSet.class)
-public class UserInfoTest extends AbstractAdalTests {
+public class UserInfoTest extends AbstractMsalTests {
 
     @Test
     public void testCreateFromIdTokenClaims_EmptyClaims() throws ParseException {

@@ -23,11 +23,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.AuthorizationCode;
-import com.nimbusds.oauth2.sdk.AuthorizationCodeGrant;
-import com.nimbusds.oauth2.sdk.RefreshTokenGrant;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
-import com.nimbusds.oauth2.sdk.token.RefreshToken;
 import org.slf4j.Logger;
 
 import javax.net.ssl.SSLSocketFactory;
@@ -43,6 +39,8 @@ import java.util.concurrent.*;
  * Abstract class containing common API methods and properties.
  */
 abstract public class ClientApplicationBase {
+
+    public static String DEFAULT_AUTHORITY = "https://login.microsoftonline.com/common/";
     protected Logger log;
     protected ClientAuthentication clientAuthentication;
     protected String clientId;
@@ -51,18 +49,14 @@ abstract public class ClientApplicationBase {
     private boolean validateAuthority;
     private String correlationId;
     private boolean logPii;
-    protected ExecutorService executorService;
-    private Proxy proxy;
-    private SSLSocketFactory sslSocketFactory;
-
-    public static String DEFAULT_AUTHORITY = "https://login.microsoftonline.com/common/";
+    private ServiceBundle serviceBundle;
 
     /**
      * Returns Proxy configuration to be used by the context for all network communication.
      *
      * @return Proxy Object
      */
-    public Proxy getProxy() { return proxy; }
+    public Proxy getProxy() { return this.serviceBundle.getProxy(); }
 
     /**
      * Returns SSLSocketFactory to be used by the context for all network communication.
@@ -70,7 +64,9 @@ abstract public class ClientApplicationBase {
      * @return SSLSocketFactory object
      */
 
-    public SSLSocketFactory getSslSocketFactory() { return sslSocketFactory; }
+    public SSLSocketFactory getSslSocketFactory() {
+        return this.serviceBundle.getSslSocketFactory();
+    }
 
     /**
      * Gets the URL of the authority, or security token service (STS) from which MSAL will acquire security tokens
@@ -113,16 +109,113 @@ abstract public class ClientApplicationBase {
         return this.validateAuthority;
     }
 
-    protected CompletableFuture<AuthenticationResult> acquireToken(
-            final AbstractMsalAuthorizationGrant authGrant,
-            final ClientAuthentication clientAuth) {
+    /**
+     * Acquires security token from the authority using an authorization code
+     * previously received.
+     *
+     * @param scopes scopes of the access request
+     * @param authorizationCode The authorization code received from service authorization endpoint.
+     * @param redirectUri (also known as Reply URI or Reply URL),
+     *                    is the URI at which Azure AD will contact back the application with the tokens.
+     *                    This redirect URI needs to be registered in the app registration portal.
+     * @return A {@link Future} object representing the
+     *         {@link AuthenticationResult} of the call. It contains Access
+     *         Token, Refresh Token and the Access Token's expiration time.
+     */
 
-        AcquireTokenByAuthorisationGrantSupplier supplier = new AcquireTokenByAuthorisationGrantSupplier(this, authGrant, clientAuth);
+    public CompletableFuture<AuthenticationResult> acquireTokenByAuthorizationCode(
+            Set<String> scopes,
+            String authorizationCode,
+            URI redirectUri) {
 
-        CompletableFuture<AuthenticationResult> future =
-                executorService != null ? CompletableFuture.supplyAsync(supplier, executorService)
-                                : CompletableFuture.supplyAsync(supplier);
+        validateNotBlank("authorizationCode", authorizationCode);
+        validateNotBlank("redirectUri", authorizationCode);
+
+        AuthorizationCodeRequest authorizationCodeRequest =
+                new AuthorizationCodeRequest(
+                        scopes,
+                        authorizationCode,
+                        redirectUri,
+                        clientAuthentication,
+                        new RequestContext(clientId, correlationId));
+
+        return this.executeRequest(authorizationCodeRequest);
+    }
+
+    /**
+     * Acquires a security token from the authority using a Refresh Token
+     * previously received.
+     *
+     * @param refreshToken
+     *            Refresh Token to use in the refresh flow.
+     * @param scopes scopes of the access request
+     * @return A {@link CompletableFuture} object representing the
+     *         {@link AuthenticationResult} of the call. It contains Access
+     *         Token, Refresh Token and the Access Token's expiration time.
+     */
+
+    public CompletableFuture<AuthenticationResult> acquireTokenByRefreshToken(String refreshToken,
+                                                                              Set<String> scopes) {
+        validateNotBlank("refreshToken", refreshToken);
+        validateNotEmpty("scopes", scopes);
+
+        RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(
+                refreshToken,
+                scopes,
+                clientAuthentication,
+                new RequestContext(clientId, correlationId));
+
+        return this.executeRequest(refreshTokenRequest);
+    }
+
+    CompletableFuture<AuthenticationResult> executeRequest(
+            MsalRequest msalRequest) {
+
+        AuthenticationResultSupplier supplier = getAuthenticationResultSupplier(msalRequest);
+
+        ExecutorService executorService = serviceBundle.getExecutorService();
+        CompletableFuture<AuthenticationResult> future = executorService != null ?
+                        CompletableFuture.supplyAsync(supplier, executorService) :
+                        CompletableFuture.supplyAsync(supplier);
         return future;
+    }
+
+    AuthenticationResult acquireTokenCommon(MsalRequest msalRequest) throws Exception {
+        ClientDataHttpHeaders headers = msalRequest.getHeaders();
+
+        if(logPii) {
+            log.debug(LogHelper.createMessage(
+                    String.format("Using Client Http Headers: %s", headers),
+                    headers.getHeaderCorrelationIdValue()));
+        }
+
+        this.authenticationAuthority.doInstanceDiscovery(
+                validateAuthority,
+                headers.getReadonlyHeaderMap(),
+                this.serviceBundle);
+
+        URL url = new URL(this.authenticationAuthority.getTokenUri());
+        TokenEndpointRequest request = new TokenEndpointRequest(
+                url,
+                msalRequest,
+                serviceBundle);
+
+        return request.executeOauthRequestAndProcessResponse();
+    }
+
+    private AuthenticationResultSupplier getAuthenticationResultSupplier(MsalRequest msalRequest){
+
+        AuthenticationResultSupplier supplier;
+        if(msalRequest instanceof DeviceCodeRequest){
+            supplier = new AcquireTokenByDeviceCodeFlowSupplier(
+                    (PublicClientApplication) this,
+                    (DeviceCodeRequest) msalRequest);
+        } else {
+            supplier = new AcquireTokenByAuthorizationGrantSupplier(
+                            this,
+                            msalRequest);
+        }
+        return supplier;
     }
 
     protected static void validateNotBlank(String name, String value) {
@@ -143,70 +236,8 @@ abstract public class ClientApplicationBase {
         }
     }
 
-    /**
-     * Acquires security token from the authority using an authorization code
-     * previously received.
-     *
-     * @param scopes scopes of the access request
-     * @param authorizationCode The authorization code received from service authorization endpoint.
-     * @param redirectUri (also known as Reply URI or Reply URL),
-     *                    is the URI at which Azure AD will contact back the application with the tokens.
-     *                    This redirect URI needs to be registered in the app registration portal.
-     * @return A {@link Future} object representing the
-     *         {@link AuthenticationResult} of the call. It contains Access
-     *         Token, Refresh Token and the Access Token's expiration time.
-     */
-    public CompletableFuture<AuthenticationResult> acquireTokenByAuthorizationCode(Set<String> scopes,
-                                                                                   String authorizationCode,
-                                                                                   URI redirectUri)
-    {
-        validateNotBlank("authorizationCode", authorizationCode);
-        validateNotBlank("redirectUri", authorizationCode);
-
-        MsalOAuthAuthorizationGrant authGrant = new MsalOAuthAuthorizationGrant(
-                new AuthorizationCodeGrant(new AuthorizationCode(authorizationCode), redirectUri), scopes);
-
-        return this.acquireToken(authGrant, clientAuthentication);
-    }
-
-    /**
-     * Acquires a security token from the authority using a Refresh Token
-     * previously received.
-     *
-     * @param refreshToken
-     *            Refresh Token to use in the refresh flow.
-     * @param scopes scopes of the access request
-     * @return A {@link CompletableFuture} object representing the
-     *         {@link AuthenticationResult} of the call. It contains Access
-     *         Token, Refresh Token and the Access Token's expiration time.
-     */
-    public CompletableFuture<AuthenticationResult> acquireTokenByRefreshToken(String refreshToken, Set<String> scopes) {
-        validateNotBlank("refreshToken", refreshToken);
-
-        final MsalOAuthAuthorizationGrant authGrant = new MsalOAuthAuthorizationGrant(
-                new RefreshTokenGrant(new RefreshToken(refreshToken)), scopes);
-
-        return this.acquireToken(authGrant, clientAuthentication);
-    }
-
-    AuthenticationResult acquireTokenCommon(AbstractMsalAuthorizationGrant authGrant, ClientAuthentication clientAuth,
-                                            ClientDataHttpHeaders headers) throws Exception {
-        if(logPii) {
-            log.debug(LogHelper.createMessage(
-                    String.format("Using Client Http Headers: %s", headers),
-                    headers.getHeaderCorrelationIdValue()));
-        }
-
-        this.authenticationAuthority.doInstanceDiscovery(validateAuthority,
-                headers.getReadonlyHeaderMap(), this.proxy,
-                this.sslSocketFactory);
-        URL url = new URL(this.authenticationAuthority.getTokenUri());
-        AdalTokenRequest request = new AdalTokenRequest(url, clientAuth,
-                authGrant, headers.getReadonlyHeaderMap(), this.proxy,
-                this.sslSocketFactory);
-        AuthenticationResult result = request
-                .executeOAuthRequestAndProcessResponse();
-        return result;
+    ServiceBundle getServiceBundle(){
+        return serviceBundle;
     }
 
     abstract static class Builder<T extends Builder<T>> {
@@ -338,8 +369,7 @@ abstract public class ClientApplicationBase {
         validateAuthority = builder.validateAuthority;
         correlationId = builder.correlationId;
         logPii = builder.logPii;
-        executorService = builder.executorService;
-        proxy = builder.proxy;
-        sslSocketFactory = builder.sslSocketFactory;
+        // Telemetry will also go into serviceBundle
+        serviceBundle = new ServiceBundle(builder.executorService, builder.proxy, builder.sslSocketFactory);
     }
 }

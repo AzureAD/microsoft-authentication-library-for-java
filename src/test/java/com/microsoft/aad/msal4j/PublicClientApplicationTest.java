@@ -23,21 +23,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-
-import javax.net.ssl.SSLSocketFactory;
-import java.net.Proxy;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateEncodingException;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Map;
-import java.util.concurrent.Future;
-
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import org.easymock.EasyMock;
 import org.powermock.api.easymock.PowerMock;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
@@ -45,6 +30,14 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateEncodingException;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Map;
+import java.util.concurrent.Future;
 
 @PowerMockIgnore({"javax.net.ssl.*"})
 @Test(groups = { "checkin" })
@@ -61,11 +54,8 @@ public class PublicClientApplicationTest extends PowerMockTestCase {
                         .authority(TestConfiguration.AAD_TENANT_ENDPOINT));
 
         PowerMock.expectPrivate(app, "acquireTokenCommon",
-                EasyMock.isA(MsalOAuthAuthorizationGrant.class),
-                EasyMock.isA(ClientAuthentication.class),
-                EasyMock.isA(ClientDataHttpHeaders.class))
-                .andReturn(
-                        new AuthenticationResult("bearer", "accessToken",
+                EasyMock.isA(MsalRequest.class))
+                .andReturn(new AuthenticationResult("bearer", "accessToken",
                                 "refreshToken", new Date().getTime(), null,
                                 null, false));
 
@@ -78,8 +68,7 @@ public class PublicClientApplicationTest extends PowerMockTestCase {
                 UserDiscoveryRequest.execute(
                         EasyMock.isA(String.class),
                         EasyMock.isA(Map.class),
-                        EasyMock.isNull(Proxy.class),
-                        EasyMock.isNull(SSLSocketFactory.class))).andReturn(response);
+                        EasyMock.isA(ServiceBundle.class))).andReturn(response);
 
         PowerMock.replay(app, response, UserDiscoveryRequest.class);
         Future<AuthenticationResult> result =

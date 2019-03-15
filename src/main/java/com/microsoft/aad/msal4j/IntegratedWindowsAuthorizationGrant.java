@@ -23,49 +23,29 @@
 
 package com.microsoft.aad.msal4j;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
-/**
- * Class for device code grant.
- */
-public class MsalDeviceCodeAuthorizationGrant extends AbstractMsalAuthorizationGrant {
-    private final static String GRANT_TYPE = "device_code";
+public class IntegratedWindowsAuthorizationGrant extends MsalAuthorizationGrant {
 
-    private final DeviceCode deviceCode;
-    private final String scopes;
+    private Set<String> scopes;
+    private final String userName;
 
-    protected String correlationId;
-
-    public String getCorrelationId() {
-        return correlationId;
-    }
-
-    /**
-     *  Create a new device code grant object from a device code and a resource.
-     *
-     * @param deviceCode  The device code.
-     * @param scopes    The resource for which the device code was acquired.
-     */
-    MsalDeviceCodeAuthorizationGrant(final DeviceCode deviceCode, final String scopes) {
-        this.deviceCode = deviceCode;
+    IntegratedWindowsAuthorizationGrant(String userName, Set<String> scopes){
+        this.userName = userName;
         this.scopes = scopes;
-        this.correlationId = deviceCode.getCorrelationId();
     }
 
-    /**
-     * Converts the device code grant to a map of HTTP paramters.
-     *
-     * @return The map with HTTP parameters.
-     */
     @Override
     public Map<String, String> toParameters() {
-        final Map<String, String> outParams = new LinkedHashMap<>();
-        outParams.put(SCOPE_PARAM_NAME, COMMON_SCOPES_PARAM + SCOPES_DELIMITER + scopes);
-        outParams.put("grant_type", GRANT_TYPE);
-        outParams.put("code", deviceCode.getDeviceCode());
-        outParams.put("client_info", "1");
+        return null;
+    }
 
-        return outParams;
+    public Set<String> getScopes() {
+        return scopes;
+    }
+
+    public String getUserName() {
+        return userName;
     }
 }

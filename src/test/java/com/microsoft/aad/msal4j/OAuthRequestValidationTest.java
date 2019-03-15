@@ -23,27 +23,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import static org.powermock.api.support.membermodification.MemberMatcher.method;
-import static org.powermock.api.support.membermodification.MemberModifier.replace;
-
-import java.io.FileInputStream;
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URLDecoder;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.KeyStore;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.cert.X509Certificate;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -59,8 +38,35 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.FileInputStream;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URLDecoder;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
+import static org.powermock.api.support.membermodification.MemberMatcher.method;
+import static org.powermock.api.support.membermodification.MemberModifier.replace;
+
 @PowerMockIgnore({"javax.net.ssl.*"})
-@PrepareForTest(com.microsoft.aad.msal4j.AdalOAuthRequest.class)
+@PrepareForTest(OauthHttpRequest.class)
 public class OAuthRequestValidationTest extends PowerMockTestCase {
 
     private final static String AUTHORITY = "https://loginXXX.windows.net/path/";
@@ -69,6 +75,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
     private final static String CLIENT_SECRET = "ClientPassword";
 
     private final static String SCOPES = "https://SomeResource.azure.net";
+    private final static String DEFAULT_SCOPES = "openid profile offline_access";
 
     private final static String GRANT_TYPE_JWT = "urn:ietf:params:oauth:grant-type:jwt-bearer";
     private final static String CLIENT_ASSERTION_TYPE_JWT = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
@@ -88,11 +95,11 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
 
     @BeforeMethod
     public void init() {
-        replace(method(com.microsoft.aad.msal4j.AdalOAuthRequest.class, "send")).
+        replace(method(OauthHttpRequest.class, "send")).
                 with(new InvocationHandler() {
                     @Override
                     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                        OAuthRequestValidationTest.query = ((AdalOAuthRequest) proxy).getQuery();
+                        OAuthRequestValidationTest.query = ((OauthHttpRequest) proxy).getQuery();
                         throw new AuthenticationException("");
                     }
                 });
@@ -221,11 +228,10 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
         // validate Client Authentication query params
         Assert.assertFalse(StringUtils.isEmpty(queryParams.get("client_assertion")));
 
-        // to do validate scopes
-        Assert.assertEquals(SCOPES, queryParams.get("scope"));
-
-        Assert.assertEquals(CLIENT_ASSERTION_TYPE_JWT, queryParams.get("client_assertion_type"));
-        Assert.assertEquals(ON_BEHALF_OF_USE_JWT, queryParams.get("requested_token_use"));
+        // validate scopes
+        Assert.assertEquals( queryParams.get("scope"),DEFAULT_SCOPES + " " + SCOPES );
+        Assert.assertEquals( queryParams.get("client_assertion_type"), CLIENT_ASSERTION_TYPE_JWT);
+        Assert.assertEquals( queryParams.get("requested_token_use"), ON_BEHALF_OF_USE_JWT);
     }
 
     @Test
@@ -271,8 +277,8 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
         Assert.assertEquals(CLIENT_ASSERTION_TYPE_JWT, queryParams.get("client_assertion_type"));
 
 
-        // to do validate scopes
-        Assert.assertEquals("openid profile offline_access https://SomeResource.azure.net", queryParams.get("scope"));
+        // validate scopes
+        Assert.assertEquals( queryParams.get("scope"), DEFAULT_SCOPES + " " + SCOPES);
     }
 }
 

@@ -23,30 +23,30 @@
 
 package com.microsoft.aad.msal4j;
 
-import java.util.Map;
-import java.util.Set;
+/**
+ * The exception type thrown when a claims challenge error occurs during token acquisition.
+ */
+public class ClaimsChallengeException extends AuthenticationException {
 
-public class MsalIntegratedAuthorizationGrant extends AbstractMsalAuthorizationGrant {
+    /**
+     * Constructor
+     *
+     * @param message string error message
+     * @param claims claims challenge returned from the STS
+     */
+    public ClaimsChallengeException(String message, String claims) {
+        super(message);
 
-    private Set<String> scopes;
-
-    private final String userName;
-
-    MsalIntegratedAuthorizationGrant(String userName, Set<String> scopes){
-        this.userName = userName;
-        this.scopes = scopes;
+        this.claims = claims;
     }
 
-    @Override
-    public Map<String, String> toParameters() {
-        return null;
-    }
+    private final String claims;
 
-    public Set<String> getScopes() {
-        return scopes;
-    }
-
-    public String getUserName() {
-        return userName;
+    /**
+     *
+     * @return claims challenge value
+     */
+    public String getClaims() {
+        return claims;
     }
 }

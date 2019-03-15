@@ -23,22 +23,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSocketFactory;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.net.HttpURLConnection;
-import java.net.Proxy;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.Collections;
-import java.util.Map;
-
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.http.CommonContentTypes;
 import com.nimbusds.oauth2.sdk.http.HTTPRequest;
@@ -46,26 +30,37 @@ import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class AdalOAuthRequest extends HTTPRequest {
+import javax.net.ssl.HttpsURLConnection;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Collections;
+import java.util.Map;
+
+class OauthHttpRequest extends HTTPRequest {
 
     private final Map<String, String> extraHeaderParams;
-    private final Logger log = LoggerFactory.getLogger(AdalOAuthRequest.class);
-
-    private final Proxy proxy;
-    private final SSLSocketFactory sslSocketFactory;
+    private final Logger log = LoggerFactory.getLogger(OauthHttpRequest.class);
+    private final ServiceBundle serviceBundle;
 
     /**
      * 
      * @param method
      * @param url
      */
-    AdalOAuthRequest(final Method method, final URL url,
-            final Map<String, String> extraHeaderParams, final Proxy proxy,
-            final SSLSocketFactory sslSocketFactory) {
+    OauthHttpRequest(final Method method, final URL url,
+                     final Map<String, String> extraHeaderParams, final ServiceBundle serviceBundle) {
         super(method, url);
         this.extraHeaderParams = extraHeaderParams;
-        this.proxy = proxy;
-        this.sslSocketFactory = sslSocketFactory;
+        this.serviceBundle = serviceBundle;
+
     }
 
     Map<String, String> getReadOnlyExtraHeaderParameters() {
@@ -79,12 +74,11 @@ class AdalOAuthRequest extends HTTPRequest {
     public HTTPResponse send() throws IOException {
 
         final HttpsURLConnection conn = HttpHelper.openConnection(this.getURL(),
-                this.proxy, this.sslSocketFactory);
+                this.serviceBundle);
         this.configureHeaderAndExecuteOAuthCall(conn);
         final String out = this.processAndReadResponse(conn);
         HttpHelper.verifyReturnedCorrelationId(log, conn,
-                this.extraHeaderParams
-                        .get(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME));
+                this.extraHeaderParams.get(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME));
         return createResponse(conn, out);
     }
 
@@ -151,7 +145,7 @@ class AdalOAuthRequest extends HTTPRequest {
 
     String processAndReadResponse(final HttpURLConnection conn)
             throws IOException {
-        Reader inReader = null;
+        Reader inReader;
         final int responseCode = conn.getResponseCode();
         if (responseCode == 200) {
             inReader = new InputStreamReader(conn.getInputStream());

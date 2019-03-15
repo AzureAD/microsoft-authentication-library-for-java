@@ -23,14 +23,14 @@
 
 package com.microsoft.aad.msal4j;
 
+import org.powermock.modules.testng.PowerMockTestCase;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-import org.powermock.modules.testng.PowerMockTestCase;
-
-public class AbstractAdalTests extends PowerMockTestCase {
+public class AbstractMsalTests extends PowerMockTestCase {
 
     public void beforeClass() throws IOException {
 

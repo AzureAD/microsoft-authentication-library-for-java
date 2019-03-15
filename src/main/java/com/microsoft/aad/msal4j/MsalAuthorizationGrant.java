@@ -26,14 +26,25 @@ package com.microsoft.aad.msal4j;
 import java.util.Map;
 
 /**
- * Interface for an MSAL grant.
+ * Abstract class for an MSAL grant.
  */
-public interface MsalAuthorizationGrant {
+abstract class MsalAuthorizationGrant {
 
     /**
      *  Converts the grant into a HTTP parameters map.
      *
      * @return A map contains the HTTP parameters
      */
-    Map<String, String> toParameters();
+    abstract Map<String, String> toParameters();
+
+    static final String SCOPE_PARAM_NAME = "scope";
+    static final String SCOPES_DELIMITER = " ";
+
+    static final String SCOPE_OPEN_ID = "openid";
+    static final String SCOPE_PROFILE = "profile";
+    static final String SCOPE_OFFLINE_ACCESS = "offline_access";
+
+    static final String COMMON_SCOPES_PARAM = SCOPE_OPEN_ID + SCOPES_DELIMITER +
+            SCOPE_PROFILE + SCOPES_DELIMITER +
+            SCOPE_OFFLINE_ACCESS;
 }

@@ -26,7 +26,6 @@ package com.microsoft.aad.msal4j;
 import javax.net.ssl.HttpsURLConnection;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.io.StringReader;
 import java.net.URL;
 
 
@@ -39,7 +38,7 @@ import org.testng.annotations.Test;
  */
 
 @Test(groups = { "checkin" })
-public class HttpHelperTest extends AbstractAdalTests {
+public class HttpHelperTest extends AbstractMsalTests {
 
     @Test(expectedExceptions = AuthenticationException.class,
             expectedExceptionsMessageRegExp = "Server returned HTTP response code: 403 for URL : https://some.url, Error details : error info")

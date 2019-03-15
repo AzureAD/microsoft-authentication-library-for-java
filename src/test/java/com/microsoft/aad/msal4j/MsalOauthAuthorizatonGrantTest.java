@@ -23,30 +23,35 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.nimbusds.oauth2.sdk.AuthorizationCode;
+import com.nimbusds.oauth2.sdk.AuthorizationCodeGrant;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * The exception type thrown when a claims challenge error occurs during token acquisition.
+ *
  */
-public class AdalClaimsChallengeException extends AuthenticationException {
+public class MsalOauthAuthorizatonGrantTest {
 
-    /**
-     * Constructor
-     *
-     * @param message string error message
-     * @param claims claims challenge returned from the STS
-     */
-    public AdalClaimsChallengeException(String message, String claims) {
-        super(message);
-
-        this.claims = claims;
+    @Test
+    public void testConstructor() {
+        final OauthAuthorizationGrant grant = new OauthAuthorizationGrant(null,
+                new HashMap<String, String>());
+        Assert.assertNotNull(grant);
     }
 
-    private final String claims;
-
-    /**
-     *
-     * @return claims challenge value
-     */
-    public String getClaims() {
-        return claims;
+    @Test
+    public void testToParameters() throws URISyntaxException {
+        final OauthAuthorizationGrant grant = new OauthAuthorizationGrant(
+                new AuthorizationCodeGrant(new AuthorizationCode("grant"),
+                        new URI("http://microsoft.com")),
+                (Map<String, String>) null);
+        Assert.assertNotNull(grant);
+        Assert.assertNotNull(grant.toParameters());
     }
 }

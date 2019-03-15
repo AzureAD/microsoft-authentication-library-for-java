@@ -23,28 +23,20 @@
 
 package com.microsoft.aad.msal4j;
 
-import java.util.Map;
+public enum AuthenticationErrorCode {
 
-/**
- * Abstract class for an MSAL grant.
- */
-abstract class AbstractMsalAuthorizationGrant {
+    UNKNOWN ("unknown"),
+    AUTHORIZATION_PENDING ("authorization_pending"),
+    INTERACTION_REQUIRED ("interaction_required");
 
-    /**
-     *  Converts the grant into a HTTP parameters map.
-     *
-     * @return A map contains the HTTP parameters
-     */
-    abstract Map<String, String> toParameters();
+    private String errorCode;
 
-    static final String SCOPE_PARAM_NAME = "scope";
-    static final String SCOPES_DELIMITER = " ";
+    AuthenticationErrorCode(String errorCode){
+        this.errorCode = errorCode;
+    }
 
-    static final String SCOPE_OPEN_ID = "openid";
-    static final String SCOPE_PROFILE = "profile";
-    static final String SCOPE_OFFLINE_ACCESS = "offline_access";
-
-    static final String COMMON_SCOPES_PARAM = SCOPE_OPEN_ID + SCOPES_DELIMITER +
-            SCOPE_PROFILE + SCOPES_DELIMITER +
-            SCOPE_OFFLINE_ACCESS;
+    @Override
+    public String toString(){
+        return errorCode;
+    }
 }

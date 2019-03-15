@@ -23,13 +23,11 @@
 
 package com.microsoft.aad.msal4j;
 
-import javax.net.ssl.SSLSocketFactory;
-import java.net.Proxy;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 class UserDiscoveryRequest {
 
@@ -40,16 +38,16 @@ class UserDiscoveryRequest {
     static {
         HEADERS = new HashMap<>();
         HEADERS.put("Accept", "application/json, text/javascript, */*");
-
     }
 
-    static UserDiscoveryResponse execute(final String uri, final Map<String, String> clientDataHeaders,
-            final Proxy proxy, final SSLSocketFactory sslSocketFactory) throws Exception {
-            
+    static UserDiscoveryResponse execute(
+            final String uri,
+            final Map<String, String> clientDataHeaders,
+            ServiceBundle serviceBundle) throws Exception {
+
         HashMap<String, String> headers = new HashMap<>(HEADERS);
         headers.putAll(clientDataHeaders);
-        String response = HttpHelper.executeHttpGet(log, uri, headers, proxy,
-                sslSocketFactory);
+        String response = HttpHelper.executeHttpGet(log, uri, headers, serviceBundle);
         return JsonHelper.convertJsonToObject(response,
                 UserDiscoveryResponse.class);
     }

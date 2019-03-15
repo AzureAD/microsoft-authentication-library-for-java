@@ -23,15 +23,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import static org.testng.Assert.assertNotNull;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-
 import com.nimbusds.oauth2.sdk.http.HTTPRequest.Method;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import org.easymock.EasyMock;
@@ -41,14 +32,23 @@ import org.powermock.reflect.Whitebox;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import static org.testng.Assert.assertNotNull;
+
 @Test(groups = { "checkin" })
-@PrepareForTest({ AdalOAuthRequest.class })
-public class AdalOAuthRequestTest extends AbstractAdalTests {
+@PrepareForTest({ OauthHttpRequest.class })
+public class OauthHttpRequestTest extends AbstractMsalTests {
 
     @Test
     public void testConstructor() throws MalformedURLException {
-        final AdalOAuthRequest request = new AdalOAuthRequest(Method.POST,
-                new URL("http://login.windows.net"), null, null, null);
+        final OauthHttpRequest request = new OauthHttpRequest(Method.POST,
+                new URL("http://login.windows.net"), null, null);
         assertNotNull(request);
     }
 
@@ -57,8 +57,8 @@ public class AdalOAuthRequestTest extends AbstractAdalTests {
     public void testCreateResponseContentTypeParsingFailure()
             throws Exception {
 
-        final AdalOAuthRequest request = new AdalOAuthRequest(Method.GET,
-                new URL("https://" + TestConfiguration.AAD_HOST_NAME), null, null, null);
+        final OauthHttpRequest request = new OauthHttpRequest(Method.GET,
+                new URL("https://" + TestConfiguration.AAD_HOST_NAME), null, null);
         final HttpURLConnection conn = PowerMock
                 .createMock(HttpURLConnection.class);
         EasyMock.expect(conn.getResponseCode()).andReturn(200).times(1);
@@ -73,8 +73,8 @@ public class AdalOAuthRequestTest extends AbstractAdalTests {
     @Test
     public void testCreateResponseLocationNull()
             throws Exception {
-        final AdalOAuthRequest request = new AdalOAuthRequest(Method.GET,
-                new URL("https://" + TestConfiguration.AAD_HOST_NAME), null, null, null);
+        final OauthHttpRequest request = new OauthHttpRequest(Method.GET,
+                new URL("https://" + TestConfiguration.AAD_HOST_NAME), null, null);
         final HttpURLConnection conn = PowerMock
                 .createMock(HttpURLConnection.class);
         EasyMock.expect(conn.getResponseCode()).andReturn(200).times(1);
@@ -102,8 +102,8 @@ public class AdalOAuthRequestTest extends AbstractAdalTests {
 
     @Test
     public void testCreateResponse() throws Exception {
-        final AdalOAuthRequest request = new AdalOAuthRequest(Method.GET,
-                new URL("https://" + TestConfiguration.AAD_HOST_NAME), null, null, null);
+        final OauthHttpRequest request = new OauthHttpRequest(Method.GET,
+                new URL("https://" + TestConfiguration.AAD_HOST_NAME), null, null);
         final HttpURLConnection conn = PowerMock
                 .createMock(HttpURLConnection.class);
         EasyMock.expect(conn.getResponseCode()).andReturn(200).times(1);
@@ -133,8 +133,8 @@ public class AdalOAuthRequestTest extends AbstractAdalTests {
     
     @Test
     public void testCreateResponseFor404() throws Exception {
-        final AdalOAuthRequest request = new AdalOAuthRequest(Method.GET,
-                new URL("https://" + TestConfiguration.AAD_HOST_NAME), null, null, null);
+        final OauthHttpRequest request = new OauthHttpRequest(Method.GET,
+                new URL("https://" + TestConfiguration.AAD_HOST_NAME), null, null);
         final HttpURLConnection conn = PowerMock
                 .createMock(HttpURLConnection.class);
         EasyMock.expect(conn.getResponseCode()).andReturn(404);

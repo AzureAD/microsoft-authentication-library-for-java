@@ -23,51 +23,47 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 /**
- * MSAL generic exception class
+ * Class for device code grant.
  */
-public class AuthenticationException extends RuntimeException {
+public class DeviceCodeAuthorizationGrant extends MsalAuthorizationGrant {
+    private final static String GRANT_TYPE = "device_code";
 
-    private static final long serialVersionUID = 1L;
-
-    private AuthenticationErrorCode errorCode;
-
-    /**
-     * Constructor
-     *
-     * @param t Throwable object
-     */
-    public AuthenticationException(final Throwable t) {
-        super(t);
-        this.errorCode = AuthenticationErrorCode.UNKNOWN;
-    }
+    private final DeviceCode deviceCode;
+    private final String scopes;
+    private String correlationId;
 
     /**
-     * Constructor
+     *  Create a new device code grant object from a device code and a resource.
      *
-     * @param message string error message
+     * @param scopes    The resource for which the device code was acquired.
      */
-    public AuthenticationException(final String message) {
-        this(AuthenticationErrorCode.UNKNOWN, message);
-    }
-
-    public AuthenticationException(AuthenticationErrorCode errorCode, final String message) {
-        super(message);
-        this.errorCode = errorCode;
+    DeviceCodeAuthorizationGrant(DeviceCode deviceCode, final String scopes) {
+        this.deviceCode = deviceCode;
+        this.correlationId = deviceCode.getCorrelationId();
+        this.scopes = scopes;
     }
 
     /**
-     * Constructor
+     * Converts the device code grant to a map of HTTP paramters.
      *
-     * @param message string error message
-     * @param t Throwable object
+     * @return The map with HTTP parameters.
      */
-    public AuthenticationException(final String message, final Throwable t) {
-        super(message, t);
-        this.errorCode = AuthenticationErrorCode.UNKNOWN;
+    @Override
+    public Map<String, String> toParameters() {
+        final Map<String, String> outParams = new LinkedHashMap<>();
+        outParams.put(SCOPE_PARAM_NAME, COMMON_SCOPES_PARAM + SCOPES_DELIMITER + scopes);
+        outParams.put("grant_type", GRANT_TYPE);
+        outParams.put("code", deviceCode.getDeviceCode());
+        outParams.put("client_info", "1");
+
+        return outParams;
     }
 
-    public AuthenticationErrorCode getErrorCode() {
-        return errorCode;
+    public String getCorrelationId() {
+        return correlationId;
     }
 }

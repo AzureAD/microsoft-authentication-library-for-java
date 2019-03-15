@@ -23,8 +23,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.oauth2.sdk.*;
+import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import com.nimbusds.oauth2.sdk.auth.ClientSecretPost;
 import com.nimbusds.oauth2.sdk.auth.PrivateKeyJWT;
@@ -39,46 +38,6 @@ import java.util.concurrent.CompletableFuture;
 
 public class ConfidentialClientApplication extends ClientApplicationBase {
 
-    private ConfidentialClientApplication(ConfidentialClientApplication.Builder builder){
-        super(builder);
-
-        log = LoggerFactory.getLogger(ConfidentialClientApplication.class);
-
-        initClientAuthentication(builder.clientCredential);
-    }
-
-    private void initClientAuthentication(IClientCredential clientCredential){
-        validateNotNull("clientCredential", clientCredential);
-
-        if(clientCredential instanceof ClientSecret){
-            clientAuthentication = new ClientSecretPost(new ClientID(clientId),
-                    new Secret(((ClientSecret)clientCredential).getClientSecret()));
-        }
-        else if(clientCredential instanceof AsymmetricKeyCredential){
-            ClientAssertion clientAssertion = JwtHelper.buildJwt(clientId,
-                    (AsymmetricKeyCredential)clientCredential, this.authenticationAuthority.getSelfSignedJwtAudience());
-
-            clientAuthentication = createClientAuthFromClientAssertion(clientAssertion);
-        }
-        else{
-            throw new IllegalArgumentException("Unsupported client credential");
-        }
-    }
-
-    private ClientAuthentication createClientAuthFromClientAssertion(
-            final ClientAssertion clientAssertion) {
-
-        try {
-            final Map<String, String> map = new HashMap<>();
-            map.put("client_assertion_type", clientAssertion.getAssertionType());
-            map.put("client_assertion", clientAssertion.getAssertion());
-            return PrivateKeyJWT.parse(map);
-        }
-        catch (final ParseException e) {
-            throw new AuthenticationException(e);
-        }
-    }
-
     /**
      * Acquires security token from the authority.
      *
@@ -91,10 +50,13 @@ public class ConfidentialClientApplication extends ClientApplicationBase {
     public CompletableFuture<AuthenticationResult> acquireTokenForClient(Set<String> scopes) {
         validateNotEmpty("scopes", scopes);
 
-        MsalOAuthAuthorizationGrant authGrant = new MsalOAuthAuthorizationGrant(
-                new ClientCredentialsGrant(), scopes);
+        ClientCredentialRequest clientCredentialRequest =
+                new ClientCredentialRequest(
+                        scopes,
+                        clientAuthentication,
+                        new RequestContext(clientId, this.getCorrelationId()));
 
-        return this.acquireToken(authGrant, clientAuthentication);
+        return this.executeRequest(clientCredentialRequest);
     }
 
     /**
@@ -110,25 +72,68 @@ public class ConfidentialClientApplication extends ClientApplicationBase {
      *         property will be null for this overload.
      * @throws AuthenticationException {@link AuthenticationException}
      */
-    public CompletableFuture<AuthenticationResult> acquireTokenOnBehalfOf(Set<String> scopes, UserAssertion userAssertion) {
+    public CompletableFuture<AuthenticationResult> acquireTokenOnBehalfOf(
+            Set<String> scopes,
+            UserAssertion userAssertion) {
+
         validateNotNull("userAssertion", userAssertion);
         validateNotEmpty("scopes", scopes);
 
         return acquireTokenOnBehalfOf(scopes, userAssertion, clientAuthentication);
     }
 
-    private CompletableFuture<AuthenticationResult> acquireTokenOnBehalfOf
-            (Set<String> scopes, UserAssertion userAssertion, ClientAuthentication clientAuthentication) {
-        Map<String, String> params = new HashMap<>();
-        params.put("scope", String.join(" ", scopes));
-        params.put("requested_token_use", "on_behalf_of");
-        try {
-            MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(
-                    new JWTBearerGrant(SignedJWT.parse(userAssertion.getAssertion())), params);
+    private CompletableFuture<AuthenticationResult> acquireTokenOnBehalfOf(
+            Set<String> scopes,
+            UserAssertion userAssertion,
+            ClientAuthentication clientAuthentication) {
 
-            return this.acquireToken(grant, clientAuthentication);
+        OboRequest oboRequest = new OboRequest(
+                userAssertion,
+                scopes,
+                clientAuthentication,
+                new RequestContext(clientId, this.getCorrelationId()));
+
+        return this.executeRequest(oboRequest);
+    }
+
+    private ConfidentialClientApplication(Builder builder){
+        super(builder);
+
+        log = LoggerFactory.getLogger(ConfidentialClientApplication.class);
+
+        initClientAuthentication(builder.clientCredential);
+    }
+
+    private void initClientAuthentication(IClientCredential clientCredential){
+        validateNotNull("clientCredential", clientCredential);
+
+        if(clientCredential instanceof ClientSecret){
+            clientAuthentication = new ClientSecretPost(
+                    new ClientID(clientId),
+                    new Secret(((ClientSecret)clientCredential).getClientSecret()));
         }
-        catch (final Exception e) {
+        else if(clientCredential instanceof AsymmetricKeyCredential){
+            ClientAssertion clientAssertion = JwtHelper.buildJwt(
+                    clientId,
+                    (AsymmetricKeyCredential)clientCredential,
+                    this.authenticationAuthority.getSelfSignedJwtAudience());
+
+            clientAuthentication = createClientAuthFromClientAssertion(clientAssertion);
+        }
+        else{
+            throw new IllegalArgumentException("Unsupported client credential");
+        }
+    }
+
+    private ClientAuthentication createClientAuthFromClientAssertion(
+            final ClientAssertion clientAssertion) {
+        try {
+            final Map<String, String> map = new HashMap<>();
+            map.put("client_assertion_type", clientAssertion.getAssertionType());
+            map.put("client_assertion", clientAssertion.getAssertion());
+            return PrivateKeyJWT.parse(map);
+        }
+        catch (final ParseException e) {
             throw new AuthenticationException(e);
         }
     }
