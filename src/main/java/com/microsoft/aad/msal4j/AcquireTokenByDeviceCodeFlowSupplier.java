@@ -25,14 +25,14 @@ package com.microsoft.aad.msal4j;
 
 import java.util.concurrent.TimeUnit;
 
-import static com.microsoft.aad.msal4j.MsalErrorCode.AUTHORIZATION_PENDING;
+import static com.microsoft.aad.msal4j.AuthenticationErrorCode.AUTHORIZATION_PENDING;
 
-class AcquireTokenDeviceCodeFlowSupplier extends AuthenticationResultSupplier {
+class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier {
 
     private DeviceCodeRequest deviceCodeRequest;
 
-    AcquireTokenDeviceCodeFlowSupplier(PublicClientApplication clientApplication,
-                                       DeviceCodeRequest deviceCodeRequest) {
+    AcquireTokenByDeviceCodeFlowSupplier(PublicClientApplication clientApplication,
+                                         DeviceCodeRequest deviceCodeRequest) {
         super(clientApplication, deviceCodeRequest.getHeaders());
         this.deviceCodeRequest = deviceCodeRequest;
     }

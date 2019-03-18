@@ -23,7 +23,7 @@
 
 package com.microsoft.aad.msal4j;
 
-public enum MsalErrorCode {
+public enum AuthenticationErrorCode {
 
     UNKNOWN ("unknown"),
     AUTHORIZATION_PENDING ("authorization_pending"),
@@ -31,7 +31,7 @@ public enum MsalErrorCode {
 
     private String errorCode;
 
-    MsalErrorCode(String errorCode){
+    AuthenticationErrorCode(String errorCode){
         this.errorCode = errorCode;
     }
 

@@ -61,7 +61,7 @@ class TokenEndpointRequest {
      * @throws IOException
      * @throws java.text.ParseException
      */
-    AuthenticationResult executeOAuthRequestAndProcessResponse()
+    AuthenticationResult executeOauthRequestAndProcessResponse()
             throws ParseException, AuthenticationException, SerializeException,
             IOException, java.text.ParseException {
 
@@ -76,8 +76,8 @@ class TokenEndpointRequest {
 
             AuthenticationResult result;
             HTTPResponse httpResponse;
-            final MsalOauthRequest msalOauthHttpRequest = this.toOAuthRequest();
-            httpResponse = msalOauthHttpRequest.send();
+            final OauthHttpRequest oauthHttpRequest = this.toOauthHttpRequest();
+            httpResponse = oauthHttpRequest.send();
 
             httpEvent.setHttpResponseStatus(httpResponse.getStatusCode());
             httpEvent.setHttpMethod("POST");
@@ -100,8 +100,8 @@ class TokenEndpointRequest {
             }
 
             if (httpResponse.getStatusCode() == HTTPResponse.SC_OK) {
-                final MsalAccessTokenResponse response =
-                        MsalAccessTokenResponse.parseHttpResponse(httpResponse);
+                final AccessTokenResponse response =
+                        AccessTokenResponse.parseHttpResponse(httpResponse);
 
                 OIDCTokens tokens = response.getOIDCTokens();
                 String refreshToken = null;
@@ -126,27 +126,27 @@ class TokenEndpointRequest {
                 final TokenErrorResponse errorResponse = TokenErrorResponse.parse(httpResponse);
                 ErrorObject errorObject = errorResponse.getErrorObject();
 
-                if(MsalErrorCode.AUTHORIZATION_PENDING.toString()
+                if(AuthenticationErrorCode.AUTHORIZATION_PENDING.toString()
                         .equals(errorObject.getCode())){
 
-                    httpEvent.setOauthErrorCode(MsalErrorCode.AUTHORIZATION_PENDING.toString());
+                    httpEvent.setOauthErrorCode(AuthenticationErrorCode.AUTHORIZATION_PENDING.toString());
 
-                    throw new AuthenticationException(MsalErrorCode.AUTHORIZATION_PENDING,
+                    throw new AuthenticationException(AuthenticationErrorCode.AUTHORIZATION_PENDING,
                             errorObject.getDescription());
                 }
 
                 if(HTTPResponse.SC_BAD_REQUEST == errorObject.getHTTPStatusCode() &&
-                        MsalErrorCode.INTERACTION_REQUIRED.toString().equals(errorObject.getCode())){
+                        AuthenticationErrorCode.INTERACTION_REQUIRED.toString().equals(errorObject.getCode())){
 
-                    httpEvent.setOauthErrorCode(MsalErrorCode.INTERACTION_REQUIRED.toString());
+                    httpEvent.setOauthErrorCode(AuthenticationErrorCode.INTERACTION_REQUIRED.toString());
 
-                    throw new MsalClaimsChallengeException(
+                    throw new ClaimsChallengeException(
                             errorResponse.toJSONObject().toJSONString(),
                             getClaims(httpResponse.getContent()));
                 }
                 else {
                     String telemetryErrorCode = Strings.isNullOrEmpty(errorObject.getCode()) ?
-                            MsalErrorCode.UNKNOWN.toString() :
+                            AuthenticationErrorCode.UNKNOWN.toString() :
                             errorObject.getCode();
 
                     httpEvent.setOauthErrorCode(telemetryErrorCode);
@@ -170,26 +170,26 @@ class TokenEndpointRequest {
      * @return
      * @throws SerializeException
      */
-    MsalOauthRequest toOAuthRequest() throws SerializeException {
+    OauthHttpRequest toOauthHttpRequest() throws SerializeException {
 
         if (this.url == null) {
             throw new SerializeException("The endpoint URI is not specified");
         }
 
-        final MsalOauthRequest httpRequest = new MsalOauthRequest(
+        final OauthHttpRequest oauthHttpRequest = new OauthHttpRequest(
                 HTTPRequest.Method.POST,
                 this.url,
                 msalRequest.getHeaders().getReadonlyHeaderMap(),
                 this.serviceBundle);
-        httpRequest.setContentType(CommonContentTypes.APPLICATION_URLENCODED);
+        oauthHttpRequest.setContentType(CommonContentTypes.APPLICATION_URLENCODED);
 
         final Map<String, String> params = msalRequest.getMsalAuthorizationGrant().toParameters();
-        httpRequest.setQuery(URLUtils.serializeParameters(params));
+        oauthHttpRequest.setQuery(URLUtils.serializeParameters(params));
 
         if (msalRequest.getClientAuthentication() != null) {
-            msalRequest.getClientAuthentication().applyTo(httpRequest);
+            msalRequest.getClientAuthentication().applyTo(oauthHttpRequest);
         }
 
-        return httpRequest;
+        return oauthHttpRequest;
     }
 }

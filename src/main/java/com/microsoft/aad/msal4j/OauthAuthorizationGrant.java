@@ -31,19 +31,19 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-class MsalOAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
+class OauthAuthorizationGrant extends MsalAuthorizationGrant {
 
     private AuthorizationGrant grant;
     private final Map<String, String> params;
 
 
-    MsalOAuthAuthorizationGrant(final AuthorizationGrant grant, Set<String> scopes) {
+    OauthAuthorizationGrant(final AuthorizationGrant grant, Set<String> scopes) {
         this.grant = grant;
         this.params = convertScopesToParameters(scopes);
     }
 
-    MsalOAuthAuthorizationGrant(final AuthorizationGrant grant,
-                                final Map<String, String> params) {
+    OauthAuthorizationGrant(final AuthorizationGrant grant,
+                            final Map<String, String> params) {
         this.grant = grant;
 
         this.params = initializeStandardParamaters();

@@ -15,7 +15,7 @@ class OboRequest extends MsalRequest {
         super(createAuthenticationGrant(userAssertion, scopes), clientAuthentication, requestContext);
     }
 
-    private static MsalOAuthAuthorizationGrant createAuthenticationGrant(
+    private static OauthAuthorizationGrant createAuthenticationGrant(
             UserAssertion userAssertion,
             Set<String> scopes){
 
@@ -25,6 +25,6 @@ class OboRequest extends MsalRequest {
         }catch(Exception e){
             throw new AuthenticationException(e);
         }
-        return new MsalOAuthAuthorizationGrant(jWTBearerGrant, scopes);
+        return new OauthAuthorizationGrant(jWTBearerGrant, scopes);
     }
 }

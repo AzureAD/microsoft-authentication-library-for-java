@@ -42,25 +42,25 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
     }
 
     AuthenticationResult execute() throws Exception {
-        AbstractMsalAuthorizationGrant authGrant = msalRequest.getMsalAuthorizationGrant();
-        if (authGrant instanceof MsalOAuthAuthorizationGrant) {
+        MsalAuthorizationGrant authGrant = msalRequest.getMsalAuthorizationGrant();
+        if (authGrant instanceof OauthAuthorizationGrant) {
             msalRequest.setMsalAuthorizationGrant(
-                    processPasswordGrant((MsalOAuthAuthorizationGrant) authGrant));
+                    processPasswordGrant((OauthAuthorizationGrant) authGrant));
         }
 
-        if (authGrant instanceof MsalIntegratedAuthorizationGrant) {
-            MsalIntegratedAuthorizationGrant integratedAuthGrant =
-                    (MsalIntegratedAuthorizationGrant) authGrant;
+        if (authGrant instanceof IntegratedWindowsAuthorizationGrant) {
+            IntegratedWindowsAuthorizationGrant integratedAuthGrant =
+                    (IntegratedWindowsAuthorizationGrant) authGrant;
             msalRequest.setMsalAuthorizationGrant(
-                    new MsalOAuthAuthorizationGrant(getAuthorizationGrantIntegrated(
+                    new OauthAuthorizationGrant(getAuthorizationGrantIntegrated(
                             integratedAuthGrant.getUserName()), integratedAuthGrant.getScopes()));
         }
 
         return this.clientApplication.acquireTokenCommon(msalRequest);
     }
 
-    private MsalOAuthAuthorizationGrant processPasswordGrant(
-            MsalOAuthAuthorizationGrant authGrant) throws Exception {
+    private OauthAuthorizationGrant processPasswordGrant(
+            OauthAuthorizationGrant authGrant) throws Exception {
 
         if (!(authGrant.getAuthorizationGrant() instanceof ResourceOwnerPasswordCredentialsGrant)) {
             return authGrant;
@@ -93,7 +93,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
                         Base64.encodeBase64String(response.getToken()
                                 .getBytes())));
             }
-            authGrant = new MsalOAuthAuthorizationGrant(updatedGrant,
+            authGrant = new OauthAuthorizationGrant(updatedGrant,
                     authGrant.getCustomParameters());
         }
         return authGrant;

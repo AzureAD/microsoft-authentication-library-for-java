@@ -44,7 +44,7 @@ class DeviceCodeRequest extends MsalRequest {
     }
 
     void createAuthenticationGrant(DeviceCode deviceCode){
-        setMsalAuthorizationGrant(new MsalDeviceCodeAuthorizationGrant(
+        setMsalAuthorizationGrant(new DeviceCodeAuthorizationGrant(
                 deviceCode, deviceCode.getScopes()));
     }
 
@@ -52,8 +52,8 @@ class DeviceCodeRequest extends MsalRequest {
         Map<String, String> queryParameters = new HashMap<>();
         queryParameters.put("client_id", clientId);
 
-        String scopesParam = AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM +
-                AbstractMsalAuthorizationGrant.SCOPES_DELIMITER + scopes;
+        String scopesParam = MsalAuthorizationGrant.COMMON_SCOPES_PARAM +
+                MsalAuthorizationGrant.SCOPES_DELIMITER + scopes;
 
         queryParameters.put("scope", scopesParam);
 

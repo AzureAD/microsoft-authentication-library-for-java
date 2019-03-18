@@ -69,7 +69,7 @@ class HttpHelper {
 
                 case POST:
                     httpEvent.setHttpMethod("POST");
-                    response = executeHttpPost(log, endpointUrl, postData, headers, serviceBundle)
+                    response = executeHttpPost(log, endpointUrl, postData, headers, serviceBundle);
             }
 
         } catch(Exception e){

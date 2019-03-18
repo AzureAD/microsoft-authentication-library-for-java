@@ -32,18 +32,18 @@ import com.nimbusds.openid.connect.sdk.OIDCTokenResponse;
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens;
 import net.minidev.json.JSONObject;
 
-class MsalAccessTokenResponse extends OIDCTokenResponse {
+class AccessTokenResponse extends OIDCTokenResponse {
 
     private String scope;
 
-    MsalAccessTokenResponse(final AccessToken accessToken,
-                            final RefreshToken refreshToken, final String idToken) {
+    AccessTokenResponse(final AccessToken accessToken,
+                        final RefreshToken refreshToken, final String idToken) {
         super(new OIDCTokens(idToken, accessToken, refreshToken));
     }
 
-    MsalAccessTokenResponse(final AccessToken accessToken,
-                            final RefreshToken refreshToken, final String idToken,
-                            final String scope) {
+    AccessTokenResponse(final AccessToken accessToken,
+                        final RefreshToken refreshToken, final String idToken,
+                        final String scope) {
         this(accessToken, refreshToken, idToken);
         this.scope = scope;
     }
@@ -58,7 +58,7 @@ class MsalAccessTokenResponse extends OIDCTokenResponse {
      * @return
      * @throws ParseException
      */
-    static MsalAccessTokenResponse parseHttpResponse(
+    static AccessTokenResponse parseHttpResponse(
             final HTTPResponse httpResponse) throws ParseException {
 
         httpResponse.ensureStatusCode(HTTPResponse.SC_OK);
@@ -74,7 +74,7 @@ class MsalAccessTokenResponse extends OIDCTokenResponse {
      * @return
      * @throws ParseException
      */
-    static MsalAccessTokenResponse parseJsonObject(final JSONObject jsonObject)
+    static AccessTokenResponse parseJsonObject(final JSONObject jsonObject)
             throws ParseException {
 
         final AccessToken accessToken = AccessToken.parse(jsonObject);
@@ -93,7 +93,7 @@ class MsalAccessTokenResponse extends OIDCTokenResponse {
             scopeValue = JSONObjectUtils.getString(jsonObject, "scope");
         }
 
-        return new MsalAccessTokenResponse(accessToken, refreshToken,
+        return new AccessTokenResponse(accessToken, refreshToken,
                 idTokenValue, scopeValue);
     }
 }

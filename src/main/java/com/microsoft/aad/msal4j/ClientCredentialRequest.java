@@ -12,9 +12,9 @@ public class ClientCredentialRequest extends MsalRequest{
         super(createMsalGrant(scopes), clientAuthentication, requestContext );
     }
 
-    private static MsalOAuthAuthorizationGrant createMsalGrant(Set<String> scopes){
+    private static OauthAuthorizationGrant createMsalGrant(Set<String> scopes){
 
-        return new MsalOAuthAuthorizationGrant(new ClientCredentialsGrant(), scopes);
+        return new OauthAuthorizationGrant(new ClientCredentialsGrant(), scopes);
     }
 
 }

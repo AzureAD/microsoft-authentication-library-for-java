@@ -29,7 +29,7 @@ import java.util.Map;
 /**
  * Class for device code grant.
  */
-public class MsalDeviceCodeAuthorizationGrant extends AbstractMsalAuthorizationGrant {
+public class DeviceCodeAuthorizationGrant extends MsalAuthorizationGrant {
     private final static String GRANT_TYPE = "device_code";
 
     private final DeviceCode deviceCode;
@@ -41,7 +41,7 @@ public class MsalDeviceCodeAuthorizationGrant extends AbstractMsalAuthorizationG
      *
      * @param scopes    The resource for which the device code was acquired.
      */
-    MsalDeviceCodeAuthorizationGrant(DeviceCode deviceCode, final String scopes) {
+    DeviceCodeAuthorizationGrant(DeviceCode deviceCode, final String scopes) {
         this.deviceCode = deviceCode;
         this.correlationId = deviceCode.getCorrelationId();
         this.scopes = scopes;

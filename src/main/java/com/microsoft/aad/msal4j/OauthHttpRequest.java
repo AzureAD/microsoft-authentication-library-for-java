@@ -44,18 +44,19 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
 
-class MsalOauthRequest extends HTTPRequest {
-    private final Logger log = LoggerFactory.getLogger(MsalOauthRequest.class);
+class OauthHttpRequest extends HTTPRequest {
+    private final Logger log = LoggerFactory.getLogger(OauthHttpRequest.class);
 
     private final Map<String, String> extraHeaderParams;
+
     private final ServiceBundle serviceBundle;
 
     /**
-     * 
+     *
      * @param method
      * @param url
      */
-    MsalOauthRequest(final Method method, final URL url,
+    OauthHttpRequest(final Method method, final URL url,
                      final Map<String, String> extraHeaderParams, final ServiceBundle serviceBundle) {
         super(method, url);
         this.extraHeaderParams = extraHeaderParams;
@@ -68,7 +69,7 @@ class MsalOauthRequest extends HTTPRequest {
     }
 
     /**
-     * 
+     *
      */
     @Override
     public HTTPResponse send() throws IOException {
@@ -136,7 +137,7 @@ class MsalOauthRequest extends HTTPRequest {
 
         if (this.getQuery() != null) {
             try(final OutputStreamWriter writer = new OutputStreamWriter(
-                        conn.getOutputStream())) {
+                    conn.getOutputStream())) {
                 writer.write(getQuery());
                 writer.flush();
             }

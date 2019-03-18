@@ -26,7 +26,7 @@ package com.microsoft.aad.msal4j;
 /**
  * The exception type thrown when a claims challenge error occurs during token acquisition.
  */
-public class MsalClaimsChallengeException extends AuthenticationException {
+public class ClaimsChallengeException extends AuthenticationException {
 
     /**
      * Constructor
@@ -34,7 +34,7 @@ public class MsalClaimsChallengeException extends AuthenticationException {
      * @param message string error message
      * @param claims claims challenge returned from the STS
      */
-    public MsalClaimsChallengeException(String message, String claims) {
+    public ClaimsChallengeException(String message, String claims) {
         super(message);
 
         this.claims = claims;

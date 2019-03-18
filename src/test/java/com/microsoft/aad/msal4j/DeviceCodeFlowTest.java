@@ -138,8 +138,8 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         Map<String, String> expectedQueryParams = new HashMap<>();
         expectedQueryParams.put("client_id", AAD_CLIENT_ID);
-        expectedQueryParams.put("scope", URLEncoder.encode(AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM +
-                AbstractMsalAuthorizationGrant.SCOPES_DELIMITER + AAD_RESOURCE_ID));
+        expectedQueryParams.put("scope", URLEncoder.encode(MsalAuthorizationGrant.COMMON_SCOPES_PARAM +
+                MsalAuthorizationGrant.SCOPES_DELIMITER + AAD_RESOURCE_ID));
 
         Assert.assertEquals(getQueryMap(url.getQuery()), expectedQueryParams);
 
@@ -170,11 +170,11 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
             throws Exception {
 
         TokenEndpointRequest request = PowerMock.createPartialMock(
-                TokenEndpointRequest.class, new String[]{"toOAuthRequest"},
+                TokenEndpointRequest.class, new String[]{"toOauthHttpRequest"},
                 new URL("http://login.windows.net"), null, null);
 
-        MsalOauthRequest msalOauthHttpRequest = PowerMock
-                .createMock(MsalOauthRequest.class);
+        OauthHttpRequest msalOauthHttpRequest = PowerMock
+                .createMock(OauthHttpRequest.class);
 
         HTTPResponse httpResponse = new HTTPResponse(HTTPResponse.SC_BAD_REQUEST);
 
@@ -190,16 +190,16 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         httpResponse.setContent(content);
         httpResponse.setContentType(CommonContentTypes.APPLICATION_JSON);
 
-        EasyMock.expect(request.toOAuthRequest()).andReturn(msalOauthHttpRequest).times(1);
+        EasyMock.expect(request.toOauthHttpRequest()).andReturn(msalOauthHttpRequest).times(1);
         EasyMock.expect(msalOauthHttpRequest.send()).andReturn(httpResponse).times(1);
 
         PowerMock.replay(request, msalOauthHttpRequest);
 
         try {
-            request.executeOAuthRequestAndProcessResponse();
+            request.executeOauthRequestAndProcessResponse();
             Assert.fail("Expected AuthenticationException was not thrown");
         } catch (AuthenticationException ex) {
-            Assert.assertEquals(ex.getErrorCode(), MsalErrorCode.AUTHORIZATION_PENDING);
+            Assert.assertEquals(ex.getErrorCode(), AuthenticationErrorCode.AUTHORIZATION_PENDING);
         }
         PowerMock.verifyAll();
     }
