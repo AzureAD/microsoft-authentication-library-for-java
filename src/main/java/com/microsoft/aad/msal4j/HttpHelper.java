@@ -55,7 +55,7 @@ class HttpHelper {
 
             URL endpointUrl = new URL(url);
             httpEvent.setHttpPath(endpointUrl.toURI());
-            if(Strings.isNullOrEmpty(endpointUrl.getQuery())){
+            if(!Strings.isNullOrEmpty(endpointUrl.getQuery())){
                 httpEvent.setQueryParameters(endpointUrl.getQuery());
             }
 

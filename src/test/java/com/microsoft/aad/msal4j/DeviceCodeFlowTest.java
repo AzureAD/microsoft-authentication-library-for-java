@@ -111,7 +111,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
                         EasyMock.isA(HttpMethod.class),
                         EasyMock.capture(capturedUrl),
                         EasyMock.isA(Map.class),
-                        EasyMock.isA(String.class),
+                        EasyMock.isNull(),
                         EasyMock.isA(RequestContext.class),
                         EasyMock.isA(ServiceBundle.class)))
                 .andReturn(deviceCodeJsonResponse);
@@ -180,12 +180,13 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
     public void executeAcquireDeviceCode_AuthenticaionPendingErrorReturned_AuthenticationExceptionThrown()
             throws Exception {
 
-        TelemetryManager telemetryManager =  PowerMock.createMock(TelemetryManager.class);
+        TelemetryManager telemetryManager =  new TelemetryManager(null, false);
 
         AtomicReference<CompletableFuture<AuthenticationResult>> futureReference =
                 new AtomicReference<>();
 
-        Consumer<DeviceCode> deviceCodeConsumer = PowerMock.createMock(Consumer.class);
+        Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> { };
+
         final ClientAuthentication ca = new ClientSecretPost(
                 new ClientID("id"), new Secret("secret"));
 

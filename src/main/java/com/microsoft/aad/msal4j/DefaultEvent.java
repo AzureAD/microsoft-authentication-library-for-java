@@ -31,7 +31,6 @@ class DefaultEvent extends Event {
     }
 
     private void setSdkVersion(){
-        Package aPackage = this.getClass().getPackage();
         this.put(SDK_VERSION_KEY, this.getClass().getPackage().getImplementationVersion());
     }
 

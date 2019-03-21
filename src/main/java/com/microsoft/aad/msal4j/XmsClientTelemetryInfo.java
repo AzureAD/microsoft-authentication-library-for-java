@@ -13,16 +13,10 @@ class XmsClientTelemetryInfo {
     private final static int TOKEN_AGE_INDEX = 3;
     private final static int SPE_INFO_INDEX = 4;
 
-    private String version;
     private String serverErrorCode;
     private String serverSubErrorCode;
     private String tokenAge;
     private String speInfo;
-
-
-    private XmsClientTelemetryInfo(String headerVersion){
-        this.version = headerVersion;
-    }
 
     static XmsClientTelemetryInfo parseXmsTelemetryInfo(String headerValue){
         if(Strings.isNullOrEmpty(headerValue)){
@@ -35,10 +29,10 @@ class XmsClientTelemetryInfo {
         }
 
         String headerVersion = headerSegments[0];
-        XmsClientTelemetryInfo xmsClientTelemetryInfo = new XmsClientTelemetryInfo(headerVersion);
+        XmsClientTelemetryInfo xmsClientTelemetryInfo = new XmsClientTelemetryInfo();
 
         if(!headerVersion.equals(EXPECTED_HEADER_VERSION)){
-            return  xmsClientTelemetryInfo;
+            return  null;
         }
 
         Matcher matcher = matchHeaderToExpectedFormat(headerValue);

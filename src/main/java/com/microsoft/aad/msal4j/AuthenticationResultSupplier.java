@@ -51,30 +51,33 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
 
         ApiEvent apiEvent = initializeApiEvent(msalRequest);
 
-        try(TelemetryHelper telemetryHelper = clientApplication.getServiceBundle().getTelemetryManager().createTelemetryHelper(
-                msalRequest.getRequestContext().getTelemetryRequestId(),
-                msalRequest.getClientAuthentication().getClientID().toString(),
-                apiEvent,
-                true)){
+        try(TelemetryHelper telemetryHelper =
+                    clientApplication.getServiceBundle().getTelemetryManager().createTelemetryHelper(
+                            msalRequest.getRequestContext().getTelemetryRequestId(),
+                            msalRequest.getClientAuthentication().getClientID().toString(),
+                            apiEvent,
+                            true)) {
+            try {
+                result = execute();
+                logResult(result, msalRequest.getHeaders());
 
-            result = execute();
-            logResult(result, msalRequest.getHeaders());
+                if (result != null) {
+                    apiEvent.setWasSuccessful(true);
+                    if(result.getUserInfo() != null){
+                        apiEvent.setTenantId(result.getUserInfo().getTenantId());
+                    }
+                }
+            } catch(Exception ex) {
+                if (ex instanceof AuthenticationException) {
+                    apiEvent.setApiErrorCode(((AuthenticationException) ex).getErrorCode());
+                }
+                clientApplication.log.error(
+                        LogHelper.createMessage(
+                                "Execution of " + this.getClass() + " failed.",
+                                msalRequest.getHeaders().getHeaderCorrelationIdValue()), ex);
 
-            if(result != null){
-                apiEvent.setWasSuccessful(true);
-                apiEvent.setTenantId(result.getUserInfo().getTenantId());
+                throw new CompletionException(ex);
             }
-        } catch (Exception ex) {
-
-            if(ex instanceof AuthenticationException){
-                apiEvent.setApiErrorCode(((AuthenticationException) ex).getErrorCode());
-            }
-
-            clientApplication.log.error(
-                    LogHelper.createMessage("Execution of " + this.getClass() + " failed.",
-                            msalRequest.getHeaders().getHeaderCorrelationIdValue()), ex);
-
-            throw new CompletionException(ex);
         }
         return result;
     }
@@ -89,26 +92,27 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
                 String refreshTokenHash = this.computeSha256Hash(result
                         .getRefreshToken());
                 if(clientApplication.isLogPii()){
-                    clientApplication.log.debug(LogHelper.createMessage(String
-                                    .format("Access Token with hash '%s' and Refresh Token with hash '%s' returned",
-                                            accessTokenHash, refreshTokenHash),
+                    clientApplication.log.debug(LogHelper.createMessage(String.format(
+                            "Access Token with hash '%s' and Refresh Token with hash '%s' returned",
+                            accessTokenHash, refreshTokenHash),
                             headers.getHeaderCorrelationIdValue()));
                 }
                 else{
                     clientApplication.log.debug(
-                            LogHelper.createMessage("Access Token and Refresh Token were returned",
+                            LogHelper.createMessage(
+                                    "Access Token and Refresh Token were returned",
                                     headers.getHeaderCorrelationIdValue()));
                 }
             }
             else {
                 if(clientApplication.isLogPii()){
-                    clientApplication.log.debug(LogHelper.createMessage(String
-                                    .format("Access Token with hash '%s' returned",
-                                            accessTokenHash),
+                    clientApplication.log.debug(LogHelper.createMessage(String.format(
+                            "Access Token with hash '%s' returned", accessTokenHash),
                             headers.getHeaderCorrelationIdValue()));
                 }
                 else{
-                    clientApplication.log.debug(LogHelper.createMessage("Access Token was returned",
+                    clientApplication.log.debug(LogHelper.createMessage(
+                            "Access Token was returned",
                             headers.getHeaderCorrelationIdValue()));
                 }
             }
@@ -154,9 +158,9 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
             return Base64.encodeBase64URLSafeString(hash);
         }
         catch (NoSuchAlgorithmException | UnsupportedEncodingException ex){
-            clientApplication.log.warn(
-                    LogHelper.createMessage("Failed to compute SHA-256 hash due to exception - ",
-                            LogHelper.getPiiScrubbedDetails(ex)));
+            clientApplication.log.warn(LogHelper.createMessage(
+                    "Failed to compute SHA-256 hash due to exception - ",
+                    LogHelper.getPiiScrubbedDetails(ex)));
             return "Failed to compute SHA-256 hash";
         }
     }

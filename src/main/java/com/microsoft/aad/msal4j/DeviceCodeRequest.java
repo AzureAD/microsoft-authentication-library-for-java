@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 class DeviceCodeRequest extends MsalRequest {
-    private final static Logger log = LoggerFactory.getLogger(DeviceCodeRequest.class);
+    private final Logger log = LoggerFactory.getLogger(DeviceCodeRequest.class);
 
     private AtomicReference<CompletableFuture<AuthenticationResult>> futureReference;
     private Consumer<DeviceCode> deviceCodeConsumer;

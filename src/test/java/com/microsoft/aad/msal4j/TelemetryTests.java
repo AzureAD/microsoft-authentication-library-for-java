@@ -14,7 +14,9 @@ import java.util.function.Consumer;
 @Test(groups = { "checkin" })
 public class TelemetryTests {
 
-    public List<HashMap<String,String>> eventsReceived = new ArrayList<>();
+    private List<HashMap<String,String>> eventsReceived = new ArrayList<>();
+    private String tenantId = "tenantId123";
+    private String clientId = "a1b3c3d4";
 
     private class MyTelemetryConsumer {
 
@@ -50,7 +52,7 @@ public class TelemetryTests {
         TelemetryManager telemetryManager = new TelemetryManager(telemetryConsumer, false);
         String reqId = telemetryManager.generateRequestId();
 
-        ApiEvent apiEvent1 = createApiEvent();
+        ApiEvent apiEvent1 = createApiEvent(false);
         telemetryManager.startEvent(reqId, apiEvent1);
         apiEvent1.setWasSuccessful(true);
         telemetryManager.stopEvent(reqId, apiEvent1);
@@ -60,7 +62,7 @@ public class TelemetryTests {
         httpEvent1.setHttpResponseStatus(200);
         telemetryManager.stopEvent(reqId, httpEvent1);
 
-        telemetryManager.flush(reqId,"a1b3c3d4" );
+        telemetryManager.flush(reqId,clientId );
 
         // 1 Default event, 1 API event, 1 Http event
         Assert.assertEquals(eventsReceived.size(), 3);
@@ -75,7 +77,7 @@ public class TelemetryTests {
         String reqId = telemetryManager.generateRequestId();
 
 
-        ApiEvent apiEvent1 = createApiEvent();
+        ApiEvent apiEvent1 = createApiEvent(false);
         telemetryManager.startEvent(reqId, apiEvent1);
         apiEvent1.setWasSuccessful(true);
         telemetryManager.stopEvent(reqId, apiEvent1);
@@ -85,14 +87,14 @@ public class TelemetryTests {
         httpEvent1.setHttpResponseStatus(200);
         telemetryManager.stopEvent(reqId, httpEvent1);
 
-        telemetryManager.flush(reqId,"a1b3c3d4" );
+        telemetryManager.flush(reqId,clientId );
 
         // API event was successful, so count should be 0
         Assert.assertEquals(eventsReceived.size(), 0);
         eventsReceived.clear();
 
         String reqId2 = telemetryManager.generateRequestId();
-        ApiEvent apiEvent2 = createApiEvent();
+        ApiEvent apiEvent2 = createApiEvent(false);
         telemetryManager.startEvent(reqId2, apiEvent2);
         apiEvent2.setWasSuccessful(false);
         telemetryManager.stopEvent(reqId2, apiEvent2);
@@ -102,7 +104,7 @@ public class TelemetryTests {
         httpEvent2.setHttpResponseStatus(200);
         telemetryManager.stopEvent(reqId2, httpEvent2);
 
-        telemetryManager.flush(reqId2,"a1b3c3d4" );
+        telemetryManager.flush(reqId2,clientId );
 
         // API event failed, so count should be 3 (1 default, 1 Api, 1 http)
         Assert.assertEquals(eventsReceived.size(), 3);
@@ -127,7 +129,7 @@ public class TelemetryTests {
         TelemetryManager telemetryManager = new TelemetryManager(telemetryConsumer, false);
         String reqId = telemetryManager.generateRequestId();
 
-        ApiEvent apiEvent1 = createApiEvent();
+        ApiEvent apiEvent1 = createApiEvent(false);
         telemetryManager.startEvent(reqId, apiEvent1);
         apiEvent1.setWasSuccessful(true);
         telemetryManager.stopEvent(reqId, apiEvent1);
@@ -137,7 +139,7 @@ public class TelemetryTests {
         httpEvent1.setHttpResponseStatus(200);
         telemetryManager.stopEvent(reqId, httpEvent1);
 
-        telemetryManager.flush(reqId,"a1b3c3d4" );
+        telemetryManager.flush(reqId,clientId );
 
         Assert.assertEquals(eventsReceived.get(0).get("event_name"), "msal.default_event");
     }
@@ -149,7 +151,7 @@ public class TelemetryTests {
         TelemetryManager telemetryManager = new TelemetryManager(telemetryConsumer, false);
         String reqId = telemetryManager.generateRequestId();
 
-        ApiEvent apiEvent1 = createApiEvent();
+        ApiEvent apiEvent1 = createApiEvent(false);
         telemetryManager.startEvent(reqId, apiEvent1);
         apiEvent1.setWasSuccessful(true);
 
@@ -159,7 +161,7 @@ public class TelemetryTests {
 
         // didn't stop http event, should still be sent
         telemetryManager.stopEvent(reqId, apiEvent1);
-        telemetryManager.flush(reqId,"a1b3c3d4" );
+        telemetryManager.flush(reqId,clientId );
 
         Assert.assertEquals(eventsReceived.size(), 3);
         Assert.assertTrue(eventsReceived.stream().anyMatch(event -> event.get("event_name").equals("msal.http_event")));
@@ -172,7 +174,7 @@ public class TelemetryTests {
         TelemetryManager telemetryManager = new TelemetryManager(telemetryConsumer, false);
         String reqId = telemetryManager.generateRequestId();
 
-        ApiEvent apiEvent1 = createApiEvent();
+        ApiEvent apiEvent1 = createApiEvent(false);
         telemetryManager.startEvent(reqId, apiEvent1);
         apiEvent1.setWasSuccessful(true);
 
@@ -184,7 +186,7 @@ public class TelemetryTests {
         telemetryManager.stopEvent(reqId, apiEvent1);
         telemetryManager.stopEvent(reqId, httpEvent1);
 
-        telemetryManager.flush(reqId, "a1b3c3d4");
+        telemetryManager.flush(reqId, clientId);
 
         Assert.assertEquals(eventsReceived.size(), 2);
         Assert.assertFalse(eventsReceived.stream().anyMatch(event -> event.get("event_name").equals("msal.http_event")));
@@ -192,22 +194,102 @@ public class TelemetryTests {
 
     @Test
     public void piiLoggingEnabled_ApiEventHashTest(){
+        Consumer<List<HashMap<String, String>>> telemetryConsumer =
+                new MyTelemetryConsumer().telemetryConsumer;
+        TelemetryManager telemetryManager = new TelemetryManager(telemetryConsumer, false);
+        String reqId = telemetryManager.generateRequestId();
 
+        // TODO account_id should also be hashed when cache is added
+        // set log pii to true
+        ApiEvent apiEvent = createApiEvent(true);
+
+        telemetryManager.startEvent(reqId, apiEvent);
+        apiEvent.setWasSuccessful(true);
+        telemetryManager.stopEvent(reqId, apiEvent);
+
+        Assert.assertNotNull(apiEvent.get("msal.tenant_id"));
+        Assert.assertNotEquals(apiEvent.get("msal.tenant_id"), tenantId);
     }
 
     @Test
     public void piiLoggingEnabledFalse_TenantIdUserIdSetToNullTest(){
+        Consumer<List<HashMap<String, String>>> telemetryConsumer =
+                new MyTelemetryConsumer().telemetryConsumer;
+        TelemetryManager telemetryManager = new TelemetryManager(telemetryConsumer, false);
+        String reqId = telemetryManager.generateRequestId();
 
+        // TODO account_id should also be null when piiLogging = false
+        // set log pii to true
+        ApiEvent apiEvent = createApiEvent(false);
+
+        telemetryManager.startEvent(reqId, apiEvent);
+        apiEvent.setWasSuccessful(true);
+        telemetryManager.stopEvent(reqId, apiEvent);
+
+        Assert.assertNull(apiEvent.get("msal.tenant_id"));
     }
 
+    @Test
+    public void authorityNotInTrustedHostList_AuthorityIsNullTest() throws URISyntaxException{
+        Consumer<List<HashMap<String, String>>> telemetryConsumer =
+                new MyTelemetryConsumer().telemetryConsumer;
+        TelemetryManager telemetryManager = new TelemetryManager(telemetryConsumer, false);
+        String reqId = telemetryManager.generateRequestId();
+
+        ApiEvent apiEvent = new ApiEvent(false);
+        apiEvent.setAuthority(new URI("https://login.microsoftonline.com"));
+        telemetryManager.startEvent(reqId, apiEvent);
+        apiEvent.setWasSuccessful(true);
+        telemetryManager.stopEvent(reqId, apiEvent);
+
+        Assert.assertEquals(apiEvent.get("msal.authority"), "https://login.microsoftonline.com");
 
 
-    private ApiEvent createApiEvent(){
+        ApiEvent apiEvent2 = new ApiEvent(false);
+        apiEvent2.setAuthority(new URI("https://login.contoso.com"));
+        telemetryManager.startEvent(reqId, apiEvent2);
+        apiEvent2.setWasSuccessful(true);
+        telemetryManager.stopEvent(reqId, apiEvent2);
+
+        Assert.assertNull(apiEvent2.get("msal.authority"));
+    }
+
+    @Test
+    public void xmsCliTelemetryTest_CorrectFormatTest(){
+        String responseHeader = "1,0,0,," ;
+        XmsClientTelemetryInfo info = XmsClientTelemetryInfo.parseXmsTelemetryInfo(responseHeader);
+
+        Assert.assertEquals(info.getServerErrorCode(), "0");
+        Assert.assertEquals(info.getServerSubErrorCode(), "0");
+        Assert.assertEquals(info.getTokenAge(), "");
+        Assert.assertEquals(info.getSpeInfo(), "");
+    }
+
+    @Test
+    public void xmsCliTelemetryTest_IncorrectFormatTest(){
+        String responseHeader =  "1,2,3,4,5,6";
+        XmsClientTelemetryInfo info = XmsClientTelemetryInfo.parseXmsTelemetryInfo(responseHeader);
+
+        Assert.assertNull(info.getServerErrorCode());
+        Assert.assertNull(info.getServerSubErrorCode());
+        Assert.assertNull(info.getTokenAge());
+        Assert.assertNull(info.getSpeInfo());
+    }
+
+    @Test
+    public void xmsCliTelemetryTest_IncorrectHeaderTest(){
+        String responseHeader = "3,0,0,,";
+        XmsClientTelemetryInfo info = XmsClientTelemetryInfo.parseXmsTelemetryInfo(responseHeader);
+
+        Assert.assertNull(info);
+    }
+
+    private ApiEvent createApiEvent(Boolean logPii){
         ApiEvent apiEvent1;
         try {
-            apiEvent1 = new ApiEvent(false);
+            apiEvent1 = new ApiEvent(logPii);
             apiEvent1.setAuthority(new URI("https://login.microsoft.com"));
-            apiEvent1.setTenantId("tenantId123");
+            apiEvent1.setTenantId(tenantId);
 
         } catch(URISyntaxException e){
             throw new RuntimeException(e.getMessage());

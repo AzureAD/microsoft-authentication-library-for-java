@@ -69,9 +69,15 @@ public class TokenEndpointRequestTest extends AbstractMsalTests {
                         "corr-id",
                         AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
+        ServiceBundle serviceBundle = new ServiceBundle(
+                null,
+                null,
+                null,
+                new TelemetryManager(null, false));
+
         TokenEndpointRequest request = PowerMock.createPartialMock(
                 TokenEndpointRequest.class, new String[]{"toOauthHttpRequest"},
-                new URL("http://login.windows.net"), acr, null);
+                new URL("http://login.windows.net"), acr, serviceBundle);
         OauthHttpRequest msalOauthHttpRequest = PowerMock
                 .createMock(OauthHttpRequest.class);
 
@@ -118,8 +124,14 @@ public class TokenEndpointRequestTest extends AbstractMsalTests {
                         "corr-id",
                         AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
-        final ServiceBundle sb = new ServiceBundle(null, null, null, null);
-        final TokenEndpointRequest request = new TokenEndpointRequest(null, acr, sb);
+
+        ServiceBundle serviceBundle = new ServiceBundle(
+                null,
+                null,
+                null,
+                new TelemetryManager(null, false));
+
+        final TokenEndpointRequest request = new TokenEndpointRequest(null, acr, serviceBundle);
         Assert.assertNotNull(request);
         request.executeOauthRequestAndProcessResponse();
     }
@@ -213,13 +225,20 @@ public class TokenEndpointRequestTest extends AbstractMsalTests {
                         "corr-id",
                         AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
+        ServiceBundle serviceBundle = new ServiceBundle(
+                null,
+                null,
+                null,
+                new TelemetryManager(null, false));
+
         final TokenEndpointRequest request = PowerMock.createPartialMock(
                 TokenEndpointRequest.class, new String[] { "toOauthHttpRequest" },
-                new URL("http://login.windows.net"), acr, null);
+                new URL("http://login.windows.net"), acr, serviceBundle);
         final OauthHttpRequest msalOauthHttpRequest = PowerMock
                 .createMock(OauthHttpRequest.class);
         final HTTPResponse httpResponse = PowerMock
                 .createMock(HTTPResponse.class);
+
         EasyMock.expect(request.toOauthHttpRequest())
                 .andReturn(msalOauthHttpRequest).times(1);
         EasyMock.expect(msalOauthHttpRequest.send()).andReturn(httpResponse)
@@ -232,6 +251,11 @@ public class TokenEndpointRequestTest extends AbstractMsalTests {
                 .times(1);
         httpResponse.ensureStatusCode(200);
         EasyMock.expectLastCall();
+
+        EasyMock.expect(httpResponse.getHeader("User-Agent")).andReturn(null);
+        EasyMock.expect(httpResponse.getHeader("x-ms-request-id")).andReturn(null);
+        EasyMock.expect(httpResponse.getHeader("x-ms-clitelem")).andReturn(null);
+        EasyMock.expect(httpResponse.getStatusCode()).andReturn(200).times(1);
 
         PowerMock.replay(request, msalOauthHttpRequest, httpResponse);
 
@@ -268,9 +292,15 @@ public class TokenEndpointRequestTest extends AbstractMsalTests {
                         "corr-id",
                         AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
+        ServiceBundle serviceBundle = new ServiceBundle(
+                null,
+                null,
+                null,
+                new TelemetryManager(null, false));
+
         final TokenEndpointRequest request = PowerMock.createPartialMock(
                 TokenEndpointRequest.class, new String[] { "toOauthHttpRequest" },
-                new URL("http://login.windows.net"), acr, null);
+                new URL("http://login.windows.net"), acr, serviceBundle);
         final OauthHttpRequest msalOauthHttpRequest = PowerMock
                 .createMock(OauthHttpRequest.class);
         final HTTPResponse httpResponse = PowerMock
@@ -287,12 +317,18 @@ public class TokenEndpointRequestTest extends AbstractMsalTests {
         final ErrorObject errorObject = PowerMock.createMock(ErrorObject.class);
 
         EasyMock.expect(errorObject.getCode())
-                .andReturn("unknown").times(1);
+                .andReturn("unknown").times(3);
         EasyMock.expect(errorObject.getHTTPStatusCode())
                 .andReturn(402).times(1);
 
         EasyMock.expect(errorResponse.getErrorObject())
                 .andReturn(errorObject).times(1);
+
+        EasyMock.expect(httpResponse.getHeader("User-Agent")).andReturn(null);
+        EasyMock.expect(httpResponse.getHeader("x-ms-request-id")).andReturn(null);
+        EasyMock.expect(httpResponse.getHeader("x-ms-clitelem")).andReturn(null);
+        EasyMock.expect(httpResponse.getStatusCode()).andReturn(402).times(1);
+
 
         PowerMock.mockStaticPartial(TokenErrorResponse.class, "parse");
         PowerMock.createPartialMock(TokenErrorResponse.class, "parse");
