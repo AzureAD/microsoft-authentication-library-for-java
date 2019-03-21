@@ -35,12 +35,16 @@ import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import com.nimbusds.oauth2.sdk.util.URLUtils;
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Map;
 
 class TokenEndpointRequest {
+    Logger log = LoggerFactory.getLogger(TokenEndpointRequest.class);
 
     private final URL url;
     private final MsalRequest msalRequest;
@@ -59,9 +63,12 @@ class TokenEndpointRequest {
         HttpEvent httpEvent = new HttpEvent();
         try {
             httpEvent.setHttpPath(url.toURI());
-            httpEvent.setQueryParameters(url.getQuery());
-        } catch(Exception e){
-            //TODO log exception
+            if(!Strings.isNullOrEmpty(url.getQuery()))
+                httpEvent.setQueryParameters(url.getQuery());
+        } catch(URISyntaxException ex){
+            log.warn(LogHelper.createMessage("Setting URL telemetry fields failed: " +
+                            LogHelper.getPiiScrubbedDetails(ex),
+                    msalRequest.getHeaders().getHeaderCorrelationIdValue()));
         }
 
         try(TelemetryHelper telemetryHelper = serviceBundle.getTelemetryManager().createTelemetryHelper(

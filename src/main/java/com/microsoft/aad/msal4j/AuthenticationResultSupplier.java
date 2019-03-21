@@ -136,9 +136,11 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
                 apiEvent.setAuthority(new URI(authenticationAuthority.getAuthority()));
                 apiEvent.setAuthorityType(authenticationAuthority.getAuthorityType().toString());
             }
-        } catch (URISyntaxException e){
-            //TODO fix log message to be formatted correctly
-            clientApplication.log.warn("Error setting telemetry authority information");
+        } catch (URISyntaxException ex){
+            clientApplication.log.warn(LogHelper.createMessage(
+                    "Setting URL telemetry fields failed: " +
+                            LogHelper.getPiiScrubbedDetails(ex),
+                    msalRequest.getHeaders().getHeaderCorrelationIdValue()));
         }
 
         return apiEvent;

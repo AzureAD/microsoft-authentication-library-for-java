@@ -31,7 +31,8 @@ class DefaultEvent extends Event {
     }
 
     private void setSdkVersion(){
-       this.put(SDK_VERSION_KEY, this.getClass().getPackage().getSpecificationVersion());
+        Package aPackage = this.getClass().getPackage();
+        this.put(SDK_VERSION_KEY, this.getClass().getPackage().getImplementationVersion());
     }
 
     private void setHttpEventCount(){
