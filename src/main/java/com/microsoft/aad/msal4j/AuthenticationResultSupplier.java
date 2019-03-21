@@ -97,7 +97,7 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
                 else{
                     clientApplication.log.debug(
                             LogHelper.createMessage("Access Token and Refresh Token were returned",
-                            headers.getHeaderCorrelationIdValue()));
+                                    headers.getHeaderCorrelationIdValue()));
                 }
             }
             else {

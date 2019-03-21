@@ -36,13 +36,13 @@ import java.util.Map;
 
 class HttpHelper {
 
-     static String executeHttpRequest(Logger log,
-                               HttpMethod httpMethod,
-                               final String url,
-                               final Map<String, String> headers,
-                               String postData,
-                               RequestContext requestContext,
-                               final ServiceBundle serviceBundle) throws Exception{
+    static String executeHttpRequest(Logger log,
+                                     HttpMethod httpMethod,
+                                     final String url,
+                                     final Map<String, String> headers,
+                                     String postData,
+                                     RequestContext requestContext,
+                                     final ServiceBundle serviceBundle) throws Exception{
 
         HttpEvent httpEvent = new HttpEvent();
         String response = null;
@@ -70,10 +70,10 @@ class HttpHelper {
         return response;
     }
 
-     private static String executeHttpGet(final Logger log, final URL url,
-                                   final Map<String, String> headers,
-                                   final ServiceBundle serviceBundle,
-                                   HttpEvent httpEvent) throws Exception {
+    private static String executeHttpGet(final Logger log, final URL url,
+                                         final Map<String, String> headers,
+                                         final ServiceBundle serviceBundle,
+                                         HttpEvent httpEvent) throws Exception {
         final HttpsURLConnection conn = HttpHelper.openConnection(url, serviceBundle);
         configureAdditionalHeaders(conn, headers);
 
@@ -81,8 +81,8 @@ class HttpHelper {
     }
 
     private static String executeHttpPost(final Logger log, final URL url,
-            String postData, final Map<String, String> headers,
-            final ServiceBundle serviceBundle, HttpEvent httpEvent)
+                                          String postData, final Map<String, String> headers,
+                                          final ServiceBundle serviceBundle, HttpEvent httpEvent)
             throws Exception {
         final HttpsURLConnection conn = HttpHelper.openConnection(url, serviceBundle);
         configureAdditionalHeaders(conn, headers);
@@ -149,7 +149,7 @@ class HttpHelper {
     }
 
     static void verifyReturnedCorrelationId(Logger log,
-            HttpsURLConnection conn, String sentCorrelationId) {
+                                            HttpsURLConnection conn, String sentCorrelationId) {
         if (StringHelper
                 .isBlank(conn
                         .getHeaderField(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME))

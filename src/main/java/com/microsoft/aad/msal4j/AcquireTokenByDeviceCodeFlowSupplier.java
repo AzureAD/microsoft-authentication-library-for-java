@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import static com.microsoft.aad.msal4j.AuthenticationErrorCode.AUTHORIZATION_PENDING;
 
 class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier {
+
     private DeviceCodeRequest deviceCodeRequest;
 
     AcquireTokenByDeviceCodeFlowSupplier(PublicClientApplication clientApplication,

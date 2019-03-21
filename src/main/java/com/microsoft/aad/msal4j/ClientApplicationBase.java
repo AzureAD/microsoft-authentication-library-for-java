@@ -231,8 +231,8 @@ abstract public class ClientApplicationBase {
                     (DeviceCodeRequest) msalRequest);
         } else {
             supplier = new AcquireTokenByAuthorizationGrantSupplier(
-                            this,
-                            msalRequest);
+                    this,
+                    msalRequest);
         }
         return supplier;
     }

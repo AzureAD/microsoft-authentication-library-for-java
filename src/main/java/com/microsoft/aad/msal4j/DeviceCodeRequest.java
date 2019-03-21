@@ -102,5 +102,3 @@ class DeviceCodeRequest extends MsalRequest {
         return scopes;
     }
 }
-
-

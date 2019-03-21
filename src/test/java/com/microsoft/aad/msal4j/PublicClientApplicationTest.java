@@ -56,8 +56,8 @@ public class PublicClientApplicationTest extends PowerMockTestCase {
         PowerMock.expectPrivate(app, "acquireTokenCommon",
                 EasyMock.isA(MsalRequest.class))
                 .andReturn(new AuthenticationResult("bearer", "accessToken",
-                                "refreshToken", new Date().getTime(), null,
-                                null, false));
+                        "refreshToken", new Date().getTime(), null,
+                        null, false));
 
         UserDiscoveryResponse response = EasyMock
                 .createMock(UserDiscoveryResponse.class);

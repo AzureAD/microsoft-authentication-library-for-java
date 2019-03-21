@@ -68,7 +68,7 @@ class WSTrustRequest {
 
         String body = buildMessage(policy.getUrl(), username, password,
                 policy.getVersion(), cloudAudienceUrn).toString();
-      
+
         String response = HttpHelper.executeHttpRequest(log, HttpMethod.POST, policy.getUrl(),
                 headers, body, requestContext , serviceBundle);
 
@@ -119,7 +119,7 @@ class WSTrustRequest {
     }
 
     static StringBuilder buildMessage(String address, String username,
-            String password, WSTrustVersion addressVersion, String cloudAudienceUrn) {
+                                      String password, WSTrustVersion addressVersion, String cloudAudienceUrn) {
         boolean integrated = (username == null) & (password == null);
 
         StringBuilder securityHeaderBuilder = new StringBuilder(MAX_EXPECTED_MESSAGE_SIZE);
@@ -165,44 +165,44 @@ class WSTrustRequest {
         messageBuilder
                 .append(String
                         .format("<s:Envelope xmlns:s='http://www.w3.org/2003/05/soap-envelope' xmlns:a='http://www.w3.org/2005/08/addressing' xmlns:u='%s'>"
-                                + "<s:Header>"
-                                + "<a:Action s:mustUnderstand='1'>%s</a:Action>"
-                                + "<a:messageID>urn:uuid:"
-                                + "%s"
-                                + // guid
-                                "</a:messageID>"
-                                + "<a:ReplyTo>"
-                                + "<a:Address>http://www.w3.org/2005/08/addressing/anonymous</a:Address>"
-                                + "</a:ReplyTo>"
-                                + "<a:To s:mustUnderstand='1'>"
-                                + "%s"
-                                + // resource
-                                "</a:To>"
-                                + "%s"
-                                + // securityHeader
-                                "</s:Header>"
-                                + "<s:Body>"
-                                + "<trust:RequestSecurityToken xmlns:trust='%s'>"
-                                + "<wsp:AppliesTo xmlns:wsp='http://schemas.xmlsoap.org/ws/2004/09/policy'>"
-                                + "<a:EndpointReference>"
-                                + "<a:Address>"
-                                + "%s"
-                                + // appliesTo like
-                                  // urn:federation:MicrosoftOnline. Either
-                                  // wst:TokenType or wst:AppliesTo should be
-                                  // defined in the token request message. If
-                                  // both are specified, the wst:AppliesTo field
-                                  // takes precedence.
-                                "</a:Address>"
-                                + "</a:EndpointReference>"
-                                + "</wsp:AppliesTo>"
-                                + "<trust:KeyType>%s</trust:KeyType>"
-                                + "<trust:RequestType>%s</trust:RequestType>"
-                                + // If we dont specify tokentype, it will
-                                  // return samlv1.1
-                                "</trust:RequestSecurityToken>"
-                                + "</s:Body>"
-                                + "</s:Envelope>", schemaLocation, soapAction,
+                                        + "<s:Header>"
+                                        + "<a:Action s:mustUnderstand='1'>%s</a:Action>"
+                                        + "<a:messageID>urn:uuid:"
+                                        + "%s"
+                                        + // guid
+                                        "</a:messageID>"
+                                        + "<a:ReplyTo>"
+                                        + "<a:Address>http://www.w3.org/2005/08/addressing/anonymous</a:Address>"
+                                        + "</a:ReplyTo>"
+                                        + "<a:To s:mustUnderstand='1'>"
+                                        + "%s"
+                                        + // resource
+                                        "</a:To>"
+                                        + "%s"
+                                        + // securityHeader
+                                        "</s:Header>"
+                                        + "<s:Body>"
+                                        + "<trust:RequestSecurityToken xmlns:trust='%s'>"
+                                        + "<wsp:AppliesTo xmlns:wsp='http://schemas.xmlsoap.org/ws/2004/09/policy'>"
+                                        + "<a:EndpointReference>"
+                                        + "<a:Address>"
+                                        + "%s"
+                                        + // appliesTo like
+                                        // urn:federation:MicrosoftOnline. Either
+                                        // wst:TokenType or wst:AppliesTo should be
+                                        // defined in the token request message. If
+                                        // both are specified, the wst:AppliesTo field
+                                        // takes precedence.
+                                        "</a:Address>"
+                                        + "</a:EndpointReference>"
+                                        + "</wsp:AppliesTo>"
+                                        + "<trust:KeyType>%s</trust:KeyType>"
+                                        + "<trust:RequestType>%s</trust:RequestType>"
+                                        + // If we dont specify tokentype, it will
+                                        // return samlv1.1
+                                        "</trust:RequestSecurityToken>"
+                                        + "</s:Body>"
+                                        + "</s:Envelope>", schemaLocation, soapAction,
                                 guid, address,
                                 integrated ? "" : securityHeaderBuilder.toString(),
                                 rstTrustNamespace,

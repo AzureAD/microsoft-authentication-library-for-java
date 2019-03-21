@@ -137,7 +137,7 @@ class AuthenticationAuthority {
                 // as a fall back is success
                 if (validateAuthority
                         && !doDynamicInstanceDiscovery(
-                                validateAuthority, headers, requestContext, serviceBundle)) {
+                        validateAuthority, headers, requestContext, serviceBundle)) {
                     throw new AuthenticationException(
                             AuthenticationErrorMessage.AUTHORITY_NOT_IN_VALID_LIST);
                 }
