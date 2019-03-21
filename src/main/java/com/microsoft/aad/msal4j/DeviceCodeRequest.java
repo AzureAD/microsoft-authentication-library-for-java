@@ -38,7 +38,14 @@ class DeviceCodeRequest extends MsalRequest {
         String urlWithQueryParams = createQueryParamsAndAppendToURL(url, clientId);
         Map<String, String> headers = appendToHeaders(clientDataHeaders);
 
-        final String json = HttpHelper.executeHttpGet(log, urlWithQueryParams, headers, serviceBundle);
+        final String json = HttpHelper.executeHttpRequest(
+                log,
+                HttpMethod.GET,
+                urlWithQueryParams,
+                headers,
+                null,
+                this.getRequestContext(),
+                serviceBundle);
 
         return parseJsonToDeviceCodeAndSetParameters(json, headers, clientId);
     }

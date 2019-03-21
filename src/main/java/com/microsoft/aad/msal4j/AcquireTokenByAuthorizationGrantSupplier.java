@@ -33,12 +33,9 @@ import java.net.URLEncoder;
 
 class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSupplier {
 
-    private MsalRequest msalRequest;
-
     AcquireTokenByAuthorizationGrantSupplier(ClientApplicationBase clientApplication,
                                              MsalRequest msalRequest) {
-        super(clientApplication, msalRequest.getHeaders());
-        this.msalRequest = msalRequest;
+        super(clientApplication, msalRequest);
     }
 
     AuthenticationResult execute() throws Exception {
@@ -71,6 +68,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
         UserDiscoveryResponse userDiscoveryResponse = UserDiscoveryRequest.execute(
                 this.clientApplication.authenticationAuthority.getUserRealmEndpoint(grant.getUsername()),
                 msalRequest.getHeaders().getReadonlyHeaderMap(),
+                msalRequest.getRequestContext(),
                 this.clientApplication.getServiceBundle());
 
         if (userDiscoveryResponse.isAccountFederated()) {
@@ -79,6 +77,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
                     grant.getUsername(),
                     grant.getPassword().getValue(),
                     userDiscoveryResponse.getCloudAudienceUrn(),
+                    msalRequest.getRequestContext(),
                     this.clientApplication.getServiceBundle(),
                     this.clientApplication.isLogPii());
 
@@ -109,6 +108,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
         UserDiscoveryResponse userRealmResponse = UserDiscoveryRequest.execute(
                 userRealmEndpoint,
                 msalRequest.getHeaders().getReadonlyHeaderMap(),
+                msalRequest.getRequestContext(),
                 this.clientApplication.getServiceBundle());
 
         if (userRealmResponse.isAccountFederated() &&
@@ -122,6 +122,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
             WSTrustResponse wsTrustResponse = WSTrustRequest.execute(
                     mexURL,
                     cloudAudienceUrn,
+                    msalRequest.getRequestContext(),
                     this.clientApplication.getServiceBundle(),
                     this.clientApplication.isLogPii());
 

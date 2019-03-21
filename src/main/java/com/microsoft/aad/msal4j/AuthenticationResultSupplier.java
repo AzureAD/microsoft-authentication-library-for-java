@@ -26,6 +26,8 @@ package com.microsoft.aad.msal4j;
 import org.apache.commons.codec.binary.Base64;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.CompletionException;
@@ -34,11 +36,11 @@ import java.util.function.Supplier;
 abstract class AuthenticationResultSupplier implements Supplier<AuthenticationResult> {
 
     ClientApplicationBase clientApplication;
-    private ClientDataHttpHeaders headers;
+    MsalRequest msalRequest;
 
-    AuthenticationResultSupplier(ClientApplicationBase clientApplication, ClientDataHttpHeaders headers) {
+    AuthenticationResultSupplier(ClientApplicationBase clientApplication, MsalRequest msalRequest) {
         this.clientApplication = clientApplication;
-        this.headers = headers;
+        this.msalRequest = msalRequest;
     }
 
     abstract AuthenticationResult execute() throws Exception;
@@ -46,14 +48,31 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
     @Override
     public AuthenticationResult get() {
         AuthenticationResult result;
-        try {
-            result = execute();
 
-            logResult(result, headers);
+        ApiEvent apiEvent = initializeApiEvent(msalRequest);
+
+        try(TelemetryHelper telemetryHelper = clientApplication.getServiceBundle().getTelemetryManager().createTelemetryHelper(
+                msalRequest.getRequestContext().getTelemetryRequestId(),
+                msalRequest.getClientAuthentication().getClientID().toString(),
+                apiEvent,
+                true)){
+
+            result = execute();
+            logResult(result, msalRequest.getHeaders());
+
+            if(result != null){
+                apiEvent.setWasSuccessful(true);
+                apiEvent.setTenantId(result.getUserInfo().getTenantId());
+            }
         } catch (Exception ex) {
+
+            if(ex instanceof AuthenticationException){
+                apiEvent.setApiErrorCode(((AuthenticationException) ex).getErrorCode());
+            }
+
             clientApplication.log.error(
                     LogHelper.createMessage("Execution of " + this.getClass() + " failed.",
-                            this.headers.getHeaderCorrelationIdValue()), ex);
+                            msalRequest.getHeaders().getHeaderCorrelationIdValue()), ex);
 
             throw new CompletionException(ex);
         }
@@ -94,6 +113,35 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
                 }
             }
         }
+    }
+
+    private ApiEvent initializeApiEvent(MsalRequest msalRequest){
+        ApiEvent apiEvent = new ApiEvent(clientApplication.isLogPii());
+        msalRequest.getRequestContext().setTelemetryRequestId(
+                clientApplication.getServiceBundle().getTelemetryManager().generateRequestId());
+        apiEvent.setApiId(msalRequest.getRequestContext().getAcquireTokenPublicApi().getApiId());
+        apiEvent.setCorrelationId(msalRequest.getRequestContext().getCorrelationId());
+        apiEvent.setRequestId(msalRequest.getRequestContext().getTelemetryRequestId());
+        apiEvent.setWasSuccessful(false);
+
+        if(clientApplication instanceof ConfidentialClientApplication){
+            apiEvent.setIsConfidentialClient(true);
+        } else {
+            apiEvent.setIsConfidentialClient(false);
+        }
+
+        try {
+            AuthenticationAuthority authenticationAuthority = clientApplication.authenticationAuthority;
+            if (authenticationAuthority != null) {
+                apiEvent.setAuthority(new URI(authenticationAuthority.getAuthority()));
+                apiEvent.setAuthorityType(authenticationAuthority.getAuthorityType().toString());
+            }
+        } catch (URISyntaxException e){
+            //TODO fix log message to be formatted correctly
+            clientApplication.log.warn("Error setting telemetry authority information");
+        }
+
+        return apiEvent;
     }
 
     private String computeSha256Hash(String input) {

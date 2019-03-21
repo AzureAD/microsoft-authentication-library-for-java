@@ -28,12 +28,11 @@ import java.util.concurrent.TimeUnit;
 import static com.microsoft.aad.msal4j.AuthenticationErrorCode.AUTHORIZATION_PENDING;
 
 class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier {
-
     private DeviceCodeRequest deviceCodeRequest;
 
     AcquireTokenByDeviceCodeFlowSupplier(PublicClientApplication clientApplication,
                                          DeviceCodeRequest deviceCodeRequest) {
-        super(clientApplication, deviceCodeRequest.getHeaders());
+        super(clientApplication, deviceCodeRequest);
         this.deviceCodeRequest = deviceCodeRequest;
     }
 
@@ -47,6 +46,7 @@ class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier 
         this.clientApplication.authenticationAuthority.doInstanceDiscovery(
                 this.clientApplication.isValidateAuthority(),
                 deviceCodeRequest.getHeaders().getReadonlyHeaderMap(),
+                deviceCodeRequest.getRequestContext(),
                 this.clientApplication.getServiceBundle());
     }
 

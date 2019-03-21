@@ -54,11 +54,11 @@ class ApiEvent extends Event{
         }
     }
 
-    public void setWasSuccesful(boolean wasSuccesful){
-        this.put(WAS_SUCCESSFUL_KEY, String.valueOf(wasSuccesful).toLowerCase(Locale.ROOT));
+    public void setWasSuccessful(boolean wasSuccessful){
+        this.put(WAS_SUCCESSFUL_KEY, String.valueOf(wasSuccessful).toLowerCase(Locale.ROOT));
     }
 
-    public boolean getWasSuccesful(){
+    public boolean getWasSuccessful(){
         return Boolean.valueOf(this.get(WAS_SUCCESSFUL_KEY));
     }
 

@@ -124,9 +124,10 @@ class AuthenticationAuthority {
         this.selfSignedJwtAudience = selfSignedJwtAudience;
     }
 
-    void doInstanceDiscovery(boolean validateAuthority, final Map<String, String> headers,
-            final ServiceBundle serviceBundle)
-            throws Exception {
+    void doInstanceDiscovery(boolean validateAuthority,
+                             final Map<String, String> headers,
+                             RequestContext requestContext,
+                             final ServiceBundle serviceBundle) throws Exception {
 
         // instance discovery should be executed only once per context instance.
         if (!instanceDiscoveryCompleted) {
@@ -135,7 +136,8 @@ class AuthenticationAuthority {
                 // if authority must be validated and dynamic discovery request
                 // as a fall back is success
                 if (validateAuthority
-                        && !doDynamicInstanceDiscovery(validateAuthority, headers, serviceBundle)) {
+                        && !doDynamicInstanceDiscovery(
+                                validateAuthority, headers, requestContext, serviceBundle)) {
                     throw new AuthenticationException(
                             AuthenticationErrorMessage.AUTHORITY_NOT_IN_VALID_LIST);
                 }
@@ -149,14 +151,17 @@ class AuthenticationAuthority {
         }
     }
 
-    boolean doDynamicInstanceDiscovery(boolean validateAuthority, final Map<String, String> headers,
-            ServiceBundle serviceBundle)
-            throws Exception {
-
-        final String json = HttpHelper.executeHttpGet(
+    boolean doDynamicInstanceDiscovery(boolean validateAuthority,
+                                       final Map<String, String> headers,
+                                       RequestContext requestContext,
+                                       ServiceBundle serviceBundle) throws Exception {
+        final String json = HttpHelper.executeHttpRequest(
                 log,
+                HttpMethod.GET,
                 instanceDiscoveryEndpoint,
                 headers,
+                null,
+                requestContext,
                 serviceBundle);
 
         final InstanceDiscoveryResponse discoveryResponse = JsonHelper

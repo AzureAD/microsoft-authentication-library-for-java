@@ -30,7 +30,6 @@ import javax.net.ssl.SSLSocketFactory;
 import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
@@ -154,7 +153,8 @@ abstract public class ClientApplicationBase {
                         authorizationCode,
                         redirectUri,
                         clientAuthentication,
-                        new RequestContext(clientId, correlationId));
+                        createRequestContext(
+                                AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         return this.executeRequest(authorizationCodeRequest);
     }
@@ -180,7 +180,7 @@ abstract public class ClientApplicationBase {
                 refreshToken,
                 scopes,
                 clientAuthentication,
-                new RequestContext(clientId, correlationId));
+                createRequestContext(AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_REFRESH_TOKEN));
 
         return this.executeRequest(refreshTokenRequest);
     }
@@ -188,32 +188,13 @@ abstract public class ClientApplicationBase {
     CompletableFuture<AuthenticationResult> executeRequest(
             MsalRequest msalRequest) {
 
-        ApiEvent apiEvent = initializeApiEvent(msalRequest);
-        CompletableFuture<AuthenticationResult> future;
+        AuthenticationResultSupplier supplier = getAuthenticationResultSupplier(msalRequest);
 
-        try(TelemetryHelper telemetryHelper = serviceBundle.getTelemetryManager().createTelemetryHelper(
-                msalRequest.getRequestContext().getTelemetryRequestId(),
-                msalRequest.getClientAuthentication().getClientID().toString(),
-                apiEvent)){
-                try {
-                AuthenticationResultSupplier supplier = getAuthenticationResultSupplier(msalRequest);
+        ExecutorService executorService = serviceBundle.getExecutorService();
+        CompletableFuture<AuthenticationResult> future = executorService != null ?
+                CompletableFuture.supplyAsync(supplier, executorService) :
+                CompletableFuture.supplyAsync(supplier);
 
-                ExecutorService executorService = serviceBundle.getExecutorService();
-                future = executorService != null ?
-                        CompletableFuture.supplyAsync(supplier, executorService) :
-                        CompletableFuture.supplyAsync(supplier);
-
-                apiEvent.setTenantId(future.thenApply(result ->
-                        result.getUserInfo().getTenantId()).toString());
-                // TODO set AccountId
-                //apiEvent.setAccountId(future.thenApply(result -> result.));
-                apiEvent.setWasSuccesful(true);
-
-            } catch (AuthenticationException e){
-                apiEvent.setApiErrorCode(e.getErrorCode());
-                throw e;
-            }
-        }
         return future;
     }
 
@@ -229,6 +210,7 @@ abstract public class ClientApplicationBase {
         this.authenticationAuthority.doInstanceDiscovery(
                 validateAuthority,
                 headers.getReadonlyHeaderMap(),
+                msalRequest.getRequestContext(),
                 this.serviceBundle);
 
         URL url = new URL(this.authenticationAuthority.getTokenUri());
@@ -255,49 +237,29 @@ abstract public class ClientApplicationBase {
         return supplier;
     }
 
-    private ApiEvent initializeApiEvent(MsalRequest msalRequest){
-        ApiEvent apiEvent = new ApiEvent(logPii);
-        msalRequest.getRequestContext().setTelemetryRequestId(serviceBundle.getTelemetryManager().generateRequestId());
-        // TODO set apiIds
-        apiEvent.setApiId(0);
-        apiEvent.setCorrelationId(msalRequest.getRequestContext().getCorrelationId());
-        apiEvent.setRequestId(msalRequest.getRequestContext().getTelemetryRequestId());
-        apiEvent.setWasSuccesful(false);
-
-        if(this instanceof ConfidentialClientApplication){
-            apiEvent.setIsConfidentialClient(true);
-        } else {
-            apiEvent.setIsConfidentialClient(false);
-        }
-
-        try {
-            if (authenticationAuthority != null) {
-                apiEvent.setAuthority(new URI(authenticationAuthority.getAuthority()));
-                apiEvent.setAuthorityType(authenticationAuthority.getAuthorityType().toString());
-            }
-        } catch (URISyntaxException e){
-            log.warn("Error setting telemetry authority information");
-        }
-
-        return apiEvent;
-    }
-
-    protected static void validateNotBlank(String name, String value) {
+    static void validateNotBlank(String name, String value) {
         if (StringHelper.isBlank(value)) {
             throw new IllegalArgumentException(name + " is null or empty");
         }
     }
 
-    protected static void validateNotNull(String name, Object obj) {
+    static void validateNotNull(String name, Object obj) {
         if (obj == null) {
             throw new IllegalArgumentException(name + " is null");
         }
     }
 
-    protected static void validateNotEmpty(String name, Set<String> set) {
+    static void validateNotEmpty(String name, Set<String> set) {
         if (set == null || set.isEmpty()) {
             throw new IllegalArgumentException(name + " is null or empty");
         }
+    }
+
+    RequestContext createRequestContext(AcquireTokenPublicApi publicApi){
+        return new RequestContext(
+                clientId,
+                this.getCorrelationId(),
+                publicApi);
     }
 
     ServiceBundle getServiceBundle(){

@@ -42,9 +42,11 @@ class XmsClientTelemetryInfo {
         }
 
         Matcher matcher = matchHeaderToExpectedFormat(headerValue);
-        if(!matcher.find()){
+        if(!matcher.matches()){
             return xmsClientTelemetryInfo;
         }
+
+        headerSegments = headerValue.split(",", 5 );
 
         xmsClientTelemetryInfo.serverErrorCode = headerSegments[ERROR_CODE_INDEX];
         xmsClientTelemetryInfo.serverSubErrorCode = headerSegments[SUB_ERROR_CODE_INDEX];
@@ -55,24 +57,18 @@ class XmsClientTelemetryInfo {
     }
 
     private static Matcher matchHeaderToExpectedFormat(String header){
-        String regexp = "@\"^[1-9]+\\.?[0-9|\\\\.]*,[0-9|\\\\.]*,[0-9|\\\\.]*,[^,]*[0-9\\\\.]*,[^,]*$\"";
+        String regexp = "^[1-9]+\\.?[0-9|\\.]*,[0-9|\\.]*,[0-9|\\.]*,[^,]*[0-9\\.]*,[^,]*$";
         Pattern pattern = Pattern.compile(regexp);
-        Matcher matcher = pattern.matcher(header);
-
-        return matcher;
+        return pattern.matcher(header);
     }
-
-
 
     public String getServerErrorCode() {
         return serverErrorCode;
     }
 
-
     public String getServerSubErrorCode() {
         return serverSubErrorCode;
     }
-
 
     public String getTokenAge() {
         return tokenAge;
@@ -81,5 +77,4 @@ class XmsClientTelemetryInfo {
     public String getSpeInfo() {
         return speInfo;
     }
-
 }

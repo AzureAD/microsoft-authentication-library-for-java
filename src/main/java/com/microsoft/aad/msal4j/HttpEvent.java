@@ -2,7 +2,7 @@ package com.microsoft.aad.msal4j;
 
 import com.google.common.base.Strings;
 
-import java.net.URL;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Locale;
 
@@ -22,56 +22,63 @@ class HttpEvent extends Event{
     private final static String SERVER_ERROR_CODE_KEY = EVENT_NAME_PREFIX  + "server_error_code";
     private final static String SERVER_SUB_ERROR_CODE_KEY = EVENT_NAME_PREFIX + "server_sub_error_code";
 
-    public HttpEvent(){
+    HttpEvent(){
         super(TelemetryConstants.HTTP_EVENT_NAME_KEY);
     }
 
-    public void setHttpPath(URL httpPath){
+    void setHttpPath(URI httpPath){
         this.put(HTTP_PATH_KEY, scrubTenant(httpPath));
     }
 
-    public void setUserAgent(String userAgent){
+    void setUserAgent(String userAgent){
         this.put(USER_AGENT_KEY, userAgent.toLowerCase(Locale.ROOT));
     }
 
-    public void setQueryParameters(String queryParameters){
+    void setQueryParameters(String queryParameters){
         this.put(QUERY_PARAMETERS_KEY, String.join("&", parseQueryParametersAndReturnKeys(queryParameters)));
     }
 
-    public void setApiVersion(String apiVersion){
+    void setApiVersion(String apiVersion){
         this.put(API_VERSION_KEY, apiVersion.toLowerCase());
     }
 
-    public void setHttpResponseStatus(Integer httpResponseStatus){
+    void setHttpResponseStatus(Integer httpResponseStatus){
         this.put(RESPONSE_CODE_KEY, httpResponseStatus.toString().toLowerCase());
     }
 
-    public void setHttpMethod(String httpMethod){
+    void setHttpMethod(String httpMethod){
         this.put(HTTP_METHOD_KEY, httpMethod);
     }
 
-    public void setOauthErrorCode(String oauthErrorCode){
+    void setOauthErrorCode(String oauthErrorCode){
         this.put(OAUTH_ERROR_CODE_KEY, oauthErrorCode.toLowerCase());
     }
 
-    public void setRequestIdHeader(String requestIdHeader){
+    void setRequestIdHeader(String requestIdHeader){
         this.put(REQUEST_ID_HEADER_KEY, requestIdHeader.toLowerCase());
     }
 
-    public void setTokenAge(String tokenAge){
+    private void setTokenAge(String tokenAge){
         this.put(TOKEN_AGEN_KEY, tokenAge.toLowerCase());
     }
 
-    public void setSpeInfo(String speInfo){
+    private void setSpeInfo(String speInfo){
         this.put(SPE_INFO_KEY, speInfo.toLowerCase());
     }
 
-    public void setServerErrorCode(String serverErrorCode){
+    private void setServerErrorCode(String serverErrorCode){
         this.put(SERVER_ERROR_CODE_KEY, serverErrorCode.toLowerCase());
     }
 
-    public void setSubServerErrorCode(String subServerErrorCode){
+    private void setSubServerErrorCode(String subServerErrorCode){
         this.put(SERVER_SUB_ERROR_CODE_KEY, subServerErrorCode.toLowerCase());
+    }
+
+    void setXmsClientTelemetryInfo(XmsClientTelemetryInfo xmsClientTelemetryInfo){
+        this.setTokenAge(xmsClientTelemetryInfo.getTokenAge());
+        this.setSpeInfo(xmsClientTelemetryInfo.getSpeInfo());
+        this.setServerErrorCode(xmsClientTelemetryInfo.getServerErrorCode());
+        this.setSubServerErrorCode(xmsClientTelemetryInfo.getServerSubErrorCode());
     }
 
     private ArrayList<String> parseQueryParametersAndReturnKeys(String queryParams){
@@ -87,8 +94,4 @@ class HttpEvent extends Event{
         }
         return queryKeys;
     }
-
-
-
-
 }

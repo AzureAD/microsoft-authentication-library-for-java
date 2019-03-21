@@ -106,7 +106,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
     }
 
     public static Map<String, String> splitQuery(String query) throws UnsupportedEncodingException {
-        Map<String, String> query_pairs = new LinkedHashMap();
+        Map<String, String> query_pairs = new LinkedHashMap<>();
         String[] pairs = query.split("&");
         for (String pair : pairs) {
             int idx = pair.indexOf("=");

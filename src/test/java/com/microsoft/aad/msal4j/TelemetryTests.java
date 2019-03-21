@@ -52,7 +52,7 @@ public class TelemetryTests {
 
         ApiEvent apiEvent1 = createApiEvent();
         telemetryManager.startEvent(reqId, apiEvent1);
-        apiEvent1.setWasSuccesful(true);
+        apiEvent1.setWasSuccessful(true);
         telemetryManager.stopEvent(reqId, apiEvent1);
 
         HttpEvent httpEvent1 = createHttpEvent();
@@ -77,7 +77,7 @@ public class TelemetryTests {
 
         ApiEvent apiEvent1 = createApiEvent();
         telemetryManager.startEvent(reqId, apiEvent1);
-        apiEvent1.setWasSuccesful(true);
+        apiEvent1.setWasSuccessful(true);
         telemetryManager.stopEvent(reqId, apiEvent1);
 
         HttpEvent httpEvent1 = createHttpEvent();
@@ -94,7 +94,7 @@ public class TelemetryTests {
         String reqId2 = telemetryManager.generateRequestId();
         ApiEvent apiEvent2 = createApiEvent();
         telemetryManager.startEvent(reqId2, apiEvent2);
-        apiEvent2.setWasSuccesful(false);
+        apiEvent2.setWasSuccessful(false);
         telemetryManager.stopEvent(reqId2, apiEvent2);
 
         HttpEvent httpEvent2 = createHttpEvent();
@@ -129,7 +129,7 @@ public class TelemetryTests {
 
         ApiEvent apiEvent1 = createApiEvent();
         telemetryManager.startEvent(reqId, apiEvent1);
-        apiEvent1.setWasSuccesful(true);
+        apiEvent1.setWasSuccessful(true);
         telemetryManager.stopEvent(reqId, apiEvent1);
 
         HttpEvent httpEvent1 = createHttpEvent();
@@ -151,7 +151,7 @@ public class TelemetryTests {
 
         ApiEvent apiEvent1 = createApiEvent();
         telemetryManager.startEvent(reqId, apiEvent1);
-        apiEvent1.setWasSuccesful(true);
+        apiEvent1.setWasSuccessful(true);
 
         HttpEvent httpEvent1 = createHttpEvent();
         telemetryManager.startEvent(reqId, httpEvent1);
@@ -174,7 +174,7 @@ public class TelemetryTests {
 
         ApiEvent apiEvent1 = createApiEvent();
         telemetryManager.startEvent(reqId, apiEvent1);
-        apiEvent1.setWasSuccesful(true);
+        apiEvent1.setWasSuccessful(true);
 
         // http event never started
         HttpEvent httpEvent1 = createHttpEvent();

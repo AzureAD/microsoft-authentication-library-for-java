@@ -52,27 +52,23 @@ class TokenEndpointRequest {
         this.msalRequest = msalRequest;
     }
 
-    /**
-     *
-     * @return
-     * @throws ParseException
-     * @throws AuthenticationException
-     * @throws SerializeException
-     * @throws IOException
-     * @throws java.text.ParseException
-     */
     AuthenticationResult executeOauthRequestAndProcessResponse()
             throws ParseException, AuthenticationException, SerializeException,
             IOException, java.text.ParseException {
 
         HttpEvent httpEvent = new HttpEvent();
-        httpEvent.setHttpPath(url);
-        httpEvent.setQueryParameters(url.getQuery());
+        try {
+            httpEvent.setHttpPath(url.toURI());
+            httpEvent.setQueryParameters(url.getQuery());
+        } catch(Exception e){
+            //TODO log exception
+        }
 
         try(TelemetryHelper telemetryHelper = serviceBundle.getTelemetryManager().createTelemetryHelper(
                 msalRequest.getRequestContext().getTelemetryRequestId(),
                 msalRequest.getClientAuthentication().getClientID().toString(),
-                httpEvent)){
+                httpEvent,
+                false)){
 
             AuthenticationResult result;
             HTTPResponse httpResponse;
@@ -81,7 +77,10 @@ class TokenEndpointRequest {
 
             httpEvent.setHttpResponseStatus(httpResponse.getStatusCode());
             httpEvent.setHttpMethod("POST");
-            httpEvent.setUserAgent(httpResponse.getHeader("User-Agent"));
+
+            if(!Strings.isNullOrEmpty(httpResponse.getHeader("User-Agent"))){
+                httpEvent.setUserAgent(httpResponse.getHeader("User-Agent"));
+            }
 
             if(!Strings.isNullOrEmpty(httpResponse.getHeader("x-ms-request-id"))){
                 httpEvent.setRequestIdHeader(httpResponse.getHeader("x-ms-request-id"));
@@ -92,10 +91,7 @@ class TokenEndpointRequest {
                         XmsClientTelemetryInfo.parseXmsTelemetryInfo(
                                 httpResponse.getHeader("x-ms-clitelem"));
                 if(xmsClientTelemetryInfo != null){
-                    httpEvent.setTokenAge(xmsClientTelemetryInfo.getTokenAge());
-                    httpEvent.setSpeInfo(xmsClientTelemetryInfo.getSpeInfo());
-                    httpEvent.setServerErrorCode(xmsClientTelemetryInfo.getServerErrorCode());
-                    httpEvent.setSubServerErrorCode(xmsClientTelemetryInfo.getServerSubErrorCode());
+                    httpEvent.setXmsClientTelemetryInfo(xmsClientTelemetryInfo);
                 }
             }
 
@@ -157,19 +153,6 @@ class TokenEndpointRequest {
         }
     }
 
-    private String getClaims(String httpResponseContentStr) {
-        JsonElement root = new JsonParser().parse(httpResponseContentStr);
-
-        JsonElement claims = root.getAsJsonObject().get("claims");
-
-        return claims != null ? claims.getAsString() : null;
-    }
-
-    /**
-     * 
-     * @return
-     * @throws SerializeException
-     */
     OauthHttpRequest toOauthHttpRequest() throws SerializeException {
 
         if (this.url == null) {
@@ -191,5 +174,13 @@ class TokenEndpointRequest {
         }
 
         return oauthHttpRequest;
+    }
+
+    private String getClaims(String httpResponseContentStr) {
+        JsonElement root = new JsonParser().parse(httpResponseContentStr);
+
+        JsonElement claims = root.getAsJsonObject().get("claims");
+
+        return claims != null ? claims.getAsString() : null;
     }
 }

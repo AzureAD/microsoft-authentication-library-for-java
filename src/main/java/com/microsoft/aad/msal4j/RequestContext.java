@@ -10,9 +10,11 @@ class RequestContext {
     private String telemetryRequestId;
     private String clientId;
     private String correlationId;
+    private AcquireTokenPublicApi publicApi;
 
-    public RequestContext(String clientId, String correlationId){
+    public RequestContext(String clientId, String correlationId, AcquireTokenPublicApi publicApi){
         this.clientId = Strings.isNullOrEmpty(clientId) ? "unset_client_id" : clientId;
+        this.publicApi= publicApi;
         this.correlationId = Strings.isNullOrEmpty(correlationId) ?
                 generateNewCorrelationId() :
                 correlationId;
@@ -32,6 +34,10 @@ class RequestContext {
 
     public String getCorrelationId(){
         return correlationId;
+    }
+
+    public AcquireTokenPublicApi getAcquireTokenPublicApi(){
+        return publicApi;
     }
 
     static String generateNewCorrelationId(){

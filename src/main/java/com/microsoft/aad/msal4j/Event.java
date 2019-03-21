@@ -1,8 +1,6 @@
 package com.microsoft.aad.msal4j;
 
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -29,24 +27,17 @@ abstract class Event extends HashMap<String, String>{
         super(predefined);
 
         this.put(EVENT_NAME_KEY, eventName);
-        startTimeStamp = Instant.now().getEpochSecond();
+        startTimeStamp = Instant.now().toEpochMilli();
         this.put(START_TIME_KEY, Long.toString(startTimeStamp));
         this.put(ELAPSED_TIME_KEY, "-1");
     }
 
     void stop(){
-        long duration =  Instant.now().getEpochSecond() - startTimeStamp;
+        long duration =  Instant.now().toEpochMilli() - startTimeStamp;
         this.put(ELAPSED_TIME_KEY, Long.toString(duration));
     }
 
-    static String scrubTenant(URL url){
-
-        URI uri;
-        try {
-            uri = url.toURI();
-        } catch(URISyntaxException e){
-            return null;
-        }
+    static String scrubTenant(URI uri){
         if(!uri.isAbsolute()){
             throw new IllegalArgumentException("Requires an absolute URI");
         }

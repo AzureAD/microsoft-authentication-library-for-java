@@ -23,8 +23,12 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
+import com.nimbusds.oauth2.sdk.auth.ClientSecretPost;
+import com.nimbusds.oauth2.sdk.auth.Secret;
 import com.nimbusds.oauth2.sdk.http.CommonContentTypes;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
+import com.nimbusds.oauth2.sdk.id.ClientID;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.powermock.api.easymock.PowerMock;
@@ -42,6 +46,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -101,8 +106,14 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         Capture<String> capturedUrl = Capture.newInstance();
 
         EasyMock.expect(
-                HttpHelper.executeHttpGet(EasyMock.isA(Logger.class), EasyMock.capture(capturedUrl),
-                        EasyMock.isA(Map.class), EasyMock.isA(ServiceBundle.class)))
+                HttpHelper.executeHttpRequest(
+                        EasyMock.isA(Logger.class),
+                        EasyMock.isA(HttpMethod.class),
+                        EasyMock.capture(capturedUrl),
+                        EasyMock.isA(Map.class),
+                        EasyMock.isA(String.class),
+                        EasyMock.isA(RequestContext.class),
+                        EasyMock.isA(ServiceBundle.class)))
                 .andReturn(deviceCodeJsonResponse);
 
         PowerMock.replay(HttpHelper.class);
@@ -169,12 +180,32 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
     public void executeAcquireDeviceCode_AuthenticaionPendingErrorReturned_AuthenticationExceptionThrown()
             throws Exception {
 
+        TelemetryManager telemetryManager =  PowerMock.createMock(TelemetryManager.class);
+
+        AtomicReference<CompletableFuture<AuthenticationResult>> futureReference =
+                new AtomicReference<>();
+
+        Consumer<DeviceCode> deviceCodeConsumer = PowerMock.createMock(Consumer.class);
+        final ClientAuthentication ca = new ClientSecretPost(
+                new ClientID("id"), new Secret("secret"));
+
+        final DeviceCodeRequest dcr =  new DeviceCodeRequest(
+                deviceCodeConsumer,
+                futureReference,
+                Collections.singleton("default-scope"),
+                ca,
+                new RequestContext(
+                        "id",
+                        "corr-id",
+                        AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_DEVICE_CODE_FLOW));
+
+
         TokenEndpointRequest request = PowerMock.createPartialMock(
                 TokenEndpointRequest.class, new String[]{"toOauthHttpRequest"},
-                new URL("http://login.windows.net"), null, null);
+                new URL("http://login.windows.net"),
+                dcr, new ServiceBundle(null, null, null, telemetryManager));
 
-        OauthHttpRequest msalOauthHttpRequest = PowerMock
-                .createMock(OauthHttpRequest.class);
+        OauthHttpRequest msalOauthHttpRequest = PowerMock.createMock(OauthHttpRequest.class);
 
         HTTPResponse httpResponse = new HTTPResponse(HTTPResponse.SC_BAD_REQUEST);
 

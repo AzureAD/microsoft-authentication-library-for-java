@@ -54,7 +54,7 @@ public class ConfidentialClientApplication extends ClientApplicationBase {
                 new ClientCredentialRequest(
                         scopes,
                         clientAuthentication,
-                        new RequestContext(clientId, this.getCorrelationId()));
+                        createRequestContext(AcquireTokenPublicApi.ACQUIRE_TOKEN_FOR_CLIENT));
 
         return this.executeRequest(clientCredentialRequest);
     }
@@ -91,7 +91,7 @@ public class ConfidentialClientApplication extends ClientApplicationBase {
                 userAssertion,
                 scopes,
                 clientAuthentication,
-                new RequestContext(clientId, this.getCorrelationId()));
+                createRequestContext(AcquireTokenPublicApi.ACQUIRE_TOKEN_ON_BEHALF_OF));
 
         return this.executeRequest(oboRequest);
     }

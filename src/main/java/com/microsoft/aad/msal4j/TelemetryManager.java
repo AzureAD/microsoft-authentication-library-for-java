@@ -30,9 +30,11 @@ class TelemetryManager implements ITelemetryManager, ITelemetry{
         this.onlySendFailureTelemetry = onlySendFailureTelemetry;
     }
 
-    public TelemetryHelper createTelemetryHelper(String requestId, String clientId,
-                                                 Event eventToStart){
-        return new TelemetryHelper(this, requestId, clientId, eventToStart);
+    public TelemetryHelper createTelemetryHelper(String requestId,
+                                                 String clientId,
+                                                 Event eventToStart,
+                                                 Boolean shouldFlush){
+        return new TelemetryHelper(this, requestId, clientId, eventToStart, shouldFlush);
     }
 
     public String generateRequestId(){
@@ -89,7 +91,7 @@ class TelemetryManager implements ITelemetryManager, ITelemetry{
                 new ConcurrentHashMap<>();
 
         Predicate<Event> isSuccessfulPredicate = event -> event instanceof ApiEvent &&
-                ((ApiEvent) event).getWasSuccesful();
+                ((ApiEvent) event).getWasSuccessful();
         if(onlySendFailureTelemetry && eventsToFlush.stream().anyMatch(isSuccessfulPredicate)){
             eventsToFlush.clear();
         }

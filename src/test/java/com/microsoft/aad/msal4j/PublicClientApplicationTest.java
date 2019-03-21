@@ -68,6 +68,7 @@ public class PublicClientApplicationTest extends PowerMockTestCase {
                 UserDiscoveryRequest.execute(
                         EasyMock.isA(String.class),
                         EasyMock.isA(Map.class),
+                        EasyMock.isA(RequestContext.class),
                         EasyMock.isA(ServiceBundle.class))).andReturn(response);
 
         PowerMock.replay(app, response, UserDiscoveryRequest.class);

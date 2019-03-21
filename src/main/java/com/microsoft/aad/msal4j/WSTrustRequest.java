@@ -44,7 +44,11 @@ class WSTrustRequest {
     private final static int MAX_EXPECTED_MESSAGE_SIZE = 1024;
     final static String DEFAULT_APPLIES_TO = "urn:federation:MicrosoftOnline";
 
-    static WSTrustResponse execute(String username, String password, String cloudAudienceUrn, BindingPolicy policy,
+    static WSTrustResponse execute(String username,
+                                   String password,
+                                   String cloudAudienceUrn,
+                                   BindingPolicy policy,
+                                   RequestContext requestContext,
                                    ServiceBundle serviceBundle) throws Exception {
 
         Map<String, String> headers = new HashMap<String, String>();
@@ -65,16 +69,21 @@ class WSTrustRequest {
         String body = buildMessage(policy.getUrl(), username, password,
                 policy.getVersion(), cloudAudienceUrn).toString();
       
-        String response = HttpHelper.executeHttpPost(log, policy.getUrl(),
-                body, headers, serviceBundle);
+        String response = HttpHelper.executeHttpRequest(log, HttpMethod.POST, policy.getUrl(),
+                headers, body, requestContext , serviceBundle);
 
         return WSTrustResponse.parse(response, policy.getVersion());
     }
 
-    static WSTrustResponse execute(String url, String username, String password, String cloudAudienceUrn,
-                                   ServiceBundle serviceBundle, boolean logPii) throws Exception {
+    static WSTrustResponse execute(String url,
+                                   String username,
+                                   String password,
+                                   String cloudAudienceUrn,
+                                   RequestContext requestContext,
+                                   ServiceBundle serviceBundle,
+                                   boolean logPii) throws Exception {
 
-        String mexResponse = HttpHelper.executeHttpGet(log, url, serviceBundle);
+        String mexResponse = HttpHelper.executeHttpRequest(log, HttpMethod.GET , url, null,null, requestContext, serviceBundle);
 
         BindingPolicy policy = MexParser.getWsTrustEndpointFromMexResponse(mexResponse, logPii);
 
@@ -82,12 +91,23 @@ class WSTrustRequest {
             throw new AuthenticationException("WsTrust endpoint not found in metadata document");
         }
 
-        return execute(username, password, cloudAudienceUrn, policy,serviceBundle);
+        return execute(username, password, cloudAudienceUrn, policy, requestContext, serviceBundle);
     }
 
-    static WSTrustResponse execute(String mexURL, String cloudAudienceUrn, ServiceBundle serviceBundle, boolean logPii) throws Exception {
+    static WSTrustResponse execute(String mexURL,
+                                   String cloudAudienceUrn,
+                                   RequestContext requestContext,
+                                   ServiceBundle serviceBundle,
+                                   boolean logPii) throws Exception {
 
-        String mexResponse = HttpHelper.executeHttpGet(log, mexURL, serviceBundle);
+        String mexResponse = HttpHelper.executeHttpRequest(
+                log,
+                HttpMethod.GET,
+                mexURL,
+                null,
+                null,
+                requestContext,
+                serviceBundle);
 
         BindingPolicy policy = MexParser.getPolicyFromMexResponseForIntegrated(mexResponse, logPii);
 
@@ -95,7 +115,7 @@ class WSTrustRequest {
             throw new AuthenticationException("WsTrust endpoint not found in metadata document");
         }
 
-        return execute(null, null, cloudAudienceUrn, policy, serviceBundle);
+        return execute(null, null, cloudAudienceUrn, policy, requestContext, serviceBundle);
     }
 
     static StringBuilder buildMessage(String address, String username,
