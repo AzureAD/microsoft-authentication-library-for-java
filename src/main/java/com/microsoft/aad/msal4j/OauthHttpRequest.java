@@ -60,7 +60,6 @@ class OauthHttpRequest extends HTTPRequest {
         super(method, url);
         this.extraHeaderParams = extraHeaderParams;
         this.serviceBundle = serviceBundle;
-
     }
 
     Map<String, String> getReadOnlyExtraHeaderParameters() {

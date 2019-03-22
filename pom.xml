@@ -68,7 +68,7 @@
 		<dependency>
 			<groupId>com.nimbusds</groupId>
 			<artifactId>oauth2-oidc-sdk</artifactId>
-			<version>5.64.4</version>
+			<version>6.5</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>

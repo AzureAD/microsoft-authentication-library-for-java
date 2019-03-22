@@ -31,7 +31,9 @@ import com.nimbusds.oauth2.sdk.auth.Secret;
 import com.nimbusds.oauth2.sdk.id.ClientID;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -128,9 +130,9 @@ public class ConfidentialClientApplication extends ClientApplicationBase {
     private ClientAuthentication createClientAuthFromClientAssertion(
             final ClientAssertion clientAssertion) {
         try {
-            final Map<String, String> map = new HashMap<>();
-            map.put("client_assertion_type", clientAssertion.getAssertionType());
-            map.put("client_assertion", clientAssertion.getAssertion());
+            final Map<String, List<String>> map = new HashMap<>();
+            map.put("client_assertion_type", Collections.singletonList(clientAssertion.getAssertionType()));
+            map.put("client_assertion", Collections.singletonList(clientAssertion.getAssertion()));
             return PrivateKeyJWT.parse(map);
         }
         catch (final ParseException e) {

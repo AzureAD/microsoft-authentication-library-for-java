@@ -23,6 +23,8 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import com.nimbusds.jose.util.Base64URL;
@@ -42,10 +44,10 @@ class SAML11BearerGrant extends SAML2BearerGrant {
     }
 
     @Override
-    public Map<String, String> toParameters() {
+    public Map<String, List<String>> toParameters() {
 
-        Map<String, String> params = super.toParameters();
-        params.put("grant_type", grantType.getValue());
+        Map<String, List<String>> params = super.toParameters();
+        params.put("grant_type", Collections.singletonList(grantType.getValue()));
         return params;
     }
 }

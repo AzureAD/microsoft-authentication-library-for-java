@@ -31,6 +31,7 @@ import org.testng.annotations.Test;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -41,7 +42,7 @@ public class MsalOauthAuthorizatonGrantTest {
     @Test
     public void testConstructor() {
         final OauthAuthorizationGrant grant = new OauthAuthorizationGrant(null,
-                new HashMap<String, String>());
+                new HashMap<>());
         Assert.assertNotNull(grant);
     }
 
@@ -50,7 +51,7 @@ public class MsalOauthAuthorizatonGrantTest {
         final OauthAuthorizationGrant grant = new OauthAuthorizationGrant(
                 new AuthorizationCodeGrant(new AuthorizationCode("grant"),
                         new URI("http://microsoft.com")),
-                (Map<String, String>) null);
+                (Map<String, List<String>>) null);
         Assert.assertNotNull(grant);
         Assert.assertNotNull(grant.toParameters());
     }

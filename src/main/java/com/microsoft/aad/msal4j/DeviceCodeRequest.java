@@ -5,7 +5,9 @@ import com.nimbusds.oauth2.sdk.util.URLUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -49,13 +51,13 @@ class DeviceCodeRequest extends MsalRequest {
     }
 
     private String createQueryParamsAndAppendToURL(String url, String clientId){
-        Map<String, String> queryParameters = new HashMap<>();
-        queryParameters.put("client_id", clientId);
+        Map<String, List<String>> queryParameters = new HashMap<>();
+        queryParameters.put("client_id", Collections.singletonList(clientId));
 
         String scopesParam = MsalAuthorizationGrant.COMMON_SCOPES_PARAM +
                 MsalAuthorizationGrant.SCOPES_DELIMITER + scopes;
 
-        queryParameters.put("scope", scopesParam);
+        queryParameters.put("scope", Collections.singletonList(scopesParam));
 
         url = url + "?" + URLUtils.serializeParameters(queryParameters);
         return url;

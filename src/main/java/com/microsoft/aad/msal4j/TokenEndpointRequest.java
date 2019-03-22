@@ -37,6 +37,7 @@ import com.nimbusds.openid.connect.sdk.token.OIDCTokens;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 
 class TokenEndpointRequest {
@@ -140,7 +141,7 @@ class TokenEndpointRequest {
                 this.serviceBundle);
         oauthHttpRequest.setContentType(CommonContentTypes.APPLICATION_URLENCODED);
 
-        final Map<String, String> params = msalRequest.getMsalAuthorizationGrant().toParameters();
+        final Map<String, List<String>> params = msalRequest.getMsalAuthorizationGrant().toParameters();
         oauthHttpRequest.setQuery(URLUtils.serializeParameters(params));
 
         if (msalRequest.getClientAuthentication() != null) {
