@@ -49,11 +49,7 @@ import org.testng.annotations.Test;
 
 import javax.net.ssl.SSLSocketFactory;
 
-import static com.microsoft.aad.msal4j.TestConfiguration.AAD_CLIENT_ID;
-import static com.microsoft.aad.msal4j.TestConfiguration.AAD_HOST_NAME;
-import static com.microsoft.aad.msal4j.TestConfiguration.AAD_RESOURCE_ID;
-import static com.microsoft.aad.msal4j.TestConfiguration.AAD_TENANT_NAME;
-import static com.microsoft.aad.msal4j.TestConfiguration.ADFS_TENANT_ENDPOINT;
+import static com.microsoft.aad.msal4j.TestConfiguration.*;
 
 
 @Test(groups = { "checkin" })
@@ -97,14 +93,23 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         PowerMock.expectPrivate(app, "acquireTokenCommon",
                 EasyMock.isA(MsalDeviceCodeAuthorizationGrant.class),
                 EasyMock.isA(ClientAuthentication.class),
-                EasyMock.capture(capturedClientDataHttpHeaders)).andReturn(
-                new AuthenticationResult("bearer", "accessToken",
-                        "refreshToken", new Date().getTime(), "idToken", null,
-                        false));
+                EasyMock.capture(capturedClientDataHttpHeaders),
+                EasyMock.isA(AuthenticationAuthority.class)).andReturn(
+                AuthenticationResult.builder().
+                        accessToken("accessToken").
+                        expiresOn(new Date().getTime() + 100).
+                        refreshToken("refreshToken").
+                        idToken("idToken").environment("environment").build()
+        );
 
         PowerMock.mockStatic(HttpHelper.class);
 
         Capture<String> capturedUrl = Capture.newInstance();
+
+        EasyMock.expect(
+                HttpHelper.executeHttpGet(EasyMock.isA(Logger.class), EasyMock.capture(capturedUrl),
+                        EasyMock.isA(Map.class), EasyMock.isNull(Proxy.class), EasyMock.isNull(SSLSocketFactory.class)))
+                .andReturn(INSTANCE_DISCOVERY_RESPONSE);
 
         EasyMock.expect(
                 HttpHelper.executeHttpGet(EasyMock.isA(Logger.class), EasyMock.capture(capturedUrl),
@@ -138,7 +143,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         // validate HTTP GET request used to get device code
         URL url = new URL(capturedUrl.getValue());
-        Assert.assertEquals(url.getAuthority(), AAD_HOST_NAME);
+        Assert.assertEquals(url.getAuthority(), AAD_PREFERRED_NETWORK_ENV_ALIAS);
         Assert.assertEquals(url.getPath(),
                 "/" + AAD_TENANT_NAME + AuthenticationAuthority.DEVICE_CODE_ENDPOINT);
 
@@ -203,7 +208,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
             request.executeOAuthRequestAndProcessResponse();
             Assert.fail("Expected AuthenticationException was not thrown");
         } catch (AuthenticationException ex) {
-            Assert.assertEquals(ex.getErrorCode(), AdalErrorCode.AUTHORIZATION_PENDING);
+            Assert.assertEquals(ex.getErrorCode(), MsalErrorCode.AUTHORIZATION_PENDING);
         }
         PowerMock.verifyAll();
     }

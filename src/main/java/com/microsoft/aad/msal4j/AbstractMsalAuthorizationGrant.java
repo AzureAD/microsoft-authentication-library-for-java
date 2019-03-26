@@ -47,4 +47,10 @@ abstract class AbstractMsalAuthorizationGrant {
     static final String COMMON_SCOPES_PARAM = SCOPE_OPEN_ID + SCOPES_DELIMITER +
             SCOPE_PROFILE + SCOPES_DELIMITER +
             SCOPE_OFFLINE_ACCESS;
+
+    String scopes;
+
+    String getScopes() {
+        return scopes;
+    }
 }

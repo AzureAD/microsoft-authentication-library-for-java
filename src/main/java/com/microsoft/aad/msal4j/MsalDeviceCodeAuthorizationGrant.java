@@ -29,11 +29,10 @@ import java.util.Map;
 /**
  * Class for device code grant.
  */
-public class MsalDeviceCodeAuthorizationGrant extends AbstractMsalAuthorizationGrant {
+class MsalDeviceCodeAuthorizationGrant extends AbstractMsalAuthorizationGrant {
     private final static String GRANT_TYPE = "device_code";
 
     private final DeviceCode deviceCode;
-    private final String scopes;
 
     protected String correlationId;
 

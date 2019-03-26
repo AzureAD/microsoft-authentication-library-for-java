@@ -27,6 +27,7 @@ import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.net.Proxy;
 import java.net.URL;
+import java.util.Date;
 import java.util.Map;
 
 import com.nimbusds.oauth2.sdk.ErrorObject;
@@ -74,20 +75,17 @@ class AdalTokenRequest {
      * @throws AuthenticationException
      * @throws SerializeException
      * @throws IOException
-     * @throws java.text.ParseException
      */
     AuthenticationResult executeOAuthRequestAndProcessResponse()
-            throws ParseException, AuthenticationException, SerializeException,
-            IOException, java.text.ParseException {
+            throws ParseException, AuthenticationException, SerializeException, IOException {
 
-        AuthenticationResult result = null;
-        HTTPResponse httpResponse = null;
+        AuthenticationResult result;
+        HTTPResponse httpResponse;
         final AdalOAuthRequest adalOAuthHttpRequest = this.toOAuthRequest();
         httpResponse = adalOAuthHttpRequest.send();
 
         if (httpResponse.getStatusCode() == HTTPResponse.SC_OK) {
-            final AdalAccessTokenResponse response = AdalAccessTokenResponse
-                    .parseHttpResponse(httpResponse);
+            final MsalAccessTokenResponse response = MsalAccessTokenResponse.parseHttpResponse(httpResponse);
 
             OIDCTokens tokens = response.getOIDCTokens();
             String refreshToken = null;
@@ -95,30 +93,40 @@ class AdalTokenRequest {
                 refreshToken = tokens.getRefreshToken().getValue();
             }
 
-            UserInfo info = null;
-            if (tokens.getIDToken() != null) {
-                info = UserInfo.createFromIdTokenClaims(tokens.getIDToken()
-                        .getJWTClaimsSet());
-            }
+            Account account = null;
 
-            result = new AuthenticationResult(tokens.getAccessToken()
-                    .getType().getValue(),
-                    tokens.getAccessToken().getValue(), refreshToken,
-                    tokens.getAccessToken().getLifetime(),
-                    tokens.getIDTokenString(), info,
-                    !StringHelper.isBlank(response.getScope()));
+            if (tokens.getIDToken() != null) {
+                String idTokenJson = tokens.getIDToken().getParsedParts()[1].decodeToString();
+                IdToken idToken = JsonHelper.convertJsonToObject(idTokenJson, IdToken.class);
+
+                if(!StringHelper.isBlank(response.getClientInfo())){
+                    account = Account.create(response.getClientInfo(), uri.getHost(), idToken);
+                }
+            }
+            long currTimestampSec = new Date().getTime() / 1000;
+
+            result = AuthenticationResult.builder().
+                        accessToken(tokens.getAccessToken().getValue()).
+                        refreshToken(refreshToken).
+                        idToken(tokens.getIDTokenString()).
+                        environment(uri.getHost()).
+                        expiresOn(currTimestampSec + response.getExpiresIn()).
+                        extExpiresOn(response.getExtExpiresIn() > 0 ? currTimestampSec + response.getExtExpiresIn() : 0).
+                        account(account).
+                        scopes(response.getScope()).
+                    build();
         } else {
             final TokenErrorResponse errorResponse = TokenErrorResponse
                     .parse(httpResponse);
             ErrorObject errorObject = errorResponse.getErrorObject();
-            if(AdalErrorCode.AUTHORIZATION_PENDING.toString()
+            if(MsalErrorCode.AUTHORIZATION_PENDING.toString()
                     .equals(errorObject.getCode())){
-                throw new AuthenticationException(AdalErrorCode.AUTHORIZATION_PENDING,
+                throw new AuthenticationException(MsalErrorCode.AUTHORIZATION_PENDING,
                         errorObject.getDescription());
             }
 
             if(HTTPResponse.SC_BAD_REQUEST == errorObject.getHTTPStatusCode() &&
-                    AdalErrorCode.INTERACTION_REQUIRED.toString()
+                    MsalErrorCode.INTERACTION_REQUIRED.toString()
                             .equals(errorObject.getCode())){
                 throw new AdalClaimsChallengeException(errorResponse.toJSONObject()
                         .toJSONString(), getClaims(httpResponse.getContent()));
@@ -162,5 +170,13 @@ class AdalTokenRequest {
         }
 
         return httpRequest;
+    }
+
+    public ClientAuthentication getClientAuth() {
+        return clientAuth;
+    }
+
+    public AbstractMsalAuthorizationGrant getAuthorizationGrant() {
+        return grant;
     }
 }

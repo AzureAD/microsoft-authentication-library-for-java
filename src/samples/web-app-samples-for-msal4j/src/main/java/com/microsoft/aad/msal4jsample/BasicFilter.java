@@ -106,13 +106,14 @@ public class BasicFilter implements Filter {
     }
 
     private boolean isAuthDataExpired(HttpServletRequest httpRequest) {
-        AuthenticationResult authData = AuthHelper.getAuthSessionObject(httpRequest);
-        return authData.getExpiresOnDate().before(new Date()) ? true : false;
+        AuthenticationResult authRes = AuthHelper.getAuthSessionObject(httpRequest);
+        Date expireDate = new Date(authRes.expiresOn());
+        return expireDate.before(new Date()) ? true : false;
     }
 
     private void updateAuthDataUsingRefreshToken(HttpServletRequest httpRequest) throws Throwable {
         AuthenticationResult authData =
-                getAccessTokenByRefreshToken(AuthHelper.getAuthSessionObject(httpRequest).getRefreshToken());
+                getAccessTokenByRefreshToken(AuthHelper.getAuthSessionObject(httpRequest).refreshToken());
         setSessionPrincipal(httpRequest, authData);
     }
 
@@ -134,7 +135,7 @@ public class BasicFilter implements Filter {
             AuthenticationResult authData =
                     getAccessTokenByAuthCode(oidcResponse.getAuthorizationCode(), currentUri);
             // validate nonce to prevent reply attacks (code maybe substituted to one with broader access)
-            validateNonce(stateData, getClaimValueFromIdToken(authData.getIdToken(), "nonce"));
+            validateNonce(stateData, getClaimValueFromIdToken(authData.idToken(), "nonce"));
 
             setSessionPrincipal(httpRequest, authData);
         } else {

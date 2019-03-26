@@ -23,6 +23,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import static com.microsoft.aad.msal4j.TestConfiguration.INSTANCE_DISCOVERY_RESPONSE;
 import static org.powermock.api.support.membermodification.MemberMatcher.method;
 import static org.powermock.api.support.membermodification.MemberModifier.replace;
 
@@ -31,6 +32,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
+import java.net.Proxy;
 import java.net.URLDecoder;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -52,15 +54,20 @@ import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.lang3.StringUtils;
+import org.easymock.EasyMock;
+import org.powermock.api.easymock.PowerMock;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
+import org.slf4j.Logger;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.net.ssl.SSLSocketFactory;
+
 @PowerMockIgnore({"javax.net.ssl.*"})
-@PrepareForTest(com.microsoft.aad.msal4j.AdalOAuthRequest.class)
+@PrepareForTest({com.microsoft.aad.msal4j.AdalOAuthRequest.class, HttpHelper.class})
 public class OAuthRequestValidationTest extends PowerMockTestCase {
 
     private final static String AUTHORITY = "https://loginXXX.windows.net/path/";
@@ -76,7 +83,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
 
     private final static String CLIENT_CREDENTIALS_GRANT_TYPE = "client_credentials";
 
-    private final static String OPEN_ID_SCOPE = "openid";
+    private final static String CLIENT_INFO_VALUE = "1";
 
     private final static String jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva" +
             "G4gRG9lIiwiYWRtaW4iOnRydWV9.TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ";
@@ -165,7 +172,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
         }
 
         Map<String, String> queryParams = splitQuery(query);
-        Assert.assertEquals(6, queryParams.size());
+        Assert.assertEquals(7, queryParams.size());
 
         // validate Authorization Grants query params
         Assert.assertEquals(GRANT_TYPE_JWT, queryParams.get("grant_type"));
@@ -176,13 +183,24 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
         Assert.assertEquals(CLIENT_SECRET, queryParams.get("client_secret"));
 
         // to do validate scopes
-        //Assert.assertEquals(OPEN_ID_SCOPE, queryParams.get("scope"));
+        Assert.assertEquals(SCOPES, queryParams.get("scope"));
 
         Assert.assertEquals("on_behalf_of", queryParams.get("requested_token_use"));
+
+        Assert.assertEquals(CLIENT_INFO_VALUE, queryParams.get("client_info"));
     }
 
     @Test
     public void oAuthRequest_for_acquireTokenByAsymmetricKeyCredential() throws Exception {
+        PowerMock.mockStatic(HttpHelper.class);
+
+        EasyMock.expect(
+                HttpHelper.executeHttpGet(EasyMock.isA(Logger.class), EasyMock.isA(String.class),
+                        EasyMock.isA(Map.class), EasyMock.isNull(Proxy.class), EasyMock.isNull(SSLSocketFactory.class)))
+                .andReturn(INSTANCE_DISCOVERY_RESPONSE);
+
+        PowerMock.replay(HttpHelper.class);
+
         try {
             final KeyStore keystore = KeyStore.getInstance("PKCS12", "SunJSSE");
             keystore.load(
@@ -212,7 +230,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
         }
 
         Map<String, String> queryParams = splitQuery(query);
-        Assert.assertEquals(6, queryParams.size());
+        Assert.assertEquals(7, queryParams.size());
 
         // validate Authorization Grants query params
         Assert.assertEquals(GRANT_TYPE_JWT, queryParams.get("grant_type"));
@@ -226,6 +244,8 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
 
         Assert.assertEquals(CLIENT_ASSERTION_TYPE_JWT, queryParams.get("client_assertion_type"));
         Assert.assertEquals(ON_BEHALF_OF_USE_JWT, queryParams.get("requested_token_use"));
+
+        Assert.assertEquals(CLIENT_INFO_VALUE, queryParams.get("client_info"));
     }
 
     @Test
@@ -261,7 +281,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
 
         Map<String, String> queryParams = splitQuery(query);
 
-        Assert.assertEquals(4, queryParams.size());
+        Assert.assertEquals(5, queryParams.size());
 
         // validate Authorization Grants query params
         Assert.assertEquals(CLIENT_CREDENTIALS_GRANT_TYPE, queryParams.get("grant_type"));
@@ -273,6 +293,8 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
 
         // to do validate scopes
         Assert.assertEquals("openid profile offline_access https://SomeResource.azure.net", queryParams.get("scope"));
+
+        Assert.assertEquals(CLIENT_INFO_VALUE, queryParams.get("client_info"));
     }
 }
 

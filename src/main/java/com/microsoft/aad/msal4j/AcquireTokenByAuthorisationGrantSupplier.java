@@ -31,10 +31,11 @@ import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import org.apache.commons.codec.binary.Base64;;
 import java.net.URLEncoder;
 
-public class AcquireTokenByAuthorisationGrantSupplier extends AuthenticationResultSupplier {
+class AcquireTokenByAuthorisationGrantSupplier extends AuthenticationResultSupplier {
 
     private AbstractMsalAuthorizationGrant authGrant;
     private ClientAuthentication clientAuth;
+    private AuthenticationAuthority requestAuthority;
 
     AcquireTokenByAuthorisationGrantSupplier(ClientApplicationBase clientApplication,
                                              AbstractMsalAuthorizationGrant authGrant, ClientAuthentication clientAuth) {
@@ -51,6 +52,14 @@ public class AcquireTokenByAuthorisationGrantSupplier extends AuthenticationResu
         this.headers = new ClientDataHttpHeaders(correlationId);
     }
 
+    AcquireTokenByAuthorisationGrantSupplier(ClientApplicationBase clientApplication,
+                                             AbstractMsalAuthorizationGrant authGrant,
+                                             ClientAuthentication clientAuth,
+                                             AuthenticationAuthority authority) {
+        this(clientApplication, authGrant, clientAuth);
+        this.requestAuthority = authority;
+    }
+
     AuthenticationResult execute() throws Exception {
         if (authGrant instanceof MsalOAuthAuthorizationGrant) {
             authGrant = processPasswordGrant((MsalOAuthAuthorizationGrant) authGrant);
@@ -58,12 +67,18 @@ public class AcquireTokenByAuthorisationGrantSupplier extends AuthenticationResu
 
         if (this.authGrant instanceof MsalIntegratedAuthorizationGrant) {
             MsalIntegratedAuthorizationGrant integratedAuthGrant = (MsalIntegratedAuthorizationGrant) authGrant;
-            authGrant = new MsalOAuthAuthorizationGrant(
-                    getAuthorizationGrantIntegrated(integratedAuthGrant.getUserName()),
-                    integratedAuthGrant.getScopes());
+            authGrant = new MsalOAuthAuthorizationGrant
+                    (getAuthorizationGrantIntegrated(integratedAuthGrant.getUserName()),
+                            integratedAuthGrant.scopes);
         }
 
-        return clientApplication.acquireTokenCommon(this.authGrant, this.clientAuth, this.headers);
+        if(requestAuthority == null){
+            requestAuthority = clientApplication.authenticationAuthority;
+        }
+
+        requestAuthority = getAuthorityWithPrefNetworkHost(requestAuthority.getAuthority());
+
+        return clientApplication.acquireTokenCommon(this.authGrant, this.clientAuth, this.headers, requestAuthority);
     }
 
     /**

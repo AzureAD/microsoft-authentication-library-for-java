@@ -23,20 +23,20 @@
 
 package com.microsoft.aad.msal4j;
 
-public enum AdalErrorCode {
+public enum MsalErrorCode {
 
-    UNKNOWN ("unknown"),
-    AUTHORIZATION_PENDING ("authorization_pending"),
-    INTERACTION_REQUIRED ("interaction_required");
+    UNKNOWN("unknown"),
+    AUTHORIZATION_PENDING("authorization_pending"),
+    INTERACTION_REQUIRED("interaction_required");
 
     private String errorCode;
 
-    AdalErrorCode(String errorCode){
+    MsalErrorCode(String errorCode) {
         this.errorCode = errorCode;
     }
 
     @Override
-    public String toString(){
+    public String toString() {
         return errorCode;
     }
 }

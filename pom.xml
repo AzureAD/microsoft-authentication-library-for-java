@@ -92,6 +92,11 @@
 			<artifactId>commons-lang3</artifactId>
 			<version>3.5</version>
 		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.18.6</version>
+		</dependency>
 
 		<!-- test dependencies -->
 		<dependency>
@@ -116,6 +121,13 @@
 			<groupId>org.easymock</groupId>
 			<artifactId>easymock</artifactId>
 			<version>3.4</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.skyscreamer</groupId>
+			<artifactId>jsonassert</artifactId>
+			<version>1.5.0</version>
 			<scope>test</scope>
 		</dependency>
 

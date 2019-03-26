@@ -66,10 +66,14 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
         PowerMock.expectPrivate(app, "acquireTokenCommon",
                 EasyMock.isA(MsalOAuthAuthorizationGrant.class),
                 EasyMock.isA(ClientAuthentication.class),
-                EasyMock.isA(ClientDataHttpHeaders.class)).andReturn(
-                new AuthenticationResult("bearer", "accessToken",
-                        "refreshToken", new Date().getTime(), "idToken", null,
-                        false));
+                EasyMock.isA(ClientDataHttpHeaders.class),
+                EasyMock.isA(AuthenticationAuthority.class)).andReturn(
+                AuthenticationResult.builder().
+                        accessToken("accessToken").
+                        expiresOn(new Date().getTime() + 100).
+                        refreshToken("refreshToken").
+                        idToken("idToken").environment("environment").build()
+        );
         PowerMock.replay(app);
         Future<AuthenticationResult> result = app
                 .acquireTokenByAuthorizationCode(null, "auth_code",
@@ -103,10 +107,14 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
         PowerMock.expectPrivate(app, "acquireTokenCommon",
                 EasyMock.isA(MsalOAuthAuthorizationGrant.class),
                 EasyMock.isA(ClientAuthentication.class),
-                EasyMock.isA(ClientDataHttpHeaders.class)).andReturn(
-                new AuthenticationResult("bearer", "accessToken",
-                        "refreshToken", new Date().getTime(), "idToken", null,
-                        false));
+                EasyMock.isA(ClientDataHttpHeaders.class),
+                EasyMock.isA(AuthenticationAuthority.class)).andReturn(
+                AuthenticationResult.builder().
+                        accessToken("accessToken").
+                        expiresOn(new Date().getTime() + 100).
+                        refreshToken("refreshToken").
+                        idToken("idToken").environment("environment").build()
+        );
 
         PowerMock.replay(app);
         Future<AuthenticationResult> result = app
@@ -141,17 +149,21 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
         PowerMock.expectPrivate(app, "acquireTokenCommon",
                 EasyMock.isA(MsalOAuthAuthorizationGrant.class),
                 EasyMock.isA(ClientAuthentication.class),
-                EasyMock.isA(ClientDataHttpHeaders.class)).andReturn(
-                new AuthenticationResult("bearer", "accessToken", null,
-                        new Date().getTime(), null, null, false));
+                EasyMock.isA(ClientDataHttpHeaders.class),
+                EasyMock.isA(AuthenticationAuthority.class)).andReturn(
+                AuthenticationResult.builder().
+                        accessToken("accessToken").
+                        expiresOn(new Date().getTime() + 100).
+                        refreshToken("refreshToken").
+                        idToken("idToken").environment("environment").build()
+        );
 
         PowerMock.replay(app);
         final Future<AuthenticationResult> result = app.acquireTokenForClient
                 (Collections.singleton(TestConfiguration.AAD_RESOURCE_ID));
         final AuthenticationResult ar = result.get();
         assertNotNull(ar);
-        assertFalse(StringHelper.isBlank(result.get().getAccessToken()));
-        assertTrue(StringHelper.isBlank(result.get().getRefreshToken()));
+        assertFalse(StringHelper.isBlank(result.get().accessToken()));
         PowerMock.verifyAll();
         PowerMock.resetAll(app);
     }

@@ -44,13 +44,16 @@ class MsalOAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
         params.put(SCOPE_PARAM_NAME, COMMON_SCOPES_PARAM);
     }
 
-    MsalOAuthAuthorizationGrant(final AuthorizationGrant grant, Set<String> scopes) {
+    MsalOAuthAuthorizationGrant(final AuthorizationGrant grant, Set<String> scopesSet) {
+        this(grant, scopesSet != null ? String.join(" ", scopesSet) : null);
+    }
+
+    MsalOAuthAuthorizationGrant(final AuthorizationGrant grant, String scopes) {
         this();
         this.grant = grant;
 
-        String scopesStr = scopes != null ? String.join(" ", scopes) : null;
-        if (!StringHelper.isBlank(scopesStr)) {
-            params.put(SCOPE_PARAM_NAME, params.get(SCOPE_PARAM_NAME) + SCOPES_DELIMITER + scopesStr);
+        if (!StringHelper.isBlank(scopes)) {
+            params.put(SCOPE_PARAM_NAME, params.get(SCOPE_PARAM_NAME) + SCOPES_DELIMITER + scopes);
         }
     }
 
@@ -67,6 +70,7 @@ class MsalOAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
     public Map<String, String> toParameters() {
         final Map<String, String> outParams = new LinkedHashMap<String, String>();
         outParams.putAll(params);
+        outParams.put("client_info", "1");
         outParams.putAll(grant.toParameters());
 
         return Collections.unmodifiableMap(outParams);

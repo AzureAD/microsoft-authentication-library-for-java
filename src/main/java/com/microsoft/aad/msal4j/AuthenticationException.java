@@ -30,7 +30,7 @@ public class AuthenticationException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    private AdalErrorCode errorCode;
+    private MsalErrorCode errorCode;
 
     /**
      * Constructor
@@ -39,7 +39,7 @@ public class AuthenticationException extends RuntimeException {
      */
     public AuthenticationException(final Throwable t) {
         super(t);
-        this.errorCode = AdalErrorCode.UNKNOWN;
+        this.errorCode = MsalErrorCode.UNKNOWN;
     }
 
     /**
@@ -48,10 +48,10 @@ public class AuthenticationException extends RuntimeException {
      * @param message string error message
      */
     public AuthenticationException(final String message) {
-        this(AdalErrorCode.UNKNOWN, message);
+        this(MsalErrorCode.UNKNOWN, message);
     }
 
-    public AuthenticationException(AdalErrorCode errorCode, final String message) {
+    public AuthenticationException(MsalErrorCode errorCode, final String message) {
         super(message);
         this.errorCode = errorCode;
     }
@@ -64,10 +64,10 @@ public class AuthenticationException extends RuntimeException {
      */
     public AuthenticationException(final String message, final Throwable t) {
         super(message, t);
-        this.errorCode = AdalErrorCode.UNKNOWN;
+        this.errorCode = MsalErrorCode.UNKNOWN;
     }
 
-    public AdalErrorCode getErrorCode() {
+    public MsalErrorCode getErrorCode() {
         return errorCode;
     }
 }

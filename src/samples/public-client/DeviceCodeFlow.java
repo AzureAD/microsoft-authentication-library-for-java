@@ -53,9 +53,9 @@ public class DeviceCodeFlow {
             }
             System.out.println("Returned ok - " + res);
 
-            System.out.println("Access Token - " + res.getAccessToken());
-            System.out.println("Refresh Token - " + res.getRefreshToken());
-            System.out.println("ID Token - " + res.getIdToken());
+            System.out.println("Access Token - " + res.accessToken());
+            System.out.println("Refresh Token - " + res.refreshToken());
+            System.out.println("ID Token - " + res.idToken());
             return res;
         });
 

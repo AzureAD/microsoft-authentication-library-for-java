@@ -169,8 +169,7 @@ public class AdalTokenRequestTest extends AbstractAdalTests {
 
     @Test
     public void testExecuteOAuth_Success() throws SerializeException,
-            ParseException, AuthenticationException, IOException,
-            java.text.ParseException, URISyntaxException {
+            ParseException, AuthenticationException, IOException, URISyntaxException {
         final AuthorizationGrant ag = new AuthorizationCodeGrant(
                 new AuthorizationCode("code"),
                 new URI("http://my.redirect.com"));
@@ -191,7 +190,7 @@ public class AdalTokenRequestTest extends AbstractAdalTests {
         EasyMock.expect(httpResponse.getContentAsJSONObject())
                 .andReturn(
                         JSONObjectUtils
-                                .parseJSONObject(TestConfiguration.HTTP_RESPONSE_FROM_AUTH_CODE))
+                                .parse(TestConfiguration.HTTP_RESPONSE_FROM_AUTH_CODE))
                 .times(1);
         httpResponse.ensureStatusCode(200);
         EasyMock.expectLastCall();
@@ -200,19 +199,16 @@ public class AdalTokenRequestTest extends AbstractAdalTests {
 
         final AuthenticationResult result = request
                 .executeOAuthRequestAndProcessResponse();
+
         PowerMock.verifyAll();
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.getUserInfo());
-        Assert.assertFalse(StringHelper.isBlank(result.getAccessToken()));
-        Assert.assertFalse(StringHelper.isBlank(result.getRefreshToken()));
-        Assert.assertTrue(result.isMultipleResourceRefreshToken());
-        Assert.assertEquals(result.getExpiresAfter(), 3600);
-        Assert.assertEquals(result.getAccessTokenType(), "Bearer");
-        Assert.assertEquals(result.getUserInfo().getFamilyName(), "Admin");
-        Assert.assertEquals(result.getUserInfo().getGivenName(), "ADALTests");
-        Assert.assertEquals(result.getUserInfo().getDisplayableId(),
-                "admin@aaltests.onmicrosoft.com");
-        Assert.assertNull(result.getUserInfo().getIdentityProvider());
+
+        Assert.assertNotNull(result.account());
+        Assert.assertNotNull(result.account().homeAccountId);
+        Assert.assertEquals(result.account().username(), "idlab@msidlab4.onmicrosoft.com");
+        Assert.assertEquals(result.account().name(), "Cloud IDLAB Basic User");
+
+        Assert.assertFalse(StringHelper.isBlank(result.accessToken()));
+        Assert.assertFalse(StringHelper.isBlank(result.refreshToken()));
     }
 
     @Test(expectedExceptions = AuthenticationException.class)

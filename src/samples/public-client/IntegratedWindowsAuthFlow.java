@@ -32,9 +32,9 @@ public class IntegratedWindowsAuthFlow {
 
         AuthenticationResult result = getAccessTokenByIntegratedAuth();
 
-        System.out.println("Access Token - " + result.getAccessToken());
-        System.out.println("Refresh Token - " + result.getRefreshToken());
-        System.out.println("ID Token - " + result.getIdToken());
+        System.out.println("Access Token - " + result.accessToken());
+        System.out.println("Refresh Token - " + result.refreshToken());
+        System.out.println("ID Token - " + result.idToken());
     }
 
     private static AuthenticationResult getAccessTokenByIntegratedAuth() throws Exception {

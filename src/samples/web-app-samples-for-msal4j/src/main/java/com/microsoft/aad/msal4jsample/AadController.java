@@ -26,6 +26,7 @@ package com.microsoft.aad.msal4jsample;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -53,7 +54,6 @@ public class AadController {
     private void setUserInfoAndTenant(ModelMap model, AuthenticationResult authenticationResult, HttpSession session){
                 String tenant = session.getServletContext().getInitParameter("tenant");
                 model.addAttribute("tenant", tenant);
-                model.addAttribute("userInfo", authenticationResult.getUserInfo());
     }
 
     @RequestMapping("/secure/aad")
@@ -69,7 +69,7 @@ public class AadController {
             String data;
             try {
                 String tenant = session.getServletContext().getInitParameter("tenant");
-                data = getUserNamesFromGraph(result.getAccessToken(), tenant);
+                data = getUserNamesFromGraph(result.accessToken(), tenant);
                 model.addAttribute("users", data);
             } catch (Exception e) {
                 model.addAttribute("error", e);
@@ -102,8 +102,8 @@ public class AadController {
         for (int i = 0; i < users.length(); i++) {
             JSONObject thisUserJSONObject = users.optJSONObject(i);
             user = new User();
-            JSONHelper.convertJSONObjectToDirectoryObject(thisUserJSONObject, user);
-            builder.append(user.getUserPrincipalName() + "<br/>");
+            //JSONHelper.convertJSONObjectToDirectoryObject(thisUserJSONObject, user);
+            //builder.append(user.getUserPrincipalName() + "<br/>");
         }
         return builder.toString();
     }
@@ -121,7 +121,7 @@ public class AadController {
                         .authority(authority).build();
 
         Future<AuthenticationResult> future =
-                app.acquireTokenByRefreshToken(refreshToken, apiIdUri);
+                app.acquireTokenByRefreshToken(refreshToken, Collections.singleton(apiIdUri));
 
         AuthenticationResult result = future.get();
 
@@ -140,7 +140,7 @@ public class AadController {
                             .authority(authority).build();
 
         Future<AuthenticationResult> future =
-                    app.acquireTokenOnBehalfOf(aadGraphDefaultScope, new UserAssertion(accessToken));
+                    app.acquireTokenOnBehalfOf(Collections.singleton(aadGraphDefaultScope), new UserAssertion(accessToken));
 
         AuthenticationResult result = future.get();
 
@@ -158,9 +158,9 @@ public class AadController {
             setUserInfoAndTenant(model, result, session);
 
             try{
-                result = acquireTokenForWebApiByRT(result.getRefreshToken());
+                result = acquireTokenForWebApiByRT(result.refreshToken());
 
-                model.addAttribute("acquiredToken", result.getAccessToken());
+                model.addAttribute("acquiredToken", result.accessToken());
             } catch (ExecutionException e) {
                 return "/error";
             }
@@ -181,13 +181,13 @@ public class AadController {
 
             try{
                 // get AT for OBO service
-                result = acquireTokenForWebApiByRT(result.getRefreshToken());
+                result = acquireTokenForWebApiByRT(result.refreshToken());
 
                 // get AT for AAD graph by OBO service
-                result = acquireTokenForGraphByWebApiUsingObo(result.getAccessToken());
+                result = acquireTokenForGraphByWebApiUsingObo(result.accessToken());
 
                 String tenant = session.getServletContext().getInitParameter("tenant");
-                String data = getUserNamesFromGraph(result.getAccessToken(), tenant);
+                String data = getUserNamesFromGraph(result.accessToken(), tenant);
                 model.addAttribute("usersInfo", data);
 
             } catch (Exception e) {

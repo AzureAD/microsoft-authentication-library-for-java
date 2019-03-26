@@ -26,6 +26,7 @@ package com.microsoft.aad.msal4j;
 import org.apache.commons.codec.binary.Base64;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.CompletionException;
@@ -38,6 +39,21 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
 
     AuthenticationResultSupplier(ClientApplicationBase clientApplication) {
         this.clientApplication = clientApplication;
+    }
+
+    AuthenticationAuthority getAuthorityWithPrefNetworkHost(String authority) throws Exception {
+
+        URL authorityUrl = new URL(authority);
+
+        InstanceDiscoveryMetadataEntry discoveryMetadataEntry =
+                AadInstanceDiscovery.GetMetadataEntry
+                        (authorityUrl, clientApplication.isValidateAuthority(), headers,
+                                clientApplication.getProxy(), clientApplication.getSslSocketFactory());
+
+        URL updatedAuthorityUrl =
+                new URL(authorityUrl.getProtocol(), discoveryMetadataEntry.preferredNetwork, authorityUrl.getFile());
+
+        return new AuthenticationAuthority(updatedAuthorityUrl);
     }
 
     abstract AuthenticationResult execute() throws Exception;
@@ -61,13 +77,13 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
 
     void logResult(AuthenticationResult result, ClientDataHttpHeaders headers)
     {
-        if (!StringHelper.isBlank(result. getAccessToken())) {
+        if (!StringHelper.isBlank(result.accessToken())) {
 
             String accessTokenHash = this.computeSha256Hash(result
-                    .getAccessToken());
-            if (!StringHelper.isBlank(result.getRefreshToken())) {
+                    .accessToken());
+            if (!StringHelper.isBlank(result.refreshToken())) {
                 String refreshTokenHash = this.computeSha256Hash(result
-                        .getRefreshToken());
+                        .refreshToken());
                 if(clientApplication.isLogPii()){
                     clientApplication.log.debug(LogHelper.createMessage(String
                                     .format("Access Token with hash '%s' and Refresh Token with hash '%s' returned",

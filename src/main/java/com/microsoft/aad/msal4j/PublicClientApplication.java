@@ -106,10 +106,10 @@ public class PublicClientApplication extends ClientApplicationBase {
      * @param scopes scopes of the access request
      * @param deviceCodeConsumer
      * @return A {@link CompletableFuture} object representing the {@link AuthenticationResult} of the call.
-     * It contains AccessToken, Refresh Token and the Access Token's expiration time.
+     * It contains AccessTokenCacheEntity, Refresh Token and the Access Token's expiration time.
      * @throws AuthenticationException thrown if authorization is pending or another error occurred.
-     *                                 If the errorCode of the exception is AdalErrorCode.AUTHORIZATION_PENDING,
-     *                                 the call needs to be retried until the AccessToken is returned.
+     *                                 If the errorCode of the exception is MsalErrorCode.AUTHORIZATION_PENDING,
+     *                                 the call needs to be retried until the AccessTokenCacheEntity is returned.
      *                                 DeviceCode.interval - The minimum amount of time in seconds that the client
      *                                 SHOULD wait between polling requests to the token endpoint
      */

@@ -26,7 +26,6 @@ package com.microsoft.aad.msal4j;
 class AuthenticationConstants {
 
     final static int AAD_JWT_TOKEN_LIFETIME_SECONDS = 60 * 10;
-    final static String RESOURCE = "resource";
 
     static final String ID_TOKEN_SUBJECT = "sub";
     static final String ID_TOKEN_TENANTID = "tid";

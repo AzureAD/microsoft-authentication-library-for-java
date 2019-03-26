@@ -31,9 +31,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import static com.microsoft.aad.msal4j.AdalErrorCode.AUTHORIZATION_PENDING;
+import static com.microsoft.aad.msal4j.MsalErrorCode.AUTHORIZATION_PENDING;
 
-public class AcquireTokenDeviceCodeFlowSupplier extends AuthenticationResultSupplier {
+class AcquireTokenDeviceCodeFlowSupplier extends AuthenticationResultSupplier {
 
     private ClientAuthentication clientAuth;
     private String scopes;
@@ -54,11 +54,9 @@ public class AcquireTokenDeviceCodeFlowSupplier extends AuthenticationResultSupp
     }
 
     AuthenticationResult execute() throws Exception {
+        AuthenticationAuthority requestAuthority = getAuthorityWithPrefNetworkHost(clientApplication.getAuthority());
 
-        clientApplication.authenticationAuthority.doInstanceDiscovery(clientApplication.isValidateAuthority(),
-                headers.getReadonlyHeaderMap(), clientApplication.getProxy(), clientApplication.getSslSocketFactory());
-
-        DeviceCode deviceCode = DeviceCodeRequest.execute(clientApplication.authenticationAuthority.getDeviceCodeEndpoint(),
+        DeviceCode deviceCode = DeviceCodeRequest.execute(requestAuthority.getDeviceCodeEndpoint(),
                 clientAuth.getClientID().toString(), scopes, headers.getReadonlyHeaderMap(), clientApplication.getProxy(),
                 clientApplication.getSslSocketFactory());
 
