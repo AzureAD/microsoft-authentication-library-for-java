@@ -60,7 +60,10 @@ public class TokenCache {
 
     private String serializedCachedData;
 
-    void deserializeAndLoadToCache(String data) {
+    public void deserializeAndLoadToCache(String data) {
+        if(StringHelper.isBlank(data)){
+            return;
+        }
         serializedCachedData = data;
         Gson gson = new GsonBuilder().create();
 
@@ -72,7 +75,7 @@ public class TokenCache {
         this.idTokens = deserializedCache.idTokens;
     }
 
-    String serialize() {
+    public String serialize() {
         if(!StringHelper.isBlank(serializedCachedData)){
             Object o = new Gson().fromJson(serializedCachedData, Object.class);
             Map<String, Object> map = (Map<String, Object>)o;

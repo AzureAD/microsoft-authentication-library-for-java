@@ -24,11 +24,13 @@
 package com.microsoft.aad.msal4j;
 
 import lombok.Builder;
+import lombok.Getter;
 
 /**
  * Contain parameters used by the MSAL to access the cache_data.
  */
 @Builder
+@Getter
 public class TokenCacheAccessContext {
 
     private TokenCache tokenCache;
