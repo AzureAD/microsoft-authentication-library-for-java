@@ -35,7 +35,7 @@ public class DeviceCodeFlow {
 
     private static void getAccessTokenByDeviceCodeGrant() throws Exception {
         PublicClientApplication app = new PublicClientApplication.Builder(TestData.PUBLIC_CLIENT_ID)
-                .authority(TestData.AUTHORITY)
+                .authority(TestData.AUTHORITY_COMMON)
                 .build();
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {

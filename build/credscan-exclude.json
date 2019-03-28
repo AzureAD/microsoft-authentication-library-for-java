@@ -1,0 +1,17 @@
+{
+  "tool": "Credential Scanner",
+  "suppressions": [
+    {
+      "file": "test-certificate.pfx",
+      "_justification": "test self signed certificate to test signing from the library. this certificate is not associated with any tenant"
+    },
+    {
+      "placeholder": "client_secret",
+      "_justification" : "credential used for testing. not associated with any tenant"
+    },
+    {
+      "placeholder": "ClientPassword",
+      "_justification" : "credential used for testing. not associated with any tenant"
+    }
+  ]
+}

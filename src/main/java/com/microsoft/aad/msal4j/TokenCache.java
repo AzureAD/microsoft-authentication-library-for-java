@@ -93,11 +93,11 @@ public class TokenCache {
     }
 
     protected void saveTokens
-            (AdalTokenRequest tokenRequest, AuthenticationResult authenticationResult, String environment){
+            (TokenEndpointRequest tokenRequest, AuthenticationResult authenticationResult, String environment){
 
         if(tokenCacheAccessAspect != null){
             TokenCacheAccessContext context = TokenCacheAccessContext.builder().
-                    clientId(tokenRequest.getClientAuth().getClientID().getValue()).
+                    clientId(tokenRequest.getMsalRequest().getClientAuthentication().getClientID().getValue()).
                     tokenCache(this).
                     build();
             tokenCacheAccessAspect.beforeCacheAccess(context);
@@ -125,7 +125,7 @@ public class TokenCache {
 
         if(tokenCacheAccessAspect != null){
             TokenCacheAccessContext context = TokenCacheAccessContext.builder().
-                    clientId(tokenRequest.getClientAuth().getClientID().getValue()).
+                    clientId(tokenRequest.getMsalRequest().getClientAuthentication().getClientID().getValue()).
                     tokenCache(this).
                     isCacheChanged(true).
                     build();
@@ -133,7 +133,7 @@ public class TokenCache {
         }
     }
 
-    static RefreshTokenCacheEntity createRefreshTokenCacheEntity(AdalTokenRequest tokenRequest,
+    static RefreshTokenCacheEntity createRefreshTokenCacheEntity(TokenEndpointRequest tokenRequest,
                                                                  AuthenticationResult authenticationResult,
                                                                  String environmentAlias) {
         RefreshTokenCacheEntity rt = new RefreshTokenCacheEntity();
@@ -144,14 +144,14 @@ public class TokenCache {
 
         rt.environment(environmentAlias);
 
-        rt.clientId(tokenRequest.getClientAuth().getClientID().toString());
+        rt.clientId(tokenRequest.getMsalRequest().getClientAuthentication().getClientID().toString());
 
         rt.secret(authenticationResult.refreshToken());
 
         return rt;
     }
 
-    static AccessTokenCacheEntity createAccessTokenCacheEntity(AdalTokenRequest tokenRequest,
+    static AccessTokenCacheEntity createAccessTokenCacheEntity(TokenEndpointRequest tokenRequest,
                                                                AuthenticationResult authenticationResult,
                                                                String environmentAlias) {
         AccessTokenCacheEntity at = new AccessTokenCacheEntity();
@@ -160,7 +160,7 @@ public class TokenCache {
             at.homeAccountId(authenticationResult.account().homeAccountId);
         }
         at.environment(environmentAlias);
-        at.clientId(tokenRequest.getClientAuth().getClientID().toString());
+        at.clientId(tokenRequest.getMsalRequest().getClientAuthentication().getClientID().getValue());
         at.secret(authenticationResult.accessToken());
 
         IdToken idTokenObj = authenticationResult.idTokenObject();
@@ -169,7 +169,7 @@ public class TokenCache {
         }
 
         String scopes = !StringHelper.isBlank(authenticationResult.scopes()) ? authenticationResult.scopes() :
-                tokenRequest.getAuthorizationGrant().getScopes();
+                tokenRequest.getMsalRequest().getMsalAuthorizationGrant().getScopes();
 
         at.target(scopes);
 
@@ -183,7 +183,7 @@ public class TokenCache {
         return at;
     }
 
-    static IdTokenCacheEntity createIdTokenCacheEntity(AdalTokenRequest tokenRequest,
+    static IdTokenCacheEntity createIdTokenCacheEntity(TokenEndpointRequest tokenRequest,
                                                        AuthenticationResult authenticationResult,
                                                        String environmentAlias) {
         IdTokenCacheEntity idToken = new IdTokenCacheEntity();
@@ -192,7 +192,7 @@ public class TokenCache {
             idToken.homeAccountId(authenticationResult.account().homeAccountId);
         }
         idToken.environment(environmentAlias);
-        idToken.clientId(tokenRequest.getClientAuth().getClientID().toString());
+        idToken.clientId(tokenRequest.getMsalRequest().getClientAuthentication().getClientID().getValue());
         idToken.secret(authenticationResult.idToken());
 
         IdToken idTokenObj = authenticationResult.idTokenObject();

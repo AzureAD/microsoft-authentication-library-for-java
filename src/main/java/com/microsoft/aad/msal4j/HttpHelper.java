@@ -23,45 +23,40 @@
 
 package com.microsoft.aad.msal4j;
 
+import org.slf4j.Logger;
+
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSocketFactory;
-import java.io.*;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.Proxy;
 import java.net.URL;
 import java.util.Map;
-
-import org.slf4j.Logger;
 
 class HttpHelper {
 
     static String executeHttpGet(final Logger log, final String url,
-            final Proxy proxy, final SSLSocketFactory sslSocketFactory)
-            throws Exception {
-        return executeHttpGet(log, url, null, proxy, sslSocketFactory);
+                                 final ServiceBundle serviceBundle) throws Exception {
+        return executeHttpGet(log, url, null, serviceBundle);
     }
 
     static String executeHttpGet(final Logger log, final String url,
-            final Map<String, String> headers, final Proxy proxy,
-            final SSLSocketFactory sslSocketFactory) throws Exception {
-        final HttpsURLConnection conn = HttpHelper.openConnection(url, proxy,
-                sslSocketFactory);
+                                 final Map<String, String> headers,
+                                 final ServiceBundle serviceBundle) throws Exception {
+        final HttpsURLConnection conn = HttpHelper.openConnection(url, serviceBundle);
         return executeGetRequest(log, headers, conn);
     }
 
     static String executeHttpPost(final Logger log, final String url,
-            String postData, final Proxy proxy,
-            final SSLSocketFactory sslSocketFactory) throws Exception {
-        return executeHttpPost(log, url, postData, null, proxy,
-                sslSocketFactory);
+            String postData, final ServiceBundle serviceBundle) throws Exception {
+        return executeHttpPost(log, url, postData, null, serviceBundle);
     }
 
     static String executeHttpPost(final Logger log, final String url,
             String postData, final Map<String, String> headers,
-            final Proxy proxy, final SSLSocketFactory sslSocketFactory)
+            final ServiceBundle serviceBundle)
             throws Exception {
-        final HttpsURLConnection conn = HttpHelper.openConnection(url, proxy,
-                sslSocketFactory);
+        final HttpsURLConnection conn = HttpHelper.openConnection(url, serviceBundle);
         return executePostRequest(log, postData, headers, conn);
     }
 
@@ -94,33 +89,30 @@ class HttpHelper {
         }
     }
 
-    static HttpsURLConnection openConnection(final URL finalURL,
-            final Proxy proxy, final SSLSocketFactory sslSocketFactory)
+    static HttpsURLConnection openConnection(final URL finalURL, final ServiceBundle serviceBundle)
             throws IOException {
         HttpsURLConnection connection;
-        if (proxy != null) {
-            connection = (HttpsURLConnection) finalURL.openConnection(proxy);
+        if (serviceBundle.getProxy() != null) {
+            connection = (HttpsURLConnection) finalURL.openConnection(serviceBundle.getProxy());
         }
         else {
             connection = (HttpsURLConnection) finalURL.openConnection();
         }
 
-        if (sslSocketFactory != null) {
-            connection.setSSLSocketFactory(sslSocketFactory);
+        if (serviceBundle.getSslSocketFactory() != null) {
+            connection.setSSLSocketFactory(serviceBundle.getSslSocketFactory());
         }
 
         return connection;
     }
 
-    static HttpsURLConnection openConnection(final String url,
-            final Proxy proxy, final SSLSocketFactory sslSocketFactory)
+    static HttpsURLConnection openConnection(final String url, final ServiceBundle serviceBundle)
             throws IOException {
-        return openConnection(new URL(url), proxy, sslSocketFactory);
+        return openConnection(new URL(url), serviceBundle);
     }
 
     static HttpsURLConnection configureAdditionalHeaders(
-            final HttpsURLConnection conn, final Map<String, String> headers)
-            throws IOException {
+            final HttpsURLConnection conn, final Map<String, String> headers) {
         if (headers != null) {
             for (final Map.Entry<String, String> entry : headers.entrySet()) {
                 conn.setRequestProperty(entry.getKey(), entry.getValue());

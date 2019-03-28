@@ -23,7 +23,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import org.easymock.EasyMock;
 import org.powermock.api.easymock.PowerMock;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
@@ -35,16 +34,14 @@ import org.testng.annotations.Test;
 import java.io.FileInputStream;
 import java.net.URI;
 import java.security.KeyStore;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.Date;
 import java.util.concurrent.Future;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
 
 @PowerMockIgnore({"javax.net.ssl.*"})
 @Test(groups = { "checkin" })
@@ -64,19 +61,17 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
         );
 
         PowerMock.expectPrivate(app, "acquireTokenCommon",
-                EasyMock.isA(MsalOAuthAuthorizationGrant.class),
-                EasyMock.isA(ClientAuthentication.class),
-                EasyMock.isA(ClientDataHttpHeaders.class),
+                EasyMock.isA(MsalRequest.class),
                 EasyMock.isA(AuthenticationAuthority.class)).andReturn(
                 AuthenticationResult.builder().
                         accessToken("accessToken").
                         expiresOn(new Date().getTime() + 100).
                         refreshToken("refreshToken").
-                        idToken("idToken").environment("environment").build()
-        );
+                        idToken("idToken").environment("environment").build());
+
         PowerMock.replay(app);
         Future<AuthenticationResult> result = app
-                .acquireTokenByAuthorizationCode(null, "auth_code",
+                .acquireTokenByAuthorizationCode(Collections.singleton("default-scope"), "auth_code",
                         new URI(TestConfiguration.AAD_DEFAULT_REDIRECT_URI));
         AuthenticationResult ar = result.get();
         Assert.assertNotNull(ar);
@@ -105,20 +100,17 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
                         .authority(TestConfiguration.AAD_TENANT_ENDPOINT));
 
         PowerMock.expectPrivate(app, "acquireTokenCommon",
-                EasyMock.isA(MsalOAuthAuthorizationGrant.class),
-                EasyMock.isA(ClientAuthentication.class),
-                EasyMock.isA(ClientDataHttpHeaders.class),
+                EasyMock.isA(MsalRequest.class),
                 EasyMock.isA(AuthenticationAuthority.class)).andReturn(
                 AuthenticationResult.builder().
                         accessToken("accessToken").
                         expiresOn(new Date().getTime() + 100).
                         refreshToken("refreshToken").
-                        idToken("idToken").environment("environment").build()
-        );
+                        idToken("idToken").environment("environment").build());
 
         PowerMock.replay(app);
         Future<AuthenticationResult> result = app
-                .acquireTokenByAuthorizationCode(null, "auth_code",
+                .acquireTokenByAuthorizationCode(Collections.singleton("default-scope"), "auth_code",
                         new URI(TestConfiguration.AAD_DEFAULT_REDIRECT_URI));
         AuthenticationResult ar = result.get();
         Assert.assertNotNull(ar);
@@ -147,16 +139,13 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
                         .authority(TestConfiguration.AAD_TENANT_ENDPOINT));
 
         PowerMock.expectPrivate(app, "acquireTokenCommon",
-                EasyMock.isA(MsalOAuthAuthorizationGrant.class),
-                EasyMock.isA(ClientAuthentication.class),
-                EasyMock.isA(ClientDataHttpHeaders.class),
+                EasyMock.isA(MsalRequest.class),
                 EasyMock.isA(AuthenticationAuthority.class)).andReturn(
                 AuthenticationResult.builder().
                         accessToken("accessToken").
                         expiresOn(new Date().getTime() + 100).
                         refreshToken("refreshToken").
-                        idToken("idToken").environment("environment").build()
-        );
+                        idToken("idToken").environment("environment").build());
 
         PowerMock.replay(app);
         final Future<AuthenticationResult> result = app.acquireTokenForClient
@@ -167,29 +156,4 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
         PowerMock.verifyAll();
         PowerMock.resetAll(app);
     }
-
-    static String getThumbPrint(final byte[] der)
-            throws NoSuchAlgorithmException, CertificateEncodingException {
-        final MessageDigest md = MessageDigest.getInstance("SHA-1");
-        md.update(der);
-        final byte[] digest = md.digest();
-        return hexify(digest);
-
-    }
-
-    static String hexify(final byte bytes[]) {
-
-        final char[] hexDigits = { '0', '1', '2', '3', '4', '5', '6', '7', '8',
-                '9', 'a', 'b', 'c', 'd', 'e', 'f' };
-
-        final StringBuffer buf = new StringBuffer(bytes.length * 2);
-
-        for (int i = 0; i < bytes.length; ++i) {
-            buf.append(hexDigits[(bytes[i] & 0xf0) >> 4]);
-            buf.append(hexDigits[bytes[i] & 0x0f]);
-        }
-
-        return buf.toString();
-    }
-
 }

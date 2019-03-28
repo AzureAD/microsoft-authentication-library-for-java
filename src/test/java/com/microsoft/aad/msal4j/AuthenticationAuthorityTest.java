@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
 @Test(groups = { "checkin" })
 @PrepareForTest({ AuthenticationAuthority.class, HttpHelper.class,
         JsonHelper.class, InstanceDiscoveryResponse.class })
-public class AuthenticationAuthorityTest extends AbstractAdalTests{
+public class AuthenticationAuthorityTest extends AbstractMsalTests {
 
     @Test
     public void testDetectAuthorityType_AAD() throws Exception {

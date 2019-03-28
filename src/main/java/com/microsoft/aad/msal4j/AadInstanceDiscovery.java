@@ -26,8 +26,6 @@ package com.microsoft.aad.msal4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.SSLSocketFactory;
-import java.net.Proxy;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.TreeSet;
@@ -72,16 +70,15 @@ class AadInstanceDiscovery {
     }
 
     private static InstanceDiscoveryResponse sendInstanceDiscoveryRequest
-            (URL authorityUrl, ClientDataHttpHeaders headers, Proxy proxy,
-             SSLSocketFactory sslSocketFactory) throws Exception {
+            (URL authorityUrl, ClientDataHttpHeaders headers, ServiceBundle serviceBundle) throws Exception {
 
         String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpoint(authorityUrl.getAuthority()) +
                 INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE.replace("{authorizeEndpoint}",
                         getAuthorizeEndpoint(authorityUrl.getAuthority(),
                                 AuthenticationAuthority.getTenant(authorityUrl)));
 
-        String json = HttpHelper.executeHttpGet(log, instanceDiscoveryRequestUrl, headers.getReadonlyHeaderMap(),
-                proxy, sslSocketFactory);
+        String json = HttpHelper.executeHttpGet
+                (log, instanceDiscoveryRequestUrl, headers.getReadonlyHeaderMap(), serviceBundle);
 
         return JsonHelper.convertJsonToObject(json, InstanceDiscoveryResponse.class);
     }
@@ -93,11 +90,11 @@ class AadInstanceDiscovery {
     }
 
     private static void doInstanceDiscoveryAndCache
-            (URL authorityUrl, boolean validateAuthority, ClientDataHttpHeaders headers, Proxy proxy,
-             SSLSocketFactory sslSocketFactor) throws Exception {
+            (URL authorityUrl, boolean validateAuthority, ClientDataHttpHeaders headers, ServiceBundle serviceBundle)
+            throws Exception {
 
         InstanceDiscoveryResponse instanceDiscoveryResponse =
-                sendInstanceDiscoveryRequest(authorityUrl, headers, proxy, sslSocketFactor);
+                sendInstanceDiscoveryRequest(authorityUrl, headers, serviceBundle);
 
         if (validateAuthority) {
             validate(instanceDiscoveryResponse);
@@ -108,12 +105,12 @@ class AadInstanceDiscovery {
 
     static InstanceDiscoveryMetadataEntry GetMetadataEntry
             (URL authorityUrl, boolean validateAuthority, ClientDataHttpHeaders headers,
-             Proxy proxy, SSLSocketFactory sslSocketFactor) throws Exception {
+             ServiceBundle serviceBundle) throws Exception {
 
         InstanceDiscoveryMetadataEntry result = cache.get(authorityUrl.getAuthority());
 
         if (result == null) {
-            doInstanceDiscoveryAndCache(authorityUrl, validateAuthority, headers, proxy, sslSocketFactor);
+            doInstanceDiscoveryAndCache(authorityUrl, validateAuthority, headers, serviceBundle);
         }
 
         return cache.get(authorityUrl.getAuthority());

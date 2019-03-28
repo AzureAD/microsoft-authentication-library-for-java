@@ -34,11 +34,14 @@ import java.util.function.Supplier;
 
 abstract class AuthenticationResultSupplier implements Supplier<AuthenticationResult> {
 
-    ClientDataHttpHeaders headers;
     ClientApplicationBase clientApplication;
+    private ClientDataHttpHeaders headers;
 
-    AuthenticationResultSupplier(ClientApplicationBase clientApplication) {
+    AuthenticationResultSupplier(ClientApplicationBase clientApplication,
+                                 ClientDataHttpHeaders headers){
+
         this.clientApplication = clientApplication;
+        this.headers = headers;
     }
 
     AuthenticationAuthority getAuthorityWithPrefNetworkHost(String authority) throws Exception {
@@ -48,7 +51,7 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
         InstanceDiscoveryMetadataEntry discoveryMetadataEntry =
                 AadInstanceDiscovery.GetMetadataEntry
                         (authorityUrl, clientApplication.isValidateAuthority(), headers,
-                                clientApplication.getProxy(), clientApplication.getSslSocketFactory());
+                                clientApplication.getServiceBundle());
 
         URL updatedAuthorityUrl =
                 new URL(authorityUrl.getProtocol(), discoveryMetadataEntry.preferredNetwork, authorityUrl.getFile());

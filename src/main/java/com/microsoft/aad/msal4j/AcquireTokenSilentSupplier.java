@@ -23,36 +23,33 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.RefreshTokenGrant;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
-import com.nimbusds.oauth2.sdk.token.RefreshToken;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Set;
 
-class AcquireTokenSilentSupplier extends AuthenticationResultSupplier{
+class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
 
-    private ClientAuthentication clientAuth;
     private Account account;
     private Set<String> scopes;
     private AuthenticationAuthority requestAuthority;
     private boolean forceRefresh;
+    private ClientAuthentication clientAuthentication;
 
-    AcquireTokenSilentSupplier(ClientApplicationBase clientApplication, ClientAuthentication clientAuth,
+    AcquireTokenSilentSupplier(ClientApplicationBase clientApplication, ClientAuthentication clientAuthentication,
                                Account account, Set<String> scopes, String authorityUrl, boolean forceRefresh)
             throws MalformedURLException {
-        super(clientApplication);
-        this.headers = new ClientDataHttpHeaders(clientApplication.getCorrelationId());
-        this.clientAuth = clientAuth;
+        super(clientApplication, new ClientDataHttpHeaders(clientApplication.getCorrelationId()));
+        this.clientApplication = clientApplication;
+        this.clientAuthentication = clientAuthentication;
 
         this.account = account;
         this.scopes = scopes;
 
-        if(!StringHelper.isBlank(authorityUrl)){
-            requestAuthority = new AuthenticationAuthority(new URL(authorityUrl));;
-        }
-        else{
+        if (!StringHelper.isBlank(authorityUrl)) {
+            requestAuthority = new AuthenticationAuthority(new URL(authorityUrl));
+        } else {
             requestAuthority = clientApplication.authenticationAuthority;
         }
         this.forceRefresh = forceRefresh;
@@ -66,19 +63,21 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier{
                 clientApplication.tokenCache.getAuthenticationResult
                         (account, requestAuthority, scopes, clientApplication.clientId);
 
-        if(!forceRefresh && !StringHelper.isBlank(res.accessToken())){
+        if (!forceRefresh && !StringHelper.isBlank(res.accessToken())) {
             return res;
         }
 
-        if(StringHelper.isBlank(res.refreshToken())){
+        if (StringHelper.isBlank(res.refreshToken())) {
             return null;
-        }
-        else{
-            final MsalOAuthAuthorizationGrant rtAuthGrant = new MsalOAuthAuthorizationGrant(
-                    new RefreshTokenGrant(new RefreshToken(res.refreshToken())), scopes);
+        } else {
+            RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(
+                    res.refreshToken(),
+                    scopes,
+                    clientAuthentication,
+                    new RequestContext(clientApplication.clientId, clientApplication.getCorrelationId()));
 
-            AcquireTokenByAuthorisationGrantSupplier acquireTokenByAuthorisationGrantSupplier =
-                    new AcquireTokenByAuthorisationGrantSupplier(clientApplication, rtAuthGrant, clientAuth, requestAuthority);
+            AcquireTokenByAuthorizationGrantSupplier acquireTokenByAuthorisationGrantSupplier =
+                    new AcquireTokenByAuthorizationGrantSupplier(clientApplication, refreshTokenRequest, requestAuthority);
 
             return acquireTokenByAuthorisationGrantSupplier.execute();
         }

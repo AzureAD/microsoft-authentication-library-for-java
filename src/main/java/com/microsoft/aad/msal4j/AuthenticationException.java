@@ -24,13 +24,13 @@
 package com.microsoft.aad.msal4j;
 
 /**
- * ADAL generic exception class
+ * MSAL generic exception class
  */
 public class AuthenticationException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    private MsalErrorCode errorCode;
+    private AuthenticationErrorCode errorCode;
 
     /**
      * Constructor
@@ -39,7 +39,8 @@ public class AuthenticationException extends RuntimeException {
      */
     public AuthenticationException(final Throwable t) {
         super(t);
-        this.errorCode = MsalErrorCode.UNKNOWN;
+
+        this.errorCode = AuthenticationErrorCode.UNKNOWN;
     }
 
     /**
@@ -48,10 +49,10 @@ public class AuthenticationException extends RuntimeException {
      * @param message string error message
      */
     public AuthenticationException(final String message) {
-        this(MsalErrorCode.UNKNOWN, message);
+        this(AuthenticationErrorCode.UNKNOWN, message);
     }
 
-    public AuthenticationException(MsalErrorCode errorCode, final String message) {
+    public AuthenticationException(AuthenticationErrorCode errorCode, final String message) {
         super(message);
         this.errorCode = errorCode;
     }
@@ -64,10 +65,11 @@ public class AuthenticationException extends RuntimeException {
      */
     public AuthenticationException(final String message, final Throwable t) {
         super(message, t);
-        this.errorCode = MsalErrorCode.UNKNOWN;
+
+        this.errorCode = AuthenticationErrorCode.UNKNOWN;
     }
 
-    public MsalErrorCode getErrorCode() {
+    public AuthenticationErrorCode getErrorCode() {
         return errorCode;
     }
 }

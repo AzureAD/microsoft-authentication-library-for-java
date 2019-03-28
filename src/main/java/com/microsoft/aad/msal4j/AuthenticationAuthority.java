@@ -23,12 +23,13 @@
 
 package com.microsoft.aad.msal4j;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.URL;
 
 import lombok.AccessLevel;
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Represents Authentication Authority responsible for issuing access tokens.
@@ -120,11 +121,6 @@ class AuthenticationAuthority {
     }
 
     void validateAuthorityUrl() {
-        /*if (authorityType != AuthorityType.AAD && validateAuthority) {
-            throw new IllegalArgumentException(
-                    AuthenticationErrorMessage.UNSUPPORTED_AUTHORITY_VALIDATION);
-        }*/
-
         if (!this.authorityUrl.getProtocol().equalsIgnoreCase("https")) {
             throw new IllegalArgumentException(
                     AuthenticationErrorMessage.AUTHORITY_URI_INSECURE);

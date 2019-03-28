@@ -67,7 +67,7 @@ final class JwtHelper {
                 .jwtID(UUID.randomUUID().toString())
                 .notBeforeTime(new Date(time))
                 .expirationTime(new Date(time
-                                + AuthenticationConstants.AAD_JWT_TOKEN_LIFETIME_SECONDS
+                                + Constants.AAD_JWT_TOKEN_LIFETIME_SECONDS
                                 * 1000))
                 .subject(clientId)
                 .build();

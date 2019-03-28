@@ -38,7 +38,7 @@ public class UsernamePasswordFlow {
 
     private static void getAccessTokenFromUserCredentials() throws Exception {
         PublicClientApplication app = new PublicClientApplication.Builder(TestData.PUBLIC_CLIENT_ID)
-                .authority(TestData.AUTHORITY)
+                .authority(TestData.AUTHORITY_COMMON)
                 .build();
 
         CompletableFuture<AuthenticationResult> future = app.acquireTokenByUsernamePassword

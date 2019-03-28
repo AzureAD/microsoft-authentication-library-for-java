@@ -23,9 +23,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.ResourceOwnerPasswordCredentialsGrant;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod;
-import com.nimbusds.oauth2.sdk.auth.Secret;
 import com.nimbusds.oauth2.sdk.id.ClientID;
 import org.slf4j.LoggerFactory;
 
@@ -35,21 +33,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 public class PublicClientApplication extends ClientApplicationBase {
-
-    private PublicClientApplication(Builder builder){
-        super(builder);
-
-        log = LoggerFactory.getLogger(PublicClientApplication.class);
-
-        initClientAuthentication(clientId);
-    }
-
-    private void initClientAuthentication(String clientId){
-        validateNotBlank("clientId", clientId);
-
-        clientAuthentication = new ClientAuthenticationPost(ClientAuthenticationMethod.NONE,
-                new ClientID(clientId));
-    }
 
     /**
      * Acquires a security token using a username/password flow.
@@ -64,14 +47,22 @@ public class PublicClientApplication extends ClientApplicationBase {
      *         {@link AuthenticationResult} of the call. It contains Access
      *         Token, Refresh Token and the Access Token's expiration time.
      */
-    public CompletableFuture<AuthenticationResult> acquireTokenByUsernamePassword(Set<String> scopes,
-                                                                                  String username, String password) {
-        validateNotEmpty("scopes", scopes);
-        validateNotBlank("username", username);
+    public CompletableFuture<AuthenticationResult> acquireTokenByUsernamePassword(
+            Set<String> scopes,
+            String username,
+            String password) {
 
-        return this.acquireToken(new MsalOAuthAuthorizationGrant(
-                new ResourceOwnerPasswordCredentialsGrant
-                        (username, new Secret(password)), scopes), clientAuthentication);
+        validateNotBlank("username", username);
+        validateNotEmpty("scopes", scopes);
+
+        UserNamePasswordRequest userNamePasswordRequest =  new UserNamePasswordRequest(
+                username,
+                password,
+                scopes,
+                clientAuthentication,
+                new RequestContext(clientId, this.getCorrelationId()));
+
+        return this.executeRequest(userNamePasswordRequest);
     }
 
     /**
@@ -84,12 +75,21 @@ public class PublicClientApplication extends ClientApplicationBase {
      *         {@link AuthenticationResult} of the call. It contains Access
      *         Token, Refresh Token and the Access Token's expiration time.
      */
-    public CompletableFuture<AuthenticationResult> acquireTokenByIntegratedWindowsAuth(Set<String> scopes, String username) {
+    public CompletableFuture<AuthenticationResult> acquireTokenByIntegratedWindowsAuth(
+            Set<String> scopes,
+            String username) {
+
         validateNotEmpty("scopes", scopes);
         validateNotBlank("username", username);
 
-        return this.acquireToken
-                (new MsalIntegratedAuthorizationGrant(username, scopes), clientAuthentication);
+        IntegratedWindowsAuthenticationRequest integratedWindowsAuthenticationRequest =
+                new IntegratedWindowsAuthenticationRequest(
+                        username,
+                        scopes,
+                        clientAuthentication,
+                        new RequestContext(clientId, this.getCorrelationId()));
+
+        return this.executeRequest(integratedWindowsAuthenticationRequest);
     }
 
     /**
@@ -108,28 +108,45 @@ public class PublicClientApplication extends ClientApplicationBase {
      * @return A {@link CompletableFuture} object representing the {@link AuthenticationResult} of the call.
      * It contains AccessTokenCacheEntity, Refresh Token and the Access Token's expiration time.
      * @throws AuthenticationException thrown if authorization is pending or another error occurred.
-     *                                 If the errorCode of the exception is MsalErrorCode.AUTHORIZATION_PENDING,
-     *                                 the call needs to be retried until the AccessTokenCacheEntity is returned.
+     *                                 If the errorCode of the exception is AuthenticationErrorCode.AUTHORIZATION_PENDING,
+     *                                 the call needs to be retried until the AccessToken is returned.
      *                                 DeviceCode.interval - The minimum amount of time in seconds that the client
      *                                 SHOULD wait between polling requests to the token endpoint
      */
-    public CompletableFuture<AuthenticationResult> acquireTokenByDeviceCodeFlow(Set<String> scopes,
-                                                                                Consumer<DeviceCode> deviceCodeConsumer)
-    {
+    public CompletableFuture<AuthenticationResult> acquireTokenByDeviceCodeFlow(
+            Set<String> scopes,
+            Consumer<DeviceCode> deviceCodeConsumer) {
+
         validateDeviceCodeRequestInput(scopes);
 
-        AtomicReference<CompletableFuture<AuthenticationResult>> futureReference = new AtomicReference<>();
+        AtomicReference<CompletableFuture<AuthenticationResult>> futureReference =
+                new AtomicReference<>();
 
-        AcquireTokenDeviceCodeFlowSupplier supplier =
-                new AcquireTokenDeviceCodeFlowSupplier
-                        (this, clientAuthentication, scopes, deviceCodeConsumer, futureReference);
+        DeviceCodeRequest deviceCodeRequest = new DeviceCodeRequest(
+                deviceCodeConsumer,
+                futureReference,
+                scopes,
+                clientAuthentication,
+                new RequestContext(clientId, this.getCorrelationId()));
 
-        CompletableFuture<AuthenticationResult> future =
-                executorService != null ? CompletableFuture.supplyAsync(supplier, executorService)
-                        : CompletableFuture.supplyAsync(supplier);
+        CompletableFuture<AuthenticationResult> future = executeRequest(deviceCodeRequest);
         futureReference.set(future);
-
         return future;
+    }
+
+    private PublicClientApplication(Builder builder){
+        super(builder);
+
+        log = LoggerFactory.getLogger(PublicClientApplication.class);
+
+        initClientAuthentication(clientId);
+    }
+
+    private void initClientAuthentication(String clientId){
+        validateNotBlank("clientId", clientId);
+
+        clientAuthentication = new ClientAuthenticationPost(ClientAuthenticationMethod.NONE,
+                new ClientID(clientId));
     }
 
     private void validateDeviceCodeRequestInput(Set<String> scopes) {

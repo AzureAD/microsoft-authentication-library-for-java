@@ -53,9 +53,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
-import static com.microsoft.aad.msal4j.TestConfiguration.AAD_PREFERRED_CACHE__ENV_ALIAS;
-
-public class CacheTests extends AbstractAdalTests {
+public class CacheTests extends AbstractMsalTests {
     String APP_DATA = "/app_data.json";
 
     String TOKEN_RESPONSE = "/token_response.json";
@@ -152,23 +150,22 @@ public class CacheTests extends AbstractAdalTests {
 
         String tokenResponse = getTokenResponse(folder);
 
-        AuthorizationGrant authzGrant = new AuthorizationCodeGrant(new AuthorizationCode("code"),
-                new URI("http://my.redirect.com"));
-
         ClientAuthentication clientAuth = new ClientAuthenticationPost(ClientAuthenticationMethod.NONE,
                 new ClientID(appData.clientId));
 
-        MsalOAuthAuthorizationGrant grant = new MsalOAuthAuthorizationGrant(authzGrant, new HashSet<>());
+        MsalRequest msalRequest = new AuthorizationCodeRequest(null, "code",
+                new URI("http://my.redirect.com"), clientAuth,
+                new RequestContext("client_id", "correlation_id"));
 
-        AdalTokenRequest request = PowerMock.createPartialMock(
-                AdalTokenRequest.class, new String[] { "toOAuthRequest" },
-                new URL(appData.authorizeRequestUrl), clientAuth, grant, null, null, null);
+        TokenEndpointRequest request = PowerMock.createPartialMock(
+                TokenEndpointRequest.class, new String[] { "toOauthHttpRequest" },
+                new URL(appData.authorizeRequestUrl), msalRequest, null);
 
-        AdalOAuthRequest msalOAuthHttpRequest = PowerMock.createMock(AdalOAuthRequest.class);
+        OAuthHttpRequest msalOAuthHttpRequest = PowerMock.createMock(OAuthHttpRequest.class);
 
         HTTPResponse httpResponse = PowerMock.createMock(HTTPResponse.class);
 
-        EasyMock.expect(request.toOAuthRequest()).andReturn(msalOAuthHttpRequest).times(1);
+        EasyMock.expect(request.toOauthHttpRequest()).andReturn(msalOAuthHttpRequest).times(1);
         EasyMock.expect(msalOAuthHttpRequest.send()).andReturn(httpResponse).times(1);
         EasyMock.expect(httpResponse.getStatusCode()).andReturn(200).times(1);
         EasyMock.expect(httpResponse.getContentAsJSONObject())
@@ -180,7 +177,7 @@ public class CacheTests extends AbstractAdalTests {
 
         PowerMock.replay(request, msalOAuthHttpRequest, httpResponse);
 
-        final AuthenticationResult result = request.executeOAuthRequestAndProcessResponse();
+        final AuthenticationResult result = request.executeOauthRequestAndProcessResponse();
 
         PowerMock.verifyAll();
 
