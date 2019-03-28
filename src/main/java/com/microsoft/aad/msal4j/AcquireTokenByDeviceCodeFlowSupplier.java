@@ -31,28 +31,24 @@ class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier 
 
     private DeviceCodeRequest deviceCodeRequest;
 
-    AcquireTokenByDeviceCodeFlowSupplier(PublicClientApplication clientApplication,
+        AcquireTokenByDeviceCodeFlowSupplier(PublicClientApplication clientApplication,
                                          DeviceCodeRequest deviceCodeRequest) {
         super(clientApplication, deviceCodeRequest.getHeaders());
         this.deviceCodeRequest = deviceCodeRequest;
     }
 
     AuthenticationResult execute() throws Exception {
-        doInstanceDiscovery();
-        DeviceCode deviceCode = getDeviceCode();
-        return acquireTokenWithDeviceCode(deviceCode);
+        AuthenticationAuthority requestAuthority = getAuthorityWithPrefNetworkHost(clientApplication.getAuthority());
+
+        DeviceCode deviceCode = getDeviceCode(requestAuthority);
+
+        return acquireTokenWithDeviceCode(deviceCode, requestAuthority);
     }
 
-    private void doInstanceDiscovery() throws Exception{
-        this.clientApplication.authenticationAuthority.doInstanceDiscovery(
-                this.clientApplication.isValidateAuthority(),
-                deviceCodeRequest.getHeaders().getReadonlyHeaderMap(),
-                this.clientApplication.getServiceBundle());
-    }
+    private DeviceCode getDeviceCode(AuthenticationAuthority requestAuthority) throws Exception{
 
-    private DeviceCode getDeviceCode() throws Exception{
         DeviceCode deviceCode = deviceCodeRequest.acquireDeviceCode(
-                this.clientApplication.authenticationAuthority.getDeviceCodeEndpoint(),
+                requestAuthority.getDeviceCodeEndpoint(),
                 deviceCodeRequest.getClientAuthentication().getClientID().toString(),
                 deviceCodeRequest.getHeaders().getReadonlyHeaderMap(),
                 this.clientApplication.getServiceBundle());
@@ -62,26 +58,25 @@ class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier 
         return deviceCode;
     }
 
-    private AuthenticationResult acquireTokenWithDeviceCode(DeviceCode deviceCode) throws Exception {
+    private AuthenticationResult acquireTokenWithDeviceCode(DeviceCode deviceCode,
+                                                            AuthenticationAuthority requestAuthority) throws Exception {
         deviceCodeRequest.createAuthenticationGrant(deviceCode);
-
         long expirationTimeInSeconds = getCurrentSystemTimeInSeconds() + deviceCode.getExpiresIn();
 
         AcquireTokenByAuthorizationGrantSupplier acquireTokenByAuthorisationGrantSupplier =
                 new AcquireTokenByAuthorizationGrantSupplier(
-                        this.clientApplication,
-                        deviceCodeRequest);
+                        clientApplication,
+                        deviceCodeRequest,
+                        requestAuthority);
 
         while (getCurrentSystemTimeInSeconds() < expirationTimeInSeconds) {
-            if(deviceCodeRequest.getFutureReference().get().isCancelled()){
+            if (deviceCodeRequest.getFutureReference().get().isCancelled()) {
                 throw new InterruptedException("Acquire token Device Code Flow was interrupted");
             }
             try {
                 return acquireTokenByAuthorisationGrantSupplier.execute();
-            }
-            catch (AuthenticationException ex) {
-                if (ex.getErrorCode().equals(AUTHORIZATION_PENDING))
-                {
+            } catch (AuthenticationException ex) {
+                if (ex.getErrorCode().equals(AUTHORIZATION_PENDING)) {
                     TimeUnit.SECONDS.sleep(deviceCode.getInterval());
                 } else {
                     throw ex;

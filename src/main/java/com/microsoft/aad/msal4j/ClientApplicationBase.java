@@ -31,6 +31,7 @@ import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URI;
 import java.net.URL;
+import java.util.Collection;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.*;
@@ -109,6 +110,8 @@ abstract public class ClientApplicationBase {
         return this.validateAuthority;
     }
 
+    protected TokenCache tokenCache;
+
     /**
      * Acquires security token from the authority using an authorization code
      * previously received.
@@ -175,12 +178,14 @@ abstract public class ClientApplicationBase {
 
         ExecutorService executorService = serviceBundle.getExecutorService();
         CompletableFuture<AuthenticationResult> future = executorService != null ?
-                        CompletableFuture.supplyAsync(supplier, executorService) :
-                        CompletableFuture.supplyAsync(supplier);
+                CompletableFuture.supplyAsync(supplier, executorService) :
+                CompletableFuture.supplyAsync(supplier);
         return future;
     }
 
-    AuthenticationResult acquireTokenCommon(MsalRequest msalRequest) throws Exception {
+    AuthenticationResult acquireTokenCommon(MsalRequest msalRequest, AuthenticationAuthority requestAuthority)
+            throws Exception {
+
         ClientDataHttpHeaders headers = msalRequest.getHeaders();
 
         if(logPii) {
@@ -189,18 +194,18 @@ abstract public class ClientApplicationBase {
                     headers.getHeaderCorrelationIdValue()));
         }
 
-        this.authenticationAuthority.doInstanceDiscovery(
-                validateAuthority,
-                headers.getReadonlyHeaderMap(),
-                this.serviceBundle);
+        URL url = new URL(requestAuthority.getTokenUri());
+        TokenEndpointRequest request = new TokenEndpointRequest(url, msalRequest, serviceBundle);
 
-        URL url = new URL(this.authenticationAuthority.getTokenUri());
-        TokenEndpointRequest request = new TokenEndpointRequest(
-                url,
-                msalRequest,
-                serviceBundle);
+        AuthenticationResult result = request.executeOauthRequestAndProcessResponse();
 
-        return request.executeOauthRequestAndProcessResponse();
+        InstanceDiscoveryMetadataEntry instanceDiscoveryMetadata =
+                AadInstanceDiscovery.GetMetadataEntry
+                        (url, validateAuthority, headers, serviceBundle);
+
+        tokenCache.saveTokens(request, result, instanceDiscoveryMetadata.preferredCache);
+
+        return result;
     }
 
     private AuthenticationResultSupplier getAuthenticationResultSupplier(MsalRequest msalRequest){
@@ -213,7 +218,7 @@ abstract public class ClientApplicationBase {
         } else {
             supplier = new AcquireTokenByAuthorizationGrantSupplier(
                             this,
-                            msalRequest);
+                            msalRequest,null);
         }
         return supplier;
     }
@@ -240,6 +245,63 @@ abstract public class ClientApplicationBase {
         return serviceBundle;
     }
 
+    /**
+     * Returns accounts for which there is an cached SSO (RT token)
+     *
+     */
+    public CompletableFuture<AuthenticationResult> acquireTokenSilently
+            (Account account, Set<String> scopes, String authorityUrl, boolean forceRefresh) throws MalformedURLException {
+
+        validateNotNull("account", account);
+        validateNotEmpty("scopes", scopes);
+
+        AcquireTokenSilentSupplier supplier =
+                new AcquireTokenSilentSupplier
+                        (this, clientAuthentication, account, scopes, authorityUrl, forceRefresh);
+
+        CompletableFuture<AuthenticationResult> future =
+                serviceBundle.getExecutorService() != null ? CompletableFuture.supplyAsync(supplier, serviceBundle.getExecutorService())
+                        : CompletableFuture.supplyAsync(supplier);
+
+        return future;
+    }
+
+    /**
+     * Returns accounts for which there is an cached SSO (RT token)
+     *
+     */
+    public CompletableFuture<Collection<Account>> getAccounts()
+    {
+        AccountsSupplier supplier = new AccountsSupplier(this);
+
+        CompletableFuture<Collection<Account>> future =
+                serviceBundle.getExecutorService() != null ? CompletableFuture.supplyAsync(supplier, serviceBundle.getExecutorService())
+                        : CompletableFuture.supplyAsync(supplier);
+        return future;
+    }
+
+    /**
+     * Remove all credentials from cache related to account
+     */
+    public CompletableFuture removeAccount(Account account)
+    {
+        RemoveAccountRunnable runnable = new RemoveAccountRunnable(this, account);
+
+        CompletableFuture<Void> future =
+                serviceBundle.getExecutorService() != null ? CompletableFuture.runAsync(runnable, serviceBundle.getExecutorService())
+                        : CompletableFuture.runAsync(runnable);
+        return future;
+    }
+
+    protected static String canonicalizeUri(String authority) {
+        authority = authority.toLowerCase();
+
+        if (!authority.endsWith("/")) {
+            authority += "/";
+        }
+        return authority;
+    }
+
     abstract static class Builder<T extends Builder<T>> {
         // Required parameters
         private String clientId;
@@ -248,11 +310,12 @@ abstract public class ClientApplicationBase {
         private String authority = DEFAULT_AUTHORITY;
         private AuthenticationAuthority authenticationAuthority;
         private boolean validateAuthority = true;
-        private String correlationId = UUID.randomUUID().toString().replace("-", "");
+        private String correlationId = UUID.randomUUID().toString();
         private boolean logPii = false;
         private ExecutorService executorService;
         private Proxy proxy;
         private SSLSocketFactory sslSocketFactory;
+        private ITokenCacheAccessAspect tokenCacheAccessAspect;
 
         /**
          * Constructor to create instance of Builder of client application
@@ -274,11 +337,13 @@ abstract public class ClientApplicationBase {
          */
         public T authority(String val) throws MalformedURLException {
             authority = canonicalizeUri(val);
-            authenticationAuthority = new AuthenticationAuthority(new URL(authority));
 
-            if(authenticationAuthority.detectAuthorityType() != AuthorityType.AAD){
+            if(AuthenticationAuthority.detectAuthorityType(new URL(authority)) != AuthorityType.AAD){
                 throw new IllegalArgumentException("Unsupported authority type");
             }
+
+            authenticationAuthority = new AuthenticationAuthority(new URL(authority));
+
             return self();
         }
 
@@ -352,23 +417,29 @@ abstract public class ClientApplicationBase {
             return self();
         }
 
-        abstract ClientApplicationBase build();
+        /**
+         * Sets ITokenCacheAccessAspect to be used for cache_data persistence.
+         *
+         */
+        public T setTokenCacheAccessAspect(ITokenCacheAccessAspect val)
+        {
+            validateNotNull("sslSocketFactory", val);
 
-        private String canonicalizeUri(String authority) {
-            if (!authority.endsWith("/")) {
-                authority += "/";
-            }
-            return authority;
+            tokenCacheAccessAspect = val;
+            return self();
         }
+
+        abstract ClientApplicationBase build();
     }
 
     ClientApplicationBase(Builder<?> builder) {
         clientId = builder.clientId;
         authority = builder.authority;
-        authenticationAuthority = builder.authenticationAuthority;
         validateAuthority = builder.validateAuthority;
         correlationId = builder.correlationId;
         logPii = builder.logPii;
+        authenticationAuthority = builder.authenticationAuthority;
+        tokenCache = new TokenCache(builder.tokenCacheAccessAspect);
         // Telemetry will also go into serviceBundle
         serviceBundle = new ServiceBundle(builder.executorService, builder.proxy, builder.sslSocketFactory);
     }

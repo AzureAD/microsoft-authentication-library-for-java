@@ -7,7 +7,12 @@
 
 	<context-param>
 		<param-name>authority</param-name>
-		<param-value>https://login.microsoftonline.com/53f49862-d94b-42dc-849b-8f132ea3674d/</param-value>
+		<param-value></param-value>
+	</context-param>
+
+	<context-param>
+		<param-name>tenant</param-name>
+		<param-value></param-value>
 	</context-param>
 
 	<context-param>
@@ -34,7 +39,7 @@
 	</context-param>
 	<context-param>
 		<param-name>obo_application_id_uri</param-name>
-		<param-value>/param-value>
+		<param-value></param-value>
 	</context-param>
 
 	<context-param>
@@ -48,7 +53,7 @@
 
 	<filter>
 		<filter-name>BasicFilter</filter-name>
-		<filter-class>com.microsoft.aad.adal4jsample.BasicFilter</filter-class>
+		<filter-class>com.microsoft.aad.msal4jsample.BasicFilter</filter-class>
 	</filter>
 
 	<filter-mapping>

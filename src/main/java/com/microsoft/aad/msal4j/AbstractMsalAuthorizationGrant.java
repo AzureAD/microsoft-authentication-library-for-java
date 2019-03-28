@@ -28,7 +28,7 @@ import java.util.Map;
 /**
  * Abstract class for an MSAL grant.
  */
-abstract class MsalAuthorizationGrant {
+abstract class AbstractMsalAuthorizationGrant {
 
     /**
      *  Converts the grant into a HTTP parameters map.
@@ -47,4 +47,10 @@ abstract class MsalAuthorizationGrant {
     static final String COMMON_SCOPES_PARAM = SCOPE_OPEN_ID + SCOPES_DELIMITER +
             SCOPE_PROFILE + SCOPES_DELIMITER +
             SCOPE_OFFLINE_ACCESS;
+
+    String scopes;
+
+    String getScopes() {
+        return scopes;
+    }
 }

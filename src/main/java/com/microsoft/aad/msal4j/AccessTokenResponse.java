@@ -30,26 +30,33 @@ import com.nimbusds.oauth2.sdk.token.RefreshToken;
 import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
 import com.nimbusds.openid.connect.sdk.OIDCTokenResponse;
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens;
+import lombok.AccessLevel;
+import lombok.Getter;
 import net.minidev.json.JSONObject;
 
+@Getter(AccessLevel.PACKAGE)
 class AccessTokenResponse extends OIDCTokenResponse {
 
     private String scope;
 
+    private String clientInfo;
+
+    private long expiresIn;
+
+    private long extExpiresIn;
+
     AccessTokenResponse(final AccessToken accessToken,
-                        final RefreshToken refreshToken, final String idToken) {
+                            final RefreshToken refreshToken, final String idToken) {
         super(new OIDCTokens(idToken, accessToken, refreshToken));
     }
 
-    AccessTokenResponse(final AccessToken accessToken,
-                        final RefreshToken refreshToken, final String idToken,
-                        final String scope) {
+    AccessTokenResponse(final AccessToken accessToken, final RefreshToken refreshToken, final String idToken,
+                            final String scope, String clientInfo, long expiresIn, long extExpiresIn) {
         this(accessToken, refreshToken, idToken);
         this.scope = scope;
-    }
-
-    String getScope() {
-        return scope;
+        this.clientInfo = clientInfo;
+        this.expiresIn = expiresIn;
+        this.extExpiresIn = extExpiresIn;
     }
 
     /**
@@ -93,7 +100,22 @@ class AccessTokenResponse extends OIDCTokenResponse {
             scopeValue = JSONObjectUtils.getString(jsonObject, "scope");
         }
 
+        String clientInfo = null;
+        if (jsonObject.containsKey("client_info")) {
+            clientInfo = JSONObjectUtils.getString(jsonObject, "client_info");
+        }
+
+        long expiresIn = 0;
+        if (jsonObject.containsKey("expires_in")) {
+            expiresIn = JSONObjectUtils.getLong(jsonObject, "expires_in");
+        }
+
+        long ext_expires_in = 0;
+        if (jsonObject.containsKey("ext_expires_in")) {
+            ext_expires_in = JSONObjectUtils.getLong(jsonObject, "ext_expires_in");
+        }
+
         return new AccessTokenResponse(accessToken, refreshToken,
-                idTokenValue, scopeValue);
+                idTokenValue, scopeValue, clientInfo, expiresIn, ext_expires_in);
     }
 }

@@ -48,6 +48,14 @@ public final class TestConfiguration {
     public final static String AAD_UNKNOWN_TENANT_ENDPOINT = "https://lgn.windows.net/"
             + AAD_TENANT_NAME + "/";
 
+    public static String INSTANCE_DISCOVERY_RESPONSE = "{" +
+            "\"tenant_discovery_endpoint\":\"https://login.microsoftonline.com/organizations/v2.0/.well-known/openid-configuration\"," +
+            "\"api-version\":\"1.1\"," +
+            "\"metadata\":[{\"preferred_network\":\"login.microsoftonline.com\",\"preferred_cache\":\"login.windows.net\",\"aliases\":[\"login.microsoftonline.com\",\"login.windows.net\",\"login.microsoft.com\",\"sts.windows.net\"]},{\"preferred_network\":\"login.partner.microsoftonline.cn\",\"preferred_cache\":\"login.partner.microsoftonline.cn\",\"aliases\":[\"login.partner.microsoftonline.cn\",\"login.chinacloudapi.cn\"]},{\"preferred_network\":\"login.microsoftonline.de\",\"preferred_cache\":\"login.microsoftonline.de\",\"aliases\":[\"login.microsoftonline.de\"]},{\"preferred_network\":\"login.microsoftonline.us\",\"preferred_cache\":\"login.microsoftonline.us\",\"aliases\":[\"login.microsoftonline.us\",\"login.usgovcloudapi.net\"]},{\"preferred_network\":\"login-us.microsoftonline.com\",\"preferred_cache\":\"login-us.microsoftonline.com\",\"aliases\":[\"login-us.microsoftonline.com\"]}]}";
+
+    public final static String AAD_PREFERRED_NETWORK_ENV_ALIAS = "login.microsoftonline.com";
+    public final static String AAD_PREFERRED_CACHE__ENV_ALIAS = "login.windows.net";
+
     public final static String HTTP_RESPONSE_FROM_AUTH_CODE = "{\"access_token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6I"
             + "k5HVEZ2ZEstZnl0aEV1THdqcHdBSk9NOW4tQSJ9.eyJhdWQiOiJiN2E2NzFkOC1hNDA4LTQyZmYtODZlMC1hYWY0NDdmZDE3YzQiLCJpc3MiOiJod"
             + "HRwczovL3N0cy53aW5kb3dzLm5ldC8zMGJhYTY2Ni04ZGY4LTQ4ZTctOTdlNi03N2NmZDA5OTU5NjMvIiwiaWF0IjoxMzkzODQ0NTA0LCJuYmYiOj"
@@ -59,18 +67,21 @@ public final class TestConfiguration {
             + "TnS_uWeSFXljbhId1l9PDrr7AwOSbOzogLvO14TaU294T6HeOQ8e0dUAvxEAMvsK_800A-AGNvbHK363xDjgmu464ye3CQvwq73GoHkzuxILCJKo0D"
             + "Uj0_XsCpQ4TdkPepuhzaGc-zYsfMU1POuIOB87pzW7e_VDpCdxcN1fuk-7CECPQb8nrO0L8Du8y-TZDdTSe-i_A0Alv48Zll-6tDY9cxfAR0Uy"
             + "YKl_Kf45kuHAphCWwPsjUxv4rGHhgXZPRlKFq7bkXP2Es4ixCQzb3bVLLrtQaZjkQ1yn37ngJro8NR63EbHHjHTA9lRmf8KIQ\",\"token_type\""
-            + ":\"Bearer\",\"expires_in\":\"3600\",\"expires_on\":\"1393848404\",\"resource\":\"b7a671d8-a408-42ff-86e0-aaf447fd1"
+            + ":\"Bearer\",\"expires_in\":3600,\"expires_on\":\"1393848404\",\"resource\":\"b7a671d8-a408-42ff-86e0-aaf447fd1"
             + "7c4\",\"refresh_token\":\"AwABAAAAvPM1KaPlrEqdFSBzjqfTGPW9BlsxWYtD0DS9hJNOPHPnq8QYbv6_FKJ3MxSHbPAIekKwJ04TnZI1NnRj"
             + "CMhphmsy5ZFjWtLy3WN2E67b3aW2MTQ9lN06B-HdRdU0Rxi9EalB8kAlgb92Ob0zuhB90zWm3RbxshOW0vkHS3lNAV6_LQ8fZKeLTB1AuuRgLXsy-9"
             + "2h0yYuEQw_Uvs80IbGx59j1z3hJrCMEMrqh-Hf42OnckN-uR113zMircfEOMm0qzhrQdtLleTHELS79B18647OiG6e8k8saVIvJmjpIuy79_aN-Bk5"
             + "PRkkab-QAwn_R68via4nK0zpKHBCl0xoEvK59mqerNDEKJNY168_FHDYPiZyECaZCdlWdEqd3dLohFlnKv9zc0CnuvB_QSQHHNScqWkX53s_Us9I45"
             + "QlRDaUPB89QXzQQaT2wZ8i3wTOb7mnEUMzrNrpsor6E4ckiviMx6WoepZmqQEZV-Yd-UUgAA\",\"scope\":\"user_impersonation\",\""
-            + "id_token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.eyJhdWQiOiI5MDgzY2NiOC04YTQ2LTQzZTctODQzOS0xZDY5NmRmOTg0YWUiLCJpc"
-            + "3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC8zMGJhYTY2Ni04ZGY4LTQ4ZTctOTdlNi03N2NmZDA5OTU5NjMvIiwiaWF0IjoxMzkzODQ0NTA0LCJ"
-            + "uYmYiOjEzOTM4NDQ1MDQsImV4cCI6MTM5Mzg0ODQwNCwidmVyIjoiMS4wIiwidGlkIjoiMzBiYWE2NjYtOGRmOC00OGU3LTk3ZTYtNzdjZmQwOTk1O"
-            + "TYzIiwib2lkIjoiNGY4NTk5ODktYTJmZi00MTFlLTkwNDgtYzMyMjI0N2FjNjJjIiwidXBuIjoiYWRtaW5AYWFsdGVzdHMub25taWNyb3NvZnQuY29"
-            + "tIiwidW5pcXVlX25hbWUiOiJhZG1pbkBhYWx0ZXN0cy5vbm1pY3Jvc29mdC5jb20iLCJzdWIiOiJCczVxVG4xQ3YtNC10VXIxTGxBb3pOS1NRd0Fjb"
-            + "m4ydHcyQjlmelduNlpJIiwiZmFtaWx5X25hbWUiOiJBZG1pbiIsImdpdmVuX25hbWUiOiJBREFMVGVzdHMifQ.\"}";
+            + "id_token\":\"eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.ew0KICAiYXVkIjogImI2YzY5YTM3LWRmOTYtNGRiMC05MDg4LTJhYjk2ZTFkO" +
+            "DIxNSIsDQogICJpc3MiOiAiaHR0cHM6Ly9sb2dpbi5taWNyb3NvZnRvbmxpbmUuY29tL2Y2NDVhZDkyLWUzOGQtNGQxYS1iNTEwLWQxYjA5YTc0YThjYS" +
+            "92Mi4wIiwNCiAgImlhdCI6IDE1Mzg1Mzg0MjIsDQogICJuYmYiOiAxNTM4NTM4NDIyLA0KICAiZXhwIjogMTUzODU0MjMyMiwNCiAgIm5hbWUiOiAiQ2x" +
+            "vdWQgSURMQUIgQmFzaWMgVXNlciIsDQogICJvaWQiOiAiOWY0ODgwZDgtODBiYS00YzQwLTk3YmMtZjdhMjNjNzAzMDg0IiwNCiAgInByZWZlcnJlZF91" +
+            "c2VybmFtZSI6ICJpZGxhYkBtc2lkbGFiNC5vbm1pY3Jvc29mdC5jb20iLA0KICAic3ViIjogIlk2WWtCZEhOTkxITm1US2VsOUtoUno4d3Jhc3hkTFJGa" +
+            "VAxNEJSUFdybjQiLA0KICAidGlkIjogImY2NDVhZDkyLWUzOGQtNGQxYS1iNTEwLWQxYjA5YTc0YThjYSIsDQogICJ1dGkiOiAiNm5jaVgwMlNNa2k5azc" +
+            "zLUYxc1pBQSIsDQogICJ2ZXIiOiAiMi4wIg0KfQ==.e30=\", \"client_info\": \"eyJ1a" +
+            "WQiOiI5ZjQ4ODBkOC04MGJhLTRjNDAtOTdiYy1mN2EyM2M3MDMwODQiLCJ1dGlkIjoiZjY0NWFkOTItZTM4ZC00ZDFhLWI1MTAtZDFiMDlhNzRhOGNhIn0\"" +
+            "}";
 
     public final static String HTTP_ERROR_RESPONSE = "{\"error\":\"invalid_request\",\"error_description\":\"AADSTS90011: Request "
             + "is ambiguous, multiple application identifiers found. Application identifiers: 'd09bb6da-4d46-4a16-880c-7885d8291fb9"

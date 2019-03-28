@@ -23,7 +23,8 @@
 
 public class TestData {
 
-    final static String AUTHORITY = "https://login.microsoftonline.com/TenantId/";
+    final static String TENANT_SPECIFIC_AUTHORITY = "https://login.microsoftonline.com/TenantId/";
+    final static String AUTHORITY = "https://login.microsoftonline.com/common/";
     final static String PUBLIC_CLIENT_ID = "";
 
     final static String GRAPH_DEFAULT_SCOPE = "https://graph.windows.net/.default";
@@ -31,4 +32,6 @@ public class TestData {
     final static String USER_NAME = "";
     final static String USER_PASSWORD= "";
 
+    final static String CONFIDENTIAL_CLIENT_ID = "";
+    final static String CONFIDENTIAL_CLIENT_SECRET = "";
 }

@@ -35,7 +35,6 @@ import java.util.Collections;
 
 @Test()
 public class UsernamePasswordIT {
-
     private LabUserProvider labUserProvider;
 
     @BeforeClass
@@ -106,9 +105,9 @@ public class UsernamePasswordIT {
                 get();
 
         Assert.assertNotNull(result);
-        Assert.assertNotNull(result.getAccessToken());
-        Assert.assertNotNull(result.getRefreshToken());
-        Assert.assertNotNull(result.getIdToken());
+        Assert.assertNotNull(result.accessToken());
+        Assert.assertNotNull(result.refreshToken());
+        Assert.assertNotNull(result.idToken());
         // TODO AuthenticationResult should have an getAccountInfo API
         // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
     }

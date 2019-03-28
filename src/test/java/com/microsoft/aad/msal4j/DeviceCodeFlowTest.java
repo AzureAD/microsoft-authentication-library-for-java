@@ -45,11 +45,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import static com.microsoft.aad.msal4j.TestConfiguration.AAD_CLIENT_ID;
-import static com.microsoft.aad.msal4j.TestConfiguration.AAD_HOST_NAME;
-import static com.microsoft.aad.msal4j.TestConfiguration.AAD_RESOURCE_ID;
-import static com.microsoft.aad.msal4j.TestConfiguration.AAD_TENANT_NAME;
-import static com.microsoft.aad.msal4j.TestConfiguration.ADFS_TENANT_ENDPOINT;
+import static com.microsoft.aad.msal4j.TestConfiguration.*;
 
 
 @Test(groups = { "checkin" })
@@ -91,14 +87,20 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         Capture<MsalRequest> capturedMsalRequest = Capture.newInstance();
 
         PowerMock.expectPrivate(app, "acquireTokenCommon",
-                EasyMock.capture(capturedMsalRequest)).andReturn(
-                new AuthenticationResult("bearer", "accessToken",
-                        "refreshToken", new Date().getTime(), "idToken", null,
-                        false));
+                EasyMock.capture(capturedMsalRequest), EasyMock.isA(AuthenticationAuthority.class)).andReturn(
+                AuthenticationResult.builder().
+                        accessToken("accessToken").
+                        expiresOn(new Date().getTime() + 100).
+                        refreshToken("refreshToken").
+                        idToken("idToken").environment("environment").build());
 
         PowerMock.mockStatic(HttpHelper.class);
 
         Capture<String> capturedUrl = Capture.newInstance();
+
+        EasyMock.expect(HttpHelper.executeHttpGet(EasyMock.isA(Logger.class), EasyMock.capture(capturedUrl),
+                        EasyMock.isA(Map.class), EasyMock.isA(ServiceBundle.class)))
+                .andReturn(INSTANCE_DISCOVERY_RESPONSE);
 
         EasyMock.expect(
                 HttpHelper.executeHttpGet(EasyMock.isA(Logger.class), EasyMock.capture(capturedUrl),
@@ -132,14 +134,14 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         // validate HTTP GET request used to get device code
         URL url = new URL(capturedUrl.getValue());
-        Assert.assertEquals(url.getAuthority(), AAD_HOST_NAME);
+        Assert.assertEquals(url.getAuthority(), AAD_PREFERRED_NETWORK_ENV_ALIAS);
         Assert.assertEquals(url.getPath(),
                 "/" + AAD_TENANT_NAME + AuthenticationAuthority.DEVICE_CODE_ENDPOINT);
 
         Map<String, String> expectedQueryParams = new HashMap<>();
         expectedQueryParams.put("client_id", AAD_CLIENT_ID);
-        expectedQueryParams.put("scope", URLEncoder.encode(MsalAuthorizationGrant.COMMON_SCOPES_PARAM +
-                MsalAuthorizationGrant.SCOPES_DELIMITER + AAD_RESOURCE_ID));
+        expectedQueryParams.put("scope", URLEncoder.encode(AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM +
+                AbstractMsalAuthorizationGrant.SCOPES_DELIMITER + AAD_RESOURCE_ID));
 
         Assert.assertEquals(getQueryMap(url.getQuery()), expectedQueryParams);
 
@@ -173,8 +175,8 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
                 TokenEndpointRequest.class, new String[]{"toOauthHttpRequest"},
                 new URL("http://login.windows.net"), null, null);
 
-        OauthHttpRequest msalOauthHttpRequest = PowerMock
-                .createMock(OauthHttpRequest.class);
+        OAuthHttpRequest msalOAuthHttpRequest = PowerMock
+                .createMock(OAuthHttpRequest.class);
 
         HTTPResponse httpResponse = new HTTPResponse(HTTPResponse.SC_BAD_REQUEST);
 
@@ -190,10 +192,10 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         httpResponse.setContent(content);
         httpResponse.setContentType(CommonContentTypes.APPLICATION_JSON);
 
-        EasyMock.expect(request.toOauthHttpRequest()).andReturn(msalOauthHttpRequest).times(1);
-        EasyMock.expect(msalOauthHttpRequest.send()).andReturn(httpResponse).times(1);
+        EasyMock.expect(request.toOauthHttpRequest()).andReturn(msalOAuthHttpRequest).times(1);
+        EasyMock.expect(msalOAuthHttpRequest.send()).andReturn(httpResponse).times(1);
 
-        PowerMock.replay(request, msalOauthHttpRequest);
+        PowerMock.replay(request, msalOAuthHttpRequest);
 
         try {
             request.executeOauthRequestAndProcessResponse();

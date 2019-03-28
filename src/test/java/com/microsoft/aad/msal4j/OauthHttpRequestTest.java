@@ -42,12 +42,12 @@ import java.net.URL;
 import static org.testng.Assert.assertNotNull;
 
 @Test(groups = { "checkin" })
-@PrepareForTest({ OauthHttpRequest.class })
+@PrepareForTest({ OAuthHttpRequest.class })
 public class OauthHttpRequestTest extends AbstractMsalTests {
 
     @Test
     public void testConstructor() throws MalformedURLException {
-        final OauthHttpRequest request = new OauthHttpRequest(Method.POST,
+        final OAuthHttpRequest request = new OAuthHttpRequest(Method.POST,
                 new URL("http://login.windows.net"), null, null);
         assertNotNull(request);
     }
@@ -57,7 +57,7 @@ public class OauthHttpRequestTest extends AbstractMsalTests {
     public void testCreateResponseContentTypeParsingFailure()
             throws Exception {
 
-        final OauthHttpRequest request = new OauthHttpRequest(Method.GET,
+        final OAuthHttpRequest request = new OAuthHttpRequest(Method.GET,
                 new URL("https://" + TestConfiguration.AAD_HOST_NAME), null, null);
         final HttpURLConnection conn = PowerMock
                 .createMock(HttpURLConnection.class);
@@ -73,7 +73,7 @@ public class OauthHttpRequestTest extends AbstractMsalTests {
     @Test
     public void testCreateResponseLocationNull()
             throws Exception {
-        final OauthHttpRequest request = new OauthHttpRequest(Method.GET,
+        final OAuthHttpRequest request = new OAuthHttpRequest(Method.GET,
                 new URL("https://" + TestConfiguration.AAD_HOST_NAME), null, null);
         final HttpURLConnection conn = PowerMock
                 .createMock(HttpURLConnection.class);
@@ -102,7 +102,7 @@ public class OauthHttpRequestTest extends AbstractMsalTests {
 
     @Test
     public void testCreateResponse() throws Exception {
-        final OauthHttpRequest request = new OauthHttpRequest(Method.GET,
+        final OAuthHttpRequest request = new OAuthHttpRequest(Method.GET,
                 new URL("https://" + TestConfiguration.AAD_HOST_NAME), null, null);
         final HttpURLConnection conn = PowerMock
                 .createMock(HttpURLConnection.class);
@@ -133,7 +133,7 @@ public class OauthHttpRequestTest extends AbstractMsalTests {
     
     @Test
     public void testCreateResponseFor404() throws Exception {
-        final OauthHttpRequest request = new OauthHttpRequest(Method.GET,
+        final OAuthHttpRequest request = new OAuthHttpRequest(Method.GET,
                 new URL("https://" + TestConfiguration.AAD_HOST_NAME), null, null);
         final HttpURLConnection conn = PowerMock
                 .createMock(HttpURLConnection.class);

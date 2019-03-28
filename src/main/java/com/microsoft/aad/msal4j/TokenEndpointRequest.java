@@ -23,9 +23,14 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.io.IOException;
+import java.net.URL;
+import java.util.Date;
+import java.util.Map;
+
+import com.nimbusds.oauth2.sdk.ErrorObject;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import com.nimbusds.oauth2.sdk.ErrorObject;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.SerializeException;
 import com.nimbusds.oauth2.sdk.TokenErrorResponse;
@@ -34,18 +39,17 @@ import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import com.nimbusds.oauth2.sdk.util.URLUtils;
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens;
+import lombok.AccessLevel;
+import lombok.Getter;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.Map;
-
+@Getter(AccessLevel.PACKAGE)
 class TokenEndpointRequest {
 
     private final URL uri;
     private final MsalRequest msalRequest;
     private final ServiceBundle serviceBundle;
 
-    TokenEndpointRequest(final URL uri, MsalRequest msalRequest , final ServiceBundle serviceBundle) {
+    TokenEndpointRequest(final URL uri, MsalRequest msalRequest, final ServiceBundle serviceBundle) {
         this.uri = uri;
         this.serviceBundle = serviceBundle;
         this.msalRequest = msalRequest;
@@ -58,18 +62,19 @@ class TokenEndpointRequest {
      * @throws AuthenticationException
      * @throws SerializeException
      * @throws IOException
-     * @throws java.text.ParseException
      */
     AuthenticationResult executeOauthRequestAndProcessResponse()
             throws ParseException, AuthenticationException, SerializeException,
-            IOException, java.text.ParseException {
+            IOException {
 
         AuthenticationResult result;
         HTTPResponse httpResponse;
-        final OauthHttpRequest oauthHttpRequest = this.toOauthHttpRequest();
+        // PS rename to token request
+        final OAuthHttpRequest oauthHttpRequest = this.toOauthHttpRequest();
         httpResponse = oauthHttpRequest.send();
 
         if (httpResponse.getStatusCode() == HTTPResponse.SC_OK) {
+            // PS rename token response
             final AccessTokenResponse response =
                     AccessTokenResponse.parseHttpResponse(httpResponse);
 
@@ -79,18 +84,29 @@ class TokenEndpointRequest {
                 refreshToken = tokens.getRefreshToken().getValue();
             }
 
-            UserInfo info = null;
-            if (tokens.getIDToken() != null) {
-                info = UserInfo.createFromIdTokenClaims(tokens.getIDToken().getJWTClaimsSet());
-            }
+            Account account = null;
 
-            result = new AuthenticationResult(
-                    tokens.getAccessToken().getType().getValue(),
-                    tokens.getAccessToken().getValue(), refreshToken,
-                    tokens.getAccessToken().getLifetime(),
-                    tokens.getIDTokenString(),
-                    info,
-                    !StringHelper.isBlank(response.getScope()));
+            if (tokens.getIDToken() != null) {
+                String idTokenJson = tokens.getIDToken().getParsedParts()[1].decodeToString();
+                IdToken idToken = JsonHelper.convertJsonToObject(idTokenJson, IdToken.class);
+
+                if(!StringHelper.isBlank(response.getClientInfo())){
+                    account = Account.create(response.getClientInfo(), uri.getHost(), idToken);
+                }
+            }
+            long currTimestampSec = new Date().getTime() / 1000;
+
+            result = AuthenticationResult.builder().
+                        accessToken(tokens.getAccessToken().getValue()).
+                        refreshToken(refreshToken).
+                        idToken(tokens.getIDTokenString()).
+                        environment(uri.getHost()).
+                        expiresOn(currTimestampSec + response.getExpiresIn()).
+                        extExpiresOn(response.getExtExpiresIn() > 0 ? currTimestampSec + response.getExtExpiresIn() : 0).
+                        account(account).
+                        scopes(response.getScope()).
+                    build();
+
         } else {
             final TokenErrorResponse errorResponse = TokenErrorResponse.parse(httpResponse);
             ErrorObject errorObject = errorResponse.getErrorObject();
@@ -127,13 +143,13 @@ class TokenEndpointRequest {
      * @return
      * @throws SerializeException
      */
-    OauthHttpRequest toOauthHttpRequest() throws SerializeException {
+    OAuthHttpRequest toOauthHttpRequest() throws SerializeException {
 
         if (this.uri == null) {
             throw new SerializeException("The endpoint URI is not specified");
         }
 
-        final OauthHttpRequest oauthHttpRequest = new OauthHttpRequest(
+        final OAuthHttpRequest oauthHttpRequest = new OAuthHttpRequest(
                 HTTPRequest.Method.POST,
                 this.uri,
                 msalRequest.getHeaders().getReadonlyHeaderMap(),

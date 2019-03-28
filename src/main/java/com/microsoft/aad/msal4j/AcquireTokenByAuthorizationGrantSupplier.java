@@ -33,34 +33,46 @@ import java.net.URLEncoder;
 
 class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSupplier {
 
+    //private AbstractMsalAuthorizationGrant authGrant;
+    //private ClientAuthentication clientAuth;
+    private AuthenticationAuthority requestAuthority;
+
     private MsalRequest msalRequest;
 
     AcquireTokenByAuthorizationGrantSupplier(ClientApplicationBase clientApplication,
-                                             MsalRequest msalRequest) {
+                                             MsalRequest msalRequest,
+                                             AuthenticationAuthority authority) {
         super(clientApplication, msalRequest.getHeaders());
         this.msalRequest = msalRequest;
+        this.requestAuthority = authority;
     }
 
     AuthenticationResult execute() throws Exception {
-        MsalAuthorizationGrant authGrant = msalRequest.getMsalAuthorizationGrant();
-        if (authGrant instanceof OauthAuthorizationGrant) {
+        AbstractMsalAuthorizationGrant authGrant = msalRequest.getMsalAuthorizationGrant();
+        if (authGrant instanceof OAuthAuthorizationGrant) {
             msalRequest.setMsalAuthorizationGrant(
-                    processPasswordGrant((OauthAuthorizationGrant) authGrant));
+                    processPasswordGrant((OAuthAuthorizationGrant) authGrant));
         }
 
         if (authGrant instanceof IntegratedWindowsAuthorizationGrant) {
             IntegratedWindowsAuthorizationGrant integratedAuthGrant =
                     (IntegratedWindowsAuthorizationGrant) authGrant;
             msalRequest.setMsalAuthorizationGrant(
-                    new OauthAuthorizationGrant(getAuthorizationGrantIntegrated(
+                    new OAuthAuthorizationGrant(getAuthorizationGrantIntegrated(
                             integratedAuthGrant.getUserName()), integratedAuthGrant.getScopes()));
         }
 
-        return this.clientApplication.acquireTokenCommon(msalRequest);
+        if(requestAuthority == null){
+            requestAuthority = clientApplication.authenticationAuthority;
+        }
+
+        requestAuthority = getAuthorityWithPrefNetworkHost(requestAuthority.getAuthority());
+
+        return clientApplication.acquireTokenCommon(msalRequest, requestAuthority);
     }
 
-    private OauthAuthorizationGrant processPasswordGrant(
-            OauthAuthorizationGrant authGrant) throws Exception {
+    private OAuthAuthorizationGrant processPasswordGrant(
+            OAuthAuthorizationGrant authGrant) throws Exception {
 
         if (!(authGrant.getAuthorizationGrant() instanceof ResourceOwnerPasswordCredentialsGrant)) {
             return authGrant;
@@ -93,7 +105,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
                         Base64.encodeBase64String(response.getToken()
                                 .getBytes())));
             }
-            authGrant = new OauthAuthorizationGrant(updatedGrant,
+            authGrant = new OAuthAuthorizationGrant(updatedGrant,
                     authGrant.getCustomParameters());
         }
         return authGrant;

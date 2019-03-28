@@ -21,9 +21,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import com.microsoft.aad.msal4j.Account;
 import com.microsoft.aad.msal4j.AuthenticationResult;
 import com.microsoft.aad.msal4j.PublicClientApplication;
 
+import java.net.MalformedURLException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
@@ -35,7 +38,7 @@ public class UsernamePasswordFlow {
 
     private static void getAccessTokenFromUserCredentials() throws Exception {
         PublicClientApplication app = new PublicClientApplication.Builder(TestData.PUBLIC_CLIENT_ID)
-                .authority(TestData.AUTHORITY)
+                .authority(TestData.AUTHORITY_COMMON)
                 .build();
 
         CompletableFuture<AuthenticationResult> future = app.acquireTokenByUsernamePassword
@@ -46,14 +49,34 @@ public class UsernamePasswordFlow {
                 System.out.println("Oops! We have an exception - " + ex.getMessage());
                 return "Unknown!";
             }
+
+            Collection<Account> accounts = app.getAccounts().join();
+
+            CompletableFuture<AuthenticationResult> future1 = null;
+            try {
+                future1 = app.acquireTokenSilently(accounts.stream().findAny().get(),
+                        Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE), null, true);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+
+            AuthenticationResult res1 = future1.join();
+
+            Account a = app.getAccounts().join().iterator().next();
+
+            app.removeAccount(a).join();
+
+            accounts = app.getAccounts().join();
+
+            System.out.println("Num of account - " + accounts.size());
+
             System.out.println("Returned ok - " + res);
 
-            System.out.println("Access Token - " + res.getAccessToken());
-            System.out.println("Refresh Token - " + res.getRefreshToken());
-            System.out.println("ID Token - " + res.getIdToken());
+            System.out.println("Access Token - " + res.accessToken());
+            System.out.println("Refresh Token - " + res.refreshToken());
+            System.out.println("ID Token - " + res.idToken());
             return res;
-        });
+        }).join();
 
-        future.join();
     }
 }

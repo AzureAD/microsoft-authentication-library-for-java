@@ -31,23 +31,23 @@ public class RTFlow {
     public static void main(String args[]) throws Exception {
         AuthenticationResult result = getAccessTokenFromUserCredentials();
 
-        System.out.println("Access Token - " + result.getAccessToken());
-        System.out.println("Refresh Token - " + result.getRefreshToken());
-        System.out.println("ID Token - " + result.getIdToken());
+        System.out.println("Access Token - " + result.accessToken());
+        System.out.println("Refresh Token - " + result.refreshToken());
+        System.out.println("ID Token - " + result.idToken());
     }
 
     private static AuthenticationResult getAccessTokenFromUserCredentials()
             throws Exception {
 
         PublicClientApplication app = new PublicClientApplication.Builder(TestData.PUBLIC_CLIENT_ID)
-                .authority(TestData.AUTHORITY)
+                .authority(TestData.AUTHORITY_COMMON)
                 .build();
 
         Future<AuthenticationResult> future = app.acquireTokenByUsernamePassword
                 (Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE), TestData.USER_NAME, TestData.USER_PASSWORD);
         AuthenticationResult result = future.get();
 
-        future = app.acquireTokenByRefreshToken(result.getRefreshToken(),
+        future = app.acquireTokenByRefreshToken(result.refreshToken(),
                 Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE));
         result = future.get();
 

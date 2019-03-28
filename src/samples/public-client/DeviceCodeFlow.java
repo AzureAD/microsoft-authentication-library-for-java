@@ -35,7 +35,7 @@ public class DeviceCodeFlow {
 
     private static void getAccessTokenByDeviceCodeGrant() throws Exception {
         PublicClientApplication app = new PublicClientApplication.Builder(TestData.PUBLIC_CLIENT_ID)
-                .authority(TestData.AUTHORITY)
+                .authority(TestData.AUTHORITY_COMMON)
                 .build();
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
@@ -53,9 +53,9 @@ public class DeviceCodeFlow {
             }
             System.out.println("Returned ok - " + res);
 
-            System.out.println("Access Token - " + res.getAccessToken());
-            System.out.println("Refresh Token - " + res.getRefreshToken());
-            System.out.println("ID Token - " + res.getIdToken());
+            System.out.println("Access Token - " + res.accessToken());
+            System.out.println("Refresh Token - " + res.refreshToken());
+            System.out.println("ID Token - " + res.idToken());
             return res;
         });
 

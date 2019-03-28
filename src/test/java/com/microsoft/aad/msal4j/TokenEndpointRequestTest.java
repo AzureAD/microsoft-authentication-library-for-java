@@ -70,8 +70,8 @@ public class TokenEndpointRequestTest extends AbstractMsalTests {
         TokenEndpointRequest request = PowerMock.createPartialMock(
                 TokenEndpointRequest.class, new String[]{"toOauthHttpRequest"},
                 new URL("http://login.windows.net"), acr, null);
-        OauthHttpRequest msalOauthHttpRequest = PowerMock
-                .createMock(OauthHttpRequest.class);
+        OAuthHttpRequest msalOAuthHttpRequest = PowerMock
+                .createMock(OAuthHttpRequest.class);
 
         HTTPResponse httpResponse = new HTTPResponse(HTTPResponse.SC_BAD_REQUEST);
 
@@ -87,10 +87,10 @@ public class TokenEndpointRequestTest extends AbstractMsalTests {
         httpResponse.setContent(content);
         httpResponse.setContentType(CommonContentTypes.APPLICATION_JSON);
 
-        EasyMock.expect(request.toOauthHttpRequest()).andReturn(msalOauthHttpRequest).times(1);
-        EasyMock.expect(msalOauthHttpRequest.send()).andReturn(httpResponse).times(1);
+        EasyMock.expect(request.toOauthHttpRequest()).andReturn(msalOAuthHttpRequest).times(1);
+        EasyMock.expect(msalOAuthHttpRequest.send()).andReturn(httpResponse).times(1);
 
-        PowerMock.replay(request, msalOauthHttpRequest);
+        PowerMock.replay(request, msalOAuthHttpRequest);
 
         try {
             request.executeOauthRequestAndProcessResponse();
@@ -155,7 +155,7 @@ public class TokenEndpointRequestTest extends AbstractMsalTests {
                 acr,
                 new ServiceBundle(null, null, null));
         Assert.assertNotNull(request);
-        final OauthHttpRequest req = request.toOauthHttpRequest();
+        final OAuthHttpRequest req = request.toOauthHttpRequest();
         Assert.assertNotNull(req);
         Assert.assertEquals(
                 "corr-id",
@@ -180,14 +180,13 @@ public class TokenEndpointRequestTest extends AbstractMsalTests {
                 acr,
                 new ServiceBundle(null, null, null));
         Assert.assertNotNull(request);
-        final OauthHttpRequest req = request.toOauthHttpRequest();
+        final OAuthHttpRequest req = request.toOauthHttpRequest();
         Assert.assertNotNull(req);
     }
 
     @Test
-    public void testExecuteOAuth_Success() throws SerializeException,
-            ParseException, AuthenticationException, IOException,
-            java.text.ParseException, URISyntaxException {
+    public void testExecuteOAuth_Success() throws SerializeException, ParseException, AuthenticationException,
+            IOException, java.text.ParseException, URISyntaxException {
         final ClientAuthentication ca = new ClientSecretPost(
                 new ClientID("id"), new Secret("secret"));
         final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
@@ -200,40 +199,35 @@ public class TokenEndpointRequestTest extends AbstractMsalTests {
         final TokenEndpointRequest request = PowerMock.createPartialMock(
                 TokenEndpointRequest.class, new String[] { "toOauthHttpRequest" },
                 new URL("http://login.windows.net"), acr, null);
-        final OauthHttpRequest msalOauthHttpRequest = PowerMock
-                .createMock(OauthHttpRequest.class);
+        final OAuthHttpRequest msalOAuthHttpRequest = PowerMock
+                .createMock(OAuthHttpRequest.class);
         final HTTPResponse httpResponse = PowerMock
                 .createMock(HTTPResponse.class);
         EasyMock.expect(request.toOauthHttpRequest())
-                .andReturn(msalOauthHttpRequest).times(1);
-        EasyMock.expect(msalOauthHttpRequest.send()).andReturn(httpResponse)
+                .andReturn(msalOAuthHttpRequest).times(1);
+        EasyMock.expect(msalOAuthHttpRequest.send()).andReturn(httpResponse)
                 .times(1);
         EasyMock.expect(httpResponse.getStatusCode()).andReturn(200).times(1);
         EasyMock.expect(httpResponse.getContentAsJSONObject())
                 .andReturn(
                         JSONObjectUtils
-                                .parseJSONObject(TestConfiguration.HTTP_RESPONSE_FROM_AUTH_CODE))
+                                .parse(TestConfiguration.HTTP_RESPONSE_FROM_AUTH_CODE))
                 .times(1);
         httpResponse.ensureStatusCode(200);
         EasyMock.expectLastCall();
 
-        PowerMock.replay(request, msalOauthHttpRequest, httpResponse);
+        PowerMock.replay(request, msalOAuthHttpRequest, httpResponse);
 
-        final AuthenticationResult result = request
-                .executeOauthRequestAndProcessResponse();
+        final AuthenticationResult result = request.executeOauthRequestAndProcessResponse();
         PowerMock.verifyAll();
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.getUserInfo());
-        Assert.assertFalse(StringHelper.isBlank(result.getAccessToken()));
-        Assert.assertFalse(StringHelper.isBlank(result.getRefreshToken()));
-        Assert.assertTrue(result.isMultipleResourceRefreshToken());
-        Assert.assertEquals(result.getExpiresAfter(), 3600);
-        Assert.assertEquals(result.getAccessTokenType(), "Bearer");
-        Assert.assertEquals(result.getUserInfo().getFamilyName(), "Admin");
-        Assert.assertEquals(result.getUserInfo().getGivenName(), "ADALTests");
-        Assert.assertEquals(result.getUserInfo().getDisplayableId(),
-                "admin@aaltests.onmicrosoft.com");
-        Assert.assertNull(result.getUserInfo().getIdentityProvider());
+
+        Assert.assertNotNull(result.account());
+        Assert.assertNotNull(result.account().homeAccountId);
+        Assert.assertEquals(result.account().username(), "idlab@msidlab4.onmicrosoft.com");
+        Assert.assertEquals(result.account().name(), "Cloud IDLAB Basic User");
+
+        Assert.assertFalse(StringHelper.isBlank(result.accessToken()));
+        Assert.assertFalse(StringHelper.isBlank(result.refreshToken()));
     }
 
     @Test(expectedExceptions = AuthenticationException.class)
@@ -252,13 +246,13 @@ public class TokenEndpointRequestTest extends AbstractMsalTests {
         final TokenEndpointRequest request = PowerMock.createPartialMock(
                 TokenEndpointRequest.class, new String[] { "toOauthHttpRequest" },
                 new URL("http://login.windows.net"), acr, null);
-        final OauthHttpRequest msalOauthHttpRequest = PowerMock
-                .createMock(OauthHttpRequest.class);
+        final OAuthHttpRequest msalOAuthHttpRequest = PowerMock
+                .createMock(OAuthHttpRequest.class);
         final HTTPResponse httpResponse = PowerMock
                 .createMock(HTTPResponse.class);
         EasyMock.expect(request.toOauthHttpRequest())
-                .andReturn(msalOauthHttpRequest).times(1);
-        EasyMock.expect(msalOauthHttpRequest.send()).andReturn(httpResponse)
+                .andReturn(msalOAuthHttpRequest).times(1);
+        EasyMock.expect(msalOAuthHttpRequest.send()).andReturn(httpResponse)
                 .times(1);
         EasyMock.expect(httpResponse.getStatusCode()).andReturn(402).times(1);
 
@@ -286,14 +280,14 @@ public class TokenEndpointRequestTest extends AbstractMsalTests {
         EasyMock.expect(errorResponse.toJSONObject()).andReturn(jsonObj)
                 .times(1);
 
-        PowerMock.replay(request, msalOauthHttpRequest, httpResponse,
+        PowerMock.replay(request, msalOAuthHttpRequest, httpResponse,
                 TokenErrorResponse.class, errorObject, jsonObj, errorResponse);
         try {
             request.executeOauthRequestAndProcessResponse();
             PowerMock.verifyAll();
         }
         finally {
-            PowerMock.reset(request, msalOauthHttpRequest, httpResponse,
+            PowerMock.reset(request, msalOAuthHttpRequest, httpResponse,
                     TokenErrorResponse.class, jsonObj, errorResponse);
         }
     }

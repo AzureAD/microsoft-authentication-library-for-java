@@ -81,7 +81,7 @@ class KeyVaultSecretsProvider {
             throw new RuntimeException("Error acquiring token from Azure AD: " + e.getMessage());
         }
         if(result != null){
-            return result.getAccessToken();
+            return result.accessToken();
         } else {
             throw new NullPointerException("Authentication result is null");
         }

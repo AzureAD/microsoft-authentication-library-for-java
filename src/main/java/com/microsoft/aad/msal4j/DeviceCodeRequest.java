@@ -52,8 +52,8 @@ class DeviceCodeRequest extends MsalRequest {
         Map<String, String> queryParameters = new HashMap<>();
         queryParameters.put("client_id", clientId);
 
-        String scopesParam = MsalAuthorizationGrant.COMMON_SCOPES_PARAM +
-                MsalAuthorizationGrant.SCOPES_DELIMITER + scopes;
+        String scopesParam = AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM +
+                AbstractMsalAuthorizationGrant.SCOPES_DELIMITER + scopes;
 
         queryParameters.put("scope", scopesParam);
 

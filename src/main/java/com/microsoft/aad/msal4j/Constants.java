@@ -23,20 +23,10 @@
 
 package com.microsoft.aad.msal4j;
 
-class AuthenticationConstants {
+final class Constants {
 
-    final static int AAD_JWT_TOKEN_LIFETIME_SECONDS = 60 * 10;
-    final static String RESOURCE = "resource";
+    static final String CACHE_KEY_SEPARATOR = "-";
+    static final String SCOPES_SEPARATOR = " ";
 
-    static final String ID_TOKEN_SUBJECT = "sub";
-    static final String ID_TOKEN_TENANTID = "tid";
-    static final String ID_TOKEN_UPN = "upn";
-    static final String ID_TOKEN_GIVEN_NAME = "given_name";
-    static final String ID_TOKEN_FAMILY_NAME = "family_name";
-    static final String ID_TOKEN_UNIQUE_NAME = "unique_name";
-    static final String ID_TOKEN_EMAIL = "email";
-    static final String ID_TOKEN_IDENTITY_PROVIDER = "idp";
-    static final String ID_TOKEN_OBJECT_ID = "oid";
-    static final String ID_TOKEN_PASSWORD_CHANGE_URL = "pwd_url";
-    static final String ID_TOKEN_PASSWORD_EXPIRES_ON = "pwd_exp";
+    static final int AAD_JWT_TOKEN_LIFETIME_SECONDS = 60 * 10;
 }

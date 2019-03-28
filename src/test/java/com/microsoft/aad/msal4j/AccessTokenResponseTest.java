@@ -67,7 +67,7 @@ public class AccessTokenResponseTest extends AbstractMsalTests {
             throws com.nimbusds.oauth2.sdk.ParseException {
         final AccessTokenResponse response = AccessTokenResponse
                 .parseJsonObject(JSONObjectUtils
-                        .parseJSONObject(TestConfiguration.HTTP_RESPONSE_FROM_AUTH_CODE));
+                        .parse(TestConfiguration.HTTP_RESPONSE_FROM_AUTH_CODE));
         Assert.assertNotNull(response);
         OIDCTokens tokens = response.getOIDCTokens();
         Assert.assertNotNull(tokens);
