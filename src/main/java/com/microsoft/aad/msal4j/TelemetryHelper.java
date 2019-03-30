@@ -23,32 +23,36 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.AuthorizationCode;
-import com.nimbusds.oauth2.sdk.AuthorizationCodeGrant;
-import com.nimbusds.oauth2.sdk.AuthorizationGrant;
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
+class TelemetryHelper implements AutoCloseable{
+    private Event eventToEnd;
+    private String requestId;
+    private String clientId;
+    private ITelemetry telemetry;
+    private Boolean shouldFlush;
 
-import java.net.URI;
-import java.util.Set;
+    TelemetryHelper(ITelemetry telemetry,
+                    String requestId,
+                    String clientId,
+                    Event event,
+                    Boolean shouldFlush) {
 
-class AuthorizationCodeRequest extends MsalRequest {
+        this.telemetry = telemetry;
+        this.requestId = requestId;
+        this.clientId = clientId;
+        this.eventToEnd = event;
+        this.shouldFlush = shouldFlush;
 
-    AuthorizationCodeRequest(Set<String> scopes,
-                             String authorizationCode,
-                             URI redirectUri,
-                             ClientAuthentication clientAuthentication,
-                             RequestContext requestContext){
-        super(clientAuthentication, createMsalGrant(authorizationCode, redirectUri, scopes), requestContext);
+        if(telemetry != null){
+            telemetry.startEvent(requestId, event);
+        }
     }
 
-    private static AbstractMsalAuthorizationGrant createMsalGrant(
-            String authorizationCode,
-            URI redirectUri,
-            Set<String> scopes){
-
-        AuthorizationGrant authorizationGrant = new AuthorizationCodeGrant(
-                new AuthorizationCode(authorizationCode), redirectUri);
-
-        return new OAuthAuthorizationGrant(authorizationGrant, scopes);
+    public void close(){
+        if(telemetry != null) {
+            telemetry.stopEvent(requestId, eventToEnd);
+            if(shouldFlush){
+                telemetry.flush(requestId, clientId);
+            }
+        }
     }
 }

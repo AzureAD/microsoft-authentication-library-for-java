@@ -43,12 +43,20 @@ class UserDiscoveryRequest {
     static UserDiscoveryResponse execute(
             final String uri,
             final Map<String, String> clientDataHeaders,
+            RequestContext requestContext,
             ServiceBundle serviceBundle) throws Exception {
 
         HashMap<String, String> headers = new HashMap<>(HEADERS);
         headers.putAll(clientDataHeaders);
-        String response = HttpHelper.executeHttpGet(log, uri, headers, serviceBundle);
-        return JsonHelper.convertJsonToObject(response,
-                UserDiscoveryResponse.class);
+        String response = HttpHelper.executeHttpRequest(
+                log,
+                HttpMethod.GET,
+                uri,
+                headers,
+                null,
+                requestContext,
+                serviceBundle);
+
+        return JsonHelper.convertJsonToObject(response, UserDiscoveryResponse.class);
     }
 }

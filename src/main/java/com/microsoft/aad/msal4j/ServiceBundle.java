@@ -32,11 +32,14 @@ class ServiceBundle {
     private ExecutorService executorService;
     private Proxy proxy;
     private SSLSocketFactory sslSocketFactory;
+    private TelemetryManager telemetryManager;
 
-    ServiceBundle(ExecutorService executorService, Proxy proxy, SSLSocketFactory sslSocketFactory){
+    ServiceBundle(ExecutorService executorService, Proxy proxy, SSLSocketFactory sslSocketFactory,
+                  TelemetryManager telemetryManager){
         this.executorService = executorService;
         this.proxy = proxy;
         this.sslSocketFactory = sslSocketFactory;
+        this.telemetryManager = telemetryManager;
     }
 
     public ExecutorService getExecutorService() {
@@ -49,5 +52,9 @@ class ServiceBundle {
 
     public SSLSocketFactory getSslSocketFactory() {
         return sslSocketFactory;
+    }
+
+    public TelemetryManager getTelemetryManager(){
+        return telemetryManager;
     }
 }

@@ -37,7 +37,7 @@ class OboRequest extends MsalRequest {
                Set<String> scopes,
                ClientAuthentication clientAuthentication,
                RequestContext requestContext){
-        super(createAuthenticationGrant(userAssertion, scopes), clientAuthentication, requestContext);
+        super(clientAuthentication, createAuthenticationGrant(userAssertion, scopes), requestContext);
     }
 
     private static OAuthAuthorizationGrant createAuthenticationGrant(

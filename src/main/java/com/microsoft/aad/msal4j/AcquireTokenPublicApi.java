@@ -23,32 +23,24 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.AuthorizationCode;
-import com.nimbusds.oauth2.sdk.AuthorizationCodeGrant;
-import com.nimbusds.oauth2.sdk.AuthorizationGrant;
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
+enum AcquireTokenPublicApi {
+    // TODO finalize api ids
+    ACQUIRE_TOKEN_BY_REFRESH_TOKEN(82),
+    ACQUIRE_TOKEN_BY_USERNAME_PASSWORD(300),
+    ACQUIRE_TOKEN_BY_INTEGRATED_WINDOWS_AUTH(400),
+    ACQUIRE_TOKEN_ON_BEHALF_OF(522),
+    ACQUIRE_TOKEN_BY_DEVICE_CODE_FLOW(620),
+    ACQUIRE_TOKEN_FOR_CLIENT(729),
+    ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE(831),
+    ACQUIRE_TOKEN_SILENTLY(800);
 
-import java.net.URI;
-import java.util.Set;
+    private final int apiId;
 
-class AuthorizationCodeRequest extends MsalRequest {
-
-    AuthorizationCodeRequest(Set<String> scopes,
-                             String authorizationCode,
-                             URI redirectUri,
-                             ClientAuthentication clientAuthentication,
-                             RequestContext requestContext){
-        super(clientAuthentication, createMsalGrant(authorizationCode, redirectUri, scopes), requestContext);
+    AcquireTokenPublicApi(int apiId){
+        this.apiId = apiId;
     }
 
-    private static AbstractMsalAuthorizationGrant createMsalGrant(
-            String authorizationCode,
-            URI redirectUri,
-            Set<String> scopes){
-
-        AuthorizationGrant authorizationGrant = new AuthorizationCodeGrant(
-                new AuthorizationCode(authorizationCode), redirectUri);
-
-        return new OAuthAuthorizationGrant(authorizationGrant, scopes);
+    int getApiId(){
+        return apiId;
     }
 }

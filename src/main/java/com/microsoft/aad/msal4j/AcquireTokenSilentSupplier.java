@@ -31,39 +31,43 @@ import java.util.Set;
 
 class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
 
-    private Account account;
-    private Set<String> scopes;
-    private AuthenticationAuthority requestAuthority;
-    private boolean forceRefresh;
-    private ClientAuthentication clientAuthentication;
+    //private Account account;
+    //private Set<String> scopes;
+    //private AuthenticationAuthority requestAuthority;
+    //private boolean forceRefresh;
+    //private ClientAuthentication clientAuthentication;
+    private SilentRequest silentRequest;
 
-    AcquireTokenSilentSupplier(ClientApplicationBase clientApplication, ClientAuthentication clientAuthentication,
-                               Account account, Set<String> scopes, String authorityUrl, boolean forceRefresh)
-            throws MalformedURLException {
-        super(clientApplication, new ClientDataHttpHeaders(clientApplication.getCorrelationId()));
-        this.clientApplication = clientApplication;
-        this.clientAuthentication = clientAuthentication;
+    AcquireTokenSilentSupplier(ClientApplicationBase clientApplication, SilentRequest silentRequest) {
 
-        this.account = account;
-        this.scopes = scopes;
+        super(clientApplication, silentRequest);
 
+        //this.clientApplication = clientApplication;
+        //this.clientAuthentication = clientAuthentication;
+
+        //this.account = account;
+        //this.scopes = scopes;
+
+        /*
         if (!StringHelper.isBlank(authorityUrl)) {
             requestAuthority = new AuthenticationAuthority(new URL(authorityUrl));
         } else {
             requestAuthority = clientApplication.authenticationAuthority;
         }
         this.forceRefresh = forceRefresh;
+        */
     }
 
     @Override
     AuthenticationResult execute() throws Exception {
-        requestAuthority = getAuthorityWithPrefNetworkHost(requestAuthority.getAuthority());
+        AuthenticationAuthority requestAuthority =
+                getAuthorityWithPrefNetworkHost(silentRequest.requestAuthority().getAuthority());
 
         AuthenticationResult res =
                 clientApplication.tokenCache.getAuthenticationResult
-                        (account, requestAuthority, scopes, clientApplication.clientId);
+                        (silentRequest.account(), requestAuthority, silentRequest.scopes(), clientApplication.clientId);
 
-        if (!forceRefresh && !StringHelper.isBlank(res.accessToken())) {
+        if (!silentRequest.forceRefresh() && !StringHelper.isBlank(res.accessToken())) {
             return res;
         }
 
@@ -72,9 +76,9 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
         } else {
             RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(
                     res.refreshToken(),
-                    scopes,
-                    clientAuthentication,
-                    new RequestContext(clientApplication.clientId, clientApplication.getCorrelationId()));
+                    silentRequest.scopes(),
+                    silentRequest.getClientAuthentication(),
+                    silentRequest.getRequestContext());
 
             AcquireTokenByAuthorizationGrantSupplier acquireTokenByAuthorisationGrantSupplier =
                     new AcquireTokenByAuthorizationGrantSupplier(clientApplication, refreshTokenRequest, requestAuthority);

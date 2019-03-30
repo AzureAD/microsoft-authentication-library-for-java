@@ -33,7 +33,7 @@ class IntegratedWindowsAuthenticationRequest extends MsalRequest{
                                            Set<String> scopes,
                                            ClientAuthentication clientAuthentication,
                                            RequestContext requestContext){
-            super(createAuthenticationGrant(username, scopes), clientAuthentication, requestContext);
+            super(clientAuthentication, createAuthenticationGrant(username, scopes), requestContext);
     }
 
     private static AbstractMsalAuthorizationGrant createAuthenticationGrant(String username,

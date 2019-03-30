@@ -93,7 +93,7 @@ public class TokenCache {
     }
 
     protected void saveTokens
-            (TokenEndpointRequest tokenRequest, AuthenticationResult authenticationResult, String environment){
+            (TokenRequest tokenRequest, AuthenticationResult authenticationResult, String environment){
 
         if(tokenCacheAccessAspect != null){
             TokenCacheAccessContext context = TokenCacheAccessContext.builder().
@@ -133,7 +133,7 @@ public class TokenCache {
         }
     }
 
-    static RefreshTokenCacheEntity createRefreshTokenCacheEntity(TokenEndpointRequest tokenRequest,
+    static RefreshTokenCacheEntity createRefreshTokenCacheEntity(TokenRequest tokenRequest,
                                                                  AuthenticationResult authenticationResult,
                                                                  String environmentAlias) {
         RefreshTokenCacheEntity rt = new RefreshTokenCacheEntity();
@@ -151,7 +151,7 @@ public class TokenCache {
         return rt;
     }
 
-    static AccessTokenCacheEntity createAccessTokenCacheEntity(TokenEndpointRequest tokenRequest,
+    static AccessTokenCacheEntity createAccessTokenCacheEntity(TokenRequest tokenRequest,
                                                                AuthenticationResult authenticationResult,
                                                                String environmentAlias) {
         AccessTokenCacheEntity at = new AccessTokenCacheEntity();
@@ -183,7 +183,7 @@ public class TokenCache {
         return at;
     }
 
-    static IdTokenCacheEntity createIdTokenCacheEntity(TokenEndpointRequest tokenRequest,
+    static IdTokenCacheEntity createIdTokenCacheEntity(TokenRequest tokenRequest,
                                                        AuthenticationResult authenticationResult,
                                                        String environmentAlias) {
         IdTokenCacheEntity idToken = new IdTokenCacheEntity();

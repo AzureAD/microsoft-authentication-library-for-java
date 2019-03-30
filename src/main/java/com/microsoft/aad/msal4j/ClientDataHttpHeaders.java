@@ -26,7 +26,7 @@ package com.microsoft.aad.msal4j;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
+import java.util.function.BiConsumer;
 
 final class ClientDataHttpHeaders {
 
@@ -50,55 +50,29 @@ final class ClientDataHttpHeaders {
     private final String headerValues;
     private final Map<String, String> headerMap = new HashMap<String, String>();
 
-    private static String generateCorrelationId(){
-    return UUID.randomUUID().toString();
-}
-
     ClientDataHttpHeaders(final String correlationId) {
         if (!StringHelper.isBlank(correlationId)) {
             this.correlationIdHeaderValue = correlationId;
         }
         else {
-            this.correlationIdHeaderValue = generateCorrelationId();
+            this.correlationIdHeaderValue = RequestContext.generateNewCorrelationId();
         }
         this.headerValues = initHeaderMap();
     }
 
     private String initHeaderMap() {
         StringBuilder sb = new StringBuilder();
-        headerMap.put(PRODUCT_HEADER_NAME, PRODUCT_HEADER_VALUE);
-        sb.append(PRODUCT_HEADER_NAME);
-        sb.append("=");
-        sb.append(PRODUCT_HEADER_VALUE);
-        sb.append(";");
-        headerMap
-                .put(PRODUCT_VERSION_HEADER_NAME, PRODUCT_VERSION_HEADER_VALUE);
-        sb.append(PRODUCT_VERSION_HEADER_NAME);
-        sb.append("=");
-        sb.append(PRODUCT_VERSION_HEADER_VALUE);
-        sb.append(";");
-        headerMap.put(OS_HEADER_NAME, OS_HEADER_VALUE);
-        sb.append(OS_HEADER_NAME);
-        sb.append("=");
-        sb.append(OS_HEADER_VALUE);
-        sb.append(";");
-        headerMap.put(CPU_HEADER_NAME, CPU_HEADER_VALUE);
-        sb.append(CPU_HEADER_NAME);
-        sb.append("=");
-        sb.append(CPU_HEADER_VALUE);
-        sb.append(";");
-        headerMap.put(REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_NAME,
-                REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_VALUE);
-        sb.append(REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_NAME);
-        sb.append("=");
-        sb.append(REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_VALUE);
-        sb.append(";");
-        headerMap
-                .put(CORRELATION_ID_HEADER_NAME, this.correlationIdHeaderValue);
-        sb.append(CORRELATION_ID_HEADER_NAME);
-        sb.append("=");
-        sb.append(this.correlationIdHeaderValue);
-        sb.append(";");
+
+        BiConsumer<String, String> init = (String key, String val) -> {
+            headerMap.put(key, val);
+            sb.append(key).append("=").append(val).append(";");
+        };
+        init.accept(PRODUCT_HEADER_NAME, PRODUCT_HEADER_VALUE);
+        init.accept(PRODUCT_VERSION_HEADER_NAME, PRODUCT_VERSION_HEADER_VALUE);
+        init.accept(OS_HEADER_NAME, OS_HEADER_VALUE);
+        init.accept(CPU_HEADER_NAME, CPU_HEADER_VALUE);
+        init.accept(REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_NAME, REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_VALUE);
+        init.accept(CORRELATION_ID_HEADER_NAME, this.correlationIdHeaderValue);
 
         return sb.toString();
     }

@@ -29,12 +29,11 @@ import com.nimbusds.oauth2.sdk.ResourceOwnerPasswordCredentialsGrant;
 import com.nimbusds.oauth2.sdk.SAML2BearerGrant;
 import org.apache.commons.codec.binary.Base64;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
 class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSupplier {
 
-    //private AbstractMsalAuthorizationGrant authGrant;
-    //private ClientAuthentication clientAuth;
     private AuthenticationAuthority requestAuthority;
 
     private MsalRequest msalRequest;
@@ -42,7 +41,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
     AcquireTokenByAuthorizationGrantSupplier(ClientApplicationBase clientApplication,
                                              MsalRequest msalRequest,
                                              AuthenticationAuthority authority) {
-        super(clientApplication, msalRequest.getHeaders());
+        super(clientApplication, msalRequest);
         this.msalRequest = msalRequest;
         this.requestAuthority = authority;
     }
@@ -83,6 +82,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
         UserDiscoveryResponse userDiscoveryResponse = UserDiscoveryRequest.execute(
                 this.clientApplication.authenticationAuthority.getUserRealmEndpoint(grant.getUsername()),
                 msalRequest.getHeaders().getReadonlyHeaderMap(),
+                msalRequest.getRequestContext(),
                 this.clientApplication.getServiceBundle());
 
         if (userDiscoveryResponse.isAccountFederated()) {
@@ -91,24 +91,29 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
                     grant.getUsername(),
                     grant.getPassword().getValue(),
                     userDiscoveryResponse.getCloudAudienceUrn(),
+                    msalRequest.getRequestContext(),
                     this.clientApplication.getServiceBundle(),
                     this.clientApplication.isLogPii());
 
-            AuthorizationGrant updatedGrant;
-            if (response.isTokenSaml2()) {
-                updatedGrant = new SAML2BearerGrant(new Base64URL(
-                        Base64.encodeBase64String(response.getToken().getBytes(
-                                "UTF-8"))));
-            }
-            else {
-                updatedGrant = new SAML11BearerGrant(new Base64URL(
-                        Base64.encodeBase64String(response.getToken()
-                                .getBytes())));
-            }
-            authGrant = new OAuthAuthorizationGrant(updatedGrant,
-                    authGrant.getCustomParameters());
+            AuthorizationGrant updatedGrant = getSAMLAuthorizationGrant(response);
+
+            authGrant = new OAuthAuthorizationGrant(updatedGrant, authGrant.getCustomParameters());
         }
         return authGrant;
+    }
+
+    private AuthorizationGrant getSAMLAuthorizationGrant(WSTrustResponse response) throws UnsupportedEncodingException {
+        AuthorizationGrant updatedGrant;
+        if (response.isTokenSaml2()) {
+            updatedGrant = new SAML2BearerGrant(new Base64URL(
+                    Base64.encodeBase64String(response.getToken().getBytes(
+                            "UTF-8"))));
+        } else {
+            updatedGrant = new SAML11BearerGrant(new Base64URL(
+                    Base64.encodeBase64String(response.getToken()
+                            .getBytes())));
+        }
+        return updatedGrant;
     }
 
     private AuthorizationGrant getAuthorizationGrantIntegrated(String userName) throws Exception {
@@ -121,6 +126,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
         UserDiscoveryResponse userRealmResponse = UserDiscoveryRequest.execute(
                 userRealmEndpoint,
                 msalRequest.getHeaders().getReadonlyHeaderMap(),
+                msalRequest.getRequestContext(),
                 this.clientApplication.getServiceBundle());
 
         if (userRealmResponse.isAccountFederated() &&
@@ -134,19 +140,11 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
             WSTrustResponse wsTrustResponse = WSTrustRequest.execute(
                     mexURL,
                     cloudAudienceUrn,
+                    msalRequest.getRequestContext(),
                     this.clientApplication.getServiceBundle(),
                     this.clientApplication.isLogPii());
 
-            if (wsTrustResponse.isTokenSaml2()) {
-                updatedGrant =
-                        new SAML2BearerGrant(new Base64URL(Base64.encodeBase64String(
-                                        wsTrustResponse.getToken().getBytes("UTF-8"))));
-            }
-            else {
-                updatedGrant =
-                        new SAML11BearerGrant(new Base64URL(Base64.encodeBase64String(
-                                wsTrustResponse.getToken().getBytes())));
-            }
+            updatedGrant = getSAMLAuthorizationGrant(wsTrustResponse);
         }
         else if (userRealmResponse.isAccountManaged()) {
             throw new AuthenticationException("Password is required for managed user");

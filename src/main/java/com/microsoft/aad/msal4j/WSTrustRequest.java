@@ -39,13 +39,16 @@ import java.util.UUID;
 
 class WSTrustRequest {
 
-    private final static Logger log = LoggerFactory
-            .getLogger(WSTrustRequest.class);
+    private final static Logger log = LoggerFactory.getLogger(WSTrustRequest.class);
 
     private final static int MAX_EXPECTED_MESSAGE_SIZE = 1024;
     final static String DEFAULT_APPLIES_TO = "urn:federation:MicrosoftOnline";
 
-    static WSTrustResponse execute(String username, String password, String cloudAudienceUrn, BindingPolicy policy,
+    static WSTrustResponse execute(String username,
+                                   String password,
+                                   String cloudAudienceUrn,
+                                   BindingPolicy policy,
+                                   RequestContext requestContext,
                                    ServiceBundle serviceBundle) throws Exception {
 
         Map<String, String> headers = new HashMap<String, String>();
@@ -65,17 +68,22 @@ class WSTrustRequest {
 
         String body = buildMessage(policy.getUrl(), username, password,
                 policy.getVersion(), cloudAudienceUrn).toString();
-      
-        String response = HttpHelper.executeHttpPost(log, policy.getUrl(),
-                body, headers, serviceBundle);
+
+        String response = HttpHelper.executeHttpRequest(log, HttpMethod.POST, policy.getUrl(),
+                headers, body, requestContext , serviceBundle);
 
         return WSTrustResponse.parse(response, policy.getVersion());
     }
 
-    static WSTrustResponse execute(String url, String username, String password, String cloudAudienceUrn,
-                                   ServiceBundle serviceBundle, boolean logPii) throws Exception {
+    static WSTrustResponse execute(String url,
+                                   String username,
+                                   String password,
+                                   String cloudAudienceUrn,
+                                   RequestContext requestContext,
+                                   ServiceBundle serviceBundle,
+                                   boolean logPii) throws Exception {
 
-        String mexResponse = HttpHelper.executeHttpGet(log, url, serviceBundle);
+        String mexResponse = HttpHelper.executeHttpRequest(log, HttpMethod.GET , url, null,null, requestContext, serviceBundle);
 
         BindingPolicy policy = MexParser.getWsTrustEndpointFromMexResponse(mexResponse, logPii);
 
@@ -83,12 +91,23 @@ class WSTrustRequest {
             throw new AuthenticationException("WsTrust endpoint not found in metadata document");
         }
 
-        return execute(username, password, cloudAudienceUrn, policy,serviceBundle);
+        return execute(username, password, cloudAudienceUrn, policy, requestContext, serviceBundle);
     }
 
-    static WSTrustResponse execute(String mexURL, String cloudAudienceUrn, ServiceBundle serviceBundle, boolean logPii) throws Exception {
+    static WSTrustResponse execute(String mexURL,
+                                   String cloudAudienceUrn,
+                                   RequestContext requestContext,
+                                   ServiceBundle serviceBundle,
+                                   boolean logPii) throws Exception {
 
-        String mexResponse = HttpHelper.executeHttpGet(log, mexURL, serviceBundle);
+        String mexResponse = HttpHelper.executeHttpRequest(
+                log,
+                HttpMethod.GET,
+                mexURL,
+                null,
+                null,
+                requestContext,
+                serviceBundle);
 
         BindingPolicy policy = MexParser.getPolicyFromMexResponseForIntegrated(mexResponse, logPii);
 
@@ -96,11 +115,11 @@ class WSTrustRequest {
             throw new AuthenticationException("WsTrust endpoint not found in metadata document");
         }
 
-        return execute(null, null, cloudAudienceUrn, policy, serviceBundle);
+        return execute(null, null, cloudAudienceUrn, policy, requestContext, serviceBundle);
     }
 
     static StringBuilder buildMessage(String address, String username,
-            String password, WSTrustVersion addressVersion, String cloudAudienceUrn) {
+                                      String password, WSTrustVersion addressVersion, String cloudAudienceUrn) {
         boolean integrated = (username == null) & (password == null);
 
         StringBuilder securityHeaderBuilder = new StringBuilder(MAX_EXPECTED_MESSAGE_SIZE);
@@ -146,44 +165,44 @@ class WSTrustRequest {
         messageBuilder
                 .append(String
                         .format("<s:Envelope xmlns:s='http://www.w3.org/2003/05/soap-envelope' xmlns:a='http://www.w3.org/2005/08/addressing' xmlns:u='%s'>"
-                                + "<s:Header>"
-                                + "<a:Action s:mustUnderstand='1'>%s</a:Action>"
-                                + "<a:messageID>urn:uuid:"
-                                + "%s"
-                                + // guid
-                                "</a:messageID>"
-                                + "<a:ReplyTo>"
-                                + "<a:Address>http://www.w3.org/2005/08/addressing/anonymous</a:Address>"
-                                + "</a:ReplyTo>"
-                                + "<a:To s:mustUnderstand='1'>"
-                                + "%s"
-                                + // resource
-                                "</a:To>"
-                                + "%s"
-                                + // securityHeader
-                                "</s:Header>"
-                                + "<s:Body>"
-                                + "<trust:RequestSecurityToken xmlns:trust='%s'>"
-                                + "<wsp:AppliesTo xmlns:wsp='http://schemas.xmlsoap.org/ws/2004/09/policy'>"
-                                + "<a:EndpointReference>"
-                                + "<a:Address>"
-                                + "%s"
-                                + // appliesTo like
-                                  // urn:federation:MicrosoftOnline. Either
-                                  // wst:TokenType or wst:AppliesTo should be
-                                  // defined in the token request message. If
-                                  // both are specified, the wst:AppliesTo field
-                                  // takes precedence.
-                                "</a:Address>"
-                                + "</a:EndpointReference>"
-                                + "</wsp:AppliesTo>"
-                                + "<trust:KeyType>%s</trust:KeyType>"
-                                + "<trust:RequestType>%s</trust:RequestType>"
-                                + // If we dont specify tokentype, it will
-                                  // return samlv1.1
-                                "</trust:RequestSecurityToken>"
-                                + "</s:Body>"
-                                + "</s:Envelope>", schemaLocation, soapAction,
+                                        + "<s:Header>"
+                                        + "<a:Action s:mustUnderstand='1'>%s</a:Action>"
+                                        + "<a:messageID>urn:uuid:"
+                                        + "%s"
+                                        + // guid
+                                        "</a:messageID>"
+                                        + "<a:ReplyTo>"
+                                        + "<a:Address>http://www.w3.org/2005/08/addressing/anonymous</a:Address>"
+                                        + "</a:ReplyTo>"
+                                        + "<a:To s:mustUnderstand='1'>"
+                                        + "%s"
+                                        + // resource
+                                        "</a:To>"
+                                        + "%s"
+                                        + // securityHeader
+                                        "</s:Header>"
+                                        + "<s:Body>"
+                                        + "<trust:RequestSecurityToken xmlns:trust='%s'>"
+                                        + "<wsp:AppliesTo xmlns:wsp='http://schemas.xmlsoap.org/ws/2004/09/policy'>"
+                                        + "<a:EndpointReference>"
+                                        + "<a:Address>"
+                                        + "%s"
+                                        + // appliesTo like
+                                        // urn:federation:MicrosoftOnline. Either
+                                        // wst:TokenType or wst:AppliesTo should be
+                                        // defined in the token request message. If
+                                        // both are specified, the wst:AppliesTo field
+                                        // takes precedence.
+                                        "</a:Address>"
+                                        + "</a:EndpointReference>"
+                                        + "</wsp:AppliesTo>"
+                                        + "<trust:KeyType>%s</trust:KeyType>"
+                                        + "<trust:RequestType>%s</trust:RequestType>"
+                                        + // If we dont specify tokentype, it will
+                                        // return samlv1.1
+                                        "</trust:RequestSecurityToken>"
+                                        + "</s:Body>"
+                                        + "</s:Envelope>", schemaLocation, soapAction,
                                 guid, address,
                                 integrated ? "" : securityHeaderBuilder.toString(),
                                 rstTrustNamespace,

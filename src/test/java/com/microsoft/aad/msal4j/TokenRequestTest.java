@@ -50,7 +50,7 @@ import java.util.Collections;
 
 @Test(groups = { "checkin" })
 @PrepareForTest(TokenErrorResponse.class)
-public class TokenEndpointRequestTest extends AbstractMsalTests {
+public class TokenRequestTest extends AbstractMsalTests {
 
     @Test
     public void executeOAuthRequest_SCBadRequestErrorInteractionRequired_ClaimsChallengeExceptionThrown()
@@ -65,11 +65,20 @@ public class TokenEndpointRequestTest extends AbstractMsalTests {
                 "code",
                 new URI("http://my.redirect.com"),
                 ca,
-                new RequestContext("id", "corr-id"));
+                new RequestContext("id",
+                        "corr-id",
+                        AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
-        TokenEndpointRequest request = PowerMock.createPartialMock(
-                TokenEndpointRequest.class, new String[]{"toOauthHttpRequest"},
-                new URL("http://login.windows.net"), acr, null);
+        ServiceBundle serviceBundle = new ServiceBundle(
+                null,
+                null,
+                null,
+                new TelemetryManager(null, false));
+
+        TokenRequest request = PowerMock.createPartialMock(
+                TokenRequest.class, new String[]{"toOauthHttpRequest"},
+
+                new URL("http://login.windows.net"), acr, serviceBundle);
         OAuthHttpRequest msalOAuthHttpRequest = PowerMock
                 .createMock(OAuthHttpRequest.class);
 
@@ -101,25 +110,6 @@ public class TokenEndpointRequestTest extends AbstractMsalTests {
         PowerMock.verifyAll();
     }
 
-    @Test(expectedExceptions = SerializeException.class, expectedExceptionsMessageRegExp = "The endpoint URI is not specified")
-    public void testNullUri() throws SerializeException, ParseException,
-            AuthenticationException, IOException, java.text.ParseException,
-            URISyntaxException {
-        final ClientAuthentication ca = new ClientSecretPost(
-                new ClientID("id"), new Secret("secret"));
-        final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
-                Collections.singleton("default-scope"),
-                "code",
-                new URI("http://my.redirect.com"),
-                ca,
-                new RequestContext("id", "corr-id"));
-
-        final ServiceBundle sb = new ServiceBundle(null, null, null);
-        final TokenEndpointRequest request = new TokenEndpointRequest(null, acr, sb);
-        Assert.assertNotNull(request);
-        request.executeOauthRequestAndProcessResponse();
-    }
-
     @Test
     public void testConstructor() throws MalformedURLException,
             URISyntaxException {
@@ -130,11 +120,14 @@ public class TokenEndpointRequestTest extends AbstractMsalTests {
                 "code",
                 new URI("http://my.redirect.com"),
                 ca,
-                new RequestContext("id", "corr-id"));
-        final TokenEndpointRequest request = new TokenEndpointRequest(
+                new RequestContext(
+                        "id",
+                        "corr-id",
+                        AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+        final TokenRequest request = new TokenRequest(
                 new URL("http://login.windows.net"),
                 acr,
-                new ServiceBundle(null, null, null));
+                new ServiceBundle(null, null, null, null));
         Assert.assertNotNull(request);
     }
 
@@ -149,11 +142,14 @@ public class TokenEndpointRequestTest extends AbstractMsalTests {
                 "code",
                 new URI("http://my.redirect.com"),
                 ca,
-                new RequestContext("id", "corr-id"));
-        final TokenEndpointRequest request = new TokenEndpointRequest(
+                new RequestContext(
+                        "id",
+                        "corr-id",
+                        AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+        final TokenRequest request = new TokenRequest(
                 new URL("http://login.windows.net"),
                 acr,
-                new ServiceBundle(null, null, null));
+                new ServiceBundle(null, null, null, null));
         Assert.assertNotNull(request);
         final OAuthHttpRequest req = request.toOauthHttpRequest();
         Assert.assertNotNull(req);
@@ -174,11 +170,14 @@ public class TokenEndpointRequestTest extends AbstractMsalTests {
                 "code",
                 new URI("http://my.redirect.com"),
                 ca,
-                new RequestContext("id", "corr-id"));
-        final TokenEndpointRequest request = new TokenEndpointRequest(
+                new RequestContext(
+                        "id",
+                        "corr-id",
+                        AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+        final TokenRequest request = new TokenRequest(
                 new URL("http://login.windows.net"),
                 acr,
-                new ServiceBundle(null, null, null));
+                new ServiceBundle(null, null, null, null));
         Assert.assertNotNull(request);
         final OAuthHttpRequest req = request.toOauthHttpRequest();
         Assert.assertNotNull(req);
@@ -194,15 +193,27 @@ public class TokenEndpointRequestTest extends AbstractMsalTests {
                 "code",
                 new URI("http://my.redirect.com"),
                 ca,
-                new RequestContext("id", "corr-id"));
+                new RequestContext(
+                        "id",
+                        "corr-id",
+                        AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
-        final TokenEndpointRequest request = PowerMock.createPartialMock(
-                TokenEndpointRequest.class, new String[] { "toOauthHttpRequest" },
-                new URL("http://login.windows.net"), acr, null);
+        ServiceBundle serviceBundle = new ServiceBundle(
+                null,
+                null,
+                null,
+                new TelemetryManager(null, false));
+
+        final TokenRequest request = PowerMock.createPartialMock(
+                TokenRequest.class, new String[] { "toOauthHttpRequest" },
+
+                new URL("http://login.windows.net"), acr, serviceBundle);
         final OAuthHttpRequest msalOAuthHttpRequest = PowerMock
                 .createMock(OAuthHttpRequest.class);
+
         final HTTPResponse httpResponse = PowerMock
                 .createMock(HTTPResponse.class);
+
         EasyMock.expect(request.toOauthHttpRequest())
                 .andReturn(msalOAuthHttpRequest).times(1);
         EasyMock.expect(msalOAuthHttpRequest.send()).andReturn(httpResponse)
@@ -215,6 +226,11 @@ public class TokenEndpointRequestTest extends AbstractMsalTests {
                 .times(1);
         httpResponse.ensureStatusCode(200);
         EasyMock.expectLastCall();
+
+        EasyMock.expect(httpResponse.getHeader("User-Agent")).andReturn(null);
+        EasyMock.expect(httpResponse.getHeader("x-ms-request-id")).andReturn(null);
+        EasyMock.expect(httpResponse.getHeader("x-ms-clitelem")).andReturn(null);
+        EasyMock.expect(httpResponse.getStatusCode()).andReturn(200).times(1);
 
         PowerMock.replay(request, msalOAuthHttpRequest, httpResponse);
 
@@ -241,13 +257,23 @@ public class TokenEndpointRequestTest extends AbstractMsalTests {
                 "code",
                 new URI("http://my.redirect.com"),
                 ca,
-                new RequestContext("id", "corr-id"));
+                new RequestContext(
+                        "id",
+                        "corr-id",
+                        AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
-        final TokenEndpointRequest request = PowerMock.createPartialMock(
-                TokenEndpointRequest.class, new String[] { "toOauthHttpRequest" },
-                new URL("http://login.windows.net"), acr, null);
+        ServiceBundle serviceBundle = new ServiceBundle(
+                null,
+                null,
+                null,
+                new TelemetryManager(null, false));
+
+        final TokenRequest request = PowerMock.createPartialMock(
+                TokenRequest.class, new String[] { "toOauthHttpRequest" },
+                new URL("http://login.windows.net"), acr, serviceBundle);
         final OAuthHttpRequest msalOAuthHttpRequest = PowerMock
                 .createMock(OAuthHttpRequest.class);
+
         final HTTPResponse httpResponse = PowerMock
                 .createMock(HTTPResponse.class);
         EasyMock.expect(request.toOauthHttpRequest())
@@ -262,12 +288,18 @@ public class TokenEndpointRequestTest extends AbstractMsalTests {
         final ErrorObject errorObject = PowerMock.createMock(ErrorObject.class);
 
         EasyMock.expect(errorObject.getCode())
-                .andReturn("unknown").times(1);
+                .andReturn("unknown").times(3);
         EasyMock.expect(errorObject.getHTTPStatusCode())
                 .andReturn(402).times(1);
 
         EasyMock.expect(errorResponse.getErrorObject())
                 .andReturn(errorObject).times(1);
+
+        EasyMock.expect(httpResponse.getHeader("User-Agent")).andReturn(null);
+        EasyMock.expect(httpResponse.getHeader("x-ms-request-id")).andReturn(null);
+        EasyMock.expect(httpResponse.getHeader("x-ms-clitelem")).andReturn(null);
+        EasyMock.expect(httpResponse.getStatusCode()).andReturn(402).times(1);
+
 
         PowerMock.mockStaticPartial(TokenErrorResponse.class, "parse");
         PowerMock.createPartialMock(TokenErrorResponse.class, "parse");

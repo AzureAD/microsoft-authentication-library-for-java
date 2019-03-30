@@ -111,7 +111,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
     }
 
     public static Map<String, String> splitQuery(String query) throws UnsupportedEncodingException {
-        Map<String, String> query_pairs = new LinkedHashMap();
+        Map<String, String> query_pairs = new LinkedHashMap<>();
         String[] pairs = query.split("&");
         for (String pair : pairs) {
             int idx = pair.indexOf("=");
@@ -199,9 +199,16 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
         PowerMock.mockStatic(HttpHelper.class);
 
         EasyMock.expect(
-                HttpHelper.executeHttpGet(EasyMock.isA(Logger.class), EasyMock.isA(String.class),
-                        EasyMock.isA(Map.class), EasyMock.isA(ServiceBundle.class)))
+                HttpHelper.executeHttpRequest(
+                        EasyMock.isA(Logger.class),
+                        EasyMock.isA(HttpMethod.class),
+                        EasyMock.isA(String.class),
+                        EasyMock.isA(Map.class),
+                        EasyMock.isNull(),
+                        EasyMock.isA(RequestContext.class),
+                        EasyMock.isA(ServiceBundle.class)))
                 .andReturn(INSTANCE_DISCOVERY_RESPONSE);
+
 
         PowerMock.replay(HttpHelper.class);
 

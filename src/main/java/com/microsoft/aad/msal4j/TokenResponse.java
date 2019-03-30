@@ -35,7 +35,7 @@ import lombok.Getter;
 import net.minidev.json.JSONObject;
 
 @Getter(AccessLevel.PACKAGE)
-class AccessTokenResponse extends OIDCTokenResponse {
+class TokenResponse extends OIDCTokenResponse {
 
     private String scope;
 
@@ -45,13 +45,13 @@ class AccessTokenResponse extends OIDCTokenResponse {
 
     private long extExpiresIn;
 
-    AccessTokenResponse(final AccessToken accessToken,
-                            final RefreshToken refreshToken, final String idToken) {
+    TokenResponse(final AccessToken accessToken,
+                  final RefreshToken refreshToken, final String idToken) {
         super(new OIDCTokens(idToken, accessToken, refreshToken));
     }
 
-    AccessTokenResponse(final AccessToken accessToken, final RefreshToken refreshToken, final String idToken,
-                            final String scope, String clientInfo, long expiresIn, long extExpiresIn) {
+    TokenResponse(final AccessToken accessToken, final RefreshToken refreshToken, final String idToken,
+                  final String scope, String clientInfo, long expiresIn, long extExpiresIn) {
         this(accessToken, refreshToken, idToken);
         this.scope = scope;
         this.clientInfo = clientInfo;
@@ -65,7 +65,7 @@ class AccessTokenResponse extends OIDCTokenResponse {
      * @return
      * @throws ParseException
      */
-    static AccessTokenResponse parseHttpResponse(
+    static TokenResponse parseHttpResponse(
             final HTTPResponse httpResponse) throws ParseException {
 
         httpResponse.ensureStatusCode(HTTPResponse.SC_OK);
@@ -81,7 +81,7 @@ class AccessTokenResponse extends OIDCTokenResponse {
      * @return
      * @throws ParseException
      */
-    static AccessTokenResponse parseJsonObject(final JSONObject jsonObject)
+    static TokenResponse parseJsonObject(final JSONObject jsonObject)
             throws ParseException {
 
         final AccessToken accessToken = AccessToken.parse(jsonObject);
@@ -115,7 +115,7 @@ class AccessTokenResponse extends OIDCTokenResponse {
             ext_expires_in = JSONObjectUtils.getLong(jsonObject, "ext_expires_in");
         }
 
-        return new AccessTokenResponse(accessToken, refreshToken,
+        return new TokenResponse(accessToken, refreshToken,
                 idTokenValue, scopeValue, clientInfo, expiresIn, ext_expires_in);
     }
 }

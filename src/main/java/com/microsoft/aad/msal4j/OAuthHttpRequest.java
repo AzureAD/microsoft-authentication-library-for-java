@@ -51,7 +51,7 @@ class OAuthHttpRequest extends HTTPRequest {
     private final ServiceBundle serviceBundle;
 
     /**
-     * 
+     *
      * @param method
      * @param url
      */
@@ -68,7 +68,7 @@ class OAuthHttpRequest extends HTTPRequest {
     }
 
     /**
-     * 
+     *
      */
     @Override
     public HTTPResponse send() throws IOException {
@@ -136,7 +136,7 @@ class OAuthHttpRequest extends HTTPRequest {
 
         if (this.getQuery() != null) {
             try(final OutputStreamWriter writer = new OutputStreamWriter(
-                        conn.getOutputStream())) {
+                    conn.getOutputStream())) {
                 writer.write(getQuery());
                 writer.flush();
             }

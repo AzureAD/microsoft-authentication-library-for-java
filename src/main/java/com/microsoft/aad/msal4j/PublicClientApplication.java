@@ -28,7 +28,7 @@ import com.nimbusds.oauth2.sdk.id.ClientID;
 import org.slf4j.LoggerFactory;
 
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -60,7 +60,7 @@ public class PublicClientApplication extends ClientApplicationBase {
                 password,
                 scopes,
                 clientAuthentication,
-                new RequestContext(clientId, this.getCorrelationId()));
+                createRequestContext(AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_USERNAME_PASSWORD));
 
         return this.executeRequest(userNamePasswordRequest);
     }
@@ -87,7 +87,8 @@ public class PublicClientApplication extends ClientApplicationBase {
                         username,
                         scopes,
                         clientAuthentication,
-                        new RequestContext(clientId, this.getCorrelationId()));
+                        createRequestContext(
+                                AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_INTEGRATED_WINDOWS_AUTH));
 
         return this.executeRequest(integratedWindowsAuthenticationRequest);
     }
@@ -127,7 +128,7 @@ public class PublicClientApplication extends ClientApplicationBase {
                 futureReference,
                 scopes,
                 clientAuthentication,
-                new RequestContext(clientId, this.getCorrelationId()));
+                createRequestContext(AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_DEVICE_CODE_FLOW));
 
         CompletableFuture<AuthenticationResult> future = executeRequest(deviceCodeRequest);
         futureReference.set(future);

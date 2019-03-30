@@ -23,15 +23,14 @@
 
 package com.microsoft.aad.msal4j;
 
+import org.easymock.EasyMock;
+import org.powermock.api.easymock.PowerMock;
+import org.testng.annotations.Test;
+
 import javax.net.ssl.HttpsURLConnection;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URL;
-
-
-import org.easymock.EasyMock;
-import org.powermock.api.easymock.PowerMock;
-import org.testng.annotations.Test;
 
 /**
  *
@@ -57,6 +56,7 @@ public class HttpHelperTest extends AbstractMsalTests {
 
         PowerMock.replayAll(connection);
 
-        HttpHelper.readResponseFromConnection(connection);
+        HttpEvent httpEvent = new HttpEvent();
+        HttpHelper.readResponseFromConnection(connection, httpEvent);
     }
 }

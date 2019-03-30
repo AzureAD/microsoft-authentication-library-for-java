@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 class AadInstanceDiscovery {
     private static final Logger log = LoggerFactory.getLogger(AadInstanceDiscovery.class);
 
-    private final static TreeSet<String> TRUSTED_HOSTS_SET = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    final static TreeSet<String> TRUSTED_HOSTS_SET = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
     static {
         TRUSTED_HOSTS_SET.addAll(Arrays.asList(
@@ -70,15 +70,17 @@ class AadInstanceDiscovery {
     }
 
     private static InstanceDiscoveryResponse sendInstanceDiscoveryRequest
-            (URL authorityUrl, ClientDataHttpHeaders headers, ServiceBundle serviceBundle) throws Exception {
+            (URL authorityUrl, MsalRequest msalRequest,
+             ServiceBundle serviceBundle) throws Exception {
 
         String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpoint(authorityUrl.getAuthority()) +
                 INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE.replace("{authorizeEndpoint}",
                         getAuthorizeEndpoint(authorityUrl.getAuthority(),
                                 AuthenticationAuthority.getTenant(authorityUrl)));
 
-        String json = HttpHelper.executeHttpGet
-                (log, instanceDiscoveryRequestUrl, headers.getReadonlyHeaderMap(), serviceBundle);
+        String json = HttpHelper.executeHttpRequest
+                (log, HttpMethod.GET, instanceDiscoveryRequestUrl, msalRequest.getHeaders().getReadonlyHeaderMap(),
+                        null, msalRequest.getRequestContext(), serviceBundle);
 
         return JsonHelper.convertJsonToObject(json, InstanceDiscoveryResponse.class);
     }
@@ -90,11 +92,10 @@ class AadInstanceDiscovery {
     }
 
     private static void doInstanceDiscoveryAndCache
-            (URL authorityUrl, boolean validateAuthority, ClientDataHttpHeaders headers, ServiceBundle serviceBundle)
-            throws Exception {
+            (URL authorityUrl, boolean validateAuthority, MsalRequest msalRequest, ServiceBundle serviceBundle) throws Exception {
 
         InstanceDiscoveryResponse instanceDiscoveryResponse =
-                sendInstanceDiscoveryRequest(authorityUrl, headers, serviceBundle);
+                sendInstanceDiscoveryRequest(authorityUrl, msalRequest, serviceBundle);
 
         if (validateAuthority) {
             validate(instanceDiscoveryResponse);
@@ -104,13 +105,12 @@ class AadInstanceDiscovery {
     }
 
     static InstanceDiscoveryMetadataEntry GetMetadataEntry
-            (URL authorityUrl, boolean validateAuthority, ClientDataHttpHeaders headers,
-             ServiceBundle serviceBundle) throws Exception {
+            (URL authorityUrl, boolean validateAuthority, MsalRequest msalRequest, ServiceBundle serviceBundle) throws Exception {
 
         InstanceDiscoveryMetadataEntry result = cache.get(authorityUrl.getAuthority());
 
         if (result == null) {
-            doInstanceDiscoveryAndCache(authorityUrl, validateAuthority, headers, serviceBundle);
+            doInstanceDiscoveryAndCache(authorityUrl, validateAuthority, msalRequest, serviceBundle);
         }
 
         return cache.get(authorityUrl.getAuthority());

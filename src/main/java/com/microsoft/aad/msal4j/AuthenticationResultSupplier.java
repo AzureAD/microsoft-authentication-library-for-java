@@ -26,6 +26,8 @@ package com.microsoft.aad.msal4j;
 import org.apache.commons.codec.binary.Base64;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -35,13 +37,11 @@ import java.util.function.Supplier;
 abstract class AuthenticationResultSupplier implements Supplier<AuthenticationResult> {
 
     ClientApplicationBase clientApplication;
-    private ClientDataHttpHeaders headers;
+    MsalRequest msalRequest;
 
-    AuthenticationResultSupplier(ClientApplicationBase clientApplication,
-                                 ClientDataHttpHeaders headers){
-
+    AuthenticationResultSupplier(ClientApplicationBase clientApplication, MsalRequest msalRequest) {
         this.clientApplication = clientApplication;
-        this.headers = headers;
+        this.msalRequest = msalRequest;
     }
 
     AuthenticationAuthority getAuthorityWithPrefNetworkHost(String authority) throws Exception {
@@ -50,7 +50,7 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
 
         InstanceDiscoveryMetadataEntry discoveryMetadataEntry =
                 AadInstanceDiscovery.GetMetadataEntry
-                        (authorityUrl, clientApplication.isValidateAuthority(), headers,
+                        (authorityUrl, clientApplication.isValidateAuthority(), msalRequest,
                                 clientApplication.getServiceBundle());
 
         URL updatedAuthorityUrl =
@@ -64,16 +64,34 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
     @Override
     public AuthenticationResult get() {
         AuthenticationResult result;
-        try {
-            result = execute();
 
-            logResult(result, headers);
-        } catch (Exception ex) {
-            clientApplication.log.error(
-                    LogHelper.createMessage("Execution of " + this.getClass() + " failed.",
-                            this.headers.getHeaderCorrelationIdValue()), ex);
+        ApiEvent apiEvent = initializeApiEvent(msalRequest);
 
-            throw new CompletionException(ex);
+        try(TelemetryHelper telemetryHelper =
+                    clientApplication.getServiceBundle().getTelemetryManager().createTelemetryHelper(
+                            msalRequest.getRequestContext().getTelemetryRequestId(),
+                            msalRequest.getClientAuthentication().getClientID().toString(),
+                            apiEvent,
+                            true)) {
+            try {
+                result = execute();
+                logResult(result, msalRequest.getHeaders());
+
+                apiEvent.setWasSuccessful(true);
+                if (result.account() != null) {
+                    apiEvent.setTenantId(result.account().realm());
+                }
+            } catch(Exception ex) {
+                if (ex instanceof AuthenticationException) {
+                    apiEvent.setApiErrorCode(((AuthenticationException) ex).getErrorCode());
+                }
+                clientApplication.log.error(
+                        LogHelper.createMessage(
+                                "Execution of " + this.getClass() + " failed.",
+                                msalRequest.getHeaders().getHeaderCorrelationIdValue()), ex);
+
+                throw new CompletionException(ex);
+            }
         }
         return result;
     }
@@ -88,30 +106,62 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
                 String refreshTokenHash = this.computeSha256Hash(result
                         .refreshToken());
                 if(clientApplication.isLogPii()){
-                    clientApplication.log.debug(LogHelper.createMessage(String
-                                    .format("Access Token with hash '%s' and Refresh Token with hash '%s' returned",
-                                            accessTokenHash, refreshTokenHash),
+                    clientApplication.log.debug(LogHelper.createMessage(String.format(
+                            "Access Token with hash '%s' and Refresh Token with hash '%s' returned",
+                            accessTokenHash, refreshTokenHash),
                             headers.getHeaderCorrelationIdValue()));
                 }
                 else{
                     clientApplication.log.debug(
-                            LogHelper.createMessage("Access Token and Refresh Token were returned",
-                            headers.getHeaderCorrelationIdValue()));
+                            LogHelper.createMessage(
+                                    "Access Token and Refresh Token were returned",
+                                    headers.getHeaderCorrelationIdValue()));
                 }
             }
             else {
                 if(clientApplication.isLogPii()){
-                    clientApplication.log.debug(LogHelper.createMessage(String
-                                    .format("Access Token with hash '%s' returned",
-                                            accessTokenHash),
+                    clientApplication.log.debug(LogHelper.createMessage(String.format(
+                            "Access Token with hash '%s' returned", accessTokenHash),
                             headers.getHeaderCorrelationIdValue()));
                 }
                 else{
-                    clientApplication.log.debug(LogHelper.createMessage("Access Token was returned",
+                    clientApplication.log.debug(LogHelper.createMessage(
+                            "Access Token was returned",
                             headers.getHeaderCorrelationIdValue()));
                 }
             }
         }
+    }
+
+    private ApiEvent initializeApiEvent(MsalRequest msalRequest){
+        ApiEvent apiEvent = new ApiEvent(clientApplication.isLogPii());
+        msalRequest.getRequestContext().setTelemetryRequestId(
+                clientApplication.getServiceBundle().getTelemetryManager().generateRequestId());
+        apiEvent.setApiId(msalRequest.getRequestContext().getAcquireTokenPublicApi().getApiId());
+        apiEvent.setCorrelationId(msalRequest.getRequestContext().getCorrelationId());
+        apiEvent.setRequestId(msalRequest.getRequestContext().getTelemetryRequestId());
+        apiEvent.setWasSuccessful(false);
+
+        if(clientApplication instanceof ConfidentialClientApplication){
+            apiEvent.setIsConfidentialClient(true);
+        } else {
+            apiEvent.setIsConfidentialClient(false);
+        }
+
+        try {
+            AuthenticationAuthority authenticationAuthority = clientApplication.authenticationAuthority;
+            if (authenticationAuthority != null) {
+                apiEvent.setAuthority(new URI(authenticationAuthority.getAuthority()));
+                apiEvent.setAuthorityType(authenticationAuthority.getAuthorityType().toString());
+            }
+        } catch (URISyntaxException ex){
+            clientApplication.log.warn(LogHelper.createMessage(
+                    "Setting URL telemetry fields failed: " +
+                            LogHelper.getPiiScrubbedDetails(ex),
+                    msalRequest.getHeaders().getHeaderCorrelationIdValue()));
+        }
+
+        return apiEvent;
     }
 
     private String computeSha256Hash(String input) {
@@ -122,9 +172,9 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
             return Base64.encodeBase64URLSafeString(hash);
         }
         catch (NoSuchAlgorithmException | UnsupportedEncodingException ex){
-            clientApplication.log.warn(
-                    LogHelper.createMessage("Failed to compute SHA-256 hash due to exception - ",
-                            LogHelper.getPiiScrubbedDetails(ex)));
+            clientApplication.log.warn(LogHelper.createMessage(
+                    "Failed to compute SHA-256 hash due to exception - ",
+                    LogHelper.getPiiScrubbedDetails(ex)));
             return "Failed to compute SHA-256 hash";
         }
     }

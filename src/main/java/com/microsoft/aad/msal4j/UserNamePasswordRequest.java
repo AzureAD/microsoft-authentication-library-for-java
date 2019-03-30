@@ -36,7 +36,7 @@ class UserNamePasswordRequest extends MsalRequest{
                             Set<String> scopes,
                             ClientAuthentication clientAuthentication,
                             RequestContext requestContext) {
-        super(createAuthenticationGrant(username, password, scopes), clientAuthentication, requestContext);
+        super(clientAuthentication, createAuthenticationGrant(username, password, scopes), requestContext);
     }
 
     private static OAuthAuthorizationGrant createAuthenticationGrant(

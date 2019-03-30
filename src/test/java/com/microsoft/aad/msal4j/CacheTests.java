@@ -25,9 +25,6 @@ package com.microsoft.aad.msal4j;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
-import com.nimbusds.oauth2.sdk.AuthorizationCode;
-import com.nimbusds.oauth2.sdk.AuthorizationCodeGrant;
-import com.nimbusds.oauth2.sdk.AuthorizationGrant;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod;
@@ -155,11 +152,18 @@ public class CacheTests extends AbstractMsalTests {
 
         MsalRequest msalRequest = new AuthorizationCodeRequest(null, "code",
                 new URI("http://my.redirect.com"), clientAuth,
-                new RequestContext("client_id", "correlation_id"));
+                new RequestContext("client_id", "correlation_id",
+                        AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
-        TokenEndpointRequest request = PowerMock.createPartialMock(
-                TokenEndpointRequest.class, new String[] { "toOauthHttpRequest" },
-                new URL(appData.authorizeRequestUrl), msalRequest, null);
+        ServiceBundle serviceBundle = new ServiceBundle(
+                null,
+                null,
+                null,
+                new TelemetryManager(null, false));
+
+        TokenRequest request = PowerMock.createPartialMock(
+                TokenRequest.class, new String[] { "toOauthHttpRequest" },
+                new URL(appData.authorizeRequestUrl), msalRequest, serviceBundle);
 
         OAuthHttpRequest msalOAuthHttpRequest = PowerMock.createMock(OAuthHttpRequest.class);
 
@@ -167,7 +171,8 @@ public class CacheTests extends AbstractMsalTests {
 
         EasyMock.expect(request.toOauthHttpRequest()).andReturn(msalOAuthHttpRequest).times(1);
         EasyMock.expect(msalOAuthHttpRequest.send()).andReturn(httpResponse).times(1);
-        EasyMock.expect(httpResponse.getStatusCode()).andReturn(200).times(1);
+        EasyMock.expect(httpResponse.getHeader(EasyMock.isA(String.class))).andReturn(null).times(3);
+        EasyMock.expect(httpResponse.getStatusCode()).andReturn(200).times(2);
         EasyMock.expect(httpResponse.getContentAsJSONObject())
                 .andReturn(
                         JSONObjectUtils.parse(tokenResponse))

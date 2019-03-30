@@ -33,7 +33,7 @@ class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier 
 
         AcquireTokenByDeviceCodeFlowSupplier(PublicClientApplication clientApplication,
                                          DeviceCodeRequest deviceCodeRequest) {
-        super(clientApplication, deviceCodeRequest.getHeaders());
+        super(clientApplication, deviceCodeRequest);
         this.deviceCodeRequest = deviceCodeRequest;
     }
 
