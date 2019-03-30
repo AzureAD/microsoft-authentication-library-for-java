@@ -29,35 +29,49 @@ import com.nimbusds.oauth2.sdk.ResourceOwnerPasswordCredentialsGrant;
 import com.nimbusds.oauth2.sdk.SAML2BearerGrant;
 import org.apache.commons.codec.binary.Base64;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
 class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSupplier {
 
+    private AuthenticationAuthority requestAuthority;
+
+    private MsalRequest msalRequest;
+
     AcquireTokenByAuthorizationGrantSupplier(ClientApplicationBase clientApplication,
-                                             MsalRequest msalRequest) {
+                                             MsalRequest msalRequest,
+                                             AuthenticationAuthority authority) {
         super(clientApplication, msalRequest);
+        this.msalRequest = msalRequest;
+        this.requestAuthority = authority;
     }
 
     AuthenticationResult execute() throws Exception {
-        MsalAuthorizationGrant authGrant = msalRequest.getMsalAuthorizationGrant();
-        if (authGrant instanceof OauthAuthorizationGrant) {
+        AbstractMsalAuthorizationGrant authGrant = msalRequest.getMsalAuthorizationGrant();
+        if (authGrant instanceof OAuthAuthorizationGrant) {
             msalRequest.setMsalAuthorizationGrant(
-                    processPasswordGrant((OauthAuthorizationGrant) authGrant));
+                    processPasswordGrant((OAuthAuthorizationGrant) authGrant));
         }
 
         if (authGrant instanceof IntegratedWindowsAuthorizationGrant) {
             IntegratedWindowsAuthorizationGrant integratedAuthGrant =
                     (IntegratedWindowsAuthorizationGrant) authGrant;
             msalRequest.setMsalAuthorizationGrant(
-                    new OauthAuthorizationGrant(getAuthorizationGrantIntegrated(
+                    new OAuthAuthorizationGrant(getAuthorizationGrantIntegrated(
                             integratedAuthGrant.getUserName()), integratedAuthGrant.getScopes()));
         }
 
-        return this.clientApplication.acquireTokenCommon(msalRequest);
+        if(requestAuthority == null){
+            requestAuthority = clientApplication.authenticationAuthority;
+        }
+
+        requestAuthority = getAuthorityWithPrefNetworkHost(requestAuthority.getAuthority());
+
+        return clientApplication.acquireTokenCommon(msalRequest, requestAuthority);
     }
 
-    private OauthAuthorizationGrant processPasswordGrant(
-            OauthAuthorizationGrant authGrant) throws Exception {
+    private OAuthAuthorizationGrant processPasswordGrant(
+            OAuthAuthorizationGrant authGrant) throws Exception {
 
         if (!(authGrant.getAuthorizationGrant() instanceof ResourceOwnerPasswordCredentialsGrant)) {
             return authGrant;
@@ -81,21 +95,25 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
                     this.clientApplication.getServiceBundle(),
                     this.clientApplication.isLogPii());
 
-            AuthorizationGrant updatedGrant;
-            if (response.isTokenSaml2()) {
-                updatedGrant = new SAML2BearerGrant(new Base64URL(
-                        Base64.encodeBase64String(response.getToken().getBytes(
-                                "UTF-8"))));
-            }
-            else {
-                updatedGrant = new SAML11BearerGrant(new Base64URL(
-                        Base64.encodeBase64String(response.getToken()
-                                .getBytes())));
-            }
-            authGrant = new OauthAuthorizationGrant(updatedGrant,
-                    authGrant.getCustomParameters());
+            AuthorizationGrant updatedGrant = getSAMLAuthorizationGrant(response);
+
+            authGrant = new OAuthAuthorizationGrant(updatedGrant, authGrant.getCustomParameters());
         }
         return authGrant;
+    }
+
+    private AuthorizationGrant getSAMLAuthorizationGrant(WSTrustResponse response) throws UnsupportedEncodingException {
+        AuthorizationGrant updatedGrant;
+        if (response.isTokenSaml2()) {
+            updatedGrant = new SAML2BearerGrant(new Base64URL(
+                    Base64.encodeBase64String(response.getToken().getBytes(
+                            "UTF-8"))));
+        } else {
+            updatedGrant = new SAML11BearerGrant(new Base64URL(
+                    Base64.encodeBase64String(response.getToken()
+                            .getBytes())));
+        }
+        return updatedGrant;
     }
 
     private AuthorizationGrant getAuthorizationGrantIntegrated(String userName) throws Exception {
@@ -126,16 +144,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
                     this.clientApplication.getServiceBundle(),
                     this.clientApplication.isLogPii());
 
-            if (wsTrustResponse.isTokenSaml2()) {
-                updatedGrant =
-                        new SAML2BearerGrant(new Base64URL(Base64.encodeBase64String(
-                                        wsTrustResponse.getToken().getBytes("UTF-8"))));
-            }
-            else {
-                updatedGrant =
-                        new SAML11BearerGrant(new Base64URL(Base64.encodeBase64String(
-                                wsTrustResponse.getToken().getBytes())));
-            }
+            updatedGrant = getSAMLAuthorizationGrant(wsTrustResponse);
         }
         else if (userRealmResponse.isAccountManaged()) {
             throw new AuthenticationException("Password is required for managed user");

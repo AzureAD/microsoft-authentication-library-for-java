@@ -28,6 +28,8 @@ import com.nimbusds.oauth2.sdk.AuthorizationGrant;
 import com.nimbusds.oauth2.sdk.JWTBearerGrant;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 class OboRequest extends MsalRequest {
@@ -35,10 +37,10 @@ class OboRequest extends MsalRequest {
                Set<String> scopes,
                ClientAuthentication clientAuthentication,
                RequestContext requestContext){
-        super(createAuthenticationGrant(userAssertion, scopes), clientAuthentication, requestContext);
+        super(clientAuthentication, createAuthenticationGrant(userAssertion, scopes), requestContext);
     }
 
-    private static OauthAuthorizationGrant createAuthenticationGrant(
+    private static OAuthAuthorizationGrant createAuthenticationGrant(
             UserAssertion userAssertion,
             Set<String> scopes){
 
@@ -48,6 +50,11 @@ class OboRequest extends MsalRequest {
         }catch(Exception e){
             throw new AuthenticationException(e);
         }
-        return new OauthAuthorizationGrant(jWTBearerGrant, scopes);
+
+        Map<String, String> params = new HashMap<>();
+        params.put("scope", String.join(" ", scopes));
+        params.put("requested_token_use", "on_behalf_of");
+
+        return new OAuthAuthorizationGrant(jWTBearerGrant, params);
     }
 }

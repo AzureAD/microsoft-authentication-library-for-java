@@ -24,9 +24,15 @@
 package com.microsoft.aad.msal4j;
 
 import com.google.common.base.Strings;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Date;
+import java.util.Map;
+
+import com.nimbusds.oauth2.sdk.ErrorObject;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import com.nimbusds.oauth2.sdk.ErrorObject;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.SerializeException;
 import com.nimbusds.oauth2.sdk.TokenErrorResponse;
@@ -38,33 +44,142 @@ import com.nimbusds.openid.connect.sdk.token.OIDCTokens;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.Map;
+import lombok.AccessLevel;
+import lombok.Getter;
 
-class TokenEndpointRequest {
-    Logger log = LoggerFactory.getLogger(TokenEndpointRequest.class);
+@Getter(AccessLevel.PACKAGE)
+class TokenRequest {
+    Logger log = LoggerFactory.getLogger(TokenRequest.class);
 
     private final URL url;
     private final MsalRequest msalRequest;
     private final ServiceBundle serviceBundle;
 
-    TokenEndpointRequest(final URL url, MsalRequest msalRequest, final ServiceBundle serviceBundle) {
+    TokenRequest(final URL url, MsalRequest msalRequest, final ServiceBundle serviceBundle) {
         this.url = url;
         this.serviceBundle = serviceBundle;
         this.msalRequest = msalRequest;
     }
 
+    /**
+     *
+     * @return
+     * @throws ParseException
+     * @throws AuthenticationException
+     * @throws SerializeException
+     * @throws IOException
+     */
     AuthenticationResult executeOauthRequestAndProcessResponse()
             throws ParseException, AuthenticationException, SerializeException,
-            IOException, java.text.ParseException {
+            IOException {
 
-        if (this.url == null) {
-            throw new SerializeException("The endpoint URI is not specified");
+        HttpEvent httpEvent = createHttpEvent();
+
+        try(TelemetryHelper telemetryHelper = serviceBundle.getTelemetryManager().createTelemetryHelper(
+                msalRequest.getRequestContext().getTelemetryRequestId(),
+                msalRequest.getClientAuthentication().getClientID().toString(),
+                httpEvent,
+                false)) {
+
+            AuthenticationResult result;
+            HTTPResponse httpResponse;
+
+            httpResponse = toOauthHttpRequest().send();
+
+            addResponseHeadersToHttpEvent(httpEvent, httpResponse);
+
+            if (httpResponse.getStatusCode() == HTTPResponse.SC_OK) {
+                final TokenResponse response =
+                        TokenResponse.parseHttpResponse(httpResponse);
+
+                OIDCTokens tokens = response.getOIDCTokens();
+                String refreshToken = null;
+                if (tokens.getRefreshToken() != null) {
+                    refreshToken = tokens.getRefreshToken().getValue();
+                }
+
+                Account account = null;
+
+                if (tokens.getIDToken() != null) {
+                    String idTokenJson = tokens.getIDToken().getParsedParts()[1].decodeToString();
+                    IdToken idToken = JsonHelper.convertJsonToObject(idTokenJson, IdToken.class);
+
+                    if (!StringHelper.isBlank(response.getClientInfo())) {
+                        account = Account.create(response.getClientInfo(), url.getHost(), idToken);
+                    }
+                }
+                long currTimestampSec = new Date().getTime() / 1000;
+
+                result = AuthenticationResult.builder().
+                        accessToken(tokens.getAccessToken().getValue()).
+                        refreshToken(refreshToken).
+                        idToken(tokens.getIDTokenString()).
+                        environment(url.getHost()).
+                        expiresOn(currTimestampSec + response.getExpiresIn()).
+                        extExpiresOn(response.getExtExpiresIn() > 0 ? currTimestampSec + response.getExtExpiresIn() : 0).
+                        account(account).
+                        scopes(response.getScope()).
+                        build();
+
+            } else {
+                final TokenErrorResponse errorResponse = TokenErrorResponse.parse(httpResponse);
+                ErrorObject errorObject = errorResponse.getErrorObject();
+
+                if (AuthenticationErrorCode.AUTHORIZATION_PENDING.toString()
+                        .equals(errorObject.getCode())) {
+
+                    httpEvent.setOauthErrorCode(AuthenticationErrorCode.AUTHORIZATION_PENDING.toString());
+
+                    throw new AuthenticationException(AuthenticationErrorCode.AUTHORIZATION_PENDING,
+                            errorObject.getDescription());
+                }
+
+                if (HTTPResponse.SC_BAD_REQUEST == errorObject.getHTTPStatusCode() &&
+                        AuthenticationErrorCode.INTERACTION_REQUIRED.toString().equals(errorObject.getCode())) {
+
+                    httpEvent.setOauthErrorCode(AuthenticationErrorCode.INTERACTION_REQUIRED.toString());
+
+                    throw new ClaimsChallengeException(
+                            errorResponse.toJSONObject().toJSONString(),
+                            getClaims(httpResponse.getContent()));
+                } else {
+                    String telemetryErrorCode = Strings.isNullOrEmpty(errorObject.getCode()) ?
+                            AuthenticationErrorCode.UNKNOWN.toString() :
+                            errorObject.getCode();
+
+                    httpEvent.setOauthErrorCode(telemetryErrorCode);
+
+                    throw new AuthenticationException(errorResponse.toJSONObject().toJSONString());
+                }
+            }
+            return result;
+        }
+    }
+
+    private void addResponseHeadersToHttpEvent(HttpEvent httpEvent, HTTPResponse httpResponse) {
+        httpEvent.setHttpResponseStatus(httpResponse.getStatusCode());
+
+        if (!Strings.isNullOrEmpty(httpResponse.getHeader("User-Agent"))) {
+            httpEvent.setUserAgent(httpResponse.getHeader("User-Agent"));
         }
 
+        if (!Strings.isNullOrEmpty(httpResponse.getHeader("x-ms-request-id"))) {
+            httpEvent.setRequestIdHeader(httpResponse.getHeader("x-ms-request-id"));
+        }
+
+        if (!Strings.isNullOrEmpty(httpResponse.getHeader("x-ms-clitelem"))) {
+            XmsClientTelemetryInfo xmsClientTelemetryInfo =
+                    XmsClientTelemetryInfo.parseXmsTelemetryInfo(
+                            httpResponse.getHeader("x-ms-clitelem"));
+            if (xmsClientTelemetryInfo != null) {
+                httpEvent.setXmsClientTelemetryInfo(xmsClientTelemetryInfo);
+            }
+        }
+    }
+
+    private HttpEvent createHttpEvent() {
         HttpEvent httpEvent = new HttpEvent();
+        httpEvent.setHttpMethod("POST");
         try {
             httpEvent.setHttpPath(url.toURI());
             if(!Strings.isNullOrEmpty(url.getQuery()))
@@ -74,99 +189,29 @@ class TokenEndpointRequest {
                             LogHelper.getPiiScrubbedDetails(ex),
                     msalRequest.getHeaders().getHeaderCorrelationIdValue()));
         }
-
-        try(TelemetryHelper telemetryHelper = serviceBundle.getTelemetryManager().createTelemetryHelper(
-                msalRequest.getRequestContext().getTelemetryRequestId(),
-                msalRequest.getClientAuthentication().getClientID().toString(),
-                httpEvent,
-                false)){
-
-            AuthenticationResult result;
-            HTTPResponse httpResponse;
-            final OauthHttpRequest oauthHttpRequest = this.toOauthHttpRequest();
-            httpResponse = oauthHttpRequest.send();
-
-            httpEvent.setHttpResponseStatus(httpResponse.getStatusCode());
-            httpEvent.setHttpMethod("POST");
-
-            if(!Strings.isNullOrEmpty(httpResponse.getHeader("User-Agent"))){
-                httpEvent.setUserAgent(httpResponse.getHeader("User-Agent"));
-            }
-
-            if(!Strings.isNullOrEmpty(httpResponse.getHeader("x-ms-request-id"))){
-                httpEvent.setRequestIdHeader(httpResponse.getHeader("x-ms-request-id"));
-            }
-
-            if(!Strings.isNullOrEmpty(httpResponse.getHeader("x-ms-clitelem"))){
-                XmsClientTelemetryInfo xmsClientTelemetryInfo =
-                        XmsClientTelemetryInfo.parseXmsTelemetryInfo(
-                                httpResponse.getHeader("x-ms-clitelem"));
-                if(xmsClientTelemetryInfo != null){
-                    httpEvent.setXmsClientTelemetryInfo(xmsClientTelemetryInfo);
-                }
-            }
-
-            if (httpResponse.getStatusCode() == HTTPResponse.SC_OK) {
-                final AccessTokenResponse response =
-                        AccessTokenResponse.parseHttpResponse(httpResponse);
-
-                OIDCTokens tokens = response.getOIDCTokens();
-                String refreshToken = null;
-                if (tokens.getRefreshToken() != null) {
-                    refreshToken = tokens.getRefreshToken().getValue();
-                }
-
-                UserInfo info = null;
-                if (tokens.getIDToken() != null) {
-                    info = UserInfo.createFromIdTokenClaims(tokens.getIDToken().getJWTClaimsSet());
-                }
-
-                result = new AuthenticationResult(
-                        tokens.getAccessToken().getType().getValue(),
-                        tokens.getAccessToken().getValue(), refreshToken,
-                        tokens.getAccessToken().getLifetime(),
-                        tokens.getIDTokenString(),
-                        info,
-                        !StringHelper.isBlank(response.getScope()));
-
-            } else {
-                final TokenErrorResponse errorResponse = TokenErrorResponse.parse(httpResponse);
-                ErrorObject errorObject = errorResponse.getErrorObject();
-
-                if(AuthenticationErrorCode.AUTHORIZATION_PENDING.toString()
-                        .equals(errorObject.getCode())){
-
-                    httpEvent.setOauthErrorCode(AuthenticationErrorCode.AUTHORIZATION_PENDING.toString());
-
-                    throw new AuthenticationException(AuthenticationErrorCode.AUTHORIZATION_PENDING,
-                            errorObject.getDescription());
-                }
-
-                if(HTTPResponse.SC_BAD_REQUEST == errorObject.getHTTPStatusCode() &&
-                        AuthenticationErrorCode.INTERACTION_REQUIRED.toString().equals(errorObject.getCode())){
-
-                    httpEvent.setOauthErrorCode(AuthenticationErrorCode.INTERACTION_REQUIRED.toString());
-
-                    throw new ClaimsChallengeException(
-                            errorResponse.toJSONObject().toJSONString(),
-                            getClaims(httpResponse.getContent()));
-                }
-                else {
-                    String telemetryErrorCode = Strings.isNullOrEmpty(errorObject.getCode()) ?
-                            AuthenticationErrorCode.UNKNOWN.toString() :
-                            errorObject.getCode();
-
-                    httpEvent.setOauthErrorCode(telemetryErrorCode);
-                    throw new AuthenticationException(errorResponse.toJSONObject().toJSONString());
-                }
-            }
-            return result;
-        }
+        return httpEvent;
     }
 
-    OauthHttpRequest toOauthHttpRequest() throws SerializeException {
+    private String getClaims(String httpResponseContentStr) {
+        JsonElement root = new JsonParser().parse(httpResponseContentStr);
 
-        final OauthHttpRequest oauthHttpRequest = new OauthHttpRequest(
+        JsonElement claims = root.getAsJsonObject().get("claims");
+
+        return claims != null ? claims.getAsString() : null;
+    }
+
+    /**
+     *
+     * @return
+     * @throws SerializeException
+     */
+    OAuthHttpRequest toOauthHttpRequest() throws SerializeException {
+
+        if (this.url == null) {
+            throw new SerializeException("The endpoint URI is not specified");
+        }
+
+        final OAuthHttpRequest oauthHttpRequest = new OAuthHttpRequest(
                 HTTPRequest.Method.POST,
                 this.url,
                 msalRequest.getHeaders().getReadonlyHeaderMap(),
@@ -181,13 +226,5 @@ class TokenEndpointRequest {
         }
 
         return oauthHttpRequest;
-    }
-
-    private String getClaims(String httpResponseContentStr) {
-        JsonElement root = new JsonParser().parse(httpResponseContentStr);
-
-        JsonElement claims = root.getAsJsonObject().get("claims");
-
-        return claims != null ? claims.getAsString() : null;
     }
 }

@@ -44,11 +44,10 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
 
-class OauthHttpRequest extends HTTPRequest {
-    private final Logger log = LoggerFactory.getLogger(OauthHttpRequest.class);
+class OAuthHttpRequest extends HTTPRequest {
 
     private final Map<String, String> extraHeaderParams;
-
+    private final Logger log = LoggerFactory.getLogger(OAuthHttpRequest.class);
     private final ServiceBundle serviceBundle;
 
     /**
@@ -56,7 +55,7 @@ class OauthHttpRequest extends HTTPRequest {
      * @param method
      * @param url
      */
-    OauthHttpRequest(final Method method, final URL url,
+    OAuthHttpRequest(final Method method, final URL url,
                      final Map<String, String> extraHeaderParams, final ServiceBundle serviceBundle) {
         super(method, url);
         this.extraHeaderParams = extraHeaderParams;

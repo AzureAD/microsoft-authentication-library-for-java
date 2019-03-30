@@ -39,6 +39,7 @@ public class AuthenticationException extends RuntimeException {
      */
     public AuthenticationException(final Throwable t) {
         super(t);
+
         this.errorCode = AuthenticationErrorCode.UNKNOWN;
     }
 
@@ -64,6 +65,7 @@ public class AuthenticationException extends RuntimeException {
      */
     public AuthenticationException(final String message, final Throwable t) {
         super(message, t);
+
         this.errorCode = AuthenticationErrorCode.UNKNOWN;
     }
 

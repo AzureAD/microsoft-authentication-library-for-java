@@ -23,136 +23,59 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.nimbusds.jwt.JWTParser;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.experimental.Accessors;
+
 import java.io.Serializable;
+import java.text.ParseException;
 import java.util.Date;
-import java.util.Objects;
 
 /**
  * Contains the results of one token acquisition operation.
  */
+@Accessors(fluent = true) @Getter
+@EqualsAndHashCode
+@Builder
 public final class AuthenticationResult implements Serializable {
-
     private static final long serialVersionUID = 1L;
 
-    private final String accessTokenType;
-    private final long expiresIn;
-    private final Date expiresOn;
-    private final String idToken;
-    private final UserInfo userInfo;
     private final String accessToken;
+
+    private final long expiresOn;
+
+    private final long extExpiresOn;
+
     private final String refreshToken;
-    private final boolean isMultipleResourceRefreshToken;
 
-    public AuthenticationResult(final String accessTokenType,
-            final String accessToken, final String refreshToken,
-            final long expiresIn, final String idToken,
-            final UserInfo userInfo,
-            final boolean isMultipleResourceRefreshToken) {
-        this.accessTokenType = accessTokenType;
-        this.accessToken = accessToken;
-        this.refreshToken = refreshToken;
-        this.expiresIn = expiresIn;
+    private final String idToken;
 
-        Date now = new Date();
-        now.setTime(now.getTime() + (expiresIn * 1000));
-        this.expiresOn = now;
+    @Getter(value=AccessLevel.PACKAGE, lazy=true)
+    private final IdToken idTokenObject = getIdTokenObj();
 
-        this.idToken = idToken;
-        this.userInfo = userInfo;
-        this.isMultipleResourceRefreshToken = isMultipleResourceRefreshToken;
-    }
-
-    public String getAccessTokenType() {
-        return accessTokenType;
-    }
-
-    public String getAccessToken() {
-        return accessToken;
-    }
-
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
-    @Deprecated
-    public long getExpiresOn() {
-        return expiresIn;
-    }
-
-    public long getExpiresAfter() {
-        return expiresIn;
-    }
-
-    public Date getExpiresOnDate() {
-        if (expiresOn != null) {
-            return (Date)expiresOn.clone();
-        } else {
+    private IdToken getIdTokenObj() {
+        if(StringHelper.isBlank(idToken)){
             return null;
         }
+        try {
+            String idTokenJson = JWTParser.parse(idToken).getParsedParts()[1].decodeToString();
+            return JsonHelper.convertJsonToObject(idTokenJson, IdToken.class);
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
-    public String getIdToken() {
-        return idToken;
-    }
+    private final Account account;
 
-    public UserInfo getUserInfo() {
-        return userInfo;
-    }
+    private String environment;
 
-    public boolean isMultipleResourceRefreshToken() {
-        return isMultipleResourceRefreshToken;
-    }
-    
-    @Override
-    public int hashCode() {
-        int hash = 3;
-        hash = 41 * hash + Objects.hashCode(this.accessTokenType);
-        hash = 41 * hash + (int) (this.expiresIn ^ (this.expiresIn >>> 32));
-        hash = 41 * hash + Objects.hashCode(this.expiresOn);
-        hash = 41 * hash + Objects.hashCode(this.idToken);
-        hash = 41 * hash + Objects.hashCode(this.userInfo);
-        hash = 41 * hash + Objects.hashCode(this.accessToken);
-        hash = 41 * hash + Objects.hashCode(this.refreshToken);
-        hash = 41 * hash + (this.isMultipleResourceRefreshToken ? 1 : 0);
-        return hash;
-    }
+    @Getter(lazy=true)
+    private final Date expiresOnDate = new Date(expiresOn*1000);
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final AuthenticationResult other = (AuthenticationResult) obj;
-        if (this.expiresIn != other.expiresIn) {
-            return false;
-        }
-        if (this.isMultipleResourceRefreshToken != other.isMultipleResourceRefreshToken) {
-            return false;
-        }
-        if (!Objects.equals(this.accessTokenType, other.accessTokenType)) {
-            return false;
-        }
-        if (!Objects.equals(this.idToken, other.idToken)) {
-            return false;
-        }
-        if (!Objects.equals(this.accessToken, other.accessToken)) {
-            return false;
-        }
-        if (!Objects.equals(this.refreshToken, other.refreshToken)) {
-            return false;
-        }
-        if (!Objects.equals(this.expiresOn, other.expiresOn)) {
-            return false;
-        }
-        if (!Objects.equals(this.userInfo, other.userInfo)) {
-            return false;
-        }
-        return true;
-    }    
+    private final String scopes;
 }

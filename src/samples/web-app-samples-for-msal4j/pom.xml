@@ -57,7 +57,7 @@
 	</dependencies>
 
 	<build>
-		<finalName>sample-for-adal4j</finalName>
+		<finalName>sample-for-msal4j</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

@@ -64,7 +64,7 @@ abstract class Event extends HashMap<String, String>{
         if(!uri.isAbsolute()){
             throw new IllegalArgumentException("Requires an absolute URI");
         }
-        if(!Arrays.asList(AuthenticationAuthority.getTrustedHostList()).contains(uri.getHost())){
+        if(!AadInstanceDiscovery.TRUSTED_HOSTS_SET.contains(uri.getHost())){
             return null;
         }
 

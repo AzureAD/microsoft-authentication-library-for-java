@@ -36,16 +36,16 @@ class UserNamePasswordRequest extends MsalRequest{
                             Set<String> scopes,
                             ClientAuthentication clientAuthentication,
                             RequestContext requestContext) {
-        super(createAuthenticationGrant(username, password, scopes), clientAuthentication, requestContext);
+        super(clientAuthentication, createAuthenticationGrant(username, password, scopes), requestContext);
     }
 
-    private static OauthAuthorizationGrant createAuthenticationGrant(
+    private static OAuthAuthorizationGrant createAuthenticationGrant(
             String username,
             String password,
             Set<String> scopes ) {
         ResourceOwnerPasswordCredentialsGrant resourceOwnerPasswordCredentialsGrant =
                 new ResourceOwnerPasswordCredentialsGrant(username, new Secret(password));
 
-        return new OauthAuthorizationGrant(resourceOwnerPasswordCredentialsGrant, scopes);
+        return new OAuthAuthorizationGrant(resourceOwnerPasswordCredentialsGrant, scopes);
     }
 }

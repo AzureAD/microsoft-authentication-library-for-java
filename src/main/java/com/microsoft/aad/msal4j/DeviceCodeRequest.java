@@ -47,7 +47,7 @@ class DeviceCodeRequest extends MsalRequest {
                       Set<String> scopes,
                       ClientAuthentication clientAuthentication,
                       RequestContext requestContext){
-        super(null, clientAuthentication, requestContext);
+        super(clientAuthentication, null, requestContext);
         this.scopes = String.join(" ", scopes);
         this.deviceCodeConsumer = deviceCodeConsumer;
         this.futureReference = futureReference;
@@ -82,8 +82,8 @@ class DeviceCodeRequest extends MsalRequest {
         Map<String, String> queryParameters = new HashMap<>();
         queryParameters.put("client_id", clientId);
 
-        String scopesParam = MsalAuthorizationGrant.COMMON_SCOPES_PARAM +
-                MsalAuthorizationGrant.SCOPES_DELIMITER + scopes;
+        String scopesParam = AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM +
+                AbstractMsalAuthorizationGrant.SCOPES_DELIMITER + scopes;
 
         queryParameters.put("scope", scopesParam);
 
