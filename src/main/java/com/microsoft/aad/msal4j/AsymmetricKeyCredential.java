@@ -74,7 +74,7 @@ public final class AsymmetricKeyCredential implements IClientCredential{
         }
         else if("sun.security.mscapi.RSAPrivateKey".equals(key.getClass().getName())){
             try {
-                Method method = key.getClass().getMethod("length", null);
+                Method method = key.getClass().getMethod("length");
                 method.setAccessible(true);
                 if ((int)method.invoke(key)< MIN_KEY_SIZE_IN_BITS) {
                     throw new IllegalArgumentException(
