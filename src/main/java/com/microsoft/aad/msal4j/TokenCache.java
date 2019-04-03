@@ -97,7 +97,7 @@ public class TokenCache {
 
         if(tokenCacheAccessAspect != null){
             TokenCacheAccessContext context = TokenCacheAccessContext.builder().
-                    clientId(tokenRequest.getMsalRequest().getClientAuthentication().getClientID().getValue()).
+                    clientId(tokenRequest.getMsalRequest().application().clientId()).
                     tokenCache(this).
                     build();
             tokenCacheAccessAspect.beforeCacheAccess(context);
@@ -125,7 +125,7 @@ public class TokenCache {
 
         if(tokenCacheAccessAspect != null){
             TokenCacheAccessContext context = TokenCacheAccessContext.builder().
-                    clientId(tokenRequest.getMsalRequest().getClientAuthentication().getClientID().getValue()).
+                    clientId(tokenRequest.getMsalRequest().application().clientId()).
                     tokenCache(this).
                     isCacheChanged(true).
                     build();
@@ -144,7 +144,7 @@ public class TokenCache {
 
         rt.environment(environmentAlias);
 
-        rt.clientId(tokenRequest.getMsalRequest().getClientAuthentication().getClientID().toString());
+        rt.clientId(tokenRequest.getMsalRequest().application().clientId());
 
         rt.secret(authenticationResult.refreshToken());
 
@@ -160,7 +160,7 @@ public class TokenCache {
             at.homeAccountId(authenticationResult.account().homeAccountId);
         }
         at.environment(environmentAlias);
-        at.clientId(tokenRequest.getMsalRequest().getClientAuthentication().getClientID().getValue());
+        at.clientId(tokenRequest.getMsalRequest().application().clientId());
         at.secret(authenticationResult.accessToken());
 
         IdToken idTokenObj = authenticationResult.idTokenObject();
@@ -169,7 +169,7 @@ public class TokenCache {
         }
 
         String scopes = !StringHelper.isBlank(authenticationResult.scopes()) ? authenticationResult.scopes() :
-                tokenRequest.getMsalRequest().getMsalAuthorizationGrant().getScopes();
+                tokenRequest.getMsalRequest().msalAuthorizationGrant().getScopes();
 
         at.target(scopes);
 
@@ -192,7 +192,7 @@ public class TokenCache {
             idToken.homeAccountId(authenticationResult.account().homeAccountId);
         }
         idToken.environment(environmentAlias);
-        idToken.clientId(tokenRequest.getMsalRequest().getClientAuthentication().getClientID().getValue());
+        idToken.clientId(tokenRequest.getMsalRequest().application().clientId());
         idToken.secret(authenticationResult.idToken());
 
         IdToken idTokenObj = authenticationResult.idTokenObject();

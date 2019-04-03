@@ -48,23 +48,27 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collections;
 
+import static com.microsoft.aad.msal4j.TestConfiguration.ADFS_TENANT_ENDPOINT;
+
 @Test(groups = { "checkin" })
 @PrepareForTest(TokenErrorResponse.class)
 public class TokenRequestTest extends AbstractMsalTests {
 
     @Test
     public void executeOAuthRequest_SCBadRequestErrorInteractionRequired_ClaimsChallengeExceptionThrown()
-            throws SerializeException,
-            ParseException, AuthenticationException, IOException,
-            java.text.ParseException, URISyntaxException {
+            throws SerializeException, ParseException, AuthenticationException,
+            IOException, URISyntaxException {
 
-        final ClientAuthentication ca = new ClientSecretPost(
-                new ClientID("id"), new Secret("secret"));
+        PublicClientApplication app = new PublicClientApplication.Builder("id").build();
+
+        AuthorizationCodeParameters parameters = AuthorizationCodeParameters
+                .builder("code", new URI("http://my.redirect.com"))
+                .scopes(Collections.singleton("default-scope"))
+                .build();
+
         final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
-                Collections.singleton("default-scope"),
-                "code",
-                new URI("http://my.redirect.com"),
-                ca,
+                parameters,
+                app,
                 new RequestContext("id",
                         "corr-id",
                         AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
@@ -113,17 +117,22 @@ public class TokenRequestTest extends AbstractMsalTests {
     @Test
     public void testConstructor() throws MalformedURLException,
             URISyntaxException {
-        final ClientAuthentication ca = new ClientSecretPost(
-                new ClientID("id"), new Secret("secret"));
+
+        PublicClientApplication app = new PublicClientApplication.Builder("id").build();
+
+        AuthorizationCodeParameters parameters = AuthorizationCodeParameters
+                .builder("code", new URI("http://my.redirect.com"))
+                .scopes(Collections.singleton("default-scope"))
+                .build();
+
         final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
-                Collections.singleton("default-scope"),
-                "code",
-                new URI("http://my.redirect.com"),
-                ca,
+                parameters,
+                app,
                 new RequestContext(
                         "id",
                         "corr-id",
                         AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+
         final TokenRequest request = new TokenRequest(
                 new URL("http://login.windows.net"),
                 acr,
@@ -133,25 +142,29 @@ public class TokenRequestTest extends AbstractMsalTests {
 
     @Test
     public void testToOAuthRequestNonEmptyCorrelationId()
-            throws MalformedURLException, SerializeException,
-            URISyntaxException {
-        final ClientAuthentication ca = new ClientSecretPost(
-                new ClientID("id"), new Secret("secret"));
-        final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
-                Collections.singleton("default-scope"),
-                "code",
-                new URI("http://my.redirect.com"),
-                ca,
+            throws MalformedURLException, SerializeException, URISyntaxException {
+
+        PublicClientApplication app = new PublicClientApplication.Builder("id").build();
+
+        AuthorizationCodeParameters parameters = AuthorizationCodeParameters
+                .builder("code", new URI("http://my.redirect.com"))
+                .scopes(Collections.singleton("default-scope"))
+                .build();
+
+        AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
+                parameters,
+                app,
                 new RequestContext(
                         "id",
                         "corr-id",
                         AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
-        final TokenRequest request = new TokenRequest(
+
+        TokenRequest request = new TokenRequest(
                 new URL("http://login.windows.net"),
                 acr,
                 new ServiceBundle(null, null, null, null));
         Assert.assertNotNull(request);
-        final OAuthHttpRequest req = request.toOauthHttpRequest();
+        OAuthHttpRequest req = request.toOauthHttpRequest();
         Assert.assertNotNull(req);
         Assert.assertEquals(
                 "corr-id",
@@ -163,17 +176,22 @@ public class TokenRequestTest extends AbstractMsalTests {
     public void testToOAuthRequestNullCorrelationId_NullClientAuth()
             throws MalformedURLException, SerializeException,
             URISyntaxException {
-        final ClientAuthentication ca = new ClientSecretPost(
-                new ClientID("id"), new Secret("secret"));
+
+        PublicClientApplication app = new PublicClientApplication.Builder("id").build();
+
+        AuthorizationCodeParameters parameters = AuthorizationCodeParameters
+                .builder("code", new URI("http://my.redirect.com"))
+                .scopes(Collections.singleton("default-scope"))
+                .build();
+
         final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
-                Collections.singleton("default-scope"),
-                "code",
-                new URI("http://my.redirect.com"),
-                ca,
+                parameters,
+                app,
                 new RequestContext(
                         "id",
                         "corr-id",
                         AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+
         final TokenRequest request = new TokenRequest(
                 new URL("http://login.windows.net"),
                 acr,
@@ -185,14 +203,18 @@ public class TokenRequestTest extends AbstractMsalTests {
 
     @Test
     public void testExecuteOAuth_Success() throws SerializeException, ParseException, AuthenticationException,
-            IOException, java.text.ParseException, URISyntaxException {
-        final ClientAuthentication ca = new ClientSecretPost(
-                new ClientID("id"), new Secret("secret"));
+            IOException, URISyntaxException {
+
+        PublicClientApplication app = new PublicClientApplication.Builder("id").build();
+
+        AuthorizationCodeParameters parameters = AuthorizationCodeParameters
+                .builder("code", new URI("http://my.redirect.com"))
+                .scopes(Collections.singleton("default-scope"))
+                .build();
+
         final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
-                Collections.singleton("default-scope"),
-                "code",
-                new URI("http://my.redirect.com"),
-                ca,
+                parameters,
+                app,
                 new RequestContext(
                         "id",
                         "corr-id",
@@ -248,15 +270,18 @@ public class TokenRequestTest extends AbstractMsalTests {
 
     @Test(expectedExceptions = AuthenticationException.class)
     public void testExecuteOAuth_Failure() throws SerializeException,
-            ParseException, AuthenticationException, IOException,
-            java.text.ParseException, URISyntaxException {
-        final ClientAuthentication ca = new ClientSecretPost(
-                new ClientID("id"), new Secret("secret"));
+            ParseException, AuthenticationException, IOException, URISyntaxException {
+
+        PublicClientApplication app = new PublicClientApplication.Builder("id").build();
+
+        AuthorizationCodeParameters parameters = AuthorizationCodeParameters
+                .builder("code", new URI("http://my.redirect.com"))
+                .scopes(Collections.singleton("default-scope"))
+                .build();
+
         final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
-                Collections.singleton("default-scope"),
-                "code",
-                new URI("http://my.redirect.com"),
-                ca,
+                parameters,
+                app,
                 new RequestContext(
                         "id",
                         "corr-id",

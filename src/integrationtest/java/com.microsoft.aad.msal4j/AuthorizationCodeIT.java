@@ -195,11 +195,14 @@ public class AuthorizationCodeIT {
                     labResponse.getAppId()).
                     authority(TestConstants.AUTHORITY_ORGANIZATIONS).
                     build();
-            result = pca.acquireTokenByAuthorizationCode(
-                    Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-                    authCode,
-                    new URI(TestConstants.LOCALHOST + tcpListener.getPort())).
-                    get();
+
+            result = pca.acquireToken(AuthorizationCodeParameters
+                    .builder(authCode,
+                            new URI(TestConstants.LOCALHOST + tcpListener.getPort()))
+                    .scopes(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE))
+                    .build())
+                    .get();
+
         } catch(Exception e){
             LOG.error("Error acquiring token with authCode: " + e.getMessage());
             throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());

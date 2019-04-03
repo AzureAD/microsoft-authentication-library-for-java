@@ -21,9 +21,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import com.microsoft.aad.msal4j.Account;
-import com.microsoft.aad.msal4j.AuthenticationResult;
-import com.microsoft.aad.msal4j.PublicClientApplication;
+import com.microsoft.aad.msal4j.*;
 
 import java.net.MalformedURLException;
 import java.util.Collection;
@@ -37,12 +35,18 @@ public class UsernamePasswordFlow {
     }
 
     private static void getAccessTokenFromUserCredentials() throws Exception {
-        PublicClientApplication app = new PublicClientApplication.Builder(TestData.PUBLIC_CLIENT_ID)
+        PublicClientApplication app = PublicClientApplication.builder(TestData.PUBLIC_CLIENT_ID)
                 .authority(TestData.AUTHORITY_COMMON)
+                .telemetryConsumer(val ->
+                        System.out.println(val)
+                )
                 .build();
 
-        CompletableFuture<AuthenticationResult> future = app.acquireTokenByUsernamePassword
-                (Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE), TestData.USER_NAME, TestData.USER_PASSWORD);
+        CompletableFuture<AuthenticationResult> future = app.acquireToken
+                (UserNamePasswordParameters.builder(Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE),
+                        TestData.USER_NAME,
+                        TestData.USER_PASSWORD)
+                        .build());
 
         future.handle((res, ex) -> {
             if(ex != null) {
@@ -54,8 +58,12 @@ public class UsernamePasswordFlow {
 
             CompletableFuture<AuthenticationResult> future1 = null;
             try {
-                future1 = app.acquireTokenSilently(accounts.stream().findAny().get(),
-                        Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE), null, true);
+                future1 = app.acquireTokenSilently
+                        (SilentParameters.builder(Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE),
+                                accounts.iterator().next())
+                                .forceRefresh(true)
+                                .build());
+
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }

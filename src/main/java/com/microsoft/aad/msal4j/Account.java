@@ -30,7 +30,9 @@ import lombok.experimental.Accessors;
 import java.util.ArrayList;
 import java.util.List;
 
-@Accessors(fluent = true) @Getter @Setter
+@Accessors(fluent = true)
+@Getter
+@Setter
 @EqualsAndHashCode
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Account {
@@ -58,14 +60,14 @@ public class Account {
     @SerializedName("client_info")
     protected String clientInfoStr;
 
-    ClientInfo clientInfo(){
+    ClientInfo clientInfo() {
         return ClientInfo.createFromJson(clientInfoStr);
     }
 
     @SerializedName("authority_type")
     protected String authorityType;
 
-    String getKey(){
+    String getKey() {
 
         List<String> keyParts = new ArrayList<>();
 
@@ -76,7 +78,7 @@ public class Account {
         return String.join(Constants.CACHE_KEY_SEPARATOR, keyParts).toLowerCase();
     }
 
-    static Account create(String clientInfoStr, String environment, IdToken idToken){
+    static Account create(String clientInfoStr, String environment, IdToken idToken) {
 
         Account account = new Account();
         account.authorityType(MSSTS_ACCOUNT_TYPE);

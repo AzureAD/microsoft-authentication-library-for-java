@@ -50,7 +50,7 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
 
         InstanceDiscoveryMetadataEntry discoveryMetadataEntry =
                 AadInstanceDiscovery.GetMetadataEntry
-                        (authorityUrl, clientApplication.isValidateAuthority(), msalRequest,
+                        (authorityUrl, clientApplication.validateAuthority(), msalRequest,
                                 clientApplication.getServiceBundle());
 
         URL updatedAuthorityUrl =
@@ -69,13 +69,13 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
 
         try(TelemetryHelper telemetryHelper =
                     clientApplication.getServiceBundle().getTelemetryManager().createTelemetryHelper(
-                            msalRequest.getRequestContext().getTelemetryRequestId(),
-                            msalRequest.getClientAuthentication().getClientID().toString(),
+                            msalRequest.requestContext().getTelemetryRequestId(),
+                            msalRequest.application().clientId(),
                             apiEvent,
                             true)) {
             try {
                 result = execute();
-                logResult(result, msalRequest.getHeaders());
+                logResult(result, msalRequest.headers());
 
                 apiEvent.setWasSuccessful(true);
                 if (result.account() != null) {
@@ -88,7 +88,7 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
                 clientApplication.log.error(
                         LogHelper.createMessage(
                                 "Execution of " + this.getClass() + " failed.",
-                                msalRequest.getHeaders().getHeaderCorrelationIdValue()), ex);
+                                msalRequest.headers().getHeaderCorrelationIdValue()), ex);
 
                 throw new CompletionException(ex);
             }
@@ -105,7 +105,7 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
             if (!StringHelper.isBlank(result.refreshToken())) {
                 String refreshTokenHash = this.computeSha256Hash(result
                         .refreshToken());
-                if(clientApplication.isLogPii()){
+                if(clientApplication.logPii()){
                     clientApplication.log.debug(LogHelper.createMessage(String.format(
                             "Access Token with hash '%s' and Refresh Token with hash '%s' returned",
                             accessTokenHash, refreshTokenHash),
@@ -119,7 +119,7 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
                 }
             }
             else {
-                if(clientApplication.isLogPii()){
+                if(clientApplication.logPii()){
                     clientApplication.log.debug(LogHelper.createMessage(String.format(
                             "Access Token with hash '%s' returned", accessTokenHash),
                             headers.getHeaderCorrelationIdValue()));
@@ -134,12 +134,12 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
     }
 
     private ApiEvent initializeApiEvent(MsalRequest msalRequest){
-        ApiEvent apiEvent = new ApiEvent(clientApplication.isLogPii());
-        msalRequest.getRequestContext().setTelemetryRequestId(
+        ApiEvent apiEvent = new ApiEvent(clientApplication.logPii());
+        msalRequest.requestContext().setTelemetryRequestId(
                 clientApplication.getServiceBundle().getTelemetryManager().generateRequestId());
-        apiEvent.setApiId(msalRequest.getRequestContext().getAcquireTokenPublicApi().getApiId());
-        apiEvent.setCorrelationId(msalRequest.getRequestContext().getCorrelationId());
-        apiEvent.setRequestId(msalRequest.getRequestContext().getTelemetryRequestId());
+        apiEvent.setApiId(msalRequest.requestContext().getAcquireTokenPublicApi().getApiId());
+        apiEvent.setCorrelationId(msalRequest.requestContext().getCorrelationId());
+        apiEvent.setRequestId(msalRequest.requestContext().getTelemetryRequestId());
         apiEvent.setWasSuccessful(false);
 
         if(clientApplication instanceof ConfidentialClientApplication){
@@ -158,7 +158,7 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
             clientApplication.log.warn(LogHelper.createMessage(
                     "Setting URL telemetry fields failed: " +
                             LogHelper.getPiiScrubbedDetails(ex),
-                    msalRequest.getHeaders().getHeaderCorrelationIdValue()));
+                    msalRequest.headers().getHeaderCorrelationIdValue()));
         }
 
         return apiEvent;

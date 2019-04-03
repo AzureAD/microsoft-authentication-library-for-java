@@ -28,7 +28,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-@Accessors(fluent = true) @Getter @Setter
+@Accessors(fluent = true)
+@Getter
+@Setter
 class Credential {
 
     @SerializedName("home_account_id")

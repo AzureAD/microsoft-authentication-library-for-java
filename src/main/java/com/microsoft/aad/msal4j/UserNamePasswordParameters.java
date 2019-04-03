@@ -23,38 +23,44 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.oauth2.sdk.AuthorizationGrant;
-import com.nimbusds.oauth2.sdk.JWTBearerGrant;
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
+import lombok.*;
+import lombok.experimental.Accessors;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
-class OboRequest extends MsalRequest {
-    OboRequest(UserAssertion userAssertion,
-               Set<String> scopes,
-               ClientAuthentication clientAuthentication,
-               RequestContext requestContext){
-        super(clientAuthentication, createAuthenticationGrant(userAssertion, scopes), requestContext);
+import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotBlank;
+import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty;
+
+@Builder
+@Accessors(fluent = true)
+@Getter
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public class UserNamePasswordParameters {
+
+    @NonNull
+    private Set<String> scopes;
+
+    @NonNull
+    private String username;
+
+    @NonNull
+    private String password;
+
+    private static UserNamePasswordParametersBuilder builder() {
+
+        return new UserNamePasswordParametersBuilder();
     }
 
-    private static OAuthAuthorizationGrant createAuthenticationGrant(
-            UserAssertion userAssertion,
-            Set<String> scopes){
+    public static UserNamePasswordParametersBuilder builder
+            (Set<String> scopes, String username, String password) {
 
-        AuthorizationGrant jWTBearerGrant;
-        try{
-           jWTBearerGrant = new JWTBearerGrant(SignedJWT.parse(userAssertion.getAssertion()));
-        }catch(Exception e){
-            throw new AuthenticationException(e);
-        }
+        validateNotEmpty("scopes", scopes);
+        validateNotBlank("username", username);
+        validateNotBlank("password", password);
 
-        Map<String, String> params = new HashMap<>();
-        params.put("scope", String.join(" ", scopes));
-        params.put("requested_token_use", "on_behalf_of");
-
-        return new OAuthAuthorizationGrant(jWTBearerGrant, params);
+        return builder()
+                .scopes(scopes)
+                .username(username)
+                .password(password);
     }
 }

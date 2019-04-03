@@ -37,7 +37,8 @@ import java.util.Date;
 /**
  * Contains the results of one token acquisition operation.
  */
-@Accessors(fluent = true) @Getter
+@Accessors(fluent = true)
+@Getter
 @EqualsAndHashCode
 @Builder
 public final class AuthenticationResult implements Serializable {
@@ -53,11 +54,11 @@ public final class AuthenticationResult implements Serializable {
 
     private final String idToken;
 
-    @Getter(value=AccessLevel.PACKAGE, lazy=true)
+    @Getter(value = AccessLevel.PACKAGE, lazy = true)
     private final IdToken idTokenObject = getIdTokenObj();
 
     private IdToken getIdTokenObj() {
-        if(StringHelper.isBlank(idToken)){
+        if (StringHelper.isBlank(idToken)) {
             return null;
         }
         try {
@@ -74,8 +75,8 @@ public final class AuthenticationResult implements Serializable {
 
     private String environment;
 
-    @Getter(lazy=true)
-    private final Date expiresOnDate = new Date(expiresOn*1000);
+    @Getter(lazy = true)
+    private final Date expiresOnDate = new Date(expiresOn * 1000);
 
     private final String scopes;
 }

@@ -70,9 +70,15 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
                         idToken("idToken").environment("environment").build());
 
         PowerMock.replay(app);
-        Future<AuthenticationResult> result = app
-                .acquireTokenByAuthorizationCode(Collections.singleton("default-scope"), "auth_code",
-                        new URI(TestConfiguration.AAD_DEFAULT_REDIRECT_URI));
+
+        AuthorizationCodeParameters parameters = AuthorizationCodeParameters.builder
+                ("auth_code",
+                        new URI(TestConfiguration.AAD_DEFAULT_REDIRECT_URI))
+                .scopes(Collections.singleton("default-scope"))
+                .build();
+
+        Future<AuthenticationResult> result = app.acquireToken(parameters);
+
         AuthenticationResult ar = result.get();
         Assert.assertNotNull(ar);
         PowerMock.verifyAll();
@@ -109,9 +115,15 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
                         idToken("idToken").environment("environment").build());
 
         PowerMock.replay(app);
-        Future<AuthenticationResult> result = app
-                .acquireTokenByAuthorizationCode(Collections.singleton("default-scope"), "auth_code",
-                        new URI(TestConfiguration.AAD_DEFAULT_REDIRECT_URI));
+
+        AuthorizationCodeParameters parameters = AuthorizationCodeParameters.builder
+                ("auth_code",
+                        new URI(TestConfiguration.AAD_DEFAULT_REDIRECT_URI))
+                .scopes(Collections.singleton("default-scope"))
+                .build();
+
+        Future<AuthenticationResult> result = app.acquireToken(parameters);
+
         AuthenticationResult ar = result.get();
         Assert.assertNotNull(ar);
         PowerMock.verifyAll();
@@ -148,8 +160,13 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
                         idToken("idToken").environment("environment").build());
 
         PowerMock.replay(app);
-        final Future<AuthenticationResult> result = app.acquireTokenForClient
-                (Collections.singleton(TestConfiguration.AAD_RESOURCE_ID));
+
+        ClientCredentialParameters parameters = ClientCredentialParameters.builder(
+                Collections.singleton(TestConfiguration.AAD_RESOURCE_ID))
+                .build();
+
+        final Future<AuthenticationResult> result = app.acquireToken(parameters);
+
         final AuthenticationResult ar = result.get();
         assertNotNull(ar);
         assertFalse(StringHelper.isBlank(result.get().accessToken()));

@@ -27,28 +27,24 @@ import com.nimbusds.oauth2.sdk.AuthorizationCode;
 import com.nimbusds.oauth2.sdk.AuthorizationCodeGrant;
 import com.nimbusds.oauth2.sdk.AuthorizationGrant;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
+import lombok.Builder;
 
 import java.net.URI;
 import java.util.Set;
 
 class AuthorizationCodeRequest extends MsalRequest {
 
-    AuthorizationCodeRequest(Set<String> scopes,
-                             String authorizationCode,
-                             URI redirectUri,
-                             ClientAuthentication clientAuthentication,
+    AuthorizationCodeRequest(AuthorizationCodeParameters parameters,
+                             ClientApplicationBase application,
                              RequestContext requestContext){
-        super(clientAuthentication, createMsalGrant(authorizationCode, redirectUri, scopes), requestContext);
+        super(application, createMsalGrant(parameters), requestContext);
     }
 
-    private static AbstractMsalAuthorizationGrant createMsalGrant(
-            String authorizationCode,
-            URI redirectUri,
-            Set<String> scopes){
+    private static AbstractMsalAuthorizationGrant createMsalGrant(AuthorizationCodeParameters parameters){
 
         AuthorizationGrant authorizationGrant = new AuthorizationCodeGrant(
-                new AuthorizationCode(authorizationCode), redirectUri);
+                new AuthorizationCode(parameters.authorizationCode()), parameters.redirectUri());
 
-        return new OAuthAuthorizationGrant(authorizationGrant, scopes);
+        return new OAuthAuthorizationGrant(authorizationGrant, parameters.scopes());
     }
 }

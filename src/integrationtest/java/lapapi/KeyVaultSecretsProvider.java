@@ -27,11 +27,7 @@
 
 package lapapi;
 
-import com.microsoft.aad.msal4j.AuthenticationResult;
-import com.microsoft.aad.msal4j.ClientCredentialFactory;
-import com.microsoft.aad.msal4j.ConfidentialClientApplication;
-import com.microsoft.aad.msal4j.IClientCredential;
-import com.microsoft.aad.msal4j.TestConstants;
+import com.microsoft.aad.msal4j.*;
 import com.microsoft.azure.keyvault.KeyVaultClient;
 import com.microsoft.azure.keyvault.authentication.KeyVaultCredentials;
 
@@ -69,13 +65,15 @@ class KeyVaultSecretsProvider {
     private String requestAccessTokenForAutomation() {
         AuthenticationResult result;
         try{
-            ConfidentialClientApplication cca = new ConfidentialClientApplication.Builder(
+            ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
                     CLIENT_ID, getClientCredentialFromKeyStore()).
                     authority(TestConstants.AUTHORITY_MICROSOFT).
                     build();
-             result = cca.acquireTokenForClient(
-                     Collections.singleton(TestConstants.KEYVAULT_DEFAULT_SCOPE)).
-                     get();
+
+            result = cca.acquireToken(ClientCredentialParameters
+                    .builder(Collections.singleton(TestConstants.KEYVAULT_DEFAULT_SCOPE))
+                    .build()).
+                    get();
 
         } catch(Exception e){
             throw new RuntimeException("Error acquiring token from Azure AD: " + e.getMessage());

@@ -23,40 +23,29 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
-import java.util.Set;
+import java.net.MalformedURLException;
+import java.net.URL;
 
-@Accessors(fluent = true) @Getter
-public class SilentRequest extends MsalRequest {
+@Accessors(fluent = true)
+@Getter
+class SilentRequest extends MsalRequest {
 
-    private Account account;
-    private Set<String> scopes;
-    private boolean forceRefresh;
+    private SilentParameters parameters;
+
     private AuthenticationAuthority requestAuthority;
 
-    SilentRequest(Set<String> scopes,
-                  AuthenticationAuthority requestAuthority,
-                  boolean forceRefresh,
-                  Account account,
-                  ClientAuthentication clientAuthentication,
-                  RequestContext requestContext){
+    SilentRequest(SilentParameters parameters,
+                  ClientApplicationBase application,
+                  RequestContext requestContext) throws MalformedURLException {
 
-        super(clientAuthentication, null, requestContext);
+        super(application, null, requestContext);
 
-        this.account = account;
-        this.scopes = scopes;
-        this.requestAuthority = requestAuthority;
-        this.forceRefresh = forceRefresh;
-        /*
-        this.forceRefresh = forceRefresh;
-        if (!StringHelper.isBlank(authorityUrl)) {
-            requestAuthority = new AuthenticationAuthority(new URL(authorityUrl));
-        } else {
-            requestAuthority = clientApplication.authenticationAuthority;
-        }
-        */
+        this.parameters = parameters;
+        this.requestAuthority = StringHelper.isBlank(parameters.authorityUrl()) ?
+                application.authenticationAuthority :
+                new AuthenticationAuthority(new URL(parameters.authorityUrl()));
     }
 }

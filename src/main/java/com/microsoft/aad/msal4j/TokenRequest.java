@@ -76,8 +76,8 @@ class TokenRequest {
         HttpEvent httpEvent = createHttpEvent();
 
         try(TelemetryHelper telemetryHelper = serviceBundle.getTelemetryManager().createTelemetryHelper(
-                msalRequest.getRequestContext().getTelemetryRequestId(),
-                msalRequest.getClientAuthentication().getClientID().toString(),
+                msalRequest.requestContext().getTelemetryRequestId(),
+                msalRequest.application().clientId(),
                 httpEvent,
                 false)) {
 
@@ -187,7 +187,7 @@ class TokenRequest {
         } catch(URISyntaxException ex){
             log.warn(LogHelper.createMessage("Setting URL telemetry fields failed: " +
                             LogHelper.getPiiScrubbedDetails(ex),
-                    msalRequest.getHeaders().getHeaderCorrelationIdValue()));
+                    msalRequest.headers().getHeaderCorrelationIdValue()));
         }
         return httpEvent;
     }
@@ -214,15 +214,15 @@ class TokenRequest {
         final OAuthHttpRequest oauthHttpRequest = new OAuthHttpRequest(
                 HTTPRequest.Method.POST,
                 this.url,
-                msalRequest.getHeaders().getReadonlyHeaderMap(),
+                msalRequest.headers().getReadonlyHeaderMap(),
                 this.serviceBundle);
         oauthHttpRequest.setContentType(CommonContentTypes.APPLICATION_URLENCODED);
 
-        final Map<String, String> params = msalRequest.getMsalAuthorizationGrant().toParameters();
+        final Map<String, String> params = msalRequest.msalAuthorizationGrant().toParameters();
         oauthHttpRequest.setQuery(URLUtils.serializeParameters(params));
 
-        if (msalRequest.getClientAuthentication() != null) {
-            msalRequest.getClientAuthentication().applyTo(oauthHttpRequest);
+        if (msalRequest.application().clientAuthentication != null) {
+            msalRequest.application().clientAuthentication.applyTo(oauthHttpRequest);
         }
 
         return oauthHttpRequest;

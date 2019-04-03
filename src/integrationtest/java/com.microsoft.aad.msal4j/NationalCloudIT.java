@@ -66,11 +66,12 @@ public class NationalCloudIT {
                 authority(TestConstants.AUTHORITY_ORGANIZATIONS).
                 build();
 
-        AuthenticationResult result = pca.acquireTokenByUsernamePassword(
-                Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-                labResponse.getUser().getUpn(),
-                password).
-                get();
+        AuthenticationResult result = pca.acquireToken(UserNamePasswordParameters
+                        .builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                                labResponse.getUser().getUpn(),
+                                password)
+                        .build())
+                .get();
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());

@@ -23,24 +23,36 @@
 
 package com.microsoft.aad.msal4j;
 
-import java.util.Map;
+import lombok.*;
+import lombok.experimental.Accessors;
+
 import java.util.Set;
 
-public class IntegratedWindowsAuthorizationGrant extends AbstractMsalAuthorizationGrant {
+import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty;
 
-    private final String userName;
+@Builder
+@Accessors(fluent = true)
+@Getter
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public class OnBehalfOfParameters {
 
-    IntegratedWindowsAuthorizationGrant(Set<String> scopes, String userName) {
-        this.userName = userName;
-        this.scopes = String.join(" ", scopes);
+    @NonNull
+    private Set<String> scopes;
+
+    @NonNull
+    private UserAssertion userAssertion;
+
+    private static OnBehalfOfParametersBuilder builder() {
+
+        return new OnBehalfOfParametersBuilder();
     }
 
-    @Override
-    Map<String, String> toParameters() {
-        return null;
-    }
+    public static OnBehalfOfParametersBuilder builder(Set<String> scopes, UserAssertion userAssertion) {
 
-    String getUserName() {
-        return userName;
+        validateNotEmpty("scopes", scopes);
+
+        return builder()
+                .scopes(scopes)
+                .userAssertion(userAssertion);
     }
 }

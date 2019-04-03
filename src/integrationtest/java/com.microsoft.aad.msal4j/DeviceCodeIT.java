@@ -71,9 +71,12 @@ public class DeviceCodeIT {
             runAutomatedDeviceCodeFlow(deviceCode, labResponse.getUser());
         };
 
-        AuthenticationResult result = pca.acquireTokenByDeviceCodeFlow(
-                Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-                deviceCodeConsumer).get();
+
+        AuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
+                .builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                        deviceCodeConsumer)
+                .build())
+                .get();
 
         Assert.assertNotNull(result);
         Assert.assertTrue(!Strings.isNullOrEmpty(result.accessToken()));

@@ -31,9 +31,6 @@ import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateEncodingException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
@@ -76,8 +73,11 @@ public class PublicClientApplicationTest extends PowerMockTestCase {
                         EasyMock.isA(ServiceBundle.class))).andReturn(response);
 
         PowerMock.replay(app, response, UserDiscoveryRequest.class);
-        Future<AuthenticationResult> result =
-                app.acquireTokenByUsernamePassword(Collections.singleton("scopes"), "username", "password");
+
+        Future<AuthenticationResult> result = app.acquireToken(
+                UserNamePasswordParameters
+                        .builder(Collections.singleton("scopes"), "username", "password")
+                        .build());
 
         AuthenticationResult ar = result.get();
         Assert.assertNotNull(ar);
