@@ -35,7 +35,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
-@Accessors(fluent = true) @Getter(AccessLevel.PACKAGE)
+@Accessors(fluent = true)
+@Getter(AccessLevel.PACKAGE)
 class DeviceCodeFlowRequest extends MsalRequest {
     private final Logger log = LoggerFactory.getLogger(DeviceCodeFlowRequest.class);
 
@@ -47,7 +48,7 @@ class DeviceCodeFlowRequest extends MsalRequest {
     DeviceCodeFlowRequest(DeviceCodeFlowParameters parameters,
                           AtomicReference<CompletableFuture<AuthenticationResult>> futureReference,
                           PublicClientApplication application,
-                          RequestContext requestContext){
+                          RequestContext requestContext) {
 
         super(application, null, requestContext);
 
@@ -76,11 +77,11 @@ class DeviceCodeFlowRequest extends MsalRequest {
         return parseJsonToDeviceCodeAndSetParameters(json, headers, clientId);
     }
 
-    void createAuthenticationGrant(DeviceCode deviceCode){
+    void createAuthenticationGrant(DeviceCode deviceCode) {
         msalAuthorizationGrant = new DeviceCodeAuthorizationGrant(deviceCode, deviceCode.getScopes());
     }
 
-    private String createQueryParamsAndAppendToURL(String url, String clientId){
+    private String createQueryParamsAndAppendToURL(String url, String clientId) {
         Map<String, String> queryParameters = new HashMap<>();
         queryParameters.put("client_id", clientId);
 
@@ -93,7 +94,7 @@ class DeviceCodeFlowRequest extends MsalRequest {
         return url;
     }
 
-    private  Map<String, String> appendToHeaders(Map<String, String> clientDataHeaders){
+    private Map<String, String> appendToHeaders(Map<String, String> clientDataHeaders) {
         Map<String, String> headers = new HashMap<>(clientDataHeaders);
         headers.put("Accept", "application/json");
 
@@ -102,8 +103,8 @@ class DeviceCodeFlowRequest extends MsalRequest {
 
     private DeviceCode parseJsonToDeviceCodeAndSetParameters(
             String json,
-            Map<String, String > headers,
-            String clientId){
+            Map<String, String> headers,
+            String clientId) {
 
         DeviceCode result;
         result = JsonHelper.convertJsonToObject(json, DeviceCode.class);

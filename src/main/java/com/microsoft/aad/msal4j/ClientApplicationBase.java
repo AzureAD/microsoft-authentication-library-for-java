@@ -26,7 +26,6 @@ package com.microsoft.aad.msal4j;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
 
 import javax.net.ssl.SSLSocketFactory;
@@ -48,8 +47,6 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 /**
  * Abstract class containing common API methods and properties.
  */
-
-@SuperBuilder
 abstract class ClientApplicationBase {
 
     public static String DEFAULT_AUTHORITY = "https://login.microsoftonline.com/common/";

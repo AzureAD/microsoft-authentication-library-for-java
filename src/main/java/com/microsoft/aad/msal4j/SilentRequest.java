@@ -29,7 +29,8 @@ import lombok.experimental.Accessors;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-@Accessors(fluent = true) @Getter
+@Accessors(fluent = true)
+@Getter
 class SilentRequest extends MsalRequest {
 
     private SilentParameters parameters;

@@ -32,24 +32,22 @@ import lombok.experimental.Accessors;
 import java.util.HashMap;
 import java.util.Map;
 
-@Accessors(fluent = true) @Getter
+@Accessors(fluent = true)
+@Getter
 class OnBehalfOfRequest extends MsalRequest {
-
-    private String op1;
-    private String op2;
 
     OnBehalfOfRequest(OnBehalfOfParameters parameters,
                       ConfidentialClientApplication application,
-                      RequestContext requestContext){
+                      RequestContext requestContext) {
         super(application, createAuthenticationGrant(parameters), requestContext);
     }
 
-    private static OAuthAuthorizationGrant createAuthenticationGrant(OnBehalfOfParameters parameters){
+    private static OAuthAuthorizationGrant createAuthenticationGrant(OnBehalfOfParameters parameters) {
 
         AuthorizationGrant jWTBearerGrant;
-        try{
+        try {
             jWTBearerGrant = new JWTBearerGrant(SignedJWT.parse(parameters.userAssertion().getAssertion()));
-        }catch(Exception e){
+        } catch (Exception e) {
             throw new AuthenticationException(e);
         }
 

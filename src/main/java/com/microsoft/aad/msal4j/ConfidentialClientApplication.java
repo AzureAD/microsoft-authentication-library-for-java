@@ -124,7 +124,7 @@ public class ConfidentialClientApplication extends ClientApplicationBase {
             throw new AuthenticationException(e);
         }
     }
-    
+
     /**
      * Returns instance of Builder of ConfidentialClientApplication
      *

@@ -28,7 +28,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
-@Accessors(fluent = true) @Getter(AccessLevel.PACKAGE)
+@Accessors(fluent = true)
+@Getter(AccessLevel.PACKAGE)
 @AllArgsConstructor
 abstract class MsalRequest {
     private final ClientApplicationBase application;
@@ -37,7 +38,7 @@ abstract class MsalRequest {
 
     private final RequestContext requestContext;
 
-    @Getter(value=AccessLevel.PACKAGE, lazy=true)
+    @Getter(value = AccessLevel.PACKAGE, lazy = true)
     private final ClientDataHttpHeaders headers = new ClientDataHttpHeaders(requestContext.getCorrelationId());
 }
 

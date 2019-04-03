@@ -31,7 +31,9 @@ import lombok.experimental.Accessors;
 import java.util.ArrayList;
 import java.util.List;
 
-@Accessors(fluent = true) @Getter @Setter
+@Accessors(fluent = true)
+@Getter
+@Setter
 class AccessTokenCacheEntity extends Credential {
 
     @SerializedName("credential_type")
@@ -52,7 +54,7 @@ class AccessTokenCacheEntity extends Credential {
     @SerializedName("extended_expires_on")
     private String extExpiresOn;
 
-    String getKey(){
+    String getKey() {
         List<String> keyParts = new ArrayList<>();
 
         keyParts.add(StringHelper.isBlank(homeAccountId) ? "" : homeAccountId);
