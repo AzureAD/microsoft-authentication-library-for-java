@@ -23,24 +23,25 @@
 
 package com.microsoft.aad.msal4j;
 
-import java.util.Map;
 import java.util.Set;
 
-public class IntegratedWindowsAuthorizationGrant extends AbstractMsalAuthorizationGrant {
+class ParameterValidationUtils {
 
-    private final String userName;
-
-    IntegratedWindowsAuthorizationGrant(Set<String> scopes, String userName) {
-        this.userName = userName;
-        this.scopes = String.join(" ", scopes);
+    static void validateNotBlank(String name, String value) {
+        if (StringHelper.isBlank(value)) {
+            throw new IllegalArgumentException(name + " is null or empty");
+        }
     }
 
-    @Override
-    Map<String, String> toParameters() {
-        return null;
+    static void validateNotNull(String name, Object obj) {
+        if (obj == null) {
+            throw new IllegalArgumentException(name + " is null");
+        }
     }
 
-    String getUserName() {
-        return userName;
+    static void validateNotEmpty(String name, Set<String> set) {
+        if (set == null || set.isEmpty()) {
+            throw new IllegalArgumentException(name + " is null or empty");
+        }
     }
 }

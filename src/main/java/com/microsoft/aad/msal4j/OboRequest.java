@@ -31,8 +31,9 @@ import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
+/*
 class OboRequest extends MsalRequest {
+
     OboRequest(UserAssertion userAssertion,
                Set<String> scopes,
                ClientAuthentication clientAuthentication,
@@ -58,3 +59,4 @@ class OboRequest extends MsalRequest {
         return new OAuthAuthorizationGrant(jWTBearerGrant, params);
     }
 }
+*/

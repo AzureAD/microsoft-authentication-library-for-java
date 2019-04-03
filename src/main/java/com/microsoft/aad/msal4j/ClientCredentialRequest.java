@@ -24,20 +24,19 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.ClientCredentialsGrant;
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 
 import java.util.Set;
 
-public class ClientCredentialRequest extends MsalRequest{
-    ClientCredentialRequest(Set<String> scopes,
-                            ClientAuthentication clientAuthentication,
+class ClientCredentialRequest extends MsalRequest{
+
+    ClientCredentialRequest(ClientCredentialParameters parameters,
+                            ConfidentialClientApplication application,
                             RequestContext requestContext){
-        super(clientAuthentication, createMsalGrant(scopes), requestContext );
+        super(application, createMsalGrant(parameters), requestContext );
     }
 
-    private static OAuthAuthorizationGrant createMsalGrant(Set<String> scopes){
+    private static OAuthAuthorizationGrant createMsalGrant(ClientCredentialParameters parameters){
 
-        return new OAuthAuthorizationGrant(new ClientCredentialsGrant(), scopes);
+        return new OAuthAuthorizationGrant(new ClientCredentialsGrant(), parameters.scopes());
     }
-
 }

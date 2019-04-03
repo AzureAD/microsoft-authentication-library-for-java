@@ -22,6 +22,7 @@
 // THE SOFTWARE.
 
 import com.microsoft.aad.msal4j.AuthenticationResult;
+import com.microsoft.aad.msal4j.IntegratedWindowsAuthenticationParameters;
 import com.microsoft.aad.msal4j.PublicClientApplication;
 
 import java.util.Collections;
@@ -38,14 +39,16 @@ public class IntegratedWindowsAuthFlow {
     }
 
     private static AuthenticationResult getAccessTokenByIntegratedAuth() throws Exception {
-        PublicClientApplication app = new PublicClientApplication.Builder(TestData.PUBLIC_CLIENT_ID)
+        PublicClientApplication app = PublicClientApplication.builder(TestData.PUBLIC_CLIENT_ID)
                 .authority(TestData.AUTHORITY_COMMON)
                 .build();
 
-        Future<AuthenticationResult> futureAuthenticationResult =
-                    app.acquireTokenByIntegratedWindowsAuth(Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE), TestData.USER_NAME);
+        Future<AuthenticationResult> future = app.acquireToken
+                (IntegratedWindowsAuthenticationParameters.builder
+                        (Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE), TestData.USER_NAME)
+                        .build());
 
-        AuthenticationResult result = futureAuthenticationResult.get();
+        AuthenticationResult result = future.get();
 
         return result;
     }

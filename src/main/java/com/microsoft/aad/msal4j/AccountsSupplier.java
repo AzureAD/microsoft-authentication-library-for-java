@@ -35,7 +35,7 @@ class AccountsSupplier implements Supplier<Collection<Account>> {
     AccountsSupplier(ClientApplicationBase clientApplication) {
 
         this.clientApplication = clientApplication;
-        this.headers = new ClientDataHttpHeaders(clientApplication.getCorrelationId());
+        this.headers = new ClientDataHttpHeaders(clientApplication.correlationId());
     }
 
     @Override
@@ -46,7 +46,7 @@ class AccountsSupplier implements Supplier<Collection<Account>> {
                     AadInstanceDiscovery.cache.get(clientApplication.authenticationAuthority.getHost());
 
             accounts = clientApplication.tokenCache.getAccounts
-                    (clientApplication.clientId, instanceDiscoveryData.getAliasesSet());
+                    (clientApplication.clientId(), instanceDiscoveryData.getAliasesSet());
 
         } catch (Exception ex) {
             clientApplication.log.error(

@@ -32,35 +32,30 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotBlank;
+import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
+
 public class PublicClientApplication extends ClientApplicationBase {
 
     /**
      * Acquires a security token using a username/password flow.
      *
-     * @param scopes scopes of the access request
-     * @param username
-     *            Username of the managed or federated user.
-     * @param password
-     *            Password of the managed or federated user.
-     *            If null, integrated authentication will be used.
+     * @param parameters#scopes   scopes of the access request
+     * @param parameters#username Username of the managed or federated user.
+     * @param parameters#password Password of the managed or federated user.
+     *                            If null, integrated authentication will be used.
      * @return A {@link CompletableFuture} object representing the
-     *         {@link AuthenticationResult} of the call. It contains Access
-     *         Token, Refresh Token and the Access Token's expiration time.
+     * {@link AuthenticationResult} of the call. It contains Access
+     * Token, Refresh Token and the Access Token's expiration time.
      */
-    public CompletableFuture<AuthenticationResult> acquireTokenByUsernamePassword(
-            Set<String> scopes,
-            String username,
-            String password) {
+    public CompletableFuture<AuthenticationResult> acquireToken(UserNamePasswordParameters parameters) {
 
-        validateNotBlank("username", username);
-        validateNotEmpty("scopes", scopes);
+        validateNotNull("parameters", parameters);
 
-        UserNamePasswordRequest userNamePasswordRequest =  new UserNamePasswordRequest(
-                username,
-                password,
-                scopes,
-                clientAuthentication,
-                createRequestContext(AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_USERNAME_PASSWORD));
+        UserNamePasswordRequest userNamePasswordRequest =
+                new UserNamePasswordRequest(parameters,
+                        this,
+                        createRequestContext(AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_USERNAME_PASSWORD));
 
         return this.executeRequest(userNamePasswordRequest);
     }
@@ -68,25 +63,20 @@ public class PublicClientApplication extends ClientApplicationBase {
     /**
      * Acquires a security token using Windows integrated authentication flow.
      *
-     * @param scopes scopes of the access request
-     * @param username
-     *            Username of the managed or federated user.
+     * @param parameters#scopes   scopes of the access request
+     * @param parameters#username Username of the managed or federated user.
      * @return A {@link CompletableFuture} object representing the
-     *         {@link AuthenticationResult} of the call. It contains Access
-     *         Token, Refresh Token and the Access Token's expiration time.
+     * {@link AuthenticationResult} of the call. It contains Access
+     * Token, Refresh Token and the Access Token's expiration time.
      */
-    public CompletableFuture<AuthenticationResult> acquireTokenByIntegratedWindowsAuth(
-            Set<String> scopes,
-            String username) {
+    public CompletableFuture<AuthenticationResult> acquireToken(IntegratedWindowsAuthenticationParameters parameters) {
 
-        validateNotEmpty("scopes", scopes);
-        validateNotBlank("username", username);
+        validateNotNull("parameters", parameters);
 
         IntegratedWindowsAuthenticationRequest integratedWindowsAuthenticationRequest =
                 new IntegratedWindowsAuthenticationRequest(
-                        username,
-                        scopes,
-                        clientAuthentication,
+                        parameters,
+                        this,
                         createRequestContext(
                                 AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_INTEGRATED_WINDOWS_AUTH));
 
@@ -95,17 +85,17 @@ public class PublicClientApplication extends ClientApplicationBase {
 
     /**
      * Acquires security token from the authority using an device code flow.
-     *
+     * <p>
      * Flow is designed for devices that do not have access to a browser or have input constraints.
      * The authorization server issues DeviceCode object with verification code, an end-user code
      * and the end-user verification URI. DeviceCode is provided through deviceCodeConsumer callback.
      * End-user should be instructed to use another device to connect to the authorization server to approve the access request.
-     *
+     * <p>
      * Since the client cannot receive incoming requests, it polls the authorization server repeatedly
      * until the end-user completes the approval process.
      *
-     * @param scopes scopes of the access request
-     * @param deviceCodeConsumer
+     * @param parameters#scopes             scopes of the access request
+     * @param parameters#deviceCodeConsumer
      * @return A {@link CompletableFuture} object representing the {@link AuthenticationResult} of the call.
      * It contains AccessTokenCacheEntity, Refresh Token and the Access Token's expiration time.
      * @throws AuthenticationException thrown if authorization is pending or another error occurred.
@@ -114,20 +104,22 @@ public class PublicClientApplication extends ClientApplicationBase {
      *                                 DeviceCode.interval - The minimum amount of time in seconds that the client
      *                                 SHOULD wait between polling requests to the token endpoint
      */
-    public CompletableFuture<AuthenticationResult> acquireTokenByDeviceCodeFlow(
-            Set<String> scopes,
-            Consumer<DeviceCode> deviceCodeConsumer) {
+    public CompletableFuture<AuthenticationResult> acquireToken(DeviceCodeFlowParameters parameters) {
 
-        validateDeviceCodeRequestInput(scopes);
+        if (!AuthorityType.AAD.equals(authenticationAuthority.getAuthorityType())) {
+            throw new IllegalArgumentException(
+                    "Invalid authority type. Device Flow is only supported by AAD authority");
+        }
+
+        validateNotNull("parameters", parameters);
 
         AtomicReference<CompletableFuture<AuthenticationResult>> futureReference =
                 new AtomicReference<>();
 
-        DeviceCodeRequest deviceCodeRequest = new DeviceCodeRequest(
-                deviceCodeConsumer,
+        DeviceCodeFlowRequest deviceCodeRequest = new DeviceCodeFlowRequest(
+                parameters,
                 futureReference,
-                scopes,
-                clientAuthentication,
+                this,
                 createRequestContext(AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_DEVICE_CODE_FLOW));
 
         CompletableFuture<AuthenticationResult> future = executeRequest(deviceCodeRequest);
@@ -135,47 +127,51 @@ public class PublicClientApplication extends ClientApplicationBase {
         return future;
     }
 
-    private PublicClientApplication(Builder builder){
+    private PublicClientApplication(Builder builder) {
         super(builder);
 
         log = LoggerFactory.getLogger(PublicClientApplication.class);
 
-        initClientAuthentication(clientId);
+        initClientAuthentication(clientId());
     }
 
-    private void initClientAuthentication(String clientId){
+    private void initClientAuthentication(String clientId) {
         validateNotBlank("clientId", clientId);
 
         clientAuthentication = new ClientAuthenticationPost(ClientAuthenticationMethod.NONE,
                 new ClientID(clientId));
     }
 
-    private void validateDeviceCodeRequestInput(Set<String> scopes) {
-        validateNotEmpty("scopes", scopes);
+    /**
+     * Returns instance of Builder of PublicClientApplication
+     *
+     * @param clientId Client ID (Application ID) of the application as registered
+     *                 in the application registration portal (portal.azure.com)
+     */
+    public static Builder builder(String clientId) {
 
-        if (AuthorityType.ADFS.equals(authenticationAuthority.getAuthorityType())){
-            throw new IllegalArgumentException(
-                    "Invalid authority type. Device Flow is not supported by ADFS authority");
-        }
+        return new Builder(clientId);
     }
 
-    public static class Builder extends ClientApplicationBase.Builder<Builder>{
+    public static class Builder extends ClientApplicationBase.Builder<Builder> {
         /**
          * Constructor to create instance of Builder of PublicClientApplication
+         *
          * @param clientId Client ID (Application ID) of the application as registered
          *                 in the application registration portal (portal.azure.com)
          */
-        public Builder(String clientId){
+        Builder(String clientId) {
             super(clientId);
         }
 
-        @Override public PublicClientApplication build() {
+        @Override
+        public PublicClientApplication build() {
 
             return new PublicClientApplication(this);
         }
 
-        @Override protected Builder self()
-        {
+        @Override
+        protected Builder self() {
             return this;
         }
     }

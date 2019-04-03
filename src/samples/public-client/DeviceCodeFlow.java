@@ -22,6 +22,7 @@
 // THE SOFTWARE.
 import com.microsoft.aad.msal4j.AuthenticationResult;
 import com.microsoft.aad.msal4j.DeviceCode;
+import com.microsoft.aad.msal4j.DeviceCodeFlowParameters;
 import com.microsoft.aad.msal4j.PublicClientApplication;
 
 import java.util.Collections;
@@ -34,7 +35,7 @@ public class DeviceCodeFlow {
     }
 
     private static void getAccessTokenByDeviceCodeGrant() throws Exception {
-        PublicClientApplication app = new PublicClientApplication.Builder(TestData.PUBLIC_CLIENT_ID)
+        PublicClientApplication app = PublicClientApplication.builder(TestData.PUBLIC_CLIENT_ID)
                 .authority(TestData.AUTHORITY_COMMON)
                 .build();
 
@@ -42,8 +43,11 @@ public class DeviceCodeFlow {
             System.out.println(deviceCode.getMessage());
         };
 
-        CompletableFuture<AuthenticationResult> future =
-                app.acquireTokenByDeviceCodeFlow(Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE), deviceCodeConsumer);
+        CompletableFuture<AuthenticationResult> future = app.acquireToken(
+                DeviceCodeFlowParameters.builder
+                        (Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE), deviceCodeConsumer)
+                        .build());
+
 
         future.handle((res, ex) -> {
             if(ex != null) {

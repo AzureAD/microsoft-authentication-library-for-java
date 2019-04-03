@@ -36,24 +36,27 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
+
 public class ConfidentialClientApplication extends ClientApplicationBase {
 
     /**
      * Acquires security token from the authority.
      *
-     * @param scopes scopes of the access request
+     * @param parameters#scopes scopes of the access request
      * @return A {@link CompletableFuture} object representing the
-     *         {@link AuthenticationResult} of the call. It contains Access
-     *         Token and the Access Token's expiration time. Refresh Token
-     *         property will be null for this overload.
+     * {@link AuthenticationResult} of the call. It contains Access
+     * Token and the Access Token's expiration time. Refresh Token
+     * property will be null for this overload.
      */
-    public CompletableFuture<AuthenticationResult> acquireTokenForClient(Set<String> scopes) {
-        validateNotEmpty("scopes", scopes);
+    public CompletableFuture<AuthenticationResult> acquireToken(ClientCredentialParameters parameters) {
+
+        validateNotNull("parameters", parameters);
 
         ClientCredentialRequest clientCredentialRequest =
                 new ClientCredentialRequest(
-                        scopes,
-                        clientAuthentication,
+                        parameters,
+                        this,
                         createRequestContext(AcquireTokenPublicApi.ACQUIRE_TOKEN_FOR_CLIENT));
 
         return this.executeRequest(clientCredentialRequest);
@@ -63,40 +66,27 @@ public class ConfidentialClientApplication extends ClientApplicationBase {
      * Acquires an access token from the authority on behalf of a user. It
      * requires using a user token previously received.
      *
-     * @param scopes scopes of the access request
-     * @param userAssertion
-     *            userAssertion to use as Authorization grant
+     * @param parameters#scopes        scopes of the access request
+     * @param parameters#userAssertion userAssertion to use as Authorization grant
      * @return A {@link CompletableFuture} object representing the
-     *         {@link AuthenticationResult} of the call. It contains Access
-     *         Token and the Access Token's expiration time. Refresh Token
-     *         property will be null for this overload.
+     * {@link AuthenticationResult} of the call. It contains Access
+     * Token and the Access Token's expiration time. Refresh Token
+     * property will be null for this overload.
      * @throws AuthenticationException {@link AuthenticationException}
      */
-    public CompletableFuture<AuthenticationResult> acquireTokenOnBehalfOf(
-            Set<String> scopes,
-            UserAssertion userAssertion) {
+    public CompletableFuture<AuthenticationResult> acquireToken(OnBehalfOfParameters parameters) {
 
-        validateNotNull("userAssertion", userAssertion);
-        validateNotEmpty("scopes", scopes);
+        validateNotNull("parameters", parameters);
 
-        return acquireTokenOnBehalfOf(scopes, userAssertion, clientAuthentication);
-    }
-
-    private CompletableFuture<AuthenticationResult> acquireTokenOnBehalfOf(
-            Set<String> scopes,
-            UserAssertion userAssertion,
-            ClientAuthentication clientAuthentication) {
-
-        OboRequest oboRequest = new OboRequest(
-                userAssertion,
-                scopes,
-                clientAuthentication,
+        OnBehalfOfRequest oboRequest = new OnBehalfOfRequest(
+                parameters,
+                this,
                 createRequestContext(AcquireTokenPublicApi.ACQUIRE_TOKEN_ON_BEHALF_OF));
 
         return this.executeRequest(oboRequest);
     }
 
-    private ConfidentialClientApplication(Builder builder){
+    private ConfidentialClientApplication(Builder builder) {
         super(builder);
 
         log = LoggerFactory.getLogger(ConfidentialClientApplication.class);
@@ -104,23 +94,21 @@ public class ConfidentialClientApplication extends ClientApplicationBase {
         initClientAuthentication(builder.clientCredential);
     }
 
-    private void initClientAuthentication(IClientCredential clientCredential){
+    private void initClientAuthentication(IClientCredential clientCredential) {
         validateNotNull("clientCredential", clientCredential);
 
-        if(clientCredential instanceof ClientSecret){
+        if (clientCredential instanceof ClientSecret) {
             clientAuthentication = new ClientSecretPost(
-                    new ClientID(clientId),
-                    new Secret(((ClientSecret)clientCredential).getClientSecret()));
-        }
-        else if(clientCredential instanceof AsymmetricKeyCredential){
+                    new ClientID(clientId()),
+                    new Secret(((ClientSecret) clientCredential).getClientSecret()));
+        } else if (clientCredential instanceof AsymmetricKeyCredential) {
             ClientAssertion clientAssertion = JwtHelper.buildJwt(
-                    clientId,
-                    (AsymmetricKeyCredential)clientCredential,
+                    clientId(),
+                    (AsymmetricKeyCredential) clientCredential,
                     this.authenticationAuthority.getSelfSignedJwtAudience());
 
             clientAuthentication = createClientAuthFromClientAssertion(clientAssertion);
-        }
-        else{
+        } else {
             throw new IllegalArgumentException("Unsupported client credential");
         }
     }
@@ -132,34 +120,47 @@ public class ConfidentialClientApplication extends ClientApplicationBase {
             map.put("client_assertion_type", clientAssertion.getAssertionType());
             map.put("client_assertion", clientAssertion.getAssertion());
             return PrivateKeyJWT.parse(map);
-        }
-        catch (final ParseException e) {
+        } catch (final ParseException e) {
             throw new AuthenticationException(e);
         }
     }
+    
+    /**
+     * Returns instance of Builder of ConfidentialClientApplication
+     *
+     * @param clientId         Client ID (Application ID) of the application as registered
+     *                         in the application registration portal (portal.azure.com)
+     * @param clientCredential The client credential to use for token acquisition.
+     */
+    public static Builder builder(String clientId, IClientCredential clientCredential) {
 
-    public static class Builder extends ClientApplicationBase.Builder<Builder>{
+        return new Builder(clientId, clientCredential);
+    }
+
+    public static class Builder extends ClientApplicationBase.Builder<Builder> {
 
         private IClientCredential clientCredential;
 
         /**
          * Constructor to create instance of Builder of ConfidentialClientApplication
-         * @param clientId Client ID (Application ID) of the application as registered
-         *                 in the application registration portal (portal.azure.com)
+         *
+         * @param clientId         Client ID (Application ID) of the application as registered
+         *                         in the application registration portal (portal.azure.com)
          * @param clientCredential The client credential to use for token acquisition.
          */
-        public Builder(String clientId, IClientCredential clientCredential){
+        Builder(String clientId, IClientCredential clientCredential) {
             super(clientId);
             this.clientCredential = clientCredential;
         }
 
-        @Override public ConfidentialClientApplication build() {
+        @Override
+        public ConfidentialClientApplication build() {
 
             return new ConfidentialClientApplication(this);
         }
 
-        @Override protected ConfidentialClientApplication.Builder self()
-        {
+        @Override
+        protected ConfidentialClientApplication.Builder self() {
             return this;
         }
     }

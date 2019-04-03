@@ -23,22 +23,17 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
-
-import java.util.Set;
-
 class IntegratedWindowsAuthenticationRequest extends MsalRequest{
 
-    IntegratedWindowsAuthenticationRequest(String username,
-                                           Set<String> scopes,
-                                           ClientAuthentication clientAuthentication,
+    IntegratedWindowsAuthenticationRequest(IntegratedWindowsAuthenticationParameters parameters,
+                                           PublicClientApplication application,
                                            RequestContext requestContext){
-            super(clientAuthentication, createAuthenticationGrant(username, scopes), requestContext);
+            super(application, createAuthenticationGrant(parameters), requestContext);
     }
 
-    private static AbstractMsalAuthorizationGrant createAuthenticationGrant(String username,
-                                                                Set<String> scopes){
+    private static AbstractMsalAuthorizationGrant createAuthenticationGrant
+            (IntegratedWindowsAuthenticationParameters parameters){
 
-        return new IntegratedWindowsAuthorizationGrant(username, scopes);
+        return new IntegratedWindowsAuthorizationGrant(parameters.scopes(), parameters.username());
     }
 }

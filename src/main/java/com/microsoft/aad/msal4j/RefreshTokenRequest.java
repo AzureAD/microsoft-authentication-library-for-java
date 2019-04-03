@@ -24,23 +24,20 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.RefreshTokenGrant;
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import com.nimbusds.oauth2.sdk.token.RefreshToken;
-
-import java.util.Set;
 
 class RefreshTokenRequest extends MsalRequest {
 
-    RefreshTokenRequest(String refreshToken,
-                        Set<String> scopes,
-                        ClientAuthentication clientAuthentication,
+    RefreshTokenRequest(RefreshTokenParameters parameters,
+                        ClientApplicationBase application,
                         RequestContext requestContext){
-        super(clientAuthentication, createAuthenticationGrant(refreshToken, scopes), requestContext);
+        super(application, createAuthenticationGrant(parameters), requestContext);
     }
 
-    private static AbstractMsalAuthorizationGrant createAuthenticationGrant(String refreshToken,
-                                                                    Set<String > scopes){
-        RefreshTokenGrant refreshTokenGrant = new RefreshTokenGrant(new RefreshToken(refreshToken));
-        return new OAuthAuthorizationGrant(refreshTokenGrant, scopes);
+    private static AbstractMsalAuthorizationGrant createAuthenticationGrant(
+            RefreshTokenParameters parameters){
+
+        RefreshTokenGrant refreshTokenGrant = new RefreshTokenGrant(new RefreshToken(parameters.refreshToken()));
+        return new OAuthAuthorizationGrant(refreshTokenGrant, parameters.scopes());
     }
 }

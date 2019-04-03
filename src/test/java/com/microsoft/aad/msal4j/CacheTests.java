@@ -147,12 +147,19 @@ public class CacheTests extends AbstractMsalTests {
 
         String tokenResponse = getTokenResponse(folder);
 
-        ClientAuthentication clientAuth = new ClientAuthenticationPost(ClientAuthenticationMethod.NONE,
-                new ClientID(appData.clientId));
+        PublicClientApplication app = new PublicClientApplication.Builder(appData.clientId)
+                .authority(appData.authorizeRequestUrl)
+                .build();
 
-        MsalRequest msalRequest = new AuthorizationCodeRequest(null, "code",
-                new URI("http://my.redirect.com"), clientAuth,
-                new RequestContext("client_id", "correlation_id",
+        AuthorizationCodeParameters parameters =
+                AuthorizationCodeParameters.builder
+                        ("code", new URI("http://my.redirect.com"))
+                        .build();
+
+        MsalRequest msalRequest = new AuthorizationCodeRequest(
+                parameters,
+                app,
+                new RequestContext(appData.clientId, "correlation_id",
                         AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         ServiceBundle serviceBundle = new ServiceBundle(

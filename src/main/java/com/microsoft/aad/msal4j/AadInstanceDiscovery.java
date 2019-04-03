@@ -79,8 +79,8 @@ class AadInstanceDiscovery {
                                 AuthenticationAuthority.getTenant(authorityUrl)));
 
         String json = HttpHelper.executeHttpRequest
-                (log, HttpMethod.GET, instanceDiscoveryRequestUrl, msalRequest.getHeaders().getReadonlyHeaderMap(),
-                        null, msalRequest.getRequestContext(), serviceBundle);
+                (log, HttpMethod.GET, instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(),
+                        null, msalRequest.requestContext(), serviceBundle);
 
         return JsonHelper.convertJsonToObject(json, InstanceDiscoveryResponse.class);
     }

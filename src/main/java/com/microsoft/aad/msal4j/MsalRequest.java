@@ -23,22 +23,21 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.experimental.Accessors;
 
-@Getter
+@Accessors(fluent = true) @Getter(AccessLevel.PACKAGE)
 @AllArgsConstructor
 abstract class MsalRequest {
+    private final ClientApplicationBase application;
 
-    private final ClientAuthentication clientAuthentication;
-    @Setter
-    private AbstractMsalAuthorizationGrant msalAuthorizationGrant;
+    AbstractMsalAuthorizationGrant msalAuthorizationGrant;
 
     private final RequestContext requestContext;
 
-    @Getter(lazy = true)
+    @Getter(value=AccessLevel.PACKAGE, lazy=true)
     private final ClientDataHttpHeaders headers = new ClientDataHttpHeaders(requestContext.getCorrelationId());
 }
 

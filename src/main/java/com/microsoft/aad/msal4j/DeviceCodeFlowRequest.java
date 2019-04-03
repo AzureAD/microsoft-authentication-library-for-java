@@ -23,33 +23,36 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import com.nimbusds.oauth2.sdk.util.URLUtils;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
-class DeviceCodeRequest extends MsalRequest {
-    private final Logger log = LoggerFactory.getLogger(DeviceCodeRequest.class);
+@Accessors(fluent = true) @Getter(AccessLevel.PACKAGE)
+class DeviceCodeFlowRequest extends MsalRequest {
+    private final Logger log = LoggerFactory.getLogger(DeviceCodeFlowRequest.class);
 
     private AtomicReference<CompletableFuture<AuthenticationResult>> futureReference;
-    private Consumer<DeviceCode> deviceCodeConsumer;
-    private String scopes;
 
-    DeviceCodeRequest(Consumer<DeviceCode> deviceCodeConsumer,
-                      AtomicReference<CompletableFuture<AuthenticationResult>> futureReference,
-                      Set<String> scopes,
-                      ClientAuthentication clientAuthentication,
-                      RequestContext requestContext){
-        super(clientAuthentication, null, requestContext);
-        this.scopes = String.join(" ", scopes);
-        this.deviceCodeConsumer = deviceCodeConsumer;
+    private DeviceCodeFlowParameters parameters;
+    private String scopesStr;
+
+    DeviceCodeFlowRequest(DeviceCodeFlowParameters parameters,
+                          AtomicReference<CompletableFuture<AuthenticationResult>> futureReference,
+                          PublicClientApplication application,
+                          RequestContext requestContext){
+
+        super(application, null, requestContext);
+
+        this.parameters = parameters;
+        this.scopesStr = String.join(" ", parameters.scopes());
         this.futureReference = futureReference;
     }
 
@@ -67,15 +70,14 @@ class DeviceCodeRequest extends MsalRequest {
                 urlWithQueryParams,
                 headers,
                 null,
-                this.getRequestContext(),
+                this.requestContext(),
                 serviceBundle);
 
         return parseJsonToDeviceCodeAndSetParameters(json, headers, clientId);
     }
 
     void createAuthenticationGrant(DeviceCode deviceCode){
-        setMsalAuthorizationGrant(new DeviceCodeAuthorizationGrant(
-                deviceCode, deviceCode.getScopes()));
+        msalAuthorizationGrant = new DeviceCodeAuthorizationGrant(deviceCode, deviceCode.getScopes());
     }
 
     private String createQueryParamsAndAppendToURL(String url, String clientId){
@@ -83,7 +85,7 @@ class DeviceCodeRequest extends MsalRequest {
         queryParameters.put("client_id", clientId);
 
         String scopesParam = AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM +
-                AbstractMsalAuthorizationGrant.SCOPES_DELIMITER + scopes;
+                AbstractMsalAuthorizationGrant.SCOPES_DELIMITER + scopesStr;
 
         queryParameters.put("scope", scopesParam);
 
@@ -108,20 +110,8 @@ class DeviceCodeRequest extends MsalRequest {
 
         result.setCorrelationId(headers.get(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME));
         result.setClientId(clientId);
-        result.setScopes(scopes);
+        result.setScopes(scopesStr);
 
         return result;
-    }
-
-    AtomicReference<CompletableFuture<AuthenticationResult>> getFutureReference() {
-        return futureReference;
-    }
-
-    Consumer<DeviceCode> getDeviceCodeConsumer() {
-        return deviceCodeConsumer;
-    }
-
-    String getScopes() {
-        return scopes;
     }
 }

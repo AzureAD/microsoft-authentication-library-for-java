@@ -23,24 +23,38 @@
 
 package com.microsoft.aad.msal4j;
 
-import java.util.Map;
+import lombok.*;
+import lombok.experimental.Accessors;
+
 import java.util.Set;
+import java.util.function.Consumer;
 
-public class IntegratedWindowsAuthorizationGrant extends AbstractMsalAuthorizationGrant {
+import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty;
 
-    private final String userName;
+@Builder
+@Accessors(fluent = true)
+@Getter
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public class DeviceCodeFlowParameters {
 
-    IntegratedWindowsAuthorizationGrant(Set<String> scopes, String userName) {
-        this.userName = userName;
-        this.scopes = String.join(" ", scopes);
+    @NonNull
+    private Set<String> scopes;
+
+    @NonNull
+    private Consumer<DeviceCode> deviceCodeConsumer;
+
+    private static DeviceCodeFlowParametersBuilder builder() {
+
+        return new DeviceCodeFlowParametersBuilder();
     }
 
-    @Override
-    Map<String, String> toParameters() {
-        return null;
-    }
+    public static DeviceCodeFlowParametersBuilder builder
+            (Set<String> scopes, Consumer<DeviceCode> deviceCodeConsumer) {
 
-    String getUserName() {
-        return userName;
+        validateNotEmpty("scopes", scopes);
+
+        return builder()
+                .scopes(scopes)
+                .deviceCodeConsumer(deviceCodeConsumer);
     }
 }

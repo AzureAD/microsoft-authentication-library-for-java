@@ -34,7 +34,7 @@ class RemoveAccountRunnable implements Runnable {
     RemoveAccountRunnable
             (ClientApplicationBase clientApplication, Account account) {
         this.clientApplication = clientApplication;
-        this.headers = new ClientDataHttpHeaders(clientApplication.getCorrelationId());
+        this.headers = new ClientDataHttpHeaders(clientApplication.correlationId());
         this.account = account;
     }
 
@@ -45,7 +45,7 @@ class RemoveAccountRunnable implements Runnable {
                     AadInstanceDiscovery.cache.get(clientApplication.authenticationAuthority.getHost());
 
             clientApplication.tokenCache.removeAccount
-                    (clientApplication.clientId, account, instanceDiscoveryData.getAliasesSet());
+                    (clientApplication.clientId(), account, instanceDiscoveryData.getAliasesSet());
 
         } catch (Exception ex) {
             clientApplication.log.error(

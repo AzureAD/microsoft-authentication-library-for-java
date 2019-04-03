@@ -24,25 +24,24 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.ResourceOwnerPasswordCredentialsGrant;
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import com.nimbusds.oauth2.sdk.auth.Secret;
 
 import java.util.Set;
 
 class UserNamePasswordRequest extends MsalRequest{
 
-    UserNamePasswordRequest(String username,
-                            String password,
-                            Set<String> scopes,
-                            ClientAuthentication clientAuthentication,
+    UserNamePasswordRequest(UserNamePasswordParameters parameters,
+                            PublicClientApplication application,
                             RequestContext requestContext) {
-        super(clientAuthentication, createAuthenticationGrant(username, password, scopes), requestContext);
+        super(application,
+                createAuthenticationGrant(parameters.scopes(), parameters.username(),
+                        parameters.password()), requestContext);
     }
 
     private static OAuthAuthorizationGrant createAuthenticationGrant(
+            Set<String> scopes,
             String username,
-            String password,
-            Set<String> scopes ) {
+            String password) {
         ResourceOwnerPasswordCredentialsGrant resourceOwnerPasswordCredentialsGrant =
                 new ResourceOwnerPasswordCredentialsGrant(username, new Secret(password));
 

@@ -23,24 +23,40 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.oauth2.sdk.AuthorizationGrant;
+import com.nimbusds.oauth2.sdk.JWTBearerGrant;
+import lombok.Getter;
+import lombok.experimental.Accessors;
+
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
-public class IntegratedWindowsAuthorizationGrant extends AbstractMsalAuthorizationGrant {
+@Accessors(fluent = true) @Getter
+class OnBehalfOfRequest extends MsalRequest {
 
-    private final String userName;
+    private String op1;
+    private String op2;
 
-    IntegratedWindowsAuthorizationGrant(Set<String> scopes, String userName) {
-        this.userName = userName;
-        this.scopes = String.join(" ", scopes);
+    OnBehalfOfRequest(OnBehalfOfParameters parameters,
+                      ConfidentialClientApplication application,
+                      RequestContext requestContext){
+        super(application, createAuthenticationGrant(parameters), requestContext);
     }
 
-    @Override
-    Map<String, String> toParameters() {
-        return null;
-    }
+    private static OAuthAuthorizationGrant createAuthenticationGrant(OnBehalfOfParameters parameters){
 
-    String getUserName() {
-        return userName;
+        AuthorizationGrant jWTBearerGrant;
+        try{
+            jWTBearerGrant = new JWTBearerGrant(SignedJWT.parse(parameters.userAssertion().getAssertion()));
+        }catch(Exception e){
+            throw new AuthenticationException(e);
+        }
+
+        Map<String, String> params = new HashMap<>();
+        params.put("scope", String.join(" ", parameters.scopes()));
+        params.put("requested_token_use", "on_behalf_of");
+
+        return new OAuthAuthorizationGrant(jWTBearerGrant, params);
     }
 }

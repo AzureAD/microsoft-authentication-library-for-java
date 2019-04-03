@@ -23,39 +23,14 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
-
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Set;
-
 class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
 
-    //private Account account;
-    //private Set<String> scopes;
-    //private AuthenticationAuthority requestAuthority;
-    //private boolean forceRefresh;
-    //private ClientAuthentication clientAuthentication;
     private SilentRequest silentRequest;
 
     AcquireTokenSilentSupplier(ClientApplicationBase clientApplication, SilentRequest silentRequest) {
-
         super(clientApplication, silentRequest);
 
-        //this.clientApplication = clientApplication;
-        //this.clientAuthentication = clientAuthentication;
-
-        //this.account = account;
-        //this.scopes = scopes;
-
-        /*
-        if (!StringHelper.isBlank(authorityUrl)) {
-            requestAuthority = new AuthenticationAuthority(new URL(authorityUrl));
-        } else {
-            requestAuthority = clientApplication.authenticationAuthority;
-        }
-        this.forceRefresh = forceRefresh;
-        */
+        this.silentRequest = silentRequest;
     }
 
     @Override
@@ -65,20 +40,23 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
 
         AuthenticationResult res =
                 clientApplication.tokenCache.getAuthenticationResult
-                        (silentRequest.account(), requestAuthority, silentRequest.scopes(), clientApplication.clientId);
+                        (silentRequest.parameters().account(),
+                                requestAuthority,
+                                silentRequest.parameters().scopes(),
+                                clientApplication.clientId());
 
-        if (!silentRequest.forceRefresh() && !StringHelper.isBlank(res.accessToken())) {
+        if (!silentRequest.parameters().forceRefresh() && !StringHelper.isBlank(res.accessToken())) {
             return res;
         }
 
         if (StringHelper.isBlank(res.refreshToken())) {
             return null;
         } else {
+
             RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(
-                    res.refreshToken(),
-                    silentRequest.scopes(),
-                    silentRequest.getClientAuthentication(),
-                    silentRequest.getRequestContext());
+                    RefreshTokenParameters.builder(silentRequest.parameters().scopes(), res.refreshToken()).build(),
+                    silentRequest.application(),
+                    silentRequest.requestContext());
 
             AcquireTokenByAuthorizationGrantSupplier acquireTokenByAuthorisationGrantSupplier =
                     new AcquireTokenByAuthorizationGrantSupplier(clientApplication, refreshTokenRequest, requestAuthority);

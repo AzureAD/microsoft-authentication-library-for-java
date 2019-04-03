@@ -147,8 +147,10 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         PowerMock.replay(app);
 
-        AuthenticationResult authResult =
-                app.acquireTokenByDeviceCodeFlow(Collections.singleton(AAD_RESOURCE_ID), deviceCodeConsumer).get();
+        AuthenticationResult authResult = app.acquireToken
+                (DeviceCodeFlowParameters.builder(Collections.singleton(AAD_RESOURCE_ID), deviceCodeConsumer)
+                        .build())
+                .get();
 
         // validate HTTP GET request used to get device code
         URL url = new URL(capturedUrl.getValue());
@@ -165,8 +167,8 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         // make sure same correlation id is used for acquireDeviceCode and acquireTokenByDeviceCode calls
 
-        Map<String, String > headers = capturedMsalRequest.getValue().getHeaders().getReadonlyHeaderMap();
-        Assert.assertEquals(capturedMsalRequest.getValue().getHeaders().getReadonlyHeaderMap().
+        Map<String, String > headers = capturedMsalRequest.getValue().headers().getReadonlyHeaderMap();
+        Assert.assertEquals(capturedMsalRequest.getValue().headers().getReadonlyHeaderMap().
                 get(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME), deviceCodeCorrelationId.get());
         Assert.assertNotNull(authResult);
 
@@ -182,7 +184,10 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
                 .authority(ADFS_TENANT_ENDPOINT)
                 .validateAuthority(false).build();
 
-        app.acquireTokenByDeviceCodeFlow(Collections.singleton(AAD_RESOURCE_ID), (DeviceCode deviceCode) -> {});
+        app.acquireToken
+                (DeviceCodeFlowParameters
+                        .builder(Collections.singleton(AAD_RESOURCE_ID), (DeviceCode deviceCode) -> {})
+                        .build());
     }
 
     @Test
@@ -196,14 +201,19 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> { };
 
-        final ClientAuthentication ca = new ClientSecretPost(
-                new ClientID("id"), new Secret("secret"));
+        app = new PublicClientApplication.Builder("client_id")
+                .authority(AAD_TENANT_ENDPOINT)
+                .validateAuthority(false)
+                .build();
 
-        final DeviceCodeRequest dcr =  new DeviceCodeRequest(
-                deviceCodeConsumer,
+        DeviceCodeFlowParameters parameters =
+                DeviceCodeFlowParameters.builder(Collections.singleton("default-scope"), deviceCodeConsumer)
+                        .build();
+
+        final DeviceCodeFlowRequest dcr =  new DeviceCodeFlowRequest(
+                parameters,
                 futureReference,
-                Collections.singleton("default-scope"),
-                ca,
+                app,
                 new RequestContext(
                         "id",
                         "corr-id",

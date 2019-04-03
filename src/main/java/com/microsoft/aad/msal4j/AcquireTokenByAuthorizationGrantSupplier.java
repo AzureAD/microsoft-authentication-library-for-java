@@ -47,18 +47,18 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
     }
 
     AuthenticationResult execute() throws Exception {
-        AbstractMsalAuthorizationGrant authGrant = msalRequest.getMsalAuthorizationGrant();
+        AbstractMsalAuthorizationGrant authGrant = msalRequest.msalAuthorizationGrant();
         if (authGrant instanceof OAuthAuthorizationGrant) {
-            msalRequest.setMsalAuthorizationGrant(
-                    processPasswordGrant((OAuthAuthorizationGrant) authGrant));
+            msalRequest.msalAuthorizationGrant =
+                    processPasswordGrant((OAuthAuthorizationGrant) authGrant);
         }
 
         if (authGrant instanceof IntegratedWindowsAuthorizationGrant) {
             IntegratedWindowsAuthorizationGrant integratedAuthGrant =
                     (IntegratedWindowsAuthorizationGrant) authGrant;
-            msalRequest.setMsalAuthorizationGrant(
+            msalRequest.msalAuthorizationGrant =
                     new OAuthAuthorizationGrant(getAuthorizationGrantIntegrated(
-                            integratedAuthGrant.getUserName()), integratedAuthGrant.getScopes()));
+                            integratedAuthGrant.getUserName()), integratedAuthGrant.getScopes());
         }
 
         if(requestAuthority == null){
@@ -81,8 +81,8 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
 
         UserDiscoveryResponse userDiscoveryResponse = UserDiscoveryRequest.execute(
                 this.clientApplication.authenticationAuthority.getUserRealmEndpoint(grant.getUsername()),
-                msalRequest.getHeaders().getReadonlyHeaderMap(),
-                msalRequest.getRequestContext(),
+                msalRequest.headers().getReadonlyHeaderMap(),
+                msalRequest.requestContext(),
                 this.clientApplication.getServiceBundle());
 
         if (userDiscoveryResponse.isAccountFederated()) {
@@ -91,9 +91,9 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
                     grant.getUsername(),
                     grant.getPassword().getValue(),
                     userDiscoveryResponse.getCloudAudienceUrn(),
-                    msalRequest.getRequestContext(),
+                    msalRequest.requestContext(),
                     this.clientApplication.getServiceBundle(),
-                    this.clientApplication.isLogPii());
+                    this.clientApplication.logPii());
 
             AuthorizationGrant updatedGrant = getSAMLAuthorizationGrant(response);
 
@@ -125,8 +125,8 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
         // Get the realm information
         UserDiscoveryResponse userRealmResponse = UserDiscoveryRequest.execute(
                 userRealmEndpoint,
-                msalRequest.getHeaders().getReadonlyHeaderMap(),
-                msalRequest.getRequestContext(),
+                msalRequest.headers().getReadonlyHeaderMap(),
+                msalRequest.requestContext(),
                 this.clientApplication.getServiceBundle());
 
         if (userRealmResponse.isAccountFederated() &&
@@ -140,9 +140,9 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
             WSTrustResponse wsTrustResponse = WSTrustRequest.execute(
                     mexURL,
                     cloudAudienceUrn,
-                    msalRequest.getRequestContext(),
+                    msalRequest.requestContext(),
                     this.clientApplication.getServiceBundle(),
-                    this.clientApplication.isLogPii());
+                    this.clientApplication.logPii());
 
             updatedGrant = getSAMLAuthorizationGrant(wsTrustResponse);
         }

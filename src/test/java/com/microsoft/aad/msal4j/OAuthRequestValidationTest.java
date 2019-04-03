@@ -168,9 +168,12 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
 
         try {
             // Using UserAssertion as Authorization Grants
-            Future<AuthenticationResult> future =
-                    app.acquireTokenOnBehalfOf(Collections.singleton(SCOPES), new UserAssertion(jwt));
-            future.get();
+            OnBehalfOfParameters parameters =
+                    OnBehalfOfParameters.builder(Collections.singleton(SCOPES), new UserAssertion(jwt))
+                            .build();
+
+            app.acquireToken(parameters).get();
+
         } catch (ExecutionException ex) {
             Assert.assertTrue(ex.getCause() instanceof AuthenticationException);
         }
@@ -232,9 +235,11 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
                     .validateAuthority(false).build();
 
             // Using UserAssertion as Authorization Grants
-            Future<AuthenticationResult> future =
-                    app.acquireTokenOnBehalfOf(Collections.singleton(SCOPES), new UserAssertion(jwt));
-            future.get();
+            OnBehalfOfParameters parameters =
+                    OnBehalfOfParameters.builder(Collections.singleton(SCOPES), new UserAssertion(jwt))
+                            .build();
+
+            app.acquireToken(parameters).get();
         } catch (ExecutionException ex) {
             Assert.assertTrue(ex.getCause() instanceof AuthenticationException);
         }
@@ -281,9 +286,11 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
                             .build();
 
             // Using ClientAssertion for Client Authentication and as the authorization grant
-            Future<AuthenticationResult> future = app.acquireTokenForClient(Collections.singleton(SCOPES));
 
-            future.get();
+            app.acquireToken(ClientCredentialParameters.builder(Collections.singleton(SCOPES))
+                    .build())
+                    .get();
+
         } catch (ExecutionException ex) {
             Assert.assertTrue(ex.getCause() instanceof AuthenticationException);
         }

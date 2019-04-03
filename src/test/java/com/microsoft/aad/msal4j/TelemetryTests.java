@@ -65,7 +65,7 @@ public class TelemetryTests {
                 .telemetryConsumer(new MyTelemetryConsumer().telemetryConsumer)
                 .build();
 
-        Assert.assertNotNull(app.getTelemetryConsumer());
+        Assert.assertNotNull(app.telemetryConsumer());
     }
 
     @Test
