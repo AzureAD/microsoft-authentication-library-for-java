@@ -26,7 +26,7 @@ package com.microsoft.aad.msal4j;
 import java.util.Map;
 import java.util.Set;
 
-public class IntegratedWindowsAuthorizationGrant extends AbstractMsalAuthorizationGrant {
+class IntegratedWindowsAuthorizationGrant extends AbstractMsalAuthorizationGrant {
 
     private final String userName;
 

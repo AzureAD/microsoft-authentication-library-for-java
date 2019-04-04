@@ -44,4 +44,10 @@ class ParameterValidationUtils {
             throw new IllegalArgumentException(name + " is null or empty");
         }
     }
+
+    static void validateNotEmpty(String name, char[] arr) {
+        if (arr == null || arr.length == 0) {
+            throw new IllegalArgumentException(name + " is null or empty");
+        }
+    }
 }

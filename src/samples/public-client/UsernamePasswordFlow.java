@@ -36,7 +36,7 @@ public class UsernamePasswordFlow {
 
     private static void getAccessTokenFromUserCredentials() throws Exception {
         PublicClientApplication app = PublicClientApplication.builder(TestData.PUBLIC_CLIENT_ID)
-                .authority(TestData.AUTHORITY_COMMON)
+                .authority(TestData.AUTHORITY)
                 .telemetryConsumer(val ->
                         System.out.println(val)
                 )
@@ -45,7 +45,7 @@ public class UsernamePasswordFlow {
         CompletableFuture<AuthenticationResult> future = app.acquireToken
                 (UserNamePasswordParameters.builder(Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE),
                         TestData.USER_NAME,
-                        TestData.USER_PASSWORD)
+                        TestData.USER_PASSWORD.toCharArray())
                         .build());
 
         future.handle((res, ex) -> {

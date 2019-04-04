@@ -28,7 +28,7 @@ import com.microsoft.aad.msal4j.ConfidentialClientApplication;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
-public class ClientCredentialGrant {
+class ClientCredentialGrant {
 
     public static void main(String args[]) throws Exception {
         getAccessTokenByClientCredentialGrant();
