@@ -76,7 +76,7 @@ public class PublicClientApplicationTest extends PowerMockTestCase {
 
         Future<AuthenticationResult> result = app.acquireToken(
                 UserNamePasswordParameters
-                        .builder(Collections.singleton("scopes"), "username", "password")
+                        .builder(Collections.singleton("scopes"), "username", "password".toCharArray())
                         .build());
 
         AuthenticationResult ar = result.get();

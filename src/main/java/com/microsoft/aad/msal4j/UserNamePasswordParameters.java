@@ -44,7 +44,7 @@ public class UserNamePasswordParameters {
     private String username;
 
     @NonNull
-    private String password;
+    private char[] password;
 
     private static UserNamePasswordParametersBuilder builder() {
 
@@ -52,11 +52,11 @@ public class UserNamePasswordParameters {
     }
 
     public static UserNamePasswordParametersBuilder builder
-            (Set<String> scopes, String username, String password) {
+            (Set<String> scopes, String username, char[] password) {
 
         validateNotEmpty("scopes", scopes);
         validateNotBlank("username", username);
-        validateNotBlank("password", password);
+        validateNotEmpty("password", password);
 
         return builder()
                 .scopes(scopes)

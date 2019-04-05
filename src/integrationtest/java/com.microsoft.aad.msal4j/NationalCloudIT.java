@@ -69,7 +69,7 @@ public class NationalCloudIT {
         AuthenticationResult result = pca.acquireToken(UserNamePasswordParameters
                         .builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
                                 labResponse.getUser().getUpn(),
-                                password)
+                                password.toCharArray())
                         .build())
                 .get();
 

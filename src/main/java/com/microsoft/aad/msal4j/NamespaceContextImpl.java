@@ -29,7 +29,7 @@ import java.util.Map;
 
 import javax.xml.namespace.NamespaceContext;
 
-public class NamespaceContextImpl implements NamespaceContext {
+class NamespaceContextImpl implements NamespaceContext {
 
     private final static Map<String, String> PREF_MAP = new HashMap<String, String>();
     static {
