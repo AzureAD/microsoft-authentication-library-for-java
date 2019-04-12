@@ -40,4 +40,7 @@ public class AppIdentityProvider {
         return keyVaultSecretsProvider.getSecret(LabConstants.APP_PASSWORD_URL);
     }
 
+    public String getOboPassword(){
+        return keyVaultSecretsProvider.getSecret(LabConstants.OBO_APP_PASSWORD_URL);
+    }
 }
