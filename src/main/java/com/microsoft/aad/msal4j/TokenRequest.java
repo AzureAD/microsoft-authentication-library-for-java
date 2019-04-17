@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import com.nimbusds.oauth2.sdk.ErrorObject;
@@ -159,18 +160,18 @@ class TokenRequest {
     private void addResponseHeadersToHttpEvent(HttpEvent httpEvent, HTTPResponse httpResponse) {
         httpEvent.setHttpResponseStatus(httpResponse.getStatusCode());
 
-        if (!Strings.isNullOrEmpty(httpResponse.getHeader("User-Agent"))) {
-            httpEvent.setUserAgent(httpResponse.getHeader("User-Agent"));
+        if (!Strings.isNullOrEmpty(httpResponse.getHeaderValue("User-Agent"))) {
+            httpEvent.setUserAgent(httpResponse.getHeaderValue("User-Agent"));
         }
 
-        if (!Strings.isNullOrEmpty(httpResponse.getHeader("x-ms-request-id"))) {
-            httpEvent.setRequestIdHeader(httpResponse.getHeader("x-ms-request-id"));
+        if (!Strings.isNullOrEmpty(httpResponse.getHeaderValue("x-ms-request-id"))) {
+            httpEvent.setRequestIdHeader(httpResponse.getHeaderValue("x-ms-request-id"));
         }
 
-        if (!Strings.isNullOrEmpty(httpResponse.getHeader("x-ms-clitelem"))) {
+        if (!Strings.isNullOrEmpty(httpResponse.getHeaderValue("x-ms-clitelem"))) {
             XmsClientTelemetryInfo xmsClientTelemetryInfo =
                     XmsClientTelemetryInfo.parseXmsTelemetryInfo(
-                            httpResponse.getHeader("x-ms-clitelem"));
+                            httpResponse.getHeaderValue("x-ms-clitelem"));
             if (xmsClientTelemetryInfo != null) {
                 httpEvent.setXmsClientTelemetryInfo(xmsClientTelemetryInfo);
             }
@@ -218,7 +219,7 @@ class TokenRequest {
                 this.serviceBundle);
         oauthHttpRequest.setContentType(CommonContentTypes.APPLICATION_URLENCODED);
 
-        final Map<String, String> params = msalRequest.msalAuthorizationGrant().toParameters();
+        final Map<String, List<String>> params = msalRequest.msalAuthorizationGrant().toParameters();
         oauthHttpRequest.setQuery(URLUtils.serializeParameters(params));
 
         if (msalRequest.application().clientAuthentication != null) {

@@ -29,7 +29,9 @@ import com.nimbusds.oauth2.sdk.JWTBearerGrant;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Accessors(fluent = true)
@@ -51,9 +53,9 @@ class OnBehalfOfRequest extends MsalRequest {
             throw new AuthenticationException(e);
         }
 
-        Map<String, String> params = new HashMap<>();
-        params.put("scope", String.join(" ", parameters.scopes()));
-        params.put("requested_token_use", "on_behalf_of");
+        Map<String, List<String>> params = new HashMap<>();
+        params.put("scope", Collections.singletonList(String.join(" ", parameters.scopes())));
+        params.put("requested_token_use", Collections.singletonList("on_behalf_of"));
 
         return new OAuthAuthorizationGrant(jWTBearerGrant, params);
     }
