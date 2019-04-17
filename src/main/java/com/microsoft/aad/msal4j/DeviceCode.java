@@ -24,7 +24,11 @@
 package com.microsoft.aad.msal4j;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
 public final class DeviceCode {
 
     /**
@@ -40,10 +44,10 @@ public final class DeviceCode {
     private String deviceCode;
 
     /**
-     * The verification url.
+     * The verification uri.
      */
-    @SerializedName("verification_url")
-    private String verificationUrl;
+    @SerializedName("verification_uri")
+    private String verificationUri;
 
     /**
      * The expiration time in seconds.
@@ -63,87 +67,15 @@ public final class DeviceCode {
     @SerializedName("message")
     private String message;
 
+    @Getter(AccessLevel.PROTECTED)
+    @Setter(AccessLevel.PROTECTED)
     private transient  String correlationId = null;
 
+    @Getter(AccessLevel.PROTECTED)
+    @Setter(AccessLevel.PROTECTED)
     private transient  String clientId = null;
 
+    @Getter(AccessLevel.PROTECTED)
+    @Setter(AccessLevel.PROTECTED)
     private transient  String scopes = null;
-
-    /**
-     * Returns the user code.
-     *
-     * @return The user code.
-     */
-    public String getUserCode() {
-        return userCode;
-    }
-
-    /**
-     * Returns the device code.
-     *
-     * @return The device code.
-     */
-    public String getDeviceCode() {
-        return deviceCode;
-    }
-
-    /**
-     * Returns the verification URL.
-     *
-     * @return The verification URL.
-     */
-    public String getVerificationUrl() {
-        return verificationUrl;
-    }
-
-    /**
-     * Returns the expiration in seconds.
-     *
-     * @return The expiration time in seconds.
-     */
-    public long getExpiresIn() {
-        return expiresIn;
-    }
-
-    /**
-     * Returns the interval.
-     *
-     * @return The interval.
-     */
-    public long getInterval() {
-        return interval;
-    }
-
-    /**
-     * Returns the message which should be displayed to the user.
-     *
-     * @return The message.
-     */
-    public String getMessage() {
-        return message;
-    }
-
-    protected String getCorrelationId() {
-        return correlationId;
-    }
-
-    protected void setCorrelationId(String correlationId) {
-        this.correlationId = correlationId;
-    }
-
-    protected String getClientId() {
-        return clientId;
-    }
-
-    protected void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    protected String getScopes() {
-        return scopes;
-    }
-
-    protected void setScopes(String scopes) {
-        this.scopes = scopes;
-    }
 }

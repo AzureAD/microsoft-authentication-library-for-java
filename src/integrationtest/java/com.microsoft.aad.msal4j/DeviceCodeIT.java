@@ -97,7 +97,7 @@ public class DeviceCodeIT {
                 continueButtonId = "continueBtn";
             }
             LOG.info("Loggin in ... Entering device code");
-            seleniumDriver.navigate().to(deviceCode.getVerificationUrl());
+            seleniumDriver.navigate().to(deviceCode.getVerificationUri());
             seleniumDriver.findElement(new By.ById(deviceCodeFormId)).sendKeys(deviceCode.getUserCode());
 
             LOG.info("Loggin in ... click continue");
