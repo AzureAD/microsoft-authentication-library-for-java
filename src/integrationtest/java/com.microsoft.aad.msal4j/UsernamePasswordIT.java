@@ -23,10 +23,10 @@
 
 package com.microsoft.aad.msal4j;
 
-import lapapi.FederationProvider;
-import lapapi.LabResponse;
-import lapapi.LabUserProvider;
-import lapapi.NationalCloud;
+import labapi.FederationProvider;
+import labapi.LabResponse;
+import labapi.LabUserProvider;
+import labapi.NationalCloud;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;

@@ -25,27 +25,21 @@
 //
 //------------------------------------------------------------------------------
 
-package lapapi;
+package labapi;
 
 import com.google.gson.annotations.SerializedName;
 
-public class LabResponse{
+public enum UserType {
+    @SerializedName("member")
+    MEMBER(0),
+    @SerializedName("guest")
+    GUEST(1),
+    @SerializedName("b2c")
+    B2C(2);
 
-    @SerializedName("AppID")
-    private String appId;
-    @SerializedName("Users")
-    private LabUser user;
+    private int labId;
 
-    public LabResponse(String appId, LabUser user){
-        this.appId = appId;
-        this.user = user;
-    }
-
-    public String getAppId() {
-        return appId;
-    }
-
-    public LabUser getUser() {
-        return user;
+    UserType(int labId){
+        this.labId = labId;
     }
 }

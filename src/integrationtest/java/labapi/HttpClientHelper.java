@@ -25,7 +25,7 @@
 //
 //------------------------------------------------------------------------------
 
-package lapapi;
+package labapi;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedReader;

@@ -25,21 +25,19 @@
 //
 //------------------------------------------------------------------------------
 
-package lapapi;
+package labapi;
 
-import com.google.gson.annotations.SerializedName;
+public class LabUserNotFoundException extends IllegalArgumentException {
 
-public enum UserType {
-    @SerializedName("member")
-    MEMBER(0),
-    @SerializedName("guest")
-    GUEST(1),
-    @SerializedName("b2c")
-    B2C(2);
+    private UserQuery parameters;
 
-    private int labId;
+    public LabUserNotFoundException(UserQuery parameters, String message){
+        super(message);
 
-    UserType(int labId){
-        this.labId = labId;
+        this.parameters = parameters;
+    }
+
+    public UserQuery getParameters() {
+        return parameters;
     }
 }
