@@ -25,19 +25,27 @@
 //
 //------------------------------------------------------------------------------
 
-package lapapi;
+package labapi;
 
-public class LabUserNotFoundException extends IllegalArgumentException {
+import com.google.gson.annotations.SerializedName;
 
-    private UserQuery parameters;
+public class LabResponse{
 
-    public LabUserNotFoundException(UserQuery parameters, String message){
-        super(message);
+    @SerializedName("AppID")
+    private String appId;
+    @SerializedName("Users")
+    private LabUser user;
 
-        this.parameters = parameters;
+    public LabResponse(String appId, LabUser user){
+        this.appId = appId;
+        this.user = user;
     }
 
-    public UserQuery getParameters() {
-        return parameters;
+    public String getAppId() {
+        return appId;
+    }
+
+    public LabUser getUser() {
+        return user;
     }
 }

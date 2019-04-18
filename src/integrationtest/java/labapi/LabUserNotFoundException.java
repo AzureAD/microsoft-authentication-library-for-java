@@ -25,21 +25,19 @@
 //
 //------------------------------------------------------------------------------
 
-package lapapi;
+package labapi;
 
-import com.google.gson.annotations.SerializedName;
+public class LabUserNotFoundException extends IllegalArgumentException {
 
-public enum B2CIdentityProvider {
-    @SerializedName("local")
-    LOCAL(1),
-    @SerializedName("facebook")
-    FACEBOOK(2),
-    @SerializedName("google")
-    GOOGLE(3);
+    private UserQuery parameters;
 
-    private final int labId;
+    public LabUserNotFoundException(UserQuery parameters, String message){
+        super(message);
 
-    B2CIdentityProvider(int labId){
-        this.labId= labId;
+        this.parameters = parameters;
+    }
+
+    public UserQuery getParameters() {
+        return parameters;
     }
 }

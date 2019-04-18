@@ -25,7 +25,7 @@
 //
 //------------------------------------------------------------------------------
 
-package lapapi;
+package labapi;
 
 public class LabConstants {
     public final static String MOBILE_DEVICE_MANAGEMENT_WITH_CONDITIONAL_ACCESS = "mdmca";

@@ -1,3 +1,5 @@
+//----------------------------------------------------------------------
+//
 // Copyright (c) Microsoft Corporation.
 // All rights reserved.
 //
@@ -20,27 +22,24 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+//
+//------------------------------------------------------------------------------
 
-package lapapi;
+package labapi;
 
-public class AppIdentityProvider {
-    KeyVaultSecretsProvider keyVaultSecretsProvider;
-    LabService labService;
+import com.google.gson.annotations.SerializedName;
 
-    public AppIdentityProvider(){
-        keyVaultSecretsProvider = new KeyVaultSecretsProvider();
-        labService = new LabService();
-    }
+public enum UserType {
+    @SerializedName("member")
+    MEMBER(0),
+    @SerializedName("guest")
+    GUEST(1),
+    @SerializedName("b2c")
+    B2C(2);
 
-    public String getDefaultLabId(){
-        return keyVaultSecretsProvider.getSecret(LabConstants.APP_ID_URL);
-    }
+    private int labId;
 
-    public String getDefaultLabPassword(){
-        return keyVaultSecretsProvider.getSecret(LabConstants.APP_PASSWORD_URL);
-    }
-
-    public String getOboPassword(){
-        return keyVaultSecretsProvider.getSecret(LabConstants.OBO_APP_PASSWORD_URL);
+    UserType(int labId){
+        this.labId = labId;
     }
 }

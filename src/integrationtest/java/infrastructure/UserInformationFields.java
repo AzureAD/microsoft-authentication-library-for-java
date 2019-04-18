@@ -23,9 +23,9 @@
 
 package infrastructure;
 
-import lapapi.FederationProvider;
-import lapapi.LabUser;
-import lapapi.UserType;
+import labapi.FederationProvider;
+import labapi.LabUser;
+import labapi.UserType;
 import org.testng.util.Strings;
 
 class UserInformationFields {

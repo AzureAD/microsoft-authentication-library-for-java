@@ -1,9 +1,9 @@
 package com.microsoft.aad.msal4j;
 
-import lapapi.AppIdentityProvider;
-import lapapi.LabResponse;
-import lapapi.LabUserProvider;
-import lapapi.NationalCloud;
+import labapi.AppIdentityProvider;
+import labapi.LabResponse;
+import labapi.LabUserProvider;
+import labapi.NationalCloud;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;

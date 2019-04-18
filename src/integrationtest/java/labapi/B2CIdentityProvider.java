@@ -25,21 +25,21 @@
 //
 //------------------------------------------------------------------------------
 
-package lapapi;
+package labapi;
 
 import com.google.gson.annotations.SerializedName;
 
-public enum UserType {
-    @SerializedName("member")
-    MEMBER(0),
-    @SerializedName("guest")
-    GUEST(1),
-    @SerializedName("b2c")
-    B2C(2);
+public enum B2CIdentityProvider {
+    @SerializedName("local")
+    LOCAL(1),
+    @SerializedName("facebook")
+    FACEBOOK(2),
+    @SerializedName("google")
+    GOOGLE(3);
 
-    private int labId;
+    private final int labId;
 
-    UserType(int labId){
-        this.labId = labId;
+    B2CIdentityProvider(int labId){
+        this.labId= labId;
     }
 }

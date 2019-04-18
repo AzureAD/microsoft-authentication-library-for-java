@@ -23,8 +23,8 @@
 
 package infrastructure;
 
-import lapapi.FederationProvider;
-import lapapi.LabUser;
+import labapi.FederationProvider;
+import labapi.LabUser;
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.OutputType;
