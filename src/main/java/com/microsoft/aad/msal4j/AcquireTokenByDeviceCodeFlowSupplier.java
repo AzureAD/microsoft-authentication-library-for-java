@@ -61,7 +61,7 @@ class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier 
     private AuthenticationResult acquireTokenWithDeviceCode(DeviceCode deviceCode,
                                                             AuthenticationAuthority requestAuthority) throws Exception {
         deviceCodeFlowRequest.createAuthenticationGrant(deviceCode);
-        long expirationTimeInSeconds = getCurrentSystemTimeInSeconds() + deviceCode.getExpiresIn();
+        long expirationTimeInSeconds = getCurrentSystemTimeInSeconds() + deviceCode.expiresIn();
 
         AcquireTokenByAuthorizationGrantSupplier acquireTokenByAuthorisationGrantSupplier =
                 new AcquireTokenByAuthorizationGrantSupplier(
@@ -77,7 +77,7 @@ class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier 
                 return acquireTokenByAuthorisationGrantSupplier.execute();
             } catch (AuthenticationException ex) {
                 if (ex.getErrorCode().equals(AUTHORIZATION_PENDING)) {
-                    TimeUnit.SECONDS.sleep(deviceCode.getInterval());
+                    TimeUnit.SECONDS.sleep(deviceCode.interval());
                 } else {
                     throw ex;
                 }

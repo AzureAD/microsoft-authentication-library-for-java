@@ -23,12 +23,8 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
-import com.nimbusds.oauth2.sdk.auth.ClientSecretPost;
-import com.nimbusds.oauth2.sdk.auth.Secret;
 import com.nimbusds.oauth2.sdk.http.CommonContentTypes;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
-import com.nimbusds.oauth2.sdk.id.ClientID;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.powermock.api.easymock.PowerMock;
@@ -76,7 +72,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
     String deviceCodeJsonResponse = "{\n" +
             "  \"user_code\": \"DW83JNP2P\",\n" +
             "  \"device_code\": \"DAQABAAEAAADRNYRQ3dhRFEeqWvq-yi6QodK2pb1iAA\",\n" +
-            "  \"verification_url\": \"https://aka.ms/devicelogin\",\n" +
+            "  \"verification_uri\": \"https://aka.ms/devicelogin\",\n" +
             "  \"expires_in\": \"900\",\n" +
             "  \"interval\": \"5\",\n" +
             "  \"message\": \"To sign in, use a web browser to open the page https://aka.ms/devicelogin and enter the code DW83JNP2P to authenticate.\"\n" +
@@ -133,16 +129,16 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
             // validate returned Device Code object
             Assert.assertNotNull(deviceCode);
-            Assert.assertEquals(deviceCode.getUserCode(), "DW83JNP2P");
-            Assert.assertEquals(deviceCode.getDeviceCode(), "DAQABAAEAAADRNYRQ3dhRFEeqWvq-yi6QodK2pb1iAA");
-            Assert.assertEquals(deviceCode.getVerificationUrl(), "https://aka.ms/devicelogin");
-            Assert.assertEquals(deviceCode.getExpiresIn(), 900);
-            Assert.assertEquals(deviceCode.getInterval(), 5);
-            Assert.assertEquals(deviceCode.getMessage(), "To sign in, use a web browser" +
+            Assert.assertEquals(deviceCode.userCode(), "DW83JNP2P");
+            Assert.assertEquals(deviceCode.deviceCode(), "DAQABAAEAAADRNYRQ3dhRFEeqWvq-yi6QodK2pb1iAA");
+            Assert.assertEquals(deviceCode.verificationUri(), "https://aka.ms/devicelogin");
+            Assert.assertEquals(deviceCode.expiresIn(), 900);
+            Assert.assertEquals(deviceCode.interval(), 5);
+            Assert.assertEquals(deviceCode.message(), "To sign in, use a web browser" +
                     " to open the page https://aka.ms/devicelogin and enter the code DW83JNP2P to authenticate.");
-            Assert.assertNotNull(deviceCode.getCorrelationId());
+            Assert.assertNotNull(deviceCode.correlationId());
 
-            deviceCodeCorrelationId.set(deviceCode.getCorrelationId());
+            deviceCodeCorrelationId.set(deviceCode.correlationId());
         };
 
         PowerMock.replay(app);
