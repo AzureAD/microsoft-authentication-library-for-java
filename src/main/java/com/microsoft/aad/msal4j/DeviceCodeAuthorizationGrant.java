@@ -43,7 +43,7 @@ class DeviceCodeAuthorizationGrant extends AbstractMsalAuthorizationGrant {
      */
     DeviceCodeAuthorizationGrant(DeviceCode deviceCode, final String scopes) {
         this.deviceCode = deviceCode;
-        this.correlationId = deviceCode.getCorrelationId();
+        this.correlationId = deviceCode.correlationId();
         this.scopes = scopes;
     }
 
@@ -57,7 +57,7 @@ class DeviceCodeAuthorizationGrant extends AbstractMsalAuthorizationGrant {
         final Map<String, String> outParams = new LinkedHashMap<>();
         outParams.put(SCOPE_PARAM_NAME, COMMON_SCOPES_PARAM + SCOPES_DELIMITER + scopes);
         outParams.put("grant_type", GRANT_TYPE);
-        outParams.put("code", deviceCode.getDeviceCode());
+        outParams.put("code", deviceCode.deviceCode());
         outParams.put("client_info", "1");
 
         return outParams;

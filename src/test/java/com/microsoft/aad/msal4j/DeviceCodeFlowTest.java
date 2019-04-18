@@ -129,16 +129,16 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
             // validate returned Device Code object
             Assert.assertNotNull(deviceCode);
-            Assert.assertEquals(deviceCode.getUserCode(), "DW83JNP2P");
-            Assert.assertEquals(deviceCode.getDeviceCode(), "DAQABAAEAAADRNYRQ3dhRFEeqWvq-yi6QodK2pb1iAA");
-            Assert.assertEquals(deviceCode.getVerificationUri(), "https://aka.ms/devicelogin");
-            Assert.assertEquals(deviceCode.getExpiresIn(), 900);
-            Assert.assertEquals(deviceCode.getInterval(), 5);
-            Assert.assertEquals(deviceCode.getMessage(), "To sign in, use a web browser" +
+            Assert.assertEquals(deviceCode.userCode(), "DW83JNP2P");
+            Assert.assertEquals(deviceCode.deviceCode(), "DAQABAAEAAADRNYRQ3dhRFEeqWvq-yi6QodK2pb1iAA");
+            Assert.assertEquals(deviceCode.verificationUri(), "https://aka.ms/devicelogin");
+            Assert.assertEquals(deviceCode.expiresIn(), 900);
+            Assert.assertEquals(deviceCode.interval(), 5);
+            Assert.assertEquals(deviceCode.message(), "To sign in, use a web browser" +
                     " to open the page https://aka.ms/devicelogin and enter the code DW83JNP2P to authenticate.");
-            Assert.assertNotNull(deviceCode.getCorrelationId());
+            Assert.assertNotNull(deviceCode.correlationId());
 
-            deviceCodeCorrelationId.set(deviceCode.getCorrelationId());
+            deviceCodeCorrelationId.set(deviceCode.correlationId());
         };
 
         PowerMock.replay(app);

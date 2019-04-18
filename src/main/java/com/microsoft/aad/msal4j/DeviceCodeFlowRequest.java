@@ -78,7 +78,7 @@ class DeviceCodeFlowRequest extends MsalRequest {
     }
 
     void createAuthenticationGrant(DeviceCode deviceCode) {
-        msalAuthorizationGrant = new DeviceCodeAuthorizationGrant(deviceCode, deviceCode.getScopes());
+        msalAuthorizationGrant = new DeviceCodeAuthorizationGrant(deviceCode, deviceCode.scopes());
     }
 
     private String createQueryParamsAndAppendToURL(String url, String clientId) {
@@ -109,9 +109,9 @@ class DeviceCodeFlowRequest extends MsalRequest {
         DeviceCode result;
         result = JsonHelper.convertJsonToObject(json, DeviceCode.class);
 
-        result.setCorrelationId(headers.get(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME));
-        result.setClientId(clientId);
-        result.setScopes(scopesStr);
+        result.correlationId(headers.get(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME));
+        result.clientId(clientId);
+        result.scopes(scopesStr);
 
         return result;
     }
