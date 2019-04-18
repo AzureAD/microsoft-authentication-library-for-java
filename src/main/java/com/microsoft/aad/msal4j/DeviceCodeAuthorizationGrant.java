@@ -23,7 +23,9 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -53,12 +55,12 @@ class DeviceCodeAuthorizationGrant extends AbstractMsalAuthorizationGrant {
      * @return The map with HTTP parameters.
      */
     @Override
-    public Map<String, String> toParameters() {
-        final Map<String, String> outParams = new LinkedHashMap<>();
-        outParams.put(SCOPE_PARAM_NAME, COMMON_SCOPES_PARAM + SCOPES_DELIMITER + scopes);
-        outParams.put("grant_type", GRANT_TYPE);
-        outParams.put("code", deviceCode.deviceCode());
-        outParams.put("client_info", "1");
+    public Map<String, List<String>> toParameters() {
+        final Map<String, List<String>> outParams = new LinkedHashMap<>();
+        outParams.put(SCOPE_PARAM_NAME, Collections.singletonList(COMMON_SCOPES_PARAM + SCOPES_DELIMITER + scopes));
+        outParams.put("grant_type", Collections.singletonList(GRANT_TYPE));
+        outParams.put("code", Collections.singletonList(deviceCode.deviceCode()));
+        outParams.put("client_info", Collections.singletonList("1"));
 
         return outParams;
     }

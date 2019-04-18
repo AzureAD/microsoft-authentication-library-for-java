@@ -25,7 +25,7 @@
 //
 //------------------------------------------------------------------------------
 
-package lapapi;
+package labapi;
 
 import com.google.gson.Gson;
 import org.testng.util.Strings;

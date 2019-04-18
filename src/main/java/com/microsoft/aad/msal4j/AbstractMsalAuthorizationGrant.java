@@ -23,6 +23,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -35,7 +36,7 @@ abstract class AbstractMsalAuthorizationGrant {
      *
      * @return A map contains the HTTP parameters
      */
-    abstract Map<String, String> toParameters();
+    abstract Map<String, List<String>> toParameters();
 
     static final String SCOPE_PARAM_NAME = "scope";
     static final String SCOPES_DELIMITER = " ";

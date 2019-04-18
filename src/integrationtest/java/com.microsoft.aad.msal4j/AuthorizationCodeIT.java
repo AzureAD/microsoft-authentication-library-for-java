@@ -25,10 +25,10 @@ package com.microsoft.aad.msal4j;
 
 import infrastructure.SeleniumExtensions;
 import infrastructure.TcpListener;
-import lapapi.FederationProvider;
-import lapapi.LabResponse;
-import lapapi.LabUserProvider;
-import lapapi.NationalCloud;
+import labapi.FederationProvider;
+import labapi.LabResponse;
+import labapi.LabUserProvider;
+import labapi.NationalCloud;
 import org.openqa.selenium.WebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

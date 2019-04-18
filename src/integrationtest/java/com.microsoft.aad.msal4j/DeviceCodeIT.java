@@ -24,10 +24,10 @@
 package com.microsoft.aad.msal4j;
 
 import infrastructure.SeleniumExtensions;
-import lapapi.LabResponse;
-import lapapi.LabUser;
-import lapapi.LabUserProvider;
-import lapapi.NationalCloud;
+import labapi.LabResponse;
+import labapi.LabUser;
+import labapi.LabUserProvider;
+import labapi.NationalCloud;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;

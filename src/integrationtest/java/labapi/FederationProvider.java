@@ -25,19 +25,28 @@
 //
 //------------------------------------------------------------------------------
 
-package lapapi;
+package labapi;
 
-public class LabUserNotFoundException extends IllegalArgumentException {
+import com.google.gson.annotations.SerializedName;
 
-    private UserQuery parameters;
+public enum FederationProvider {
+    @SerializedName("ADFSv2")
+    ADFSV2(2),
+    @SerializedName("ADFSv3")
+    ADFSV3(3),
+    @SerializedName("ADFSv4")
+    ADFSV4(4),
+    @SerializedName("ADFSv2019")
+    ADFSv2019(5),
+    @SerializedName("PingFederatev83")
+    PINGFEDERATEV83(5),
+    @SerializedName("Shibboleth")
+    SHIBBOLETH(6);
 
-    public LabUserNotFoundException(UserQuery parameters, String message){
-        super(message);
+    private final int labId;
 
-        this.parameters = parameters;
-    }
-
-    public UserQuery getParameters() {
-        return parameters;
+    FederationProvider(int labId){
+        this.labId = labId;
     }
 }
+

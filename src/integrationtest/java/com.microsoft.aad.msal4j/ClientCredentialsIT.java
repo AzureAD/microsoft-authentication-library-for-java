@@ -23,7 +23,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import lapapi.AppIdentityProvider;
+import labapi.AppIdentityProvider;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
