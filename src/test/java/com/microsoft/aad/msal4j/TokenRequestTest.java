@@ -249,9 +249,9 @@ public class TokenRequestTest extends AbstractMsalTests {
         httpResponse.ensureStatusCode(200);
         EasyMock.expectLastCall();
 
-        EasyMock.expect(httpResponse.getHeader("User-Agent")).andReturn(null);
-        EasyMock.expect(httpResponse.getHeader("x-ms-request-id")).andReturn(null);
-        EasyMock.expect(httpResponse.getHeader("x-ms-clitelem")).andReturn(null);
+        EasyMock.expect(httpResponse.getHeaderValue("User-Agent")).andReturn(null);
+        EasyMock.expect(httpResponse.getHeaderValue("x-ms-request-id")).andReturn(null);
+        EasyMock.expect(httpResponse.getHeaderValue("x-ms-clitelem")).andReturn(null);
         EasyMock.expect(httpResponse.getStatusCode()).andReturn(200).times(1);
 
         PowerMock.replay(request, msalOAuthHttpRequest, httpResponse);
@@ -320,9 +320,9 @@ public class TokenRequestTest extends AbstractMsalTests {
         EasyMock.expect(errorResponse.getErrorObject())
                 .andReturn(errorObject).times(1);
 
-        EasyMock.expect(httpResponse.getHeader("User-Agent")).andReturn(null);
-        EasyMock.expect(httpResponse.getHeader("x-ms-request-id")).andReturn(null);
-        EasyMock.expect(httpResponse.getHeader("x-ms-clitelem")).andReturn(null);
+        EasyMock.expect(httpResponse.getHeaderValue("User-Agent")).andReturn(null);
+        EasyMock.expect(httpResponse.getHeaderValue("x-ms-request-id")).andReturn(null);
+        EasyMock.expect(httpResponse.getHeaderValue("x-ms-clitelem")).andReturn(null);
         EasyMock.expect(httpResponse.getStatusCode()).andReturn(402).times(1);
 
 

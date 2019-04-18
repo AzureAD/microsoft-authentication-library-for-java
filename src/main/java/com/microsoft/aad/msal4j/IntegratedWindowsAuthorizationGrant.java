@@ -23,6 +23,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -36,7 +37,7 @@ class IntegratedWindowsAuthorizationGrant extends AbstractMsalAuthorizationGrant
     }
 
     @Override
-    Map<String, String> toParameters() {
+    Map<String, List<String>> toParameters() {
         return null;
     }
 
