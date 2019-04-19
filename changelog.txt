@@ -1,0 +1,8 @@
+Version 0.0.1
+=============
+Public preview of Microsoft Authentication Library for Java
+- Feature parity with ADAL Java
+- Updated public API to use builder pattern
+- Added telemetry callback
+- Added support for caching tokens
+- Added acquire token with silent parameters API
