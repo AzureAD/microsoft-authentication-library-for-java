@@ -51,6 +51,8 @@ public class IntegratedWindowsAuthFlow {
 
         Future<AuthenticationResult> future = app.acquireToken(parameters);
 
-        return future.get();
+        AuthenticationResult result = future.get();
+
+        return result;
     }
 }

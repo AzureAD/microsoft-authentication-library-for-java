@@ -40,7 +40,7 @@ public class Telemetry {
         getAccessTokenFromUserCredentials();
     }
 
-    private static class MyTelemetryConsumer {
+    public static class MyTelemetryConsumer {
 
         Consumer<List<HashMap<String, String>>> telemetryConsumer =
                 (List<HashMap<String, String>> telemetryEvents) -> {

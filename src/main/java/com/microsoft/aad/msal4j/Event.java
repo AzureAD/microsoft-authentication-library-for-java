@@ -71,13 +71,13 @@ abstract class Event extends HashMap<String, String>{
 
         String[] segment = uri.getPath().split("/");
         if(segment.length >= 2){
-            if(segment[1].equals("tfp")){
+            if(segment[1].equals("tfp") && segment.length >= 3){
                 segment[2] = TENANT_PLACEHOLDER;
             } else {
                 segment[1] = TENANT_PLACEHOLDER;
             }
 
-            if(segment.length >= 3 && segment[2].equals("userrealm")){
+            if(segment.length >= 4 && segment[2].equals("userrealm")){
                 segment[3] = USERNAME_PLACEHOLDER;
             }
         }
