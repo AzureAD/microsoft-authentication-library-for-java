@@ -36,17 +36,16 @@ public class UsernamePasswordFlow {
 
     private static void getAccessTokenFromUserCredentials() throws Exception {
         PublicClientApplication app = PublicClientApplication.builder(TestData.PUBLIC_CLIENT_ID)
-                .authority(TestData.AUTHORITY)
-                .telemetryConsumer(val ->
-                        System.out.println(val)
-                )
+                .authority(TestData.AUTHORITY_ORGANIZATION)
                 .build();
 
-        CompletableFuture<AuthenticationResult> future = app.acquireToken
-                (UserNamePasswordParameters.builder(Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE),
-                        TestData.USER_NAME,
-                        TestData.USER_PASSWORD.toCharArray())
-                        .build());
+        UserNamePasswordParameters parameters = UserNamePasswordParameters.builder(
+                Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE),
+                TestData.USER_NAME,
+                TestData.USER_PASSWORD.toCharArray())
+                .build();
+
+        CompletableFuture<AuthenticationResult> future = app.acquireToken(parameters);
 
         future.handle((res, ex) -> {
             if(ex != null) {
@@ -56,7 +55,7 @@ public class UsernamePasswordFlow {
 
             Collection<Account> accounts = app.getAccounts().join();
 
-            CompletableFuture<AuthenticationResult> future1 = null;
+            CompletableFuture<AuthenticationResult> future1;
             try {
                 future1 = app.acquireTokenSilently
                         (SilentParameters.builder(Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE),
@@ -66,20 +65,17 @@ public class UsernamePasswordFlow {
 
             } catch (MalformedURLException e) {
                 e.printStackTrace();
+                throw new RuntimeException();
             }
 
-            AuthenticationResult res1 = future1.join();
+            future1.join();
 
-            Account a = app.getAccounts().join().iterator().next();
-
-            app.removeAccount(a).join();
-
+            Account account = app.getAccounts().join().iterator().next();
+            app.removeAccount(account).join();
             accounts = app.getAccounts().join();
 
             System.out.println("Num of account - " + accounts.size());
-
             System.out.println("Returned ok - " + res);
-
             System.out.println("Access Token - " + res.accessToken());
             System.out.println("Refresh Token - " + res.refreshToken());
             System.out.println("ID Token - " + res.idToken());

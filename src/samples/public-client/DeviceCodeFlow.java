@@ -40,14 +40,14 @@ public class DeviceCodeFlow {
                 .build();
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
-            System.out.println(deviceCode.getMessage());
+            System.out.println(deviceCode.message());
         };
 
         CompletableFuture<AuthenticationResult> future = app.acquireToken(
-                DeviceCodeFlowParameters.builder
-                        (Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE), deviceCodeConsumer)
+                DeviceCodeFlowParameters.builder(
+                        Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE),
+                        deviceCodeConsumer)
                         .build());
-
 
         future.handle((res, ex) -> {
             if(ex != null) {

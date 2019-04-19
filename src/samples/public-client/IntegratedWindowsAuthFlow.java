@@ -40,16 +40,17 @@ public class IntegratedWindowsAuthFlow {
 
     private static AuthenticationResult getAccessTokenByIntegratedAuth() throws Exception {
         PublicClientApplication app = PublicClientApplication.builder(TestData.PUBLIC_CLIENT_ID)
-                .authority(TestData.AUTHORITY_COMMON)
+                .authority(TestData.AUTHORITY_ORGANIZATION)
+                .telemetryConsumer(new Telemetry.MyTelemetryConsumer().telemetryConsumer)
                 .build();
 
-        Future<AuthenticationResult> future = app.acquireToken
-                (IntegratedWindowsAuthenticationParameters.builder
-                        (Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE), TestData.USER_NAME)
-                        .build());
+        IntegratedWindowsAuthenticationParameters parameters =
+                IntegratedWindowsAuthenticationParameters.builder(
+                        Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE), TestData.USER_NAME)
+                        .build();
 
-        AuthenticationResult result = future.get();
+        Future<AuthenticationResult> future = app.acquireToken(parameters);
 
-        return result;
+        return future.get();
     }
 }

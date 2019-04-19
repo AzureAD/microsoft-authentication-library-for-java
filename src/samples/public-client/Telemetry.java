@@ -23,44 +23,51 @@
 
 import com.microsoft.aad.msal4j.AuthenticationResult;
 import com.microsoft.aad.msal4j.PublicClientApplication;
-import com.microsoft.aad.msal4j.RefreshTokenParameters;
 import com.microsoft.aad.msal4j.UserNamePasswordParameters;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.concurrent.Future;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
-public class RTFlow {
+public class Telemetry {
+
+    private static List<HashMap<String,String>> eventsReceived = new ArrayList<>();
+
     public static void main(String args[]) throws Exception {
-        AuthenticationResult result = getAccessTokenFromUserCredentials();
-
-        System.out.println("Access Token - " + result.accessToken());
-        System.out.println("Refresh Token - " + result.refreshToken());
-        System.out.println("ID Token - " + result.idToken());
+        getAccessTokenFromUserCredentials();
     }
 
-    private static AuthenticationResult getAccessTokenFromUserCredentials()
-            throws Exception {
+    private static class MyTelemetryConsumer {
 
+        Consumer<List<HashMap<String, String>>> telemetryConsumer =
+                (List<HashMap<String, String>> telemetryEvents) -> {
+                    eventsReceived.addAll(telemetryEvents);
+                    System.out.println("Received " + telemetryEvents.size() + " events");
+                    telemetryEvents.forEach(event -> {
+                        System.out.print("Event Name: " + event.get("event_name"));
+                        event.entrySet().forEach(entry -> System.out.println("   " + entry));
+                    });
+                };
+    }
+
+    private static void getAccessTokenFromUserCredentials() throws Exception {
         PublicClientApplication app = PublicClientApplication.builder(TestData.PUBLIC_CLIENT_ID)
-                .authority(TestData.AUTHORITY_COMMON)
+                .authority(TestData.AUTHORITY_ORGANIZATION)
+                .telemetryConsumer(new MyTelemetryConsumer().telemetryConsumer)
                 .build();
 
-        UserNamePasswordParameters parameters = UserNamePasswordParameters.builder(
-                Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE),
-                TestData.USER_NAME,
-                TestData.USER_PASSWORD.toCharArray())
-                .build();
-
-        Future<AuthenticationResult> future = app.acquireToken(parameters);
-        AuthenticationResult ropcResult = future.get();
-
-        RefreshTokenParameters rtParameters = RefreshTokenParameters.builder(
-                Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE), ropcResult.refreshToken())
-                .build();
-        future = app.acquireToken(rtParameters);
+        CompletableFuture<AuthenticationResult> future = app.acquireToken
+                (UserNamePasswordParameters.builder(Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE),
+                        TestData.USER_NAME,
+                        TestData.USER_PASSWORD.toCharArray())
+                        .build());
 
         AuthenticationResult result = future.get();
-
-        return result;
+        System.out.println(result.accessToken());
+        System.out.println(result.refreshToken());
+        System.out.println(result.idToken());
     }
 }
