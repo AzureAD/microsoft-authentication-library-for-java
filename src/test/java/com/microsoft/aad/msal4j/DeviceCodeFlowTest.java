@@ -73,8 +73,8 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
             "  \"user_code\": \"DW83JNP2P\",\n" +
             "  \"device_code\": \"DAQABAAEAAADRNYRQ3dhRFEeqWvq-yi6QodK2pb1iAA\",\n" +
             "  \"verification_uri\": \"https://aka.ms/devicelogin\",\n" +
-            "  \"expires_in\": \"900\",\n" +
-            "  \"interval\": \"5\",\n" +
+            "  \"expires_in\": 900,\n" +
+            "  \"interval\": 5,\n" +
             "  \"message\": \"To sign in, use a web browser to open the page https://aka.ms/devicelogin and enter the code DW83JNP2P to authenticate.\"\n" +
             "}";
 
