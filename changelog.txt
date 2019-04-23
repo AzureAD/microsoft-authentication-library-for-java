@@ -1,4 +1,4 @@
-Version 0.0.1
+Version 0.0.1-preview
 =============
 Public preview of Microsoft Authentication Library for Java
 - Feature parity with ADAL Java
