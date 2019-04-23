@@ -1,0 +1,14 @@
+{
+  "ver": "2.0",
+  "iss": "https://login.microsoftonline.com/9188040d-6c67-4c5b-b112-36a304b66dad/v2.0",
+  "sub": "AAAAAAAAAAAAAAAAAAAAAMNeAFpSLglHiOTr9IZHJEA",
+  "aud": "b6c69a37-df96-4db0-9088-2ab96e1d8215",
+  "exp": 1538885254,
+  "iat": 1538798554,
+  "nbf": 1538798554,
+  "name": "Test Username",
+  "preferred_username": "msalsdktest@outlook.com",
+  "oid": "00000000-0000-0000-40c0-3bac188d01d1",
+  "tid": "9188040d-6c67-4c5b-b112-36a304b66dad",
+  "aio": "DWgKnl!EsfVkSU8jFVbxM6PhZaR2EyXsMBymRGSXvREu4i*FmBU1RBl5hHvNvoGSGlqdBJFxndAsA6*Z3qZBr0c9vaIRwUpeICV*SXZjw8!B"
+}

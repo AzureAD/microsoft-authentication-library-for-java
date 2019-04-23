@@ -1,0 +1,10 @@
+{
+  "local_account_id": "00000000-0000-0000-40c0-3bac188d01d1",
+  "home_account_id": "00000000-0000-0000-40c0-3bac188d01d1.9188040d-6c67-4c5b-b112-36a304b66dad",
+  "username": "msalsdktest@outlook.com",
+  "environment": "login.microsoftonline.com",
+  "realm": "9188040d-6c67-4c5b-b112-36a304b66dad",
+  "authority_type": "MSSTS",
+  "name": "Test Username",
+  "client_info": "eyJ2ZXIiOiIxLjAiLCJzdWIiOiJBQUFBQUFBQUFBQUFBQUFBQUFBQUFNTmVBRnBTTGdsSGlPVHI5SVpISkVBIiwibmFtZSI6Ik9sZ2EgRGFsdG9tIiwicHJlZmVycmVkX3VzZXJuYW1lIjoibXNhbHNka3Rlc3RAb3V0bG9vay5jb20iLCJvaWQiOiIwMDAwMDAwMC0wMDAwLTAwMDAtNDBjMC0zYmFjMTg4ZDAxZDEiLCJ0aWQiOiI5MTg4MDQwZC02YzY3LTRjNWItYjExMi0zNmEzMDRiNjZkYWQiLCJob21lX29pZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC00MGMwLTNiYWMxODhkMDFkMSIsInVpZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC00MGMwLTNiYWMxODhkMDFkMSIsInV0aWQiOiI5MTg4MDQwZC02YzY3LTRjNWItYjExMi0zNmEzMDRiNjZkYWQifQ"
+}

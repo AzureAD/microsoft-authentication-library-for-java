@@ -1,0 +1,10 @@
+{
+  "token_type": "Bearer",
+  "scope": "Calendars.Read openid profile Tasks.Read User.Read email",
+  "expires_in": 3600,
+  "ext_expires_in": 262800,
+  "access_token": "<removed_at>",
+  "refresh_token": "<removed_rt>",
+  "id_token": "<removed_id_token>",
+  "client_info": "eyJ1aWQiOiI5ZjQ4ODBkOC04MGJhLTRjNDAtOTdiYy1mN2EyM2M3MDMwODQiLCJ1dGlkIjoiZjY0NWFkOTItZTM4ZC00ZDFhLWI1MTAtZDFiMDlhNzRhOGNhIn0"
+}
