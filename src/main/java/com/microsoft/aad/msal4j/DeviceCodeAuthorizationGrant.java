@@ -59,7 +59,7 @@ class DeviceCodeAuthorizationGrant extends AbstractMsalAuthorizationGrant {
         final Map<String, List<String>> outParams = new LinkedHashMap<>();
         outParams.put(SCOPE_PARAM_NAME, Collections.singletonList(COMMON_SCOPES_PARAM + SCOPES_DELIMITER + scopes));
         outParams.put("grant_type", Collections.singletonList(GRANT_TYPE));
-        outParams.put("code", Collections.singletonList(deviceCode.deviceCode()));
+        outParams.put("device_code", Collections.singletonList(deviceCode.deviceCode()));
         outParams.put("client_info", Collections.singletonList("1"));
 
         return outParams;
