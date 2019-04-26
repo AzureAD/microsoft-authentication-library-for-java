@@ -23,7 +23,9 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.mail.internet.ContentType;
@@ -43,11 +45,11 @@ class ClientAuthenticationPost extends ClientAuthentication {
         super(method, clientID);
     }
 
-    Map<String, String> toParameters() {
+    Map<String, List<String>> toParameters() {
 
-        Map<String, String> params = new HashMap<String, String>();
+        Map<String, List<String>> params = new HashMap<>();
 
-        params.put("client_id", getClientID().getValue());
+        params.put("client_id", Collections.singletonList(getClientID().getValue()));
 
         return params;
     }
@@ -68,7 +70,7 @@ class ClientAuthenticationPost extends ClientAuthentication {
                     "The HTTP Content-Type header must be "
                             + CommonContentTypes.APPLICATION_URLENCODED);
 
-        Map<String, String> params = httpRequest.getQueryParameters();
+        Map<String, List<String>> params = httpRequest.getQueryParameters();
 
         params.putAll(toParameters());
 
@@ -76,5 +78,4 @@ class ClientAuthenticationPost extends ClientAuthentication {
 
         httpRequest.setQuery(queryString);
     }
-
 }

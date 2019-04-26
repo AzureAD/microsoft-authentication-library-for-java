@@ -178,7 +178,7 @@ public class CacheTests extends AbstractMsalTests {
 
         EasyMock.expect(request.toOauthHttpRequest()).andReturn(msalOAuthHttpRequest).times(1);
         EasyMock.expect(msalOAuthHttpRequest.send()).andReturn(httpResponse).times(1);
-        EasyMock.expect(httpResponse.getHeader(EasyMock.isA(String.class))).andReturn(null).times(3);
+        EasyMock.expect(httpResponse.getHeaderValue(EasyMock.isA(String.class))).andReturn(null).times(3);
         EasyMock.expect(httpResponse.getStatusCode()).andReturn(200).times(2);
         EasyMock.expect(httpResponse.getContentAsJSONObject())
                 .andReturn(

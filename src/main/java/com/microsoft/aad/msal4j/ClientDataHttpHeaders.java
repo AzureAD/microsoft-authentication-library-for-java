@@ -31,7 +31,7 @@ import java.util.function.BiConsumer;
 final class ClientDataHttpHeaders {
 
     public final static String PRODUCT_HEADER_NAME = "x-client-SKU";
-    public final static String PRODUCT_HEADER_VALUE = "java";
+    public final static String PRODUCT_HEADER_VALUE = "MSAL.Java";
 
     public final static String PRODUCT_VERSION_HEADER_NAME = "x-client-VER";
     public final static String PRODUCT_VERSION_HEADER_VALUE = getProductVersion();

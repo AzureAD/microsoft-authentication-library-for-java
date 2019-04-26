@@ -25,7 +25,7 @@
 //
 //------------------------------------------------------------------------------
 
-package lapapi;
+package labapi;
 
 import com.microsoft.aad.msal4j.*;
 import com.microsoft.azure.keyvault.KeyVaultClient;

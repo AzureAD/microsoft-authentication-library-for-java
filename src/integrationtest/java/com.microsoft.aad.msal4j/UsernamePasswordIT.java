@@ -23,11 +23,11 @@
 
 package com.microsoft.aad.msal4j;
 
-import lapapi.B2CIdentityProvider;
-import lapapi.FederationProvider;
-import lapapi.LabResponse;
-import lapapi.LabUserProvider;
-import lapapi.NationalCloud;
+import labapi.B2CIdentityProvider;
+import labapi.FederationProvider;
+import labapi.LabResponse;
+import labapi.LabUserProvider;
+import labapi.NationalCloud;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -170,6 +170,4 @@ public class UsernamePasswordIT {
         // TODO uncomment once service fixes this for ROPC flow
         // Assert.assertNotNull(result.idToken());
     }
-
-
 }

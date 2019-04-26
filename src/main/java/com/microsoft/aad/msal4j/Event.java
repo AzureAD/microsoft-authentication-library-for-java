@@ -39,6 +39,7 @@ abstract class Event extends HashMap<String, String>{
     final static String START_TIME_KEY = "start_time";
     final static String ELAPSED_TIME_KEY = "elapsed_time";
     private final static String TENANT_PLACEHOLDER = "<tenant>";
+    private final static String USERNAME_PLACEHOLDER = "<user>";
 
     private long startTimeStamp;
 
@@ -69,12 +70,15 @@ abstract class Event extends HashMap<String, String>{
         }
 
         String[] segment = uri.getPath().split("/");
-        if(segment.length >= 3){
-            if(segment[1].equals("tfp")){
-                // B2C authority
+
+        if(segment.length >= 2){
+            if(segment[1].equals("tfp") && segment.length >= 3){
                 segment[2] = TENANT_PLACEHOLDER;
             } else {
                 segment[1] = TENANT_PLACEHOLDER;
+            }
+            if(segment.length >= 4 && segment[2].equals("userrealm")){
+                segment[3] = USERNAME_PLACEHOLDER;
             }
         }
 

@@ -1,3 +1,5 @@
+//----------------------------------------------------------------------
+//
 // Copyright (c) Microsoft Corporation.
 // All rights reserved.
 //
@@ -20,25 +22,24 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+//
+//------------------------------------------------------------------------------
 
-package lapapi;
+package labapi;
 
 import com.google.gson.annotations.SerializedName;
 
-public enum NationalCloud {
-
-    @SerializedName("azurecloud")
-    AZURE_CLOUD(1),
-    @SerializedName("azuregermanycloud")
-    GERMAN_CLOUD(2),
-    @SerializedName("azurechinacloud")
-    CHINA_CLOUD(3),
-    @SerializedName("azuregovernmentcloud")
-    GOVERNMENT_CLOUD(4);
+public enum B2CIdentityProvider {
+    @SerializedName("Local")
+    LOCAL(1),
+    @SerializedName("Facebook")
+    FACEBOOK(2),
+    @SerializedName("Google")
+    GOOGLE(3);
 
     private final int labId;
 
-    NationalCloud(int labId){
-        this.labId = labId;
+    B2CIdentityProvider(int labId){
+        this.labId= labId;
     }
 }

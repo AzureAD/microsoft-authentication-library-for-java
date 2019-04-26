@@ -25,7 +25,7 @@
 //
 //------------------------------------------------------------------------------
 
-package lapapi;
+package labapi;
 
 import org.testng.util.Strings;
 import java.util.HashMap;

@@ -21,7 +21,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package lapapi;
+package labapi;
 
 public class AppIdentityProvider {
     KeyVaultSecretsProvider keyVaultSecretsProvider;
@@ -40,4 +40,7 @@ public class AppIdentityProvider {
         return keyVaultSecretsProvider.getSecret(LabConstants.APP_PASSWORD_URL);
     }
 
+    public String getOboPassword(){
+        return keyVaultSecretsProvider.getSecret(LabConstants.OBO_APP_PASSWORD_URL);
+    }
 }

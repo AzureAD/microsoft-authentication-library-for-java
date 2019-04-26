@@ -27,13 +27,14 @@ import com.nimbusds.oauth2.sdk.AuthorizationGrant;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 class OAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
 
     private AuthorizationGrant grant;
-    private final Map<String, String> params;
+    private final Map<String, List<String>> params;
 
     /**
      * init standard scopes
@@ -41,7 +42,7 @@ class OAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
     private OAuthAuthorizationGrant() {
         params = new LinkedHashMap<>();
 
-        params.put(SCOPE_PARAM_NAME, COMMON_SCOPES_PARAM);
+        params.put(SCOPE_PARAM_NAME, Collections.singletonList(COMMON_SCOPES_PARAM));
     }
 
     OAuthAuthorizationGrant(final AuthorizationGrant grant, Set<String> scopesSet) {
@@ -52,13 +53,15 @@ class OAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
         this();
         this.grant = grant;
 
+
         if (!StringHelper.isBlank(scopes)) {
-            params.put(SCOPE_PARAM_NAME, params.get(SCOPE_PARAM_NAME) + SCOPES_DELIMITER + scopes);
+            params.put(SCOPE_PARAM_NAME,
+                    Collections.singletonList(String.join(" ",params.get(SCOPE_PARAM_NAME)) + SCOPES_DELIMITER + scopes));
         }
     }
 
     OAuthAuthorizationGrant(final AuthorizationGrant grant,
-                                final Map<String, String> params) {
+                                final Map<String, List<String>> params) {
         this();
         this.grant = grant;
         if(params != null){
@@ -67,10 +70,10 @@ class OAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
     }
 
     @Override
-    public Map<String, String> toParameters() {
-        final Map<String, String> outParams = new LinkedHashMap<>();
+    public Map<String, List<String>> toParameters() {
+        final Map<String, List<String>> outParams = new LinkedHashMap<>();
         outParams.putAll(params);
-        outParams.put("client_info", "1");
+        outParams.put("client_info", Collections.singletonList("1"));
         outParams.putAll(grant.toParameters());
 
         return Collections.unmodifiableMap(outParams);
@@ -80,7 +83,7 @@ class OAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
         return this.grant;
     }
 
-    Map<String, String> getCustomParameters() {
+    Map<String, List<String>> getCustomParameters() {
         return params;
     }
 }

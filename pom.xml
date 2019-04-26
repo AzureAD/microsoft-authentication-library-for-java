@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.microsoft.azure</groupId>
 	<artifactId>msal4j</artifactId>
-	<version>0.0.1</version>
+	<version>0.1.0-preview</version>
 	<packaging>jar</packaging>
 	<name>msal4j</name>
 	<description>
@@ -60,15 +60,9 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>javax.servlet</groupId>
-			<artifactId>javax.servlet-api</artifactId>
-			<version>4.0.1</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
 			<groupId>com.nimbusds</groupId>
 			<artifactId>oauth2-oidc-sdk</artifactId>
-			<version>5.64.4</version>
+			<version>6.5</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
@@ -111,19 +105,19 @@
 		<dependency>
 			<groupId>org.powermock</groupId>
 			<artifactId>powermock-module-testng</artifactId>
-			<version>1.6.5</version>
+			<version>2.0.0</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.powermock</groupId>
 			<artifactId>powermock-api-easymock</artifactId>
-			<version>1.6.5</version>
+			<version>2.0.0</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.easymock</groupId>
 			<artifactId>easymock</artifactId>
-			<version>3.4</version>
+			<version>4.0.2</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
