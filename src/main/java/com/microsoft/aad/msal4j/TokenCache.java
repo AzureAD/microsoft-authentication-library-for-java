@@ -270,7 +270,7 @@ public class TokenCache {
     }
 
     Optional<AccessTokenCacheEntity> getAccessTokenCacheEntity
-            (Account account, AuthenticationAuthority authority, Set<String> scopes, String clientId,
+            (Account account, Authority authority, Set<String> scopes, String clientId,
              Set<String> environmentAliases){
         long currTimeStampSec = new Date().getTime()/1000;
 
@@ -285,7 +285,7 @@ public class TokenCache {
     }
 
     Optional<IdTokenCacheEntity> getIdTokenCacheEntity
-            (Account account, AuthenticationAuthority authority, String clientId, Set<String> environmentAliases){
+            (Account account, Authority authority, String clientId, Set<String> environmentAliases){
         return idTokens.values().stream().filter
                 (idToken -> idToken.homeAccountId.equals(account.homeAccountId) &&
                         environmentAliases.contains(idToken.environment) &&
@@ -305,7 +305,7 @@ public class TokenCache {
     }
 
     AuthenticationResult getAuthenticationResult
-            (Account account, AuthenticationAuthority authority, Set<String> scopes, String clientId) {
+            (Account account, Authority authority, Set<String> scopes, String clientId) {
 
         TokenCacheAccessContext context = null;
         if(tokenCacheAccessAspect != null){

@@ -23,29 +23,40 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.Getter;
-import lombok.experimental.Accessors;
-
-import java.net.MalformedURLException;
 import java.net.URL;
 
-@Accessors(fluent = true)
-@Getter
-class SilentRequest extends MsalRequest {
+import lombok.AccessLevel;
+import lombok.Getter;
 
-    private SilentParameters parameters;
+@Getter(AccessLevel.PACKAGE)
+class AADAuthority extends Authority {
 
-    private Authority requestAuthority;
+    private final static String TENANTLESS_TENANT_NAME = "common";
 
-    SilentRequest(SilentParameters parameters,
-                  ClientApplicationBase application,
-                  RequestContext requestContext) throws MalformedURLException {
 
-        super(application, null, requestContext);
+    private final String AADAuthorityFormat = "https://%s/%s/";
+    final String AADtokenEndpointFormat = "https://%s/{tenant}" + TOKEN_ENDPOINT;
 
-        this.parameters = parameters;
-        this.requestAuthority = StringHelper.isBlank(parameters.authorityUrl()) ?
-                application.authenticationAuthority :
-                Authority.createAuthority(new URL(parameters.authorityUrl()));
+    final static String DEVICE_CODE_ENDPOINT = "/oauth2/v2.0/devicecode";
+    final String deviceCodeEndpointFormat = "https://%s/{tenant}" + DEVICE_CODE_ENDPOINT;
+
+    String deviceCodeEndpoint;
+
+    AADAuthority(final URL authorityUrl) {
+        super(authorityUrl);
+        validateAuthorityUrl();
+        setAuthorityProperties();
+        this.authority = String.format(AADAuthorityFormat, host, tenant);
+    }
+
+    private void setAuthorityProperties() {
+        this.tokenEndpoint = String.format(AADtokenEndpointFormat, host);
+        this.tokenEndpoint = this.tokenEndpoint.replace("{tenant}", tenant);
+
+        this.deviceCodeEndpoint = String.format(this.deviceCodeEndpointFormat, host);
+        this.deviceCodeEndpoint = this.deviceCodeEndpoint.replace("{tenant}", tenant);
+
+        this.isTenantless = TENANTLESS_TENANT_NAME.equalsIgnoreCase(tenant);
+        this.selfSignedJwtAudience = this.tokenEndpoint;
     }
 }

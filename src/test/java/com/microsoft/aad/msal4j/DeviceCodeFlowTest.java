@@ -23,12 +23,8 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
-import com.nimbusds.oauth2.sdk.auth.ClientSecretPost;
-import com.nimbusds.oauth2.sdk.auth.Secret;
 import com.nimbusds.oauth2.sdk.http.CommonContentTypes;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
-import com.nimbusds.oauth2.sdk.id.ClientID;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.powermock.api.easymock.PowerMock;
@@ -92,7 +88,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         Capture<MsalRequest> capturedMsalRequest = Capture.newInstance();
 
         PowerMock.expectPrivate(app, "acquireTokenCommon",
-                EasyMock.capture(capturedMsalRequest), EasyMock.isA(AuthenticationAuthority.class)).andReturn(
+                EasyMock.capture(capturedMsalRequest), EasyMock.isA(AADAuthority.class)).andReturn(
                 AuthenticationResult.builder().
                         accessToken("accessToken").
                         expiresOn(new Date().getTime() + 100).
@@ -156,7 +152,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         URL url = new URL(capturedUrl.getValue());
         Assert.assertEquals(url.getAuthority(), AAD_PREFERRED_NETWORK_ENV_ALIAS);
         Assert.assertEquals(url.getPath(),
-                "/" + AAD_TENANT_NAME + AuthenticationAuthority.DEVICE_CODE_ENDPOINT);
+                "/" + AAD_TENANT_NAME + AADAuthority.DEVICE_CODE_ENDPOINT);
 
         Map<String, String> expectedQueryParams = new HashMap<>();
         expectedQueryParams.put("client_id", AAD_CLIENT_ID);

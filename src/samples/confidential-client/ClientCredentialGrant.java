@@ -23,6 +23,7 @@
 
 import com.microsoft.aad.msal4j.AuthenticationResult;
 import com.microsoft.aad.msal4j.ClientCredentialFactory;
+import com.microsoft.aad.msal4j.ClientCredentialParameters;
 import com.microsoft.aad.msal4j.ConfidentialClientApplication;
 
 import java.util.Collections;
@@ -35,14 +36,18 @@ class ClientCredentialGrant {
     }
 
     private static void getAccessTokenByClientCredentialGrant() throws Exception {
-        ConfidentialClientApplication app =
-                new ConfidentialClientApplication.Builder(TestData.CONFIDENTIAL_CLIENT_ID,
-                        ClientCredentialFactory.create(TestData.CONFIDENTIAL_CLIENT_SECRET))
+
+        ConfidentialClientApplication app = ConfidentialClientApplication.builder(
+                TestData.CONFIDENTIAL_CLIENT_ID,
+                ClientCredentialFactory.create(TestData.CONFIDENTIAL_CLIENT_SECRET))
                 .authority(TestData.TENANT_SPECIFIC_AUTHORITY)
                 .build();
 
-        CompletableFuture<AuthenticationResult> future = app.acquireTokenForClient
-                (Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE));
+        ClientCredentialParameters parameters = ClientCredentialParameters.builder(
+                Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE))
+                .build();
+
+        CompletableFuture<AuthenticationResult> future = app.acquireToken(parameters);
 
         future.handle((res, ex) -> {
             if (ex != null) {

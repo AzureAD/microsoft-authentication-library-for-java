@@ -45,6 +45,10 @@ public class LabResponse{
         return appId;
     }
 
+    public void setAppId(String appId){
+        this.appId = appId;
+    }
+
     public LabUser getUser() {
         return user;
     }

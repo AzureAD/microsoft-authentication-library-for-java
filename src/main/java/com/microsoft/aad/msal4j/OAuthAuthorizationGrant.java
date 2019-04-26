@@ -68,7 +68,7 @@ class OAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
 
     @Override
     public Map<String, String> toParameters() {
-        final Map<String, String> outParams = new LinkedHashMap<String, String>();
+        final Map<String, String> outParams = new LinkedHashMap<>();
         outParams.putAll(params);
         outParams.put("client_info", "1");
         outParams.putAll(grant.toParameters());

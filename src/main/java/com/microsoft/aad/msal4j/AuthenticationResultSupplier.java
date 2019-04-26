@@ -44,7 +44,7 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
         this.msalRequest = msalRequest;
     }
 
-    AuthenticationAuthority getAuthorityWithPrefNetworkHost(String authority) throws Exception {
+    Authority getAuthorityWithPrefNetworkHost(String authority) throws Exception {
 
         URL authorityUrl = new URL(authority);
 
@@ -56,7 +56,7 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
         URL updatedAuthorityUrl =
                 new URL(authorityUrl.getProtocol(), discoveryMetadataEntry.preferredNetwork, authorityUrl.getFile());
 
-        return new AuthenticationAuthority(updatedAuthorityUrl);
+        return Authority.createAuthority(updatedAuthorityUrl);
     }
 
     abstract AuthenticationResult execute() throws Exception;
@@ -149,7 +149,7 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
         }
 
         try {
-            AuthenticationAuthority authenticationAuthority = clientApplication.authenticationAuthority;
+            Authority authenticationAuthority = clientApplication.authenticationAuthority;
             if (authenticationAuthority != null) {
                 apiEvent.setAuthority(new URI(authenticationAuthority.getAuthority()));
                 apiEvent.setAuthorityType(authenticationAuthority.getAuthorityType().toString());

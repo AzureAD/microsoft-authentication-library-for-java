@@ -52,7 +52,7 @@ public class PublicClientApplicationTest extends PowerMockTestCase {
 
         PowerMock.expectPrivate(app, "acquireTokenCommon",
                 EasyMock.isA(MsalRequest.class),
-                EasyMock.isA(AuthenticationAuthority.class))
+                EasyMock.isA(AADAuthority.class))
                 .andReturn(AuthenticationResult.builder().
                         accessToken("accessToken").
                         expiresOn(new Date().getTime() + 100).

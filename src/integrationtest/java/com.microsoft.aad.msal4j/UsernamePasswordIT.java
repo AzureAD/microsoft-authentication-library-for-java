@@ -23,6 +23,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import lapapi.B2CIdentityProvider;
 import lapapi.FederationProvider;
 import lapapi.LabResponse;
 import lapapi.LabUserProvider;
@@ -113,4 +114,62 @@ public class UsernamePasswordIT {
         // TODO AuthenticationResult should have an getAccountInfo API
         // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
     }
+
+    @Test
+    public void acquireTokenWithUsernamePassword_B2C_CustomAuthority() throws Exception{
+        LabResponse labResponse = labUserProvider.getB2cUser(
+                B2CIdentityProvider.LOCAL,
+                false);
+
+        String b2CAppId = "e3b9ad76-9763-4827-b088-80c7a7888f79";
+        String password = labUserProvider.getUserPassword(labResponse.getUser());
+
+        PublicClientApplication pca = new PublicClientApplication.Builder(
+                b2CAppId).
+                b2cAuthority(TestConstants.B2C_AUTHORITY_ROPC).
+                build();
+
+        AuthenticationResult result = pca.acquireToken(UserNamePasswordParameters.
+                builder(Collections.singleton(TestConstants.B2C_READ_SCOPE),
+                        labResponse.getUser().getUpn(),
+                        password.toCharArray())
+                .build())
+                .get();
+
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.accessToken());
+        Assert.assertNotNull(result.refreshToken());
+        // TODO uncomment once service fixes this for ROPC flow
+        // Assert.assertNotNull(result.idToken());
+    }
+
+    @Test
+    public void acquireTokenWithUsernamePassword_B2C_LoginMicrosoftOnline() throws Exception{
+        LabResponse labResponse = labUserProvider.getB2cUser(
+                B2CIdentityProvider.LOCAL,
+                false);
+
+        String b2CAppId = "e3b9ad76-9763-4827-b088-80c7a7888f79";
+        String password = labUserProvider.getUserPassword(labResponse.getUser());
+
+        PublicClientApplication pca = new PublicClientApplication.Builder(
+                b2CAppId).
+                b2cAuthority(TestConstants.B2C_MICROSOFTLOGIN_ROPC).
+                build();
+
+        AuthenticationResult result = pca.acquireToken(UserNamePasswordParameters.
+                builder(Collections.singleton(TestConstants.B2C_READ_SCOPE),
+                        labResponse.getUser().getUpn(),
+                        password.toCharArray())
+                .build())
+                .get();
+
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.accessToken());
+        Assert.assertNotNull(result.refreshToken());
+        // TODO uncomment once service fixes this for ROPC flow
+        // Assert.assertNotNull(result.idToken());
+    }
+
+
 }

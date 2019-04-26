@@ -68,10 +68,14 @@ abstract class Event extends HashMap<String, String>{
             return null;
         }
 
-        //TODO should be updated when B2C is added, since tenant could be in different place
         String[] segment = uri.getPath().split("/");
-        if(segment.length >= 2){
-            segment[1] = TENANT_PLACEHOLDER;
+        if(segment.length >= 3){
+            if(segment[1].equals("tfp")){
+                // B2C authority
+                segment[2] = TENANT_PLACEHOLDER;
+            } else {
+                segment[1] = TENANT_PLACEHOLDER;
+            }
         }
 
         String scrubbedPath = String.join("/", segment);

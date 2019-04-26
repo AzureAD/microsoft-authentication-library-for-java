@@ -34,13 +34,12 @@ import java.net.URLEncoder;
 
 class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSupplier {
 
-    private AuthenticationAuthority requestAuthority;
-
+    private Authority requestAuthority;
     private MsalRequest msalRequest;
 
     AcquireTokenByAuthorizationGrantSupplier(ClientApplicationBase clientApplication,
                                              MsalRequest msalRequest,
-                                             AuthenticationAuthority authority) {
+                                             Authority authority) {
         super(clientApplication, msalRequest);
         this.msalRequest = msalRequest;
         this.requestAuthority = authority;
@@ -65,7 +64,9 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
             requestAuthority = clientApplication.authenticationAuthority;
         }
 
-        requestAuthority = getAuthorityWithPrefNetworkHost(requestAuthority.getAuthority());
+        if(requestAuthority.authorityType != AuthorityType.B2C){
+            requestAuthority = getAuthorityWithPrefNetworkHost(requestAuthority.getAuthority());
+        }
 
         return clientApplication.acquireTokenCommon(msalRequest, requestAuthority);
     }
@@ -76,6 +77,11 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
         if (!(authGrant.getAuthorizationGrant() instanceof ResourceOwnerPasswordCredentialsGrant)) {
             return authGrant;
         }
+
+        if(msalRequest.application().authenticationAuthority.authorityType == AuthorityType.B2C){
+            return authGrant;
+        }
+
         ResourceOwnerPasswordCredentialsGrant grant =
                 (ResourceOwnerPasswordCredentialsGrant) authGrant.getAuthorizationGrant();
 

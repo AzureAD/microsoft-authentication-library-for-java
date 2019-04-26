@@ -70,7 +70,7 @@ abstract class ClientApplicationBase {
     @Getter
     private String authority;
 
-    protected AuthenticationAuthority authenticationAuthority;
+    protected Authority authenticationAuthority;
 
     /**
      * A boolean value telling the application if the authority needs to be verified
@@ -192,7 +192,47 @@ abstract class ClientApplicationBase {
         return future;
     }
 
-    AuthenticationResult acquireTokenCommon(MsalRequest msalRequest, AuthenticationAuthority requestAuthority)
+    /**
+     * Returns accounts for which there is an cached SSO (RT token)
+     */
+    public CompletableFuture<AuthenticationResult> acquireTokenSilently(SilentParameters parameters)
+            throws MalformedURLException {
+
+        validateNotNull("parameters", parameters);
+
+        SilentRequest silentRequest = new SilentRequest(
+                parameters,
+                this,
+                createRequestContext(AcquireTokenPublicApi.ACQUIRE_TOKEN_SILENTLY));
+
+        return executeRequest(silentRequest);
+    }
+
+    /**
+     * Returns accounts for which there is an cached SSO (RT token)
+     */
+    public CompletableFuture<Collection<Account>> getAccounts() {
+        AccountsSupplier supplier = new AccountsSupplier(this);
+
+        CompletableFuture<Collection<Account>> future =
+                serviceBundle.getExecutorService() != null ? CompletableFuture.supplyAsync(supplier, serviceBundle.getExecutorService())
+                        : CompletableFuture.supplyAsync(supplier);
+        return future;
+    }
+
+    /**
+     * Remove all credentials from cache related to the account
+     */
+    public CompletableFuture removeAccount(Account account) {
+        RemoveAccountRunnable runnable = new RemoveAccountRunnable(this, account);
+
+        CompletableFuture<Void> future =
+                serviceBundle.getExecutorService() != null ? CompletableFuture.runAsync(runnable, serviceBundle.getExecutorService())
+                        : CompletableFuture.runAsync(runnable);
+        return future;
+    }
+
+    AuthenticationResult acquireTokenCommon(MsalRequest msalRequest, Authority requestAuthority)
             throws Exception {
 
         ClientDataHttpHeaders headers = msalRequest.headers();
@@ -203,16 +243,20 @@ abstract class ClientApplicationBase {
                     headers.getHeaderCorrelationIdValue()));
         }
 
-        URL url = new URL(requestAuthority.getTokenUri());
+        URL url = new URL(requestAuthority.getTokenEndpoint());
         TokenRequest request = new TokenRequest(url, msalRequest, serviceBundle);
 
         AuthenticationResult result = request.executeOauthRequestAndProcessResponse();
 
-        InstanceDiscoveryMetadataEntry instanceDiscoveryMetadata =
-                AadInstanceDiscovery.GetMetadataEntry
-                        (url, validateAuthority, msalRequest, serviceBundle);
+        if(authenticationAuthority.authorityType.equals(AuthorityType.B2C)){
+            tokenCache.saveTokens(request, result, authenticationAuthority.host);
+        } else {
+            InstanceDiscoveryMetadataEntry instanceDiscoveryMetadata =
+                    AadInstanceDiscovery.GetMetadataEntry
+                            (url, validateAuthority, msalRequest, serviceBundle);
 
-        tokenCache.saveTokens(request, result, instanceDiscoveryMetadata.preferredCache);
+            tokenCache.saveTokens(request, result, instanceDiscoveryMetadata.preferredCache);
+        }
 
         return result;
     }
@@ -245,46 +289,6 @@ abstract class ClientApplicationBase {
         return serviceBundle;
     }
 
-    /**
-     * Returns accounts for which there is an cached SSO (RT token)
-     */
-    public CompletableFuture<AuthenticationResult> acquireTokenSilently(SilentParameters parameters)
-            throws MalformedURLException {
-
-        validateNotNull("parameters", parameters);
-
-        SilentRequest silentRequest = new SilentRequest(
-                parameters,
-                this,
-                createRequestContext(AcquireTokenPublicApi.ACQUIRE_TOKEN_SILENTLY));
-
-        return executeRequest(silentRequest);
-    }
-
-    /**
-     * Returns accounts for which there is an cached SSO (RT token)
-     */
-    public CompletableFuture<Collection<Account>> getAccounts() {
-        AccountsSupplier supplier = new AccountsSupplier(this);
-
-        CompletableFuture<Collection<Account>> future =
-                serviceBundle.getExecutorService() != null ? CompletableFuture.supplyAsync(supplier, serviceBundle.getExecutorService())
-                        : CompletableFuture.supplyAsync(supplier);
-        return future;
-    }
-
-    /**
-     * Remove all credentials from cache related to account
-     */
-    public CompletableFuture removeAccount(Account account) {
-        RemoveAccountRunnable runnable = new RemoveAccountRunnable(this, account);
-
-        CompletableFuture<Void> future =
-                serviceBundle.getExecutorService() != null ? CompletableFuture.runAsync(runnable, serviceBundle.getExecutorService())
-                        : CompletableFuture.runAsync(runnable);
-        return future;
-    }
-
     protected static String canonicalizeUrl(String authority) {
         authority = authority.toLowerCase();
 
@@ -294,14 +298,13 @@ abstract class ClientApplicationBase {
         return authority;
     }
 
-
     abstract static class Builder<T extends Builder<T>> {
         // Required parameters
         private String clientId;
 
         // Optional parameters - initialized to default values
         private String authority = DEFAULT_AUTHORITY;
-        private AuthenticationAuthority authenticationAuthority;
+        private Authority authenticationAuthority;
         private boolean validateAuthority = true;
         private String correlationId = UUID.randomUUID().toString();
         private boolean logPii = false;
@@ -335,12 +338,24 @@ abstract class ClientApplicationBase {
         public T authority(String val) throws MalformedURLException {
             authority = canonicalizeUrl(val);
 
-            if (AuthenticationAuthority.detectAuthorityType(new URL(authority)) != AuthorityType.AAD) {
+            if (Authority.detectAuthorityType(new URL(authority)) != AuthorityType.AAD) {
                 throw new IllegalArgumentException("Unsupported authority type");
             }
 
-            authenticationAuthority = new AuthenticationAuthority(new URL(authority));
+            authenticationAuthority = new AADAuthority(new URL(authority));
 
+            return self();
+        }
+
+        public T b2cAuthority(String val) throws MalformedURLException{
+            authority = canonicalizeUrl(val);
+
+            if(Authority.detectAuthorityType(new URL(authority)) != AuthorityType.B2C){
+                throw new IllegalArgumentException("Not a B2C authority type");
+            }
+            authenticationAuthority = new B2CAuthority(new URL(authority));
+
+            validateAuthority = false;
             return self();
         }
 

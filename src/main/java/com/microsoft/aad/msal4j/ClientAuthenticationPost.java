@@ -75,7 +75,6 @@ class ClientAuthenticationPost extends ClientAuthentication {
         String queryString = URLUtils.serializeParameters(params);
 
         httpRequest.setQuery(queryString);
-
     }
 
 }

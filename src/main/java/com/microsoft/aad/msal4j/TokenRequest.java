@@ -219,6 +219,7 @@ class TokenRequest {
         oauthHttpRequest.setContentType(CommonContentTypes.APPLICATION_URLENCODED);
 
         final Map<String, String> params = msalRequest.msalAuthorizationGrant().toParameters();
+
         oauthHttpRequest.setQuery(URLUtils.serializeParameters(params));
 
         if (msalRequest.application().clientAuthentication != null) {
