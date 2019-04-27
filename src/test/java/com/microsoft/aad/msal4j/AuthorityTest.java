@@ -50,7 +50,7 @@ public class AuthorityTest extends AbstractMsalTests {
 
     @Test
     public void testDetectAuthorityType_B2C() throws Exception {
-        URL url = new URL(TestConfiguration.B2C_TENANT_ENDPOINT);
+        URL url = new URL(TestConfiguration.B2C_AUTHORITY);
         Assert.assertEquals(Authority.detectAuthorityType(url), AuthorityType.B2C);
     }
 
@@ -101,35 +101,35 @@ public class AuthorityTest extends AbstractMsalTests {
     public void testConstructor_AADAuthority() throws MalformedURLException {
         final AADAuthority aa = new AADAuthority(new URL(TestConfiguration.AAD_TENANT_ENDPOINT));
         Assert.assertNotNull(aa);
-        Assert.assertEquals(aa.getAuthority(),
+        Assert.assertEquals(aa.authority(),
                 TestConfiguration.AAD_TENANT_ENDPOINT);
-        Assert.assertEquals(aa.getHost(), TestConfiguration.AAD_HOST_NAME);
-        Assert.assertEquals(aa.getTokenEndpoint(),
+        Assert.assertEquals(aa.host(), TestConfiguration.AAD_HOST_NAME);
+        Assert.assertEquals(aa.tokenEndpoint(),
                 TestConfiguration.AAD_TENANT_ENDPOINT + "oauth2/v2.0/token");
-        Assert.assertEquals(aa.getSelfSignedJwtAudience(),
+        Assert.assertEquals(aa.selfSignedJwtAudience(),
                 TestConfiguration.AAD_TENANT_ENDPOINT + "oauth2/v2.0/token");
-        Assert.assertEquals(aa.getTokenEndpoint(),
+        Assert.assertEquals(aa.tokenEndpoint(),
                 TestConfiguration.AAD_TENANT_ENDPOINT + "oauth2/v2.0/token");
-        Assert.assertEquals(aa.getAuthorityType(), AuthorityType.AAD);
+        Assert.assertEquals(aa.authorityType(), AuthorityType.AAD);
         Assert.assertFalse(aa.isTenantless());
-        Assert.assertEquals(aa.getDeviceCodeEndpoint(),
+        Assert.assertEquals(aa.deviceCodeEndpoint(),
                 TestConfiguration.AAD_TENANT_ENDPOINT + "oauth2/v2.0/devicecode");
     }
 
     @Test
     public void testConstructor_B2CAuthority() throws MalformedURLException {
-        final B2CAuthority aa = new B2CAuthority (new URL(TestConfiguration.B2C_TENANT_ENDPOINT));
+        final B2CAuthority aa = new B2CAuthority (new URL(TestConfiguration.B2C_AUTHORITY));
         Assert.assertNotNull(aa);
-        Assert.assertEquals(aa.getAuthority(),
-                TestConfiguration.B2C_TENANT_ENDPOINT);
-        Assert.assertEquals(aa.getHost(), TestConfiguration.B2C_HOST_NAME);
-        Assert.assertEquals(aa.getSelfSignedJwtAudience(),
-                TestConfiguration.B2C_TENANT_ENDPOINT + "/oauth2/v2.0/token");
-        Assert.assertEquals(aa.getTokenEndpoint(),
-                TestConfiguration.B2C_TENANT_ENDPOINT + "/oauth2/v2.0/token");
-        Assert.assertEquals(aa.getAuthorityType(), AuthorityType.B2C);
-        Assert.assertEquals(aa.getTokenEndpoint(),
-                TestConfiguration.B2C_TENANT_ENDPOINT + "/oauth2/v2.0/token");
+        Assert.assertEquals(aa.authority(),
+                TestConfiguration.B2C_AUTHORITY + "/");
+        Assert.assertEquals(aa.host(), TestConfiguration.B2C_HOST_NAME);
+        Assert.assertEquals(aa.selfSignedJwtAudience(),
+                TestConfiguration.B2C_AUTHORITY_ENDPOINT + "/oauth2/v2.0/token?p=" + TestConfiguration.B2C_SIGN_IN_POLICY);
+        Assert.assertEquals(aa.tokenEndpoint(),
+                TestConfiguration.B2C_AUTHORITY_ENDPOINT + "/oauth2/v2.0/token?p=" + TestConfiguration.B2C_SIGN_IN_POLICY);
+        Assert.assertEquals(aa.authorityType(), AuthorityType.B2C);
+        Assert.assertEquals(aa.tokenEndpoint(),
+                TestConfiguration.B2C_AUTHORITY_ENDPOINT + "/oauth2/v2.0/token?p=" + TestConfiguration.B2C_SIGN_IN_POLICY);
         Assert.assertFalse(aa.isTenantless());
     }
 

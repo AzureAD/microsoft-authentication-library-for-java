@@ -50,7 +50,7 @@ public class SeleniumExtensions {
     public static WebDriver createDefaultWebDriver(){
         ChromeOptions options = new ChromeOptions();
         //no visual rendering, remove when debugging
-        //options.addArguments("--headless");
+        options.addArguments("--headless");
 
         System.setProperty("webdriver.chrome.driver", "C:/Windows/chromedriver.exe");
         ChromeDriver driver = new ChromeDriver(options);

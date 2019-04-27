@@ -40,7 +40,6 @@ public class TestConstants {
     public final static String B2C_MICROSOFTLOGIN_AUTHORITY = "https://login.microsoftonline.com/tfp/msidlabb2c.onmicrosoft.com/";
     public final static String B2C_MICROSOFTLOGIN_ROPC = B2C_MICROSOFTLOGIN_AUTHORITY + B2C_ROPC_POLICY;
 
-
     public final static String LOCALHOST = "http://localhost:";
     public final static String LOCAL_FLAG_ENV_VAR = "MSAL_JAVA_RUN_LOCAL";
 }

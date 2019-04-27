@@ -184,7 +184,6 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        //String b2CAppId = "2ae335cd-5ec9-4eee-8148-58be9e8020c9";
         String b2CAppId = "b876a048-55a5-4fc5-9403-f5d90cb1c852";
         labResponse.setAppId(b2CAppId);
 

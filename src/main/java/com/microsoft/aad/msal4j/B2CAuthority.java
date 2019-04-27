@@ -6,10 +6,9 @@ import lombok.experimental.Accessors;
 
 import java.net.URL;
 
-@Accessors(fluent = true)
+@Accessors(fluent=true)
 @Getter(AccessLevel.PACKAGE)
 class B2CAuthority extends Authority{
-
 
     final String B2CTokenEndpointFormat = "https://%s/{tenant}" + TOKEN_ENDPOINT + "?p={policy}";
 

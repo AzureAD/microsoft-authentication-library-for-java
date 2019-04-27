@@ -278,7 +278,7 @@ public class TokenCache {
                 (accessToken -> accessToken.homeAccountId.equals(account.homeAccountId) &&
                         environmentAliases.contains(accessToken.environment) &&
                         Long.parseLong(accessToken.expiresOn()) > currTimeStampSec + MIN_ACCESS_TOKEN_EXPIRE_IN_SEC &&
-                        accessToken.realm.equals(authority.getTenant()) &&
+                        accessToken.realm.equals(authority.tenant()) &&
                         accessToken.clientId.equals(clientId) &&
                         isMatchingScopes(accessToken, scopes)
                 ).findAny();
@@ -289,7 +289,7 @@ public class TokenCache {
         return idTokens.values().stream().filter
                 (idToken -> idToken.homeAccountId.equals(account.homeAccountId) &&
                         environmentAliases.contains(idToken.environment) &&
-                        idToken.realm.equals(authority.getTenant()) &&
+                        idToken.realm.equals(authority.tenant()) &&
                         idToken.clientId.equals(clientId)
                 ).findAny();
     }
@@ -347,7 +347,7 @@ public class TokenCache {
                     refreshToken(rtCacheEntity.get().secret);
         }
         builder.account(account);
-        builder.environment(authority.getHost());
+        builder.environment(authority.host());
 
         return builder.build();
     }

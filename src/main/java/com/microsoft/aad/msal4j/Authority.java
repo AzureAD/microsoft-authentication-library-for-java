@@ -2,6 +2,7 @@ package com.microsoft.aad.msal4j;
 
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.experimental.Accessors;
 import org.openqa.selenium.InvalidArgumentException;
 
 import java.net.URL;
@@ -9,6 +10,8 @@ import java.net.URL;
 /**
  * Represents Authentication Authority responsible for issuing access tokens.
  */
+
+@Accessors(fluent=true)
 @Getter(AccessLevel.PACKAGE)
 abstract class Authority {
 
@@ -68,6 +71,8 @@ abstract class Authority {
 
         if(isB2CAuthority(firstPath)){
             return AuthorityType.B2C;
+        } else if(isAdfsAuthority(firstPath)) {
+            return AuthorityType.ADFS;
         } else {
             return AuthorityType.AAD;
         }

@@ -40,7 +40,7 @@ class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier 
     AuthenticationResult execute() throws Exception {
 
         Authority requestAuthority = clientApplication.authenticationAuthority;
-        requestAuthority = getAuthorityWithPrefNetworkHost(requestAuthority.getAuthority());
+        requestAuthority = getAuthorityWithPrefNetworkHost(requestAuthority.authority());
 
         DeviceCode deviceCode = getDeviceCode((AADAuthority) requestAuthority);
 
@@ -50,7 +50,7 @@ class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier 
     private DeviceCode getDeviceCode(AADAuthority requestAuthority) throws Exception{
 
         DeviceCode deviceCode = deviceCodeFlowRequest.acquireDeviceCode(
-                requestAuthority.getDeviceCodeEndpoint(),
+                requestAuthority.deviceCodeEndpoint(),
                 clientApplication.clientId(),
                 deviceCodeFlowRequest.headers().getReadonlyHeaderMap(),
                 this.clientApplication.getServiceBundle());

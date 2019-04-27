@@ -39,7 +39,7 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
         Authority requestAuthority = silentRequest.requestAuthority();
         if(requestAuthority.authorityType != AuthorityType.B2C){
             requestAuthority =
-                    getAuthorityWithPrefNetworkHost(silentRequest.requestAuthority().getAuthority());
+                    getAuthorityWithPrefNetworkHost(silentRequest.requestAuthority().authority());
         }
 
         AuthenticationResult res = clientApplication.tokenCache.getAuthenticationResult(

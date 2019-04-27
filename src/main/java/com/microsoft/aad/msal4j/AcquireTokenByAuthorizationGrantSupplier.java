@@ -65,7 +65,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
         }
 
         if(requestAuthority.authorityType != AuthorityType.B2C){
-            requestAuthority = getAuthorityWithPrefNetworkHost(requestAuthority.getAuthority());
+            requestAuthority = getAuthorityWithPrefNetworkHost(requestAuthority.authority());
         }
 
         return clientApplication.acquireTokenCommon(msalRequest, requestAuthority);

@@ -27,7 +27,9 @@ import java.net.URL;
 
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.experimental.Accessors;
 
+@Accessors(fluent=true)
 @Getter(AccessLevel.PACKAGE)
 class AADAuthority extends Authority {
 

@@ -151,8 +151,8 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
         try {
             Authority authenticationAuthority = clientApplication.authenticationAuthority;
             if (authenticationAuthority != null) {
-                apiEvent.setAuthority(new URI(authenticationAuthority.getAuthority()));
-                apiEvent.setAuthorityType(authenticationAuthority.getAuthorityType().toString());
+                apiEvent.setAuthority(new URI(authenticationAuthority.authority()));
+                apiEvent.setAuthorityType(authenticationAuthority.authorityType().toString());
             }
         } catch (URISyntaxException ex){
             clientApplication.log.warn(LogHelper.createMessage(

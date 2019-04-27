@@ -171,13 +171,29 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         PowerMock.verify();
     }
 
+    // TODO uncomment when ADFS support is added
+//    @Test(expectedExceptions = IllegalArgumentException.class,
+//            expectedExceptionsMessageRegExp = "Invalid authority type. Device Flow is only supported by AAD authority")
+//    public void executeAcquireDeviceCode_AdfsAuthorityUsed_IllegalArgumentExceptionThrown()
+//            throws Exception {
+//
+//        app = new PublicClientApplication.Builder("client_id")
+//                .authority(ADFS_TENANT_ENDPOINT)
+//                .validateAuthority(false).build();
+//
+//        app.acquireToken
+//                (DeviceCodeFlowParameters
+//                        .builder(Collections.singleton(AAD_RESOURCE_ID), (DeviceCode deviceCode) -> {})
+//                        .build());
+//    }
+
     @Test(expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "Unsupported authority type")
-    public void executeAcquireDeviceCode_AdfsAuthorityUsed_IllegalArgumentExceptionThrown()
+            expectedExceptionsMessageRegExp = "Invalid authority type. Device Flow is only supported by AAD authority")
+    public void executeAcquireDeviceCode_B2CAuthorityUsed_IllegalArgumentExceptionThrown()
             throws Exception {
 
         app = new PublicClientApplication.Builder("client_id")
-                .authority(ADFS_TENANT_ENDPOINT)
+                .b2cAuthority(TestConfiguration.B2C_AUTHORITY)
                 .validateAuthority(false).build();
 
         app.acquireToken
@@ -185,6 +201,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
                         .builder(Collections.singleton(AAD_RESOURCE_ID), (DeviceCode deviceCode) -> {})
                         .build());
     }
+
 
     @Test
     public void executeAcquireDeviceCode_AuthenticaionPendingErrorReturned_AuthenticationExceptionThrown()

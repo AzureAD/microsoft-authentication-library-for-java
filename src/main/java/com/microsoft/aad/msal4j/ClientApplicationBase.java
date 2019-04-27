@@ -243,7 +243,7 @@ abstract class ClientApplicationBase {
                     headers.getHeaderCorrelationIdValue()));
         }
 
-        URL url = new URL(requestAuthority.getTokenEndpoint());
+        URL url = new URL(requestAuthority.tokenEndpoint());
         TokenRequest request = new TokenRequest(url, msalRequest, serviceBundle);
 
         AuthenticationResult result = request.executeOauthRequestAndProcessResponse();
@@ -339,7 +339,7 @@ abstract class ClientApplicationBase {
             authority = canonicalizeUrl(val);
 
             if (Authority.detectAuthorityType(new URL(authority)) != AuthorityType.AAD) {
-                throw new IllegalArgumentException("Unsupported authority type");
+                throw new IllegalArgumentException("Unsupported authority type. Please use AAD authority");
             }
 
             authenticationAuthority = new AADAuthority(new URL(authority));
@@ -351,7 +351,7 @@ abstract class ClientApplicationBase {
             authority = canonicalizeUrl(val);
 
             if(Authority.detectAuthorityType(new URL(authority)) != AuthorityType.B2C){
-                throw new IllegalArgumentException("Not a B2C authority type");
+                throw new IllegalArgumentException("Unsupported authority type. Please use B2C authority");
             }
             authenticationAuthority = new B2CAuthority(new URL(authority));
 
