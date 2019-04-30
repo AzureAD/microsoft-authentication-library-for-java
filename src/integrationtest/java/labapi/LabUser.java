@@ -72,7 +72,7 @@ public class LabUser {
     @SerializedName("homeUPN")
     private String homeUpn;
 
-    @SerializedName("b2cProvider")
+    @SerializedName("B2CProvider")
     private B2CIdentityProvider b2CIdentityProvider;
 
     private LabUser homeUser;

@@ -106,7 +106,7 @@ public class DeviceCodeIT {
                    new By.ById(continueButtonId));
             continueBtn.click();
 
-            SeleniumExtensions.performLogin(seleniumDriver, user);
+            SeleniumExtensions.performADLogin(seleniumDriver, user);
         } catch(Exception e){
             if(!isRunningLocally){
                 SeleniumExtensions.takeScreenShot(seleniumDriver);

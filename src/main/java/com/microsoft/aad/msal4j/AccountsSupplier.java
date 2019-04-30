@@ -43,7 +43,7 @@ class AccountsSupplier implements Supplier<Collection<Account>> {
         Collection<Account> accounts;
         try {
             InstanceDiscoveryMetadataEntry instanceDiscoveryData =
-                    AadInstanceDiscovery.cache.get(clientApplication.authenticationAuthority.getHost());
+                    AadInstanceDiscovery.cache.get(clientApplication.authenticationAuthority.host());
 
             accounts = clientApplication.tokenCache.getAccounts
                     (clientApplication.clientId(), instanceDiscoveryData.getAliasesSet());

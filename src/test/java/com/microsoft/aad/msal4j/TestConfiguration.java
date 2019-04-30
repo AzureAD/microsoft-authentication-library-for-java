@@ -41,12 +41,26 @@ public final class TestConfiguration {
     public final static String AAD_CERTIFICATE_PASSWORD = "password";
     public final static String AAD_DEFAULT_REDIRECT_URI = "https://non_existing_uri.windows.com/";
     public final static String AAD_REDIRECT_URI_FOR_CONFIDENTIAL_CLIENT = "https://non_existing_uri_for_confidential_client.com/";
+    public final static String AAD_COMMON_AUTHORITY = "https://login.microsoftonline.com/common/";
 
     public final static String ADFS_HOST_NAME = "fs.ade2eadfs30.com";
     public final static String ADFS_TENANT_ENDPOINT = "https://"
             + ADFS_HOST_NAME + "/adfs/";
     public final static String AAD_UNKNOWN_TENANT_ENDPOINT = "https://lgn.windows.net/"
             + AAD_TENANT_NAME + "/";
+
+    public final static String B2C_HOST_NAME = "msidlabb2c.b2clogin.com";
+    public final static String B2C_SIGN_IN_POLICY = "B2C_1_SignInPolicy";
+    public final static String B2C_AUTHORITY = "https://" +  B2C_HOST_NAME +
+            "/tfp/msidlabb2c.onmicrosoft.com/" + B2C_SIGN_IN_POLICY;
+
+    public final static String B2C_AUTHORITY_ENDPOINT = "https://" +  B2C_HOST_NAME +
+            "/msidlabb2c.onmicrosoft.com";
+    public final static String B2C_AUTHORITY_CUSTOM_PORT = "https://login.microsoftonline.in:444/tfp/tenant/policy";
+    public final static String B2C_AUTHORITY_CUSTOM_PORT_TAIL_SLASH = "https://login.microsoftonline.in:444/tfp/tenant/policy/";
+
+
+
 
     public static String INSTANCE_DISCOVERY_RESPONSE = "{" +
             "\"tenant_discovery_endpoint\":\"https://login.microsoftonline.com/organizations/v2.0/.well-known/openid-configuration\"," +

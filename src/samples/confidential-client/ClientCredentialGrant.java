@@ -43,11 +43,11 @@ class ClientCredentialGrant {
                 .authority(TestData.TENANT_SPECIFIC_AUTHORITY)
                 .build();
 
-        ClientCredentialParameters parameters =  ClientCredentialParameters.builder(
-                Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE)).build();
+        ClientCredentialParameters parameters = ClientCredentialParameters.builder(
+                Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE))
+                .build();
 
         CompletableFuture<AuthenticationResult> future = app.acquireToken(parameters);
-
 
         future.handle((res, ex) -> {
             if (ex != null) {

@@ -106,7 +106,7 @@ public class PublicClientApplication extends ClientApplicationBase {
      */
     public CompletableFuture<AuthenticationResult> acquireToken(DeviceCodeFlowParameters parameters) {
 
-        if (!AuthorityType.AAD.equals(authenticationAuthority.getAuthorityType())) {
+        if (!AuthorityType.AAD.equals(authenticationAuthority.authorityType())) {
             throw new IllegalArgumentException(
                     "Invalid authority type. Device Flow is only supported by AAD authority");
         }

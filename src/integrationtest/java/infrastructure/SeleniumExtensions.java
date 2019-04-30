@@ -52,11 +52,12 @@ public class SeleniumExtensions {
         //no visual rendering, remove when debugging
         options.addArguments("--headless");
 
+        System.setProperty("webdriver.chrome.driver", "C:/Windows/chromedriver.exe");
         ChromeDriver driver = new ChromeDriver(options);
         driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 
         return driver;
-    }
+}
 
     public static WebElement waitForElementToBeVisibleAndEnable(WebDriver driver, By by){
         WebDriverWait webDriverWait = new WebDriverWait(driver, 15);
@@ -74,7 +75,7 @@ public class SeleniumExtensions {
         });
     }
 
-    public static void performLogin(WebDriver driver, LabUser user){
+    public static void performADLogin(WebDriver driver, LabUser user){
         UserInformationFields fields = new UserInformationFields(user);
 
         LOG.info("Loggin in ... Entering username");
@@ -90,12 +91,61 @@ public class SeleniumExtensions {
         }
 
         LOG.info("Loggin in ... Entering password");
-
         By by = new By.ById(fields.getPasswordInputId());
         waitForElementToBeVisibleAndEnable(driver, by).sendKeys(user.getPassword());
 
         LOG.info("Loggin in ... click submit");
-        waitForElementToBeVisibleAndEnable(driver, new By.ById(fields.getPasswordSigInButtonId())).
+         waitForElementToBeVisibleAndEnable(driver, new By.ById(fields.getPasswordSigInButtonId())).
+                click();
+    }
+
+    public static void performLocalLogin(WebDriver driver, LabUser user){
+
+        driver.findElement(new By.ById(SeleniumConstants.B2C_LOCAL_ACCOUNT_ID)).click();
+
+        LOG.info("Loggin in ... Entering username");
+        driver.findElement(new By.ById(SeleniumConstants.B2C_LOCAL_USERNAME_ID)).sendKeys(user.getUpn());
+
+        LOG.info("Loggin in ... Entering password");
+        By by = new By.ById(SeleniumConstants.B2C_LOCAL_PASSWORD_ID);
+        waitForElementToBeVisibleAndEnable(driver, by).sendKeys(user.getPassword());
+
+        waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.B2C_LOCAL_SIGN_IN_BUTTON_ID)).
+                click();
+    }
+
+    public static void performGoogleLogin(WebDriver driver, LabUser user){
+
+        driver.findElement(new By.ById(SeleniumConstants .GOOGLE_ACCOUNT_ID)).click();
+
+        LOG.info("Loggin in ... Entering username");
+        driver.findElement(new By.ById(SeleniumConstants.GOOGLE_USERNAME_ID)).sendKeys(user.getUpn());
+
+        LOG.info("Loggin in ... Clicking <Next> after username");
+        driver.findElement(new By.ById(SeleniumConstants.GOOGLE_NEXT_AFTER_USERNAME_BUTTON)).click();
+
+        LOG.info("Loggin in ... Entering password");
+        By by = new By.ByName(SeleniumConstants.GOOGLE_PASSWORD_ID);
+        waitForElementToBeVisibleAndEnable(driver, by).sendKeys(user.getPassword());
+
+        LOG.info("Loggin in ... click submit");
+
+        waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.GOOGLE_NEXT_BUTTON_ID)).
+                click();
+    }
+
+    public static void performFacebookLogin(WebDriver driver, LabUser user){
+
+        driver.findElement(new By.ById(SeleniumConstants.FACEBOOK_ACCOUNT_ID)).click();
+
+        LOG.info("Loggin in ... Entering username");
+        driver.findElement(new By.ById(SeleniumConstants.FACEBOOK_USERNAME_ID)).sendKeys(user.getUpn());
+
+        LOG.info("Loggin in ... Entering password");
+        By by = new By.ById(SeleniumConstants.FACEBOOK_PASSWORD_ID);
+        waitForElementToBeVisibleAndEnable(driver, by).sendKeys(user.getPassword());
+
+        waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.FACEBOOK_LOGIN_BUTTON_ID)).
                 click();
     }
 
