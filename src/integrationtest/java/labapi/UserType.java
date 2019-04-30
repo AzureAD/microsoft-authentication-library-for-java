@@ -34,7 +34,7 @@ public enum UserType {
     MEMBER(0),
     @SerializedName("guest")
     GUEST(1),
-    @SerializedName("b2c")
+    @SerializedName("B2C")
     B2C(2);
 
     private int labId;

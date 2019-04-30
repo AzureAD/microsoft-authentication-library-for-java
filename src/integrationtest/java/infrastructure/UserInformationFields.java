@@ -70,29 +70,7 @@ class UserInformationFields {
             passwordSigInButtonId = SeleniumConstants.ADFSV4_WEB_SUBMIT_ID;
             return;
         }
-        if(labUser.getUserType() == UserType.B2C){
-            determineB2cFieldIds();
-            return;
-        }
         passwordInputId = SeleniumConstants.WEB_PASSWORD_ID;
         passwordSigInButtonId = SeleniumConstants.WEB_SUBMIT_ID;
-    }
-
-
-    private void determineB2cFieldIds(){
-        switch(labUser.getB2CIdentityProvider()){
-            case LOCAL:
-                passwordSigInButtonId = SeleniumConstants.B2C_WEB_PASSWORD_ID;
-                passwordInputId = SeleniumConstants.B2C_WEB_SUBMIT_ID;
-                break;
-            case FACEBOOK:
-                passwordSigInButtonId = SeleniumConstants.B2C_WEB_PASSWORD_FACEBOOK_ID;
-                passwordInputId = SeleniumConstants.B2C_FACEBOOK_SUBMIT_ID;
-                break;
-            case GOOGLE:
-                passwordSigInButtonId = SeleniumConstants.B2C_WEB_PASSWORD_GOOGLE_ID;
-                passwordInputId = SeleniumConstants.B2C_GOOGLE_SIGNIN_ID;
-                break;
-        }
     }
 }

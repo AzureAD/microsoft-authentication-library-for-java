@@ -42,7 +42,7 @@ class RemoveAccountRunnable implements Runnable {
     public void run() {
         try {
             InstanceDiscoveryMetadataEntry instanceDiscoveryData =
-                    AadInstanceDiscovery.cache.get(clientApplication.authenticationAuthority.getHost());
+                    AadInstanceDiscovery.cache.get(clientApplication.authenticationAuthority.host());
 
             clientApplication.tokenCache.removeAccount
                     (clientApplication.clientId(), account, instanceDiscoveryData.getAliasesSet());

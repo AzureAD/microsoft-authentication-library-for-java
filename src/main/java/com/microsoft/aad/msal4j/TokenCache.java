@@ -270,7 +270,7 @@ public class TokenCache {
     }
 
     Optional<AccessTokenCacheEntity> getAccessTokenCacheEntity
-            (Account account, AuthenticationAuthority authority, Set<String> scopes, String clientId,
+            (Account account, Authority authority, Set<String> scopes, String clientId,
              Set<String> environmentAliases){
         long currTimeStampSec = new Date().getTime()/1000;
 
@@ -278,18 +278,18 @@ public class TokenCache {
                 (accessToken -> accessToken.homeAccountId.equals(account.homeAccountId) &&
                         environmentAliases.contains(accessToken.environment) &&
                         Long.parseLong(accessToken.expiresOn()) > currTimeStampSec + MIN_ACCESS_TOKEN_EXPIRE_IN_SEC &&
-                        accessToken.realm.equals(authority.getTenant()) &&
+                        accessToken.realm.equals(authority.tenant()) &&
                         accessToken.clientId.equals(clientId) &&
                         isMatchingScopes(accessToken, scopes)
                 ).findAny();
     }
 
     Optional<IdTokenCacheEntity> getIdTokenCacheEntity
-            (Account account, AuthenticationAuthority authority, String clientId, Set<String> environmentAliases){
+            (Account account, Authority authority, String clientId, Set<String> environmentAliases){
         return idTokens.values().stream().filter
                 (idToken -> idToken.homeAccountId.equals(account.homeAccountId) &&
                         environmentAliases.contains(idToken.environment) &&
-                        idToken.realm.equals(authority.getTenant()) &&
+                        idToken.realm.equals(authority.tenant()) &&
                         idToken.clientId.equals(clientId)
                 ).findAny();
     }
@@ -305,7 +305,7 @@ public class TokenCache {
     }
 
     AuthenticationResult getAuthenticationResult
-            (Account account, AuthenticationAuthority authority, Set<String> scopes, String clientId) {
+            (Account account, Authority authority, Set<String> scopes, String clientId) {
 
         TokenCacheAccessContext context = null;
         if(tokenCacheAccessAspect != null){
@@ -347,7 +347,7 @@ public class TokenCache {
                     refreshToken(rtCacheEntity.get().secret);
         }
         builder.account(account);
-        builder.environment(authority.getHost());
+        builder.environment(authority.host());
 
         return builder.build();
     }

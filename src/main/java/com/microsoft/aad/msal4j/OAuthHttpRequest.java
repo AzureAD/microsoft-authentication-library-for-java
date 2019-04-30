@@ -50,26 +50,17 @@ class OAuthHttpRequest extends HTTPRequest {
     private final Logger log = LoggerFactory.getLogger(OAuthHttpRequest.class);
     private final ServiceBundle serviceBundle;
 
-    /**
-     *
-     * @param method
-     * @param url
-     */
     OAuthHttpRequest(final Method method, final URL url,
                      final Map<String, String> extraHeaderParams, final ServiceBundle serviceBundle) {
         super(method, url);
         this.extraHeaderParams = extraHeaderParams;
         this.serviceBundle = serviceBundle;
-
     }
 
     Map<String, String> getReadOnlyExtraHeaderParameters() {
         return Collections.unmodifiableMap(this.extraHeaderParams);
     }
 
-    /**
-     *
-     */
     @Override
     public HTTPResponse send() throws IOException {
 

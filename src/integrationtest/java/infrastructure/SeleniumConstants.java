@@ -29,34 +29,33 @@ package infrastructure;
 
 public class SeleniumConstants {
 
-    public final static String WEB_UPN_INPUT_ID = "i0116";
-    public final static String ADFSV4_WEB_PASSWORD_ID = "passwordInput";
-    public final static String ADFSV4_WEB_SUBMIT_ID = "submitButton";
-    public final static String WEB_PASSWORD_ID = "i0118";
-    public final static String WEB_SUBMIT_ID = "idSIButton9";
+    final static String WEB_UPN_INPUT_ID = "i0116";
+    final static String ADFSV4_WEB_PASSWORD_ID = "passwordInput";
+    final static String ADFSV4_WEB_SUBMIT_ID = "submitButton";
+    final static String WEB_PASSWORD_ID = "i0118";
+    final static String WEB_SUBMIT_ID = "idSIButton9";
 
     // ADFSv2 fields
-    public final static String ADFSV2_WEB_USERNAME_INPUT_ID = "ContentPlaceHolder1_UsernameTextBox";
-    public final static String ADFSV2_WEB_PASSWORD_INPUT_ID = "ContentPlaceHolder1_PasswordTextBox";
-    public final static String ADFSV2_WEB_SUBMIT_BUTTON_ID = "ContentPlaceHolder1_SubmitButton";
+    final static String ADFSV2_WEB_USERNAME_INPUT_ID = "ContentPlaceHolder1_UsernameTextBox";
+    final static String ADFSV2_WEB_PASSWORD_INPUT_ID = "ContentPlaceHolder1_PasswordTextBox";
+    final static String ADFSV2_WEB_SUBMIT_BUTTON_ID = "ContentPlaceHolder1_SubmitButton";
 
-    //MSAL B2C
-    public final static String AUTHORITY_PICKER_ID = "b2cAuthorityPicker";
-    public final static String WEB_UPN_B2C_LOCAL_INPUT_ID = "logonIdentifier";
-    public final static String B2C_WEB_SUBMIT_ID = "next";
-    public final static String B2C_WEB_PASSWORD_ID = "password";
-    public final static String B2C_LOGIN_AUTHORITY = "b2clogin.com";
-    public final static String MICROSOFT_ONLINE_AUTHORITY = "login.microsoftonline.com";
-    public final static String NON_B2C_AUTHORITY = "non-b2c authority";
-    public final static String B2C_EDIT_PROFILE_AUTHORITY = "Edit profile policy authority";
-    public final static String FACEBOOK_ACCOUNT_ID = "FacebookExchange";
-    public final static String WEB_UPN_B2C_FACEBOOK_INPUT_ID = "m_login_email";
-    public final static String B2C_WEB_PASSWORD_FACEBOOK_ID = "m_login_password";
-    public final static String B2C_FACEBOOK_SUBMIT_ID = "u_0_5";
-    public final static String GOOGLE_ACCOUNT_ID = "GoogleExchange";
-    public final static String WEB_UPN_B2C_GOOGLE_INPUT_ID = "Email";
-    public final static String B2C_WEB_PASSWORD_GOOGLE_ID = "Passwd";
-    public final static String B2C_GOOGLE_NEXT_ID = "next";
-    public final static String B2C_GOOGLE_SIGNIN_ID = "signIn";
-    public final static String B2C_EDIT_PROFILE_CONTINUE_ID = "continue";
+    //B2C Facebook
+    final static String FACEBOOK_ACCOUNT_ID = "FacebookExchange";
+    final static String FACEBOOK_USERNAME_ID = "email";
+    final static String FACEBOOK_PASSWORD_ID = "pass";
+    final static String FACEBOOK_LOGIN_BUTTON_ID = "loginbutton";
+
+    //B2C Google
+    final static String GOOGLE_ACCOUNT_ID = "GoogleExchange";
+    final static String GOOGLE_USERNAME_ID = "identifierId";
+    final static String GOOGLE_NEXT_AFTER_USERNAME_BUTTON = "identifierNext";
+    final static String GOOGLE_PASSWORD_ID = "password";
+    final static String GOOGLE_NEXT_BUTTON_ID = "passwordNext";
+
+    // B2C Local
+    final static String B2C_LOCAL_ACCOUNT_ID = "SignInWithLogonNameExchange";
+    final static String B2C_LOCAL_USERNAME_ID = "cred_userid_inputtext";
+    final static String B2C_LOCAL_PASSWORD_ID = "cred_password_inputtext";
+    final static String B2C_LOCAL_SIGN_IN_BUTTON_ID = "cred_sign_in_button";
 }

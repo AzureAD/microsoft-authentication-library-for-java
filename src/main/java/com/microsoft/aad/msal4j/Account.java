@@ -78,12 +78,14 @@ public class Account {
         return String.join(Constants.CACHE_KEY_SEPARATOR, keyParts).toLowerCase();
     }
 
-    static Account create(String clientInfoStr, String environment, IdToken idToken) {
+    static Account create(String clientInfoStr, String environment, IdToken idToken, String policy) {
 
         Account account = new Account();
         account.authorityType(MSSTS_ACCOUNT_TYPE);
         account.clientInfoStr = clientInfoStr;
-        account.homeAccountId(account.clientInfo().toAccountIdentifier());
+        account.homeAccountId(policy != null ?
+                account.clientInfo().toAccountIdentifier() + Constants.CACHE_KEY_SEPARATOR + policy :
+                account.clientInfo().toAccountIdentifier());
         account.environment(environment);
 
         if (idToken != null) {
@@ -96,5 +98,9 @@ public class Account {
         }
 
         return account;
+    }
+
+    static Account create(String clientInfoStr, String environment, IdToken idToken){
+        return create(clientInfoStr, environment, idToken, null);
     }
 }
