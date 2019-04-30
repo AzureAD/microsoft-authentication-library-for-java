@@ -304,7 +304,7 @@ abstract class ClientApplicationBase {
 
         // Optional parameters - initialized to default values
         private String authority = DEFAULT_AUTHORITY;
-        private Authority authenticationAuthority;
+        private Authority authenticationAuthority = createDefaultAADAuthority();
         private boolean validateAuthority = true;
         private String correlationId = UUID.randomUUID().toString();
         private boolean logPii = false;
@@ -443,6 +443,16 @@ abstract class ClientApplicationBase {
 
             tokenCacheAccessAspect = val;
             return self();
+        }
+
+        private static Authority createDefaultAADAuthority() {
+            Authority authority;
+            try {
+                authority = new AADAuthority(new URL(DEFAULT_AUTHORITY));
+            } catch(Exception e){
+                throw new AuthenticationException(e);
+            }
+            return authority;
         }
 
         abstract ClientApplicationBase build();

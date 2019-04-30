@@ -86,7 +86,7 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        assertAcquireTokenCommon(labResponse, AuthorityType.AAD);
+        assertAcquireTokenAAD(labResponse);
     }
 
     @Test
@@ -97,7 +97,7 @@ public class AuthorizationCodeIT {
                 true);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        assertAcquireTokenCommon(labResponse, AuthorityType.AAD);
+        assertAcquireTokenAAD(labResponse);
     }
 
     @Test
@@ -108,7 +108,7 @@ public class AuthorizationCodeIT {
                 true);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        assertAcquireTokenCommon(labResponse, AuthorityType.AAD);
+        assertAcquireTokenAAD(labResponse);
     }
 
     @Test
@@ -119,7 +119,7 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        assertAcquireTokenCommon(labResponse, AuthorityType.AAD);
+        assertAcquireTokenAAD(labResponse);
     }
 
     @Test
@@ -130,7 +130,7 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        assertAcquireTokenCommon(labResponse, AuthorityType.AAD);
+        assertAcquireTokenAAD(labResponse);
     }
 
     @Test
@@ -140,8 +140,8 @@ public class AuthorizationCodeIT {
                 true,
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
+        assertAcquireTokenAAD(labResponse);
 
-        assertAcquireTokenCommon(labResponse, AuthorityType.AAD);
     }
 
     @Test
@@ -152,7 +152,7 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        assertAcquireTokenCommon(labResponse, AuthorityType.AAD);
+        assertAcquireTokenAAD(labResponse);
     }
 
     @Test
@@ -163,7 +163,7 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        assertAcquireTokenCommon(labResponse, AuthorityType.AAD);
+        assertAcquireTokenAAD(labResponse);
     }
 
     @Test
@@ -174,7 +174,7 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        assertAcquireTokenCommon(labResponse, AuthorityType.AAD);
+        assertAcquireTokenAAD(labResponse);
     }
 
     @Test
@@ -187,7 +187,7 @@ public class AuthorizationCodeIT {
         String b2CAppId = "b876a048-55a5-4fc5-9403-f5d90cb1c852";
         labResponse.setAppId(b2CAppId);
 
-        assertAcquireTokenCommon(labResponse, AuthorityType.B2C);
+        assertAcquireTokenB2C(labResponse);
     }
 
     @Test
@@ -200,26 +200,27 @@ public class AuthorizationCodeIT {
         String b2CAppId = "b876a048-55a5-4fc5-9403-f5d90cb1c852";
         labResponse.setAppId(b2CAppId);
 
-        assertAcquireTokenCommon(labResponse, AuthorityType.B2C);
+        assertAcquireTokenB2C(labResponse);
     }
 
-    @Test
-    public void acquireTokenWithAuthorizationCode_B2C_Facebook(){
-        LabResponse labResponse = labUserProvider.getB2cUser(
-                B2CIdentityProvider.FACEBOOK,
-                false);
-        labUserProvider.getUserPassword(labResponse.getUser());
+    // TODO uncomment when lab fixes facebook test account
+//    @Test
+//    public void acquireTokenWithAuthorizationCode_B2C_Facebook(){
+//        LabResponse labResponse = labUserProvider.getB2cUser(
+//                B2CIdentityProvider.FACEBOOK,
+//                false);
+//        labUserProvider.getUserPassword(labResponse.getUser());
+//
+//        String b2CAppId = "b876a048-55a5-4fc5-9403-f5d90cb1c852";
+//        labResponse.setAppId(b2CAppId);
+//
+//        assertAcquireTokenB2C(labResponse);
+//    }
 
-        String b2CAppId = "b876a048-55a5-4fc5-9403-f5d90cb1c852";
-        labResponse.setAppId(b2CAppId);
 
-        assertAcquireTokenCommon(labResponse, AuthorityType.B2C);
-    }
-
-
-    private void assertAcquireTokenCommon(LabResponse labResponse, AuthorityType authorityType){
-        String authCode = acquireAuthorizationCodeAutomated(labResponse, authorityType);
-        AuthenticationResult result = acquireTokenInteractive(labResponse, authorityType, authCode);
+    private void assertAcquireTokenAAD(LabResponse labResponse){
+        String authCode = acquireAuthorizationCodeAutomated(labResponse, AuthorityType.AAD);
+        AuthenticationResult result = acquireTokenInteractiveAAD(labResponse, authCode);
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
@@ -229,14 +230,28 @@ public class AuthorizationCodeIT {
         // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
     }
 
-    private AuthenticationResult acquireTokenInteractive(
+    private void assertAcquireTokenB2C(LabResponse labResponse){
+        String authCode = acquireAuthorizationCodeAutomated(labResponse, AuthorityType.B2C);
+        AuthenticationResult result = acquireTokenInteractiveB2C(labResponse, authCode);
+
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.accessToken());
+        Assert.assertNotNull(result.refreshToken());
+        Assert.assertNotNull(result.idToken());
+        // TODO AuthenticationResult should have an getAccountInfo API
+        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+    }
+
+    private AuthenticationResult acquireTokenInteractiveAAD(
             LabResponse labResponse,
-            AuthorityType authorityType,
             String authCode){
 
         AuthenticationResult result;
         try {
-            PublicClientApplication pca = createPublicClientApplication(labResponse, authorityType);
+            PublicClientApplication pca = PublicClientApplication.builder(
+                    labResponse.getAppId()).
+                    authority(TestConstants.AUTHORITY_ORGANIZATIONS).
+                    build();
 
             result = pca.acquireToken(AuthorizationCodeParameters
                     .builder(authCode,
@@ -252,21 +267,30 @@ public class AuthorizationCodeIT {
         return result;
     }
 
-    private PublicClientApplication createPublicClientApplication(
-            LabResponse labResponse,
-            AuthorityType authorityType) throws MalformedURLException {
-        if(authorityType == AuthorityType.AAD){
-            return new PublicClientApplication.Builder(
-                    labResponse.getAppId()).
-                    authority(TestConstants.AUTHORITY_ORGANIZATIONS).
-                    build();
-        } else {
-            return new PublicClientApplication.Builder(
-                    labResponse.getAppId()).
-                    b2cAuthority(TestConstants.B2C_AUTHORITY_SIGN_IN).
-                    build();
+    private AuthenticationResult acquireTokenInteractiveB2C(LabResponse labResponse,
+                                                            String authCode) {
+        AuthenticationResult result;
+        try{
+            IClientCredential credential = ClientCredentialFactory.create("=]Y)_A7LX`]6\"]_PoD!)Lo24");
+            ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
+                    labResponse.getAppId(),
+                    credential)
+                    .b2cAuthority(TestConstants.B2C_AUTHORITY_SIGN_IN)
+                    .build();
+
+            result = cca.acquireToken(AuthorizationCodeParameters.builder(
+                    authCode,
+                    new URI(TestConstants.LOCALHOST + tcpListener.getPort()))
+                    .scopes(Collections.singleton(TestConstants.B2C_LAB_SCOPE))
+                    .build())
+                    .get();
+        } catch (Exception e){
+            LOG.error("Error acquiring token with authCode: " + e.getMessage());
+            throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
         }
+        return result;
     }
+
 
     private String acquireAuthorizationCodeAutomated(
             LabResponse labUserData,
@@ -364,10 +388,13 @@ public class AuthorizationCodeIT {
         int portNumber = tcpListener.getPort();
 
         String authority;
+        String scope;
         if(authorityType == AuthorityType.AAD){
             authority = TestConstants.AUTHORITY_ORGANIZATIONS;
+            scope = TestConstants.GRAPH_DEFAULT_SCOPE;
         } else {
             authority = TestConstants.B2C_AUTHORITY_URL;
+            scope = TestConstants.B2C_LAB_SCOPE;
         }
 
         redirectUrl = authority + "oauth2/v2.0/authorize?" +
@@ -375,7 +402,7 @@ public class AuthorizationCodeIT {
                 "&response_mode=query" +
                 "&client_id=" + appId +
                 "&redirect_uri=" + URLEncoder.encode(TestConstants.LOCALHOST + portNumber, "UTF-8") +
-                "&scope=" + URLEncoder.encode("openid offline_access profile " + TestConstants.GRAPH_DEFAULT_SCOPE, "UTF-8");
+                "&scope=" + URLEncoder.encode("openid offline_access profile " + scope, "UTF-8");
 
         if(authorityType == AuthorityType.B2C){
             redirectUrl = redirectUrl + "&p=" + TestConstants.B2C_SIGN_IN_POLICY;

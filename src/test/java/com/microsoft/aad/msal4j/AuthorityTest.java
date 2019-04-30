@@ -166,6 +166,14 @@ public class AuthorityTest extends AbstractMsalTests {
     }
 
     @Test
+    public void testNoAuthorityPassedIn_DefaultsToCommonAuthority(){
+        PublicClientApplication pca =  PublicClientApplication.builder("client_id").build();
+
+        Assert.assertEquals(pca.authority(), TestConfiguration.AAD_COMMON_AUTHORITY);
+        Assert.assertNotNull(pca.authenticationAuthority);
+    }
+
+    @Test
     public void testDoStaticInstanceDiscovery_ValidateTrue_TrustedAuthority()
             throws MalformedURLException, Exception {
         final AADAuthority aa = new AADAuthority(new URL(TestConfiguration.AAD_TENANT_ENDPOINT));

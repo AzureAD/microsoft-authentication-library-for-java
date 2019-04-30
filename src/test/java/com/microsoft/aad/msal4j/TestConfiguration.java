@@ -41,6 +41,7 @@ public final class TestConfiguration {
     public final static String AAD_CERTIFICATE_PASSWORD = "password";
     public final static String AAD_DEFAULT_REDIRECT_URI = "https://non_existing_uri.windows.com/";
     public final static String AAD_REDIRECT_URI_FOR_CONFIDENTIAL_CLIENT = "https://non_existing_uri_for_confidential_client.com/";
+    public final static String AAD_COMMON_AUTHORITY = "https://login.microsoftonline.com/common/";
 
     public final static String ADFS_HOST_NAME = "fs.ade2eadfs30.com";
     public final static String ADFS_TENANT_ENDPOINT = "https://"

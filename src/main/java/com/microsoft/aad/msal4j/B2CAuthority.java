@@ -11,6 +11,7 @@ import java.net.URL;
 class B2CAuthority extends Authority{
 
     final String B2CTokenEndpointFormat = "https://%s/{tenant}" + TOKEN_ENDPOINT + "?p={policy}";
+    String policy;
 
     B2CAuthority(final URL authorityUrl){
         super(authorityUrl);
@@ -26,7 +27,7 @@ class B2CAuthority extends Authority{
                     "B2C 'authority' Uri should have at least 3 segments in the path " +
                             "(i.e. https://<host>/tfp/<tenant>/<policy>/...)");
         }
-        String policy = segments[2];
+        policy = segments[2];
 
         final String b2cAuthorityFormat = "https://%s/%s/%s/%s/";
         this.authority = String.format(
