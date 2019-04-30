@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.microsoft.azure</groupId>
 	<artifactId>msal4j</artifactId>
-	<version>0.1.0-preview</version>
+	<version>0.2.0-preview</version>
 	<packaging>jar</packaging>
 	<name>msal4j</name>
 	<description>
