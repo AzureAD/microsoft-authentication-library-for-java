@@ -23,38 +23,41 @@
 
 package com.microsoft.aad.msal4j;
 
-import java.util.Collection;
+import java.net.URL;
+import java.util.Set;
 import java.util.concurrent.CompletionException;
 import java.util.function.Supplier;
 
-class AccountsSupplier implements Supplier<Collection<Account>> {
+class AccountsSupplier implements Supplier<Set<Account>> {
 
-    ClientDataHttpHeaders headers;
     ClientApplicationBase clientApplication;
+    MsalRequest msalRequest;
 
-    AccountsSupplier(ClientApplicationBase clientApplication) {
+    AccountsSupplier(ClientApplicationBase clientApplication, MsalRequest msalRequest) {
 
         this.clientApplication = clientApplication;
-        this.headers = new ClientDataHttpHeaders(clientApplication.correlationId());
+        this.msalRequest = msalRequest;
     }
 
     @Override
-    public Collection<Account> get() {
-        Collection<Account> accounts;
+    public Set<Account> get() {
         try {
             InstanceDiscoveryMetadataEntry instanceDiscoveryData =
-                    AadInstanceDiscovery.cache.get(clientApplication.authenticationAuthority.getHost());
+                    AadInstanceDiscovery.GetMetadataEntry
+                            (new URL(clientApplication.authority()),
+                                    clientApplication.validateAuthority(),
+                                    msalRequest,
+                                    clientApplication.getServiceBundle());
 
-            accounts = clientApplication.tokenCache.getAccounts
+            return clientApplication.tokenCache.getAccounts
                     (clientApplication.clientId(), instanceDiscoveryData.getAliasesSet());
 
         } catch (Exception ex) {
             clientApplication.log.error(
                     LogHelper.createMessage("Execution of " + this.getClass() + " failed.",
-                            this.headers.getHeaderCorrelationIdValue()), ex);
+                            msalRequest.headers().getHeaderCorrelationIdValue()), ex);
 
             throw new CompletionException(ex);
         }
-        return accounts;
     }
 }

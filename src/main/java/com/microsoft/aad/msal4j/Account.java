@@ -45,6 +45,7 @@ public class Account {
     @SerializedName("environment")
     protected String environment;
 
+    @EqualsAndHashCode.Exclude
     @SerializedName("realm")
     protected String realm;
 

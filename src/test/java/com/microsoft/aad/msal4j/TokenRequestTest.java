@@ -27,12 +27,8 @@ import com.nimbusds.oauth2.sdk.ErrorObject;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.SerializeException;
 import com.nimbusds.oauth2.sdk.TokenErrorResponse;
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
-import com.nimbusds.oauth2.sdk.auth.ClientSecretPost;
-import com.nimbusds.oauth2.sdk.auth.Secret;
 import com.nimbusds.oauth2.sdk.http.CommonContentTypes;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
-import com.nimbusds.oauth2.sdk.id.ClientID;
 import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
 import net.minidev.json.JSONObject;
 import org.easymock.EasyMock;
@@ -47,8 +43,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collections;
-
-import static com.microsoft.aad.msal4j.TestConfiguration.ADFS_TENANT_ENDPOINT;
 
 @Test(groups = { "checkin" })
 @PrepareForTest(TokenErrorResponse.class)
@@ -71,7 +65,7 @@ public class TokenRequestTest extends AbstractMsalTests {
                 app,
                 new RequestContext("id",
                         "corr-id",
-                        AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                        PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         ServiceBundle serviceBundle = new ServiceBundle(
                 null,
@@ -131,7 +125,7 @@ public class TokenRequestTest extends AbstractMsalTests {
                 new RequestContext(
                         "id",
                         "corr-id",
-                        AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                        PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         final TokenRequest request = new TokenRequest(
                 new URL("http://login.windows.net"),
@@ -157,7 +151,7 @@ public class TokenRequestTest extends AbstractMsalTests {
                 new RequestContext(
                         "id",
                         "corr-id",
-                        AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                        PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         TokenRequest request = new TokenRequest(
                 new URL("http://login.windows.net"),
@@ -190,7 +184,7 @@ public class TokenRequestTest extends AbstractMsalTests {
                 new RequestContext(
                         "id",
                         "corr-id",
-                        AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                        PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         final TokenRequest request = new TokenRequest(
                 new URL("http://login.windows.net"),
@@ -218,7 +212,7 @@ public class TokenRequestTest extends AbstractMsalTests {
                 new RequestContext(
                         "id",
                         "corr-id",
-                        AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                        PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         ServiceBundle serviceBundle = new ServiceBundle(
                 null,
@@ -285,7 +279,7 @@ public class TokenRequestTest extends AbstractMsalTests {
                 new RequestContext(
                         "id",
                         "corr-id",
-                        AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                        PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         ServiceBundle serviceBundle = new ServiceBundle(
                 null,

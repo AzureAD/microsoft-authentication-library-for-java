@@ -114,6 +114,7 @@ class TokenRequest {
                 result = AuthenticationResult.builder().
                         accessToken(tokens.getAccessToken().getValue()).
                         refreshToken(refreshToken).
+                        familyId(response.getFoci()).
                         idToken(tokens.getIDTokenString()).
                         environment(url.getHost()).
                         expiresOn(currTimestampSec + response.getExpiresIn()).

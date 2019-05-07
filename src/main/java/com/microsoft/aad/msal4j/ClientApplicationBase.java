@@ -32,10 +32,7 @@ import javax.net.ssl.SSLSocketFactory;
 import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Collection;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -151,7 +148,7 @@ abstract class ClientApplicationBase {
         AuthorizationCodeRequest authorizationCodeRequest = new AuthorizationCodeRequest(
                 parameters,
                 this,
-                createRequestContext(AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         return this.executeRequest(authorizationCodeRequest);
     }
@@ -174,7 +171,7 @@ abstract class ClientApplicationBase {
         RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(
                 parameters,
                 this,
-                createRequestContext(AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_REFRESH_TOKEN));
+                createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_REFRESH_TOKEN));
 
         return executeRequest(refreshTokenRequest);
     }
@@ -234,7 +231,7 @@ abstract class ClientApplicationBase {
         return supplier;
     }
 
-    RequestContext createRequestContext(AcquireTokenPublicApi publicApi) {
+    RequestContext createRequestContext(PublicApi publicApi) {
         return new RequestContext(
                 clientId,
                 correlationId(),
@@ -256,7 +253,7 @@ abstract class ClientApplicationBase {
         SilentRequest silentRequest = new SilentRequest(
                 parameters,
                 this,
-                createRequestContext(AcquireTokenPublicApi.ACQUIRE_TOKEN_SILENTLY));
+                createRequestContext(PublicApi.ACQUIRE_TOKEN_SILENTLY));
 
         return executeRequest(silentRequest);
     }
@@ -264,10 +261,14 @@ abstract class ClientApplicationBase {
     /**
      * Returns accounts for which there is an cached SSO (RT token)
      */
-    public CompletableFuture<Collection<Account>> getAccounts() {
-        AccountsSupplier supplier = new AccountsSupplier(this);
+    public CompletableFuture<Set<Account>> getAccounts() {
+        MsalRequest msalRequest =
+                new MsalRequest(this, null,
+                        createRequestContext(PublicApi.GET_ACCOUNTS)){};
 
-        CompletableFuture<Collection<Account>> future =
+        AccountsSupplier supplier = new AccountsSupplier(this, msalRequest);
+
+        CompletableFuture<Set<Account>> future =
                 serviceBundle.getExecutorService() != null ? CompletableFuture.supplyAsync(supplier, serviceBundle.getExecutorService())
                         : CompletableFuture.supplyAsync(supplier);
         return future;

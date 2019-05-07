@@ -23,6 +23,9 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.util.Optional;
+import java.util.Set;
+
 class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
 
     private SilentRequest silentRequest;
@@ -38,21 +41,17 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
         AuthenticationAuthority requestAuthority =
                 getAuthorityWithPrefNetworkHost(silentRequest.requestAuthority().getAuthority());
 
-        AuthenticationResult res =
-                clientApplication.tokenCache.getAuthenticationResult
-                        (silentRequest.parameters().account(),
-                                requestAuthority,
-                                silentRequest.parameters().scopes(),
-                                clientApplication.clientId());
+        AuthenticationResult res = clientApplication.tokenCache.getAuthenticationResult
+                (silentRequest.parameters().account(),
+                        requestAuthority,
+                        silentRequest.parameters().scopes(),
+                        clientApplication.clientId());
 
         if (!silentRequest.parameters().forceRefresh() && !StringHelper.isBlank(res.accessToken())) {
             return res;
         }
 
-        if (StringHelper.isBlank(res.refreshToken())) {
-            return null;
-        } else {
-
+        if (!StringHelper.isBlank(res.refreshToken())) {
             RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(
                     RefreshTokenParameters.builder(silentRequest.parameters().scopes(), res.refreshToken()).build(),
                     silentRequest.application(),
@@ -62,6 +61,8 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
                     new AcquireTokenByAuthorizationGrantSupplier(clientApplication, refreshTokenRequest, requestAuthority);
 
             return acquireTokenByAuthorisationGrantSupplier.execute();
+        } else {
+            return null;
         }
     }
 }

@@ -49,8 +49,7 @@ public class RefreshTokenParameters {
     }
 
     public static RefreshTokenParametersBuilder builder(Set<String> scopes, String refreshToken) {
-
-        validateNotEmpty("scopes", scopes);
+        
         validateNotBlank("refreshToken", refreshToken);
 
         return builder()
