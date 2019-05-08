@@ -62,7 +62,7 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
 
         PowerMock.expectPrivate(app, "acquireTokenCommon",
                 EasyMock.isA(MsalRequest.class),
-                EasyMock.isA(AuthenticationAuthority.class)).andReturn(
+                EasyMock.isA(AADAuthority.class)).andReturn(
                 AuthenticationResult.builder().
                         accessToken("accessToken").
                         expiresOn(new Date().getTime() + 100).
@@ -107,7 +107,7 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
 
         PowerMock.expectPrivate(app, "acquireTokenCommon",
                 EasyMock.isA(MsalRequest.class),
-                EasyMock.isA(AuthenticationAuthority.class)).andReturn(
+                EasyMock.isA(AADAuthority.class)).andReturn(
                 AuthenticationResult.builder().
                         accessToken("accessToken").
                         expiresOn(new Date().getTime() + 100).
@@ -152,7 +152,7 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
 
         PowerMock.expectPrivate(app, "acquireTokenCommon",
                 EasyMock.isA(MsalRequest.class),
-                EasyMock.isA(AuthenticationAuthority.class)).andReturn(
+                EasyMock.isA(AADAuthority.class)).andReturn(
                 AuthenticationResult.builder().
                         accessToken("accessToken").
                         expiresOn(new Date().getTime() + 100).

@@ -42,7 +42,6 @@ public class TcpListener implements AutoCloseable{
     private int port;
     private Thread serverThread;
 
-
     public TcpListener(BlockingQueue<String> authorizationCodeQueue,
                        BlockingQueue<Boolean> tcpStartUpNotificationQueue){
         this.authorizationCodeQueue = authorizationCodeQueue;
@@ -51,7 +50,7 @@ public class TcpListener implements AutoCloseable{
 
     public void startServer(){
         Runnable serverTask = () -> {
-            try(ServerSocket serverSocket = new ServerSocket(0)) {
+            try(ServerSocket serverSocket = createSocket()) {
                 port = serverSocket.getLocalPort();
                 tcpStartUpNotificationQueue.put(Boolean.TRUE);
                 Socket clientSocket = serverSocket.accept();
@@ -95,6 +94,18 @@ public class TcpListener implements AutoCloseable{
                 }
             }
         }
+    }
+
+    public ServerSocket createSocket() throws IOException {
+        int[] ports = { 3843, 4584, 4843, 49153, 60000 };
+        for (int port : ports) {
+            try {
+                return new ServerSocket(port);
+            } catch (IOException ex) {
+                LOG.warn("Port: " + port + "is blocked");
+            }
+        }
+        throw new IOException("no free port found");
     }
 
     public int getPort() {

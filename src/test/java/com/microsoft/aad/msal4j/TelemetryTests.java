@@ -141,6 +141,11 @@ public class TelemetryTests {
         Assert.assertEquals( Event.scrubTenant(new URI("https://login.microsoftonline.com/common")),
                 "https://login.microsoftonline.com/<tenant>");
 
+        Assert.assertEquals(Event.scrubTenant(new URI("https://login.microsoftonline.com/tfp/msidlabb2c.onmicrosoft.com/B2C_1_ROPC_Auth")),
+                "https://login.microsoftonline.com/tfp/<tenant>/B2C_1_ROPC_Auth");
+
+        Assert.assertNull(Event.scrubTenant(new URI("https://msidlabb2c.b2clogin.com/tfp/msidlabb2c.onmicrosoft.com/B2C_1_ROPC_Auth")));
+
         Assert.assertNull(Event.scrubTenant(new URI("https://login.contoso.com/adfs")));
     }
 

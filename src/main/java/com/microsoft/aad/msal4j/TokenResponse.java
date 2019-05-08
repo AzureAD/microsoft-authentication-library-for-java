@@ -94,28 +94,28 @@ class TokenResponse extends OIDCTokenResponse {
         // use an empty string in order to avoid an IllegalArgumentException from OIDCTokens.
         String idTokenValue = "";
         if (jsonObject.containsKey("id_token")) {
-            idTokenValue = JSONObjectUtils.getString(jsonObject, "id_token");
+            idTokenValue =  jsonObject.getAsString("id_token");
         }
 
         // Parse value
         String scopeValue = null;
         if (jsonObject.containsKey("scope")) {
-            scopeValue = JSONObjectUtils.getString(jsonObject, "scope");
+            scopeValue = jsonObject.getAsString("scope");
         }
 
         String clientInfo = null;
         if (jsonObject.containsKey("client_info")) {
-            clientInfo = JSONObjectUtils.getString(jsonObject, "client_info");
+            clientInfo = jsonObject.getAsString("client_info");
         }
 
         long expiresIn = 0;
         if (jsonObject.containsKey("expires_in")) {
-            expiresIn = JSONObjectUtils.getLong(jsonObject, "expires_in");
+            expiresIn = jsonObject.getAsNumber("expires_in").longValue();
         }
 
         long ext_expires_in = 0;
         if (jsonObject.containsKey("ext_expires_in")) {
-            ext_expires_in = JSONObjectUtils.getLong(jsonObject, "ext_expires_in");
+            ext_expires_in = jsonObject.getAsNumber("ext_expires_in").longValue();
         }
 
         String foci = null;

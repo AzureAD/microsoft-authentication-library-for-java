@@ -106,7 +106,23 @@ class TokenRequest {
                     IdToken idToken = JsonHelper.convertJsonToObject(idTokenJson, IdToken.class);
 
                     if (!StringHelper.isBlank(response.getClientInfo())) {
-                        account = Account.create(response.getClientInfo(), url.getHost(), idToken);
+
+                        AuthorityType type = msalRequest.application().authenticationAuthority.authorityType;
+                        if(type == AuthorityType.B2C){
+
+                            B2CAuthority authority = (B2CAuthority) msalRequest.application().authenticationAuthority;
+
+                            account = Account.create(
+                                    response.getClientInfo(),
+                                    url.getHost(),
+                                    idToken,
+                                    authority.policy);
+                        } else {
+                            account = Account.create(
+                                    response.getClientInfo(),
+                                    url.getHost(),
+                                    idToken);
+                        }
                     }
                 }
                 long currTimestampSec = new Date().getTime() / 1000;
@@ -221,6 +237,7 @@ class TokenRequest {
         oauthHttpRequest.setContentType(CommonContentTypes.APPLICATION_URLENCODED);
 
         final Map<String, List<String>> params = msalRequest.msalAuthorizationGrant().toParameters();
+
         oauthHttpRequest.setQuery(URLUtils.serializeParameters(params));
 
         if (msalRequest.application().clientAuthentication != null) {

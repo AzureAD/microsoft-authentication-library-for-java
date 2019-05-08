@@ -106,7 +106,7 @@ public class ConfidentialClientApplication extends ClientApplicationBase {
             ClientAssertion clientAssertion = JwtHelper.buildJwt(
                     clientId(),
                     (AsymmetricKeyCredential) clientCredential,
-                    this.authenticationAuthority.getSelfSignedJwtAudience());
+                    this.authenticationAuthority.selfSignedJwtAudience());
 
             clientAuthentication = createClientAuthFromClientAssertion(clientAssertion);
         } else {

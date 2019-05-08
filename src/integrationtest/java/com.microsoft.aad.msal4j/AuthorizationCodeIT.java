@@ -25,6 +25,7 @@ package com.microsoft.aad.msal4j;
 
 import infrastructure.SeleniumExtensions;
 import infrastructure.TcpListener;
+import labapi.B2CIdentityProvider;
 import labapi.FederationProvider;
 import labapi.LabResponse;
 import labapi.LabUserProvider;
@@ -40,6 +41,7 @@ import org.testng.annotations.Test;
 import org.testng.util.Strings;
 
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.util.Collections;
@@ -65,11 +67,11 @@ public class AuthorizationCodeIT {
 
     @AfterMethod
     public void cleanUp(){
-       seleniumDriver.quit();
-       if(AuthorizationCodeQueue != null){
-           AuthorizationCodeQueue.clear();
-       }
-       tcpListener.close();
+        seleniumDriver.quit();
+        if(AuthorizationCodeQueue != null){
+            AuthorizationCodeQueue.clear();
+        }
+        tcpListener.close();
     }
 
     @BeforeMethod
@@ -84,7 +86,7 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        assertAcquireTokenCommon(labResponse);
+        assertAcquireTokenAAD(labResponse);
     }
 
     @Test
@@ -95,9 +97,9 @@ public class AuthorizationCodeIT {
                 true);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        assertAcquireTokenCommon(labResponse);
+        assertAcquireTokenAAD(labResponse);
     }
-    
+
     @Test
     public void acquireTokenWithAuthorizationCode_ADFSv2019_NotFederated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
@@ -106,7 +108,7 @@ public class AuthorizationCodeIT {
                 true);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        assertAcquireTokenCommon(labResponse);
+        assertAcquireTokenAAD(labResponse);
     }
 
     @Test
@@ -117,7 +119,7 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        assertAcquireTokenCommon(labResponse);
+        assertAcquireTokenAAD(labResponse);
     }
 
     @Test
@@ -128,7 +130,7 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        assertAcquireTokenCommon(labResponse);
+        assertAcquireTokenAAD(labResponse);
     }
 
     @Test
@@ -138,8 +140,8 @@ public class AuthorizationCodeIT {
                 true,
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
+        assertAcquireTokenAAD(labResponse);
 
-        assertAcquireTokenCommon(labResponse);
     }
 
     @Test
@@ -150,7 +152,7 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        assertAcquireTokenCommon(labResponse);
+        assertAcquireTokenAAD(labResponse);
     }
 
     @Test
@@ -161,7 +163,7 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        assertAcquireTokenCommon(labResponse);
+        assertAcquireTokenAAD(labResponse);
     }
 
     @Test
@@ -172,12 +174,53 @@ public class AuthorizationCodeIT {
                 false);
         labUserProvider.getUserPassword(labResponse.getUser());
 
-        assertAcquireTokenCommon(labResponse);
+        assertAcquireTokenAAD(labResponse);
     }
 
-    private void assertAcquireTokenCommon(LabResponse labResponse){
-        String authCode = acquireAuthorizationCodeAutomated(labResponse);
-        AuthenticationResult result = acquireTokenInteractive(labResponse, authCode);
+    @Test
+    public void acquireTokenWithAuthorizationCode_B2C_Local(){
+        LabResponse labResponse = labUserProvider.getB2cUser(
+                B2CIdentityProvider.LOCAL,
+                false);
+        labUserProvider.getUserPassword(labResponse.getUser());
+
+        String b2CAppId = "b876a048-55a5-4fc5-9403-f5d90cb1c852";
+        labResponse.setAppId(b2CAppId);
+
+        assertAcquireTokenB2C(labResponse);
+    }
+
+    @Test
+    public void acquireTokenWithAuthorizationCode_B2C_Google(){
+        LabResponse labResponse = labUserProvider.getB2cUser(
+                B2CIdentityProvider.GOOGLE,
+                false);
+        labUserProvider.getUserPassword(labResponse.getUser());
+
+        String b2CAppId = "b876a048-55a5-4fc5-9403-f5d90cb1c852";
+        labResponse.setAppId(b2CAppId);
+
+        assertAcquireTokenB2C(labResponse);
+    }
+
+    // TODO uncomment when lab fixes facebook test account
+//    @Test
+//    public void acquireTokenWithAuthorizationCode_B2C_Facebook(){
+//        LabResponse labResponse = labUserProvider.getB2cUser(
+//                B2CIdentityProvider.FACEBOOK,
+//                false);
+//        labUserProvider.getUserPassword(labResponse.getUser());
+//
+//        String b2CAppId = "b876a048-55a5-4fc5-9403-f5d90cb1c852";
+//        labResponse.setAppId(b2CAppId);
+//
+//        assertAcquireTokenB2C(labResponse);
+//    }
+
+
+    private void assertAcquireTokenAAD(LabResponse labResponse){
+        String authCode = acquireAuthorizationCodeAutomated(labResponse, AuthorityType.AAD);
+        AuthenticationResult result = acquireTokenInteractiveAAD(labResponse, authCode);
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
@@ -187,11 +230,25 @@ public class AuthorizationCodeIT {
         // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
     }
 
-    private AuthenticationResult acquireTokenInteractive(LabResponse labResponse,
-                                                                String authCode){
+    private void assertAcquireTokenB2C(LabResponse labResponse){
+        String authCode = acquireAuthorizationCodeAutomated(labResponse, AuthorityType.B2C);
+        AuthenticationResult result = acquireTokenInteractiveB2C(labResponse, authCode);
+
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.accessToken());
+        Assert.assertNotNull(result.refreshToken());
+        Assert.assertNotNull(result.idToken());
+        // TODO AuthenticationResult should have an getAccountInfo API
+        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+    }
+
+    private AuthenticationResult acquireTokenInteractiveAAD(
+            LabResponse labResponse,
+            String authCode){
+
         AuthenticationResult result;
         try {
-            PublicClientApplication pca = new PublicClientApplication.Builder(
+            PublicClientApplication pca = PublicClientApplication.builder(
                     labResponse.getAppId()).
                     authority(TestConstants.AUTHORITY_ORGANIZATIONS).
                     build();
@@ -210,7 +267,34 @@ public class AuthorizationCodeIT {
         return result;
     }
 
-    private String acquireAuthorizationCodeAutomated(LabResponse labUserData){
+    private AuthenticationResult acquireTokenInteractiveB2C(LabResponse labResponse,
+                                                            String authCode) {
+        AuthenticationResult result;
+        try{
+            IClientCredential credential = ClientCredentialFactory.create("=]Y)_A7LX`]6\"]_PoD!)Lo24");
+            ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
+                    labResponse.getAppId(),
+                    credential)
+                    .b2cAuthority(TestConstants.B2C_AUTHORITY_SIGN_IN)
+                    .build();
+
+            result = cca.acquireToken(AuthorizationCodeParameters.builder(
+                    authCode,
+                    new URI(TestConstants.LOCALHOST + tcpListener.getPort()))
+                    .scopes(Collections.singleton(TestConstants.B2C_LAB_SCOPE))
+                    .build())
+                    .get();
+        } catch (Exception e){
+            LOG.error("Error acquiring token with authCode: " + e.getMessage());
+            throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
+        }
+        return result;
+    }
+
+
+    private String acquireAuthorizationCodeAutomated(
+            LabResponse labUserData,
+            AuthorityType authorityType){
         BlockingQueue<Boolean> tcpStartUpNotificationQueue = new LinkedBlockingQueue<>();
         startTcpListener(tcpStartUpNotificationQueue);
 
@@ -222,7 +306,7 @@ public class AuthorizationCodeIT {
             if (tcpListenerStarted == null || !tcpListenerStarted){
                 throw new RuntimeException("Could not start TCP listener");
             }
-            runSeleniumAutomatedLogin(labUserData);
+            runSeleniumAutomatedLogin(labUserData, authorityType);
             authServerResponse = getResponseFromTcpListener();
         } catch(Exception e){
             if(!Strings.isNullOrEmpty(
@@ -232,14 +316,28 @@ public class AuthorizationCodeIT {
             LOG.error("Error running automated selenium login: " + e.getMessage());
             throw new RuntimeException("Error running automated selenium login: " + e.getMessage());
         }
-        return parseServerResponse(authServerResponse);
+        return parseServerResponse(authServerResponse,authorityType);
     }
 
-    private void runSeleniumAutomatedLogin(LabResponse labUserData) throws
-            UnsupportedEncodingException{
-        String url = buildAuthenticationCodeURL(labUserData.getAppId());
+    private void runSeleniumAutomatedLogin(LabResponse labUserData, AuthorityType authorityType)
+            throws UnsupportedEncodingException{
+        String url = buildAuthenticationCodeURL(labUserData.getAppId(), authorityType);
         seleniumDriver.navigate().to(url);
-        SeleniumExtensions.performLogin(seleniumDriver, labUserData.getUser());
+        if(authorityType == AuthorityType.B2C){
+            switch(labUserData.getUser().getB2CIdentityProvider()){
+                case LOCAL:
+                    SeleniumExtensions.performLocalLogin(seleniumDriver, labUserData.getUser());
+                    break;
+                case GOOGLE:
+                    SeleniumExtensions.performGoogleLogin(seleniumDriver, labUserData.getUser());
+                    break;
+                case FACEBOOK:
+                    SeleniumExtensions.performFacebookLogin(seleniumDriver, labUserData.getUser());
+                    break;
+            }
+        } else {
+            SeleniumExtensions.performADLogin(seleniumDriver, labUserData.getUser());
+        }
     }
 
     private void startTcpListener(BlockingQueue<Boolean> tcpStartUpNotifierQueue){
@@ -264,9 +362,15 @@ public class AuthorizationCodeIT {
         return response;
     }
 
-    private String parseServerResponse(String serverResponse){
+    private String parseServerResponse(String serverResponse, AuthorityType authorityType){
         // Response will be a GET request with query parameter ?code=authCode
-        String regexp = "code=(.*)&";
+        String regexp;
+        if(authorityType == AuthorityType.B2C){
+            regexp = "(?<=code=)(?:(?! HTTP).)*";
+        } else {
+            regexp = "(?<=code=)(?:(?!&).)*";
+        }
+
         Pattern pattern = Pattern.compile(regexp);
         Matcher matcher = pattern.matcher(serverResponse);
 
@@ -275,18 +379,34 @@ public class AuthorizationCodeIT {
             throw new IllegalStateException("No authorization code in server response: " +
                     serverResponse);
         }
-        return matcher.group(1);
+        return matcher.group(0);
     }
 
-    private String buildAuthenticationCodeURL(String appId) throws UnsupportedEncodingException{
+    private String buildAuthenticationCodeURL(String appId, AuthorityType authorityType)
+            throws UnsupportedEncodingException{
         String redirectUrl;
         int portNumber = tcpListener.getPort();
-        redirectUrl = TestConstants.AUTHORITY_ORGANIZATIONS + "oauth2/v2.0/authorize?" +
-                "response_type=code&" +
-                "response_mode=query&" +
+
+        String authority;
+        String scope;
+        if(authorityType == AuthorityType.AAD){
+            authority = TestConstants.AUTHORITY_ORGANIZATIONS;
+            scope = TestConstants.GRAPH_DEFAULT_SCOPE;
+        } else {
+            authority = TestConstants.B2C_AUTHORITY_URL;
+            scope = TestConstants.B2C_LAB_SCOPE;
+        }
+
+        redirectUrl = authority + "oauth2/v2.0/authorize?" +
+                "response_type=code" +
+                "&response_mode=query" +
                 "&client_id=" + appId +
                 "&redirect_uri=" + URLEncoder.encode(TestConstants.LOCALHOST + portNumber, "UTF-8") +
-                "&scope=" + URLEncoder.encode("openid offline_access profile " + TestConstants.GRAPH_DEFAULT_SCOPE, "UTF-8");
+                "&scope=" + URLEncoder.encode("openid offline_access profile " + scope, "UTF-8");
+
+        if(authorityType == AuthorityType.B2C){
+            redirectUrl = redirectUrl + "&p=" + TestConstants.B2C_SIGN_IN_POLICY;
+        }
 
         return redirectUrl;
     }

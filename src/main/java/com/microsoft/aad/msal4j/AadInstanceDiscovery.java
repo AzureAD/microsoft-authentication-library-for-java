@@ -76,7 +76,7 @@ class AadInstanceDiscovery {
         String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpoint(authorityUrl.getAuthority()) +
                 INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE.replace("{authorizeEndpoint}",
                         getAuthorizeEndpoint(authorityUrl.getAuthority(),
-                                AuthenticationAuthority.getTenant(authorityUrl)));
+                                Authority.getTenant(authorityUrl, Authority.detectAuthorityType(authorityUrl))));
 
         String json = HttpHelper.executeHttpRequest
                 (log, HttpMethod.GET, instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(),

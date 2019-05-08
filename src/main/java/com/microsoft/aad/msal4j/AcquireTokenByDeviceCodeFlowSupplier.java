@@ -38,17 +38,19 @@ class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier 
     }
 
     AuthenticationResult execute() throws Exception {
-        AuthenticationAuthority requestAuthority = getAuthorityWithPrefNetworkHost(clientApplication.authority());
 
-        DeviceCode deviceCode = getDeviceCode(requestAuthority);
+        Authority requestAuthority = clientApplication.authenticationAuthority;
+        requestAuthority = getAuthorityWithPrefNetworkHost(requestAuthority.authority());
+
+        DeviceCode deviceCode = getDeviceCode((AADAuthority) requestAuthority);
 
         return acquireTokenWithDeviceCode(deviceCode, requestAuthority);
     }
 
-    private DeviceCode getDeviceCode(AuthenticationAuthority requestAuthority) throws Exception{
+    private DeviceCode getDeviceCode(AADAuthority requestAuthority) throws Exception{
 
         DeviceCode deviceCode = deviceCodeFlowRequest.acquireDeviceCode(
-                requestAuthority.getDeviceCodeEndpoint(),
+                requestAuthority.deviceCodeEndpoint(),
                 clientApplication.clientId(),
                 deviceCodeFlowRequest.headers().getReadonlyHeaderMap(),
                 this.clientApplication.getServiceBundle());
@@ -59,7 +61,7 @@ class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier 
     }
 
     private AuthenticationResult acquireTokenWithDeviceCode(DeviceCode deviceCode,
-                                                            AuthenticationAuthority requestAuthority) throws Exception {
+                                                            Authority requestAuthority) throws Exception {
         deviceCodeFlowRequest.createAuthenticationGrant(deviceCode);
         long expirationTimeInSeconds = getCurrentSystemTimeInSeconds() + deviceCode.expiresIn();
 

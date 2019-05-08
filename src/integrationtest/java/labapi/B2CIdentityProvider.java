@@ -30,11 +30,11 @@ package labapi;
 import com.google.gson.annotations.SerializedName;
 
 public enum B2CIdentityProvider {
-    @SerializedName("local")
+    @SerializedName("Local")
     LOCAL(1),
-    @SerializedName("facebook")
+    @SerializedName("Facebook")
     FACEBOOK(2),
-    @SerializedName("google")
+    @SerializedName("Google")
     GOOGLE(3);
 
     private final int labId;

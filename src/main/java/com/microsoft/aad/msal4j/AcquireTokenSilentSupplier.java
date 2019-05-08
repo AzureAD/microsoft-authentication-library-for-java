@@ -38,14 +38,17 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
 
     @Override
     AuthenticationResult execute() throws Exception {
-        AuthenticationAuthority requestAuthority =
-                getAuthorityWithPrefNetworkHost(silentRequest.requestAuthority().getAuthority());
+        Authority requestAuthority = silentRequest.requestAuthority();
+        if(requestAuthority.authorityType != AuthorityType.B2C){
+            requestAuthority =
+                    getAuthorityWithPrefNetworkHost(silentRequest.requestAuthority().authority());
+        }
 
-        AuthenticationResult res = clientApplication.tokenCache.getAuthenticationResult
-                (silentRequest.parameters().account(),
-                        requestAuthority,
-                        silentRequest.parameters().scopes(),
-                        clientApplication.clientId());
+        AuthenticationResult res = clientApplication.tokenCache.getAuthenticationResult(
+                silentRequest.parameters().account(),
+                requestAuthority,
+                silentRequest.parameters().scopes(),
+                clientApplication.clientId());
 
         if (!silentRequest.parameters().forceRefresh() && !StringHelper.isBlank(res.accessToken())) {
             return res;
