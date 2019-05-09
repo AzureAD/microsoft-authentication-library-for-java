@@ -24,12 +24,8 @@
 package com.microsoft.aad.msal4j;
 
 import com.google.gson.GsonBuilder;
-import com.google.gson.annotations.SerializedName;
 import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
-import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
-import com.nimbusds.oauth2.sdk.id.ClientID;
 import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
 import net.minidev.json.JSONObject;
 import org.easymock.EasyMock;
@@ -51,8 +47,6 @@ import java.nio.file.Paths;
 import java.util.*;
 
 public class CacheTests extends AbstractMsalTests {
-    String APP_DATA = "/app_data.json";
-
     String TOKEN_RESPONSE = "/token_response.json";
     String TOKEN_RESPONSE_ID_TOKEN = "/token_response_id_token.json";
 
@@ -68,18 +62,13 @@ public class CacheTests extends AbstractMsalTests {
     String ACCOUNT_CACHE_ENTITY_KEY = "/account_cache_entity_key.txt";
     String ACCOUNT_CACHE_ENTITY = "/account_cache_entity.json";
 
+    String APP_METADATA_ENTITY_KEY = "/app_metadata_cache_entity_key.txt";
+    String APP_METADATA_CACHE_ENTITY = "/app_metadata_cache_entity.json";
+
     String ID_TOKEN_PLACEHOLDER = "<removed_id_token>";
     String CACHED_AT_PLACEHOLDER = "<cached_at>";
     String EXPIRES_ON_PLACEHOLDER = "<expires_on>";
     String EXTENDED_EXPIRES_ON_PLACEHOLDER = "<extended_expires_on>";
-
-    class AppData{
-        @SerializedName("client_id")
-        String clientId;
-
-        @SerializedName("authorize_request_url")
-        String authorizeRequestUrl;
-    }
 
     @Test
     public void cacheDeserializationSerializationTest() throws IOException, URISyntaxException, JSONException {
@@ -98,6 +87,10 @@ public class CacheTests extends AbstractMsalTests {
         return new String(
                 Files.readAllBytes(
                         Paths.get(getClass().getResource(resource).toURI())));
+    }
+
+    boolean doesResourceExist(String resource) throws IOException, URISyntaxException {
+        return getClass().getResource(resource) != null;
     }
 
     public class DynamicTimestampsComparator extends DefaultComparator {
@@ -142,14 +135,18 @@ public class CacheTests extends AbstractMsalTests {
         tokenCacheEntitiesFormatTest("/MSA_cache_data");
     }
 
+    @Test
+    public void FociTokenCacheEntitiesFormatTest() throws JSONException, IOException, ParseException, URISyntaxException {
+        tokenCacheEntitiesFormatTest("/Foci_cache_data");
+    }
+
     public void tokenCacheEntitiesFormatTest(String folder) throws URISyntaxException, IOException, ParseException, JSONException {
-        AppData appData = new GsonBuilder().create().fromJson(readResource(folder + APP_DATA), AppData.class);
+        String CLIENT_ID = "b6c69a37-df96-4db0-9088-2ab96e1d8215";
+        String AUTHORIZE_REQUEST_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize";
 
         String tokenResponse = getTokenResponse(folder);
 
-        PublicClientApplication app = new PublicClientApplication.Builder(appData.clientId)
-                .authority(appData.authorizeRequestUrl)
-                .build();
+        PublicClientApplication app = new PublicClientApplication.Builder(CLIENT_ID).build();
 
         AuthorizationCodeParameters parameters =
                 AuthorizationCodeParameters.builder
@@ -159,8 +156,8 @@ public class CacheTests extends AbstractMsalTests {
         MsalRequest msalRequest = new AuthorizationCodeRequest(
                 parameters,
                 app,
-                new RequestContext(appData.clientId, "correlation_id",
-                        AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                new RequestContext(CLIENT_ID, "correlation_id",
+                        PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         ServiceBundle serviceBundle = new ServiceBundle(
                 null,
@@ -170,7 +167,7 @@ public class CacheTests extends AbstractMsalTests {
 
         TokenRequest request = PowerMock.createPartialMock(
                 TokenRequest.class, new String[] { "toOauthHttpRequest" },
-                new URL(appData.authorizeRequestUrl), msalRequest, serviceBundle);
+                new URL(AUTHORIZE_REQUEST_URL), msalRequest, serviceBundle);
 
         OAuthHttpRequest msalOAuthHttpRequest = PowerMock.createMock(OAuthHttpRequest.class);
 
@@ -201,6 +198,7 @@ public class CacheTests extends AbstractMsalTests {
         validateRefreshTokenCacheEntity(folder, tokenCache);
         validateIdTokenCacheEntity(folder, tokenCache);
         validateAccountCacheEntity(folder, tokenCache);
+        validateAppMetadataCacheEntity(folder, tokenCache);
     }
 
     private void validateAccessTokenCacheEntity(String folder, String tokenResponse, TokenCache tokenCache)
@@ -285,6 +283,25 @@ public class CacheTests extends AbstractMsalTests {
 
         String actualValue = new GsonBuilder().create().toJson(tokenCache.accounts.get(actualKey));
         String valueExpected = readResource(folder + ACCOUNT_CACHE_ENTITY);
+
+        JSONAssert.assertEquals(valueExpected, actualValue, JSONCompareMode.STRICT);
+    }
+
+    private void validateAppMetadataCacheEntity(String folder, TokenCache tokenCache)
+            throws IOException, URISyntaxException, JSONException {
+
+        if(!doesResourceExist(folder + APP_METADATA_CACHE_ENTITY)){
+            return;
+        }
+
+        Assert.assertEquals(tokenCache.appMetadata.size(),1 );
+
+        String actualKey = tokenCache.appMetadata.keySet().stream().findFirst().get();
+        String keyExpected = readResource(folder + APP_METADATA_ENTITY_KEY);
+        Assert.assertEquals(actualKey, keyExpected);
+
+        String actualValue = new GsonBuilder().create().toJson(tokenCache.appMetadata.get(actualKey));
+        String valueExpected = readResource(folder + APP_METADATA_CACHE_ENTITY);
 
         JSONAssert.assertEquals(valueExpected, actualValue, JSONCompareMode.STRICT);
     }

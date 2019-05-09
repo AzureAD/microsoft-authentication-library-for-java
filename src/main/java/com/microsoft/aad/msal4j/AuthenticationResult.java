@@ -52,6 +52,8 @@ public final class AuthenticationResult implements Serializable {
 
     private final String refreshToken;
 
+    private final String familyId;
+
     private final String idToken;
 
     @Getter(value = AccessLevel.PACKAGE, lazy = true)

@@ -44,8 +44,9 @@
       "authority_type": "MSSTS"
     }
   },
-  "AppMetaData": {
-    "client_id": "b6c69a37-df96-4db0-9088-2ab96e1d8215",
-    "environment": "login.microsoftonline.com"
+  "AppMetadata":{},
+  "unknownEntity": {
+    "field1": "1",
+    "field2": "whats"
   }
 }

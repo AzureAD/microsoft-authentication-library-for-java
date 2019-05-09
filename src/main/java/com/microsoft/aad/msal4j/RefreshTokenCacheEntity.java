@@ -24,16 +24,27 @@
 package com.microsoft.aad.msal4j;
 
 import com.google.gson.annotations.SerializedName;
-import com.microsoft.aad.msal4j.Constants;
-import com.microsoft.aad.msal4j.Credential;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Accessors(fluent = true)
+@Getter
+@Setter
 class RefreshTokenCacheEntity extends Credential {
 
     @SerializedName("credential_type")
     private String credentialType = "RefreshToken";
+
+    @SerializedName("family_id")
+    private String family_id;
+
+    boolean isFamilyRT(){
+        return !StringHelper.isBlank(family_id);
+    }
 
     String getKey(){
         List<String> keyParts = new ArrayList<>();
@@ -41,7 +52,13 @@ class RefreshTokenCacheEntity extends Credential {
         keyParts.add(homeAccountId);
         keyParts.add(environment);
         keyParts.add(credentialType);
-        keyParts.add(clientId);
+
+        if(isFamilyRT()){
+            keyParts.add(family_id);
+        }
+        else{
+            keyParts.add(clientId);
+        }
 
         // realm
         keyParts.add("");

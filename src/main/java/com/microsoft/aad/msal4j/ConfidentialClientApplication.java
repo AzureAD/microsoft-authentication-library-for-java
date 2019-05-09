@@ -35,7 +35,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
@@ -59,7 +58,7 @@ public class ConfidentialClientApplication extends ClientApplicationBase {
                 new ClientCredentialRequest(
                         parameters,
                         this,
-                        createRequestContext(AcquireTokenPublicApi.ACQUIRE_TOKEN_FOR_CLIENT));
+                        createRequestContext(PublicApi.ACQUIRE_TOKEN_FOR_CLIENT));
 
         return this.executeRequest(clientCredentialRequest);
     }
@@ -83,7 +82,7 @@ public class ConfidentialClientApplication extends ClientApplicationBase {
         OnBehalfOfRequest oboRequest = new OnBehalfOfRequest(
                 parameters,
                 this,
-                createRequestContext(AcquireTokenPublicApi.ACQUIRE_TOKEN_ON_BEHALF_OF));
+                createRequestContext(PublicApi.ACQUIRE_TOKEN_ON_BEHALF_OF));
 
         return this.executeRequest(oboRequest);
     }

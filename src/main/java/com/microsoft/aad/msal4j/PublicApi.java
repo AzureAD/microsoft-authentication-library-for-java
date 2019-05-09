@@ -23,7 +23,7 @@
 
 package com.microsoft.aad.msal4j;
 
-enum AcquireTokenPublicApi {
+enum PublicApi {
     // TODO finalize api ids
     ACQUIRE_TOKEN_BY_REFRESH_TOKEN(82),
     ACQUIRE_TOKEN_BY_USERNAME_PASSWORD(300),
@@ -32,11 +32,12 @@ enum AcquireTokenPublicApi {
     ACQUIRE_TOKEN_BY_DEVICE_CODE_FLOW(620),
     ACQUIRE_TOKEN_FOR_CLIENT(729),
     ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE(831),
-    ACQUIRE_TOKEN_SILENTLY(800);
+    ACQUIRE_TOKEN_SILENTLY(800),
+    GET_ACCOUNTS(801);
 
     private final int apiId;
 
-    AcquireTokenPublicApi(int apiId){
+    PublicApi(int apiId){
         this.apiId = apiId;
     }
 

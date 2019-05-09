@@ -27,10 +27,8 @@ import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod;
 import com.nimbusds.oauth2.sdk.id.ClientID;
 import org.slf4j.LoggerFactory;
 
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotBlank;
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
@@ -55,7 +53,7 @@ public class PublicClientApplication extends ClientApplicationBase {
         UserNamePasswordRequest userNamePasswordRequest =
                 new UserNamePasswordRequest(parameters,
                         this,
-                        createRequestContext(AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_USERNAME_PASSWORD));
+                        createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_USERNAME_PASSWORD));
 
         return this.executeRequest(userNamePasswordRequest);
     }
@@ -78,7 +76,7 @@ public class PublicClientApplication extends ClientApplicationBase {
                         parameters,
                         this,
                         createRequestContext(
-                                AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_INTEGRATED_WINDOWS_AUTH));
+                                PublicApi.ACQUIRE_TOKEN_BY_INTEGRATED_WINDOWS_AUTH));
 
         return this.executeRequest(integratedWindowsAuthenticationRequest);
     }
@@ -120,7 +118,7 @@ public class PublicClientApplication extends ClientApplicationBase {
                 parameters,
                 futureReference,
                 this,
-                createRequestContext(AcquireTokenPublicApi.ACQUIRE_TOKEN_BY_DEVICE_CODE_FLOW));
+                createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_DEVICE_CODE_FLOW));
 
         CompletableFuture<AuthenticationResult> future = executeRequest(deviceCodeRequest);
         futureReference.set(future);

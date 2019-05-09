@@ -1,0 +1,12 @@
+{
+  "secret": "<removed_at>",
+  "target": "Calendars.Read openid profile Tasks.Read User.Read email",
+  "extended_expires_on": "<extended_expires_on>",
+  "credential_type": "AccessToken",
+  "environment": "login.microsoftonline.com",
+  "realm": "f645ad92-e38d-4d1a-b510-d1b09a74a8ca",
+  "expires_on": "<expires_on>",
+  "cached_at": "<cached_at>",
+  "client_id": "b6c69a37-df96-4db0-9088-2ab96e1d8215",
+  "home_account_id": "9f4880d8-80ba-4c40-97bc-f7a23c703084.f645ad92-e38d-4d1a-b510-d1b09a74a8ca"
+}
