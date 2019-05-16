@@ -66,7 +66,7 @@ public class NationalCloudIT {
                 authority(TestConstants.AUTHORITY_ORGANIZATIONS).
                 build();
 
-        AuthenticationResult result = pca.acquireToken(UserNamePasswordParameters
+        IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters
                         .builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
                                 labResponse.getUser().getUpn(),
                                 password.toCharArray())
@@ -75,7 +75,6 @@ public class NationalCloudIT {
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.refreshToken());
         Assert.assertNotNull(result.idToken());
         // TODO AuthenticationResult should have an getAccountInfo API
         // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());

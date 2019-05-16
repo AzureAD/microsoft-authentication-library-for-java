@@ -45,7 +45,7 @@ public class UsernamePasswordFlow {
                 TestData.USER_PASSWORD.toCharArray())
                 .build();
 
-        CompletableFuture<AuthenticationResult> future = app.acquireToken(parameters);
+        CompletableFuture<IAuthenticationResult> future = app.acquireToken(parameters);
 
         future.handle((res, ex) -> {
             if(ex != null) {
@@ -53,9 +53,9 @@ public class UsernamePasswordFlow {
                 return "Unknown!";
             }
 
-            Collection<Account> accounts = app.getAccounts().join();
+            Collection<IAccount> accounts = app.getAccounts().join();
 
-            CompletableFuture<AuthenticationResult> future1;
+            CompletableFuture<IAuthenticationResult> future1;
             try {
                 future1 = app.acquireTokenSilently
                         (SilentParameters.builder(Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE),
@@ -70,14 +70,13 @@ public class UsernamePasswordFlow {
 
             future1.join();
 
-            Account account = app.getAccounts().join().iterator().next();
+            IAccount account = app.getAccounts().join().iterator().next();
             app.removeAccount(account).join();
             accounts = app.getAccounts().join();
 
             System.out.println("Num of account - " + accounts.size());
             System.out.println("Returned ok - " + res);
             System.out.println("Access Token - " + res.accessToken());
-            System.out.println("Refresh Token - " + res.refreshToken());
             System.out.println("ID Token - " + res.idToken());
             return res;
         }).join();

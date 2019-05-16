@@ -32,7 +32,7 @@ public class OnBehalfOfIT {
                 authority(msidlab4Authority).
                 build();
 
-        AuthenticationResult result = pca.acquireToken(
+        IAuthenticationResult result = pca.acquireToken(
                 UserNamePasswordParameters.builder(Collections.singleton(apiReadScope),
                         labResponse.getUser().getUpn(),
                         labResponse.getUser().getPassword().toCharArray()).build()).get();
@@ -51,7 +51,7 @@ public class OnBehalfOfIT {
                         authority(msidlab4Authority).
                         build();
 
-        AuthenticationResult result =
+        IAuthenticationResult result =
                 cca.acquireToken(OnBehalfOfParameters.builder(
                         Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
                         new UserAssertion(accessToken)).build()).
@@ -59,7 +59,6 @@ public class OnBehalfOfIT {
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.refreshToken());
         Assert.assertNotNull(result.idToken());
         // TODO AuthenticationResult should have an getAccountInfo API
         // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());

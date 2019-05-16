@@ -72,7 +72,7 @@ public class CacheTests extends AbstractMsalTests {
 
     @Test
     public void cacheDeserializationSerializationTest() throws IOException, URISyntaxException, JSONException {
-        TokenCache tokenCache = new TokenCache(null);
+        ITokenCache tokenCache = new TokenCache(null);
 
         String previouslyStoredCache = readResource("/cache_data/serialized_cache.json");
 

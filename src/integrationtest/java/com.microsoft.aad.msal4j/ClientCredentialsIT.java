@@ -65,7 +65,7 @@ public class ClientCredentialsIT {
                 authority(TestConstants.AUTHORITY_MICROSOFT).
                 build();
 
-        AuthenticationResult result = cca.acquireToken(ClientCredentialParameters
+        AuthenticationResult result = (AuthenticationResult)cca.acquireToken(ClientCredentialParameters
                 .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
                 .build())
                 .get();

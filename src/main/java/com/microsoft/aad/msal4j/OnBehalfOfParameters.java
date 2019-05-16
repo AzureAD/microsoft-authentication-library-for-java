@@ -40,7 +40,7 @@ public class OnBehalfOfParameters {
     private Set<String> scopes;
 
     @NonNull
-    private UserAssertion userAssertion;
+    private IUserAssertion userAssertion;
 
     private static OnBehalfOfParametersBuilder builder() {
 

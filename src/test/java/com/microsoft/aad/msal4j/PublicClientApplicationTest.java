@@ -74,12 +74,12 @@ public class PublicClientApplicationTest extends PowerMockTestCase {
 
         PowerMock.replay(app, response, UserDiscoveryRequest.class);
 
-        Future<AuthenticationResult> result = app.acquireToken(
+        Future<IAuthenticationResult> result = app.acquireToken(
                 UserNamePasswordParameters
                         .builder(Collections.singleton("scopes"), "username", "password".toCharArray())
                         .build());
 
-        AuthenticationResult ar = result.get();
+        IAuthenticationResult ar = result.get();
         Assert.assertNotNull(ar);
         PowerMock.verifyAll();
         PowerMock.resetAll(app);

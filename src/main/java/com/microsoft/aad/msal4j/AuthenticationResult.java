@@ -34,24 +34,24 @@ import java.io.Serializable;
 import java.text.ParseException;
 import java.util.Date;
 
-/**
- * Contains the results of one token acquisition operation.
- */
 @Accessors(fluent = true)
 @Getter
 @EqualsAndHashCode
 @Builder
-public final class AuthenticationResult implements Serializable {
+final class AuthenticationResult implements Serializable, IAuthenticationResult {
     private static final long serialVersionUID = 1L;
 
     private final String accessToken;
 
+    @Getter(value = AccessLevel.PACKAGE)
     private final long expiresOn;
 
+    @Getter(value = AccessLevel.PACKAGE)
     private final long extExpiresOn;
 
     private final String refreshToken;
 
+    @Getter(value = AccessLevel.PACKAGE)
     private final String familyId;
 
     private final String idToken;
@@ -73,7 +73,18 @@ public final class AuthenticationResult implements Serializable {
         return null;
     }
 
-    private final Account account;
+    @Getter(value = AccessLevel.PACKAGE)
+    private final AccountCacheEntity accountCacheEntity;
+
+    @Getter(lazy = true)
+    private final IAccount account = getAccount();
+
+    private IAccount getAccount() {
+        if (accountCacheEntity == null) {
+            return null;
+        }
+        return accountCacheEntity.toAccount();
+    }
 
     private String environment;
 

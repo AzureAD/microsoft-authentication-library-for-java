@@ -28,7 +28,7 @@ import java.util.Set;
 import java.util.concurrent.CompletionException;
 import java.util.function.Supplier;
 
-class AccountsSupplier implements Supplier<Set<Account>> {
+class AccountsSupplier implements Supplier<Set<IAccount>> {
 
     ClientApplicationBase clientApplication;
     MsalRequest msalRequest;
@@ -40,7 +40,7 @@ class AccountsSupplier implements Supplier<Set<Account>> {
     }
 
     @Override
-    public Set<Account> get() {
+    public Set<IAccount> get() {
         try {
             InstanceDiscoveryMetadataEntry instanceDiscoveryData =
                     AadInstanceDiscovery.GetMetadataEntry

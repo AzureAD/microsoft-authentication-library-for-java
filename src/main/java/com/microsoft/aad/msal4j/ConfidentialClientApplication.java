@@ -39,18 +39,10 @@ import java.util.concurrent.CompletableFuture;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 
-public class ConfidentialClientApplication extends ClientApplicationBase {
+public class ConfidentialClientApplication extends ClientApplicationBase implements IConfidentialClientApplication {
 
-    /**
-     * Acquires security token from the authority.
-     *
-     * @param parameters#scopes scopes of the access request
-     * @return A {@link CompletableFuture} object representing the
-     * {@link AuthenticationResult} of the call. It contains Access
-     * Token and the Access Token's expiration time. Refresh Token
-     * property will be null for this overload.
-     */
-    public CompletableFuture<AuthenticationResult> acquireToken(ClientCredentialParameters parameters) {
+    @Override
+    public CompletableFuture<IAuthenticationResult> acquireToken(ClientCredentialParameters parameters) {
 
         validateNotNull("parameters", parameters);
 
@@ -63,19 +55,8 @@ public class ConfidentialClientApplication extends ClientApplicationBase {
         return this.executeRequest(clientCredentialRequest);
     }
 
-    /**
-     * Acquires an access token from the authority on behalf of a user. It
-     * requires using a user token previously received.
-     *
-     * @param parameters#scopes        scopes of the access request
-     * @param parameters#userAssertion userAssertion to use as Authorization grant
-     * @return A {@link CompletableFuture} object representing the
-     * {@link AuthenticationResult} of the call. It contains Access
-     * Token and the Access Token's expiration time. Refresh Token
-     * property will be null for this overload.
-     * @throws AuthenticationException {@link AuthenticationException}
-     */
-    public CompletableFuture<AuthenticationResult> acquireToken(OnBehalfOfParameters parameters) {
+    @Override
+    public CompletableFuture<IAuthenticationResult> acquireToken(OnBehalfOfParameters parameters) {
 
         validateNotNull("parameters", parameters);
 

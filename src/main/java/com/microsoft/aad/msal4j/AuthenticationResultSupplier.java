@@ -35,7 +35,7 @@ import java.util.Set;
 import java.util.concurrent.CompletionException;
 import java.util.function.Supplier;
 
-abstract class AuthenticationResultSupplier implements Supplier<AuthenticationResult> {
+abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationResult> {
 
     ClientApplicationBase clientApplication;
     MsalRequest msalRequest;
@@ -63,7 +63,7 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
     abstract AuthenticationResult execute() throws Exception;
 
     @Override
-    public AuthenticationResult get() {
+    public IAuthenticationResult get() {
         AuthenticationResult result;
 
         ApiEvent apiEvent = initializeApiEvent(msalRequest);
@@ -80,7 +80,7 @@ abstract class AuthenticationResultSupplier implements Supplier<AuthenticationRe
 
                 apiEvent.setWasSuccessful(true);
                 if (result.account() != null) {
-                    apiEvent.setTenantId(result.account().realm());
+                    apiEvent.setTenantId(result.accountCacheEntity().realm());
                 }
             } catch(Exception ex) {
                 if (ex instanceof AuthenticationException) {

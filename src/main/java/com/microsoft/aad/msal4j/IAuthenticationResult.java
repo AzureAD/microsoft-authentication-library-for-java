@@ -23,35 +23,20 @@
 
 package com.microsoft.aad.msal4j;
 
-/***
- * Credential type containing an assertion representing user credential.
+/**
+ * Represents the results of token acquisition operation.
  */
-public class UserAssertion implements IUserAssertion {
+public interface IAuthenticationResult {
 
-    private final String assertion;
+    String accessToken();
 
-    /**
-     * Constructor to create credential with a jwt token encoded as a base64 url
-     * encoded string.
-     *
-     * @param assertion
-     *            The jwt used as credential.
-     */
-    public UserAssertion(final String assertion) {
-        if (StringHelper.isBlank(assertion)) {
-            throw new NullPointerException("assertion");
-        }
+    String idToken();
 
-        this.assertion = assertion;
-    }
+    IAccount account();
 
-    /**
-     * Gets the assertion.
-     *
-     * @return string value
-     */
-    @Override
-    public String getAssertion() {
-        return assertion;
-    }
+    String environment();
+
+    String scopes();
+
+    java.util.Date expiresOnDate();
 }

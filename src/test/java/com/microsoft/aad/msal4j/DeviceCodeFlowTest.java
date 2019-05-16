@@ -143,7 +143,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         PowerMock.replay(app);
 
-        AuthenticationResult authResult = app.acquireToken
+        IAuthenticationResult authResult = app.acquireToken
                 (DeviceCodeFlowParameters.builder(Collections.singleton(AAD_RESOURCE_ID), deviceCodeConsumer)
                         .build())
                 .get();
@@ -209,7 +209,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         TelemetryManager telemetryManager =  new TelemetryManager(null, false);
 
-        AtomicReference<CompletableFuture<AuthenticationResult>> futureReference =
+        AtomicReference<CompletableFuture<IAuthenticationResult>> futureReference =
                 new AtomicReference<>();
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> { };
