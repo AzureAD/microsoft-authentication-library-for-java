@@ -102,10 +102,9 @@ public class PublicClientApplication extends ClientApplicationBase implements IP
     }
 
     /**
-     * Returns instance of Builder of PublicClientApplication
-     *
      * @param clientId Client ID (Application ID) of the application as registered
      *                 in the application registration portal (portal.azure.com)
+     * @return instance of Builder of PublicClientApplication
      */
     public static Builder builder(String clientId) {
 

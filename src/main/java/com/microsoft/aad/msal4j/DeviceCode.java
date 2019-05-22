@@ -34,37 +34,37 @@ import lombok.experimental.Accessors;
 public final class DeviceCode {
 
     /**
-     *  The user code.
+     *  @return user code.
      */
     @SerializedName("user_code")
     private String userCode;
 
     /**
-     * The device code.
+     * @return device code.
      */
     @SerializedName("device_code")
     private String deviceCode;
 
     /**
-     * The verification uri.
+     * @return verification uri.
      */
     @SerializedName("verification_uri")
     private String verificationUri;
 
     /**
-     * The expiration time in seconds.
+     * @return expiration time in seconds.
      */
     @SerializedName("expires_in")
     private long expiresIn;
 
     /**
-     * The interval
+     * @return interval
      */
     @SerializedName("interval")
     private long interval;
 
     /**
-     * The message which should be displayed to the user.
+     * @return message which should be displayed to the user.
      */
     @SerializedName("message")
     private String message;

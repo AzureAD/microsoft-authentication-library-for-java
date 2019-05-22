@@ -35,40 +35,40 @@ public interface IClientApplicationBase {
     String DEFAULT_AUTHORITY = "https://login.microsoftonline.com/common/";
 
     /**
-     * Client ID (Application ID) of the application as registered in the application registration portal
+     * @return Client ID (Application ID) of the application as registered in the application registration portal
      * (portal.azure.com) and as passed in the constructor of the application
      */
     String clientId();
 
     /**
-     * URL of the authority, or security token service (STS) from which MSAL will acquire security tokens.
-     * Default value is {@link this#DEFAULT_AUTHORITY}
+     * @return URL of the authority, or security token service (STS) from which MSAL will acquire security tokens.
+     * Default value is {@link IClientApplicationBase#DEFAULT_AUTHORITY}
      */
     String authority();
 
     /**
-     * Determine whether the authority needs to be verified against a list of known authorities.
+     * @return a boolean value which determines whether the authority needs to be verified against a list of known authorities.
      */
     boolean validateAuthority();
 
     /**
-     * Correlation Id is to be used for diagnostics purposes, is attached to token service requests
+     * @return Correlation Id which is used for diagnostics purposes, is attached to token service requests
      * Default value is random UUID
      */
     String correlationId();
 
     /**
-     * Determine whether Pii (personally identifiable information) will be logged in
+     * @return a boolean value which determines whether Pii (personally identifiable information) will be logged in
      */
     boolean logPii();
 
     /**
-     * Proxy used by the application for all network communication.
+     * @return proxy used by the application for all network communication.
      */
     Proxy proxy();
 
     /**
-     * SSLSocketFactory used by the application for all network communication.
+     * @return SSLSocketFactory used by the application for all network communication.
      */
     SSLSocketFactory sslSocketFactory();
 
@@ -76,7 +76,7 @@ public interface IClientApplicationBase {
     ITokenCache tokenCache();
 
     /**
-     * Telemetry consumer that will receive telemetry events emitted by the library.
+     * @return Telemetry consumer that will receive telemetry events emitted by the library.
      */
     java.util.function.Consumer<java.util.List<java.util.HashMap<String, String>>> telemetryConsumer();
 
@@ -88,25 +88,31 @@ public interface IClientApplicationBase {
      * @param parameters#redirectUri       (also known as Reply URI or Reply URL),
      *                                     is the URI at which Azure AD will contact back the application with the tokens.
      *                                     This redirect URI needs to be registered in the app registration portal.
-     * @return A {@link Future} object representing the
-     * {@link IAuthenticationResult} of the call. It contains Access
-     * Token, Refresh Token and the Access Token's expiration time.
+     * @return A {@link CompletableFuture} object representing the {@link IAuthenticationResult} of the call.
      */
     CompletableFuture<IAuthenticationResult> acquireToken(AuthorizationCodeParameters parameters);
 
     /**
      * Returning tokens from cache or requesting new one using previously cached refresh tokens
+     *
+     * @param parameters instance of SilentParameters
+     * @return A {@link CompletableFuture} object representing the {@link IAuthenticationResult} of the call.
+     * @throws MalformedURLException if authorityUrl from parameters is malformed URL
      */
     CompletableFuture<IAuthenticationResult> acquireTokenSilently(SilentParameters parameters)
             throws MalformedURLException;
 
     /**
-     * Returns unique accounts from cache which can be used for silent acquire token call
+     * @return set of unique accounts from cache which can be used for silent acquire token call
      */
     CompletableFuture<Set<IAccount>> getAccounts();
 
     /**
      * Remove account from the cache
+     *
+     * @param account instance of IAccount
+     *
+     * @return {@link CompletableFuture} object representing account removal task.
      */
     CompletableFuture removeAccount(IAccount account);
 }

@@ -277,8 +277,11 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
          * will acquire security tokens.
          * The default value is {@link ClientApplicationBase#DEFAULT_AUTHORITY}
          *
-         * @throws MalformedURLException
+         * @param val a string value of authority
+         * @return instance of the Builder on which method was called
+         * @throws MalformedURLException if val is malformed URL
          */
+
         public T authority(String val) throws MalformedURLException {
             authority = canonicalizeUrl(val);
 
@@ -307,6 +310,9 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
          * Set a boolean value telling the application if the authority needs to be verified
          * against a list of known authorities.
          * The default value is true.
+         *
+         * @param val a boolean value for validateAuthority
+         * @return instance of the Builder on which method was called
          */
         public T validateAuthority(boolean val) {
             validateAuthority = val;
@@ -316,6 +322,9 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         /**
          * Set optional correlation id to be used by the API.
          * If not provided, the API generates a random UUID.
+         *
+         * @param val a string value of correlation id
+         * @return instance of the Builder on which method was called
          */
         public T correlationId(String val) {
             validateNotBlank("correlationId", val);
@@ -328,6 +337,9 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
          * Set logPii - boolean value, which determines
          * whether Pii (personally identifiable information) will be logged in.
          * The default value is false.
+         *
+         * @param val a boolean value for logPii
+         * @return instance of the Builder on which method was called
          */
         public T logPii(boolean val) {
             logPii = val;
@@ -337,6 +349,9 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         /**
          * Sets ExecutorService to be used to execute the requests.
          * Developer is responsible for maintaining the lifecycle of the ExecutorService.
+         *
+         * @param val an instance of ExecutorService
+         * @return instance of the Builder on which method was called
          */
         public T executorService(ExecutorService val) {
             validateNotNull("executorService", val);
@@ -348,6 +363,9 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         /**
          * Sets Proxy configuration to be used by the client application for all network communication.
          * Default is null and system defined properties if any, would be used.
+         *
+         * @param val an instance of Proxy
+         * @return instance of the Builder on which method was called
          */
         public T proxy(Proxy val) {
             validateNotNull("proxy", val);
@@ -358,6 +376,9 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
 
         /**
          * Sets SSLSocketFactory to be used by the client application for all network communication.
+         *
+         * @param val an instance of SSLSocketFactory
+         * @return instance of the Builder on which method was called
          */
         public T sslSocketFactory(SSLSocketFactory val) {
             validateNotNull("sslSocketFactory", val);
@@ -381,6 +402,9 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
 
         /**
          * Sets ITokenCacheAccessAspect to be used for cache_data persistence.
+         *
+         * @param val an instance of ITokenCacheAccessAspect
+         * @return instance of the Builder on which method was called
          */
         public T setTokenCacheAccessAspect(ITokenCacheAccessAspect val) {
             validateNotNull("tokenCacheAccessAspect", val);

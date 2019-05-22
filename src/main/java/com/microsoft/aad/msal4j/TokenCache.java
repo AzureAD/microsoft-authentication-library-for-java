@@ -270,7 +270,7 @@ public class TokenCache implements ITokenCache {
     }
 
     /**
-     * Get set of client ids which belong to the family
+     * @return set of client ids which belong to the family
      */
     Set<String> getFamilyClientIds(String familyId, Set<String> environmentAliases) {
 
@@ -283,6 +283,10 @@ public class TokenCache implements ITokenCache {
 
     /**
      * Remove all cache entities related to account, including account cache entity
+     *
+     * @param clientId client id
+     * @param account account
+     * @param environmentAliases environment aliases
      */
     protected void removeAccount(String clientId, IAccount account, Set<String> environmentAliases) {
         ITokenCacheAccessContext context = null;
