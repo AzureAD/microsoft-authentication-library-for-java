@@ -42,13 +42,13 @@ import java.util.concurrent.atomic.AtomicReference;
 class DeviceCodeFlowRequest extends MsalRequest {
     private final Logger log = LoggerFactory.getLogger(DeviceCodeFlowRequest.class);
 
-    private AtomicReference<CompletableFuture<AuthenticationResult>> futureReference;
+    private AtomicReference<CompletableFuture<IAuthenticationResult>> futureReference;
 
     private DeviceCodeFlowParameters parameters;
     private String scopesStr;
 
     DeviceCodeFlowRequest(DeviceCodeFlowParameters parameters,
-                          AtomicReference<CompletableFuture<AuthenticationResult>> futureReference,
+                          AtomicReference<CompletableFuture<IAuthenticationResult>> futureReference,
                           PublicClientApplication application,
                           RequestContext requestContext) {
 

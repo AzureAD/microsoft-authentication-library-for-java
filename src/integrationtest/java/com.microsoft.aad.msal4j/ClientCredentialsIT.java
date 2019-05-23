@@ -65,14 +65,13 @@ public class ClientCredentialsIT {
                 authority(TestConstants.AUTHORITY_MICROSOFT).
                 build();
 
-        AuthenticationResult result = cca.acquireToken(ClientCredentialParameters
+        IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
                 .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
                 .build())
                 .get();
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
-        Assert.assertNull(result.refreshToken());
         // TODO AuthenticationResult should have an getAccountInfo API
         // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
     }

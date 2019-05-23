@@ -99,7 +99,7 @@ class TokenRequest {
                     refreshToken = tokens.getRefreshToken().getValue();
                 }
 
-                Account account = null;
+                AccountCacheEntity accountCacheEntity = null;
 
                 if (tokens.getIDToken() != null) {
                     String idTokenJson = tokens.getIDToken().getParsedParts()[1].decodeToString();
@@ -112,13 +112,13 @@ class TokenRequest {
 
                             B2CAuthority authority = (B2CAuthority) msalRequest.application().authenticationAuthority;
 
-                            account = Account.create(
+                            accountCacheEntity = AccountCacheEntity.create(
                                     response.getClientInfo(),
                                     url.getHost(),
                                     idToken,
                                     authority.policy);
                         } else {
-                            account = Account.create(
+                            accountCacheEntity = AccountCacheEntity.create(
                                     response.getClientInfo(),
                                     url.getHost(),
                                     idToken);
@@ -135,7 +135,7 @@ class TokenRequest {
                         environment(url.getHost()).
                         expiresOn(currTimestampSec + response.getExpiresIn()).
                         extExpiresOn(response.getExtExpiresIn() > 0 ? currTimestampSec + response.getExtExpiresIn() : 0).
-                        account(account).
+                        accountCacheEntity(accountCacheEntity).
                         scopes(response.getScope()).
                         build();
 

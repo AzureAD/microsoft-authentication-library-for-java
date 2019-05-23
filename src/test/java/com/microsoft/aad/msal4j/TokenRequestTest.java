@@ -254,9 +254,8 @@ public class TokenRequestTest extends AbstractMsalTests {
         PowerMock.verifyAll();
 
         Assert.assertNotNull(result.account());
-        Assert.assertNotNull(result.account().homeAccountId);
+        Assert.assertNotNull(result.account().homeAccountId());
         Assert.assertEquals(result.account().username(), "idlab@msidlab4.onmicrosoft.com");
-        Assert.assertEquals(result.account().name(), "Cloud IDLAB Basic User");
 
         Assert.assertFalse(StringHelper.isBlank(result.accessToken()));
         Assert.assertFalse(StringHelper.isBlank(result.refreshToken()));

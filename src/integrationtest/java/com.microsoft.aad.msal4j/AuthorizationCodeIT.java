@@ -220,11 +220,10 @@ public class AuthorizationCodeIT {
 
     private void assertAcquireTokenAAD(LabResponse labResponse){
         String authCode = acquireAuthorizationCodeAutomated(labResponse, AuthorityType.AAD);
-        AuthenticationResult result = acquireTokenInteractiveAAD(labResponse, authCode);
+        IAuthenticationResult result = acquireTokenInteractiveAAD(labResponse, authCode);
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.refreshToken());
         Assert.assertNotNull(result.idToken());
         // TODO AuthenticationResult should have an getAccountInfo API
         // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
@@ -232,21 +231,20 @@ public class AuthorizationCodeIT {
 
     private void assertAcquireTokenB2C(LabResponse labResponse){
         String authCode = acquireAuthorizationCodeAutomated(labResponse, AuthorityType.B2C);
-        AuthenticationResult result = acquireTokenInteractiveB2C(labResponse, authCode);
+        IAuthenticationResult result = acquireTokenInteractiveB2C(labResponse, authCode);
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.refreshToken());
         Assert.assertNotNull(result.idToken());
         // TODO AuthenticationResult should have an getAccountInfo API
         // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
     }
 
-    private AuthenticationResult acquireTokenInteractiveAAD(
+    private IAuthenticationResult acquireTokenInteractiveAAD(
             LabResponse labResponse,
             String authCode){
 
-        AuthenticationResult result;
+        IAuthenticationResult result;
         try {
             PublicClientApplication pca = PublicClientApplication.builder(
                     labResponse.getAppId()).
@@ -267,9 +265,9 @@ public class AuthorizationCodeIT {
         return result;
     }
 
-    private AuthenticationResult acquireTokenInteractiveB2C(LabResponse labResponse,
+    private IAuthenticationResult acquireTokenInteractiveB2C(LabResponse labResponse,
                                                             String authCode) {
-        AuthenticationResult result;
+        IAuthenticationResult result;
         try{
             IClientCredential credential = ClientCredentialFactory.create("=]Y)_A7LX`]6\"]_PoD!)Lo24");
             ConfidentialClientApplication cca = ConfidentialClientApplication.builder(

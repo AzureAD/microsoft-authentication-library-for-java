@@ -25,19 +25,18 @@ package com.microsoft.aad.msal4j;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.experimental.Accessors;
 
-/**
- * Contain parameters used by the MSAL to access the cache_data.
- */
 @Builder
+@Accessors(fluent = true)
 @Getter
-public class TokenCacheAccessContext {
+public class TokenCacheAccessContext implements ITokenCacheAccessContext {
 
-    private TokenCache tokenCache;
+    private ITokenCache tokenCache;
 
     private String clientId;
 
-    private Account account;
+    private IAccount account;
 
-    private boolean isCacheChanged;
+    private boolean hasCacheChanged;
 }

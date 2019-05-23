@@ -21,7 +21,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import com.microsoft.aad.msal4j.AuthenticationResult;
+import com.microsoft.aad.msal4j.IAuthenticationResult;
 import com.microsoft.aad.msal4j.PublicClientApplication;
 import com.microsoft.aad.msal4j.UserNamePasswordParameters;
 
@@ -59,15 +59,14 @@ public class Telemetry {
                 .telemetryConsumer(new MyTelemetryConsumer().telemetryConsumer)
                 .build();
 
-        CompletableFuture<AuthenticationResult> future = app.acquireToken
+        CompletableFuture<IAuthenticationResult> future = app.acquireToken
                 (UserNamePasswordParameters.builder(Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE),
                         TestData.USER_NAME,
                         TestData.USER_PASSWORD.toCharArray())
                         .build());
 
-        AuthenticationResult result = future.get();
+        IAuthenticationResult result = future.get();
         System.out.println(result.accessToken());
-        System.out.println(result.refreshToken());
         System.out.println(result.idToken());
     }
 }

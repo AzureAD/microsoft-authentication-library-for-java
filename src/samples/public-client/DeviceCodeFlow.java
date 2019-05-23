@@ -20,10 +20,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-import com.microsoft.aad.msal4j.AuthenticationResult;
-import com.microsoft.aad.msal4j.DeviceCode;
-import com.microsoft.aad.msal4j.DeviceCodeFlowParameters;
-import com.microsoft.aad.msal4j.PublicClientApplication;
+import com.microsoft.aad.msal4j.*;
 
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
@@ -43,7 +40,7 @@ public class DeviceCodeFlow {
             System.out.println(deviceCode.message());
         };
 
-        CompletableFuture<AuthenticationResult> future = app.acquireToken(
+        CompletableFuture<IAuthenticationResult> future = app.acquireToken(
                 DeviceCodeFlowParameters.builder(
                         Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE),
                         deviceCodeConsumer)
@@ -58,7 +55,6 @@ public class DeviceCodeFlow {
             System.out.println("Returned ok - " + res);
 
             System.out.println("Access Token - " + res.accessToken());
-            System.out.println("Refresh Token - " + res.refreshToken());
             System.out.println("ID Token - " + res.idToken());
             return res;
         });

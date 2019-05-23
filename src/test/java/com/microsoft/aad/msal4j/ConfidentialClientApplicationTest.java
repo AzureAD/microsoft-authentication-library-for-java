@@ -77,9 +77,9 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
                 .scopes(Collections.singleton("default-scope"))
                 .build();
 
-        Future<AuthenticationResult> result = app.acquireToken(parameters);
+        Future<IAuthenticationResult> result = app.acquireToken(parameters);
 
-        AuthenticationResult ar = result.get();
+        IAuthenticationResult ar = result.get();
         Assert.assertNotNull(ar);
         PowerMock.verifyAll();
     }
@@ -122,9 +122,9 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
                 .scopes(Collections.singleton("default-scope"))
                 .build();
 
-        Future<AuthenticationResult> result = app.acquireToken(parameters);
+        Future<IAuthenticationResult> result = app.acquireToken(parameters);
 
-        AuthenticationResult ar = result.get();
+        IAuthenticationResult ar = result.get();
         Assert.assertNotNull(ar);
         PowerMock.verifyAll();
         PowerMock.resetAll(app);
@@ -165,9 +165,9 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
                 Collections.singleton(TestConfiguration.AAD_RESOURCE_ID))
                 .build();
 
-        final Future<AuthenticationResult> result = app.acquireToken(parameters);
+        Future<IAuthenticationResult> result = app.acquireToken(parameters);
 
-        final AuthenticationResult ar = result.get();
+        IAuthenticationResult ar = result.get();
         assertNotNull(ar);
         assertFalse(StringHelper.isBlank(result.get().accessToken()));
         PowerMock.verifyAll();

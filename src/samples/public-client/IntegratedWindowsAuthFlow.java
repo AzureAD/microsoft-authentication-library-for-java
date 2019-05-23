@@ -21,7 +21,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import com.microsoft.aad.msal4j.AuthenticationResult;
+import com.microsoft.aad.msal4j.IAuthenticationResult;
 import com.microsoft.aad.msal4j.IntegratedWindowsAuthenticationParameters;
 import com.microsoft.aad.msal4j.PublicClientApplication;
 
@@ -31,14 +31,13 @@ import java.util.concurrent.Future;
 public class IntegratedWindowsAuthFlow {
     public static void main(String args[]) throws Exception {
 
-        AuthenticationResult result = getAccessTokenByIntegratedAuth();
+        IAuthenticationResult result = getAccessTokenByIntegratedAuth();
 
         System.out.println("Access Token - " + result.accessToken());
-        System.out.println("Refresh Token - " + result.refreshToken());
         System.out.println("ID Token - " + result.idToken());
     }
 
-    private static AuthenticationResult getAccessTokenByIntegratedAuth() throws Exception {
+    private static IAuthenticationResult getAccessTokenByIntegratedAuth() throws Exception {
         PublicClientApplication app = PublicClientApplication.builder(TestData.PUBLIC_CLIENT_ID)
                 .authority(TestData.AUTHORITY_ORGANIZATION)
                 .telemetryConsumer(new Telemetry.MyTelemetryConsumer().telemetryConsumer)
@@ -49,9 +48,9 @@ public class IntegratedWindowsAuthFlow {
                         Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE), TestData.USER_NAME)
                         .build();
 
-        Future<AuthenticationResult> future = app.acquireToken(parameters);
+        Future<IAuthenticationResult> future = app.acquireToken(parameters);
 
-        AuthenticationResult result = future.get();
+        IAuthenticationResult result = future.get();
 
         return result;
     }

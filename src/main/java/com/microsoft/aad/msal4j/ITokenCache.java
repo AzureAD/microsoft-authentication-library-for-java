@@ -23,35 +23,22 @@
 
 package com.microsoft.aad.msal4j;
 
-/***
- * Credential type containing an assertion representing user credential.
+/**
+ * Interface to implement cache persistence
  */
-public class UserAssertion implements IUserAssertion {
-
-    private final String assertion;
+public interface ITokenCache {
 
     /**
-     * Constructor to create credential with a jwt token encoded as a base64 url
-     * encoded string.
+     * Deserialize token cache from json
      *
-     * @param assertion
-     *            The jwt used as credential.
+     * @param data serialized cache in json format
      */
-    public UserAssertion(final String assertion) {
-        if (StringHelper.isBlank(assertion)) {
-            throw new NullPointerException("assertion");
-        }
-
-        this.assertion = assertion;
-    }
+    void deserialize(String data);
 
     /**
-     * Gets the assertion.
+     * Serialize token cache to json
      *
-     * @return string value
+     * @return serialized cache in json format
      */
-    @Override
-    public String getAssertion() {
-        return assertion;
-    }
+    String serialize();
 }

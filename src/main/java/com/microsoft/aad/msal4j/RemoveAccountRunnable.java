@@ -29,10 +29,10 @@ class RemoveAccountRunnable implements Runnable {
 
     ClientDataHttpHeaders headers;
     ClientApplicationBase clientApplication;
-    Account account;
+    IAccount account;
 
     RemoveAccountRunnable
-            (ClientApplicationBase clientApplication, Account account) {
+            (ClientApplicationBase clientApplication, IAccount account) {
         this.clientApplication = clientApplication;
         this.headers = new ClientDataHttpHeaders(clientApplication.correlationId());
         this.account = account;

@@ -63,7 +63,7 @@ class KeyVaultSecretsProvider {
     }
 
     private String requestAccessTokenForAutomation() {
-        AuthenticationResult result;
+        IAuthenticationResult result;
         try{
             ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
                     CLIENT_ID, getClientCredentialFromKeyStore()).

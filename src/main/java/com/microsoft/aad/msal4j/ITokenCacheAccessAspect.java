@@ -25,8 +25,8 @@ package com.microsoft.aad.msal4j;
 
 public interface ITokenCacheAccessAspect {
 
-    void beforeCacheAccess(TokenCacheAccessContext tokenCacheAccessContext);
+    void beforeCacheAccess(ITokenCacheAccessContext ITokenCacheAccessContext);
 
-    void afterCacheAccess(TokenCacheAccessContext tokenCacheAccessContext);
+    void afterCacheAccess(ITokenCacheAccessContext ITokenCacheAccessContext);
 
 }

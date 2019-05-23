@@ -50,7 +50,7 @@ public class RefreshTokenIT {
                 authority(TestConstants.AUTHORITY_ORGANIZATIONS).
                 build();
 
-        AuthenticationResult result = pca.acquireToken(UserNamePasswordParameters
+        AuthenticationResult result = (AuthenticationResult)pca.acquireToken(UserNamePasswordParameters
                         .builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
                                 labResponse.getUser().getUpn(),
                                 password.toCharArray())
@@ -63,7 +63,7 @@ public class RefreshTokenIT {
     @Test
     public void acquireTokenWithRefreshToken() throws Exception{
 
-        AuthenticationResult result = pca.acquireToken(RefreshTokenParameters
+        IAuthenticationResult result = pca.acquireToken(RefreshTokenParameters
                 .builder(
                         Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
                         refreshToken)
@@ -72,13 +72,12 @@ public class RefreshTokenIT {
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.refreshToken());
         Assert.assertNotNull(result.idToken());
     }
 
     @Test(expectedExceptions = ExecutionException.class)
     public void acquireTokenWithRefreshToken_WrongScopes() throws Exception{
-        AuthenticationResult result = pca.acquireToken(RefreshTokenParameters
+        IAuthenticationResult result = pca.acquireToken(RefreshTokenParameters
                 .builder(
                         Collections.singleton(TestConstants.KEYVAULT_DEFAULT_SCOPE),
                         refreshToken)

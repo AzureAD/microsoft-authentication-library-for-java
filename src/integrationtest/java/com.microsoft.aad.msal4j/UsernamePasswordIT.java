@@ -100,7 +100,7 @@ public class UsernamePasswordIT {
                 authority(TestConstants.AUTHORITY_ORGANIZATIONS).
                 build();
 
-        AuthenticationResult result = pca.acquireToken(UserNamePasswordParameters.
+        IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters.
                 builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
                         labResponse.getUser().getUpn(),
                         password.toCharArray())
@@ -109,7 +109,6 @@ public class UsernamePasswordIT {
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.refreshToken());
         Assert.assertNotNull(result.idToken());
         // TODO AuthenticationResult should have an getAccountInfo API
         // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
@@ -129,7 +128,7 @@ public class UsernamePasswordIT {
                 b2cAuthority(TestConstants.B2C_AUTHORITY_ROPC).
                 build();
 
-        AuthenticationResult result = pca.acquireToken(UserNamePasswordParameters.
+        IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters.
                 builder(Collections.singleton(TestConstants.B2C_READ_SCOPE),
                         labResponse.getUser().getUpn(),
                         password.toCharArray())
@@ -138,7 +137,6 @@ public class UsernamePasswordIT {
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.refreshToken());
         // TODO uncomment once service fixes this for ROPC flow
         // Assert.assertNotNull(result.idToken());
     }
@@ -157,7 +155,7 @@ public class UsernamePasswordIT {
                 b2cAuthority(TestConstants.B2C_MICROSOFTLOGIN_ROPC).
                 build();
 
-        AuthenticationResult result = pca.acquireToken(UserNamePasswordParameters.
+        IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters.
                 builder(Collections.singleton(TestConstants.B2C_READ_SCOPE),
                         labResponse.getUser().getUpn(),
                         password.toCharArray())
@@ -166,7 +164,6 @@ public class UsernamePasswordIT {
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.refreshToken());
         // TODO uncomment once service fixes this for ROPC flow
         // Assert.assertNotNull(result.idToken());
     }
