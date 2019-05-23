@@ -23,11 +23,23 @@
 
 package com.microsoft.aad.msal4j;
 
+/**
+ * Representation of user account
+ */
 public interface IAccount {
 
+    /**
+     * @return account id
+     */
     String homeAccountId();
 
+    /**
+     * @return account`s environment
+     */
     String environment();
 
+    /**
+     * @return account`s username
+     */
     String username();
 }

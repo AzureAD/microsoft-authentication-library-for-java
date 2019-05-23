@@ -25,8 +25,10 @@ package com.microsoft.aad.msal4j;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.experimental.Accessors;
 
 @Builder
+@Accessors(fluent = true)
 @Getter
 public class TokenCacheAccessContext implements ITokenCacheAccessContext {
 
@@ -36,5 +38,5 @@ public class TokenCacheAccessContext implements ITokenCacheAccessContext {
 
     private IAccount account;
 
-    private boolean isCacheChanged;
+    private boolean hasCacheChanged;
 }

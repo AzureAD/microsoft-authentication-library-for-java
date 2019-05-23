@@ -64,7 +64,7 @@ public class TokenCache implements ITokenCache {
     private transient String serializedCachedData;
 
     @Override
-    public void deserializeAndLoadToCache(String data) {
+    public void deserialize(String data) {
         if(StringHelper.isBlank(data)){
             return;
         }
@@ -144,7 +144,7 @@ public class TokenCache implements ITokenCache {
             ITokenCacheAccessContext context = TokenCacheAccessContext.builder().
                     clientId(tokenRequest.getMsalRequest().application().clientId()).
                     tokenCache(this).
-                    isCacheChanged(true).
+                    hasCacheChanged(true).
                     build();
             tokenCacheAccessAspect.afterCacheAccess(context);
         }

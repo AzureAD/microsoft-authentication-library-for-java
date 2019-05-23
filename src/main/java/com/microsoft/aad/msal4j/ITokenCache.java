@@ -23,8 +23,22 @@
 
 package com.microsoft.aad.msal4j;
 
+/**
+ * Interface to implement cache persistence
+ */
 public interface ITokenCache {
-    void deserializeAndLoadToCache(String data);
 
+    /**
+     * Deserialize token cache from json
+     *
+     * @param data serialized cache in json format
+     */
+    void deserialize(String data);
+
+    /**
+     * Serialize token cache to json
+     *
+     * @return serialized cache in json format
+     */
     String serialize();
 }

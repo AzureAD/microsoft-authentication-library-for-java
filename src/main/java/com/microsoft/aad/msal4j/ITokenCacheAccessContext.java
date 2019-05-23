@@ -27,11 +27,24 @@ package com.microsoft.aad.msal4j;
  * Contains parameters used by the MSAL to access the cache_data.
  */
 public interface ITokenCacheAccessContext {
-    ITokenCache getTokenCache();
 
-    String getClientId();
+    /**
+     * @return instance of accessed ITokenCache
+     */
+    ITokenCache tokenCache();
 
-    IAccount getAccount();
+    /**
+     * @return client id used for cache access
+     */
+    String clientId();
 
-    boolean isCacheChanged();
+    /**
+     * @return instance of IAccount used for cache access
+     */
+    IAccount account();
+
+    /**
+     * @return a boolean value telling whether cache was changed
+     */
+    boolean hasCacheChanged();
 }

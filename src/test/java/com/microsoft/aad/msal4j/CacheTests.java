@@ -76,7 +76,7 @@ public class CacheTests extends AbstractMsalTests {
 
         String previouslyStoredCache = readResource("/cache_data/serialized_cache.json");
 
-        tokenCache.deserializeAndLoadToCache(previouslyStoredCache);
+        tokenCache.deserialize(previouslyStoredCache);
 
         String serializedCache = tokenCache.serialize();
 

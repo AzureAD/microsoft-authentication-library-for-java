@@ -28,15 +28,33 @@ package com.microsoft.aad.msal4j;
  */
 public interface IAuthenticationResult {
 
+    /**
+     * @return access token
+     */
     String accessToken();
 
+    /**
+     * @return id token
+     */
     String idToken();
 
+    /**
+     * @return user account
+     */
     IAccount account();
 
+    /**
+     * @return environment
+     */
     String environment();
 
+    /**
+     * @return scopes which represents amount of access that is granted to access token
+     */
     String scopes();
 
+    /**
+     * @return access token expiration date
+     */
     java.util.Date expiresOnDate();
 }
