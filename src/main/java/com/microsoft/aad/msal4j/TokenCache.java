@@ -110,7 +110,7 @@ public class TokenCache implements ITokenCache {
             JsonObject update = new Gson().toJsonTree(this).getAsJsonObject();
 
             mergeJsonObjects(cache, update);
-            
+
             return cache.toString();
         }
         return new GsonBuilder().create().toJson(this);
@@ -170,7 +170,7 @@ public class TokenCache implements ITokenCache {
                                                                  AuthenticationResult authenticationResult,
                                                                  String environmentAlias) {
         RefreshTokenCacheEntity rt = new RefreshTokenCacheEntity();
-        rt.credentialType(CredentialTypeEnum.REFRESH_TOKEN.getValue());
+        rt.credentialType(CredentialTypeEnum.REFRESH_TOKEN.value());
 
         if(authenticationResult.account() != null){
             rt.homeAccountId(authenticationResult.account().homeAccountId());
@@ -189,7 +189,7 @@ public class TokenCache implements ITokenCache {
                                                                AuthenticationResult authenticationResult,
                                                                String environmentAlias) {
         AccessTokenCacheEntity at = new AccessTokenCacheEntity();
-        at.credentialType(CredentialTypeEnum.ACCESS_TOKEN.getValue());
+        at.credentialType(CredentialTypeEnum.ACCESS_TOKEN.value());
 
         if(authenticationResult.account() != null){
             at.homeAccountId(authenticationResult.account().homeAccountId());
@@ -222,7 +222,7 @@ public class TokenCache implements ITokenCache {
                                                        AuthenticationResult authenticationResult,
                                                        String environmentAlias) {
         IdTokenCacheEntity idToken = new IdTokenCacheEntity();
-        idToken.credentialType(CredentialTypeEnum.ID_TOKEN.getValue());
+        idToken.credentialType(CredentialTypeEnum.ID_TOKEN.value());
 
         if(authenticationResult.account() != null){
             idToken.homeAccountId(authenticationResult.account().homeAccountId());
