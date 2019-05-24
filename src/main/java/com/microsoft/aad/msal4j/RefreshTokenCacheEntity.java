@@ -37,7 +37,7 @@ import java.util.List;
 class RefreshTokenCacheEntity extends Credential {
 
     @SerializedName("credential_type")
-    private String credentialType = "RefreshToken";
+    private String credentialType;
 
     @SerializedName("family_id")
     private String family_id;

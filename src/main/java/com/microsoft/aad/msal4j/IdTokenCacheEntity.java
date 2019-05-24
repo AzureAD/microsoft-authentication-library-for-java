@@ -26,14 +26,20 @@ package com.microsoft.aad.msal4j;
 import com.google.gson.annotations.SerializedName;
 import com.microsoft.aad.msal4j.Constants;
 import com.microsoft.aad.msal4j.Credential;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Accessors(fluent = true)
+@Getter
+@Setter
 class IdTokenCacheEntity extends Credential {
 
     @SerializedName("credential_type")
-    private String credentialType = "IdToken";
+    private String credentialType;
 
     @SerializedName("realm")
     protected String realm;
@@ -51,13 +57,5 @@ class IdTokenCacheEntity extends Credential {
         keyParts.add("");
 
         return String.join(Constants.CACHE_KEY_SEPARATOR, keyParts).toLowerCase();
-    }
-
-    String getRealm() {
-        return realm;
-    }
-
-    void setRealm(String realm) {
-        this.realm = realm;
     }
 }

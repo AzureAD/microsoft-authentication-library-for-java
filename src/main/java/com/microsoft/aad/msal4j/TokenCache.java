@@ -23,8 +23,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.gson.*;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.internal.LinkedTreeMap;
 
@@ -80,23 +79,40 @@ public class TokenCache implements ITokenCache {
         this.appMetadata = deserializedCache.appMetadata;
     }
 
+    private static void mergeJsonObjects(JsonObject old, JsonObject update) {
+
+        for (Map.Entry<String, JsonElement> uEntry : update.entrySet())
+        {
+            String key = uEntry.getKey();
+            JsonElement uValue = uEntry.getValue();
+            if (!old.has(key)) {
+                if(!uValue.isJsonNull() &&
+                        !(uValue.isJsonObject() && uValue.getAsJsonObject().size() == 0)){
+                    old.add(key, uValue);
+                }
+            }
+            else{
+                JsonElement oValue = old.get(key);
+                if(uValue.isJsonObject()){
+                    mergeJsonObjects(oValue.getAsJsonObject(), uValue.getAsJsonObject());
+                }
+                else{
+                    old.add(key, uValue);
+                }
+            }
+        }
+    }
+
     @Override
     public String serialize() {
         if(!StringHelper.isBlank(serializedCachedData)){
-            Object o = new Gson().fromJson(serializedCachedData, Object.class);
-            Map<String, Object> map = (Map<String, Object>)o;
+            JsonObject cache = new JsonParser().parse(serializedCachedData).getAsJsonObject();
+            JsonObject update = new Gson().toJsonTree(this).getAsJsonObject();
 
-            map.put("AccessToken", accessTokens);
-            map.put("RefreshToken", refreshTokens);
+            mergeJsonObjects(cache, update);
 
-            map.put("IdToken", idTokens);
-            map.put("AccountCacheEntity", accounts);
-
-            map.put("AppMetadata", appMetadata);
-
-            return new GsonBuilder().create().toJson(map);
+            return cache.toString();
         }
-
         return new GsonBuilder().create().toJson(this);
     }
 
@@ -154,6 +170,7 @@ public class TokenCache implements ITokenCache {
                                                                  AuthenticationResult authenticationResult,
                                                                  String environmentAlias) {
         RefreshTokenCacheEntity rt = new RefreshTokenCacheEntity();
+        rt.credentialType(CredentialTypeEnum.REFRESH_TOKEN.value());
 
         if(authenticationResult.account() != null){
             rt.homeAccountId(authenticationResult.account().homeAccountId());
@@ -172,6 +189,7 @@ public class TokenCache implements ITokenCache {
                                                                AuthenticationResult authenticationResult,
                                                                String environmentAlias) {
         AccessTokenCacheEntity at = new AccessTokenCacheEntity();
+        at.credentialType(CredentialTypeEnum.ACCESS_TOKEN.value());
 
         if(authenticationResult.account() != null){
             at.homeAccountId(authenticationResult.account().homeAccountId());
@@ -204,6 +222,7 @@ public class TokenCache implements ITokenCache {
                                                        AuthenticationResult authenticationResult,
                                                        String environmentAlias) {
         IdTokenCacheEntity idToken = new IdTokenCacheEntity();
+        idToken.credentialType(CredentialTypeEnum.ID_TOKEN.value());
 
         if(authenticationResult.account() != null){
             idToken.homeAccountId(authenticationResult.account().homeAccountId());
@@ -214,7 +233,7 @@ public class TokenCache implements ITokenCache {
 
         IdToken idTokenObj = authenticationResult.idTokenObject();
         if (idTokenObj != null) {
-            idToken.setRealm(idTokenObj.tenantIdentifier);
+            idToken.realm(idTokenObj.tenantIdentifier);
         }
 
         return idToken;

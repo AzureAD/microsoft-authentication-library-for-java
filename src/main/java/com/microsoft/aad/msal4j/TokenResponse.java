@@ -119,8 +119,8 @@ class TokenResponse extends OIDCTokenResponse {
         }
 
         String foci = null;
-        if (jsonObject.containsKey("familyId")) {
-            foci = JSONObjectUtils.getString(jsonObject, "familyId");
+        if (jsonObject.containsKey("foci")) {
+            foci = JSONObjectUtils.getString(jsonObject, "foci");
         }
 
         return new TokenResponse(accessToken, refreshToken,
