@@ -23,47 +23,18 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.gson.annotations.SerializedName;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
+public enum CredentialTypeEnum {
 
-import java.util.ArrayList;
-import java.util.List;
+    ACCESS_TOKEN("AccessToken"),
+    REFRESH_TOKEN("RefreshToken"),
+    ID_TOKEN("IdToken");
 
-@Accessors(fluent = true)
-@Getter
-@Setter
-class AccessTokenCacheEntity extends Credential {
+    private final String value;
 
-    @SerializedName("credential_type")
-    private String credentialType;
-
-    @SerializedName("realm")
-    protected String realm;
-
-    @SerializedName("target")
-    private String target;
-
-    @SerializedName("cached_at")
-    private String cachedAt;
-
-    @SerializedName("expires_on")
-    private String expiresOn;
-
-    @SerializedName("extended_expires_on")
-    private String extExpiresOn;
-
-    String getKey() {
-        List<String> keyParts = new ArrayList<>();
-
-        keyParts.add(StringHelper.isBlank(homeAccountId) ? "" : homeAccountId);
-        keyParts.add(environment);
-        keyParts.add(credentialType);
-        keyParts.add(clientId);
-        keyParts.add(realm);
-        keyParts.add(target);
-
-        return String.join(Constants.CACHE_KEY_SEPARATOR, keyParts).toLowerCase();
+    CredentialTypeEnum(String value){
+        this.value = value;
+    }
+    public String getValue(){
+        return value;
     }
 }
