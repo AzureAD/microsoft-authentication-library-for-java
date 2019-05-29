@@ -40,7 +40,7 @@ public class SilentParameters {
     private Set<String> scopes;
 
     @NonNull
-    private Account account;
+    private IAccount account;
 
     private String authorityUrl;
 
@@ -51,7 +51,7 @@ public class SilentParameters {
         return new SilentParametersBuilder();
     }
 
-    public static SilentParametersBuilder builder(Set<String> scopes, Account account) {
+    public static SilentParametersBuilder builder(Set<String> scopes, IAccount account) {
 
         validateNotEmpty("scopes", scopes);
 

@@ -45,18 +45,21 @@ class TokenResponse extends OIDCTokenResponse {
 
     private long extExpiresIn;
 
+    private String foci;
+
     TokenResponse(final AccessToken accessToken,
                   final RefreshToken refreshToken, final String idToken) {
         super(new OIDCTokens(idToken, accessToken, refreshToken));
     }
 
     TokenResponse(final AccessToken accessToken, final RefreshToken refreshToken, final String idToken,
-                  final String scope, String clientInfo, long expiresIn, long extExpiresIn) {
+                  final String scope, String clientInfo, long expiresIn, long extExpiresIn, String foci) {
         this(accessToken, refreshToken, idToken);
         this.scope = scope;
         this.clientInfo = clientInfo;
         this.expiresIn = expiresIn;
         this.extExpiresIn = extExpiresIn;
+        this.foci = foci;
     }
 
     /**
@@ -115,7 +118,12 @@ class TokenResponse extends OIDCTokenResponse {
             ext_expires_in = jsonObject.getAsNumber("ext_expires_in").longValue();
         }
 
+        String foci = null;
+        if (jsonObject.containsKey("foci")) {
+            foci = JSONObjectUtils.getString(jsonObject, "foci");
+        }
+
         return new TokenResponse(accessToken, refreshToken,
-                idTokenValue, scopeValue, clientInfo, expiresIn, ext_expires_in);
+                idTokenValue, scopeValue, clientInfo, expiresIn, ext_expires_in, foci);
     }
 }

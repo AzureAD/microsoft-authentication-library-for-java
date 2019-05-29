@@ -37,7 +37,7 @@ import java.util.List;
 class AccessTokenCacheEntity extends Credential {
 
     @SerializedName("credential_type")
-    private String credentialType = "AccessToken";
+    private String credentialType;
 
     @SerializedName("realm")
     protected String realm;

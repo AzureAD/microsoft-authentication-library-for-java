@@ -23,84 +23,20 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.gson.annotations.SerializedName;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.Accessors;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Accessors(fluent = true)
 @Getter
 @Setter
-@EqualsAndHashCode
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Account {
+@AllArgsConstructor
+public class Account implements IAccount {
 
-    public static final String MSSTS_ACCOUNT_TYPE = "MSSTS";
+    String homeAccountId;
 
-    @SerializedName("home_account_id")
-    protected String homeAccountId;
+    String environment;
 
-    @SerializedName("environment")
-    protected String environment;
-
-    @SerializedName("realm")
-    protected String realm;
-
-    @SerializedName("local_account_id")
-    protected String localAccountId;
-
-    @SerializedName("username")
-    protected String username;
-
-    @SerializedName("name")
-    protected String name;
-
-    @SerializedName("client_info")
-    protected String clientInfoStr;
-
-    ClientInfo clientInfo() {
-        return ClientInfo.createFromJson(clientInfoStr);
-    }
-
-    @SerializedName("authority_type")
-    protected String authorityType;
-
-    String getKey() {
-
-        List<String> keyParts = new ArrayList<>();
-
-        keyParts.add(homeAccountId);
-        keyParts.add(environment);
-        keyParts.add(StringHelper.isBlank(realm) ? "" : realm);
-
-        return String.join(Constants.CACHE_KEY_SEPARATOR, keyParts).toLowerCase();
-    }
-
-    static Account create(String clientInfoStr, String environment, IdToken idToken, String policy) {
-
-        Account account = new Account();
-        account.authorityType(MSSTS_ACCOUNT_TYPE);
-        account.clientInfoStr = clientInfoStr;
-        account.homeAccountId(policy != null ?
-                account.clientInfo().toAccountIdentifier() + Constants.CACHE_KEY_SEPARATOR + policy :
-                account.clientInfo().toAccountIdentifier());
-        account.environment(environment);
-
-        if (idToken != null) {
-            account.realm(idToken.tenantIdentifier);
-            String localAccountId = !StringHelper.isBlank(idToken.objectIdentifier)
-                    ? idToken.objectIdentifier : idToken.subject;
-            account.localAccountId(localAccountId);
-            account.username(idToken.preferredUsername);
-            account.name(idToken.name);
-        }
-
-        return account;
-    }
-
-    static Account create(String clientInfoStr, String environment, IdToken idToken){
-        return create(clientInfoStr, environment, idToken, null);
-    }
+    String username;
 }

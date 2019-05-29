@@ -72,7 +72,7 @@ public class DeviceCodeIT {
         };
 
 
-        AuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
+        IAuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
                 .builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
                         deviceCodeConsumer)
                 .build())

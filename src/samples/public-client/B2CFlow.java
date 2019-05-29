@@ -1,5 +1,5 @@
 
-import com.microsoft.aad.msal4j.AuthenticationResult;
+import com.microsoft.aad.msal4j.IAuthenticationResult;
 import com.microsoft.aad.msal4j.PublicClientApplication;
 import com.microsoft.aad.msal4j.UserNamePasswordParameters;
 
@@ -19,7 +19,7 @@ public class B2CFlow {
                 .b2cAuthority(TestData.B2C_AUTHORITY)
                 .build();
 
-        CompletableFuture<AuthenticationResult> future = app.acquireToken(
+        CompletableFuture<IAuthenticationResult> future = app.acquireToken(
                 UserNamePasswordParameters.builder(
                         Collections.singleton(TestData.LAB_DEFAULT_B2C_SCOPE),
                         TestData.USER_NAME,
@@ -33,7 +33,6 @@ public class B2CFlow {
             System.out.println("Returned ok - " + res);
 
             System.out.println("Access Token - " + res.accessToken());
-            System.out.println("Refresh Token - " + res.refreshToken());
             System.out.println("ID Token - " + res.idToken());
             return res;
         }).join();

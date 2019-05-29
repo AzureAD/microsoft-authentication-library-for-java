@@ -23,6 +23,9 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.util.Optional;
+import java.util.Set;
+
 class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
 
     private SilentRequest silentRequest;
@@ -35,7 +38,6 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
 
     @Override
     AuthenticationResult execute() throws Exception {
-
         Authority requestAuthority = silentRequest.requestAuthority();
         if(requestAuthority.authorityType != AuthorityType.B2C){
             requestAuthority =
@@ -52,10 +54,7 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
             return res;
         }
 
-        if (StringHelper.isBlank(res.refreshToken())) {
-            return null;
-        } else {
-
+        if (!StringHelper.isBlank(res.refreshToken())) {
             RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(
                     RefreshTokenParameters.builder(silentRequest.parameters().scopes(), res.refreshToken()).build(),
                     silentRequest.application(),
@@ -65,6 +64,8 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
                     new AcquireTokenByAuthorizationGrantSupplier(clientApplication, refreshTokenRequest, requestAuthority);
 
             return acquireTokenByAuthorisationGrantSupplier.execute();
+        } else {
+            return null;
         }
     }
 }

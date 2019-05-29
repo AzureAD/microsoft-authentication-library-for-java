@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.microsoft.azure</groupId>
 	<artifactId>msal4j</artifactId>
-	<version>0.2.0-preview</version>
+	<version>0.3.0-preview</version>
 	<packaging>jar</packaging>
 	<name>msal4j</name>
 	<description>
@@ -156,6 +156,24 @@
 	<build>
 		<plugins>
 			<plugin>
+				<groupId>org.projectlombok</groupId>
+				<artifactId>lombok-maven-plugin</artifactId>
+				<version>1.18.2.0</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>delombok</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<sourceDirectory>src/main/java</sourceDirectory>
+					<outputDirectory>${project.build.directory}/delombok</outputDirectory>
+					<addOutputDirectory>false</addOutputDirectory>
+				</configuration>
+			</plugin>
+
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
 				<version>2.5</version>
@@ -176,10 +194,14 @@
 					<argLine>-noverify</argLine>
 				</configuration>
 			</plugin>
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>2.9.1</version>
+				<version>3.1.0</version>
+				<configuration>
+					<sourcepath>${project.build.directory}/delombok</sourcepath>
+				</configuration>
 				<executions>
 					<execution>
 						<id>attach-javadocs</id>
@@ -224,6 +246,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+				<version>3.7.0</version>
                 <configuration>
                     <source>8</source>
                     <target>8</target>

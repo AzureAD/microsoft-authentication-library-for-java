@@ -26,7 +26,7 @@ package com.microsoft.aad.msal4j;
 /***
  * Credential type containing an assertion representing user credential.
  */
-public class UserAssertion {
+public class UserAssertion implements IUserAssertion {
 
     private final String assertion;
 
@@ -50,6 +50,7 @@ public class UserAssertion {
      *
      * @return string value
      */
+    @Override
     public String getAssertion() {
         return assertion;
     }
