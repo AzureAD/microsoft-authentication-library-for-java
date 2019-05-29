@@ -1,3 +1,9 @@
+Version 0.3.0-preview
+=============
+- Added support for FOCI
+- Updated public API to return interfaces
+- Updated cache to be compatible with MSAL Python and MSAL.NET caches
+
 Version 0.2.0-preview
 =============
 - Added support for B2C
