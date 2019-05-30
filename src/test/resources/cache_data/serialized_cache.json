@@ -1,18 +1,18 @@
 {
   "Account": {
-    "uid.utid-login.example.com-contoso": {
+    "uid.utid-login.windows.net-contoso": {
       "username": "John Doe",
       "local_account_id": "object1234",
       "realm": "contoso",
-      "environment": "login.example.com",
+      "environment": "login.windows.net",
       "home_account_id": "uid.utid",
       "authority_type": "MSSTS"
     }
   },
   "RefreshToken": {
-    "uid.utid-login.example.com-refreshtoken-my_client_id--s2 s1 s3": {
+    "uid.utid-login.windows.net-refreshtoken-my_client_id--s2 s1 s3": {
       "target": "s2 s1 s3",
-      "environment": "login.example.com",
+      "environment": "login.windows.net",
       "credential_type": "RefreshToken",
       "secret": "a refresh token",
       "client_id": "my_client_id",
@@ -23,8 +23,8 @@
     "an-entry": {
       "foo": "bar"
     },
-    "uid.utid-login.example.com-accesstoken-my_client_id-contoso-s2 s1 s3": {
-      "environment": "login.example.com",
+    "uid.utid-login.windows.net-accesstoken-my_client_id-contoso-s2 s1 s3": {
+      "environment": "login.windows.net",
       "credential_type": "AccessToken",
       "secret": "an access token",
       "realm": "contoso",
@@ -37,9 +37,9 @@
     }
   },
   "IdToken": {
-    "uid.utid-login.example.com-idtoken-my_client_id-contoso-": {
+    "uid.utid-login.windows.net-idtoken-my_client_id-contoso-": {
       "realm": "contoso",
-      "environment": "login.example.com",
+      "environment": "login.windows.net",
       "credential_type": "IdToken",
       "secret": "header.eyJvaWQiOiAib2JqZWN0MTIzNCIsICJwcmVmZXJyZWRfdXNlcm5hbWUiOiAiSm9obiBEb2UiLCAic3ViIjogInN1YiJ9.signature",
       "client_id": "my_client_id",
@@ -51,8 +51,8 @@
     "field2": "whats"
   },
   "AppMetadata": {
-    "appmetadata-login.example.com-my_client_id": {
-      "environment": "login.example.com",
+    "appmetadata-login.windows.net-my_client_id": {
+      "environment": "login.windows.net",
       "family_id": null,
       "client_id": "my_client_id"
     }

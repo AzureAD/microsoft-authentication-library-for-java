@@ -52,7 +52,7 @@ public class TokenCache implements ITokenCache {
     @SerializedName("IdToken")
     Map<String, IdTokenCacheEntity> idTokens = new LinkedTreeMap<>();
 
-    @SerializedName("AccountCacheEntity")
+    @SerializedName("Account")
     Map<String, AccountCacheEntity> accounts = new LinkedTreeMap<>();
 
     @SerializedName("AppMetadata")
@@ -80,24 +80,50 @@ public class TokenCache implements ITokenCache {
     }
 
     private static void mergeJsonObjects(JsonObject old, JsonObject update) {
+        mergeRemovals(old, update, null);
+        mergeUpdates(old, update);
+    }
 
+    private static void mergeUpdates(JsonObject old, JsonObject update) {
         for (Map.Entry<String, JsonElement> uEntry : update.entrySet())
         {
             String key = uEntry.getKey();
             JsonElement uValue = uEntry.getValue();
+
+            // add new property
             if (!old.has(key)) {
                 if(!uValue.isJsonNull() &&
                         !(uValue.isJsonObject() && uValue.getAsJsonObject().size() == 0)){
                     old.add(key, uValue);
                 }
             }
+            // merge old and new property
             else{
                 JsonElement oValue = old.get(key);
                 if(uValue.isJsonObject()){
-                    mergeJsonObjects(oValue.getAsJsonObject(), uValue.getAsJsonObject());
+                    mergeUpdates(oValue.getAsJsonObject(), uValue.getAsJsonObject());
                 }
                 else{
                     old.add(key, uValue);
+                }
+            }
+        }
+    }
+
+    private static void mergeRemovals(JsonObject old, JsonObject update, String parentKey) {
+        Set<String> msalEntities =
+                new HashSet<>(Arrays.asList("Account", "sds", "AccessToken", "RefreshToken", "IdToken", "AppMetadata"));
+
+        for(String msalEntity : msalEntities){
+            JsonObject oldEntries = old.getAsJsonObject(msalEntity);
+            JsonObject newEntries = update.getAsJsonObject(msalEntity);
+            if(oldEntries != null){
+                for (Map.Entry<String, JsonElement> oEntry : oldEntries.entrySet())
+                {
+                    String key = oEntry.getKey();
+                    if(newEntries == null || !newEntries.has(key)){
+                        oldEntries.remove(key);
+                    }
                 }
             }
         }
@@ -326,9 +352,11 @@ public class TokenCache implements ITokenCache {
 
     private void removeAccount(IAccount account, Set<String> environmentAliases) {
 
-        Predicate<Map.Entry<String, ? extends Credential>> credentialToRemovePredicate = e ->
-                e.getValue().homeAccountId().equals(account.homeAccountId()) &&
-                        environmentAliases.contains(e.getValue().environment);
+        Predicate<Map.Entry<String, ? extends Credential>> credentialToRemovePredicate =
+                e ->    !StringHelper.isBlank(e.getValue().homeAccountId()) &&
+                        !StringHelper.isBlank(e.getValue().environment()) &&
+                        e.getValue().homeAccountId().equals(account.homeAccountId()) &&
+                        environmentAliases.contains(e.getValue().environment());
 
         accessTokens.entrySet().removeIf(credentialToRemovePredicate);
 
@@ -336,7 +364,10 @@ public class TokenCache implements ITokenCache {
 
         idTokens.entrySet().removeIf(credentialToRemovePredicate);
 
-        accounts.entrySet().removeIf(e -> e.getValue().homeAccountId().equals(account.homeAccountId()) &&
+        accounts.entrySet().removeIf(
+                e ->    !StringHelper.isBlank(e.getValue().homeAccountId()) &&
+                        !StringHelper.isBlank(e.getValue().environment()) &&
+                        e.getValue().homeAccountId().equals(account.homeAccountId()) &&
                         environmentAliases.contains(e.getValue().environment));
     }
 
