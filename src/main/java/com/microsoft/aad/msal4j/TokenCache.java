@@ -80,7 +80,7 @@ public class TokenCache implements ITokenCache {
     }
 
     private static void mergeJsonObjects(JsonObject old, JsonObject update) {
-        mergeRemovals(old, update, null);
+        mergeRemovals(old, update);
         mergeUpdates(old, update);
     }
 
