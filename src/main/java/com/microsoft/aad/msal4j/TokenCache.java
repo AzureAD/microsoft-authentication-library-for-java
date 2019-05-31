@@ -110,7 +110,7 @@ public class TokenCache implements ITokenCache {
         }
     }
 
-    private static void mergeRemovals(JsonObject old, JsonObject update, String parentKey) {
+    private static void mergeRemovals(JsonObject old, JsonObject update) {
         Set<String> msalEntities =
                 new HashSet<>(Arrays.asList("Account", "AccessToken", "RefreshToken", "IdToken", "AppMetadata"));
 
