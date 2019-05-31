@@ -3,7 +3,6 @@ package com.microsoft.aad.msal4j;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import org.openqa.selenium.InvalidArgumentException;
 
 import java.net.URL;
 
@@ -51,7 +50,7 @@ abstract class Authority {
        } else if(authorityType == AuthorityType.B2C) {
            return new B2CAuthority(authorityUrl);
        } else {
-           throw new InvalidArgumentException("Unsupported Authority Type");
+           throw new IllegalArgumentException("Unsupported Authority Type");
        }
     }
 
