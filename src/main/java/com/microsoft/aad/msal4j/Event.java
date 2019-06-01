@@ -91,7 +91,7 @@ abstract class Event extends HashMap<String, String>{
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hashedString = digest.digest(stringToHash.getBytes(StandardCharsets.UTF_8));
-             base64EncodedSha256Hash = new String(Base64.getEncoder().encode(hashedString), StandardCharsets.UTF_8);
+            base64EncodedSha256Hash = new String(Base64.getEncoder().encode(hashedString), StandardCharsets.UTF_8);
         } catch(NoSuchAlgorithmException e){
             base64EncodedSha256Hash = null;
         }
