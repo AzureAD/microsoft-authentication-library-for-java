@@ -23,8 +23,8 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
-
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
@@ -77,7 +77,7 @@ public class TokenResponseTest extends AbstractMsalTests {
     }
 
     @Test
-    public void testEmptyIdToken() throws ParseException {
+    public void testEmptyIdToken() throws ParseException, NoSuchAlgorithmException {
         final TokenResponse response = new TokenResponse(
                 new BearerAccessToken(idToken), new RefreshToken(
                         "refresh_token"), "");

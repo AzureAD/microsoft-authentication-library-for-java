@@ -50,7 +50,7 @@ class AccountsSupplier implements Supplier<Set<IAccount>> {
                                     clientApplication.getServiceBundle());
 
             return clientApplication.tokenCache.getAccounts
-                    (clientApplication.clientId(), instanceDiscoveryData.getAliasesSet());
+                    (clientApplication.clientId(), instanceDiscoveryData.aliases);
 
         } catch (Exception ex) {
             clientApplication.log.error(

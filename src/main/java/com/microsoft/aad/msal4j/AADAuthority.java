@@ -35,12 +35,11 @@ class AADAuthority extends Authority {
 
     private final static String TENANTLESS_TENANT_NAME = "common";
 
-
-    private final String AADAuthorityFormat = "https://%s/%s/";
-    final String AADtokenEndpointFormat = "https://%s/{tenant}" + TOKEN_ENDPOINT;
+    private final static String AADAuthorityFormat = "https://%s/%s/";
+    private final static String AADtokenEndpointFormat = "https://%s/{tenant}" + TOKEN_ENDPOINT;
 
     final static String DEVICE_CODE_ENDPOINT = "/oauth2/v2.0/devicecode";
-    final String deviceCodeEndpointFormat = "https://%s/{tenant}" + DEVICE_CODE_ENDPOINT;
+    private final static String deviceCodeEndpointFormat = "https://%s/{tenant}" + DEVICE_CODE_ENDPOINT;
 
     String deviceCodeEndpoint;
 

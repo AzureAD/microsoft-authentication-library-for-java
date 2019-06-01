@@ -23,8 +23,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.common.base.Strings;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -66,14 +64,14 @@ class TelemetryManager implements ITelemetryManager, ITelemetry{
 
     @Override
     public void startEvent(String requestId, Event eventToStart) {
-        if(hasConsumer() && !Strings.isNullOrEmpty(requestId)){
+        if(hasConsumer() && !StringHelper.isBlank(requestId)){
             eventsInProgress.put(new EventKey(requestId, eventToStart), eventToStart);
         }
     }
 
     @Override
     public void stopEvent(String requestId, Event eventToStop){
-        if(!hasConsumer() || Strings.isNullOrEmpty(requestId)) return;
+        if(!hasConsumer() || StringHelper.isBlank(requestId)) return;
 
         EventKey eventKey = new EventKey(requestId, eventToStop);
 

@@ -5,7 +5,7 @@ import java.net.URL;
 // Not supported for now, but we will soon add support
 class ADFSAuthority extends Authority{
 
-    private final String ADFSAuthorityFormat = "https://%s/%s/";
+    private final static String ADFSAuthorityFormat = "https://%s/%s/";
 
     ADFSAuthority(final URL authorityUrl) {
         super(authorityUrl);

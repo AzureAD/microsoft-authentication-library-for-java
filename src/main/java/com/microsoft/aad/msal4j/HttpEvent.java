@@ -23,8 +23,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.common.base.Strings;
-
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -110,8 +108,8 @@ class HttpEvent extends Event{
         for(String queryString: queryStrings){
             String[] queryPairs =  queryString.split("=");
             if(queryPairs.length == 2 &&
-                    !Strings.isNullOrEmpty(queryPairs[0]) &&
-                    !Strings.isNullOrEmpty(queryPairs[1])){
+                    !StringHelper.isBlank(queryPairs[0]) &&
+                    !StringHelper.isBlank(queryPairs[1])){
                 queryKeys.add(queryPairs[0].toLowerCase(Locale.ROOT));
             }
         }

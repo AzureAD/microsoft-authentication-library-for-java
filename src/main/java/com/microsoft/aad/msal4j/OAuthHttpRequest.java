@@ -41,6 +41,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 
@@ -127,7 +128,7 @@ class OAuthHttpRequest extends HTTPRequest {
 
         if (this.getQuery() != null) {
             try(final OutputStreamWriter writer = new OutputStreamWriter(
-                    conn.getOutputStream())) {
+                    conn.getOutputStream(), StandardCharsets.UTF_8)) {
                 writer.write(getQuery());
                 writer.flush();
             }
@@ -139,7 +140,7 @@ class OAuthHttpRequest extends HTTPRequest {
         Reader inReader;
         final int responseCode = conn.getResponseCode();
         if (responseCode == 200) {
-            inReader = new InputStreamReader(conn.getInputStream());
+            inReader = new InputStreamReader(conn.getInputStream(),  StandardCharsets.UTF_8);
         }
         else {
             InputStream stream = conn.getErrorStream();
@@ -151,7 +152,7 @@ class OAuthHttpRequest extends HTTPRequest {
                 stream = conn.getInputStream();
             }
 
-            inReader = new InputStreamReader(stream);
+            inReader = new InputStreamReader(stream, StandardCharsets.UTF_8);
         }
         final BufferedReader reader = new BufferedReader(inReader);
         final char[] buffer = new char[256];
