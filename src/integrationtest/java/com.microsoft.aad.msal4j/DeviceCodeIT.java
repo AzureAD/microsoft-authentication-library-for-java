@@ -83,8 +83,8 @@ public class DeviceCodeIT {
     }
 
     private void runAutomatedDeviceCodeFlow(DeviceCode deviceCode, LabUser user){
-        boolean isRunningLocally = !Strings.isNullOrEmpty(
-                System.getenv(TestConstants.LOCAL_FLAG_ENV_VAR));
+        boolean isRunningLocally = true; /*!Strings.isNullOrEmpty(
+                System.getenv(TestConstants.LOCAL_FLAG_ENV_VAR));*/
         LOG.info("Device code running locally: " + isRunningLocally);
         try{
             String deviceCodeFormId;
