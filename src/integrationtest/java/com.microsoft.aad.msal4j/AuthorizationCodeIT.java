@@ -78,7 +78,7 @@ public class AuthorizationCodeIT {
         seleniumDriver = SeleniumExtensions.createDefaultWebDriver();
     }
 
-    //@Test
+    @Test
     public void acquireTokenWithAuthorizationCode_ManagedUser(){
         LabResponse labResponse = labUserProvider.getDefaultUser(
                 NationalCloud.AZURE_CLOUD,
@@ -88,7 +88,7 @@ public class AuthorizationCodeIT {
         assertAcquireTokenAAD(labResponse);
     }
 
-    //@Test
+    @Test
     public void acquireTokenWithAuthorizationCode_ADFSv2019_Federated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSv2019,
@@ -99,7 +99,7 @@ public class AuthorizationCodeIT {
         assertAcquireTokenAAD(labResponse);
     }
 
-    //@Test
+    @Test
     public void acquireTokenWithAuthorizationCode_ADFSv2019_NotFederated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSv2019,
@@ -110,7 +110,7 @@ public class AuthorizationCodeIT {
         assertAcquireTokenAAD(labResponse);
     }
 
-    //@Test
+    @Test
     public void acquireTokenWithAuthorizationCode_ADFSv4_Federated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV4,
@@ -121,7 +121,7 @@ public class AuthorizationCodeIT {
         assertAcquireTokenAAD(labResponse);
     }
 
-    //@Test
+    @Test
     public void acquireTokenWithAuthorizationCode_ADFSv4_NotFederated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV4,
@@ -132,7 +132,7 @@ public class AuthorizationCodeIT {
         assertAcquireTokenAAD(labResponse);
     }
 
-    //@Test
+    @Test
     public void acquireTokenWithAuthorizationCode_ADFSv3_Federated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV3,
@@ -143,7 +143,7 @@ public class AuthorizationCodeIT {
 
     }
 
-    //@Test
+    @Test
     public void acquireTokenWithAuthorizationCode_ADFSv3_NotFederated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV3,
@@ -154,7 +154,7 @@ public class AuthorizationCodeIT {
         assertAcquireTokenAAD(labResponse);
     }
 
-    //@Test
+    @Test
     public void acquireTokenWithAuthorizationCode_ADFSv2_Federated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV2,
@@ -165,7 +165,7 @@ public class AuthorizationCodeIT {
         assertAcquireTokenAAD(labResponse);
     }
 
-    //@Test
+    @Test
     public void acquireTokenWithAuthorizationCode_ADFSv2_NotFederated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV2,
@@ -176,7 +176,7 @@ public class AuthorizationCodeIT {
         assertAcquireTokenAAD(labResponse);
     }
 
-    //@Test
+    @Test
     public void acquireTokenWithAuthorizationCode_B2C_Local(){
         LabResponse labResponse = labUserProvider.getB2cUser(
                 B2CIdentityProvider.LOCAL,
