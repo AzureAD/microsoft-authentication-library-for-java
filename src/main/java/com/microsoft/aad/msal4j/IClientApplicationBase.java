@@ -93,6 +93,15 @@ public interface IClientApplicationBase {
     CompletableFuture<IAuthenticationResult> acquireToken(AuthorizationCodeParameters parameters);
 
     /**
+     * Acquires a security token from the authority using a Refresh Token previously received.
+     *
+     * @param parameters#refreshToken Refresh Token to use in the refresh flow.
+     * @param parameters#scopes       scopes of the access request
+     * @return A {@link CompletableFuture} object representing the {@link IAuthenticationResult} of the call.
+     */
+    CompletableFuture<IAuthenticationResult> acquireToken(RefreshTokenParameters parameters);
+
+    /**
      * Returning tokens from cache or requesting new one using previously cached refresh tokens
      *
      * @param parameters instance of SilentParameters

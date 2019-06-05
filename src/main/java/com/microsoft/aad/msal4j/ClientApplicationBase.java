@@ -103,17 +103,8 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         return this.executeRequest(authorizationCodeRequest);
     }
 
-    /**
-     * Acquires a security token from the authority using a Refresh Token
-     * previously received.
-     *
-     * @param parameters#refreshToken Refresh Token to use in the refresh flow.
-     * @param parameters#scopes       scopes of the access request
-     * @return A {@link CompletableFuture} object representing the
-     * {@link IAuthenticationResult} of the call. It contains Access
-     * Token, Refresh Token and the Access Token's expiration time.
-     */
-    CompletableFuture<IAuthenticationResult> acquireToken(RefreshTokenParameters parameters) {
+    @Override
+    public CompletableFuture<IAuthenticationResult> acquireToken(RefreshTokenParameters parameters) {
 
         validateNotNull("parameters", parameters);
 
