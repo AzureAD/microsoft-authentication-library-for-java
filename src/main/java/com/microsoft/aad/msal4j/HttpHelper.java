@@ -23,7 +23,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.common.base.Strings;
 import org.slf4j.Logger;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -32,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 class HttpHelper {
@@ -55,7 +55,7 @@ class HttpHelper {
 
             URL endpointUrl = new URL(url);
             httpEvent.setHttpPath(endpointUrl.toURI());
-            if(!Strings.isNullOrEmpty(endpointUrl.getQuery())){
+            if(!StringHelper.isBlank(endpointUrl.getQuery())){
                 httpEvent.setQueryParameters(endpointUrl.getQuery());
             }
 
@@ -114,7 +114,7 @@ class HttpHelper {
                     .get(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME));
         }
 
-        if(!Strings.isNullOrEmpty(conn.getHeaderField("User-Agent"))){
+        if(!StringHelper.isBlank(conn.getHeaderField("User-Agent"))){
             httpEvent.setUserAgent(conn.getHeaderField("User-Agent"));
         }
         setXmsClientTelemetryInfo(conn, httpEvent);
@@ -195,16 +195,16 @@ class HttpHelper {
     }
 
     private static String inputStreamToString(java.io.InputStream is) {
-        java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
+        java.util.Scanner s = new java.util.Scanner(is, StandardCharsets.UTF_8.name()).useDelimiter("\\A");
         return s.hasNext() ? s.next() : "";
     }
 
     private static void setXmsClientTelemetryInfo(final HttpsURLConnection conn, HttpEvent httpEvent){
-        if(!Strings.isNullOrEmpty(conn.getHeaderField("x-ms-request-id"))){
+        if(!StringHelper.isBlank(conn.getHeaderField("x-ms-request-id"))){
             httpEvent.setRequestIdHeader(conn.getHeaderField("x-ms-request-id"));
         }
 
-        if(!Strings.isNullOrEmpty(conn.getHeaderField("x-ms-clitelem"))){
+        if(!StringHelper.isBlank(conn.getHeaderField("x-ms-clitelem"))){
             XmsClientTelemetryInfo xmsClientTelemetryInfo =
                     XmsClientTelemetryInfo.parseXmsTelemetryInfo(
                             conn.getHeaderField("x-ms-clitelem"));

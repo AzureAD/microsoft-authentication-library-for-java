@@ -23,7 +23,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.common.base.Strings;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -161,7 +160,7 @@ class TokenRequest {
                             errorResponse.toJSONObject().toJSONString(),
                             getClaims(httpResponse.getContent()));
                 } else {
-                    String telemetryErrorCode = Strings.isNullOrEmpty(errorObject.getCode()) ?
+                    String telemetryErrorCode = StringHelper.isBlank(errorObject.getCode()) ?
                             AuthenticationErrorCode.UNKNOWN.toString() :
                             errorObject.getCode();
 
@@ -177,15 +176,15 @@ class TokenRequest {
     private void addResponseHeadersToHttpEvent(HttpEvent httpEvent, HTTPResponse httpResponse) {
         httpEvent.setHttpResponseStatus(httpResponse.getStatusCode());
 
-        if (!Strings.isNullOrEmpty(httpResponse.getHeaderValue("User-Agent"))) {
+        if (!StringHelper.isBlank(httpResponse.getHeaderValue("User-Agent"))) {
             httpEvent.setUserAgent(httpResponse.getHeaderValue("User-Agent"));
         }
 
-        if (!Strings.isNullOrEmpty(httpResponse.getHeaderValue("x-ms-request-id"))) {
+        if (!StringHelper.isBlank(httpResponse.getHeaderValue("x-ms-request-id"))) {
             httpEvent.setRequestIdHeader(httpResponse.getHeaderValue("x-ms-request-id"));
         }
 
-        if (!Strings.isNullOrEmpty(httpResponse.getHeaderValue("x-ms-clitelem"))) {
+        if (!StringHelper.isBlank(httpResponse.getHeaderValue("x-ms-clitelem"))) {
             XmsClientTelemetryInfo xmsClientTelemetryInfo =
                     XmsClientTelemetryInfo.parseXmsTelemetryInfo(
                             httpResponse.getHeaderValue("x-ms-clitelem"));
@@ -200,7 +199,7 @@ class TokenRequest {
         httpEvent.setHttpMethod("POST");
         try {
             httpEvent.setHttpPath(url.toURI());
-            if(!Strings.isNullOrEmpty(url.getQuery()))
+            if(!StringHelper.isBlank(url.getQuery()))
                 httpEvent.setQueryParameters(url.getQuery());
         } catch(URISyntaxException ex){
             log.warn(LogHelper.createMessage("Setting URL telemetry fields failed: " +

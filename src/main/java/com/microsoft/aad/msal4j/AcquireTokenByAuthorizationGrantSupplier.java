@@ -31,6 +31,7 @@ import org.apache.commons.codec.binary.Base64;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSupplier {
 
@@ -112,12 +113,11 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
         AuthorizationGrant updatedGrant;
         if (response.isTokenSaml2()) {
             updatedGrant = new SAML2BearerGrant(new Base64URL(
-                    Base64.encodeBase64String(response.getToken().getBytes(
-                            "UTF-8"))));
+                    Base64.encodeBase64String(response.getToken().getBytes(StandardCharsets.UTF_8))));
         } else {
             updatedGrant = new SAML11BearerGrant(new Base64URL(
                     Base64.encodeBase64String(response.getToken()
-                            .getBytes())));
+                            .getBytes(StandardCharsets.UTF_8))));
         }
         return updatedGrant;
     }
@@ -126,7 +126,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
         AuthorizationGrant updatedGrant;
 
         String userRealmEndpoint = this.clientApplication.authenticationAuthority.
-                getUserRealmEndpoint(URLEncoder.encode(userName, "UTF-8"));
+                getUserRealmEndpoint(URLEncoder.encode(userName, StandardCharsets.UTF_8.name()));
 
         // Get the realm information
         UserDiscoveryResponse userRealmResponse = UserDiscoveryRequest.execute(

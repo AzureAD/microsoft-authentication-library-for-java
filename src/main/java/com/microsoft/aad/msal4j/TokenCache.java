@@ -448,7 +448,7 @@ public class TokenCache implements ITokenCache {
             tokenCacheAccessAspect.beforeCacheAccess(context);
         }
 
-        Set<String> environmentAliases = AadInstanceDiscovery.cache.get(account.environment()).getAliasesSet();
+        Set<String> environmentAliases = AadInstanceDiscovery.cache.get(account.environment()).aliases();
 
         Optional<AccountCacheEntity> accountCacheEntity =
                 getAccountCacheEntity(account, environmentAliases);

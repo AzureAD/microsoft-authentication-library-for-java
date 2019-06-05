@@ -23,8 +23,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.common.base.Strings;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,7 +40,7 @@ class XmsClientTelemetryInfo {
     private String speInfo;
 
     static XmsClientTelemetryInfo parseXmsTelemetryInfo(String headerValue){
-        if(Strings.isNullOrEmpty(headerValue)){
+        if(StringHelper.isBlank(headerValue)){
             return null;
         }
 

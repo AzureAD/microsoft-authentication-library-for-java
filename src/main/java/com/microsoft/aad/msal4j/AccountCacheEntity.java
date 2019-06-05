@@ -27,6 +27,7 @@ import com.google.gson.annotations.SerializedName;
 import lombok.*;
 import lombok.experimental.Accessors;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,7 +35,7 @@ import java.util.List;
 @Getter
 @Setter
 @EqualsAndHashCode
-class AccountCacheEntity {
+class AccountCacheEntity implements Serializable {
 
     static final String MSSTS_ACCOUNT_TYPE = "MSSTS";
 
