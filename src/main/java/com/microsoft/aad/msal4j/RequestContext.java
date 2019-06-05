@@ -23,7 +23,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.common.base.Strings;
 import java.util.UUID;
 
 class RequestContext {
@@ -34,9 +33,9 @@ class RequestContext {
     private PublicApi publicApi;
 
     public RequestContext(String clientId, String correlationId, PublicApi publicApi){
-        this.clientId = Strings.isNullOrEmpty(clientId) ? "unset_client_id" : clientId;
+        this.clientId = StringHelper.isBlank(clientId) ? "unset_client_id" : clientId;
         this.publicApi= publicApi;
-        this.correlationId = Strings.isNullOrEmpty(correlationId) ?
+        this.correlationId = StringHelper.isBlank(correlationId) ?
                 generateNewCorrelationId() :
                 correlationId;
     }

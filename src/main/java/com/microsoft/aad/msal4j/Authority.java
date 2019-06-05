@@ -3,7 +3,6 @@ package com.microsoft.aad.msal4j;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-
 import java.net.URL;
 
 /**
@@ -19,7 +18,7 @@ abstract class Authority {
 
     final static String TOKEN_ENDPOINT = "/oauth2/v2.0/token";
     private final static String USER_REALM_ENDPOINT = "common/userrealm";
-    private final String userRealmEndpointFormat = "https://%s/" + USER_REALM_ENDPOINT + "/%s?api-version=1.0";
+    private final static String userRealmEndpointFormat = "https://%s/" + USER_REALM_ENDPOINT + "/%s?api-version=1.0";
 
     String authority;
     final URL canonicalAuthorityUrl;

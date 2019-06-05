@@ -10,7 +10,7 @@ import java.net.URL;
 @Getter(AccessLevel.PACKAGE)
 class B2CAuthority extends Authority{
 
-    final String B2CTokenEndpointFormat = "https://%s/{tenant}" + TOKEN_ENDPOINT + "?p={policy}";
+    final static String B2CTokenEndpointFormat = "https://%s/{tenant}" + TOKEN_ENDPOINT + "?p={policy}";
     String policy;
 
     B2CAuthority(final URL authorityUrl){

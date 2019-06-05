@@ -27,9 +27,11 @@ import com.google.gson.annotations.SerializedName;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.experimental.Accessors;
 
 import java.util.*;
 
+@Accessors(fluent = true)
 @Getter(AccessLevel.PACKAGE)
 @Builder
 class InstanceDiscoveryMetadataEntry {
@@ -40,17 +42,19 @@ class InstanceDiscoveryMetadataEntry {
     @SerializedName("preferred_cache")
     String preferredCache;
 
-    @Getter(AccessLevel.PRIVATE)
     @SerializedName("aliases")
-    String[] aliases;
+    Set<String> aliases;
 
-    Set<String> getAliasesSet(){
-        Set<String> set =  new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    public static class InstanceDiscoveryMetadataEntryBuilder{
+        public InstanceDiscoveryMetadataEntryBuilder aliases(String[] aliasesArray) {
+            Set<String> set =  new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
-        if(aliases != null){
-            set.addAll(Arrays.asList(aliases));
+            if(aliasesArray != null){
+                set.addAll(Arrays.asList(aliasesArray));
+            }
+            aliases = Collections.unmodifiableSet(set);
+
+            return this;
         }
-
-        return set;
     }
 }
