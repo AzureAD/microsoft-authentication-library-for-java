@@ -51,7 +51,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Test
 public class AuthorizationCodeIT {
     private final static Logger LOG = LoggerFactory.getLogger(AuthorizationCodeIT.class);
 
@@ -79,7 +78,7 @@ public class AuthorizationCodeIT {
         seleniumDriver = SeleniumExtensions.createDefaultWebDriver();
     }
 
-    @Test
+    //@Test
     public void acquireTokenWithAuthorizationCode_ManagedUser(){
         LabResponse labResponse = labUserProvider.getDefaultUser(
                 NationalCloud.AZURE_CLOUD,
@@ -89,7 +88,7 @@ public class AuthorizationCodeIT {
         assertAcquireTokenAAD(labResponse);
     }
 
-    @Test
+    //@Test
     public void acquireTokenWithAuthorizationCode_ADFSv2019_Federated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSv2019,
@@ -100,7 +99,7 @@ public class AuthorizationCodeIT {
         assertAcquireTokenAAD(labResponse);
     }
 
-    @Test
+    //@Test
     public void acquireTokenWithAuthorizationCode_ADFSv2019_NotFederated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSv2019,
@@ -111,7 +110,7 @@ public class AuthorizationCodeIT {
         assertAcquireTokenAAD(labResponse);
     }
 
-    @Test
+    //@Test
     public void acquireTokenWithAuthorizationCode_ADFSv4_Federated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV4,
@@ -122,7 +121,7 @@ public class AuthorizationCodeIT {
         assertAcquireTokenAAD(labResponse);
     }
 
-    @Test
+    //@Test
     public void acquireTokenWithAuthorizationCode_ADFSv4_NotFederated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV4,
@@ -133,7 +132,7 @@ public class AuthorizationCodeIT {
         assertAcquireTokenAAD(labResponse);
     }
 
-    @Test
+    //@Test
     public void acquireTokenWithAuthorizationCode_ADFSv3_Federated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV3,
@@ -144,7 +143,7 @@ public class AuthorizationCodeIT {
 
     }
 
-    @Test
+    //@Test
     public void acquireTokenWithAuthorizationCode_ADFSv3_NotFederated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV3,
@@ -155,7 +154,7 @@ public class AuthorizationCodeIT {
         assertAcquireTokenAAD(labResponse);
     }
 
-    @Test
+    //@Test
     public void acquireTokenWithAuthorizationCode_ADFSv2_Federated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV2,
@@ -166,7 +165,7 @@ public class AuthorizationCodeIT {
         assertAcquireTokenAAD(labResponse);
     }
 
-    @Test
+    //@Test
     public void acquireTokenWithAuthorizationCode_ADFSv2_NotFederated(){
         LabResponse labResponse = labUserProvider.getAdfsUser(
                 FederationProvider.ADFSV2,
@@ -177,7 +176,7 @@ public class AuthorizationCodeIT {
         assertAcquireTokenAAD(labResponse);
     }
 
-    @Test
+    //@Test
     public void acquireTokenWithAuthorizationCode_B2C_Local(){
         LabResponse labResponse = labUserProvider.getB2cUser(
                 B2CIdentityProvider.LOCAL,
@@ -204,19 +203,18 @@ public class AuthorizationCodeIT {
     }
 
     // TODO uncomment when lab fixes facebook test account
-//    @Test
-//    public void acquireTokenWithAuthorizationCode_B2C_Facebook(){
-//        LabResponse labResponse = labUserProvider.getB2cUser(
-//                B2CIdentityProvider.FACEBOOK,
-//                false);
-//        labUserProvider.getUserPassword(labResponse.getUser());
-//
-//        String b2CAppId = "b876a048-55a5-4fc5-9403-f5d90cb1c852";
-//        labResponse.setAppId(b2CAppId);
-//
-//        assertAcquireTokenB2C(labResponse);
-//    }
+/*    @Test
+    public void acquireTokenWithAuthorizationCode_B2C_Facebook(){
+        LabResponse labResponse = labUserProvider.getB2cUser(
+                B2CIdentityProvider.FACEBOOK,
+                false);
+        labUserProvider.getUserPassword(labResponse.getUser());
 
+        String b2CAppId = "b876a048-55a5-4fc5-9403-f5d90cb1c852";
+        labResponse.setAppId(b2CAppId);
+
+        assertAcquireTokenB2C(labResponse);
+    }*/
 
     private void assertAcquireTokenAAD(LabResponse labResponse){
         String authCode = acquireAuthorizationCodeAutomated(labResponse, AuthorityType.AAD);
@@ -305,6 +303,7 @@ public class AuthorizationCodeIT {
                 throw new RuntimeException("Could not start TCP listener");
             }
             runSeleniumAutomatedLogin(labUserData, authorityType);
+            String page  = seleniumDriver.getPageSource();
             authServerResponse = getResponseFromTcpListener();
         } catch(Exception e){
             if(!Strings.isNullOrEmpty(

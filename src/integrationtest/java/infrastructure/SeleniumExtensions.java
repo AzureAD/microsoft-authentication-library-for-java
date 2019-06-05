@@ -120,34 +120,21 @@ public class SeleniumExtensions {
     public static void performGoogleLogin(WebDriver driver, LabUser user){
         LOG.info("PerformGoogleLogin");
 
-        String googleAccountButtonId = SeleniumConstants.GOOGLE_ACCOUNT_ID;
-        String userNameId = SeleniumConstants.GOOGLE_USERNAME_ID;
-        String nextButtonId = SeleniumConstants.GOOGLE_NEXT_AFTER_USERNAME_BUTTON;
-        String password = SeleniumConstants.GOOGLE_PASSWORD_ID;
-        String signInButton = SeleniumConstants.GOOGLE_NEXT_BUTTON_ID;
-
-        if(driver.findElements(new By.ById(SeleniumConstants.GOOGLE_USERNAME_ID)).size() == 0){
-            userNameId = SeleniumConstants.GOOGLE_USERNAME_ID_LOCAL;
-            nextButtonId = SeleniumConstants.GOOGLE_NEXT_AFTER_USERNAME_BUTTON_LOCAL;
-            password = SeleniumConstants.GOOGLE_PASSWORD_ID_LOCAL;
-            signInButton = SeleniumConstants.GOOGLE_NEXT_BUTTON_ID_LOCAL;
-        }
-
-        driver.findElement(new By.ById(googleAccountButtonId)).click();
+        driver.findElement(new By.ById(SeleniumConstants.GOOGLE_ACCOUNT_ID)).click();
 
         LOG.info("Loggin in ... Entering username");
-        driver.findElement(new By.ById(userNameId)).sendKeys(user.getUpn());
+        driver.findElement(new By.ById(SeleniumConstants.GOOGLE_USERNAME_ID)).sendKeys(user.getUpn());
 
         LOG.info("Loggin in ... Clicking <Next> after username");
-        driver.findElement(new By.ById(nextButtonId)).click();
+        driver.findElement(new By.ById(SeleniumConstants.GOOGLE_NEXT_AFTER_USERNAME_BUTTON)).click();
 
         LOG.info("Loggin in ... Entering password");
-        By by = new By.ByName(password);
+        By by = new By.ByName(SeleniumConstants.GOOGLE_PASSWORD_ID);
         waitForElementToBeVisibleAndEnable(driver, by).sendKeys(user.getPassword());
 
         LOG.info("Loggin in ... click submit");
 
-        waitForElementToBeVisibleAndEnable(driver, new By.ById(signInButton)).click();
+        waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.GOOGLE_NEXT_BUTTON_ID)).click();
     }
 
     public static void performFacebookLogin(WebDriver driver, LabUser user){

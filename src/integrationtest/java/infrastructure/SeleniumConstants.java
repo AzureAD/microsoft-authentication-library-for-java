@@ -48,17 +48,10 @@ public class SeleniumConstants {
 
     //B2C Google
     final static String GOOGLE_ACCOUNT_ID = "GoogleExchange";
-
-    final static String GOOGLE_USERNAME_ID_LOCAL = "identifierId";
-    final static String GOOGLE_NEXT_AFTER_USERNAME_BUTTON_LOCAL = "identifierNext";
-    final static String GOOGLE_PASSWORD_ID_LOCAL = "password";
-    final static String GOOGLE_NEXT_BUTTON_ID_LOCAL = "passwordNext";
-
-    final static String GOOGLE_USERNAME_ID = "Email";
-    final static String GOOGLE_NEXT_AFTER_USERNAME_BUTTON = "next";
-    final static String GOOGLE_PASSWORD_ID = "Passwd";
-    final static String GOOGLE_NEXT_BUTTON_ID = "signIn";
-
+    final static String GOOGLE_USERNAME_ID = "identifierId";
+    final static String GOOGLE_NEXT_AFTER_USERNAME_BUTTON = "identifierNext";
+    final static String GOOGLE_PASSWORD_ID = "password";
+    final static String GOOGLE_NEXT_BUTTON_ID = "passwordNext";
 
     // B2C Local
     final static String B2C_LOCAL_ACCOUNT_ID = "SignInWithLogonNameExchange";
