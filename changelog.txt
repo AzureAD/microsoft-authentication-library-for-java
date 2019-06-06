@@ -1,6 +1,6 @@
 Version 0.4.0-preview
 =============
-- bug fixes
+- Exposing acquire token by refresh token api
 
 Version 0.3.0-preview
 =============
