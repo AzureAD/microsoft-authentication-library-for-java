@@ -94,6 +94,9 @@ public interface IClientApplicationBase {
 
     /**
      * Acquires a security token from the authority using a Refresh Token previously received.
+     * Can be used in migration to MSAL from ADAL v2, and in various integration
+     * scenarios where you have a RefreshToken available.
+     * See https://aka.ms/msal-net-migration-adal2-msal2.
      *
      * @param parameters#refreshToken Refresh Token to use in the refresh flow.
      * @param parameters#scopes       scopes of the access request
