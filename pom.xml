@@ -103,7 +103,7 @@
         <dependency>
             <groupId>com.microsoft.azure</groupId>
             <artifactId>azure-keyvault</artifactId>
-            <version>1.1.2</version>
+            <version>1.2.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
