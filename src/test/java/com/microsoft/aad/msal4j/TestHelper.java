@@ -23,10 +23,16 @@
 
 package com.microsoft.aad.msal4j;
 
-public interface ITokenCacheAccessAspect {
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
-    void beforeCacheAccess(ITokenCacheAccessContext iTokenCacheAccessContext);
+public class TestHelper {
 
-    void afterCacheAccess(ITokenCacheAccessContext iTokenCacheAccessContext);
-
+    static String readResource(Class<?> classIntance, String resource) throws IOException, URISyntaxException {
+        return new String(
+                Files.readAllBytes(
+                        Paths.get(classIntance.getResource(resource).toURI())));
+    }
 }

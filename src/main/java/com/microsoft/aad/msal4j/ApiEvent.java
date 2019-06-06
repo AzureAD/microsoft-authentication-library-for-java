@@ -23,8 +23,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.common.base.Strings;
-
 import java.net.URI;
 import java.util.Locale;
 
@@ -62,7 +60,7 @@ class ApiEvent extends Event{
     }
 
     public void setTenantId(String tenantId){
-        if(!Strings.isNullOrEmpty(tenantId) && logPii){
+        if(!StringHelper.isBlank(tenantId) && logPii){
             this.put(TENANT_ID_KEY, hashPii(tenantId));
         } else {
             this.put(TENANT_ID_KEY, null);
@@ -70,7 +68,7 @@ class ApiEvent extends Event{
     }
 
     public void setAccountId(String accountId){
-        if(!Strings.isNullOrEmpty(accountId) && logPii){
+        if(!StringHelper.isBlank(accountId) && logPii){
             this.put(USER_ID_KEY, hashPii(accountId));
         } else {
             this.put(USER_ID_KEY, null);

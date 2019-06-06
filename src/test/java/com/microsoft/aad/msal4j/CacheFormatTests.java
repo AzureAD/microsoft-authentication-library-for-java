@@ -46,7 +46,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
-public class CacheTests extends AbstractMsalTests {
+public class CacheFormatTests extends AbstractMsalTests {
     String TOKEN_RESPONSE = "/token_response.json";
     String TOKEN_RESPONSE_ID_TOKEN = "/token_response_id_token.json";
 

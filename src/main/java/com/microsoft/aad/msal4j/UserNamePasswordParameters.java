@@ -46,6 +46,10 @@ public class UserNamePasswordParameters {
     @NonNull
     private char[] password;
 
+    public char[] password(){
+        return password.clone();
+    }
+
     private static UserNamePasswordParametersBuilder builder() {
 
         return new UserNamePasswordParametersBuilder();
@@ -62,5 +66,12 @@ public class UserNamePasswordParameters {
                 .scopes(scopes)
                 .username(username)
                 .password(password);
+    }
+
+    public static class UserNamePasswordParametersBuilder{
+        public UserNamePasswordParametersBuilder password(char[] password) {
+            this.password = password.clone();
+            return this;
+        }
     }
 }

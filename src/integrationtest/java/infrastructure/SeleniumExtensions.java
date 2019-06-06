@@ -76,6 +76,8 @@ public class SeleniumExtensions {
     }
 
     public static void performADLogin(WebDriver driver, LabUser user){
+        LOG.info("PerformADLogin");
+
         UserInformationFields fields = new UserInformationFields(user);
 
         LOG.info("Loggin in ... Entering username");
@@ -100,6 +102,7 @@ public class SeleniumExtensions {
     }
 
     public static void performLocalLogin(WebDriver driver, LabUser user){
+        LOG.info("PerformLocalLogin");
 
         driver.findElement(new By.ById(SeleniumConstants.B2C_LOCAL_ACCOUNT_ID)).click();
 
@@ -115,8 +118,9 @@ public class SeleniumExtensions {
     }
 
     public static void performGoogleLogin(WebDriver driver, LabUser user){
+        LOG.info("PerformGoogleLogin");
 
-        driver.findElement(new By.ById(SeleniumConstants .GOOGLE_ACCOUNT_ID)).click();
+        driver.findElement(new By.ById(SeleniumConstants.GOOGLE_ACCOUNT_ID)).click();
 
         LOG.info("Loggin in ... Entering username");
         driver.findElement(new By.ById(SeleniumConstants.GOOGLE_USERNAME_ID)).sendKeys(user.getUpn());
@@ -130,11 +134,11 @@ public class SeleniumExtensions {
 
         LOG.info("Loggin in ... click submit");
 
-        waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.GOOGLE_NEXT_BUTTON_ID)).
-                click();
+        waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.GOOGLE_NEXT_BUTTON_ID)).click();
     }
 
     public static void performFacebookLogin(WebDriver driver, LabUser user){
+        LOG.info("PerformFacebookLogin");
 
         driver.findElement(new By.ById(SeleniumConstants.FACEBOOK_ACCOUNT_ID)).click();
 
