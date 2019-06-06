@@ -11,7 +11,7 @@ The MSAL library for Java gives your app the ability to begin using the Microsof
 
 
 ## Versions
-Current version - 0.3.0-preview
+Current version - 0.4.0-preview
 
 You can find the changes for each version in the [change log](https://github.com/AzureAD/microsoft-authentication-library-for-java/blob/master/changelog.txt).
 

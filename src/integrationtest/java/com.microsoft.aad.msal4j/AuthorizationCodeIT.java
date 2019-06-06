@@ -189,7 +189,7 @@ public class AuthorizationCodeIT {
         assertAcquireTokenB2C(labResponse);
     }
 
-    // failing on azure devOps 
+    // failing on azure devOps
     //@Test
     public void acquireTokenWithAuthorizationCode_B2C_Google(){
         LabResponse labResponse = labUserProvider.getB2cUser(
