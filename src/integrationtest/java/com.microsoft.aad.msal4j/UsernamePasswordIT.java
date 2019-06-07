@@ -137,8 +137,7 @@ public class UsernamePasswordIT {
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
-        // TODO uncomment once service fixes this for ROPC flow
-        // Assert.assertNotNull(result.idToken());
+        Assert.assertNotNull(result.idToken());
     }
 
     @Test
@@ -164,7 +163,6 @@ public class UsernamePasswordIT {
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
-        // TODO uncomment once service fixes this for ROPC flow
-        // Assert.assertNotNull(result.idToken());
+        Assert.assertNotNull(result.idToken());
     }
 }
