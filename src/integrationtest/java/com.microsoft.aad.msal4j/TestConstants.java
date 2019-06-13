@@ -28,8 +28,9 @@ public class TestConstants {
     public final static String GRAPH_DEFAULT_SCOPE = "https://graph.windows.net/.default";
     public final static String B2C_LAB_SCOPE = "https://msidlabb2c.onmicrosoft.com/msaapp/user_impersonation";
 
-    public final static String AUTHORITY_ORGANIZATIONS = "https://login.microsoftonline.com/organizations/";
-    public final static String AUTHORITY_MICROSOFT = "https://login.microsoftonline.com/microsoft.onmicrosoft.com";
+    public final static String MICROSOFT_AUTHORITY_HOST = "https://login.microsoftonline.com/";
+    public final static String ORGANIZATIONS_AUTHORITY = MICROSOFT_AUTHORITY_HOST + "organizations/";
+    public final static String MICROSOFT_AUTHORITY = MICROSOFT_AUTHORITY_HOST + "microsoft.onmicrosoft.com";
 
     public final static String B2C_AUTHORITY = "https://msidlabb2c.b2clogin.com/tfp/msidlabb2c.onmicrosoft.com/";
     public final static String B2C_AUTHORITY_URL = "https://msidlabb2c.b2clogin.com/msidlabb2c.onmicrosoft.com/";

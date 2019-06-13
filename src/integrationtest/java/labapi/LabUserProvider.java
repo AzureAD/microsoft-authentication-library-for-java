@@ -86,6 +86,17 @@ public class LabUserProvider {
         return getLabUser(query);
     }
 
+    public LabResponse getExternalUser(boolean useBetaEndpoint){
+        UserQuery query = new UserQuery.Builder().
+                isExternalUser(true).
+                isMamUser(false).
+                isMfaUser(false).
+                isFederatedUser(false).
+                useBetaEnpoint(useBetaEndpoint).
+                build();
+        return getLabUser(query);
+    }
+
     // MSA users are not exposed in lab users API. Have to get them directly from keyvault.
     public LabResponse getMsaUser(){
         String userName =  keyVaultSecretsProvider.getSecret(LabConstants.USER_MSA_USERNAME_URL);
@@ -98,7 +109,7 @@ public class LabUserProvider {
         return new LabResponse(LabConstants.MSA_APP_ID, user);
     }
 
-    private LabResponse getLabUser(UserQuery userQuery){
+    public LabResponse getLabUser(UserQuery userQuery){
         if(userCache.containsKey(userQuery)){
             return userCache.get(userQuery);
         }
