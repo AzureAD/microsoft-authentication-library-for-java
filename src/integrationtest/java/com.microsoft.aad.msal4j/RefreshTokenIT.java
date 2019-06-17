@@ -47,7 +47,7 @@ public class RefreshTokenIT {
         String password = labUserProvider.getUserPassword(labResponse.getUser());
         pca = new PublicClientApplication.Builder(
                 labResponse.getAppId()).
-                authority(TestConstants.AUTHORITY_ORGANIZATIONS).
+                authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
 
         AuthenticationResult result = (AuthenticationResult)pca.acquireToken(UserNamePasswordParameters

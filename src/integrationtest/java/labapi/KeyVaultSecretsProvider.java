@@ -67,7 +67,7 @@ class KeyVaultSecretsProvider {
         try{
             ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
                     CLIENT_ID, getClientCredentialFromKeyStore()).
-                    authority(TestConstants.AUTHORITY_MICROSOFT).
+                    authority(TestConstants.MICROSOFT_AUTHORITY).
                     build();
 
             result = cca.acquireToken(ClientCredentialParameters

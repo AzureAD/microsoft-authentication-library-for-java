@@ -41,7 +41,6 @@ import org.testng.annotations.Test;
 import org.testng.util.Strings;
 
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.util.Collections;
@@ -247,7 +246,7 @@ public class AuthorizationCodeIT {
         try {
             PublicClientApplication pca = PublicClientApplication.builder(
                     labResponse.getAppId()).
-                    authority(TestConstants.AUTHORITY_ORGANIZATIONS).
+                    authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                     build();
 
             result = pca.acquireToken(AuthorizationCodeParameters
@@ -388,7 +387,7 @@ public class AuthorizationCodeIT {
         String authority;
         String scope;
         if(authorityType == AuthorityType.AAD){
-            authority = TestConstants.AUTHORITY_ORGANIZATIONS;
+            authority = TestConstants.ORGANIZATIONS_AUTHORITY;
             scope = TestConstants.GRAPH_DEFAULT_SCOPE;
         } else {
             authority = TestConstants.B2C_AUTHORITY_URL;

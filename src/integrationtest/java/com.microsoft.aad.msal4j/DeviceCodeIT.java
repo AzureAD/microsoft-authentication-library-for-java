@@ -64,7 +64,7 @@ public class DeviceCodeIT {
 
         PublicClientApplication pca = new PublicClientApplication.Builder(
                 labResponse.getAppId()).
-                authority(TestConstants.AUTHORITY_ORGANIZATIONS).
+                authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
