@@ -40,14 +40,26 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.util.Enumeration;
 
+import lombok.Getter;
+import lombok.experimental.Accessors;
 import org.apache.commons.codec.binary.Base64;
 
 /**
  * Credential type containing X509 public certificate and RSA private key.
  */
 public final class AsymmetricKeyCredential implements IClientCredential{
+
     public final static int MIN_KEY_SIZE_IN_BITS = 2048;
+
+    /**
+     * Returns private key of the credential.
+     *
+     * @return private key.
+     */
+    @Accessors(fluent = true)
+    @Getter
     private final PrivateKey key;
+
     private final X509Certificate publicCertificate;
 
     /**
@@ -113,18 +125,10 @@ public final class AsymmetricKeyCredential implements IClientCredential{
      * @return base64 encoded string
      * @throws CertificateEncodingException if an encoding error occurs
      */
-    public String getPublicCertificate() throws CertificateEncodingException {
+    public String publicCertificate() throws CertificateEncodingException {
         return Base64.encodeBase64String(this.publicCertificate.getEncoded());
     }
 
-    /**
-     * Returns private key of the credential.
-     * 
-     * @return private key.
-     */
-    public PrivateKey getKey() {
-        return key;
-    }
 
     /**
      * Static method to create KeyCredential instance.
@@ -174,5 +178,4 @@ public final class AsymmetricKeyCredential implements IClientCredential{
         md.update(inputBytes);
         return md.digest();
     }
-
 }

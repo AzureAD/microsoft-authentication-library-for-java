@@ -84,7 +84,7 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
                 }
             } catch(Exception ex) {
                 if (ex instanceof AuthenticationException) {
-                    apiEvent.setApiErrorCode(((AuthenticationException) ex).getErrorCode());
+                    apiEvent.setApiErrorCode(((AuthenticationException) ex).errorCode());
                 }
                 clientApplication.log.error(
                         LogHelper.createMessage(

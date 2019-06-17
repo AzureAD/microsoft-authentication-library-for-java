@@ -103,7 +103,7 @@ public class TokenRequestTest extends AbstractMsalTests {
             request.executeOauthRequestAndProcessResponse();
             Assert.fail("Expected ClaimsChallengeException was not thrown");
         } catch (ClaimsChallengeException ex) {
-            Assert.assertEquals(claims.replace("\\", ""), ex.getClaims());
+            Assert.assertEquals(claims.replace("\\", ""), ex.claims());
         }
         PowerMock.verifyAll();
     }

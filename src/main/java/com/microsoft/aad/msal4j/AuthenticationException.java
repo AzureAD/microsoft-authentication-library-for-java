@@ -23,6 +23,9 @@
 
 package com.microsoft.aad.msal4j;
 
+import lombok.Getter;
+import lombok.experimental.Accessors;
+
 /**
  * MSAL generic exception class
  */
@@ -30,6 +33,8 @@ public class AuthenticationException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
+    @Accessors(fluent = true)
+    @Getter
     private AuthenticationErrorCode errorCode;
 
     /**
@@ -67,9 +72,5 @@ public class AuthenticationException extends RuntimeException {
         super(message, t);
 
         this.errorCode = AuthenticationErrorCode.UNKNOWN;
-    }
-
-    public AuthenticationErrorCode getErrorCode() {
-        return errorCode;
     }
 }

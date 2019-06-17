@@ -23,10 +23,20 @@
 
 package com.microsoft.aad.msal4j;
 
+import lombok.Getter;
+import lombok.experimental.Accessors;
+
 /**
  * The exception type thrown when a claims challenge error occurs during token acquisition.
  */
 public class ClaimsChallengeException extends AuthenticationException {
+
+    /**
+     * claims challenge value
+     */
+    @Accessors(fluent = true)
+    @Getter
+    private final String claims;
 
     /**
      * Constructor
@@ -38,15 +48,5 @@ public class ClaimsChallengeException extends AuthenticationException {
         super(message);
 
         this.claims = claims;
-    }
-
-    private final String claims;
-
-    /**
-     *
-     * @return claims challenge value
-     */
-    public String getClaims() {
-        return claims;
     }
 }
