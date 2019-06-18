@@ -118,11 +118,14 @@ public class TokenCache implements ITokenCache {
             JsonObject oldEntries = old.getAsJsonObject(msalEntity);
             JsonObject newEntries = update.getAsJsonObject(msalEntity);
             if(oldEntries != null){
-                for (Map.Entry<String, JsonElement> oEntry : oldEntries.entrySet())
-                {
+                Iterator<Map.Entry<String, JsonElement>> iterator = oldEntries.entrySet().iterator();
+
+                while(iterator.hasNext()){
+                    Map.Entry<String, JsonElement> oEntry = iterator.next();
+
                     String key = oEntry.getKey();
                     if(newEntries == null || !newEntries.has(key)){
-                        oldEntries.remove(key);
+                        iterator.remove();
                     }
                 }
             }

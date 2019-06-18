@@ -28,12 +28,15 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-public class CachePersistenceIntegrationTest {
+public class CachePersistenceIT {
+
     static class TokenPersistence implements ITokenCacheAccessAspect{
+        String data;
+
         TokenPersistence(String data){
             this.data = data;
         }
-        String data;
+
         @Override
         public void beforeCacheAccess(ITokenCacheAccessContext iTokenCacheAccessContext){
             iTokenCacheAccessContext.tokenCache().deserialize(data);
@@ -44,6 +47,7 @@ public class CachePersistenceIntegrationTest {
             data = iTokenCacheAccessContext.tokenCache().serialize();
         }
     }
+
     @Test
     public void cacheDeserializationSerializationTest() throws IOException, URISyntaxException {
         String dataToInitCache = TestHelper.readResource(this.getClass(), "/cache_data/serialized_cache.json");
