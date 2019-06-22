@@ -72,8 +72,14 @@ public class ClientCredentialsIT {
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
-        // TODO AuthenticationResult should have an getAccountInfo API
-        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+
+        result = cca.acquireTokenSilently(SilentParameters
+                .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                .build())
+                .get();
+
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.accessToken());
     }
 
 

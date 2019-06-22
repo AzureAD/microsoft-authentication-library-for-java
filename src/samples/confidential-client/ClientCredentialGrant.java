@@ -21,13 +21,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import com.microsoft.aad.msal4j.AuthenticationResult;
-import com.microsoft.aad.msal4j.ClientCredentialFactory;
-import com.microsoft.aad.msal4j.ClientCredentialParameters;
-import com.microsoft.aad.msal4j.ConfidentialClientApplication;
+import com.microsoft.aad.msal4j.*;
 
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 
 class ClientCredentialGrant {
 
@@ -43,25 +42,30 @@ class ClientCredentialGrant {
                 .authority(TestData.TENANT_SPECIFIC_AUTHORITY)
                 .build();
 
-        ClientCredentialParameters parameters = ClientCredentialParameters.builder(
+        ClientCredentialParameters clientCredentialParam = ClientCredentialParameters.builder(
                 Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE))
                 .build();
 
-        CompletableFuture<AuthenticationResult> future = app.acquireToken(parameters);
+        CompletableFuture<IAuthenticationResult> future = app.acquireToken(clientCredentialParam);
 
-        future.handle((res, ex) -> {
+        BiConsumer<IAuthenticationResult, Throwable> processAuthResult = (res, ex) -> {
             if (ex != null) {
                 System.out.println("Oops! We have an exception - " + ex.getMessage());
-                return "Unknown!";
             }
             System.out.println("Returned ok - " + res);
-
             System.out.println("Access Token - " + res.accessToken());
-            System.out.println("Refresh Token - " + res.refreshToken());
             System.out.println("ID Token - " + res.idToken());
-            return res;
-        });
+        };
 
+        future.whenCompleteAsync(processAuthResult);
+        future.join();
+
+        SilentParameters silentParameters =
+                SilentParameters.builder(Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE)).build();
+
+        future = app.acquireTokenSilently(silentParameters);
+
+        future.whenCompleteAsync(processAuthResult);
         future.join();
     }
 }

@@ -23,9 +23,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import java.util.Optional;
-import java.util.Set;
-
 class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
 
     private SilentRequest silentRequest;
@@ -44,7 +41,17 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
                     getAuthorityWithPrefNetworkHost(silentRequest.requestAuthority().authority());
         }
 
-        AuthenticationResult res = clientApplication.tokenCache.getAuthenticationResult(
+        AuthenticationResult res;
+
+        if(silentRequest.parameters().account() == null){
+            res = clientApplication.tokenCache.getCachedAuthenticationResult(
+                    requestAuthority,
+                    silentRequest.parameters().scopes(),
+                    clientApplication.clientId());
+            return StringHelper.isBlank(res.accessToken()) ? null : res;
+        }
+
+        res = clientApplication.tokenCache.getCachedAuthenticationResult(
                 silentRequest.parameters().account(),
                 requestAuthority,
                 silentRequest.parameters().scopes(),

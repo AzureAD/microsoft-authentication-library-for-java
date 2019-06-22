@@ -24,6 +24,7 @@
 package com.microsoft.aad.msal4j;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Date;
@@ -51,12 +52,15 @@ import lombok.Getter;
 class TokenRequest {
     Logger log = LoggerFactory.getLogger(TokenRequest.class);
 
-    private final URL url;
+    final Authority requestAuthority;
+    private final URL tokenEndpointUrl;
     private final MsalRequest msalRequest;
     private final ServiceBundle serviceBundle;
 
-    TokenRequest(final URL url, MsalRequest msalRequest, final ServiceBundle serviceBundle) {
-        this.url = url;
+    TokenRequest(Authority requestAuthority, MsalRequest msalRequest, ServiceBundle serviceBundle)
+            throws MalformedURLException {
+        this.requestAuthority = requestAuthority;
+        this.tokenEndpointUrl = new URL(requestAuthority.tokenEndpoint());
         this.serviceBundle = serviceBundle;
         this.msalRequest = msalRequest;
     }
@@ -89,8 +93,7 @@ class TokenRequest {
             addResponseHeadersToHttpEvent(httpEvent, httpResponse);
 
             if (httpResponse.getStatusCode() == HTTPResponse.SC_OK) {
-                final TokenResponse response =
-                        TokenResponse.parseHttpResponse(httpResponse);
+                final TokenResponse response = TokenResponse.parseHttpResponse(httpResponse);
 
                 OIDCTokens tokens = response.getOIDCTokens();
                 String refreshToken = null;
@@ -113,13 +116,13 @@ class TokenRequest {
 
                             accountCacheEntity = AccountCacheEntity.create(
                                     response.getClientInfo(),
-                                    url.getHost(),
+                                    tokenEndpointUrl.getHost(),
                                     idToken,
                                     authority.policy);
                         } else {
                             accountCacheEntity = AccountCacheEntity.create(
                                     response.getClientInfo(),
-                                    url.getHost(),
+                                    tokenEndpointUrl.getHost(),
                                     idToken);
                         }
                     }
@@ -131,7 +134,7 @@ class TokenRequest {
                         refreshToken(refreshToken).
                         familyId(response.getFoci()).
                         idToken(tokens.getIDTokenString()).
-                        environment(url.getHost()).
+                        environment(tokenEndpointUrl.getHost()).
                         expiresOn(currTimestampSec + response.getExpiresIn()).
                         extExpiresOn(response.getExtExpiresIn() > 0 ? currTimestampSec + response.getExtExpiresIn() : 0).
                         accountCacheEntity(accountCacheEntity).
@@ -198,9 +201,9 @@ class TokenRequest {
         HttpEvent httpEvent = new HttpEvent();
         httpEvent.setHttpMethod("POST");
         try {
-            httpEvent.setHttpPath(url.toURI());
-            if(!StringHelper.isBlank(url.getQuery()))
-                httpEvent.setQueryParameters(url.getQuery());
+            httpEvent.setHttpPath(tokenEndpointUrl.toURI());
+            if(!StringHelper.isBlank(tokenEndpointUrl.getQuery()))
+                httpEvent.setQueryParameters(tokenEndpointUrl.getQuery());
         } catch(URISyntaxException ex){
             log.warn(LogHelper.createMessage("Setting URL telemetry fields failed: " +
                             LogHelper.getPiiScrubbedDetails(ex),
@@ -224,13 +227,13 @@ class TokenRequest {
      */
     OAuthHttpRequest toOauthHttpRequest() throws SerializeException {
 
-        if (this.url == null) {
+        if (this.tokenEndpointUrl == null) {
             throw new SerializeException("The endpoint URI is not specified");
         }
 
         final OAuthHttpRequest oauthHttpRequest = new OAuthHttpRequest(
                 HTTPRequest.Method.POST,
-                this.url,
+                this.tokenEndpointUrl,
                 msalRequest.headers().getReadonlyHeaderMap(),
                 this.serviceBundle);
         oauthHttpRequest.setContentType(CommonContentTypes.APPLICATION_URLENCODED);

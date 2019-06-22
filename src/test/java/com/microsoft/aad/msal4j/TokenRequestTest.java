@@ -75,8 +75,8 @@ public class TokenRequestTest extends AbstractMsalTests {
 
         TokenRequest request = PowerMock.createPartialMock(
                 TokenRequest.class, new String[]{"toOauthHttpRequest"},
+                new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)), acr, serviceBundle);
 
-                new URL("http://login.windows.net"), acr, serviceBundle);
         OAuthHttpRequest msalOAuthHttpRequest = PowerMock
                 .createMock(OAuthHttpRequest.class);
 
@@ -128,7 +128,7 @@ public class TokenRequestTest extends AbstractMsalTests {
                         PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         final TokenRequest request = new TokenRequest(
-                new URL("http://login.windows.net"),
+                new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
                 acr,
                 new ServiceBundle(null, null, null, null));
         Assert.assertNotNull(request);
@@ -154,7 +154,7 @@ public class TokenRequestTest extends AbstractMsalTests {
                         PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         TokenRequest request = new TokenRequest(
-                new URL("http://login.windows.net"),
+                new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
                 acr,
                 new ServiceBundle(null, null, null, null));
         Assert.assertNotNull(request);
@@ -187,7 +187,7 @@ public class TokenRequestTest extends AbstractMsalTests {
                         PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         final TokenRequest request = new TokenRequest(
-                new URL("http://login.windows.net"),
+                new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
                 acr,
                 new ServiceBundle(null, null, null, null));
         Assert.assertNotNull(request);
@@ -222,8 +222,8 @@ public class TokenRequestTest extends AbstractMsalTests {
 
         final TokenRequest request = PowerMock.createPartialMock(
                 TokenRequest.class, new String[] { "toOauthHttpRequest" },
+                new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)), acr, serviceBundle);
 
-                new URL("http://login.windows.net"), acr, serviceBundle);
         final OAuthHttpRequest msalOAuthHttpRequest = PowerMock
                 .createMock(OAuthHttpRequest.class);
 
@@ -288,7 +288,7 @@ public class TokenRequestTest extends AbstractMsalTests {
 
         final TokenRequest request = PowerMock.createPartialMock(
                 TokenRequest.class, new String[] { "toOauthHttpRequest" },
-                new URL("http://login.windows.net"), acr, serviceBundle);
+                new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)), acr, serviceBundle);
         final OAuthHttpRequest msalOAuthHttpRequest = PowerMock
                 .createMock(OAuthHttpRequest.class);
 

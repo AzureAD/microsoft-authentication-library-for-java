@@ -29,6 +29,7 @@ import lombok.experimental.Accessors;
 import java.util.Set;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty;
+import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 
 @Builder
 @Accessors(fluent = true)
@@ -39,7 +40,6 @@ public class SilentParameters {
     @NonNull
     private Set<String> scopes;
 
-    @NonNull
     private IAccount account;
 
     private String authorityUrl;
@@ -53,10 +53,17 @@ public class SilentParameters {
 
     public static SilentParametersBuilder builder(Set<String> scopes, IAccount account) {
 
+        validateNotNull("account", account);
         validateNotEmpty("scopes", scopes);
 
         return builder()
                 .scopes(scopes)
                 .account(account);
+    }
+
+    public static SilentParametersBuilder builder(Set<String> scopes) {
+        validateNotEmpty("scopes", scopes);
+
+        return builder().scopes(scopes);
     }
 }

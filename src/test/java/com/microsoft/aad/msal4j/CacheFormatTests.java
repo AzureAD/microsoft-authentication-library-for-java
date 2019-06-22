@@ -167,7 +167,7 @@ public class CacheFormatTests extends AbstractMsalTests {
 
         TokenRequest request = PowerMock.createPartialMock(
                 TokenRequest.class, new String[] { "toOauthHttpRequest" },
-                new URL(AUTHORIZE_REQUEST_URL), msalRequest, serviceBundle);
+                new AADAuthority(new URL(AUTHORIZE_REQUEST_URL)), msalRequest, serviceBundle);
 
         OAuthHttpRequest msalOAuthHttpRequest = PowerMock.createMock(OAuthHttpRequest.class);
 
