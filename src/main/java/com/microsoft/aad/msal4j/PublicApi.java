@@ -24,7 +24,7 @@
 package com.microsoft.aad.msal4j;
 
 enum PublicApi {
-    // TODO finalize api ids
+
     ACQUIRE_TOKEN_BY_REFRESH_TOKEN(82),
     ACQUIRE_TOKEN_BY_USERNAME_PASSWORD(300),
     ACQUIRE_TOKEN_BY_INTEGRATED_WINDOWS_AUTH(400),

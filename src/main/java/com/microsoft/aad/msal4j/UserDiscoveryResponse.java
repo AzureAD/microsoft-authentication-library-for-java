@@ -24,7 +24,12 @@
 package com.microsoft.aad.msal4j;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 
+@Accessors(fluent = true)
+@Getter(AccessLevel.PACKAGE)
 class UserDiscoveryResponse {
 
     @SerializedName("ver")
@@ -45,10 +50,6 @@ class UserDiscoveryResponse {
     @SerializedName("cloud_audience_urn")
     private String cloudAudienceUrn;
 
-    float getVersion() {
-        return version;
-    }
-
     boolean isAccountFederated() {
         return !StringHelper.isBlank(this.accountType)
                 && this.accountType.equalsIgnoreCase("Federated");
@@ -57,21 +58,5 @@ class UserDiscoveryResponse {
     boolean isAccountManaged() {
         return !StringHelper.isBlank(this.accountType)
                 && this.accountType.equalsIgnoreCase("Managed");
-    }
-
-    String getFederationProtocol() {
-        return federationProtocol;
-    }
-
-    String getFederationMetadataUrl() {
-        return federationMetadataUrl;
-    }
-
-    String getFederationActiveAuthUrl() {
-        return federationActiveAuthUrl;
-    }
-
-    String getCloudAudienceUrn() {
-        return cloudAudienceUrn;
     }
 }

@@ -119,7 +119,7 @@ class WSTrustResponse {
             throws Exception {
 
         NodeList tokenTypeNodes = (NodeList) xPath.compile(
-                version.getResponseTokenTypePath()).evaluate(xmlDocument,
+                version.responseTokenTypePath()).evaluate(xmlDocument,
                 XPathConstants.NODESET);
         if (tokenTypeNodes.getLength() == 0) {
             String msg = "No TokenType elements found in RSTR";
@@ -142,7 +142,7 @@ class WSTrustResponse {
             }
 
             NodeList requestedTokenNodes = (NodeList) xPath.compile(
-                    version.getResponseSecurityTokenPath()).evaluate(
+                    version.responseSecurityTokenPath()).evaluate(
                     tokenTypeNode.getParentNode(), XPathConstants.NODESET);
             if (requestedTokenNodes.getLength() > 1) {
                 throw new Exception(

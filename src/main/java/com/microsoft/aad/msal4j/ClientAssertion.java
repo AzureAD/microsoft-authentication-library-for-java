@@ -24,17 +24,21 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.auth.JWTAuthentication;
-import java.util.Objects;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 
 /***
  * Credential type containing an assertion of type
  * "urn:ietf:params:oauth:token-type:jwt".
  */
+@Accessors(fluent = true)
+@Getter
+@EqualsAndHashCode
 public final class ClientAssertion {
 
+    public static final String assertionType = JWTAuthentication.CLIENT_ASSERTION_TYPE;
     private final String assertion;
-
-    private static final String assertionType = JWTAuthentication.CLIENT_ASSERTION_TYPE;
 
     /**
      * Constructor to create credential with a jwt token encoded as a base64 url
@@ -49,38 +53,5 @@ public final class ClientAssertion {
         }
 
         this.assertion = assertion;
-    }
-
-    public String getAssertion() {
-        return assertion;
-    }
-
-    public String getAssertionType() {
-        return assertionType;
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 3;
-        hash = 97 * hash + Objects.hashCode(this.assertion);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final ClientAssertion other = (ClientAssertion) obj;
-        if (!Objects.equals(this.assertion, other.assertion)) {
-            return false;
-        }
-        return true;
     }
 }

@@ -82,7 +82,7 @@ public class ConfidentialClientApplication extends ClientApplicationBase impleme
         if (clientCredential instanceof ClientSecret) {
             clientAuthentication = new ClientSecretPost(
                     new ClientID(clientId()),
-                    new Secret(((ClientSecret) clientCredential).getClientSecret()));
+                    new Secret(((ClientSecret) clientCredential).clientSecret()));
         } else if (clientCredential instanceof AsymmetricKeyCredential) {
             ClientAssertion clientAssertion = JwtHelper.buildJwt(
                     clientId(),
@@ -99,8 +99,8 @@ public class ConfidentialClientApplication extends ClientApplicationBase impleme
             final ClientAssertion clientAssertion) {
         try {
             final Map<String, List<String>> map = new HashMap<>();
-            map.put("client_assertion_type", Collections.singletonList(clientAssertion.getAssertionType()));
-            map.put("client_assertion", Collections.singletonList(clientAssertion.getAssertion()));
+            map.put("client_assertion_type", Collections.singletonList(ClientAssertion.assertionType));
+            map.put("client_assertion", Collections.singletonList(clientAssertion.assertion()));
             return PrivateKeyJWT.parse(map);
         } catch (final ParseException e) {
             throw new AuthenticationException(e);
