@@ -88,7 +88,7 @@ class WSTrustRequest {
         BindingPolicy policy = MexParser.getWsTrustEndpointFromMexResponse(mexResponse, logPii);
 
         if(policy == null){
-            throw new AuthenticationException("WsTrust endpoint not found in metadata document");
+            throw new AuthenticationServiceException("WsTrust endpoint not found in metadata document");
         }
 
         return execute(username, password, cloudAudienceUrn, policy, requestContext, serviceBundle);
@@ -112,7 +112,7 @@ class WSTrustRequest {
         BindingPolicy policy = MexParser.getPolicyFromMexResponseForIntegrated(mexResponse, logPii);
 
         if(policy == null){
-            throw new AuthenticationException("WsTrust endpoint not found in metadata document");
+            throw new AuthenticationServiceException("WsTrust endpoint not found in metadata document");
         }
 
         return execute(null, null, cloudAudienceUrn, policy, requestContext, serviceBundle);

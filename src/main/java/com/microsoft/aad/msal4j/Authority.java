@@ -61,7 +61,7 @@ abstract class Authority {
         final String path = authorityUrl.getPath().substring(1);
         if (StringHelper.isBlank(path)) {
             throw new IllegalArgumentException(
-                    AuthenticationErrorMessage.AUTHORITY_URI_INVALID_PATH);
+                    "authority Uri should have at least one segment in the path (i.e. https://<host>/<path>/...)");
         }
 
         final String firstPath = path.substring(0, path.indexOf("/"));
@@ -79,7 +79,7 @@ abstract class Authority {
     void validateAuthorityUrl() {
         if (!this.canonicalAuthorityUrl.getProtocol().equalsIgnoreCase("https")) {
             throw new IllegalArgumentException(
-                    AuthenticationErrorMessage.AUTHORITY_URI_INSECURE);
+                    "authority should use the 'https' scheme");
         }
 
         if (this.canonicalAuthorityUrl.toString().contains("#")) {

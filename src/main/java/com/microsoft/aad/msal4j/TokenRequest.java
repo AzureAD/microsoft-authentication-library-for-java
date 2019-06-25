@@ -26,16 +26,15 @@ package com.microsoft.aad.msal4j;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import com.nimbusds.oauth2.sdk.ErrorObject;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.SerializeException;
-import com.nimbusds.oauth2.sdk.TokenErrorResponse;
 import com.nimbusds.oauth2.sdk.http.CommonContentTypes;
 import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
@@ -61,14 +60,6 @@ class TokenRequest {
         this.msalRequest = msalRequest;
     }
 
-    /**
-     *
-     * @return
-     * @throws ParseException
-     * @throws AuthenticationException
-     * @throws SerializeException
-     * @throws IOException
-     */
     AuthenticationResult executeOauthRequestAndProcessResponse()
             throws ParseException, AuthenticationException, SerializeException,
             IOException {
@@ -139,38 +130,48 @@ class TokenRequest {
                         build();
 
             } else {
-                final TokenErrorResponse errorResponse = TokenErrorResponse.parse(httpResponse);
-                ErrorObject errorObject = errorResponse.getErrorObject();
 
-                if (AuthenticationErrorCode.AUTHORIZATION_PENDING.toString()
-                        .equals(errorObject.getCode())) {
-
-                    httpEvent.setOauthErrorCode(AuthenticationErrorCode.AUTHORIZATION_PENDING.toString());
-
-                    throw new AuthenticationException(AuthenticationErrorCode.AUTHORIZATION_PENDING,
-                            errorObject.getDescription());
+                String responseContent = httpResponse.getContent();
+                if(responseContent == null || StringHelper.isBlank(responseContent)){
+                    throw new AuthenticationServiceException("Unknown Service Exception");
                 }
 
-                if (HTTPResponse.SC_BAD_REQUEST == errorObject.getHTTPStatusCode() &&
-                        AuthenticationErrorCode.INTERACTION_REQUIRED.toString().equals(errorObject.getCode())) {
+                ErrorResponse errorResponse = JsonHelper.convertJsonToObject(
+                        responseContent,
+                        ErrorResponse.class);
 
-                    httpEvent.setOauthErrorCode(AuthenticationErrorCode.INTERACTION_REQUIRED.toString());
+                errorResponse.statusCode(httpResponse.getStatusCode());
+                errorResponse.statusMessage(httpResponse.getStatusMessage());
 
-                    throw new ClaimsChallengeException(
-                            errorResponse.toJSONObject().toJSONString(),
-                            getClaims(httpResponse.getContent()));
-                } else {
-                    String telemetryErrorCode = StringHelper.isBlank(errorObject.getCode()) ?
-                            AuthenticationErrorCode.UNKNOWN.toString() :
-                            errorObject.getCode();
-
-                    httpEvent.setOauthErrorCode(telemetryErrorCode);
-
-                    throw new AuthenticationException(errorResponse.toJSONObject().toJSONString());
+                // Some invalid_grant or interaction_required subError codes returned by
+                // the service are not supposed to be exposed to customers
+                if(errorResponse.error() != null &&
+                        errorResponse.error().equalsIgnoreCase(AuthenticationErrorCode.INVALID_GRANT) ||
+                        errorResponse.error().equalsIgnoreCase(AuthenticationErrorCode.INTERACTION_REQUIRED)){
+                    errorResponse = filterSubErrorCode(errorResponse);
                 }
+
+                httpEvent.setOauthErrorCode(errorResponse.error());
+
+                throw new AuthenticationServiceException(
+                        errorResponse,
+                        httpResponse.getHeaderMap());
             }
             return result;
         }
+    }
+
+    private ErrorResponse filterSubErrorCode(ErrorResponse errorResponse){
+        String[] errorsThatShouldNotBeExposed = {"bad_token", "token_expired",
+                "protection_policy_required", "client_mismatch", "device_authentication_failed"};
+
+        Set<String> set = new HashSet<>(Arrays.asList(errorsThatShouldNotBeExposed));
+        
+        if(set.contains(errorResponse.subError)){
+            errorResponse.subError("");
+        }
+
+        return errorResponse;
     }
 
     private void addResponseHeadersToHttpEvent(HttpEvent httpEvent, HTTPResponse httpResponse) {
@@ -209,19 +210,6 @@ class TokenRequest {
         return httpEvent;
     }
 
-    private String getClaims(String httpResponseContentStr) {
-        JsonElement root = new JsonParser().parse(httpResponseContentStr);
-
-        JsonElement claims = root.getAsJsonObject().get("claims");
-
-        return claims != null ? claims.getAsString() : null;
-    }
-
-    /**
-     *
-     * @return
-     * @throws SerializeException
-     */
     OAuthHttpRequest toOauthHttpRequest() throws SerializeException {
 
         if (this.url == null) {

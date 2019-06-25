@@ -23,30 +23,43 @@
 
 package com.microsoft.aad.msal4j;
 
-/**
- * The exception type thrown when a claims challenge error occurs during token acquisition.
- */
-public class ClaimsChallengeException extends AuthenticationException {
+import com.google.gson.annotations.SerializedName;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
-    /**
-     * Constructor
-     *
-     * @param message string error message
-     * @param claims claims challenge returned from the STS
-     */
-    public ClaimsChallengeException(String message, String claims) {
-        super(message);
+@Accessors(fluent = true)
+@Getter
+@Setter
+class ErrorResponse {
 
-        this.claims = claims;
-    }
+    private Integer statusCode;
+    private String statusMessage;
 
-    private final String claims;
+    @SerializedName("error")
+    protected String error;
 
-    /**
-     *
-     * @return claims challenge value
-     */
-    public String getClaims() {
-        return claims;
-    }
+    @SerializedName("error_description")
+    protected String errorDescription;
+
+    @SerializedName("error_codes")
+    protected long[] errorCodes;
+
+    @SerializedName("suberror")
+    protected String subError;
+
+    @SerializedName("trace_id")
+    protected String traceId;
+
+    @SerializedName("timestamp")
+    protected String timestamp;
+
+    @SerializedName("correlation_id")
+    protected String correlation_id;
+
+    @SerializedName("claims")
+    private String claims;
 }
+
+
+

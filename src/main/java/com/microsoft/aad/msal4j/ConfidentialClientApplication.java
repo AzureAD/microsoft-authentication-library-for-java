@@ -103,7 +103,7 @@ public class ConfidentialClientApplication extends ClientApplicationBase impleme
             map.put("client_assertion", Collections.singletonList(clientAssertion.getAssertion()));
             return PrivateKeyJWT.parse(map);
         } catch (final ParseException e) {
-            throw new AuthenticationException(e);
+            throw new AuthenticationClientException(e);
         }
     }
 

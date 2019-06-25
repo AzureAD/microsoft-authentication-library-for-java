@@ -86,7 +86,7 @@ final class JwtHelper {
             jwt.sign(signer);
         }
         catch (final Exception e) {
-            throw new AuthenticationException(e);
+            throw new AuthenticationClientException(e);
         }
 
         return new ClientAssertion(jwt.serialize());

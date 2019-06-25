@@ -77,15 +77,15 @@ class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier 
             }
             try {
                 return acquireTokenByAuthorisationGrantSupplier.execute();
-            } catch (AuthenticationException ex) {
-                if (ex.getErrorCode().equals(AUTHORIZATION_PENDING)) {
+            } catch (AuthenticationServiceException ex) {
+                if (ex.errorCode().equals(AUTHORIZATION_PENDING)) {
                     TimeUnit.SECONDS.sleep(deviceCode.interval());
                 } else {
                     throw ex;
                 }
             }
         }
-        throw new AuthenticationException("Expired Device code");
+        throw new AuthenticationClientException("Expired Device code");
     }
 
     private Long getCurrentSystemTimeInSeconds(){

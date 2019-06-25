@@ -23,20 +23,10 @@
 
 package com.microsoft.aad.msal4j;
 
-public enum AuthenticationErrorCode {
+public class AuthenticationErrorCode {
 
-    UNKNOWN ("unknown"),
-    AUTHORIZATION_PENDING ("authorization_pending"),
-    INTERACTION_REQUIRED ("interaction_required");
-
-    private String errorCode;
-
-    AuthenticationErrorCode(String errorCode){
-        this.errorCode = errorCode;
-    }
-
-    @Override
-    public String toString(){
-        return errorCode;
-    }
+    public final static String AUTHORIZATION_PENDING = "authorization_pending";
+    public final static String INTERACTION_REQUIRED = "interaction_required";
+    public final static String INVALID_GRANT = "invalid_grant";
+    public final static String UNKNOWN = "unknown";
 }

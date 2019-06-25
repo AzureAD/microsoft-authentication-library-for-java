@@ -23,53 +23,42 @@
 
 package com.microsoft.aad.msal4j;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.experimental.Accessors;
+
 /**
- * MSAL generic exception class
+ * Base exception type thrown when an error occurs during token acquisition.
  */
+@Accessors(fluent = true)
+@Getter
 public class AuthenticationException extends RuntimeException {
 
+    @Getter(value = AccessLevel.PRIVATE)
     private static final long serialVersionUID = 1L;
 
-    private AuthenticationErrorCode errorCode;
-
     /**
-     * Constructor
-     *
-     * @param t Throwable object
+     * Initializes a new instance of the exception class
+     * @param throwable the inner exception that is the cause of the current exception
      */
-    public AuthenticationException(final Throwable t) {
-        super(t);
-
-        this.errorCode = AuthenticationErrorCode.UNKNOWN;
+    public AuthenticationException(final Throwable throwable) {
+        super(throwable);
     }
 
     /**
-     * Constructor
-     *
-     * @param message string error message
+     * Initializes a new instance of the exception class
+     * @param message the error message that explains the reason for the exception
      */
     public AuthenticationException(final String message) {
-        this(AuthenticationErrorCode.UNKNOWN, message);
-    }
-
-    public AuthenticationException(AuthenticationErrorCode errorCode, final String message) {
         super(message);
-        this.errorCode = errorCode;
     }
 
     /**
-     * Constructor
-     *
-     * @param message string error message
-     * @param t Throwable object
+     * Initializes a new instance of the exception class
+     * @param message the error message that explains the reason for the exception
+     * @param t the inner exception that is the cause of the current exception
      */
     public AuthenticationException(final String message, final Throwable t) {
         super(message, t);
-
-        this.errorCode = AuthenticationErrorCode.UNKNOWN;
-    }
-
-    public AuthenticationErrorCode getErrorCode() {
-        return errorCode;
     }
 }

@@ -38,6 +38,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
 
 import static org.testng.Assert.assertNotNull;
 
@@ -82,20 +83,12 @@ public class OauthHttpRequestTest extends AbstractMsalTests {
                 .times(1);
         EasyMock.expect(conn.getContentType())
                 .andReturn("application/x-www-form-urlencoded").times(1);
-        EasyMock.expect(conn.getHeaderField("Cache-Control")).andReturn("cc")
-                .times(1);
-        EasyMock.expect(conn.getHeaderField("Pragma")).andReturn("pragma")
-                .times(1);
-        EasyMock.expect(conn.getHeaderField("WWW-Authenticate"))
-                .andReturn("www-a").times(1);
+        EasyMock.expect(conn.getHeaderFields()).andReturn(new HashMap<>());
         PowerMock.replay(conn);
         final HTTPResponse response = Whitebox.invokeMethod(request,
                 "createResponse", conn, "content");
         PowerMock.verifyAll();
         Assert.assertNotNull(response);
-        Assert.assertEquals(response.getCacheControl(), "cc");
-        Assert.assertEquals(response.getPragma(), "pragma");
-        Assert.assertEquals(response.getWWWAuthenticate(), "www-a");
         Assert.assertNull(response.getLocation(), "location.pl");
         Assert.assertEquals(response.getContent(), "content");
     }
@@ -111,20 +104,12 @@ public class OauthHttpRequestTest extends AbstractMsalTests {
                 .andReturn("https://location.pl").times(1);
         EasyMock.expect(conn.getContentType())
                 .andReturn("application/x-www-form-urlencoded").times(1);
-        EasyMock.expect(conn.getHeaderField("Cache-Control")).andReturn("cc")
-                .times(1);
-        EasyMock.expect(conn.getHeaderField("Pragma")).andReturn("pragma")
-                .times(1);
-        EasyMock.expect(conn.getHeaderField("WWW-Authenticate"))
-                .andReturn("www-a").times(1);
+        EasyMock.expect(conn.getHeaderFields()).andReturn(new HashMap<>());
         PowerMock.replay(conn);
         final HTTPResponse response = Whitebox.invokeMethod(request,
                 "createResponse", conn, null);
         PowerMock.verifyAll();
         Assert.assertNotNull(response);
-        Assert.assertEquals(response.getCacheControl(), "cc");
-        Assert.assertEquals(response.getPragma(), "pragma");
-        Assert.assertEquals(response.getWWWAuthenticate(), "www-a");
         Assert.assertEquals(response.getLocation().getAuthority(),
                 "location.pl");
         Assert.assertEquals(response.getLocation().getScheme(), "https");

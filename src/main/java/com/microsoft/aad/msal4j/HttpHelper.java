@@ -180,8 +180,8 @@ class HttpHelper {
                 if (is != null) {
                     msg = msg + ", Error details : " + inputStreamToString(is);
                 }
-                httpEvent.setOauthErrorCode(AuthenticationErrorCode.UNKNOWN.toString());
-                throw new AuthenticationException(msg);
+                httpEvent.setOauthErrorCode(AuthenticationErrorCode.UNKNOWN);
+                throw new AuthenticationServiceException(msg);
             }
 
             is = conn.getInputStream();

@@ -83,8 +83,8 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
                     apiEvent.setTenantId(result.accountCacheEntity().realm());
                 }
             } catch(Exception ex) {
-                if (ex instanceof AuthenticationException) {
-                    apiEvent.setApiErrorCode(((AuthenticationException) ex).getErrorCode());
+                if (ex instanceof AuthenticationServiceException) {
+                    apiEvent.setApiErrorCode(((AuthenticationServiceException) ex).errorCode());
                 }
                 clientApplication.log.error(
                         LogHelper.createMessage(
