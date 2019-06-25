@@ -263,6 +263,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
             request.executeOauthRequestAndProcessResponse();
             Assert.fail("Expected AuthenticationException was not thrown");
         } catch (AuthenticationServiceException ex) {
+
             Assert.assertEquals(ex.errorCode(), AuthenticationErrorCode.AUTHORIZATION_PENDING);
         }
         PowerMock.verifyAll();

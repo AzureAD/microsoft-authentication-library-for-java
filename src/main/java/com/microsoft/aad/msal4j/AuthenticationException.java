@@ -23,18 +23,11 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.experimental.Accessors;
-
 /**
  * Base exception type thrown when an error occurs during token acquisition.
  */
-@Accessors(fluent = true)
-@Getter
 public class AuthenticationException extends RuntimeException {
 
-    @Getter(value = AccessLevel.PRIVATE)
     private static final long serialVersionUID = 1L;
 
     /**

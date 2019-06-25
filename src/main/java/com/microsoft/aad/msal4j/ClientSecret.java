@@ -23,13 +23,23 @@
 
 package com.microsoft.aad.msal4j;
 
-import java.util.Objects;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.experimental.Accessors;
+
 
 /**
  * Credential including secret.
  */
+@EqualsAndHashCode
 public final class ClientSecret implements IClientCredential {
 
+    /**
+     * Gets the secret of the client requesting the token.
+     *
+     */
+    @Accessors(fluent = true)
+    @Getter
     private final String clientSecret;
 
     /**
@@ -45,38 +55,4 @@ public final class ClientSecret implements IClientCredential {
 
         this.clientSecret = clientSecret;
     }
-
-    /**
-     * Gets the secret of the client requesting the token.
-     * 
-     * @return string client secret value
-     */
-    public String getClientSecret() {
-        return clientSecret;
-    }
-    
-    @Override
-    public int hashCode() {
-        int hash = 3;
-        hash = 71 * hash + Objects.hashCode(this.clientSecret);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final ClientSecret other = (ClientSecret) obj;
-        if (!Objects.equals(this.clientSecret, other.clientSecret)) {
-            return false;
-        }
-        return true;
-    }    
 }

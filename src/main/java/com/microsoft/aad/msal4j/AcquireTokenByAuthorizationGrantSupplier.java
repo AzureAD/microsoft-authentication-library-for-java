@@ -94,10 +94,10 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
 
         if (userDiscoveryResponse.isAccountFederated()) {
             WSTrustResponse response = WSTrustRequest.execute(
-                    userDiscoveryResponse.getFederationMetadataUrl(),
+                    userDiscoveryResponse.federationMetadataUrl(),
                     grant.getUsername(),
                     grant.getPassword().getValue(),
-                    userDiscoveryResponse.getCloudAudienceUrn(),
+                    userDiscoveryResponse.cloudAudienceUrn(),
                     msalRequest.requestContext(),
                     this.clientApplication.getServiceBundle(),
                     this.clientApplication.logPii());
@@ -136,10 +136,10 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
                 this.clientApplication.getServiceBundle());
 
         if (userRealmResponse.isAccountFederated() &&
-                "WSTrust".equalsIgnoreCase(userRealmResponse.getFederationProtocol())) {
+                "WSTrust".equalsIgnoreCase(userRealmResponse.federationProtocol())) {
 
-            String mexURL = userRealmResponse.getFederationMetadataUrl();
-            String cloudAudienceUrn = userRealmResponse.getCloudAudienceUrn();
+            String mexURL = userRealmResponse.federationMetadataUrl();
+            String cloudAudienceUrn = userRealmResponse.cloudAudienceUrn();
 
             // Discover the policy for authentication using the Metadata Exchange Url.
             // Get the WSTrust Token (Web Service Trust Token)

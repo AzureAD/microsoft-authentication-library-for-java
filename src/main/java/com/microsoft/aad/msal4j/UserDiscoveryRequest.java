@@ -31,10 +31,10 @@ import java.util.Map;
 
 class UserDiscoveryRequest {
 
-    private final static Logger log = LoggerFactory
-            .getLogger(UserDiscoveryRequest.class);
+    private final static Logger log = LoggerFactory.getLogger(UserDiscoveryRequest.class);
 
     private final static Map<String, String> HEADERS;
+
     static {
         HEADERS = new HashMap<>();
         HEADERS.put("Accept", "application/json, text/javascript, */*");

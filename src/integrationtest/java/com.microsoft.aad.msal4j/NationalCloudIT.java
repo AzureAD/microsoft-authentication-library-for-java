@@ -63,7 +63,7 @@ public class NationalCloudIT {
 
         PublicClientApplication pca = new PublicClientApplication.Builder(
                 labResponse.getAppId()).
-                authority(TestConstants.AUTHORITY_ORGANIZATIONS).
+                authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
 
         IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters
