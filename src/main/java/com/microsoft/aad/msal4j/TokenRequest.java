@@ -53,14 +53,11 @@ class TokenRequest {
     Logger log = LoggerFactory.getLogger(TokenRequest.class);
 
     final Authority requestAuthority;
-    private final URL tokenEndpointUrl;
     private final MsalRequest msalRequest;
     private final ServiceBundle serviceBundle;
 
-    TokenRequest(Authority requestAuthority, MsalRequest msalRequest, ServiceBundle serviceBundle)
-            throws MalformedURLException {
+    TokenRequest(Authority requestAuthority, MsalRequest msalRequest, ServiceBundle serviceBundle) {
         this.requestAuthority = requestAuthority;
-        this.tokenEndpointUrl = new URL(requestAuthority.tokenEndpoint());
         this.serviceBundle = serviceBundle;
         this.msalRequest = msalRequest;
     }
@@ -116,13 +113,13 @@ class TokenRequest {
 
                             accountCacheEntity = AccountCacheEntity.create(
                                     response.getClientInfo(),
-                                    tokenEndpointUrl.getHost(),
+                                    requestAuthority.host(),
                                     idToken,
                                     authority.policy);
                         } else {
                             accountCacheEntity = AccountCacheEntity.create(
                                     response.getClientInfo(),
-                                    tokenEndpointUrl.getHost(),
+                                    requestAuthority.host(),
                                     idToken);
                         }
                     }
@@ -134,7 +131,7 @@ class TokenRequest {
                         refreshToken(refreshToken).
                         familyId(response.getFoci()).
                         idToken(tokens.getIDTokenString()).
-                        environment(tokenEndpointUrl.getHost()).
+                        environment(requestAuthority.host()).
                         expiresOn(currTimestampSec + response.getExpiresIn()).
                         extExpiresOn(response.getExtExpiresIn() > 0 ? currTimestampSec + response.getExtExpiresIn() : 0).
                         accountCacheEntity(accountCacheEntity).
@@ -197,13 +194,13 @@ class TokenRequest {
         }
     }
 
-    private HttpEvent createHttpEvent() {
+    private HttpEvent createHttpEvent() throws MalformedURLException {
         HttpEvent httpEvent = new HttpEvent();
         httpEvent.setHttpMethod("POST");
         try {
-            httpEvent.setHttpPath(tokenEndpointUrl.toURI());
-            if(!StringHelper.isBlank(tokenEndpointUrl.getQuery()))
-                httpEvent.setQueryParameters(tokenEndpointUrl.getQuery());
+            httpEvent.setHttpPath(requestAuthority.tokenEndpointUrl().toURI());
+            if(!StringHelper.isBlank(requestAuthority.tokenEndpointUrl().getQuery()))
+                httpEvent.setQueryParameters(requestAuthority.tokenEndpointUrl().getQuery());
         } catch(URISyntaxException ex){
             log.warn(LogHelper.createMessage("Setting URL telemetry fields failed: " +
                             LogHelper.getPiiScrubbedDetails(ex),
@@ -225,15 +222,15 @@ class TokenRequest {
      * @return
      * @throws SerializeException
      */
-    OAuthHttpRequest toOauthHttpRequest() throws SerializeException {
+    OAuthHttpRequest toOauthHttpRequest() throws SerializeException, MalformedURLException {
 
-        if (this.tokenEndpointUrl == null) {
+        if (requestAuthority.tokenEndpointUrl() == null) {
             throw new SerializeException("The endpoint URI is not specified");
         }
 
         final OAuthHttpRequest oauthHttpRequest = new OAuthHttpRequest(
                 HTTPRequest.Method.POST,
-                this.tokenEndpointUrl,
+                requestAuthority.tokenEndpointUrl(),
                 msalRequest.headers().getReadonlyHeaderMap(),
                 this.serviceBundle);
         oauthHttpRequest.setContentType(CommonContentTypes.APPLICATION_URLENCODED);

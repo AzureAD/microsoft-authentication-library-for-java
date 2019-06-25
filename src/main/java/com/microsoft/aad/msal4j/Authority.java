@@ -3,6 +3,8 @@ package com.microsoft.aad.msal4j;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.Accessors;
+
+import java.net.MalformedURLException;
 import java.net.URL;
 
 /**
@@ -30,6 +32,10 @@ abstract class Authority {
     boolean isTenantless;
 
     String tokenEndpoint;
+
+    URL tokenEndpointUrl() throws MalformedURLException {
+        return new URL(tokenEndpoint);
+    }
 
     Authority(URL canonicalAuthorityUrl){
         this.canonicalAuthorityUrl = canonicalAuthorityUrl;
