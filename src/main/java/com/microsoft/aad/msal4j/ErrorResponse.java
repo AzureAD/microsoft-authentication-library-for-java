@@ -60,6 +60,3 @@ class ErrorResponse {
     @SerializedName("claims")
     private String claims;
 }
-
-
-
