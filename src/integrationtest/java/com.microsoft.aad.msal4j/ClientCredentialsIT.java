@@ -38,6 +38,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
 
+import static com.microsoft.aad.msal4j.TestConstants.GRAPH_DEFAULT_SCOPE;
 import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 
 @Test
@@ -72,8 +73,23 @@ public class ClientCredentialsIT {
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
-        // TODO AuthenticationResult should have an getAccountInfo API
-        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+
+        String cachedAt = result.accessToken();
+
+        result = cca.acquireTokenSilently(SilentParameters
+                .builder(Collections.singleton(GRAPH_DEFAULT_SCOPE))
+                .build())
+                .get();
+
+        Assert.assertNull(result);
+
+        result = cca.acquireTokenSilently(SilentParameters
+                .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                .build())
+                .get();
+
+        Assert.assertNotNull(result);
+        Assert.assertEquals(result.accessToken(), cachedAt);
     }
 
 

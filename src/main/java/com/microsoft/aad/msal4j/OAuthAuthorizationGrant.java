@@ -55,6 +55,7 @@ class OAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
 
 
         if (!StringHelper.isBlank(scopes)) {
+            this.scopes = scopes;
             params.put(SCOPE_PARAM_NAME,
                     Collections.singletonList(String.join(" ",params.get(SCOPE_PARAM_NAME)) + SCOPES_DELIMITER + scopes));
         }

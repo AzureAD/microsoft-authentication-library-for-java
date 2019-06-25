@@ -76,11 +76,14 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
                             true)) {
             try {
                 result = execute();
-                logResult(result, msalRequest.headers());
-
                 apiEvent.setWasSuccessful(true);
-                if (result.account() != null) {
-                    apiEvent.setTenantId(result.accountCacheEntity().realm());
+
+                if(result != null){
+                    logResult(result, msalRequest.headers());
+
+                    if (result.account() != null) {
+                        apiEvent.setTenantId(result.accountCacheEntity().realm());
+                    }
                 }
             } catch(Exception ex) {
                 if (ex instanceof AuthenticationException) {

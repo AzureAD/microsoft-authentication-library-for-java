@@ -140,8 +140,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
                     headers.getHeaderCorrelationIdValue()));
         }
 
-        URL url = new URL(requestAuthority.tokenEndpoint());
-        TokenRequest request = new TokenRequest(url, msalRequest, serviceBundle);
+        TokenRequest request = new TokenRequest(requestAuthority, msalRequest, serviceBundle);
 
         AuthenticationResult result = request.executeOauthRequestAndProcessResponse();
 
@@ -150,7 +149,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         } else {
             InstanceDiscoveryMetadataEntry instanceDiscoveryMetadata =
                     AadInstanceDiscovery.GetMetadataEntry
-                            (url, validateAuthority, msalRequest, serviceBundle);
+                            (requestAuthority.canonicalAuthorityUrl(), validateAuthority, msalRequest, serviceBundle);
 
             tokenCache.saveTokens(request, result, instanceDiscoveryMetadata.preferredCache);
         }
