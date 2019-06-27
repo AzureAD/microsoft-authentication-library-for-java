@@ -27,6 +27,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
+/**
+ * State of token cache
+ */
 @Builder
 @Accessors(fluent = true)
 @Getter

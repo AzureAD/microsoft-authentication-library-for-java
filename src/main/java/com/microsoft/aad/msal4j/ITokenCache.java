@@ -24,7 +24,7 @@
 package com.microsoft.aad.msal4j;
 
 /**
- * Interface to implement cache persistence
+ * Interface representing security token cache persistence
  */
 public interface ITokenCache {
 

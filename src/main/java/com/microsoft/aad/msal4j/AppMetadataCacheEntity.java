@@ -31,10 +31,13 @@ import lombok.experimental.Accessors;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Representation of application metadata.
+ */
 @Accessors(fluent = true)
 @Getter
 @Setter
-public class AppMetadataCacheEntity {
+class AppMetadataCacheEntity {
 
     public static final String APP_METADATA_CACHE_ENTITY_ID = "appmetadata";
 

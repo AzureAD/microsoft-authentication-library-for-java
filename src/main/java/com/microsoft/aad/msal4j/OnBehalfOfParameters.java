@@ -30,6 +30,10 @@ import java.util.Set;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty;
 
+/**
+ * Object containing parameters for On-Behalf-Of flow. Can be used as parameter to
+ * {@link ConfidentialClientApplication#acquireToken(OnBehalfOfParameters)}
+ */
 @Builder
 @Accessors(fluent = true)
 @Getter
@@ -47,6 +51,12 @@ public class OnBehalfOfParameters {
         return new OnBehalfOfParametersBuilder();
     }
 
+    /**
+     * Builder for {@link OnBehalfOfParameters}
+     * @param scopes scopes application is requesting access to
+     * @param userAssertion {@link UserAssertion} created from access token received
+     * @return builder that can be used to construct OnBehalfOfParameters
+     */
     public static OnBehalfOfParametersBuilder builder(Set<String> scopes, UserAssertion userAssertion) {
 
         validateNotEmpty("scopes", scopes);

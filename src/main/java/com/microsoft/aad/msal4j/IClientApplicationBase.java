@@ -30,6 +30,9 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
+/**
+ * Interface representing an application for which tokens can be acquired.
+ */
 public interface IClientApplicationBase {
 
     String DEFAULT_AUTHORITY = "https://login.microsoftonline.com/common/";
@@ -72,7 +75,10 @@ public interface IClientApplicationBase {
      */
     SSLSocketFactory sslSocketFactory();
 
-
+    /**
+     * @return Cache holding access tokens, refresh tokens, id tokens. It is maintained and used silently
+     * if needed when calling {@link IClientApplicationBase#acquireTokenSilently(SilentParameters)}
+     */
     ITokenCache tokenCache();
 
     /**
@@ -80,32 +86,27 @@ public interface IClientApplicationBase {
      */
     java.util.function.Consumer<java.util.List<java.util.HashMap<String, String>>> telemetryConsumer();
 
-
     /**
      * Acquires security token from the authority using an authorization code previously received.
      *
-     * @param parameters#authorizationCode The authorization code received from service authorization endpoint.
-     * @param parameters#redirectUri       (also known as Reply URI or Reply URL),
-     *                                     is the URI at which Azure AD will contact back the application with the tokens.
-     *                                     This redirect URI needs to be registered in the app registration portal.
+     * @param parameters {@link AuthorizationCodeParameters}
      * @return A {@link CompletableFuture} object representing the {@link IAuthenticationResult} of the call.
      */
     CompletableFuture<IAuthenticationResult> acquireToken(AuthorizationCodeParameters parameters);
 
     /**
-     * Acquires a security token from the authority using a Refresh Token previously received.
-     * Can be used in migration to MSAL from ADAL v2, and in various integration
-     * scenarios where you have a RefreshToken available.
-     * See https://aka.ms/msal-net-migration-adal2-msal2.
+     * Acquires a security token from the authority using a refresh token previously received.
+     * Can be used in migration to MSAL from ADAL, and in various integration
+     * scenarios where you have a refresh token available.
      *
-     * @param parameters#refreshToken Refresh Token to use in the refresh flow.
-     * @param parameters#scopes       scopes of the access request
+     * @param parameters {@link RefreshTokenParameters}
      * @return A {@link CompletableFuture} object representing the {@link IAuthenticationResult} of the call.
      */
     CompletableFuture<IAuthenticationResult> acquireToken(RefreshTokenParameters parameters);
 
     /**
-     * Returning tokens from cache or requesting new one using previously cached refresh tokens
+     * Returns tokens from cache if present and not expired or acquires new tokens from the authority
+     * by using the refresh token present in cache.
      *
      * @param parameters instance of SilentParameters
      * @return A {@link CompletableFuture} object representing the {@link IAuthenticationResult} of the call.
@@ -115,14 +116,16 @@ public interface IClientApplicationBase {
             throws MalformedURLException;
 
     /**
+     * Returns accounts in the cache
+     *
      * @return set of unique accounts from cache which can be used for silent acquire token call
      */
     CompletableFuture<Set<IAccount>> getAccounts();
 
     /**
-     * Remove account from the cache
+     * Removes IAccount from the cache
      *
-     * @param account instance of IAccount
+     * @param account instance of Account to be removed from cache
      *
      * @return {@link CompletableFuture} object representing account removal task.
      */

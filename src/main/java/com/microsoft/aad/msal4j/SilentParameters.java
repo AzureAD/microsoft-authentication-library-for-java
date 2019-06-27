@@ -30,6 +30,11 @@ import java.util.Set;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty;
 
+/**
+ * Object containing parameters for silent requests. Can be used as parameter to
+ * {@link PublicClientApplication#acquireTokenSilently(SilentParameters)} or to
+ * {@link ConfidentialClientApplication#acquireTokenSilently(SilentParameters)}
+ */
 @Builder
 @Accessors(fluent = true)
 @Getter
@@ -51,6 +56,12 @@ public class SilentParameters {
         return new SilentParametersBuilder();
     }
 
+    /**
+     * Builder for SilentParameters
+     * @param scopes scopes application is requesting access to
+     * @param account {@link IAccount} for which to acquire a token for
+     * @return builder object that can be used to construct SilentParameters
+     */
     public static SilentParametersBuilder builder(Set<String> scopes, IAccount account) {
 
         validateNotEmpty("scopes", scopes);

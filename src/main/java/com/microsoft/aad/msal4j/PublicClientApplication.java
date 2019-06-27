@@ -33,7 +33,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotBlank;
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 
+/**
+ * Class to be used to acquire tokens for public client applications (Desktop, Mobile).
+ */
 public class PublicClientApplication extends ClientApplicationBase implements IPublicClientApplication {
+
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(UserNamePasswordParameters parameters) {
 
@@ -112,6 +116,7 @@ public class PublicClientApplication extends ClientApplicationBase implements IP
     }
 
     public static class Builder extends ClientApplicationBase.Builder<Builder> {
+
         /**
          * Constructor to create instance of Builder of PublicClientApplication
          *

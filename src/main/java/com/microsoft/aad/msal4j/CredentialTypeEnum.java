@@ -31,7 +31,7 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 @Getter
 @AllArgsConstructor
-public enum CredentialTypeEnum {
+enum CredentialTypeEnum {
 
     ACCESS_TOKEN("AccessToken"),
     REFRESH_TOKEN("RefreshToken"),

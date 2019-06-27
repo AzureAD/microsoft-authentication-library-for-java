@@ -29,42 +29,46 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+/**
+ * Response returned from the STS device code endpoint containing information necessary for
+ * device code flow
+ */
 @Accessors(fluent = true)
 @Getter
 public final class DeviceCode {
 
     /**
-     *  @return user code.
+     * code which user needs to provide when authenticating at he verification URI
      */
     @SerializedName("user_code")
     private String userCode;
 
     /**
-     * @return device code.
+     * code which should be included in the request for the access token
      */
     @SerializedName("device_code")
     private String deviceCode;
 
     /**
-     * @return verification uri.
+     * URI where user can authenticate
      */
     @SerializedName("verification_uri")
     private String verificationUri;
 
     /**
-     * @return expiration time in seconds.
+     * expiration time of device code in seconds.
      */
     @SerializedName("expires_in")
     private long expiresIn;
 
     /**
-     * @return interval
+     * interval at which the STS should be polled at
      */
     @SerializedName("interval")
     private long interval;
 
     /**
-     * @return message which should be displayed to the user.
+     * message which should be displayed to the user.
      */
     @SerializedName("message")
     private String message;

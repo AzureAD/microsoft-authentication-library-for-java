@@ -28,7 +28,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
-/***
+/**
  * Credential type containing an assertion of type
  * "urn:ietf:params:oauth:token-type:jwt".
  */
@@ -44,8 +44,7 @@ public final class ClientAssertion {
      * Constructor to create credential with a jwt token encoded as a base64 url
      * encoded string.
      *
-     * @param assertion
-     *            The jwt used as credential.
+     * @param assertion The jwt used as credential.
      */
     public ClientAssertion(final String assertion) {
         if (StringHelper.isBlank(assertion)) {

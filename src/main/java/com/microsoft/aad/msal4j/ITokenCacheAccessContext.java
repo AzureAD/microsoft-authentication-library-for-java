@@ -24,7 +24,7 @@
 package com.microsoft.aad.msal4j;
 
 /**
- * Contains parameters used by the MSAL to access the cache_data.
+ * Interface representing state of token cache
  */
 public interface ITokenCacheAccessContext {
 

@@ -28,6 +28,10 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+/**
+ * Representation of a single user account. If modifying this object, ensure it is compliant with
+ * cache persistent model
+ */
 @Accessors(fluent = true)
 @Getter
 @Setter

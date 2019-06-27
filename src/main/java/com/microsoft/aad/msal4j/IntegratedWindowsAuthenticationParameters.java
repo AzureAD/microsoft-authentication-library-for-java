@@ -31,6 +31,10 @@ import java.util.Set;
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotBlank;
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty;
 
+/**
+ * Object containing parameters for Integrated Windows Authentication. Can be used as parameter to
+ *  {@link PublicClientApplication#acquireToken(IntegratedWindowsAuthenticationParameters)}
+ */
 @Builder
 @Accessors(fluent = true)
 @Getter
@@ -48,6 +52,13 @@ public class IntegratedWindowsAuthenticationParameters {
         return new IntegratedWindowsAuthenticationParametersBuilder();
     }
 
+    /**
+     * Builder for {@link IntegratedWindowsAuthenticationParameters}
+     * @param scopes scopes application is requesting access to
+     * @param username identifier of user account for which to acquire token for. Usually in UPN format,
+     *                 e.g. john.doe@contoso.com.
+     * @return builder that can be used to construct IntegratedWindowsAuthenticationParameters
+     */
     public static IntegratedWindowsAuthenticationParametersBuilder builder(Set<String> scopes, String username) {
 
         validateNotEmpty("scopes", scopes);

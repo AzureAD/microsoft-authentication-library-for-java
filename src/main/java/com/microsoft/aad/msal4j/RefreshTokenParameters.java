@@ -31,6 +31,11 @@ import java.util.Set;
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotBlank;
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty;
 
+/**
+ * Object containing parameters for refresh token request. Can be used as parameter to
+ * {@link PublicClientApplication#acquireToken(RefreshTokenParameters)} or to
+ * {@link ConfidentialClientApplication#acquireToken(RefreshTokenParameters)}
+ */
 @Builder
 @Accessors(fluent = true)
 @Getter
@@ -48,6 +53,12 @@ public class RefreshTokenParameters {
         return new RefreshTokenParametersBuilder();
     }
 
+    /**
+     * Builder for {@link RefreshTokenParameters}
+     * @param scopes scopes application is requesting access to
+     * @param refreshToken refresh token received form the STS
+     * @return builder object that can be used to construct {@link RefreshTokenParameters}
+     */
     public static RefreshTokenParametersBuilder builder(Set<String> scopes, String refreshToken) {
         
         validateNotBlank("refreshToken", refreshToken);

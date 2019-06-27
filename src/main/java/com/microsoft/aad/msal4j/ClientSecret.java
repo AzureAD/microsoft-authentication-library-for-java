@@ -29,20 +29,17 @@ import lombok.experimental.Accessors;
 
 
 /**
- * Credential including secret.
+ * Representation of client credential containing a secret in string format
  */
 @EqualsAndHashCode
 public final class ClientSecret implements IClientCredential {
 
-    /**
-     * Gets the secret of the client requesting the token.
-     *
-     */
+
     @Accessors(fluent = true)
     @Getter
     private final String clientSecret;
 
-    /**
+     /**
      * Constructor to create credential with client id and secret
      *
      * @param clientSecret

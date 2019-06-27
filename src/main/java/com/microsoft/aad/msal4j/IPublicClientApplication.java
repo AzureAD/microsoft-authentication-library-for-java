@@ -25,29 +25,24 @@ package com.microsoft.aad.msal4j;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Interface representing a public client application (Desktop, Mobile).
+ * Public client application are not trusted to safely store application secrets,
+ * and therefore can only request tokens in the name of an user
+ */
 public interface IPublicClientApplication extends IClientApplicationBase {
 
     /**
-     * Acquires a security token using a username/password flow.
-     *
-     * @param parameters#scopes   scopes of the access request
-     * @param parameters#username Username of the managed or federated user.
-     * @param parameters#password Password of the managed or federated user.
-     *                            If null, integrated authentication will be used.
-     * @return A {@link CompletableFuture} object representing the
-     * {@link IAuthenticationResult} of the call. It contains Access
-     * Token, Refresh Token and the Access Token's expiration time.
+     * Acquires tokens from the authority configured in the application via Username/Password authentication.
+     * @param parameters instance of {@link UserNamePasswordParameters}
+     * @return {@link CompletableFuture} containing an {@link IAuthenticationResult}
      */
     CompletableFuture<IAuthenticationResult> acquireToken(UserNamePasswordParameters parameters);
 
     /**
-     * Acquires a security token using Windows integrated authentication flow.
-     *
-     * @param parameters#scopes   scopes of the access request
-     * @param parameters#username Username of the managed or federated user.
-     * @return A {@link CompletableFuture} object representing the
-     * {@link IAuthenticationResult} of the call. It contains Access
-     * Token, Refresh Token and the Access Token's expiration time.
+     * Acquires tokens from the authority configured in the application via Integrated Windows Authentication.
+     * @param parameters instance of {@link IntegratedWindowsAuthenticationParameters}
+     * @return {@link CompletableFuture} containing an {@link IAuthenticationResult}
      */
     CompletableFuture<IAuthenticationResult> acquireToken(IntegratedWindowsAuthenticationParameters parameters);
 
@@ -62,10 +57,8 @@ public interface IPublicClientApplication extends IClientApplicationBase {
      * Since the client cannot receive incoming requests, it polls the authorization server repeatedly
      * until the end-user completes the approval process.
      *
-     * @param parameters#scopes             scopes of the access request
-     * @param parameters#deviceCodeConsumer
-     * @return A {@link CompletableFuture} object representing the {@link IAuthenticationResult} of the call.
-     * It contains AccessTokenCacheEntity, Refresh Token and the Access Token's expiration time.
+     * @param parameters instance of {@link DeviceCodeFlowParameters}
+     * @return {@link CompletableFuture} containing an {@link IAuthenticationResult}
      * @throws AuthenticationException thrown if authorization is pending or another error occurred.
      *                                 If the errorCode of the exception is AuthenticationErrorCode.AUTHORIZATION_PENDING,
      *                                 the call needs to be retried until the AccessToken is returned.

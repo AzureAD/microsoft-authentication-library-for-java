@@ -23,8 +23,11 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.util.Set;
+
 /**
- * Representation of user account
+ * Interface representing a single user account. An IAccount is returned in the {@link IAuthenticationResult}
+ * property, and is used as parameter in {@link SilentParameters#builder(Set, IAccount)} )}
  */
 public interface IAccount {
 
@@ -34,12 +37,12 @@ public interface IAccount {
     String homeAccountId();
 
     /**
-     * @return account`s environment
+     * @return account environment
      */
     String environment();
 
     /**
-     * @return account`s username
+     * @return account username
      */
     String username();
 }

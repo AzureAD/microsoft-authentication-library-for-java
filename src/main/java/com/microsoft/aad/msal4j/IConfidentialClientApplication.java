@@ -25,30 +25,28 @@ package com.microsoft.aad.msal4j;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Interface representing a confidential client application (Web App, Web API, Daemon App).
+ * Confidential client applications are trusted to safely store application secrets, and therefore
+ * can be used to acquire tokens in then name of either the application or an user
+ */
 public interface IConfidentialClientApplication extends IClientApplicationBase {
 
     /**
-     * Acquires security token from the authority.
-     *
-     * @param parameters#scopes scopes of the access request
-     * @return A {@link CompletableFuture} object representing the
-     * {@link IAuthenticationResult} of the call. It contains Access
-     * Token and the Access Token's expiration time. Refresh Token
-     * property will be null for this overload.
+     * Acquires tokens from the authority configured in the application, for the confidential client
+     * itself (in the name of no user)
+     * @param parameters instance of {@link ClientCredentialParameters}
+     * @return {@link CompletableFuture} containing an {@link IAuthenticationResult}
      */
     CompletableFuture<IAuthenticationResult> acquireToken(ClientCredentialParameters parameters);
 
     /**
-     * Acquires an access token from the authority on behalf of a user. It
-     * requires using a user token previously received.
-     *
-     * @param parameters#scopes        scopes of the access request
-     * @param parameters#userAssertion userAssertion to use as Authorization grant
-     * @return A {@link CompletableFuture} object representing the
-     * {@link IAuthenticationResult} of the call. It contains Access
-     * Token and the Access Token's expiration time. Refresh Token
-     * property will be null for this overload.
-     * @throws AuthenticationException {@link AuthenticationException}
+     * Acquires an access token for this application (usually a Web API) from the authority configured
+     * in the application, in order to access another downstream protected Web API on behalf of a user
+     * using the On-Behalf-Of flow. This confidential client application was itself called with a token
+     * which will be provided in the {@link UserAssertion} to the {@link OnBehalfOfParameters}
+     * @param parameters instance of {@link OnBehalfOfParameters}
+     * @return {@link CompletableFuture} containing an {@link IAuthenticationResult}
      */
     CompletableFuture<IAuthenticationResult> acquireToken(OnBehalfOfParameters parameters);
 }

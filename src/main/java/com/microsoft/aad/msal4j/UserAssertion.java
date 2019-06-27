@@ -24,7 +24,8 @@
 package com.microsoft.aad.msal4j;
 
 /***
- * Credential type containing an assertion representing user credential.
+ * Credential type containing an assertion representing user credential. Used as a parameter in
+ * {@link OnBehalfOfParameters}
  */
 public class UserAssertion implements IUserAssertion {
 
@@ -48,7 +49,7 @@ public class UserAssertion implements IUserAssertion {
     /**
      * Gets the assertion.
      *
-     * @return string value
+     * @return assertion
      */
     @Override
     public String getAssertion() {

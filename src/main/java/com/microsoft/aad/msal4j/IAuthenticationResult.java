@@ -24,7 +24,7 @@
 package com.microsoft.aad.msal4j;
 
 /**
- * Represents the results of token acquisition operation.
+ * Interface representing the results of token acquisition operation.
  */
 public interface IAuthenticationResult {
 
@@ -49,7 +49,7 @@ public interface IAuthenticationResult {
     String environment();
 
     /**
-     * @return scopes which represents amount of access that is granted to access token
+     * @return granted scopes values returned by the service
      */
     String scopes();
 

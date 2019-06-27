@@ -39,6 +39,10 @@ import java.util.concurrent.CompletableFuture;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 
+/**
+ * Class to be used to acquire tokens for confidential client applications (Web Apps, Web APIs,
+ * and daemon applications).
+ */
 public class ConfidentialClientApplication extends ClientApplicationBase implements IConfidentialClientApplication {
 
     @Override

@@ -31,6 +31,10 @@ import java.util.function.Consumer;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty;
 
+/**
+ * Object containing parameters for device code flow. Can be used as parameter to
+ * {@link PublicClientApplication#acquireToken(DeviceCodeFlowParameters)}
+ */
 @Builder
 @Accessors(fluent = true)
 @Getter
@@ -48,6 +52,12 @@ public class DeviceCodeFlowParameters {
         return new DeviceCodeFlowParametersBuilder();
     }
 
+    /**
+     * Builder for {@link DeviceCodeFlowParameters}
+     * @param scopes scopes application is requesting access to
+     * @param deviceCodeConsumer {@link Consumer} of {@link DeviceCode}
+     * @return builder that can be used to construct DeviceCodeFlowParameters
+     */
     public static DeviceCodeFlowParametersBuilder builder
             (Set<String> scopes, Consumer<DeviceCode> deviceCodeConsumer) {
 

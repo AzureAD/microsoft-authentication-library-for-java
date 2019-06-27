@@ -31,10 +31,17 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+/**
+ * Cache used for storing tokens.
+ */
 public class TokenCache implements ITokenCache {
 
     protected static final int MIN_ACCESS_TOKEN_EXPIRE_IN_SEC = 5*60;
 
+    /**
+     *  Constructor for token cache
+     * @param tokenCacheAccessAspect {@link ITokenCacheAccessAspect}
+     */
     public TokenCache(ITokenCacheAccessAspect tokenCacheAccessAspect) {
         this();
         this.tokenCacheAccessAspect = tokenCacheAccessAspect;

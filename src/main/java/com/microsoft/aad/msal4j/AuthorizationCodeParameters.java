@@ -31,6 +31,11 @@ import java.util.Set;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotBlank;
 
+/**
+ * Object containing parameters for authorization code flow. Can be used as parameter to
+ * {@link PublicClientApplication#acquireToken(AuthorizationCodeParameters)} or to
+ * {@link ConfidentialClientApplication#acquireToken(AuthorizationCodeParameters)}
+ */
 @Builder
 @Accessors(fluent = true)
 @Getter
@@ -50,6 +55,12 @@ public class AuthorizationCodeParameters {
         return new AuthorizationCodeParametersBuilder();
     }
 
+    /**
+     * Builder for {@link AuthorizationCodeParameters}
+     * @param authorizationCode code received from the service authorization endpoint
+     * @param redirectUri URI where authorization code was received
+     * @return builder object that can be used to construct {@link AuthorizationCodeParameters}
+     */
     public static AuthorizationCodeParametersBuilder builder(String authorizationCode, URI redirectUri) {
 
         validateNotBlank("authorizationCode", authorizationCode);
