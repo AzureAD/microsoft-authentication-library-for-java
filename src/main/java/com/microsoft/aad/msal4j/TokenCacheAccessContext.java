@@ -8,7 +8,7 @@ import lombok.Getter;
 import lombok.experimental.Accessors;
 
 /**
- * State of token cache
+ * Context in which the the token cache is accessed
  */
 @Builder
 @Accessors(fluent = true)

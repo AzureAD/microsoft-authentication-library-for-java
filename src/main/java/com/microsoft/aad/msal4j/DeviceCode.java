@@ -18,7 +18,7 @@ import lombok.experimental.Accessors;
 public final class DeviceCode {
 
     /**
-     * code which user needs to provide when authenticating at he verification URI
+     * code which user needs to provide when authenticating at the verification URI
      */
     @SerializedName("user_code")
     private String userCode;

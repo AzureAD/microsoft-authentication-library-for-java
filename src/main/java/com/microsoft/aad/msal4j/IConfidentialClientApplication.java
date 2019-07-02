@@ -15,7 +15,7 @@ public interface IConfidentialClientApplication extends IClientApplicationBase {
 
     /**
      * Acquires tokens from the authority configured in the application, for the confidential client
-     * itself (in the name of no user)
+     * itself
      * @param parameters instance of {@link ClientCredentialParameters}
      * @return {@link CompletableFuture} containing an {@link IAuthenticationResult}
      */

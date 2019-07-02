@@ -4,7 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 /**
- * Interface representing user credential used by downstream application in On-Behalf-Of flow
+ * Interface representing a delegated user identity used by downstream applications in On-Behalf-Of flow
  */
 public interface IUserAssertion {
 
