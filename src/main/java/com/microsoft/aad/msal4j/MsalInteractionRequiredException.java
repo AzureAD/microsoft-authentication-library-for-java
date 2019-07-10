@@ -15,10 +15,19 @@ import java.util.Map;
  */
 public class MsalInteractionRequiredException extends MsalServiceException{
 
+    /**
+     * Classification of the conditional access error, enabling you to do more actions or inform the
+     * user depending on your scenario.
+     */
     @Accessors(fluent = true)
     @Getter
     private ServiceExceptionClassification classification;
 
+    /**
+     * Initializes a new instance of the exception class
+     * @param errorResponse response object contain information about error returned by server
+     * @param headerMap http headers from the server response
+     */
     public MsalInteractionRequiredException(
             ErrorResponse errorResponse,
             Map<String,List<String>> headerMap) {
