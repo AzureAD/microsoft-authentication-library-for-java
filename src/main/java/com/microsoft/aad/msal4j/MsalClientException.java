@@ -24,34 +24,23 @@
 package com.microsoft.aad.msal4j;
 
 /**
- * Base exception type thrown when an error occurs during token acquisition.
+ *  Exception type thrown when and error occurs that is local to the library or the device.
  */
-public class AuthenticationException extends RuntimeException {
-
-    private static final long serialVersionUID = 1L;
+public class MsalClientException extends MsalException {
 
     /**
-     * Initializes a new instance of the exception class
+     * Initializes a new instance of the exception class with a instance of Throwable
      * @param throwable the inner exception that is the cause of the current exception
      */
-    public AuthenticationException(final Throwable throwable) {
+    public MsalClientException(final Throwable throwable){
         super(throwable);
     }
 
     /**
-     * Initializes a new instance of the exception class
+     * Initializes a new instance of the exception class with a specified error message
      * @param message the error message that explains the reason for the exception
      */
-    public AuthenticationException(final String message) {
-        super(message);
-    }
-
-    /**
-     * Initializes a new instance of the exception class
-     * @param message the error message that explains the reason for the exception
-     * @param t the inner exception that is the cause of the current exception
-     */
-    public AuthenticationException(final String message, final Throwable t) {
-        super(message, t);
+    public MsalClientException(final String message, final String errorCode){
+        super(message, errorCode);
     }
 }

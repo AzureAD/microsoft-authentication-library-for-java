@@ -77,7 +77,7 @@ class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier 
             }
             try {
                 return acquireTokenByAuthorisationGrantSupplier.execute();
-            } catch (AuthenticationServiceException ex) {
+            } catch (MsalServiceException ex) {
                 if (ex.errorCode().equals(AUTHORIZATION_PENDING)) {
                     TimeUnit.SECONDS.sleep(deviceCode.interval());
                 } else {
@@ -85,7 +85,7 @@ class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier 
                 }
             }
         }
-        throw new AuthenticationClientException("Expired Device code");
+        throw new MsalClientException("Expired Device code", AuthenticationErrorCode.CODE_EXPIRED);
     }
 
     private Long getCurrentSystemTimeInSeconds(){

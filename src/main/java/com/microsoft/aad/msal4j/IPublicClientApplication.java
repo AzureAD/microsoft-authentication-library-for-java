@@ -66,7 +66,7 @@ public interface IPublicClientApplication extends IClientApplicationBase {
      * @param parameters#deviceCodeConsumer
      * @return A {@link CompletableFuture} object representing the {@link IAuthenticationResult} of the call.
      * It contains AccessTokenCacheEntity, Refresh Token and the Access Token's expiration time.
-     * @throws AuthenticationException thrown if authorization is pending or another error occurred.
+     * @throws MsalException thrown if authorization is pending or another error occurred.
      *                                 If the errorCode of the exception is AuthenticationErrorCode.AUTHORIZATION_PENDING,
      *                                 the call needs to be retried until the AccessToken is returned.
      *                                 DeviceCode.interval - The minimum amount of time in seconds that the client

@@ -23,14 +23,12 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.ErrorObject;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.SerializeException;
 import com.nimbusds.oauth2.sdk.TokenErrorResponse;
 import com.nimbusds.oauth2.sdk.http.CommonContentTypes;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
-import net.minidev.json.JSONObject;
 import org.easymock.EasyMock;
 import org.powermock.api.easymock.PowerMock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -51,7 +49,7 @@ public class TokenRequestTest extends AbstractMsalTests {
 
     @Test
     public void executeOAuthRequest_SCBadRequestErrorInteractionRequired_AuthenticationServiceException()
-            throws SerializeException, ParseException, AuthenticationException,
+            throws SerializeException, ParseException, MsalException,
             IOException, URISyntaxException {
 
         TokenRequest request = createMockedTokenRequest();
@@ -80,16 +78,16 @@ public class TokenRequestTest extends AbstractMsalTests {
 
         try {
             request.executeOauthRequestAndProcessResponse();
-            Assert.fail("Expected AuthenticationServiceException was not thrown");
-        } catch (AuthenticationServiceException ex) {
+            Assert.fail("Expected MsalServiceException was not thrown");
+        } catch (MsalServiceException ex) {
             Assert.assertEquals(claims.replace("\\", ""), ex.claims());
         }
         PowerMock.verifyAll();
     }
 
     @Test
-    public void executeOAuthRequest_SCBadRequestErrorInvalidGrant_SubErrorFiltered()
-            throws SerializeException, ParseException, AuthenticationException,
+    public void executeOAuthRequest_SCBadRequestErrorInvalidGrant_InteractionRequiredException()
+            throws SerializeException, ParseException, MsalException,
             IOException, URISyntaxException {
 
         TokenRequest request = createMockedTokenRequest();
@@ -106,7 +104,7 @@ public class TokenRequestTest extends AbstractMsalTests {
                 "\"timestamp\":\"2017-07-15 02:35:05Z\"," +
                 "\"trace_id\":\"0788...000\"," +
                 "\"correlation_id\":\"3a...95a\"," +
-                "\"suberror\":\"client_mismatch\"," +
+                "\"suberror\":\"basic_action\"," +
                 "\"claims\":\"" + claims + "\"}";
         httpResponse.setContent(content);
         httpResponse.setContentType(CommonContentTypes.APPLICATION_JSON);
@@ -118,10 +116,10 @@ public class TokenRequestTest extends AbstractMsalTests {
 
         try {
             request.executeOauthRequestAndProcessResponse();
-            Assert.fail("Expected AuthenticationServiceException was not thrown");
-        } catch (AuthenticationServiceException ex) {
+            Assert.fail("Expected MsalServiceException was not thrown");
+        } catch (MsalInteractionRequiredException ex) {
             Assert.assertEquals(claims.replace("\\", ""), ex.claims());
-            Assert.assertEquals(ex.subError(), "");
+            Assert.assertEquals(ex.classification(), ServiceExceptionClassification.BASIC_ACTION);
         }
         PowerMock.verifyAll();
     }
@@ -242,7 +240,7 @@ public class TokenRequestTest extends AbstractMsalTests {
     }
 
     @Test
-    public void testExecuteOAuth_Success() throws SerializeException, ParseException, AuthenticationException,
+    public void testExecuteOAuth_Success() throws SerializeException, ParseException, MsalException,
             IOException, URISyntaxException {
 
         PublicClientApplication app = new PublicClientApplication.Builder("id").build();
@@ -307,9 +305,9 @@ public class TokenRequestTest extends AbstractMsalTests {
         Assert.assertFalse(StringHelper.isBlank(result.refreshToken()));
     }
 
-    @Test(expectedExceptions = AuthenticationException.class)
+    @Test(expectedExceptions = MsalException.class)
     public void testExecuteOAuth_Failure() throws SerializeException,
-            ParseException, AuthenticationException, IOException, URISyntaxException {
+            ParseException, MsalException, IOException, URISyntaxException {
 
         PublicClientApplication app = new PublicClientApplication.Builder("id").build();
 

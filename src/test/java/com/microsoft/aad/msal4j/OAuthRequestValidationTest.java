@@ -64,7 +64,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 import org.easymock.EasyMock;
 import org.powermock.api.easymock.PowerMock;
@@ -105,7 +104,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
                     @Override
                     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                         OAuthRequestValidationTest.query = ((OAuthHttpRequest) proxy).getQuery();
-                        throw new AuthenticationException("");
+                        throw new MsalException("", AuthenticationErrorCode.UNKNOWN);
                     }
                 });
     }
@@ -175,7 +174,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
             app.acquireToken(parameters).get();
 
         } catch (ExecutionException ex) {
-            Assert.assertTrue(ex.getCause() instanceof AuthenticationException);
+            Assert.assertTrue(ex.getCause() instanceof MsalException);
         }
 
         Map<String, String> queryParams = splitQuery(query);
@@ -241,7 +240,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
 
             app.acquireToken(parameters).get();
         } catch (ExecutionException ex) {
-            Assert.assertTrue(ex.getCause() instanceof AuthenticationException);
+            Assert.assertTrue(ex.getCause() instanceof MsalException);
         }
 
         Map<String, String> queryParams = splitQuery(query);
@@ -292,7 +291,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
                     .get();
 
         } catch (ExecutionException ex) {
-            Assert.assertTrue(ex.getCause() instanceof AuthenticationException);
+            Assert.assertTrue(ex.getCause() instanceof MsalException);
         }
 
         Map<String, String> queryParams = splitQuery(query);

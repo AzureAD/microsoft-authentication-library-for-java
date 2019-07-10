@@ -48,7 +48,7 @@ public interface IConfidentialClientApplication extends IClientApplicationBase {
      * {@link IAuthenticationResult} of the call. It contains Access
      * Token and the Access Token's expiration time. Refresh Token
      * property will be null for this overload.
-     * @throws AuthenticationException {@link AuthenticationException}
+     * @throws MsalException {@link MsalException}
      */
     CompletableFuture<IAuthenticationResult> acquireToken(OnBehalfOfParameters parameters);
 }

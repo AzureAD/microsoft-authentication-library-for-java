@@ -61,7 +61,7 @@ class TokenRequest {
     }
 
     AuthenticationResult executeOauthRequestAndProcessResponse()
-            throws ParseException, AuthenticationException, SerializeException,
+            throws ParseException, MsalServiceException, SerializeException,
             IOException {
 
         HttpEvent httpEvent = createHttpEvent();
@@ -130,48 +130,12 @@ class TokenRequest {
                         build();
 
             } else {
-
-                String responseContent = httpResponse.getContent();
-                if(responseContent == null || StringHelper.isBlank(responseContent)){
-                    throw new AuthenticationServiceException("Unknown Service Exception");
-                }
-
-                ErrorResponse errorResponse = JsonHelper.convertJsonToObject(
-                        responseContent,
-                        ErrorResponse.class);
-
-                errorResponse.statusCode(httpResponse.getStatusCode());
-                errorResponse.statusMessage(httpResponse.getStatusMessage());
-
-                // Some invalid_grant or interaction_required subError codes returned by
-                // the service are not supposed to be exposed to customers
-                if(errorResponse.error() != null &&
-                        errorResponse.error().equalsIgnoreCase(AuthenticationErrorCode.INVALID_GRANT) ||
-                        errorResponse.error().equalsIgnoreCase(AuthenticationErrorCode.INTERACTION_REQUIRED)){
-                    errorResponse = filterSubErrorCode(errorResponse);
-                }
-
-                httpEvent.setOauthErrorCode(errorResponse.error());
-
-                throw new AuthenticationServiceException(
-                        errorResponse,
-                        httpResponse.getHeaderMap());
+                MsalServiceException exception = MsalServiceExceptionFactory.fromHttpResponse(httpResponse);
+                httpEvent.setOauthErrorCode(exception.errorCode());
+                throw exception;
             }
             return result;
         }
-    }
-
-    private ErrorResponse filterSubErrorCode(ErrorResponse errorResponse){
-        String[] errorsThatShouldNotBeExposed = {"bad_token", "token_expired",
-                "protection_policy_required", "client_mismatch", "device_authentication_failed"};
-
-        Set<String> set = new HashSet<>(Arrays.asList(errorsThatShouldNotBeExposed));
-        
-        if(set.contains(errorResponse.subError)){
-            errorResponse.subError("");
-        }
-
-        return errorResponse;
     }
 
     private void addResponseHeadersToHttpEvent(HttpEvent httpEvent, HTTPResponse httpResponse) {

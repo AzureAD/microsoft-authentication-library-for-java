@@ -100,7 +100,7 @@ class OAuthHttpRequest extends HTTPRequest {
         Map<String, List<String>> headers = conn.getHeaderFields();
         for(Map.Entry<String, List<String>> header: headers.entrySet()){
 
-            if(header.getKey() == null || StringHelper.isBlank(header.getKey())){
+            if(StringHelper.isBlank(header.getKey())){
                 continue;
             }
 

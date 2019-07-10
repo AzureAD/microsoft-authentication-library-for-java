@@ -39,7 +39,7 @@ import java.net.URL;
 @Test(groups = { "checkin" })
 public class HttpHelperTest extends AbstractMsalTests {
 
-    @Test(expectedExceptions = AuthenticationException.class,
+    @Test(expectedExceptions = MsalException.class,
             expectedExceptionsMessageRegExp = "Server returned HTTP response code: 403 for URL : https://some.url, Error details : error info")
     public void testReadResponseFromConnection_ResponseCodeNot200()
             throws Exception {

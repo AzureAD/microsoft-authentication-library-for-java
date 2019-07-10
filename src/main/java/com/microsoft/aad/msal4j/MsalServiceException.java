@@ -23,6 +23,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
@@ -34,17 +35,7 @@ import java.util.Map;
  */
 @Accessors(fluent = true)
 @Getter
-public class AuthenticationServiceException extends AuthenticationException{
-
-    /**
-     * The protocol error code returned by the service
-     */
-    private String errorCode;
-
-    /**
-     * More specific error
-     */
-    private String subError;
+public class MsalServiceException extends MsalException {
 
     /**
      * Status code returned from http layer
@@ -57,7 +48,7 @@ public class AuthenticationServiceException extends AuthenticationException{
     private String statusMessage;
 
     /**
-     * An ID that can used to piece up a single authentication flow.
+     * An ID that can be used to piece up a single authentication flow.
      */
     private String correlationId;
 
@@ -73,12 +64,16 @@ public class AuthenticationServiceException extends AuthenticationException{
      */
     private Map<String, List<String>> headers;
 
+    @Accessors(fluent = true)
+    @Getter(AccessLevel.PACKAGE)
+    private String subError;
+
     /**
      * Initializes a new instance of the exception class with a specified error message
      * @param message the error message that explains the reason for the exception
      */
-    public AuthenticationServiceException(final String message){
-        super(message);
+    public MsalServiceException(final String message, final String error){
+        super(message, error);
     }
 
     /**
@@ -86,13 +81,12 @@ public class AuthenticationServiceException extends AuthenticationException{
      * @param errorResponse response object contain information about error returned by server
      * @param httpHeaders http headers from the server response
      */
-    public AuthenticationServiceException(
+    public MsalServiceException(
             final ErrorResponse errorResponse,
             final Map<String, List<String>> httpHeaders) {
 
-        super(errorResponse.errorDescription);
+        super(errorResponse.errorDescription, errorResponse.error());
 
-        this.errorCode = errorResponse.error();
         this.statusCode = errorResponse.statusCode();
         this.statusMessage = errorResponse.statusMessage();
         this.subError = errorResponse.subError();
@@ -105,11 +99,9 @@ public class AuthenticationServiceException extends AuthenticationException{
      * Initializes a new instance of the exception class
      * @param discoveryResponse response object from instance discovery network call
      */
-    public AuthenticationServiceException(InstanceDiscoveryResponse discoveryResponse){
+    public MsalServiceException(final InstanceDiscoveryResponse discoveryResponse){
+        super(discoveryResponse.errorDescription(), discoveryResponse.error());
 
-        super(discoveryResponse.errorDescription());
-
-        this.errorCode = discoveryResponse.error();
         this.correlationId = discoveryResponse.correlationId();
     }
 }

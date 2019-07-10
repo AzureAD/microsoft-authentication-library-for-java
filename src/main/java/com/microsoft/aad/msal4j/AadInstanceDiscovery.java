@@ -87,7 +87,7 @@ class AadInstanceDiscovery {
 
     private static void validate(InstanceDiscoveryResponse instanceDiscoveryResponse) {
         if (StringHelper.isBlank(instanceDiscoveryResponse.tenantDiscoveryEndpoint())) {
-            throw new AuthenticationServiceException(instanceDiscoveryResponse);
+            throw new MsalServiceException(instanceDiscoveryResponse);
         }
     }
 

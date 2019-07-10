@@ -168,7 +168,7 @@ class HttpHelper {
     }
 
     static String readResponseFromConnection(final HttpsURLConnection conn, HttpEvent httpEvent)
-            throws AuthenticationException, IOException {
+            throws MsalServiceException, IOException {
         InputStream is = null;
         try {
             int responseCode = conn.getResponseCode();
@@ -181,7 +181,7 @@ class HttpHelper {
                     msg = msg + ", Error details : " + inputStreamToString(is);
                 }
                 httpEvent.setOauthErrorCode(AuthenticationErrorCode.UNKNOWN);
-                throw new AuthenticationServiceException(msg);
+                throw new MsalServiceException(msg, AuthenticationErrorCode.UNKNOWN);
             }
 
             is = conn.getInputStream();
