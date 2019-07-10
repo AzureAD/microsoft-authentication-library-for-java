@@ -1,29 +1,10 @@
-// Copyright (c) Microsoft Corporation.
-// All rights reserved.
-//
-// This code is licensed under the MIT License.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files(the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions :
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
 
 package com.microsoft.aad.msal4j;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
@@ -50,12 +31,12 @@ import lombok.Getter;
 class TokenRequest {
     Logger log = LoggerFactory.getLogger(TokenRequest.class);
 
-    private final URL url;
+    final Authority requestAuthority;
     private final MsalRequest msalRequest;
     private final ServiceBundle serviceBundle;
 
-    TokenRequest(final URL url, MsalRequest msalRequest, final ServiceBundle serviceBundle) {
-        this.url = url;
+    TokenRequest(Authority requestAuthority, MsalRequest msalRequest, ServiceBundle serviceBundle) {
+        this.requestAuthority = requestAuthority;
         this.serviceBundle = serviceBundle;
         this.msalRequest = msalRequest;
     }
@@ -80,8 +61,7 @@ class TokenRequest {
             addResponseHeadersToHttpEvent(httpEvent, httpResponse);
 
             if (httpResponse.getStatusCode() == HTTPResponse.SC_OK) {
-                final TokenResponse response =
-                        TokenResponse.parseHttpResponse(httpResponse);
+                final TokenResponse response = TokenResponse.parseHttpResponse(httpResponse);
 
                 OIDCTokens tokens = response.getOIDCTokens();
                 String refreshToken = null;
@@ -104,13 +84,13 @@ class TokenRequest {
 
                             accountCacheEntity = AccountCacheEntity.create(
                                     response.getClientInfo(),
-                                    url.getHost(),
+                                    requestAuthority.host(),
                                     idToken,
                                     authority.policy);
                         } else {
                             accountCacheEntity = AccountCacheEntity.create(
                                     response.getClientInfo(),
-                                    url.getHost(),
+                                    requestAuthority.host(),
                                     idToken);
                         }
                     }
@@ -122,7 +102,7 @@ class TokenRequest {
                         refreshToken(refreshToken).
                         familyId(response.getFoci()).
                         idToken(tokens.getIDTokenString()).
-                        environment(url.getHost()).
+                        environment(requestAuthority.host()).
                         expiresOn(currTimestampSec + response.getExpiresIn()).
                         extExpiresOn(response.getExtExpiresIn() > 0 ? currTimestampSec + response.getExtExpiresIn() : 0).
                         accountCacheEntity(accountCacheEntity).
@@ -159,13 +139,13 @@ class TokenRequest {
         }
     }
 
-    private HttpEvent createHttpEvent() {
+    private HttpEvent createHttpEvent() throws MalformedURLException {
         HttpEvent httpEvent = new HttpEvent();
         httpEvent.setHttpMethod("POST");
         try {
-            httpEvent.setHttpPath(url.toURI());
-            if(!StringHelper.isBlank(url.getQuery()))
-                httpEvent.setQueryParameters(url.getQuery());
+            httpEvent.setHttpPath(requestAuthority.tokenEndpointUrl().toURI());
+            if(!StringHelper.isBlank(requestAuthority.tokenEndpointUrl().getQuery()))
+                httpEvent.setQueryParameters(requestAuthority.tokenEndpointUrl().getQuery());
         } catch(URISyntaxException ex){
             log.warn(LogHelper.createMessage("Setting URL telemetry fields failed: " +
                             LogHelper.getPiiScrubbedDetails(ex),
@@ -176,13 +156,13 @@ class TokenRequest {
 
     OAuthHttpRequest toOauthHttpRequest() throws SerializeException {
 
-        if (this.url == null) {
+        if (requestAuthority.tokenEndpointUrl() == null) {
             throw new SerializeException("The endpoint URI is not specified");
         }
 
         final OAuthHttpRequest oauthHttpRequest = new OAuthHttpRequest(
                 HTTPRequest.Method.POST,
-                this.url,
+                requestAuthority.tokenEndpointUrl(),
                 msalRequest.headers().getReadonlyHeaderMap(),
                 this.serviceBundle);
         oauthHttpRequest.setContentType(CommonContentTypes.APPLICATION_URLENCODED);
