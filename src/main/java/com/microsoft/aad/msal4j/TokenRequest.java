@@ -154,7 +154,7 @@ class TokenRequest {
         return httpEvent;
     }
 
-    OAuthHttpRequest toOauthHttpRequest() throws SerializeException {
+    OAuthHttpRequest toOauthHttpRequest() throws SerializeException, MalformedURLException {
 
         if (requestAuthority.tokenEndpointUrl() == null) {
             throw new SerializeException("The endpoint URI is not specified");
