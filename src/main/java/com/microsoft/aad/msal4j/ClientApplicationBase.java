@@ -1,25 +1,5 @@
-// Copyright (c) Microsoft Corporation.
-// All rights reserved.
-//
-// This code is licensed under the MIT License.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files(the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions :
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
 
 package com.microsoft.aad.msal4j;
 
@@ -129,6 +109,44 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         return future;
     }
 
+    @Override
+    public CompletableFuture<IAuthenticationResult> acquireTokenSilently(SilentParameters parameters)
+            throws MalformedURLException {
+
+        validateNotNull("parameters", parameters);
+
+        SilentRequest silentRequest = new SilentRequest(
+                parameters,
+                this,
+                createRequestContext(PublicApi.ACQUIRE_TOKEN_SILENTLY));
+
+        return executeRequest(silentRequest);
+    }
+
+    @Override
+    public CompletableFuture<Set<IAccount>> getAccounts() {
+        MsalRequest msalRequest =
+                new MsalRequest(this, null,
+                        createRequestContext(PublicApi.GET_ACCOUNTS)){};
+
+        AccountsSupplier supplier = new AccountsSupplier(this, msalRequest);
+
+        CompletableFuture<Set<IAccount>> future =
+                serviceBundle.getExecutorService() != null ? CompletableFuture.supplyAsync(supplier, serviceBundle.getExecutorService())
+                        : CompletableFuture.supplyAsync(supplier);
+        return future;
+    }
+
+    @Override
+    public CompletableFuture removeAccount(IAccount account) {
+        RemoveAccountRunnable runnable = new RemoveAccountRunnable(this, account);
+
+        CompletableFuture<Void> future =
+                serviceBundle.getExecutorService() != null ? CompletableFuture.runAsync(runnable, serviceBundle.getExecutorService())
+                        : CompletableFuture.runAsync(runnable);
+        return future;
+    }
+
     AuthenticationResult acquireTokenCommon(MsalRequest msalRequest, Authority requestAuthority)
             throws Exception {
 
@@ -185,44 +203,6 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         return serviceBundle;
     }
 
-    @Override
-    public CompletableFuture<IAuthenticationResult> acquireTokenSilently(SilentParameters parameters)
-            throws MalformedURLException {
-
-        validateNotNull("parameters", parameters);
-
-        SilentRequest silentRequest = new SilentRequest(
-                parameters,
-                this,
-                createRequestContext(PublicApi.ACQUIRE_TOKEN_SILENTLY));
-
-        return executeRequest(silentRequest);
-    }
-
-    @Override
-    public CompletableFuture<Set<IAccount>> getAccounts() {
-        MsalRequest msalRequest =
-                new MsalRequest(this, null,
-                        createRequestContext(PublicApi.GET_ACCOUNTS)){};
-
-        AccountsSupplier supplier = new AccountsSupplier(this, msalRequest);
-
-        CompletableFuture<Set<IAccount>> future =
-                serviceBundle.getExecutorService() != null ? CompletableFuture.supplyAsync(supplier, serviceBundle.getExecutorService())
-                        : CompletableFuture.supplyAsync(supplier);
-        return future;
-    }
-
-    @Override
-    public CompletableFuture removeAccount(IAccount account) {
-        RemoveAccountRunnable runnable = new RemoveAccountRunnable(this, account);
-
-        CompletableFuture<Void> future =
-                serviceBundle.getExecutorService() != null ? CompletableFuture.runAsync(runnable, serviceBundle.getExecutorService())
-                        : CompletableFuture.runAsync(runnable);
-        return future;
-    }
-
     protected static String canonicalizeUrl(String authority) {
         authority = authority.toLowerCase();
 
@@ -271,7 +251,6 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
          * @return instance of the Builder on which method was called
          * @throws MalformedURLException if val is malformed URL
          */
-
         public T authority(String val) throws MalformedURLException {
             authority = canonicalizeUrl(val);
 
