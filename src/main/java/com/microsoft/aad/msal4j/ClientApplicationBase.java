@@ -1,25 +1,5 @@
-// Copyright (c) Microsoft Corporation.
-// All rights reserved.
-//
-// This code is licensed under the MIT License.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files(the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions :
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
 
 package com.microsoft.aad.msal4j;
 
@@ -129,63 +109,6 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         return future;
     }
 
-    AuthenticationResult acquireTokenCommon(MsalRequest msalRequest, Authority requestAuthority)
-            throws Exception {
-
-        ClientDataHttpHeaders headers = msalRequest.headers();
-
-        if (logPii) {
-            log.debug(LogHelper.createMessage(
-                    String.format("Using Client Http Headers: %s", headers),
-                    headers.getHeaderCorrelationIdValue()));
-        }
-
-        URL url = new URL(requestAuthority.tokenEndpoint());
-        TokenRequest request = new TokenRequest(url, msalRequest, serviceBundle);
-
-        AuthenticationResult result = request.executeOauthRequestAndProcessResponse();
-
-        if(authenticationAuthority.authorityType.equals(AuthorityType.B2C)){
-            tokenCache.saveTokens(request, result, authenticationAuthority.host);
-        } else {
-            InstanceDiscoveryMetadataEntry instanceDiscoveryMetadata =
-                    AadInstanceDiscovery.GetMetadataEntry
-                            (url, validateAuthority, msalRequest, serviceBundle);
-
-            tokenCache.saveTokens(request, result, instanceDiscoveryMetadata.preferredCache);
-        }
-
-        return result;
-    }
-
-    private AuthenticationResultSupplier getAuthenticationResultSupplier(MsalRequest msalRequest) {
-
-        AuthenticationResultSupplier supplier;
-        if (msalRequest instanceof DeviceCodeFlowRequest) {
-            supplier = new AcquireTokenByDeviceCodeFlowSupplier(
-                    (PublicClientApplication) this,
-                    (DeviceCodeFlowRequest) msalRequest);
-        } else if (msalRequest instanceof SilentRequest) {
-            supplier = new AcquireTokenSilentSupplier(this, (SilentRequest) msalRequest);
-        } else {
-            supplier = new AcquireTokenByAuthorizationGrantSupplier(
-                    this,
-                    msalRequest, null);
-        }
-        return supplier;
-    }
-
-    RequestContext createRequestContext(PublicApi publicApi) {
-        return new RequestContext(
-                clientId,
-                correlationId(),
-                publicApi);
-    }
-
-    ServiceBundle getServiceBundle() {
-        return serviceBundle;
-    }
-
     @Override
     public CompletableFuture<IAuthenticationResult> acquireTokenSilently(SilentParameters parameters)
             throws MalformedURLException {
@@ -222,6 +145,62 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
                 serviceBundle.getExecutorService() != null ? CompletableFuture.runAsync(runnable, serviceBundle.getExecutorService())
                         : CompletableFuture.runAsync(runnable);
         return future;
+    }
+
+    AuthenticationResult acquireTokenCommon(MsalRequest msalRequest, Authority requestAuthority)
+            throws Exception {
+
+        ClientDataHttpHeaders headers = msalRequest.headers();
+
+        if (logPii) {
+            log.debug(LogHelper.createMessage(
+                    String.format("Using Client Http Headers: %s", headers),
+                    headers.getHeaderCorrelationIdValue()));
+        }
+
+        TokenRequest request = new TokenRequest(requestAuthority, msalRequest, serviceBundle);
+
+        AuthenticationResult result = request.executeOauthRequestAndProcessResponse();
+
+        if(authenticationAuthority.authorityType.equals(AuthorityType.B2C)){
+            tokenCache.saveTokens(request, result, authenticationAuthority.host);
+        } else {
+            InstanceDiscoveryMetadataEntry instanceDiscoveryMetadata =
+                    AadInstanceDiscovery.GetMetadataEntry
+                            (requestAuthority.canonicalAuthorityUrl(), validateAuthority, msalRequest, serviceBundle);
+
+            tokenCache.saveTokens(request, result, instanceDiscoveryMetadata.preferredCache);
+        }
+
+        return result;
+    }
+
+    private AuthenticationResultSupplier getAuthenticationResultSupplier(MsalRequest msalRequest) {
+
+        AuthenticationResultSupplier supplier;
+        if (msalRequest instanceof DeviceCodeFlowRequest) {
+            supplier = new AcquireTokenByDeviceCodeFlowSupplier(
+                    (PublicClientApplication) this,
+                    (DeviceCodeFlowRequest) msalRequest);
+        } else if (msalRequest instanceof SilentRequest) {
+            supplier = new AcquireTokenSilentSupplier(this, (SilentRequest) msalRequest);
+        } else {
+            supplier = new AcquireTokenByAuthorizationGrantSupplier(
+                    this,
+                    msalRequest, null);
+        }
+        return supplier;
+    }
+
+    RequestContext createRequestContext(PublicApi publicApi) {
+        return new RequestContext(
+                clientId,
+                correlationId(),
+                publicApi);
+    }
+
+    ServiceBundle getServiceBundle() {
+        return serviceBundle;
     }
 
     protected static String canonicalizeUrl(String authority) {
@@ -272,7 +251,6 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
          * @return instance of the Builder on which method was called
          * @throws MalformedURLException if val is malformed URL
          */
-
         public T authority(String val) throws MalformedURLException {
             authority = canonicalizeUrl(val);
 
@@ -409,7 +387,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
             try {
                 authority = new AADAuthority(new URL(DEFAULT_AUTHORITY));
             } catch(Exception e){
-                throw new AuthenticationException(e);
+                throw new MsalClientException(e);
             }
             return authority;
         }

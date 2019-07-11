@@ -1,25 +1,5 @@
-// Copyright (c) Microsoft Corporation.
-// All rights reserved.
-//
-// This code is licensed under the MIT License.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files(the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions :
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
 
 package com.microsoft.aad.msal4j;
 
@@ -38,6 +18,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
 
+import static com.microsoft.aad.msal4j.TestConstants.GRAPH_DEFAULT_SCOPE;
 import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 
 @Test
@@ -62,7 +43,7 @@ public class ClientCredentialsIT {
     private void assertAcquireTokenCommon(String clientId, IClientCredential credential) throws Exception{
         ConfidentialClientApplication cca = new ConfidentialClientApplication.Builder(
                 clientId, credential).
-                authority(TestConstants.AUTHORITY_MICROSOFT).
+                authority(TestConstants.MICROSOFT_AUTHORITY).
                 build();
 
         IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
@@ -72,8 +53,23 @@ public class ClientCredentialsIT {
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
-        // TODO AuthenticationResult should have an getAccountInfo API
-        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+
+        String cachedAt = result.accessToken();
+
+        result = cca.acquireTokenSilently(SilentParameters
+                .builder(Collections.singleton(GRAPH_DEFAULT_SCOPE))
+                .build())
+                .get();
+
+        Assert.assertNull(result);
+
+        result = cca.acquireTokenSilently(SilentParameters
+                .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                .build())
+                .get();
+
+        Assert.assertNotNull(result);
+        Assert.assertEquals(result.accessToken(), cachedAt);
     }
 
 

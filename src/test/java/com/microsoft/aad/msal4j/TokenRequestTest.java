@@ -1,36 +1,14 @@
-// Copyright (c) Microsoft Corporation.
-// All rights reserved.
-//
-// This code is licensed under the MIT License.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files(the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions :
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.ErrorObject;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.SerializeException;
 import com.nimbusds.oauth2.sdk.TokenErrorResponse;
 import com.nimbusds.oauth2.sdk.http.CommonContentTypes;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
-import net.minidev.json.JSONObject;
 import org.easymock.EasyMock;
 import org.powermock.api.easymock.PowerMock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -43,16 +21,92 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collections;
+import java.util.HashMap;
 
 @Test(groups = { "checkin" })
 @PrepareForTest(TokenErrorResponse.class)
 public class TokenRequestTest extends AbstractMsalTests {
 
     @Test
-    public void executeOAuthRequest_SCBadRequestErrorInteractionRequired_ClaimsChallengeExceptionThrown()
-            throws SerializeException, ParseException, AuthenticationException,
+    public void executeOAuthRequest_SCBadRequestErrorInvalidGrant_InteractionRequiredException()
+            throws SerializeException, ParseException, MsalException,
             IOException, URISyntaxException {
 
+        TokenRequest request = createMockedTokenRequest();
+
+        OAuthHttpRequest msalOAuthHttpRequest = PowerMock.createMock(OAuthHttpRequest.class);
+
+        HTTPResponse httpResponse = new HTTPResponse(HTTPResponse.SC_BAD_REQUEST);
+
+        String claims = "{\\\"access_token\\\":{\\\"polids\\\":{\\\"essential\\\":true,\\\"values\\\":[\\\"5ce770ea-8690-4747-aa73-c5b3cd509cd4\\\"]}}}";
+
+        String content = "{\"error\":\"invalid_grant\"," +
+                "\"error_description\":\"AADSTS65001: description\\r\\nCorrelation ID: 3a...5a\\r\\nTimestamp:2017-07-15 02:35:05Z\"," +
+                "\"error_codes\":[50076]," +
+                "\"timestamp\":\"2017-07-15 02:35:05Z\"," +
+                "\"trace_id\":\"0788...000\"," +
+                "\"correlation_id\":\"3a...95a\"," +
+                "\"suberror\":\"basic_action\"," +
+                "\"claims\":\"" + claims + "\"}";
+        httpResponse.setContent(content);
+        httpResponse.setContentType(CommonContentTypes.APPLICATION_JSON);
+
+        EasyMock.expect(request.toOauthHttpRequest()).andReturn(msalOAuthHttpRequest).times(1);
+        EasyMock.expect(msalOAuthHttpRequest.send()).andReturn(httpResponse).times(1);
+
+        PowerMock.replay(request, msalOAuthHttpRequest);
+
+        try {
+            request.executeOauthRequestAndProcessResponse();
+            Assert.fail("Expected MsalServiceException was not thrown");
+        } catch (MsalInteractionRequiredException ex) {
+            Assert.assertEquals(claims.replace("\\", ""), ex.claims());
+            Assert.assertEquals(ex.reason(), InteractionRequiredExceptionReason.BASIC_ACTION);
+        }
+        PowerMock.verifyAll();
+    }
+
+    @Test
+    public void executeOAuthRequest_SCBadRequestErrorInvalidGrant_SubErrorFilteredServiceExceptionThrown()
+            throws SerializeException, ParseException, MsalException,
+            IOException, URISyntaxException {
+
+        TokenRequest request = createMockedTokenRequest();
+
+        OAuthHttpRequest msalOAuthHttpRequest = PowerMock
+                .createMock(OAuthHttpRequest.class);
+
+        HTTPResponse httpResponse = new HTTPResponse(HTTPResponse.SC_BAD_REQUEST);
+
+        String claims = "{\\\"access_token\\\":{\\\"polids\\\":{\\\"essential\\\":true,\\\"values\\\":[\\\"5ce770ea-8690-4747-aa73-c5b3cd509cd4\\\"]}}}";
+
+        String content = "{\"error\":\"invalid_grant\"," +
+                "\"error_description\":\"AADSTS65001: description\\r\\nCorrelation ID: 3a...5a\\r\\nTimestamp:2017-07-15 02:35:05Z\"," +
+                "\"error_codes\":[50076]," +
+                "\"timestamp\":\"2017-07-15 02:35:05Z\"," +
+                "\"trace_id\":\"0788...000\"," +
+                "\"correlation_id\":\"3a...95a\"," +
+                "\"suberror\":\"client_mismatch\"," +
+                "\"claims\":\"" + claims + "\"}";
+        httpResponse.setContent(content);
+        httpResponse.setContentType(CommonContentTypes.APPLICATION_JSON);
+
+        EasyMock.expect(request.toOauthHttpRequest()).andReturn(msalOAuthHttpRequest).times(1);
+        EasyMock.expect(msalOAuthHttpRequest.send()).andReturn(httpResponse).times(1);
+
+        PowerMock.replay(request, msalOAuthHttpRequest);
+
+        try {
+            request.executeOauthRequestAndProcessResponse();
+            Assert.fail("Expected MsalServiceException was not thrown");
+        } catch (MsalServiceException ex) {
+            Assert.assertEquals(claims.replace("\\", ""), ex.claims());
+            Assert.assertTrue(!(ex instanceof MsalInteractionRequiredException));
+        }
+        PowerMock.verifyAll();
+    }
+
+    private TokenRequest createMockedTokenRequest() throws URISyntaxException, MalformedURLException {
         PublicClientApplication app = new PublicClientApplication.Builder("id").build();
 
         AuthorizationCodeParameters parameters = AuthorizationCodeParameters
@@ -73,39 +127,11 @@ public class TokenRequestTest extends AbstractMsalTests {
                 null,
                 new TelemetryManager(null, false));
 
-        TokenRequest request = PowerMock.createPartialMock(
+        return PowerMock.createPartialMock(
                 TokenRequest.class, new String[]{"toOauthHttpRequest"},
-
-                new URL("http://login.windows.net"), acr, serviceBundle);
-        OAuthHttpRequest msalOAuthHttpRequest = PowerMock
-                .createMock(OAuthHttpRequest.class);
-
-        HTTPResponse httpResponse = new HTTPResponse(HTTPResponse.SC_BAD_REQUEST);
-
-        String claims = "{\\\"access_token\\\":{\\\"polids\\\":{\\\"essential\\\":true,\\\"values\\\":[\\\"5ce770ea-8690-4747-aa73-c5b3cd509cd4\\\"]}}}";
-
-        String content = "{\"error\":\"interaction_required\"," +
-                "\"error_description\":\"AADSTS50076: description\\r\\nCorrelation ID: 3a...5a\\r\\nTimestamp:2017-07-15 02:35:05Z\"," +
-                "\"error_codes\":[50076]," +
-                "\"timestamp\":\"2017-07-15 02:35:05Z\"," +
-                "\"trace_id\":\"0788...000\"," +
-                "\"correlation_id\":\"3a...95a\"," +
-                "\"claims\":\"" + claims + "\"}";
-        httpResponse.setContent(content);
-        httpResponse.setContentType(CommonContentTypes.APPLICATION_JSON);
-
-        EasyMock.expect(request.toOauthHttpRequest()).andReturn(msalOAuthHttpRequest).times(1);
-        EasyMock.expect(msalOAuthHttpRequest.send()).andReturn(httpResponse).times(1);
-
-        PowerMock.replay(request, msalOAuthHttpRequest);
-
-        try {
-            request.executeOauthRequestAndProcessResponse();
-            Assert.fail("Expected ClaimsChallengeException was not thrown");
-        } catch (ClaimsChallengeException ex) {
-            Assert.assertEquals(claims.replace("\\", ""), ex.getClaims());
-        }
-        PowerMock.verifyAll();
+                new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
+                acr,
+                serviceBundle);
     }
 
     @Test
@@ -128,7 +154,7 @@ public class TokenRequestTest extends AbstractMsalTests {
                         PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         final TokenRequest request = new TokenRequest(
-                new URL("http://login.windows.net"),
+                new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
                 acr,
                 new ServiceBundle(null, null, null, null));
         Assert.assertNotNull(request);
@@ -154,7 +180,7 @@ public class TokenRequestTest extends AbstractMsalTests {
                         PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         TokenRequest request = new TokenRequest(
-                new URL("http://login.windows.net"),
+                new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
                 acr,
                 new ServiceBundle(null, null, null, null));
         Assert.assertNotNull(request);
@@ -187,7 +213,7 @@ public class TokenRequestTest extends AbstractMsalTests {
                         PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         final TokenRequest request = new TokenRequest(
-                new URL("http://login.windows.net"),
+                new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
                 acr,
                 new ServiceBundle(null, null, null, null));
         Assert.assertNotNull(request);
@@ -196,7 +222,7 @@ public class TokenRequestTest extends AbstractMsalTests {
     }
 
     @Test
-    public void testExecuteOAuth_Success() throws SerializeException, ParseException, AuthenticationException,
+    public void testExecuteOAuth_Success() throws SerializeException, ParseException, MsalException,
             IOException, URISyntaxException {
 
         PublicClientApplication app = new PublicClientApplication.Builder("id").build();
@@ -222,8 +248,8 @@ public class TokenRequestTest extends AbstractMsalTests {
 
         final TokenRequest request = PowerMock.createPartialMock(
                 TokenRequest.class, new String[] { "toOauthHttpRequest" },
+                new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)), acr, serviceBundle);
 
-                new URL("http://login.windows.net"), acr, serviceBundle);
         final OAuthHttpRequest msalOAuthHttpRequest = PowerMock
                 .createMock(OAuthHttpRequest.class);
 
@@ -261,9 +287,9 @@ public class TokenRequestTest extends AbstractMsalTests {
         Assert.assertFalse(StringHelper.isBlank(result.refreshToken()));
     }
 
-    @Test(expectedExceptions = AuthenticationException.class)
+    @Test(expectedExceptions = MsalException.class)
     public void testExecuteOAuth_Failure() throws SerializeException,
-            ParseException, AuthenticationException, IOException, URISyntaxException {
+            ParseException, MsalException, IOException, URISyntaxException {
 
         PublicClientApplication app = new PublicClientApplication.Builder("id").build();
 
@@ -288,7 +314,7 @@ public class TokenRequestTest extends AbstractMsalTests {
 
         final TokenRequest request = PowerMock.createPartialMock(
                 TokenRequest.class, new String[] { "toOauthHttpRequest" },
-                new URL("http://login.windows.net"), acr, serviceBundle);
+                new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)), acr, serviceBundle);
         final OAuthHttpRequest msalOAuthHttpRequest = PowerMock
                 .createMock(OAuthHttpRequest.class);
 
@@ -298,47 +324,30 @@ public class TokenRequestTest extends AbstractMsalTests {
                 .andReturn(msalOAuthHttpRequest).times(1);
         EasyMock.expect(msalOAuthHttpRequest.send()).andReturn(httpResponse)
                 .times(1);
-        EasyMock.expect(httpResponse.getStatusCode()).andReturn(402).times(1);
+        EasyMock.expect(httpResponse.getStatusCode()).andReturn(402).times(2);
+        EasyMock.expect(httpResponse.getStatusMessage()).andReturn("403 Forbidden");
+        EasyMock.expect(httpResponse.getHeaderMap()).andReturn(new HashMap<>());
+        EasyMock.expect(httpResponse.getContent()).andReturn(TestConfiguration.HTTP_ERROR_RESPONSE);
 
-        final TokenErrorResponse errorResponse = PowerMock
-                .createMock(TokenErrorResponse.class);
+        final ErrorResponse errorResponse = PowerMock.createMock(ErrorResponse.class);
 
-        final ErrorObject errorObject = PowerMock.createMock(ErrorObject.class);
 
-        EasyMock.expect(errorObject.getCode())
-                .andReturn("unknown").times(3);
-        EasyMock.expect(errorObject.getHTTPStatusCode())
-                .andReturn(402).times(1);
-
-        EasyMock.expect(errorResponse.getErrorObject())
-                .andReturn(errorObject).times(1);
+        EasyMock.expect(errorResponse.error()).andReturn("invalid_request");
 
         EasyMock.expect(httpResponse.getHeaderValue("User-Agent")).andReturn(null);
         EasyMock.expect(httpResponse.getHeaderValue("x-ms-request-id")).andReturn(null);
         EasyMock.expect(httpResponse.getHeaderValue("x-ms-clitelem")).andReturn(null);
         EasyMock.expect(httpResponse.getStatusCode()).andReturn(402).times(1);
 
-
-        PowerMock.mockStaticPartial(TokenErrorResponse.class, "parse");
-        PowerMock.createPartialMock(TokenErrorResponse.class, "parse");
-        EasyMock.expect(TokenErrorResponse.parse(httpResponse))
-                .andReturn(errorResponse).times(1);
-
-        final JSONObject jsonObj = PowerMock.createMock(JSONObject.class);
-        EasyMock.expect(jsonObj.toJSONString())
-                .andReturn(TestConfiguration.HTTP_ERROR_RESPONSE).times(1);
-        EasyMock.expect(errorResponse.toJSONObject()).andReturn(jsonObj)
-                .times(1);
-
         PowerMock.replay(request, msalOAuthHttpRequest, httpResponse,
-                TokenErrorResponse.class, errorObject, jsonObj, errorResponse);
+                TokenErrorResponse.class, errorResponse);
         try {
             request.executeOauthRequestAndProcessResponse();
             PowerMock.verifyAll();
         }
         finally {
             PowerMock.reset(request, msalOAuthHttpRequest, httpResponse,
-                    TokenErrorResponse.class, jsonObj, errorResponse);
+                    TokenErrorResponse.class, errorResponse);
         }
     }
 }

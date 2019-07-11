@@ -1,41 +1,17 @@
-// Copyright (c) Microsoft Corporation.
-// All rights reserved.
-//
-// This code is licensed under the MIT License.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files(the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions :
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
 
 package com.microsoft.aad.msal4j;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import com.nimbusds.oauth2.sdk.ErrorObject;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.SerializeException;
-import com.nimbusds.oauth2.sdk.TokenErrorResponse;
 import com.nimbusds.oauth2.sdk.http.CommonContentTypes;
 import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
@@ -51,26 +27,18 @@ import lombok.Getter;
 class TokenRequest {
     Logger log = LoggerFactory.getLogger(TokenRequest.class);
 
-    private final URL url;
+    final Authority requestAuthority;
     private final MsalRequest msalRequest;
     private final ServiceBundle serviceBundle;
 
-    TokenRequest(final URL url, MsalRequest msalRequest, final ServiceBundle serviceBundle) {
-        this.url = url;
+    TokenRequest(Authority requestAuthority, MsalRequest msalRequest, ServiceBundle serviceBundle) {
+        this.requestAuthority = requestAuthority;
         this.serviceBundle = serviceBundle;
         this.msalRequest = msalRequest;
     }
 
-    /**
-     *
-     * @return
-     * @throws ParseException
-     * @throws AuthenticationException
-     * @throws SerializeException
-     * @throws IOException
-     */
     AuthenticationResult executeOauthRequestAndProcessResponse()
-            throws ParseException, AuthenticationException, SerializeException,
+            throws ParseException, MsalServiceException, SerializeException,
             IOException {
 
         HttpEvent httpEvent = createHttpEvent();
@@ -89,8 +57,7 @@ class TokenRequest {
             addResponseHeadersToHttpEvent(httpEvent, httpResponse);
 
             if (httpResponse.getStatusCode() == HTTPResponse.SC_OK) {
-                final TokenResponse response =
-                        TokenResponse.parseHttpResponse(httpResponse);
+                final TokenResponse response = TokenResponse.parseHttpResponse(httpResponse);
 
                 OIDCTokens tokens = response.getOIDCTokens();
                 String refreshToken = null;
@@ -113,13 +80,13 @@ class TokenRequest {
 
                             accountCacheEntity = AccountCacheEntity.create(
                                     response.getClientInfo(),
-                                    url.getHost(),
+                                    requestAuthority.host(),
                                     idToken,
                                     authority.policy);
                         } else {
                             accountCacheEntity = AccountCacheEntity.create(
                                     response.getClientInfo(),
-                                    url.getHost(),
+                                    requestAuthority.host(),
                                     idToken);
                         }
                     }
@@ -131,7 +98,7 @@ class TokenRequest {
                         refreshToken(refreshToken).
                         familyId(response.getFoci()).
                         idToken(tokens.getIDTokenString()).
-                        environment(url.getHost()).
+                        environment(requestAuthority.host()).
                         expiresOn(currTimestampSec + response.getExpiresIn()).
                         extExpiresOn(response.getExtExpiresIn() > 0 ? currTimestampSec + response.getExtExpiresIn() : 0).
                         accountCacheEntity(accountCacheEntity).
@@ -139,35 +106,9 @@ class TokenRequest {
                         build();
 
             } else {
-                final TokenErrorResponse errorResponse = TokenErrorResponse.parse(httpResponse);
-                ErrorObject errorObject = errorResponse.getErrorObject();
-
-                if (AuthenticationErrorCode.AUTHORIZATION_PENDING.toString()
-                        .equals(errorObject.getCode())) {
-
-                    httpEvent.setOauthErrorCode(AuthenticationErrorCode.AUTHORIZATION_PENDING.toString());
-
-                    throw new AuthenticationException(AuthenticationErrorCode.AUTHORIZATION_PENDING,
-                            errorObject.getDescription());
-                }
-
-                if (HTTPResponse.SC_BAD_REQUEST == errorObject.getHTTPStatusCode() &&
-                        AuthenticationErrorCode.INTERACTION_REQUIRED.toString().equals(errorObject.getCode())) {
-
-                    httpEvent.setOauthErrorCode(AuthenticationErrorCode.INTERACTION_REQUIRED.toString());
-
-                    throw new ClaimsChallengeException(
-                            errorResponse.toJSONObject().toJSONString(),
-                            getClaims(httpResponse.getContent()));
-                } else {
-                    String telemetryErrorCode = StringHelper.isBlank(errorObject.getCode()) ?
-                            AuthenticationErrorCode.UNKNOWN.toString() :
-                            errorObject.getCode();
-
-                    httpEvent.setOauthErrorCode(telemetryErrorCode);
-
-                    throw new AuthenticationException(errorResponse.toJSONObject().toJSONString());
-                }
+                MsalServiceException exception = MsalServiceExceptionFactory.fromHttpResponse(httpResponse);
+                httpEvent.setOauthErrorCode(exception.errorCode());
+                throw exception;
             }
             return result;
         }
@@ -194,13 +135,13 @@ class TokenRequest {
         }
     }
 
-    private HttpEvent createHttpEvent() {
+    private HttpEvent createHttpEvent() throws MalformedURLException {
         HttpEvent httpEvent = new HttpEvent();
         httpEvent.setHttpMethod("POST");
         try {
-            httpEvent.setHttpPath(url.toURI());
-            if(!StringHelper.isBlank(url.getQuery()))
-                httpEvent.setQueryParameters(url.getQuery());
+            httpEvent.setHttpPath(requestAuthority.tokenEndpointUrl().toURI());
+            if(!StringHelper.isBlank(requestAuthority.tokenEndpointUrl().getQuery()))
+                httpEvent.setQueryParameters(requestAuthority.tokenEndpointUrl().getQuery());
         } catch(URISyntaxException ex){
             log.warn(LogHelper.createMessage("Setting URL telemetry fields failed: " +
                             LogHelper.getPiiScrubbedDetails(ex),
@@ -209,28 +150,15 @@ class TokenRequest {
         return httpEvent;
     }
 
-    private String getClaims(String httpResponseContentStr) {
-        JsonElement root = new JsonParser().parse(httpResponseContentStr);
+    OAuthHttpRequest toOauthHttpRequest() throws SerializeException, MalformedURLException {
 
-        JsonElement claims = root.getAsJsonObject().get("claims");
-
-        return claims != null ? claims.getAsString() : null;
-    }
-
-    /**
-     *
-     * @return
-     * @throws SerializeException
-     */
-    OAuthHttpRequest toOauthHttpRequest() throws SerializeException {
-
-        if (this.url == null) {
+        if (requestAuthority.tokenEndpointUrl() == null) {
             throw new SerializeException("The endpoint URI is not specified");
         }
 
         final OAuthHttpRequest oauthHttpRequest = new OAuthHttpRequest(
                 HTTPRequest.Method.POST,
-                this.url,
+                requestAuthority.tokenEndpointUrl(),
                 msalRequest.headers().getReadonlyHeaderMap(),
                 this.serviceBundle);
         oauthHttpRequest.setContentType(CommonContentTypes.APPLICATION_URLENCODED);

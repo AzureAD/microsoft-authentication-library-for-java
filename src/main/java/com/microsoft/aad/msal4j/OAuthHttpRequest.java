@@ -1,25 +1,5 @@
-// Copyright (c) Microsoft Corporation.
-// All rights reserved.
-//
-// This code is licensed under the MIT License.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files(the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions :
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
 
 package com.microsoft.aad.msal4j;
 
@@ -43,6 +23,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 class OAuthHttpRequest extends HTTPRequest {
@@ -74,9 +55,11 @@ class OAuthHttpRequest extends HTTPRequest {
         return createResponse(conn, out);
     }
 
-    HTTPResponse createResponse(final HttpURLConnection conn, final String out)
+    private HTTPResponse createResponse(final HttpURLConnection conn, final String out)
             throws IOException {
+
         final HTTPResponse response = new HTTPResponse(conn.getResponseCode());
+
         final String location = conn.getHeaderField("Location");
         if (!StringHelper.isBlank(location)) {
             try {
@@ -94,16 +77,26 @@ class OAuthHttpRequest extends HTTPRequest {
                     + e.getMessage(), e);
         }
 
-        response.setCacheControl(conn.getHeaderField("Cache-Control"));
-        response.setPragma(conn.getHeaderField("Pragma"));
-        response.setWWWAuthenticate(conn.getHeaderField("WWW-Authenticate"));
+        Map<String, List<String>> headers = conn.getHeaderFields();
+        for(Map.Entry<String, List<String>> header: headers.entrySet()){
+
+            if(StringHelper.isBlank(header.getKey())){
+                continue;
+            }
+
+            String headerValue = response.getHeaderValue(header.getKey());
+            if(headerValue == null || StringHelper.isBlank(headerValue)){
+                response.setHeader(header.getKey(), header.getValue().toArray(new String[0]));
+            }
+        }
+
         if (!StringHelper.isBlank(out)) {
             response.setContent(out);
         }
         return response;
     }
 
-    void configureHeaderAndExecuteOAuthCall(final HttpsURLConnection conn)
+    private void configureHeaderAndExecuteOAuthCall(final HttpsURLConnection conn)
             throws IOException {
 
         if (this.getAuthorization() != null) {
@@ -123,8 +116,7 @@ class OAuthHttpRequest extends HTTPRequest {
 
         HttpHelper.configureAdditionalHeaders(conn, params);
         conn.setDoOutput(true);
-        conn.setRequestProperty("Content-Type",
-                CommonContentTypes.APPLICATION_URLENCODED.toString());
+        conn.setRequestProperty("Content-Type", CommonContentTypes.APPLICATION_URLENCODED.toString());
 
         if (this.getQuery() != null) {
             try(final OutputStreamWriter writer = new OutputStreamWriter(
@@ -135,7 +127,7 @@ class OAuthHttpRequest extends HTTPRequest {
         }
     }
 
-    String processAndReadResponse(final HttpURLConnection conn)
+    private String processAndReadResponse(final HttpURLConnection conn)
             throws IOException {
         Reader inReader;
         final int responseCode = conn.getResponseCode();

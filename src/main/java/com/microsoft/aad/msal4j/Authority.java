@@ -1,8 +1,13 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.microsoft.aad.msal4j;
 
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.Accessors;
+
+import java.net.MalformedURLException;
 import java.net.URL;
 
 /**
@@ -30,6 +35,10 @@ abstract class Authority {
     boolean isTenantless;
 
     String tokenEndpoint;
+
+    URL tokenEndpointUrl() throws MalformedURLException {
+        return new URL(tokenEndpoint);
+    }
 
     Authority(URL canonicalAuthorityUrl){
         this.canonicalAuthorityUrl = canonicalAuthorityUrl;
@@ -61,7 +70,7 @@ abstract class Authority {
         final String path = authorityUrl.getPath().substring(1);
         if (StringHelper.isBlank(path)) {
             throw new IllegalArgumentException(
-                    AuthenticationErrorMessage.AUTHORITY_URI_INVALID_PATH);
+                    "authority Uri should have at least one segment in the path (i.e. https://<host>/<path>/...)");
         }
 
         final String firstPath = path.substring(0, path.indexOf("/"));
@@ -79,7 +88,7 @@ abstract class Authority {
     void validateAuthorityUrl() {
         if (!this.canonicalAuthorityUrl.getProtocol().equalsIgnoreCase("https")) {
             throw new IllegalArgumentException(
-                    AuthenticationErrorMessage.AUTHORITY_URI_INSECURE);
+                    "authority should use the 'https' scheme");
         }
 
         if (this.canonicalAuthorityUrl.toString().contains("#")) {

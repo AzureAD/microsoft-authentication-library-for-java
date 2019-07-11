@@ -1,25 +1,5 @@
-// Copyright (c) Microsoft Corporation.
-// All rights reserved.
-//
-// This code is licensed under the MIT License.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files(the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions :
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
 
 package com.microsoft.aad.msal4j;
 
@@ -31,7 +11,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Set;
 import java.util.concurrent.CompletionException;
 import java.util.function.Supplier;
 
@@ -76,16 +55,21 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
                             true)) {
             try {
                 result = execute();
-                logResult(result, msalRequest.headers());
-
                 apiEvent.setWasSuccessful(true);
-                if (result.account() != null) {
-                    apiEvent.setTenantId(result.accountCacheEntity().realm());
+
+                if(result != null){
+                    logResult(result, msalRequest.headers());
+
+                    if (result.account() != null) {
+                        apiEvent.setTenantId(result.accountCacheEntity().realm());
+                    }
                 }
             } catch(Exception ex) {
-                if (ex instanceof AuthenticationException) {
-                    apiEvent.setApiErrorCode(((AuthenticationException) ex).getErrorCode());
+
+                if (ex instanceof MsalServiceException) {
+                    apiEvent.setApiErrorCode(((MsalServiceException) ex).errorCode());
                 }
+
                 clientApplication.log.error(
                         LogHelper.createMessage(
                                 "Execution of " + this.getClass() + " failed.",

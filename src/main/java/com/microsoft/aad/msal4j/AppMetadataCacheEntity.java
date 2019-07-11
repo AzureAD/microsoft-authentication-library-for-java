@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.microsoft.aad.msal4j;
 
 import com.google.gson.annotations.SerializedName;
@@ -11,7 +14,7 @@ import java.util.List;
 @Accessors(fluent = true)
 @Getter
 @Setter
-public class AppMetadataCacheEntity {
+class AppMetadataCacheEntity {
 
     public static final String APP_METADATA_CACHE_ENTITY_ID = "appmetadata";
 
