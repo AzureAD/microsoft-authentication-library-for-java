@@ -52,6 +52,11 @@ public class SilentParameters {
                 .account(account);
     }
 
+    /**
+     * Builder for SilentParameters
+     * @param scopes scopes application is requesting access to
+     * @return builder object that can be used to construct SilentParameters
+     */
     public static SilentParametersBuilder builder(Set<String> scopes) {
         validateNotEmpty("scopes", scopes);
 

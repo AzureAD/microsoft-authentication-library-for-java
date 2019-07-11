@@ -1,6 +1,13 @@
+Version 0.5.0-preview
+=============
+- Refactored AuthenticationException to MsalServiceException, MsalClientException, MsalInteractionRequiredException
+- Added cache lookup to acquireToken by client credentials grant
+- Updated Javadoc reference
+- Updated license headers
+
 Version 0.4.0-preview
 =============
-- Exposing acquire token by refresh token api
+- Exposed acquire token by refresh token api
 
 Version 0.3.0-preview
 =============
