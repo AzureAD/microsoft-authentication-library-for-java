@@ -16,12 +16,12 @@ import java.util.Map;
 public class MsalInteractionRequiredException extends MsalServiceException{
 
     /**
-     * Classification of the conditional access error, enabling you to do more actions or inform the
+     * Reason for the MsalInteractionRequiredException, enabling you to do more actions or inform the
      * user depending on your scenario.
      */
     @Accessors(fluent = true)
     @Getter
-    private ServiceExceptionClassification classification;
+    private InteractionRequiredExceptionReason reason;
 
     /**
      * Initializes a new instance of the exception class
@@ -33,6 +33,6 @@ public class MsalInteractionRequiredException extends MsalServiceException{
             Map<String,List<String>> headerMap) {
         super(errorResponse, headerMap);
 
-        classification = ServiceExceptionClassification.fromSubErrorString(errorResponse.subError);
+        reason = InteractionRequiredExceptionReason.fromSubErrorString(errorResponse.subError);
     }
 }

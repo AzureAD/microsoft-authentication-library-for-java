@@ -7,7 +7,7 @@ package com.microsoft.aad.msal4j;
  * Details about the cause of an {@link MsalInteractionRequiredException}, giving a hint about the
  * user can expect when they go through interactive authentication
  */
-public enum ServiceExceptionClassification {
+public enum InteractionRequiredExceptionReason {
 
     /**
      * No further details are provided. It is possible that the user will be able to resolve the issue
@@ -47,18 +47,19 @@ public enum ServiceExceptionClassification {
 
     private String error;
 
-    ServiceExceptionClassification(String error){
+    InteractionRequiredExceptionReason(String error){
         this.error = error;
     }
 
-    static ServiceExceptionClassification fromSubErrorString(String subError){
+    static InteractionRequiredExceptionReason fromSubErrorString(String subError){
         if(StringHelper.isBlank(subError)){
             return NONE;
         }
 
-        for(ServiceExceptionClassification classification: ServiceExceptionClassification.values()){
-            if(classification.error.equalsIgnoreCase(subError)){
-                return classification;
+        for(InteractionRequiredExceptionReason reason:
+                InteractionRequiredExceptionReason.values()){
+            if(reason.error.equalsIgnoreCase(subError)){
+                return reason;
             }
         }
         return NONE;

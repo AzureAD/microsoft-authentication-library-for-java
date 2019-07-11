@@ -28,44 +28,6 @@ import java.util.HashMap;
 public class TokenRequestTest extends AbstractMsalTests {
 
     @Test
-    public void executeOAuthRequest_SCBadRequestErrorInteractionRequired_AuthenticationServiceException()
-            throws SerializeException, ParseException, MsalException,
-            IOException, URISyntaxException {
-
-        TokenRequest request = createMockedTokenRequest();
-
-        OAuthHttpRequest msalOAuthHttpRequest = PowerMock
-                .createMock(OAuthHttpRequest.class);
-
-        HTTPResponse httpResponse = new HTTPResponse(HTTPResponse.SC_BAD_REQUEST);
-
-        String claims = "{\\\"access_token\\\":{\\\"polids\\\":{\\\"essential\\\":true,\\\"values\\\":[\\\"5ce770ea-8690-4747-aa73-c5b3cd509cd4\\\"]}}}";
-
-        String content = "{\"error\":\"interaction_required\"," +
-                "\"error_description\":\"AADSTS50076: description\\r\\nCorrelation ID: 3a...5a\\r\\nTimestamp:2017-07-15 02:35:05Z\"," +
-                "\"error_codes\":[50076]," +
-                "\"timestamp\":\"2017-07-15 02:35:05Z\"," +
-                "\"trace_id\":\"0788...000\"," +
-                "\"correlation_id\":\"3a...95a\"," +
-                "\"claims\":\"" + claims + "\"}";
-        httpResponse.setContent(content);
-        httpResponse.setContentType(CommonContentTypes.APPLICATION_JSON);
-
-        EasyMock.expect(request.toOauthHttpRequest()).andReturn(msalOAuthHttpRequest).times(1);
-        EasyMock.expect(msalOAuthHttpRequest.send()).andReturn(httpResponse).times(1);
-
-        PowerMock.replay(request, msalOAuthHttpRequest);
-
-        try {
-            request.executeOauthRequestAndProcessResponse();
-            Assert.fail("Expected MsalServiceException was not thrown");
-        } catch (MsalServiceException ex) {
-            Assert.assertEquals(claims.replace("\\", ""), ex.claims());
-        }
-        PowerMock.verifyAll();
-    }
-
-    @Test
     public void executeOAuthRequest_SCBadRequestErrorInvalidGrant_InteractionRequiredException()
             throws SerializeException, ParseException, MsalException,
             IOException, URISyntaxException {
@@ -99,7 +61,47 @@ public class TokenRequestTest extends AbstractMsalTests {
             Assert.fail("Expected MsalServiceException was not thrown");
         } catch (MsalInteractionRequiredException ex) {
             Assert.assertEquals(claims.replace("\\", ""), ex.claims());
-            Assert.assertEquals(ex.classification(), ServiceExceptionClassification.BASIC_ACTION);
+            Assert.assertEquals(ex.reason(), InteractionRequiredExceptionReason.BASIC_ACTION);
+        }
+        PowerMock.verifyAll();
+    }
+
+    @Test
+    public void executeOAuthRequest_SCBadRequestErrorInvalidGrant_SubErrorFilteredServiceExceptionThrown()
+            throws SerializeException, ParseException, MsalException,
+            IOException, URISyntaxException {
+
+        TokenRequest request = createMockedTokenRequest();
+
+        OAuthHttpRequest msalOAuthHttpRequest = PowerMock
+                .createMock(OAuthHttpRequest.class);
+
+        HTTPResponse httpResponse = new HTTPResponse(HTTPResponse.SC_BAD_REQUEST);
+
+        String claims = "{\\\"access_token\\\":{\\\"polids\\\":{\\\"essential\\\":true,\\\"values\\\":[\\\"5ce770ea-8690-4747-aa73-c5b3cd509cd4\\\"]}}}";
+
+        String content = "{\"error\":\"invalid_grant\"," +
+                "\"error_description\":\"AADSTS65001: description\\r\\nCorrelation ID: 3a...5a\\r\\nTimestamp:2017-07-15 02:35:05Z\"," +
+                "\"error_codes\":[50076]," +
+                "\"timestamp\":\"2017-07-15 02:35:05Z\"," +
+                "\"trace_id\":\"0788...000\"," +
+                "\"correlation_id\":\"3a...95a\"," +
+                "\"suberror\":\"client_mismatch\"," +
+                "\"claims\":\"" + claims + "\"}";
+        httpResponse.setContent(content);
+        httpResponse.setContentType(CommonContentTypes.APPLICATION_JSON);
+
+        EasyMock.expect(request.toOauthHttpRequest()).andReturn(msalOAuthHttpRequest).times(1);
+        EasyMock.expect(msalOAuthHttpRequest.send()).andReturn(httpResponse).times(1);
+
+        PowerMock.replay(request, msalOAuthHttpRequest);
+
+        try {
+            request.executeOauthRequestAndProcessResponse();
+            Assert.fail("Expected MsalServiceException was not thrown");
+        } catch (MsalServiceException ex) {
+            Assert.assertEquals(claims.replace("\\", ""), ex.claims());
+            Assert.assertTrue(!(ex instanceof MsalInteractionRequiredException));
         }
         PowerMock.verifyAll();
     }
@@ -127,7 +129,7 @@ public class TokenRequestTest extends AbstractMsalTests {
 
         return PowerMock.createPartialMock(
                 TokenRequest.class, new String[]{"toOauthHttpRequest"},
-                new URL("http://login.windows.net"),
+                new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
                 acr,
                 serviceBundle);
     }

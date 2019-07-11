@@ -30,6 +30,9 @@ class MsalServiceExceptionFactory {
         errorResponse.statusCode(httpResponse.getStatusCode());
         errorResponse.statusMessage(httpResponse.getStatusMessage());
 
+
+        boolean bool = errorResponse.error().equalsIgnoreCase(AuthenticationErrorCode.INVALID_GRANT);
+
         if(errorResponse.error() != null &&
                 errorResponse.error().equalsIgnoreCase(AuthenticationErrorCode.INVALID_GRANT)) {
 
