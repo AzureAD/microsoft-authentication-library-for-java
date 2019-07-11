@@ -11,7 +11,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Set;
 import java.util.concurrent.CompletionException;
 import java.util.function.Supplier;
 
@@ -66,9 +65,11 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
                     }
                 }
             } catch(Exception ex) {
-                if (ex instanceof AuthenticationException) {
-                    apiEvent.setApiErrorCode(((AuthenticationException) ex).errorCode());
+
+                if (ex instanceof MsalServiceException) {
+                    apiEvent.setApiErrorCode(((MsalServiceException) ex).errorCode());
                 }
+
                 clientApplication.log.error(
                         LogHelper.createMessage(
                                 "Execution of " + this.getClass() + " failed.",

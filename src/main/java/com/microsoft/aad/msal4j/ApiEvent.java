@@ -75,7 +75,7 @@ class ApiEvent extends Event{
         this.put(IS_CONFIDENTIAL_CLIENT_KEY, String.valueOf(isConfidentialClient).toLowerCase(Locale.ROOT));
     }
 
-    public void setApiErrorCode(AuthenticationErrorCode apiErrorCode){
-        this.put(API_ERROR_CODE_KEY, apiErrorCode.toString());
+    public void setApiErrorCode(String apiErrorCode){
+        this.put(API_ERROR_CODE_KEY, apiErrorCode);
     }
 }

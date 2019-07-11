@@ -35,10 +35,9 @@ public interface IPublicClientApplication extends IClientApplicationBase {
      * End-user should be instructed to use another device to connect to the authorization server to approve the access request.
      * Since the client cannot receive incoming requests, it polls the authorization server repeatedly
      * until the end-user completes the approval process.
-     *
      * @param parameters instance of {@link DeviceCodeFlowParameters}
      * @return {@link CompletableFuture} containing an {@link IAuthenticationResult}
-     * @throws AuthenticationException thrown if authorization is pending or another error occurred.
+     * @throws MsalException thrown if authorization is pending or another error occurred.
      *                                 If the errorCode of the exception is AuthenticationErrorCode.AUTHORIZATION_PENDING,
      *                                 the call needs to be retried until the AccessToken is returned.
      *                                 DeviceCode.interval - The minimum amount of time in seconds that the client

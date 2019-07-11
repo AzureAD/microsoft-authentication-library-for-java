@@ -18,19 +18,10 @@ import com.nimbusds.jose.util.Base64URL;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
-/**
- *
- */
 final class JwtHelper {
-    /**
-     * Builds JWT object.
-     * 
-     * @param credential
-     * @return
-     * @throws AuthenticationException
-     */
+
     static ClientAssertion buildJwt(String clientId, final AsymmetricKeyCredential credential,
-            final String jwtAudience) throws AuthenticationException {
+            final String jwtAudience) throws MsalClientException {
         if (StringHelper.isBlank(clientId)) {
             throw new IllegalArgumentException("clientId is null or empty");
         }
@@ -66,7 +57,7 @@ final class JwtHelper {
             jwt.sign(signer);
         }
         catch (final Exception e) {
-            throw new AuthenticationException(e);
+            throw new MsalClientException(e);
         }
 
         return new ClientAssertion(jwt.serialize());

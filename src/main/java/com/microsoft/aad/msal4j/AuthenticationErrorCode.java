@@ -3,20 +3,44 @@
 
 package com.microsoft.aad.msal4j;
 
-public enum AuthenticationErrorCode {
+public class AuthenticationErrorCode {
 
-    UNKNOWN ("unknown"),
-    AUTHORIZATION_PENDING ("authorization_pending"),
-    INTERACTION_REQUIRED ("interaction_required");
+    /**
+     * In the context of device code user has not yet authenticated via browser
+     */
+    public final static String AUTHORIZATION_PENDING = "authorization_pending";
 
-    private String errorCode;
+    /**
+     * In the context of device code, this error happens when the device code has expired before
+     * the user signed-in on another device (this is usually after 15 min)
+     */
+    public final static String CODE_EXPIRED = "code_expired";
 
-    AuthenticationErrorCode(String errorCode){
-        this.errorCode = errorCode;
-    }
+    /**
+     * Standard Oauth2 protocol error code. It indicates that the application needs to expose
+     * the UI to the user so that user does an interactive action in order to get a new token
+     */
+    public final static String INVALID_GRANT = "invalid_grant";
 
-    @Override
-    public String toString(){
-        return errorCode;
-    }
+    /**
+     * WS-Trust Endpoint not found in Metadata document
+     */
+    public final static String WSTRUST_ENDPOINT_NOT_FOUND_IN_METADATA_DOCUMENT = "wstrust_endpoint_not_found";
+
+    /**
+     * Password is required for managed user. Will typically happen when trying to do integrated windows authentication
+     * for managed users
+     */
+    public final static String PASSWORD_REQUIRED_FOR_MANAGED_USER = "password_required_for_managed_user";
+
+    /**
+     * User realm discovery failed
+     */
+    public final static String USER_REALM_DISCOVERY_FAILED = "user_realm_discovery_failed";
+
+    /**
+     * Unknown error occurred
+     */
+    public final static String UNKNOWN = "unknown";
 }
+

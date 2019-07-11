@@ -387,7 +387,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
             try {
                 authority = new AADAuthority(new URL(DEFAULT_AUTHORITY));
             } catch(Exception e){
-                throw new AuthenticationException(e);
+                throw new MsalClientException(e);
             }
             return authority;
         }

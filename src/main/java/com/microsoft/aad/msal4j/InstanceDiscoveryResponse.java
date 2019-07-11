@@ -6,7 +6,9 @@ package com.microsoft.aad.msal4j;
 import com.google.gson.annotations.SerializedName;
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.experimental.Accessors;
 
+@Accessors(fluent = true)
 @Getter(AccessLevel.PACKAGE)
 class InstanceDiscoveryResponse {
 

@@ -30,7 +30,7 @@ class OnBehalfOfRequest extends MsalRequest {
         try {
             jWTBearerGrant = new JWTBearerGrant(SignedJWT.parse(parameters.userAssertion().getAssertion()));
         } catch (Exception e) {
-            throw new AuthenticationException(e);
+            throw new MsalClientException(e);
         }
 
         Map<String, List<String>> params = new HashMap<>();

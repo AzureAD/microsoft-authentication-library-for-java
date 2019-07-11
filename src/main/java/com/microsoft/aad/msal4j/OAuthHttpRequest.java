@@ -23,6 +23,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 class OAuthHttpRequest extends HTTPRequest {
@@ -54,9 +55,11 @@ class OAuthHttpRequest extends HTTPRequest {
         return createResponse(conn, out);
     }
 
-    HTTPResponse createResponse(final HttpURLConnection conn, final String out)
+    private HTTPResponse createResponse(final HttpURLConnection conn, final String out)
             throws IOException {
+
         final HTTPResponse response = new HTTPResponse(conn.getResponseCode());
+
         final String location = conn.getHeaderField("Location");
         if (!StringHelper.isBlank(location)) {
             try {
@@ -74,16 +77,26 @@ class OAuthHttpRequest extends HTTPRequest {
                     + e.getMessage(), e);
         }
 
-        response.setCacheControl(conn.getHeaderField("Cache-Control"));
-        response.setPragma(conn.getHeaderField("Pragma"));
-        response.setWWWAuthenticate(conn.getHeaderField("WWW-Authenticate"));
+        Map<String, List<String>> headers = conn.getHeaderFields();
+        for(Map.Entry<String, List<String>> header: headers.entrySet()){
+
+            if(StringHelper.isBlank(header.getKey())){
+                continue;
+            }
+
+            String headerValue = response.getHeaderValue(header.getKey());
+            if(headerValue == null || StringHelper.isBlank(headerValue)){
+                response.setHeader(header.getKey(), header.getValue().toArray(new String[0]));
+            }
+        }
+
         if (!StringHelper.isBlank(out)) {
             response.setContent(out);
         }
         return response;
     }
 
-    void configureHeaderAndExecuteOAuthCall(final HttpsURLConnection conn)
+    private void configureHeaderAndExecuteOAuthCall(final HttpsURLConnection conn)
             throws IOException {
 
         if (this.getAuthorization() != null) {
@@ -103,8 +116,7 @@ class OAuthHttpRequest extends HTTPRequest {
 
         HttpHelper.configureAdditionalHeaders(conn, params);
         conn.setDoOutput(true);
-        conn.setRequestProperty("Content-Type",
-                CommonContentTypes.APPLICATION_URLENCODED.toString());
+        conn.setRequestProperty("Content-Type", CommonContentTypes.APPLICATION_URLENCODED.toString());
 
         if (this.getQuery() != null) {
             try(final OutputStreamWriter writer = new OutputStreamWriter(
@@ -115,7 +127,7 @@ class OAuthHttpRequest extends HTTPRequest {
         }
     }
 
-    String processAndReadResponse(final HttpURLConnection conn)
+    private String processAndReadResponse(final HttpURLConnection conn)
             throws IOException {
         Reader inReader;
         final int responseCode = conn.getResponseCode();

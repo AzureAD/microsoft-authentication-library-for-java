@@ -6,17 +6,12 @@ package com.microsoft.aad.msal4j;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import com.nimbusds.oauth2.sdk.ErrorObject;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.SerializeException;
-import com.nimbusds.oauth2.sdk.TokenErrorResponse;
 import com.nimbusds.oauth2.sdk.http.CommonContentTypes;
 import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
@@ -42,16 +37,8 @@ class TokenRequest {
         this.msalRequest = msalRequest;
     }
 
-    /**
-     *
-     * @return
-     * @throws ParseException
-     * @throws AuthenticationException
-     * @throws SerializeException
-     * @throws IOException
-     */
     AuthenticationResult executeOauthRequestAndProcessResponse()
-            throws ParseException, AuthenticationException, SerializeException,
+            throws ParseException, MsalServiceException, SerializeException,
             IOException {
 
         HttpEvent httpEvent = createHttpEvent();
@@ -119,35 +106,9 @@ class TokenRequest {
                         build();
 
             } else {
-                final TokenErrorResponse errorResponse = TokenErrorResponse.parse(httpResponse);
-                ErrorObject errorObject = errorResponse.getErrorObject();
-
-                if (AuthenticationErrorCode.AUTHORIZATION_PENDING.toString()
-                        .equals(errorObject.getCode())) {
-
-                    httpEvent.setOauthErrorCode(AuthenticationErrorCode.AUTHORIZATION_PENDING.toString());
-
-                    throw new AuthenticationException(AuthenticationErrorCode.AUTHORIZATION_PENDING,
-                            errorObject.getDescription());
-                }
-
-                if (HTTPResponse.SC_BAD_REQUEST == errorObject.getHTTPStatusCode() &&
-                        AuthenticationErrorCode.INTERACTION_REQUIRED.toString().equals(errorObject.getCode())) {
-
-                    httpEvent.setOauthErrorCode(AuthenticationErrorCode.INTERACTION_REQUIRED.toString());
-
-                    throw new ClaimsChallengeException(
-                            errorResponse.toJSONObject().toJSONString(),
-                            getClaims(httpResponse.getContent()));
-                } else {
-                    String telemetryErrorCode = StringHelper.isBlank(errorObject.getCode()) ?
-                            AuthenticationErrorCode.UNKNOWN.toString() :
-                            errorObject.getCode();
-
-                    httpEvent.setOauthErrorCode(telemetryErrorCode);
-
-                    throw new AuthenticationException(errorResponse.toJSONObject().toJSONString());
-                }
+                MsalServiceException exception = MsalServiceExceptionFactory.fromHttpResponse(httpResponse);
+                httpEvent.setOauthErrorCode(exception.errorCode());
+                throw exception;
             }
             return result;
         }
@@ -189,19 +150,6 @@ class TokenRequest {
         return httpEvent;
     }
 
-    private String getClaims(String httpResponseContentStr) {
-        JsonElement root = new JsonParser().parse(httpResponseContentStr);
-
-        JsonElement claims = root.getAsJsonObject().get("claims");
-
-        return claims != null ? claims.getAsString() : null;
-    }
-
-    /**
-     *
-     * @return
-     * @throws SerializeException
-     */
     OAuthHttpRequest toOauthHttpRequest() throws SerializeException, MalformedURLException {
 
         if (requestAuthority.tokenEndpointUrl() == null) {

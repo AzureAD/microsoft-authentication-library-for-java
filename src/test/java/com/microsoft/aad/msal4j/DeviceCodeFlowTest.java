@@ -241,8 +241,9 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         try {
             request.executeOauthRequestAndProcessResponse();
-            Assert.fail("Expected AuthenticationException was not thrown");
-        } catch (AuthenticationException ex) {
+            Assert.fail("Expected MsalException was not thrown");
+        } catch (MsalServiceException ex) {
+
             Assert.assertEquals(ex.errorCode(), AuthenticationErrorCode.AUTHORIZATION_PENDING);
         }
         PowerMock.verifyAll();

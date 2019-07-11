@@ -36,10 +36,9 @@ public class AuthorityTest extends AbstractMsalTests {
 
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp =
-                    "'authority' Uri should have at least one segment in the path \\(i.e. https://<host>/<path>/...\\)")
+                    "authority Uri should have at least one segment in the path \\(i.e. https://<host>/<path>/...\\)")
     public void testAADAuthorityConstructor_NoPathAuthority() throws MalformedURLException {
         new AADAuthority(new URL("https://something.com/"));
-
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
@@ -59,7 +58,7 @@ public class AuthorityTest extends AbstractMsalTests {
         new B2CAuthority(null);
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = AuthenticationErrorMessage.AUTHORITY_URI_INSECURE)
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "authority should use the 'https' scheme")
     public void testAADAuthorityConstructor_HttpAuthority() throws MalformedURLException {
         new AADAuthority(new URL("http://I.com/not/h/t/t/p/s/"));
     }

@@ -66,8 +66,8 @@ class AadInstanceDiscovery {
     }
 
     private static void validate(InstanceDiscoveryResponse instanceDiscoveryResponse) {
-        if (StringHelper.isBlank(instanceDiscoveryResponse.getTenantDiscoveryEndpoint())) {
-            throw new AuthenticationException(instanceDiscoveryResponse.getErrorDescription());
+        if (StringHelper.isBlank(instanceDiscoveryResponse.tenantDiscoveryEndpoint())) {
+            throw new MsalServiceException(instanceDiscoveryResponse);
         }
     }
 
@@ -97,8 +97,8 @@ class AadInstanceDiscovery {
     }
 
     private static void cacheInstanceDiscoveryMetadata(String host, InstanceDiscoveryResponse instanceDiscoveryResponse) {
-        if (instanceDiscoveryResponse.getMetadata() != null) {
-            for (InstanceDiscoveryMetadataEntry entry : instanceDiscoveryResponse.getMetadata()) {
+        if (instanceDiscoveryResponse.metadata() != null) {
+            for (InstanceDiscoveryMetadataEntry entry : instanceDiscoveryResponse.metadata()) {
                 for (String alias : entry.aliases) {
                     cache.put(alias, entry);
                 }
