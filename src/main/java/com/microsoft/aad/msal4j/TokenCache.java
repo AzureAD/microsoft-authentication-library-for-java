@@ -8,6 +8,8 @@ import com.google.gson.annotations.SerializedName;
 import com.google.gson.internal.LinkedTreeMap;
 
 import java.util.*;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -16,12 +18,10 @@ import java.util.stream.Collectors;
  */
 public class TokenCache implements ITokenCache {
 
-    protected static final int MIN_ACCESS_TOKEN_EXPIRE_IN_SEC = 5*60;
+    static final int MIN_ACCESS_TOKEN_EXPIRE_IN_SEC = 5*60;
 
-    /**
-     *  Constructor for token cache
-     * @param tokenCacheAccessAspect {@link ITokenCacheAccessAspect}
-     */
+    private ReadWriteLock lock = new ReentrantReadWriteLock();
+
     public TokenCache(ITokenCacheAccessAspect tokenCacheAccessAspect) {
         this();
         this.tokenCacheAccessAspect = tokenCacheAccessAspect;
@@ -47,23 +47,29 @@ public class TokenCache implements ITokenCache {
 
     transient ITokenCacheAccessAspect tokenCacheAccessAspect;
 
-    private transient String serializedCachedData;
+    private transient String serializedCachedSnapshot;
 
     @Override
     public void deserialize(String data) {
         if(StringHelper.isBlank(data)){
             return;
         }
-        serializedCachedData = data;
+        serializedCachedSnapshot = data;
         Gson gson = new GsonBuilder().create();
 
         TokenCache deserializedCache = gson.fromJson(data, TokenCache.class);
 
-        this.accounts = deserializedCache.accounts;
-        this.accessTokens = deserializedCache.accessTokens;
-        this.refreshTokens = deserializedCache.refreshTokens;
-        this.idTokens = deserializedCache.idTokens;
-        this.appMetadata = deserializedCache.appMetadata;
+        lock.writeLock().lock();
+        try{
+            this.accounts = deserializedCache.accounts;
+            this.accessTokens = deserializedCache.accessTokens;
+            this.refreshTokens = deserializedCache.refreshTokens;
+            this.idTokens = deserializedCache.idTokens;
+            this.appMetadata = deserializedCache.appMetadata;
+        }
+        finally {
+            lock.writeLock().unlock();
+        }
     }
 
     private static void mergeJsonObjects(JsonObject old, JsonObject update) {
@@ -121,15 +127,21 @@ public class TokenCache implements ITokenCache {
 
     @Override
     public String serialize() {
-        if(!StringHelper.isBlank(serializedCachedData)){
-            JsonObject cache = new JsonParser().parse(serializedCachedData).getAsJsonObject();
-            JsonObject update = new Gson().toJsonTree(this).getAsJsonObject();
+        lock.readLock().lock();
+        try {
+            if (!StringHelper.isBlank(serializedCachedSnapshot)) {
+                JsonObject cache = new JsonParser().parse(serializedCachedSnapshot).getAsJsonObject();
+                JsonObject update = new Gson().toJsonTree(this).getAsJsonObject();
 
-            mergeJsonObjects(cache, update);
+                mergeJsonObjects(cache, update);
 
-            return cache.toString();
+                return cache.toString();
+            }
+            return new GsonBuilder().create().toJson(this);
         }
-        return new GsonBuilder().create().toJson(this);
+        finally {
+            lock.readLock().unlock();
+        }
     }
 
     private class CacheAspect implements AutoCloseable{
@@ -150,49 +162,54 @@ public class TokenCache implements ITokenCache {
         }
     }
 
-    protected void saveTokens
+    void saveTokens
             (TokenRequest tokenRequest, AuthenticationResult authenticationResult, String environment) {
+        lock.writeLock().lock();
+        try {
+            try (CacheAspect cacheAspect = new CacheAspect(
+                    TokenCacheAccessContext.builder().
+                            clientId(tokenRequest.getMsalRequest().application().clientId()).
+                            tokenCache(this).
+                            hasCacheChanged(true).build())) {
 
-        try (CacheAspect cacheAspect = new CacheAspect(
-                TokenCacheAccessContext.builder().
-                        clientId(tokenRequest.getMsalRequest().application().clientId()).
-                        tokenCache(this).
-                        hasCacheChanged(true).build())) {
+                if (!StringHelper.isBlank(authenticationResult.accessToken())) {
+                    AccessTokenCacheEntity atEntity = createAccessTokenCacheEntity
+                            (tokenRequest, authenticationResult, environment);
+                    accessTokens.put(atEntity.getKey(), atEntity);
+                }
+                if (!StringHelper.isBlank(authenticationResult.familyId())) {
+                    AppMetadataCacheEntity appMetadataCacheEntity =
+                            createAppMetadataCacheEntity(tokenRequest, authenticationResult, environment);
 
-            if (!StringHelper.isBlank(authenticationResult.accessToken())) {
-                AccessTokenCacheEntity atEntity = createAccessTokenCacheEntity
-                        (tokenRequest, authenticationResult, environment);
-                accessTokens.put(atEntity.getKey(), atEntity);
+                    appMetadata.put(appMetadataCacheEntity.getKey(), appMetadataCacheEntity);
+                }
+                if (!StringHelper.isBlank(authenticationResult.refreshToken())) {
+                    RefreshTokenCacheEntity rtEntity = createRefreshTokenCacheEntity
+                            (tokenRequest, authenticationResult, environment);
+
+                    rtEntity.family_id(authenticationResult.familyId());
+
+                    refreshTokens.put(rtEntity.getKey(), rtEntity);
+                }
+                if (!StringHelper.isBlank(authenticationResult.idToken())) {
+                    IdTokenCacheEntity idTokenEntity = createIdTokenCacheEntity
+                            (tokenRequest, authenticationResult, environment);
+                    idTokens.put(idTokenEntity.getKey(), idTokenEntity);
+
+                    AccountCacheEntity accountCacheEntity = authenticationResult.accountCacheEntity();
+                    accountCacheEntity.environment(environment);
+                    accounts.put(accountCacheEntity.getKey(), accountCacheEntity);
+                }
             }
-            if (!StringHelper.isBlank(authenticationResult.familyId())) {
-                AppMetadataCacheEntity appMetadataCacheEntity =
-                        createAppMetadataCacheEntity(tokenRequest, authenticationResult, environment);
-
-                appMetadata.put(appMetadataCacheEntity.getKey(), appMetadataCacheEntity);
-            }
-            if (!StringHelper.isBlank(authenticationResult.refreshToken())) {
-                RefreshTokenCacheEntity rtEntity = createRefreshTokenCacheEntity
-                        (tokenRequest, authenticationResult, environment);
-
-                rtEntity.family_id(authenticationResult.familyId());
-
-                refreshTokens.put(rtEntity.getKey(), rtEntity);
-            }
-            if (!StringHelper.isBlank(authenticationResult.idToken())) {
-                IdTokenCacheEntity idTokenEntity = createIdTokenCacheEntity
-                        (tokenRequest, authenticationResult, environment);
-                idTokens.put(idTokenEntity.getKey(), idTokenEntity);
-
-                AccountCacheEntity accountCacheEntity = authenticationResult.accountCacheEntity();
-                accountCacheEntity.environment(environment);
-                accounts.put(accountCacheEntity.getKey(), accountCacheEntity);
-            }
+        }
+        finally {
+            lock.writeLock().unlock();
         }
     }
 
-    static RefreshTokenCacheEntity createRefreshTokenCacheEntity(TokenRequest tokenRequest,
-                                                                 AuthenticationResult authenticationResult,
-                                                                 String environmentAlias) {
+    static private RefreshTokenCacheEntity createRefreshTokenCacheEntity(TokenRequest tokenRequest,
+                                                                         AuthenticationResult authenticationResult,
+                                                                         String environmentAlias) {
         RefreshTokenCacheEntity rt = new RefreshTokenCacheEntity();
         rt.credentialType(CredentialTypeEnum.REFRESH_TOKEN.value());
 
@@ -209,9 +226,9 @@ public class TokenCache implements ITokenCache {
         return rt;
     }
 
-    static AccessTokenCacheEntity createAccessTokenCacheEntity(TokenRequest tokenRequest,
-                                                               AuthenticationResult authenticationResult,
-                                                               String environmentAlias) {
+    static private AccessTokenCacheEntity createAccessTokenCacheEntity(TokenRequest tokenRequest,
+                                                                       AuthenticationResult authenticationResult,
+                                                                       String environmentAlias) {
         AccessTokenCacheEntity at = new AccessTokenCacheEntity();
         at.credentialType(CredentialTypeEnum.ACCESS_TOKEN.value());
 
@@ -245,9 +262,9 @@ public class TokenCache implements ITokenCache {
         return at;
     }
 
-    static IdTokenCacheEntity createIdTokenCacheEntity(TokenRequest tokenRequest,
-                                                       AuthenticationResult authenticationResult,
-                                                       String environmentAlias) {
+    static private IdTokenCacheEntity createIdTokenCacheEntity(TokenRequest tokenRequest,
+                                                               AuthenticationResult authenticationResult,
+                                                               String environmentAlias) {
         IdTokenCacheEntity idToken = new IdTokenCacheEntity();
         idToken.credentialType(CredentialTypeEnum.ID_TOKEN.value());
 
@@ -266,9 +283,9 @@ public class TokenCache implements ITokenCache {
         return idToken;
     }
 
-    static AppMetadataCacheEntity createAppMetadataCacheEntity(TokenRequest tokenRequest,
-                                                       AuthenticationResult authenticationResult,
-                                                       String environmentAlias) {
+    static private AppMetadataCacheEntity createAppMetadataCacheEntity(TokenRequest tokenRequest,
+                                                                       AuthenticationResult authenticationResult,
+                                                                       String environmentAlias) {
         AppMetadataCacheEntity appMetadataCacheEntity = new AppMetadataCacheEntity();
 
         appMetadataCacheEntity.clientId(tokenRequest.getMsalRequest().application().clientId());
@@ -278,23 +295,29 @@ public class TokenCache implements ITokenCache {
         return appMetadataCacheEntity;
     }
 
-    protected Set<IAccount> getAccounts(String clientId, Set<String> environmentAliases) {
-        try (CacheAspect cacheAspect = new CacheAspect(
-                TokenCacheAccessContext.builder().
-                        clientId(clientId).
-                        tokenCache(this).
-                        build())) {
+    Set<IAccount> getAccounts(String clientId, Set<String> environmentAliases) {
+        lock.readLock().lock();
+        try {
+            try (CacheAspect cacheAspect = new CacheAspect(
+                    TokenCacheAccessContext.builder().
+                            clientId(clientId).
+                            tokenCache(this).
+                            build())) {
 
-            return accounts.values().stream().
-                    filter(acc -> environmentAliases.contains(acc.environment())).
-                    collect(Collectors.mapping(AccountCacheEntity::toAccount, Collectors.toSet()));
+                return accounts.values().stream().
+                        filter(acc -> environmentAliases.contains(acc.environment())).
+                        collect(Collectors.mapping(AccountCacheEntity::toAccount, Collectors.toSet()));
+            }
+        }
+        finally {
+            lock.readLock().unlock();
         }
     }
 
     /**
      * @return familyId status of application
      */
-    String getApplicationFamilyId(String clientId, Set<String> environmentAliases) {
+    private String getApplicationFamilyId(String clientId, Set<String> environmentAliases) {
         for(AppMetadataCacheEntity data : appMetadata.values()){
             if(data.clientId().equals(clientId) &&
                     environmentAliases.contains(data.environment()) &&
@@ -309,7 +332,7 @@ public class TokenCache implements ITokenCache {
     /**
      * @return set of client ids which belong to the family
      */
-    Set<String> getFamilyClientIds(String familyId, Set<String> environmentAliases) {
+    private Set<String> getFamilyClientIds(String familyId, Set<String> environmentAliases) {
 
         return appMetadata.values().stream().filter
                 (appMetadata -> environmentAliases.contains(appMetadata.environment()) &&
@@ -325,15 +348,21 @@ public class TokenCache implements ITokenCache {
      * @param account account
      * @param environmentAliases environment aliases
      */
-    protected void removeAccount(String clientId, IAccount account, Set<String> environmentAliases) {
-        try (CacheAspect cacheAspect = new CacheAspect(
-                TokenCacheAccessContext.builder().
-                        clientId(clientId).
-                        tokenCache(this).
-                        hasCacheChanged(true).
-                        build())) {
+    void removeAccount(String clientId, IAccount account, Set<String> environmentAliases) {
+        lock.writeLock().lock();
+        try {
+            try (CacheAspect cacheAspect = new CacheAspect(
+                    TokenCacheAccessContext.builder().
+                            clientId(clientId).
+                            tokenCache(this).
+                            hasCacheChanged(true).
+                            build())) {
 
-            removeAccount(account, environmentAliases);
+                removeAccount(account, environmentAliases);
+            }
+        }
+        finally {
+            lock.writeLock().unlock();
         }
     }
 
@@ -358,7 +387,7 @@ public class TokenCache implements ITokenCache {
                         environmentAliases.contains(e.getValue().environment));
     }
 
-    boolean isMatchingScopes(AccessTokenCacheEntity accessTokenCacheEntity, Set<String> scopes){
+    private boolean isMatchingScopes(AccessTokenCacheEntity accessTokenCacheEntity, Set<String> scopes){
 
         Set<String> accessTokenCacheEntityScopes = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         accessTokenCacheEntityScopes.addAll
@@ -367,7 +396,7 @@ public class TokenCache implements ITokenCache {
         return accessTokenCacheEntityScopes.containsAll(scopes);
     }
 
-    Optional<AccessTokenCacheEntity> getAccessTokenCacheEntity
+    private Optional<AccessTokenCacheEntity> getAccessTokenCacheEntity
             (IAccount account, Authority authority, Set<String> scopes, String clientId,
              Set<String> environmentAliases){
         long currTimeStampSec = new Date().getTime()/1000;
@@ -383,7 +412,7 @@ public class TokenCache implements ITokenCache {
                 ).findAny();
     }
 
-    Optional<AccessTokenCacheEntity> getApplicationAccessTokenCacheEntity
+    private Optional<AccessTokenCacheEntity> getApplicationAccessTokenCacheEntity
             (Authority authority, Set<String> scopes, String clientId,
              Set<String> environmentAliases){
         long currTimeStampSec = new Date().getTime()/1000;
@@ -398,7 +427,7 @@ public class TokenCache implements ITokenCache {
                 ).findAny();
     }
 
-    Optional<IdTokenCacheEntity> getIdTokenCacheEntity
+    private Optional<IdTokenCacheEntity> getIdTokenCacheEntity
             (IAccount account, Authority authority, String clientId, Set<String> environmentAliases){
         return idTokens.values().stream().filter
                 (idToken -> idToken.homeAccountId.equals(account.homeAccountId()) &&
@@ -408,7 +437,7 @@ public class TokenCache implements ITokenCache {
                 ).findAny();
     }
 
-    Optional<RefreshTokenCacheEntity> getRefreshTokenCacheEntity
+    private Optional<RefreshTokenCacheEntity> getRefreshTokenCacheEntity
             (IAccount account, String clientId, Set<String> environmentAliases) {
 
         return refreshTokens.values().stream().filter
@@ -418,7 +447,7 @@ public class TokenCache implements ITokenCache {
                 ).findAny();
     }
 
-    Optional<AccountCacheEntity> getAccountCacheEntity
+    private Optional<AccountCacheEntity> getAccountCacheEntity
             (IAccount account, Set<String> environmentAliases) {
 
         return accounts.values().stream().filter
@@ -427,7 +456,7 @@ public class TokenCache implements ITokenCache {
                 ).findAny();
     }
 
-    Optional<RefreshTokenCacheEntity> getAnyFamilyRefreshTokenCacheEntity
+    private Optional<RefreshTokenCacheEntity> getAnyFamilyRefreshTokenCacheEntity
             (IAccount account, Set<String> environmentAliases) {
 
         return refreshTokens.values().stream().filter
@@ -440,86 +469,96 @@ public class TokenCache implements ITokenCache {
     AuthenticationResult getCachedAuthenticationResult
             (IAccount account, Authority authority, Set<String> scopes, String clientId) {
 
-        AuthenticationResult.AuthenticationResultBuilder builder = AuthenticationResult.builder();
-        builder.environment(authority.host());
+        lock.readLock().lock();
+        try {
+            AuthenticationResult.AuthenticationResultBuilder builder = AuthenticationResult.builder();
+            builder.environment(authority.host());
 
-        Set<String> environmentAliases = AadInstanceDiscovery.cache.get(account.environment()).aliases();
+            Set<String> environmentAliases = AadInstanceDiscovery.cache.get(account.environment()).aliases();
 
-        try (CacheAspect cacheAspect = new CacheAspect(
-                TokenCacheAccessContext.builder().
-                        clientId(clientId).
-                        tokenCache(this).
-                        account(account).
-                        build())) {
+            try (CacheAspect cacheAspect = new CacheAspect(
+                    TokenCacheAccessContext.builder().
+                            clientId(clientId).
+                            tokenCache(this).
+                            account(account).
+                            build())) {
 
-            Optional<AccountCacheEntity> accountCacheEntity =
-                    getAccountCacheEntity(account, environmentAliases);
+                Optional<AccountCacheEntity> accountCacheEntity =
+                        getAccountCacheEntity(account, environmentAliases);
 
-            Optional<AccessTokenCacheEntity> atCacheEntity =
-                    getAccessTokenCacheEntity(account, authority, scopes, clientId, environmentAliases);
+                Optional<AccessTokenCacheEntity> atCacheEntity =
+                        getAccessTokenCacheEntity(account, authority, scopes, clientId, environmentAliases);
 
-            Optional<IdTokenCacheEntity> idTokenCacheEntity =
-                    getIdTokenCacheEntity(account, authority, clientId, environmentAliases);
+                Optional<IdTokenCacheEntity> idTokenCacheEntity =
+                        getIdTokenCacheEntity(account, authority, clientId, environmentAliases);
 
-            Optional<RefreshTokenCacheEntity> rtCacheEntity;
+                Optional<RefreshTokenCacheEntity> rtCacheEntity;
 
-            if (!StringHelper.isBlank(getApplicationFamilyId(clientId, environmentAliases))) {
-                rtCacheEntity = getAnyFamilyRefreshTokenCacheEntity(account, environmentAliases);
-                if (!rtCacheEntity.isPresent()) {
-                    rtCacheEntity = getRefreshTokenCacheEntity(account, clientId, environmentAliases);
-                }
-            } else {
-                rtCacheEntity = getRefreshTokenCacheEntity(account, clientId, environmentAliases);
-                if (!rtCacheEntity.isPresent()) {
+                if (!StringHelper.isBlank(getApplicationFamilyId(clientId, environmentAliases))) {
                     rtCacheEntity = getAnyFamilyRefreshTokenCacheEntity(account, environmentAliases);
+                    if (!rtCacheEntity.isPresent()) {
+                        rtCacheEntity = getRefreshTokenCacheEntity(account, clientId, environmentAliases);
+                    }
+                } else {
+                    rtCacheEntity = getRefreshTokenCacheEntity(account, clientId, environmentAliases);
+                    if (!rtCacheEntity.isPresent()) {
+                        rtCacheEntity = getAnyFamilyRefreshTokenCacheEntity(account, environmentAliases);
+                    }
+                }
+
+                if (atCacheEntity.isPresent()) {
+                    builder.
+                            accessToken(atCacheEntity.get().secret).
+                            expiresOn(Long.parseLong(atCacheEntity.get().expiresOn()));
+                }
+                if (idTokenCacheEntity.isPresent()) {
+                    builder.
+                            idToken(idTokenCacheEntity.get().secret);
+                }
+                if (rtCacheEntity.isPresent()) {
+                    builder.
+                            refreshToken(rtCacheEntity.get().secret);
+                }
+                if (accountCacheEntity.isPresent()) {
+                    builder.
+                            accountCacheEntity(accountCacheEntity.get());
                 }
             }
-
-            if (atCacheEntity.isPresent()) {
-                builder.
-                        accessToken(atCacheEntity.get().secret).
-                        expiresOn(Long.parseLong(atCacheEntity.get().expiresOn()));
-            }
-            if (idTokenCacheEntity.isPresent()) {
-                builder.
-                        idToken(idTokenCacheEntity.get().secret);
-            }
-            if (rtCacheEntity.isPresent()) {
-                builder.
-                        refreshToken(rtCacheEntity.get().secret);
-            }
-            if (accountCacheEntity.isPresent()) {
-                builder.
-                        accountCacheEntity(accountCacheEntity.get());
-            }
+            return builder.build();
         }
-
-        return builder.build();
+        finally {
+            lock.readLock().unlock();
+        }
     }
 
     AuthenticationResult getCachedAuthenticationResult
             (Authority authority, Set<String> scopes, String clientId) {
         AuthenticationResult.AuthenticationResultBuilder builder = AuthenticationResult.builder();
 
-        Set<String> environmentAliases = AadInstanceDiscovery.cache.get(authority.host).aliases();
-        builder.environment(authority.host());
+        lock.readLock().lock();
+        try {
+            Set<String> environmentAliases = AadInstanceDiscovery.cache.get(authority.host).aliases();
+            builder.environment(authority.host());
 
-        try (CacheAspect cacheAspect = new CacheAspect(
-                TokenCacheAccessContext.builder().
-                        clientId(clientId).
-                        tokenCache(this).
-                        build())) {
+            try (CacheAspect cacheAspect = new CacheAspect(
+                    TokenCacheAccessContext.builder().
+                            clientId(clientId).
+                            tokenCache(this).
+                            build())) {
 
-            Optional<AccessTokenCacheEntity> atCacheEntity =
-                    getApplicationAccessTokenCacheEntity(authority, scopes, clientId, environmentAliases);
+                Optional<AccessTokenCacheEntity> atCacheEntity =
+                        getApplicationAccessTokenCacheEntity(authority, scopes, clientId, environmentAliases);
 
-            if (atCacheEntity.isPresent()) {
-                builder.
-                        accessToken(atCacheEntity.get().secret).
-                        expiresOn(Long.parseLong(atCacheEntity.get().expiresOn()));
+                if (atCacheEntity.isPresent()) {
+                    builder.
+                            accessToken(atCacheEntity.get().secret).
+                            expiresOn(Long.parseLong(atCacheEntity.get().expiresOn()));
+                }
             }
+            return builder.build();
         }
-
-        return builder.build();
+        finally {
+            lock.readLock().unlock();
+        }
     }
 }
