@@ -45,7 +45,7 @@ public class DeviceCodeIT {
         PublicClientApplication pca = new PublicClientApplication.Builder(
                 labResponse.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
-                build();
+        build();
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
             runAutomatedDeviceCodeFlow(deviceCode, labResponse.getUser());

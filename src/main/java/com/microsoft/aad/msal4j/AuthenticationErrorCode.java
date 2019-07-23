@@ -45,5 +45,17 @@ public class AuthenticationErrorCode {
      * Unknown error occurred
      */
     public final static String UNKNOWN = "unknown";
+
+    /**
+     * The curretn redirect URL is not a loopback URL. To use OS browser, a loopback URL must be
+     * configured both during app registration as well as when initializing the InteractiveRequestParameters
+     * object
+     */
+    public final static String LOOPBACK_REDIRECT_URI = "loopback_redirect_uri";
+
+
+    public final static String PORT_BLOCKED = "port_blocked";
+
+    public final static String AUTHORIZATION_CODE_BLANK = "authorization_code_blank";
 }
 

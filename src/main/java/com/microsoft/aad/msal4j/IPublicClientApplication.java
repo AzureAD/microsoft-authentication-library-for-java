@@ -44,4 +44,7 @@ public interface IPublicClientApplication extends IClientApplicationBase {
      *                                 SHOULD wait between polling requests to the token endpoint
      */
     CompletableFuture<IAuthenticationResult> acquireToken(DeviceCodeFlowParameters parameters);
+
+    //TODO fill in JavaDoc
+    CompletableFuture<IAuthenticationResult> acquireToken(InteractiveRequestParameters parameters);
 }

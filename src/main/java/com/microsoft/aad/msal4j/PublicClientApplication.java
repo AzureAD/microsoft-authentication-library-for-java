@@ -5,6 +5,9 @@ package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod;
 import com.nimbusds.oauth2.sdk.id.ClientID;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
@@ -68,6 +71,19 @@ public class PublicClientApplication extends ClientApplicationBase implements IP
         CompletableFuture<IAuthenticationResult> future = executeRequest(deviceCodeRequest);
         futureReference.set(future);
         return future;
+    }
+
+    @Override
+    public CompletableFuture<IAuthenticationResult> acquireToken(InteractiveRequestParameters parameters){
+
+        validateNotNull("parameters", parameters);
+
+        InteractiveRequest interactiveRequest = new InteractiveRequest(
+                parameters,
+                this,
+                createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+
+        return executeRequest(interactiveRequest);
     }
 
     private PublicClientApplication(Builder builder) {

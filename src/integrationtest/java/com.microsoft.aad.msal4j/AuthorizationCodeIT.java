@@ -4,7 +4,6 @@
 package com.microsoft.aad.msal4j;
 
 import infrastructure.SeleniumExtensions;
-import infrastructure.TcpListener;
 import labapi.B2CIdentityProvider;
 import labapi.FederationProvider;
 import labapi.LabResponse;
@@ -320,7 +319,10 @@ public class AuthorizationCodeIT {
     private void startTcpListener(BlockingQueue<Boolean> tcpStartUpNotifierQueue){
         AuthorizationCodeQueue = new LinkedBlockingQueue<>();
         tcpListener = new TcpListener(AuthorizationCodeQueue, tcpStartUpNotifierQueue);
-        tcpListener.startServer();
+
+        // these are the ports that are registered for B2C tests
+        int[] ports = { 3843,4584, 4843, 60000 };
+        tcpListener.startServer(ports);
     }
 
     private String getResponseFromTcpListener(){

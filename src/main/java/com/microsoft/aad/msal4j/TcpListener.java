@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-package infrastructure;
+package com.microsoft.aad.msal4j;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +15,7 @@ import java.util.concurrent.BlockingQueue;
 
 public class TcpListener implements AutoCloseable{
 
-    private final static Logger LOG = LoggerFactory.getLogger(SeleniumExtensions.class);
+    private final static Logger LOG = LoggerFactory.getLogger(TcpListener.class);
 
     private BlockingQueue<String> authorizationCodeQueue;
     private BlockingQueue<Boolean> tcpStartUpNotificationQueue;
@@ -24,13 +24,14 @@ public class TcpListener implements AutoCloseable{
 
     public TcpListener(BlockingQueue<String> authorizationCodeQueue,
                        BlockingQueue<Boolean> tcpStartUpNotificationQueue){
+
         this.authorizationCodeQueue = authorizationCodeQueue;
         this.tcpStartUpNotificationQueue = tcpStartUpNotificationQueue;
     }
 
-    public void startServer(){
+    public void startServer(int[] ports){
         Runnable serverTask = () -> {
-            try(ServerSocket serverSocket = createSocket()) {
+            try(ServerSocket serverSocket = createSocket(ports)) {
                 port = serverSocket.getLocalPort();
                 tcpStartUpNotificationQueue.put(Boolean.TRUE);
                 Socket clientSocket = serverSocket.accept();
@@ -76,8 +77,8 @@ public class TcpListener implements AutoCloseable{
         }
     }
 
-    public ServerSocket createSocket() throws IOException {
-        int[] ports = { 3843,4584, 4843, 60000 };
+    public ServerSocket createSocket(int[] ports) throws IOException {
+
         for (int port : ports) {
             try {
                 return new ServerSocket(port);
@@ -85,7 +86,9 @@ public class TcpListener implements AutoCloseable{
                 LOG.warn("Port: " + port + "is blocked");
             }
         }
-        throw new IOException("no free port found");
+        throw new MsalClientException(String.format(
+                "Unable to open port specified in redirect URI. Make sure port %s is not being used" +
+                        "by another process", ports.toString()), AuthenticationErrorCode.PORT_BLOCKED);
     }
 
     public int getPort() {
