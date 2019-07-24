@@ -24,6 +24,8 @@ public class PublicClientApplicationTest extends PowerMockTestCase {
 
     private PublicClientApplication app = null;
 
+    @SuppressWarnings("unchecked")
+    @Test
     public void testAcquireToken_Username_Password() throws Exception {
         app = PowerMock.createPartialMock(PublicClientApplication.class,
                 new String[] { "acquireTokenCommon" },

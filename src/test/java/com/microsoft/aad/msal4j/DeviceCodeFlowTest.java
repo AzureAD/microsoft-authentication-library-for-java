@@ -58,6 +58,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
             "  \"message\": \"To sign in, use a web browser to open the page https://aka.ms/devicelogin and enter the code DW83JNP2P to authenticate.\"\n" +
             "}";
 
+    @SuppressWarnings("unchecked")
     @Test
     public void deviceCodeFlowTest() throws Exception {
         app = PowerMock.createPartialMock(PublicClientApplication.class,
@@ -137,7 +138,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         Map<String, String> expectedQueryParams = new HashMap<>();
         expectedQueryParams.put("client_id", AAD_CLIENT_ID);
         expectedQueryParams.put("scope", URLEncoder.encode(AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM +
-                AbstractMsalAuthorizationGrant.SCOPES_DELIMITER + AAD_RESOURCE_ID));
+                AbstractMsalAuthorizationGrant.SCOPES_DELIMITER + AAD_RESOURCE_ID, "UTF-8" ));
 
         Assert.assertEquals(getQueryMap(url.getQuery()), expectedQueryParams);
 

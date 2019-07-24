@@ -176,6 +176,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
         Assert.assertEquals(CLIENT_INFO_VALUE, queryParams.get("client_info"));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void oAuthRequest_for_acquireTokenByAsymmetricKeyCredential() throws Exception {
         PowerMock.mockStatic(HttpHelper.class);
