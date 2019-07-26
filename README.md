@@ -17,7 +17,7 @@ You can find the changes for each version in the [change log](https://github.com
 
 The library is currently in preview. During the preview we reserve the right to make changes to the API, cache format, and other mechanisms of this library without notice which you will be required to take along with bug fixes or feature improvements
 
-###Maven
+### Maven
 
 ```
 <dependency>
@@ -26,7 +26,7 @@ The library is currently in preview. During the preview we reserve the right to 
     <version>0.5.0-preview</version>
 </dependency>
 ```
-###Gradle
+### Gradle
 
 ```
 compile group: 'com.microsoft.azure', name: 'msal4j', version: '0.5.0-preview'
