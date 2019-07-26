@@ -27,6 +27,3 @@ public class User {
         return new JSONObject(this).toString();
     }
 }
-
-
-

@@ -19,14 +19,10 @@ class BasicConfiguration {
     String redirectUri;
     String secretKey;
 
-    String oboClientId;
-    String oboClientSecret;
-
     String getAuthority(){
         if (!authority.endsWith("/")) {
             authority += "/";
         }
         return authority;
     }
-
 }

@@ -214,6 +214,7 @@ public class AuthFilter implements Filter {
                 "&client_id=" + authHelper.getClientId() +
                 "&scope=" + URLEncoder.encode("openid offline_access profile", "UTF-8") +
                 (StringUtils.isEmpty(claims) ? "" : "&claims=" + claims) +
+                "&prompt=select_account" +
                 "&state=" + state
                 + "&nonce=" + nonce;
 

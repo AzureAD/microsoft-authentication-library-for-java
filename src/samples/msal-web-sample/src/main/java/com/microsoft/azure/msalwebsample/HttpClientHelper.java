@@ -11,7 +11,6 @@ import java.net.HttpURLConnection;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-
 class HttpClientHelper {
 
     private HttpClientHelper() {
