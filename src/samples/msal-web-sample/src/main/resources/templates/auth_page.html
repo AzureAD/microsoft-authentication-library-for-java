@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Main</title>
+</head>
+<body>
+
+<form action="/msal4jsample/sign_out">
+    <input type="submit" value="Sign out">
+</form>
+
+<h3>Logged in Account:</h3>
+
+<table border="1">
+    <thead>
+    <tr>
+        <th>Username</th>
+        <th>Environment</th>
+        <th>Tenant Id</th>
+    </tr>
+    </thead>
+    <tbody>
+        <td th:text="${account.username()}"></td>
+        <td th:text="${account.environment()}"></td>
+        <td th:text="${tenantId}"></td>
+    </tbody>
+</table>
+
+<br/>
+
+<form action="/graph/users">
+    <input type="submit" value="Show Users">
+</form>
+
+<span th:if="${users != null}">
+    <h3>List of users registered in the tenant</h3>
+
+    <div th:utext="${users}"> </div>
+</span>
+
+
+</body>
+</html>
