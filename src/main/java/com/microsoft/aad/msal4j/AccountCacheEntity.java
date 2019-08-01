@@ -59,7 +59,7 @@ class AccountCacheEntity implements Serializable {
         return String.join(Constants.CACHE_KEY_SEPARATOR, keyParts).toLowerCase();
     }
 
-    static AccountCacheEntity create(String clientInfoStr, String environment, IdToken idToken, String policy) {
+    static AccountCacheEntity create(String clientInfoStr, Authority requestAuthority, IdToken idToken, String policy) {
 
         AccountCacheEntity account = new AccountCacheEntity();
         account.authorityType(MSSTS_ACCOUNT_TYPE);
@@ -67,10 +67,10 @@ class AccountCacheEntity implements Serializable {
         account.homeAccountId(policy != null ?
                 account.clientInfo().toAccountIdentifier() + Constants.CACHE_KEY_SEPARATOR + policy :
                 account.clientInfo().toAccountIdentifier());
-        account.environment(environment);
+        account.environment(requestAuthority.host());
+        account.realm(requestAuthority.tenant());
 
         if (idToken != null) {
-            account.realm(idToken.tenantIdentifier);
             String localAccountId = !StringHelper.isBlank(idToken.objectIdentifier)
                     ? idToken.objectIdentifier : idToken.subject;
             account.localAccountId(localAccountId);
@@ -81,8 +81,8 @@ class AccountCacheEntity implements Serializable {
         return account;
     }
 
-    static AccountCacheEntity create(String clientInfoStr, String environment, IdToken idToken){
-        return create(clientInfoStr, environment, idToken, null);
+    static AccountCacheEntity create(String clientInfoStr, Authority requestAuthority, IdToken idToken){
+        return create(clientInfoStr, requestAuthority, idToken, null);
     }
 
     IAccount toAccount(){
