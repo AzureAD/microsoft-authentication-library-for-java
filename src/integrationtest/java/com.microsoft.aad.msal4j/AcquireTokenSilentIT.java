@@ -171,4 +171,50 @@ public class AcquireTokenSilentIT {
                 .get();
         return pca;
     }
+
+    @Test
+    private void acquireTokenSilent_usingCommonAuthority_returnCachedAt() throws Exception {
+        acquireTokenSilent_returnCachedTokens(TestConstants.ORGANIZATIONS_AUTHORITY);
+    }
+
+    @Test
+    private void acquireTokenSilent_usingTenantSpecificAuthority_returnCachedAt() throws Exception {
+        LabResponse labResponse = labUserProvider.getDefaultUser(
+                NationalCloud.AZURE_CLOUD,
+                false);
+        String tenantSpecificAuthority = TestConstants.MICROSOFT_AUTHORITY_HOST + labResponse.getUser().getTenantId();
+
+        acquireTokenSilent_returnCachedTokens(tenantSpecificAuthority);
+    }
+
+    void acquireTokenSilent_returnCachedTokens(String authority) throws Exception {
+
+        LabResponse labResponse = labUserProvider.getDefaultUser(
+                NationalCloud.AZURE_CLOUD,
+                false);
+        String password = labUserProvider.getUserPassword(labResponse.getUser());
+
+        PublicClientApplication pca = new PublicClientApplication.Builder(
+                labResponse.getAppId()).
+                authority(authority).
+                build();
+
+        IAuthenticationResult interactiveAuthResult = pca.acquireToken(UserNamePasswordParameters.
+                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                        labResponse.getUser().getUpn(),
+                        password.toCharArray())
+                .build())
+                .get();
+
+        Assert.assertNotNull(interactiveAuthResult);
+
+        IAuthenticationResult silentAuthResult = pca.acquireTokenSilently(
+                SilentParameters.builder(
+                        Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE), interactiveAuthResult.account())
+                        .build())
+                .get();
+
+        Assert.assertNotNull(silentAuthResult);
+        Assert.assertEquals(interactiveAuthResult.accessToken(), silentAuthResult.accessToken());
+    }
 }
