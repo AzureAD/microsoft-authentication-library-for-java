@@ -116,6 +116,10 @@ class HttpHelper {
             connection.setSSLSocketFactory(serviceBundle.getSslSocketFactory());
         }
 
+        if (serviceBundle.getHostnameVerifier() != null) {
+            connection.setHostnameVerifier(serviceBundle.getHostnameVerifier());
+        }
+
         return connection;
     }
 

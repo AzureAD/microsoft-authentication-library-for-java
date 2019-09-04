@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
 import java.net.MalformedURLException;
 import java.net.Proxy;
@@ -225,6 +226,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         private ExecutorService executorService;
         private Proxy proxy;
         private SSLSocketFactory sslSocketFactory;
+        private HostnameVerifier hostnameVerifier;
         private Consumer<List<HashMap<String, String>>> telemetryConsumer;
         private Boolean onlySendFailureTelemetry = false;
         private ITokenCacheAccessAspect tokenCacheAccessAspect;
@@ -356,6 +358,19 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
             return self();
         }
 
+        /**
+         * Sets HostnameVerifier to be used by the client application for all network communication.
+         *
+         * @param val an instance of HostnameVerifier
+         * @return instance of the Builder on which method was called
+         */
+        public T hostnameVerifier(HostnameVerifier val) {
+            validateNotNull("hostnameVerifier", val);
+
+            hostnameVerifier = val;
+            return self();
+        }
+
         public T telemetryConsumer(Consumer<List<HashMap<String, String>>> val) {
             validateNotNull("telemetryConsumer", val);
 
@@ -406,6 +421,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
                 builder.executorService,
                 builder.proxy,
                 builder.sslSocketFactory,
+                builder.hostnameVerifier,
                 new TelemetryManager(telemetryConsumer, builder.onlySendFailureTelemetry));
         authenticationAuthority = builder.authenticationAuthority;
         tokenCache = new TokenCache(builder.tokenCacheAccessAspect);

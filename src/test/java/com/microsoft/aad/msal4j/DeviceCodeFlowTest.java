@@ -217,7 +217,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         TokenRequest request = PowerMock.createPartialMock(
                 TokenRequest.class, new String[]{"toOauthHttpRequest"},
                 new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
-                dcr, new ServiceBundle(null, null, null, telemetryManager));
+                dcr, new ServiceBundle(null, null, null, null, telemetryManager));
 
         OAuthHttpRequest msalOAuthHttpRequest = PowerMock.createMock(OAuthHttpRequest.class);
 

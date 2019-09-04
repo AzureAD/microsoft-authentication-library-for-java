@@ -143,6 +143,7 @@ public class CacheFormatTests extends AbstractMsalTests {
                 null,
                 null,
                 null,
+                null,
                 new TelemetryManager(null, false));
 
         TokenRequest request = PowerMock.createPartialMock(

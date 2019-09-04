@@ -125,6 +125,7 @@ public class TokenRequestTest extends AbstractMsalTests {
                 null,
                 null,
                 null,
+                null,
                 new TelemetryManager(null, false));
 
         return PowerMock.createPartialMock(
@@ -156,7 +157,7 @@ public class TokenRequestTest extends AbstractMsalTests {
         final TokenRequest request = new TokenRequest(
                 new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
                 acr,
-                new ServiceBundle(null, null, null, null));
+                new ServiceBundle(null, null, null, null, null));
         Assert.assertNotNull(request);
     }
 
@@ -182,7 +183,7 @@ public class TokenRequestTest extends AbstractMsalTests {
         TokenRequest request = new TokenRequest(
                 new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
                 acr,
-                new ServiceBundle(null, null, null, null));
+                new ServiceBundle(null, null, null, null, null));
         Assert.assertNotNull(request);
         OAuthHttpRequest req = request.toOauthHttpRequest();
         Assert.assertNotNull(req);
@@ -215,7 +216,7 @@ public class TokenRequestTest extends AbstractMsalTests {
         final TokenRequest request = new TokenRequest(
                 new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
                 acr,
-                new ServiceBundle(null, null, null, null));
+                new ServiceBundle(null, null, null, null, null));
         Assert.assertNotNull(request);
         final OAuthHttpRequest req = request.toOauthHttpRequest();
         Assert.assertNotNull(req);
@@ -241,6 +242,7 @@ public class TokenRequestTest extends AbstractMsalTests {
                         PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         ServiceBundle serviceBundle = new ServiceBundle(
+                null,
                 null,
                 null,
                 null,
@@ -307,6 +309,7 @@ public class TokenRequestTest extends AbstractMsalTests {
                         PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         ServiceBundle serviceBundle = new ServiceBundle(
+                null,
                 null,
                 null,
                 null,
