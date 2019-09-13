@@ -18,9 +18,14 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.ModelAndView;
 
 import static com.microsoft.azure.msalwebsample.AuthHelper.getAuthSessionObject;
@@ -57,7 +62,7 @@ public class AuthPageController {
 
     @RequestMapping("/graph/users")
     public ModelAndView getUsersFromGraph(ModelMap model, HttpServletRequest httpRequest) throws Throwable {
-        IAuthenticationResult result =  authHelper.getAuthResultBySilentFlow(httpRequest);
+        IAuthenticationResult result =  authHelper.getAuthResultBySilentFlow(httpRequest, "https://graph.microsoft.com/.default");
 
         ModelAndView mav;
 
@@ -118,5 +123,34 @@ public class AuthPageController {
 
         model.addObject("tenantId", tenantId);
         model.addObject("account", getAuthSessionObject(httpRequest).account());
+    }
+
+    @RequestMapping("/obo_api")
+    public ModelAndView callOboApi(HttpServletRequest httpRequest) throws Throwable {
+        ModelAndView mav = new ModelAndView("auth_page");
+        setAccountInfo(mav, httpRequest);
+
+        IAuthenticationResult result =  authHelper.getAuthResultBySilentFlow(httpRequest, authHelper.configuration.oboApi);
+
+        String oboApiCallRes = callOboService(result.accessToken());
+
+        mav.addObject("obo_api_call_res", oboApiCallRes);
+
+        return mav;
+    }
+
+    private String callOboService(String accessToken){
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        headers.set("Authorization", "Bearer " + accessToken);
+
+        HttpEntity<String> entity = new HttpEntity<>(null, headers);
+
+        String result = restTemplate.postForObject("http://localhost:8081/api", entity, String.class);
+
+        return result;
     }
 }

@@ -52,7 +52,7 @@ class AuthHelper {
                 build();
     }
 
-    IAuthenticationResult getAuthResultBySilentFlow(HttpServletRequest httpRequest) throws Throwable {
+    IAuthenticationResult getAuthResultBySilentFlow(HttpServletRequest httpRequest, String scope) throws Throwable {
         IAuthenticationResult result =  AuthHelper.getAuthSessionObject(httpRequest);
 
         IAuthenticationResult updatedResult;
@@ -66,7 +66,7 @@ class AuthHelper {
             }
 
             SilentParameters parameters = SilentParameters.builder(
-                    Collections.singleton("https://graph.microsoft.com/.default"),
+                    Collections.singleton(scope),
                     result.account()).build();
 
             CompletableFuture<IAuthenticationResult> future = app.acquireTokenSilently(parameters);
@@ -131,7 +131,7 @@ class AuthHelper {
     }
 
     void updateAuthDataUsingSilentFlow(HttpServletRequest httpRequest) throws Throwable {
-        IAuthenticationResult authResult = getAuthResultBySilentFlow(httpRequest);
+        IAuthenticationResult authResult = getAuthResultBySilentFlow(httpRequest, "https://graph.microsoft.com/.default");
         setSessionPrincipal(httpRequest, authResult);
     }
 

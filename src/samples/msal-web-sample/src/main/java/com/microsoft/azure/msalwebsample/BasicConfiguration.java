@@ -18,6 +18,7 @@ class BasicConfiguration {
     @Getter(AccessLevel.NONE) String authority;
     String redirectUri;
     String secretKey;
+    String oboApi;
 
     String getAuthority(){
         if (!authority.endsWith("/")) {
