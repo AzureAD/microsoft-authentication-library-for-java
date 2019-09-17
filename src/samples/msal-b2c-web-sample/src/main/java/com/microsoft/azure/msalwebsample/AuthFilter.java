@@ -71,7 +71,7 @@ public class AuthFilter implements Filter {
                         processAuthenticationCodeRedirect(httpRequest, currentUri, fullUrl);
                     } else {
                         // not authenticated, redirecting to login.microsoft.com so user can authenticate
-                        sendAuthRedirect(httpRequest, httpResponse);
+                        sendAuthRedirect(authHelper.configuration.signUpSignInAuthority, httpRequest, httpResponse);
                         return;
                     }
                 }
@@ -82,7 +82,7 @@ public class AuthFilter implements Filter {
                 // something went wrong (like expiration or revocation of token)
                 // we should invalidate AuthData stored in session and redirect to Authorization server
                 authHelper.removePrincipalFromSession(httpRequest);
-                sendAuthRedirect(httpRequest, httpResponse);
+                sendAuthRedirect(authHelper.configuration.signUpSignInAuthority, httpRequest, httpResponse);
                 return;
             } catch (Throwable exc) {
                 httpResponse.setStatus(500);
@@ -118,7 +118,8 @@ public class AuthFilter implements Filter {
             IAuthenticationResult result = authHelper.getAuthResultByAuthCode(
                     httpRequest,
                     oidcResponse.getAuthorizationCode(),
-                    currentUri);
+                    currentUri,
+                    Collections.singleton(authHelper.configuration.apiScope));
 
             // validate nonce to prevent reply attacks (code maybe substituted to one with broader access)
             validateNonce(stateData, getNonceClaimValueFromIdToken(result.idToken()));
@@ -131,14 +132,14 @@ public class AuthFilter implements Filter {
         }
     }
 
-    private void sendAuthRedirect(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException {
+    void sendAuthRedirect(String authoriy, HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException {
         // state parameter to validate response from Authorization server and nonce parameter to validate idToken
         String state = UUID.randomUUID().toString();
         String nonce = UUID.randomUUID().toString();
         storeStateInSession(httpRequest.getSession(), state, nonce);
 
         httpResponse.setStatus(302);
-        String redirectUrl = getRedirectUrl(httpRequest.getParameter("claims"), state, nonce);
+        String redirectUrl = getRedirectUrl(authoriy, httpRequest.getParameter("claims"), state, nonce);
         httpResponse.sendRedirect(redirectUrl);
     }
 
@@ -204,17 +205,16 @@ public class AuthFilter implements Filter {
         }
     }
 
-    private String getRedirectUrl(String claims, String state, String nonce)
+    private String getRedirectUrl(String authority, String claims, String state, String nonce)
             throws UnsupportedEncodingException {
 
-        String redirectUrl = authHelper.getAuthority() + "oauth2/v2.0/authorize?" +
+        String redirectUrl = authority.replace("/tfp", "") + "oauth2/v2.0/authorize?" +
                 "response_type=code&" +
                 "response_mode=form_post&" +
-                "redirect_uri=" + URLEncoder.encode(authHelper.getRedirectUri(), "UTF-8") +
-                "&client_id=" + authHelper.getClientId() +
-                //"&scope=" + URLEncoder.encode("openid offline_access profile", "UTF-8") +
-                //"&scope=" + URLEncoder.encode("openid offline_access profile" + " https://pesomka.onmicrosoft.com/TodoListService/user_impersonation", "UTF-8") +
-                "&scope=" + URLEncoder.encode("openid offline_access profile", "UTF-8") +
+                "redirect_uri=" + URLEncoder.encode(authHelper.configuration.redirectUri, "UTF-8") +
+                "&client_id=" + authHelper.configuration.clientId +
+                "&scope=" + URLEncoder.encode("openid offline_access profile " +
+                authHelper.configuration.apiScope, "UTF-8") +
                 (StringUtils.isEmpty(claims) ? "" : "&claims=" + claims) +
                 "&prompt=select_account" +
                 "&state=" + state

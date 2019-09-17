@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Main</title>
+</head>
+<body>
+
+<form action="/msal4jsample/sign_out">
+    <input type="submit" value="Sign out">
+</form>
+
+<h3>Logged in Account:</h3>
+
+<table border="1">
+    <thead>
+    <tr>
+        <th>Environment</th>
+        <th>Id Token</th>
+    </tr>
+    </thead>
+    <tbody>
+        <td th:text="${account.environment()}"></td>
+        <td>
+            <div th:each="entry : *{idTokenClaims}">
+                <li th:text="${entry}"></li>
+            </div>
+        </td>
+    </tbody>
+</table>
+
+<br/>
+
+<form action="/b2c-api">
+    <input type="submit" value="Call b2c api">
+</form>
+
+<span th:if="${b2c_api_call_res != null}">
+    <h3>B2C Api call result:</h3>
+
+    <div th:utext="${b2c_api_call_res}"> </div>
+</span>
+
+<form action="/edit-profile">
+    <input type="submit" value="Edit Profile">
+</form>
+
+</body>
+</html>

@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -149,7 +150,8 @@ public class AuthPageController {
 
         HttpEntity<String> entity = new HttpEntity<>(null, headers);
 
-        String result = restTemplate.postForObject("http://localhost:8081/api", entity, String.class);
+        String result = restTemplate.exchange("http://localhost:8081/api", HttpMethod.GET,
+                entity, String.class).getBody();
 
         return result;
     }
