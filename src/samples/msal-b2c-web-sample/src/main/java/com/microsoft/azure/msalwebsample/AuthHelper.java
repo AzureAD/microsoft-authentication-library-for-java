@@ -7,6 +7,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -28,28 +29,15 @@ class AuthHelper {
 
     static final String PRINCIPAL_SESSION_NAME = "principal";
     static final String TOKEN_CACHE_SESSION_ATTRIBUTE = "token_cache";
-    static final String END_SESSION_ENDPOINT = "https://login.microsoftonline.com/common/oauth2/v2.0/logout";
-
-    private String clientId;
-    private String clientSecret;
-    private String authority;
-    private String redirectUri;
 
     @Autowired
     BasicConfiguration configuration;
 
-    @PostConstruct
-    public void init() {
-        clientId = configuration.getClientId();
-        authority = configuration.getAuthority();
-        clientSecret = configuration.getSecretKey();
-        redirectUri = configuration.getRedirectUri();
-    }
-
     private ConfidentialClientApplication createClientApplication() throws MalformedURLException {
-        return ConfidentialClientApplication.builder(clientId, ClientCredentialFactory.create(clientSecret)).
-                authority(authority).
-                build();
+        return ConfidentialClientApplication.builder(configuration.clientId,
+                ClientCredentialFactory.create(configuration.secret))
+                .b2cAuthority(configuration.signUpSignInAuthority)
+                .build();
     }
 
     IAuthenticationResult getAuthResultBySilentFlow(HttpServletRequest httpRequest, String scope) throws Throwable {
@@ -89,7 +77,7 @@ class AuthHelper {
     IAuthenticationResult getAuthResultByAuthCode(
             HttpServletRequest httpServletRequest,
             AuthorizationCode authorizationCode,
-            String currentUri) throws Throwable {
+            String currentUri, Set<String> scopes) throws Throwable {
 
         IAuthenticationResult result;
         ConfidentialClientApplication app;
@@ -99,8 +87,9 @@ class AuthHelper {
             String authCode = authorizationCode.getValue();
             AuthorizationCodeParameters parameters = AuthorizationCodeParameters.builder(
                     authCode,
-                    new URI(currentUri)).
-                    build();
+                    new URI(currentUri))
+                    .scopes(scopes)
+                    .build();
 
             Future<IAuthenticationResult> future = app.acquireToken(parameters);
 

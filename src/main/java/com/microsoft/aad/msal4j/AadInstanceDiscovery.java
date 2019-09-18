@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -34,6 +36,15 @@ class AadInstanceDiscovery {
             "?api-version=1.1&authorization_endpoint={authorizeEndpoint}";
 
     static ConcurrentHashMap<String, InstanceDiscoveryMetadataEntry> cache = new ConcurrentHashMap<>();
+
+    static Set<String> getAliases(String host){
+        if(cache.containsKey(host)){
+            return cache.get(host).aliases();
+        }
+        else{
+            return Collections.singleton(host);
+        }
+    }
 
     private static String getAuthorizeEndpoint(String host, String tenant) {
         return AUTHORIZE_ENDPOINT_TEMPLATE.

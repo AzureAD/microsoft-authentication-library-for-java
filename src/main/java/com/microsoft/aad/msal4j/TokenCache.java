@@ -459,7 +459,8 @@ public class TokenCache implements ITokenCache {
         AuthenticationResult.AuthenticationResultBuilder builder = AuthenticationResult.builder();
         builder.environment(authority.host());
 
-        Set<String> environmentAliases = AadInstanceDiscovery.cache.get(account.environment()).aliases();
+        Set<String> environmentAliases = AadInstanceDiscovery.getAliases(account.environment());
+
         try (CacheAspect cacheAspect = new CacheAspect(
                 TokenCacheAccessContext.builder().
                         clientId(clientId).
@@ -520,7 +521,7 @@ public class TokenCache implements ITokenCache {
             (Authority authority, Set<String> scopes, String clientId) {
         AuthenticationResult.AuthenticationResultBuilder builder = AuthenticationResult.builder();
 
-        Set<String> environmentAliases = AadInstanceDiscovery.cache.get(authority.host).aliases();
+        Set<String> environmentAliases = AadInstanceDiscovery.getAliases(authority.host);
         builder.environment(authority.host());
 
         try (CacheAspect cacheAspect = new CacheAspect(

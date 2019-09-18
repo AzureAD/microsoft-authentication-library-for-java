@@ -3,27 +3,25 @@
 
 package com.microsoft.azure.msalwebsample;
 
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Getter
 @Setter
 @Component
-@ConfigurationProperties("aad")
+@ConfigurationProperties("b2c")
 class BasicConfiguration {
     String clientId;
-    @Getter(AccessLevel.NONE) String authority;
+    String secret;
     String redirectUri;
-    String secretKey;
-    String oboApi;
 
-    String getAuthority(){
-        if (!authority.endsWith("/")) {
-            authority += "/";
-        }
-        return authority;
-    }
+    String api;
+    String apiScope;
+
+    String signUpSignInAuthority;
+    String editProfileAuthority;
+    String resetPasswordAuthority;
 }

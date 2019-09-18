@@ -39,6 +39,15 @@
     <div th:utext="${users}"> </div>
 </span>
 
+<form action="/obo_api">
+    <input type="submit" value="Call Obo Api">
+</form>
+
+<span th:if="${obo_api_call_res != null}">
+    <h3>OnBehalfOf Api call result:</h3>
+
+    <div th:utext="${obo_api_call_res}"> </div>
+</span>
 
 </body>
 </html>
