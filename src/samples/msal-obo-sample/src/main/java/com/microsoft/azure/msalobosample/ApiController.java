@@ -20,8 +20,8 @@ public class ApiController {
     @Autowired
     MsalAuthHelper msalAuthHelper;
 
-    @RequestMapping("/api")
-    public String api() throws MalformedURLException {
+    @RequestMapping("/graphMeApi")
+    public String graphMeApi() throws MalformedURLException {
 
         String oboAccessToken = msalAuthHelper.getOboToken("https://graph.microsoft.com/.default");
 

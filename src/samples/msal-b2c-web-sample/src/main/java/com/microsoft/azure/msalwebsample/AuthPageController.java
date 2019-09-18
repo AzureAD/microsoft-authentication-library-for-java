@@ -40,6 +40,9 @@ public class AuthPageController {
     @Autowired
     AuthHelper authHelper;
 
+    @Autowired
+    AuthFilter authFilter;
+
     @RequestMapping("/msal4jsample")
     public String homepage(){
         return "index";
@@ -70,16 +73,16 @@ public class AuthPageController {
     }
 
     @RequestMapping("/b2c-api")
-    public ModelAndView callOboApi(HttpServletRequest httpRequest) throws Throwable {
+    public ModelAndView callB2CApi(HttpServletRequest httpRequest) throws Throwable {
 
         ModelAndView mav = new ModelAndView("auth_page");
         setAccountInfo(mav, httpRequest);
 
         IAuthenticationResult result =  authHelper.getAuthResultBySilentFlow(httpRequest, authHelper.configuration.apiScope);
 
-        String oboApiCallRes = callB2CApi(result.accessToken());
+        String b2cApiCallRes = callB2CApi(result.accessToken());
 
-        mav.addObject("b2c_api_call_res", oboApiCallRes);
+        mav.addObject("b2c_api_call_res", b2cApiCallRes);
 
         return mav;
     }
@@ -100,11 +103,8 @@ public class AuthPageController {
         return new Date() + result;
     }
 
-    @Autowired
-    AuthFilter authFilter;
-
     @RequestMapping("/edit-profile")
-    public void callOboApi(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws Throwable {
+    public void executeEditProfileB2CPolicy(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws Throwable {
         authFilter.sendAuthRedirect(authHelper.configuration.editProfileAuthority, httpRequest, httpResponse);
     }
 }

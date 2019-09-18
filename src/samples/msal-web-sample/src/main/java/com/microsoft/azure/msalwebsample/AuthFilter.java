@@ -212,8 +212,6 @@ public class AuthFilter implements Filter {
                 "response_mode=form_post&" +
                 "redirect_uri=" + URLEncoder.encode(authHelper.getRedirectUri(), "UTF-8") +
                 "&client_id=" + authHelper.getClientId() +
-                //"&scope=" + URLEncoder.encode("openid offline_access profile", "UTF-8") +
-                //"&scope=" + URLEncoder.encode("openid offline_access profile" + " https://pesomka.onmicrosoft.com/TodoListService/user_impersonation", "UTF-8") +
                 "&scope=" + URLEncoder.encode("openid offline_access profile", "UTF-8") +
                 (StringUtils.isEmpty(claims) ? "" : "&claims=" + claims) +
                 "&prompt=select_account" +
