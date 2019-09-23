@@ -37,7 +37,7 @@ class MsalServiceExceptionFactory {
                 errorResponse.error().equalsIgnoreCase(AuthenticationErrorCode.INVALID_GRANT)) {
 
             if(isInteractionRequired(errorResponse.subError)){
-                throw new MsalInteractionRequiredException(errorResponse, httpResponse.getHeaderMap());
+                return new MsalInteractionRequiredException(errorResponse, httpResponse.getHeaderMap());
             }
         }
 

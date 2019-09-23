@@ -28,7 +28,7 @@ final class ClientDataHttpHeaders {
     public final static String REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_NAME = "return-client-request-id";
     public final static String REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_VALUE = "true";
     private final String headerValues;
-    private final Map<String, String> headerMap = new HashMap<String, String>();
+    private final Map<String, String> headerMap = new HashMap<>();
 
     ClientDataHttpHeaders(final String correlationId) {
         if (!StringHelper.isBlank(correlationId)) {

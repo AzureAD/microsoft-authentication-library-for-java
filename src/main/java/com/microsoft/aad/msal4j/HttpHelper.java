@@ -26,27 +26,38 @@ class HttpHelper {
 
         HttpEvent httpEvent = new HttpEvent();
         String response = null;
+        try{
+            try(TelemetryHelper telemetryHelper = serviceBundle.getTelemetryManager().createTelemetryHelper(
+                    requestContext.getTelemetryRequestId(),
+                    requestContext.getClientId(),
+                    httpEvent,
+                    false)){
 
-        try(TelemetryHelper telemetryHelper = serviceBundle.getTelemetryManager().createTelemetryHelper(
-                requestContext.getTelemetryRequestId(),
-                requestContext.getClientId(),
-                httpEvent,
-                false)){
+                URL endpointUrl = new URL(url);
+                httpEvent.setHttpPath(endpointUrl.toURI());
+                if(!StringHelper.isBlank(endpointUrl.getQuery())){
+                    httpEvent.setQueryParameters(endpointUrl.getQuery());
+                }
 
-            URL endpointUrl = new URL(url);
-            httpEvent.setHttpPath(endpointUrl.toURI());
-            if(!StringHelper.isBlank(endpointUrl.getQuery())){
-                httpEvent.setQueryParameters(endpointUrl.getQuery());
+                if(httpMethod == HttpMethod.GET) {
+                    httpEvent.setHttpMethod("GET");
+                    response = executeHttpGet(log, endpointUrl, headers, serviceBundle, httpEvent);
+                } else if (httpMethod == HttpMethod.POST){
+                    httpEvent.setHttpMethod("POST");
+                    response = executeHttpPost(log, endpointUrl, postData, headers, serviceBundle, httpEvent);
+                }
+
+                LastRequest lastRequest = new LastRequest(
+                        requestContext.getAcquireTokenPublicApi(),
+                        requestContext.getCorrelationId());
+                serviceBundle.getServerSideTelemetry().setLastRequest(lastRequest) ;
+
             }
-
-            if(httpMethod == HttpMethod.GET) {
-                httpEvent.setHttpMethod("GET");
-                response = executeHttpGet(log, endpointUrl, headers, serviceBundle, httpEvent);
-            } else if (httpMethod == HttpMethod.POST){
-                httpEvent.setHttpMethod("POST");
-                response = executeHttpPost(log, endpointUrl, postData, headers, serviceBundle, httpEvent);
-            }
+        } catch (Exception exception){
+            serviceBundle.getServerSideTelemetry().getLastRequest().errorCode(exception.toString());
+            throw exception;
         }
+
         return response;
     }
 
@@ -55,7 +66,7 @@ class HttpHelper {
                                          final ServiceBundle serviceBundle,
                                          HttpEvent httpEvent) throws Exception {
         final HttpsURLConnection conn = HttpHelper.openConnection(url, serviceBundle);
-        configureAdditionalHeaders(conn, headers);
+        configureAdditionalHeaders(conn, headers, serviceBundle);
 
         return getResponse(log, headers, conn, httpEvent);
     }
@@ -65,7 +76,7 @@ class HttpHelper {
                                           final ServiceBundle serviceBundle, HttpEvent httpEvent)
             throws Exception {
         final HttpsURLConnection conn = HttpHelper.openConnection(url, serviceBundle);
-        configureAdditionalHeaders(conn, headers);
+        configureAdditionalHeaders(conn, headers, serviceBundle);
         conn.setRequestMethod("POST");
         conn.setDoOutput(true);
 
@@ -119,12 +130,18 @@ class HttpHelper {
         return connection;
     }
 
-    static void configureAdditionalHeaders(
-            final HttpsURLConnection conn, final Map<String, String> headers) {
-        if (headers != null) {
-            for (final Map.Entry<String, String> entry : headers.entrySet()) {
-                conn.setRequestProperty(entry.getKey(), entry.getValue());
-            }
+    static void configureAdditionalHeaders(final HttpsURLConnection conn,
+                                           final Map<String, String> headers,
+                                           ServiceBundle serviceBundle) {
+
+        Map<String, String> allHeaders = serviceBundle.getServerSideTelemetry().getServerTelemetryHeaderMap();
+
+        if(headers != null){
+            allHeaders.putAll(headers);
+        }
+
+        for (final Map.Entry<String, String> entry : allHeaders.entrySet()) {
+            conn.setRequestProperty(entry.getKey(), entry.getValue());
         }
     }
 

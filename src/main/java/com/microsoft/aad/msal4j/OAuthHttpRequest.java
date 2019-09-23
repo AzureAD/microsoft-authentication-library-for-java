@@ -114,7 +114,7 @@ class OAuthHttpRequest extends HTTPRequest {
             }
         }
 
-        HttpHelper.configureAdditionalHeaders(conn, params);
+        HttpHelper.configureAdditionalHeaders(conn, params, serviceBundle);
         conn.setDoOutput(true);
         conn.setRequestProperty("Content-Type", CommonContentTypes.APPLICATION_URLENCODED.toString());
 

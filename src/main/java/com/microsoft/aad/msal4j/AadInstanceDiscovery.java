@@ -77,6 +77,10 @@ class AadInstanceDiscovery {
         InstanceDiscoveryResponse instanceDiscoveryResponse =
                 sendInstanceDiscoveryRequest(authorityUrl, msalRequest, serviceBundle);
 
+        if(!StringHelper.isBlank(instanceDiscoveryResponse.error())){
+            serviceBundle.getServerSideTelemetry().getLastRequest().errorCode(instanceDiscoveryResponse.error());
+        }
+
         if (validateAuthority) {
             validate(instanceDiscoveryResponse);
         }

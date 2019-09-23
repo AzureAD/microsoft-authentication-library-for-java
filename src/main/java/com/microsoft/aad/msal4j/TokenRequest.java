@@ -56,6 +56,11 @@ class TokenRequest {
 
             addResponseHeadersToHttpEvent(httpEvent, httpResponse);
 
+            LastRequest lastRequest = new LastRequest(
+                    msalRequest.requestContext().getAcquireTokenPublicApi(),
+                    msalRequest.requestContext().getCorrelationId());
+            serviceBundle.getServerSideTelemetry().setLastRequest(lastRequest);
+
             if (httpResponse.getStatusCode() == HTTPResponse.SC_OK) {
                 final TokenResponse response = TokenResponse.parseHttpResponse(httpResponse);
 
@@ -107,6 +112,7 @@ class TokenRequest {
 
             } else {
                 MsalServiceException exception = MsalServiceExceptionFactory.fromHttpResponse(httpResponse);
+                lastRequest.errorCode(exception.errorCode());
                 httpEvent.setOauthErrorCode(exception.errorCode());
                 throw exception;
             }
