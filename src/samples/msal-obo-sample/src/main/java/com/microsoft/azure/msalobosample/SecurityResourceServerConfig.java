@@ -43,7 +43,7 @@ public class SecurityResourceServerConfig extends ResourceServerConfigurerAdapte
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/api")
+                .antMatchers("/*")
                 .access("#oauth2.hasScope('" + accessAsUserScope + "')"); // required scope to access /api URL
     }
 
