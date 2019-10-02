@@ -150,7 +150,7 @@ public class AuthPageController {
 
         HttpEntity<String> entity = new HttpEntity<>(null, headers);
 
-        String result = restTemplate.exchange("http://localhost:8081/api", HttpMethod.GET,
+        String result = restTemplate.exchange("http://localhost:8081/graphMeApi", HttpMethod.GET,
                 entity, String.class).getBody();
 
         return result;
