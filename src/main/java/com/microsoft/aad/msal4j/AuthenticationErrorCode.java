@@ -44,6 +44,11 @@ public class AuthenticationErrorCode {
     /**
      * Unknown error occurred
      */
+    public final static String CACHE_MISS = "cache_miss";
+
+    /**
+     * Unknown error occurred
+     */
     public final static String UNKNOWN = "unknown";
 }
 
