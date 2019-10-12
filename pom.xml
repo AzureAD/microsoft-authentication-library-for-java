@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.microsoft.azure</groupId>
 	<artifactId>msal4j</artifactId>
-	<version>0.5.0-preview</version>
+	<version>0.6.0-preview</version>
 	<packaging>jar</packaging>
 	<name>msal4j</name>
 	<description>
@@ -55,8 +55,8 @@
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.9</version>
+            <artifactId>commons-text</artifactId>
+            <version>1.7</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -98,7 +98,7 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.5</version>
+            <version>4.5.9</version>
         </dependency>
         <dependency>
             <groupId>com.microsoft.azure</groupId>
@@ -133,6 +133,7 @@
     </dependencies>
 
     <build>
+        <sourceDirectory>${project.build.directory}/delombok</sourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.projectlombok</groupId>

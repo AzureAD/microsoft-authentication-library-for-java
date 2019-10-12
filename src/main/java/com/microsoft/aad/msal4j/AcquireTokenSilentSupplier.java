@@ -28,31 +28,35 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
                     requestAuthority,
                     silentRequest.parameters().scopes(),
                     clientApplication.clientId());
-            return StringHelper.isBlank(res.accessToken()) ? null : res;
         }
+        else {
+            res = clientApplication.tokenCache.getCachedAuthenticationResult(
+                    silentRequest.parameters().account(),
+                    requestAuthority,
+                    silentRequest.parameters().scopes(),
+                    clientApplication.clientId());
 
-        res = clientApplication.tokenCache.getCachedAuthenticationResult(
-                silentRequest.parameters().account(),
-                requestAuthority,
-                silentRequest.parameters().scopes(),
-                clientApplication.clientId());
+            if (silentRequest.parameters().forceRefresh() || StringHelper.isBlank(res.accessToken())) {
 
-        if (!silentRequest.parameters().forceRefresh() && !StringHelper.isBlank(res.accessToken())) {
-            return res;
+                if (!StringHelper.isBlank(res.refreshToken())) {
+                    RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(
+                            RefreshTokenParameters.builder(silentRequest.parameters().scopes(), res.refreshToken()).build(),
+                            silentRequest.application(),
+                            silentRequest.requestContext());
+
+                    AcquireTokenByAuthorizationGrantSupplier acquireTokenByAuthorisationGrantSupplier =
+                            new AcquireTokenByAuthorizationGrantSupplier(clientApplication, refreshTokenRequest, requestAuthority);
+
+                    res = acquireTokenByAuthorisationGrantSupplier.execute();
+                }
+                else{
+                    res = null;
+                }
+            }
         }
-
-        if (!StringHelper.isBlank(res.refreshToken())) {
-            RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(
-                    RefreshTokenParameters.builder(silentRequest.parameters().scopes(), res.refreshToken()).build(),
-                    silentRequest.application(),
-                    silentRequest.requestContext());
-
-            AcquireTokenByAuthorizationGrantSupplier acquireTokenByAuthorisationGrantSupplier =
-                    new AcquireTokenByAuthorizationGrantSupplier(clientApplication, refreshTokenRequest, requestAuthority);
-
-            return acquireTokenByAuthorisationGrantSupplier.execute();
-        } else {
-            return null;
+        if(res == null || StringHelper.isBlank(res.accessToken())){
+            throw new MsalClientException(AuthenticationErrorMessage.NO_TOKEN_IN_CACHE, AuthenticationErrorCode.CACHE_MISS);
         }
+        return res;
     }
 }

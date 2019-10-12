@@ -3,8 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -189,7 +188,7 @@ class WSTrustRequest {
                                 guid, address,
                                 integrated ? "" : securityHeaderBuilder.toString(),
                                 rstTrustNamespace,
-                                StringUtils.isNotEmpty(cloudAudienceUrn) ? cloudAudienceUrn : DEFAULT_APPLIES_TO,
+                                StringHelper.isBlank(cloudAudienceUrn) ? DEFAULT_APPLIES_TO : cloudAudienceUrn,
                                 keyType,
                                 requestType));
 

@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.util.Set;
 import java.util.concurrent.CompletionException;
 
 class RemoveAccountRunnable implements Runnable {
@@ -21,11 +22,10 @@ class RemoveAccountRunnable implements Runnable {
     @Override
     public void run() {
         try {
-            InstanceDiscoveryMetadataEntry instanceDiscoveryData =
-                    AadInstanceDiscovery.cache.get(clientApplication.authenticationAuthority.host());
+            Set<String> aliases = AadInstanceDiscovery.getAliases(clientApplication.authenticationAuthority.host());
 
             clientApplication.tokenCache.removeAccount
-                    (clientApplication.clientId(), account, instanceDiscoveryData.aliases());
+                    (clientApplication.clientId(), account, aliases);
 
         } catch (Exception ex) {
             clientApplication.log.error(

@@ -80,13 +80,13 @@ class TokenRequest {
 
                             accountCacheEntity = AccountCacheEntity.create(
                                     response.getClientInfo(),
-                                    requestAuthority.host(),
+                                    requestAuthority,
                                     idToken,
                                     authority.policy);
                         } else {
                             accountCacheEntity = AccountCacheEntity.create(
                                     response.getClientInfo(),
-                                    requestAuthority.host(),
+                                    requestAuthority,
                                     idToken);
                         }
                     }
