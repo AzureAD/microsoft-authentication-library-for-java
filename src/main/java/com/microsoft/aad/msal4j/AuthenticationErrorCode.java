@@ -42,6 +42,11 @@ public class AuthenticationErrorCode {
     public final static String USER_REALM_DISCOVERY_FAILED = "user_realm_discovery_failed";
 
     /**
+     * Not found in the cache
+     */
+    public final static String CACHE_MISS = "cache_miss";
+
+    /**
      * Unknown error occurred
      */
     public final static String UNKNOWN = "unknown";

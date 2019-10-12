@@ -76,10 +76,6 @@ class AuthHelper {
             throw e.getCause();
         }
 
-        if (updatedResult == null) {
-            throw new ServiceUnavailableException("authentication result was null");
-        }
-
         //update session with latest token cache
         storeTokenCacheInSession(httpRequest, app.tokenCache().serialize());
 
