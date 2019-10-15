@@ -1,3 +1,10 @@
+Version 0.6.0-preview
+=============
+- Updated TokenCache to be thread safe
+- Removed build warnings
+- Added web app, B2C, and OBO samples
+- Updated to use delomboked sources
+
 Version 0.5.0-preview
 =============
 - Refactored AuthenticationException to MsalServiceException, MsalClientException, MsalInteractionRequiredException
