@@ -4,6 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.slf4j.Logger;
@@ -53,7 +54,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
     private ServiceBundle serviceBundle;
 
     @Accessors(fluent = true)
-    @Getter
+    @Getter(AccessLevel.PACKAGE)
     private Consumer<List<HashMap<String, String>>> telemetryConsumer;
 
     @Override
@@ -356,14 +357,14 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
             return self();
         }
 
-        public T telemetryConsumer(Consumer<List<HashMap<String, String>>> val) {
+        T telemetryConsumer(Consumer<List<HashMap<String, String>>> val) {
             validateNotNull("telemetryConsumer", val);
 
             telemetryConsumer = val;
             return self();
         }
 
-        public T onlySendFailureTelemetry(Boolean val) {
+        T onlySendFailureTelemetry(Boolean val) {
 
             onlySendFailureTelemetry = val;
             return self();
