@@ -50,7 +50,7 @@ final class JwtHelper {
 
             JWSHeader.Builder builder = new Builder(JWSAlgorithm.RS256);
             builder.x509CertChain(certs);
-            builder.x509CertThumbprint(new Base64URL(credential.getPublicCertificateHash()));
+            builder.x509CertThumbprint(new Base64URL(credential.publicCertificateHash()));
 
             jwt = new SignedJWT(builder.build(), claimsSet);
             final RSASSASigner signer = new RSASSASigner(credential.key());

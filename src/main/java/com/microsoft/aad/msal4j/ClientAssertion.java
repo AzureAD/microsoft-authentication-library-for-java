@@ -15,7 +15,7 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 @Getter
 @EqualsAndHashCode
-final class ClientAssertion implements IClientCredential{
+public final class ClientAssertion implements IClientCredential{
 
     public static final String assertionType = JWTAuthentication.CLIENT_ASSERTION_TYPE;
     private final String assertion;
