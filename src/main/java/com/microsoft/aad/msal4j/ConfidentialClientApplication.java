@@ -74,6 +74,8 @@ public class ConfidentialClientApplication extends ClientApplicationBase impleme
                     this.authenticationAuthority.selfSignedJwtAudience());
 
             clientAuthentication = createClientAuthFromClientAssertion(clientAssertion);
+        } else if (clientCredential instanceof ClientAssertion){
+            clientAuthentication = createClientAuthFromClientAssertion((ClientAssertion) clientCredential);
         } else {
             throw new IllegalArgumentException("Unsupported client credential");
         }

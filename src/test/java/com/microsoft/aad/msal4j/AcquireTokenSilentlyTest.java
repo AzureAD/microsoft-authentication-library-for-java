@@ -35,7 +35,7 @@ public class AcquireTokenSilentlyTest extends PowerMockTestCase {
     public void confidentialAppAcquireTokenSilently_emptyCache_MsalClientException() throws Throwable {
 
         ConfidentialClientApplication application = ConfidentialClientApplication
-                .builder(TestConfiguration.AAD_CLIENT_ID, ClientCredentialFactory.create(TestConfiguration.AAD_CLIENT_SECRET))
+                .builder(TestConfiguration.AAD_CLIENT_ID, ClientCredentialFactory.createFromSecret(TestConfiguration.AAD_CLIENT_SECRET))
                 .b2cAuthority(TestConfiguration.B2C_AUTHORITY).build();
 
         SilentParameters parameters = SilentParameters.builder(Collections.singleton("scope")).build();

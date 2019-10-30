@@ -15,7 +15,7 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 @Getter
 @EqualsAndHashCode
-public final class ClientAssertion {
+final class ClientAssertion implements IClientCredential{
 
     public static final String assertionType = JWTAuthentication.CLIENT_ASSERTION_TYPE;
     private final String assertion;
@@ -26,7 +26,7 @@ public final class ClientAssertion {
      *
      * @param assertion The jwt used as credential.
      */
-    public ClientAssertion(final String assertion) {
+    ClientAssertion(final String assertion) {
         if (StringHelper.isBlank(assertion)) {
             throw new NullPointerException("assertion");
         }
