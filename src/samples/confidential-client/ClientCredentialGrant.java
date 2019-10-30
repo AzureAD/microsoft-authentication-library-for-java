@@ -1,12 +1,15 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-import com.microsoft.aad.msal4j.*;
+import com.microsoft.aad.msal4j.ClientCredentialFactory;
+import com.microsoft.aad.msal4j.ClientCredentialParameters;
+import com.microsoft.aad.msal4j.ConfidentialClientApplication;
+import com.microsoft.aad.msal4j.IAuthenticationResult;
+import com.microsoft.aad.msal4j.SilentParameters;
 
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 
 class ClientCredentialGrant {
 
@@ -18,7 +21,7 @@ class ClientCredentialGrant {
 
         ConfidentialClientApplication app = ConfidentialClientApplication.builder(
                 TestData.CONFIDENTIAL_CLIENT_ID,
-                ClientCredentialFactory.create(TestData.CONFIDENTIAL_CLIENT_SECRET))
+                ClientCredentialFactory.createFromSecret(TestData.CONFIDENTIAL_CLIENT_SECRET))
                 .authority(TestData.TENANT_SPECIFIC_AUTHORITY)
                 .build();
 

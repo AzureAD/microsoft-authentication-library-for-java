@@ -46,7 +46,7 @@ class MsalAuthHelper {
         String authToken = getAuthToken();
 
         ConfidentialClientApplication application =
-                ConfidentialClientApplication.builder(clientId, ClientCredentialFactory.create(secret))
+                ConfidentialClientApplication.builder(clientId, ClientCredentialFactory.createFromSecret(secret))
                         .authority(authority).build();
 
         String cacheKey = Hashing.sha256()
