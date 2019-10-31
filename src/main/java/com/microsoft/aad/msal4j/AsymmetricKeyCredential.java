@@ -24,33 +24,16 @@ import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.apache.commons.codec.binary.Base64;
 
-/**
- * Credential type containing X509 public certificate and RSA private key.
- */
-public final class AsymmetricKeyCredential implements IClientCredential{
+final class AsymmetricKeyCredential implements IAsymmetricKeyCredential  {
 
     private final static int MIN_KEY_SIZE_IN_BITS = 2048;
 
-    /**
-     * Returns private key of the credential.
-     *
-     * @return private key.
-     */
     @Accessors(fluent = true)
     @Getter
     private final PrivateKey key;
 
     private final X509Certificate publicCertificate;
 
-    /**
-     * Constructor to create credential with client id, private key and public
-     * certificate.
-     *
-     * @param key
-     *            RSA private key to sign the assertion.
-     * @param publicCertificate
-     *            Public certificate used for thumb print.
-     */
     private AsymmetricKeyCredential(final PrivateKey key, final X509Certificate publicCertificate) {
         if (key == null) {
             throw new NullPointerException("PrivateKey is null or empty");
@@ -86,45 +69,16 @@ public final class AsymmetricKeyCredential implements IClientCredential{
         this.publicCertificate = publicCertificate;
     }
 
-    /**
-     * Base64 encoded hash of the the public certificate.
-     *
-     * @return base64 encoded string
-     * @throws CertificateEncodingException if an encoding error occurs
-     * @throws NoSuchAlgorithmException if requested algorithm is not available in the environment
-     */
     public String publicCertificateHash()
             throws CertificateEncodingException, NoSuchAlgorithmException {
         return Base64.encodeBase64String(AsymmetricKeyCredential
                 .getHash(this.publicCertificate.getEncoded()));
     }
 
-    /**
-     * Base64 encoded public certificate.
-     *
-     * @return base64 encoded string
-     * @throws CertificateEncodingException if an encoding error occurs
-     */
     public String publicCertificate() throws CertificateEncodingException {
         return Base64.encodeBase64String(this.publicCertificate.getEncoded());
     }
 
-    /**
-     * Static method to create KeyCredential instance.
-     *
-     * @param pkcs12Certificate
-     *            PKCS12 certificate stream containing public and private key.
-     *            Caller is responsible for handling the input stream.
-     * @param password
-     *            certificate password
-     * @return KeyCredential instance
-     * @throws KeyStoreException {@link KeyStoreException}
-     * @throws NoSuchProviderException {@link NoSuchProviderException}
-     * @throws NoSuchAlgorithmException {@link NoSuchAlgorithmException}
-     * @throws CertificateException {@link CertificateException}
-     * @throws IOException {@link IOException}
-     * @throws UnrecoverableKeyException {@link UnrecoverableKeyException}
-     */
     static AsymmetricKeyCredential create(final InputStream pkcs12Certificate, final String password)
             throws KeyStoreException, NoSuchProviderException,
             NoSuchAlgorithmException, CertificateException, IOException, UnrecoverableKeyException {
@@ -139,15 +93,6 @@ public final class AsymmetricKeyCredential implements IClientCredential{
         return create(key, publicCertificate);
     }
 
-    /**
-     * Static method to create KeyCredential instance.
-     *
-     * @param key
-     *            RSA private key to sign the assertion.
-     * @param publicCertificate
-     *            Public certificate used for thumb print.
-     * @return KeyCredential instance
-     */
     static AsymmetricKeyCredential create(final PrivateKey key, final X509Certificate publicCertificate) {
         return new AsymmetricKeyCredential(key, publicCertificate);
     }

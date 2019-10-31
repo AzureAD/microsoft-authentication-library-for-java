@@ -19,7 +19,7 @@ public class ClientCredentialFactory {
      * @param secret secret of application requesting a token
      * @return {@link ClientSecret}
      */
-    public static IClientCredential createFromSecret(String secret){
+    public static IClientSecret createFromSecret(String secret){
         return new ClientSecret(secret);
     }
 
@@ -35,7 +35,7 @@ public class ClientCredentialFactory {
      * @throws NoSuchProviderException
      * @throws IOException
      */
-    public static IClientCredential createFromCertificate(final InputStream pkcs12Certificate, final String password)
+    public static IAsymmetricKeyCredential createFromCertificate(final InputStream pkcs12Certificate, final String password)
             throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException,
             KeyStoreException, NoSuchProviderException, IOException {
         return AsymmetricKeyCredential.create(pkcs12Certificate, password);
@@ -47,7 +47,7 @@ public class ClientCredentialFactory {
      * @param publicCertificate x509 public certificate used for thumbprint
      * @return {@link AsymmetricKeyCredential}
      */
-    public static IClientCredential createFromCertificate(final PrivateKey key, final X509Certificate publicCertificate) {
+    public static IAsymmetricKeyCredential createFromCertificate(final PrivateKey key, final X509Certificate publicCertificate) {
         return AsymmetricKeyCredential.create(key, publicCertificate);
     }
 
@@ -56,7 +56,7 @@ public class ClientCredentialFactory {
      * @param clientAssertion Jwt token encoded as a base64 URL encoded string
      * @return {@link ClientAssertion}
      */
-    public static IClientCredential createFromClientAssertion(String clientAssertion){
+    public static IClientAssertion createFromClientAssertion(String clientAssertion){
         return new ClientAssertion(clientAssertion);
     }
 }
