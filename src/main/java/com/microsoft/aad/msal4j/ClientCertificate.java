@@ -24,7 +24,7 @@ import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.apache.commons.codec.binary.Base64;
 
-final class AsymmetricKeyCredential implements IAsymmetricKeyCredential  {
+final class ClientCertificate implements IClientCertificate {
 
     private final static int MIN_KEY_SIZE_IN_BITS = 2048;
 
@@ -34,7 +34,7 @@ final class AsymmetricKeyCredential implements IAsymmetricKeyCredential  {
 
     private final X509Certificate publicCertificate;
 
-    private AsymmetricKeyCredential(final PrivateKey key, final X509Certificate publicCertificate) {
+    private ClientCertificate(final PrivateKey key, final X509Certificate publicCertificate) {
         if (key == null) {
             throw new NullPointerException("PrivateKey is null or empty");
         }
@@ -71,7 +71,7 @@ final class AsymmetricKeyCredential implements IAsymmetricKeyCredential  {
 
     public String publicCertificateHash()
             throws CertificateEncodingException, NoSuchAlgorithmException {
-        return Base64.encodeBase64String(AsymmetricKeyCredential
+        return Base64.encodeBase64String(ClientCertificate
                 .getHash(this.publicCertificate.getEncoded()));
     }
 
@@ -79,7 +79,7 @@ final class AsymmetricKeyCredential implements IAsymmetricKeyCredential  {
         return Base64.encodeBase64String(this.publicCertificate.getEncoded());
     }
 
-    static AsymmetricKeyCredential create(final InputStream pkcs12Certificate, final String password)
+    static ClientCertificate create(final InputStream pkcs12Certificate, final String password)
             throws KeyStoreException, NoSuchProviderException,
             NoSuchAlgorithmException, CertificateException, IOException, UnrecoverableKeyException {
         final KeyStore keystore = KeyStore.getInstance("PKCS12", "SunJSSE");
@@ -93,8 +93,8 @@ final class AsymmetricKeyCredential implements IAsymmetricKeyCredential  {
         return create(key, publicCertificate);
     }
 
-    static AsymmetricKeyCredential create(final PrivateKey key, final X509Certificate publicCertificate) {
-        return new AsymmetricKeyCredential(key, publicCertificate);
+    static ClientCertificate create(final PrivateKey key, final X509Certificate publicCertificate) {
+        return new ClientCertificate(key, publicCertificate);
     }
 
     private static byte[] getHash(final byte[] inputBytes) throws NoSuchAlgorithmException {

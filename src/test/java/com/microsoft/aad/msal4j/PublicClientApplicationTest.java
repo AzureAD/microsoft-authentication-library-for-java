@@ -19,7 +19,7 @@ import java.util.concurrent.Future;
 @PowerMockIgnore({"javax.net.ssl.*"})
 @Test(groups = { "checkin" })
 @PrepareForTest({ PublicClientApplication.class,
-        AsymmetricKeyCredential.class, UserDiscoveryRequest.class})
+        ClientCertificate.class, UserDiscoveryRequest.class})
 public class PublicClientApplicationTest extends PowerMockTestCase {
 
     private PublicClientApplication app = null;

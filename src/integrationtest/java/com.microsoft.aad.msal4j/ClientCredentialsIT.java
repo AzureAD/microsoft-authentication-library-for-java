@@ -18,14 +18,13 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
 
-import static com.microsoft.aad.msal4j.TestConstants.GRAPH_DEFAULT_SCOPE;
 import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 
 @Test
 public class ClientCredentialsIT {
 
     @Test
-    public void acquireTokenClientCredentials_AsymmetricKeyCredential() throws Exception{
+    public void acquireTokenClientCredentials_ClientCertificate() throws Exception{
         String clientId = "55e7e5af-ca53-482d-9aa3-5cb1cc8eecb5";
         IClientCredential credential = getCertificateFromKeyStore();
         assertAcquireTokenCommon(clientId, credential);
@@ -48,7 +47,7 @@ public class ClientCredentialsIT {
 
         ClientAssertion clientAssertion = JwtHelper.buildJwt(
                 clientId,
-                (AsymmetricKeyCredential) certificateFromKeyStore,
+                (ClientCertificate) certificateFromKeyStore,
                 "https://login.microsoftonline.com/common/oauth2/v2.0/token");
 
 
@@ -72,7 +71,6 @@ public class ClientCredentialsIT {
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
     }
-
 
     private IClientCredential getCertificateFromKeyStore() throws
             NoSuchProviderException, KeyStoreException, IOException, NoSuchAlgorithmException,

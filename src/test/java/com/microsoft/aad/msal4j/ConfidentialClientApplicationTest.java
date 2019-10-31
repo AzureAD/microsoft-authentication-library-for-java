@@ -26,7 +26,7 @@ import static org.testng.Assert.assertNotNull;
 @PowerMockIgnore({"javax.net.ssl.*"})
 @Test(groups = { "checkin" })
 @PrepareForTest({ ConfidentialClientApplication.class,
-        AsymmetricKeyCredential.class, UserDiscoveryRequest.class })
+        ClientCertificate.class, UserDiscoveryRequest.class })
 public class ConfidentialClientApplicationTest extends PowerMockTestCase {
 
     private ConfidentialClientApplication app = null;

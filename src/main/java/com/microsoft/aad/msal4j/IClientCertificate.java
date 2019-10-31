@@ -10,7 +10,7 @@ import java.security.cert.CertificateEncodingException;
 /**
  * Credential type containing X509 public certificate and RSA private key.
  */
-public interface IAsymmetricKeyCredential extends IClientCredential{
+public interface IClientCertificate extends IClientCredential{
 
     /**
      * Returns private key of the credential.
