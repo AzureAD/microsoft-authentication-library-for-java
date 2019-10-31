@@ -78,6 +78,6 @@ class KeyVaultSecretsProvider {
         } catch (Exception e){
             throw new RuntimeException("Error getting certificate from keystore: " + e.getMessage());
         }
-        return ClientCredentialFactory.create(key, publicCertificate);
+        return ClientCredentialFactory.createFromCertificate(key, publicCertificate);
    }
 }

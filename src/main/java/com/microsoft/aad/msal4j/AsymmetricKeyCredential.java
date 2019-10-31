@@ -29,7 +29,7 @@ import org.apache.commons.codec.binary.Base64;
  */
 public final class AsymmetricKeyCredential implements IClientCredential{
 
-    public final static int MIN_KEY_SIZE_IN_BITS = 2048;
+    private final static int MIN_KEY_SIZE_IN_BITS = 2048;
 
     /**
      * Returns private key of the credential.
@@ -93,7 +93,7 @@ public final class AsymmetricKeyCredential implements IClientCredential{
      * @throws CertificateEncodingException if an encoding error occurs
      * @throws NoSuchAlgorithmException if requested algorithm is not available in the environment
      */
-    public String getPublicCertificateHash()
+    public String publicCertificateHash()
             throws CertificateEncodingException, NoSuchAlgorithmException {
         return Base64.encodeBase64String(AsymmetricKeyCredential
                 .getHash(this.publicCertificate.getEncoded()));
@@ -101,14 +101,13 @@ public final class AsymmetricKeyCredential implements IClientCredential{
 
     /**
      * Base64 encoded public certificate.
-     * 
+     *
      * @return base64 encoded string
      * @throws CertificateEncodingException if an encoding error occurs
      */
     public String publicCertificate() throws CertificateEncodingException {
         return Base64.encodeBase64String(this.publicCertificate.getEncoded());
     }
-
 
     /**
      * Static method to create KeyCredential instance.
@@ -126,7 +125,7 @@ public final class AsymmetricKeyCredential implements IClientCredential{
      * @throws IOException {@link IOException}
      * @throws UnrecoverableKeyException {@link UnrecoverableKeyException}
      */
-    public static AsymmetricKeyCredential create(final InputStream pkcs12Certificate, final String password)
+    static AsymmetricKeyCredential create(final InputStream pkcs12Certificate, final String password)
             throws KeyStoreException, NoSuchProviderException,
             NoSuchAlgorithmException, CertificateException, IOException, UnrecoverableKeyException {
         final KeyStore keystore = KeyStore.getInstance("PKCS12", "SunJSSE");
@@ -149,7 +148,7 @@ public final class AsymmetricKeyCredential implements IClientCredential{
      *            Public certificate used for thumb print.
      * @return KeyCredential instance
      */
-    public static AsymmetricKeyCredential create(final PrivateKey key, final X509Certificate publicCertificate) {
+    static AsymmetricKeyCredential create(final PrivateKey key, final X509Certificate publicCertificate) {
         return new AsymmetricKeyCredential(key, publicCertificate);
     }
 

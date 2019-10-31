@@ -25,7 +25,7 @@ public final class ClientSecret implements IClientCredential {
      * @param clientSecret
      *            Secret of the client requesting the token.
      */
-    public ClientSecret(final String clientSecret) {
+    ClientSecret(final String clientSecret) {
         if (StringHelper.isBlank(clientSecret)) {
             throw new IllegalArgumentException("clientSecret is null or empty");
         }

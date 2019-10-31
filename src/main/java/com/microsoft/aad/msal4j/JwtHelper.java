@@ -45,12 +45,13 @@ final class JwtHelper {
 
         SignedJWT jwt;
         try {
-            JWSHeader.Builder builder = new Builder(JWSAlgorithm.RS256);
-            List<Base64> certs = new ArrayList<Base64>();
+            List<Base64> certs = new ArrayList<>();
             certs.add(new Base64(credential.publicCertificate()));
+
+            JWSHeader.Builder builder = new Builder(JWSAlgorithm.RS256);
             builder.x509CertChain(certs);
-            builder.x509CertThumbprint(new Base64URL(credential
-                    .getPublicCertificateHash()));
+            builder.x509CertThumbprint(new Base64URL(credential.publicCertificateHash()));
+
             jwt = new SignedJWT(builder.build(), claimsSet);
             final RSASSASigner signer = new RSASSASigner(credential.key());
 

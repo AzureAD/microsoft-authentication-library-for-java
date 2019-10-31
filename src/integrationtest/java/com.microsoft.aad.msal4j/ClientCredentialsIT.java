@@ -23,6 +23,7 @@ import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 
 @Test
 public class ClientCredentialsIT {
+
     @Test
     public void acquireTokenClientCredentials_AsymmetricKeyCredential() throws Exception{
         String clientId = "55e7e5af-ca53-482d-9aa3-5cb1cc8eecb5";
@@ -35,7 +36,24 @@ public class ClientCredentialsIT {
         AppIdentityProvider appProvider = new AppIdentityProvider();
         final String clientId = appProvider.getDefaultLabId();
         final String password = appProvider.getDefaultLabPassword();
-        IClientCredential credential = ClientCredentialFactory.create(password);
+        IClientCredential credential = ClientCredentialFactory.createFromSecret(password);
+
+        assertAcquireTokenCommon(clientId, credential);
+    }
+
+    @Test
+    public void acquireTokenClientCredentials_ClientAssertion() throws Exception{
+        String clientId = "55e7e5af-ca53-482d-9aa3-5cb1cc8eecb5";
+        IClientCredential certificateFromKeyStore = getCertificateFromKeyStore();
+
+        ClientAssertion clientAssertion = JwtHelper.buildJwt(
+                clientId,
+                (AsymmetricKeyCredential) certificateFromKeyStore,
+                "https://login.microsoftonline.com/common/oauth2/v2.0/token");
+
+
+        IClientCredential credential = ClientCredentialFactory.createFromClientAssertion(
+                clientAssertion.assertion());
 
         assertAcquireTokenCommon(clientId, credential);
     }
@@ -53,23 +71,6 @@ public class ClientCredentialsIT {
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
-
-        String cachedAt = result.accessToken();
-
-        result = cca.acquireTokenSilently(SilentParameters
-                .builder(Collections.singleton(GRAPH_DEFAULT_SCOPE))
-                .build())
-                .get();
-
-        Assert.assertNull(result);
-
-        result = cca.acquireTokenSilently(SilentParameters
-                .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
-                .build())
-                .get();
-
-        Assert.assertNotNull(result);
-        Assert.assertEquals(result.accessToken(), cachedAt);
     }
 
 
@@ -84,6 +85,6 @@ public class ClientCredentialsIT {
         X509Certificate publicCertificate = (X509Certificate)keystore.getCertificate(
                 certificateAlias);
 
-        return ClientCredentialFactory.create(key, publicCertificate);
+        return ClientCredentialFactory.createFromCertificate(key, publicCertificate);
     }
 }

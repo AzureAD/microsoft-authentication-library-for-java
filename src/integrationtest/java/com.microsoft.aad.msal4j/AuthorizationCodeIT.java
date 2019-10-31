@@ -247,7 +247,7 @@ public class AuthorizationCodeIT {
                                                             String authCode) {
         IAuthenticationResult result;
         try{
-            IClientCredential credential = ClientCredentialFactory.create("");
+            IClientCredential credential = ClientCredentialFactory.createFromSecret("");
             ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
                     labResponse.getAppId(),
                     credential)
