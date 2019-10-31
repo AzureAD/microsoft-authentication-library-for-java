@@ -141,7 +141,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
     @Test
     public void oAuthRequest_for_acquireTokenByUserAssertion() throws Exception {
         ConfidentialClientApplication app =
-                new ConfidentialClientApplication.Builder(CLIENT_ID, ClientCredentialFactory.createFromSecret(CLIENT_SECRET))
+                ConfidentialClientApplication.builder(CLIENT_ID, ClientCredentialFactory.createFromSecret(CLIENT_SECRET))
                         .authority(AUTHORITY)
                         .validateAuthority(false).build();
 
@@ -210,7 +210,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
 
             IClientCredential clientCredential = ClientCredentialFactory.createFromCertificate(key, cert);
 
-            ConfidentialClientApplication app = new ConfidentialClientApplication.Builder(CLIENT_ID, clientCredential)
+            ConfidentialClientApplication app = ConfidentialClientApplication.builder(CLIENT_ID, clientCredential)
                     .authority(AUTHORITY)
                     .validateAuthority(false).build();
 
@@ -260,7 +260,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
                     .getCertificate(alias);
 
             ConfidentialClientApplication app =
-                    new ConfidentialClientApplication.Builder(CLIENT_ID, ClientCredentialFactory.createFromCertificate(key, cert))
+                    ConfidentialClientApplication.builder(CLIENT_ID, ClientCredentialFactory.createFromCertificate(key, cert))
                             .authority(AUTHORITY)
                             .validateAuthority(false)
                             .build();

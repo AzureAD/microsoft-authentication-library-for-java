@@ -29,7 +29,7 @@ public class PublicClientApplicationTest extends PowerMockTestCase {
     public void testAcquireToken_Username_Password() throws Exception {
         app = PowerMock.createPartialMock(PublicClientApplication.class,
                 new String[] { "acquireTokenCommon" },
-                new PublicClientApplication.Builder(TestConfiguration.AAD_CLIENT_ID)
+                PublicClientApplication.builder(TestConfiguration.AAD_CLIENT_ID)
                         .authority(TestConfiguration.AAD_TENANT_ENDPOINT));
 
         PowerMock.expectPrivate(app, "acquireTokenCommon",

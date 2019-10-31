@@ -35,7 +35,7 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
     public void testAcquireTokenAuthCode_ClientCredential() throws Exception {
         app = PowerMock.createPartialMock(ConfidentialClientApplication.class,
                 new String[] { "acquireTokenCommon" },
-                new ConfidentialClientApplication.Builder(TestConfiguration.AAD_CLIENT_ID,
+                ConfidentialClientApplication.builder(TestConfiguration.AAD_CLIENT_ID,
                 ClientCredentialFactory.createFromSecret(TestConfiguration.AAD_CLIENT_SECRET))
                         .authority(TestConfiguration.AAD_TENANT_ENDPOINT)
         );
@@ -82,7 +82,7 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
 
         app = PowerMock.createPartialMock(ConfidentialClientApplication.class,
                 new String[] { "acquireTokenCommon" },
-                new ConfidentialClientApplication.Builder(TestConfiguration.AAD_CLIENT_ID, clientCredential)
+                ConfidentialClientApplication.builder(TestConfiguration.AAD_CLIENT_ID, clientCredential)
                         .authority(TestConfiguration.AAD_TENANT_ENDPOINT));
 
         PowerMock.expectPrivate(app, "acquireTokenCommon",
@@ -127,7 +127,7 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
 
         app = PowerMock.createPartialMock(ConfidentialClientApplication.class,
                 new String[] { "acquireTokenCommon" },
-                new ConfidentialClientApplication.Builder(TestConfiguration.AAD_CLIENT_ID, clientCredential)
+                ConfidentialClientApplication.builder(TestConfiguration.AAD_CLIENT_ID, clientCredential)
                         .authority(TestConfiguration.AAD_TENANT_ENDPOINT));
 
         PowerMock.expectPrivate(app, "acquireTokenCommon",

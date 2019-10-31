@@ -107,7 +107,7 @@ public class TokenRequestTest extends AbstractMsalTests {
     }
 
     private TokenRequest createMockedTokenRequest() throws URISyntaxException, MalformedURLException {
-        PublicClientApplication app = new PublicClientApplication.Builder("id").build();
+        PublicClientApplication app = PublicClientApplication.builder("id").build();
 
         AuthorizationCodeParameters parameters = AuthorizationCodeParameters
                 .builder("code", new URI("http://my.redirect.com"))
@@ -138,7 +138,7 @@ public class TokenRequestTest extends AbstractMsalTests {
     public void testConstructor() throws MalformedURLException,
             URISyntaxException {
 
-        PublicClientApplication app = new PublicClientApplication.Builder("id").build();
+        PublicClientApplication app = PublicClientApplication.builder("id").build();
 
         AuthorizationCodeParameters parameters = AuthorizationCodeParameters
                 .builder("code", new URI("http://my.redirect.com"))
@@ -164,7 +164,7 @@ public class TokenRequestTest extends AbstractMsalTests {
     public void testToOAuthRequestNonEmptyCorrelationId()
             throws MalformedURLException, SerializeException, URISyntaxException {
 
-        PublicClientApplication app = new PublicClientApplication.Builder("id").build();
+        PublicClientApplication app = PublicClientApplication.builder("id").build();
 
         AuthorizationCodeParameters parameters = AuthorizationCodeParameters
                 .builder("code", new URI("http://my.redirect.com"))
@@ -197,7 +197,7 @@ public class TokenRequestTest extends AbstractMsalTests {
             throws MalformedURLException, SerializeException,
             URISyntaxException {
 
-        PublicClientApplication app = new PublicClientApplication.Builder("id").build();
+        PublicClientApplication app = PublicClientApplication.builder("id").build();
 
         AuthorizationCodeParameters parameters = AuthorizationCodeParameters
                 .builder("code", new URI("http://my.redirect.com"))
@@ -225,7 +225,7 @@ public class TokenRequestTest extends AbstractMsalTests {
     public void testExecuteOAuth_Success() throws SerializeException, ParseException, MsalException,
             IOException, URISyntaxException {
 
-        PublicClientApplication app = new PublicClientApplication.Builder("id").build();
+        PublicClientApplication app = PublicClientApplication.builder("id").build();
 
         AuthorizationCodeParameters parameters = AuthorizationCodeParameters
                 .builder("code", new URI("http://my.redirect.com"))
@@ -291,7 +291,7 @@ public class TokenRequestTest extends AbstractMsalTests {
     public void testExecuteOAuth_Failure() throws SerializeException,
             ParseException, MsalException, IOException, URISyntaxException {
 
-        PublicClientApplication app = new PublicClientApplication.Builder("id").build();
+        PublicClientApplication app = PublicClientApplication.builder("id").build();
 
         AuthorizationCodeParameters parameters = AuthorizationCodeParameters
                 .builder("code", new URI("http://my.redirect.com"))

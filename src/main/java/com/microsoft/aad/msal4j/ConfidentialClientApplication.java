@@ -111,14 +111,7 @@ public class ConfidentialClientApplication extends ClientApplicationBase impleme
 
         private IClientCredential clientCredential;
 
-        /**
-         * Constructor to create instance of Builder of ConfidentialClientApplication
-         *
-         * @param clientId         Client ID (Application ID) of the application as registered
-         *                         in the application registration portal (portal.azure.com)
-         * @param clientCredential The client credential to use for token acquisition.
-         */
-        Builder(String clientId, IClientCredential clientCredential) {
+        private Builder(String clientId, IClientCredential clientCredential) {
             super(clientId);
             this.clientCredential = clientCredential;
         }

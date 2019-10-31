@@ -59,7 +59,7 @@ public class ClientCredentialsIT {
     }
 
     private void assertAcquireTokenCommon(String clientId, IClientCredential credential) throws Exception{
-        ConfidentialClientApplication cca = new ConfidentialClientApplication.Builder(
+        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
                 clientId, credential).
                 authority(TestConstants.MICROSOFT_AUTHORITY).
                 build();

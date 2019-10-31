@@ -56,7 +56,7 @@ public class AcquireTokenSilentIT {
         String password = labUserProvider.getUserPassword(labResponse.getUser());
         String labAuthority = TestConstants.MICROSOFT_AUTHORITY_HOST + labResponse.getUser().getTenantId();
 
-        PublicClientApplication pca = new PublicClientApplication.Builder(
+        PublicClientApplication pca = PublicClientApplication.builder(
                 labResponse.getAppId()).
                 authority(labAuthority).
                 build();
@@ -90,7 +90,7 @@ public class AcquireTokenSilentIT {
                 false);
         String password = labUserProvider.getUserPassword(labResponse.getUser());
 
-        PublicClientApplication pca = new PublicClientApplication.Builder(
+        PublicClientApplication pca = PublicClientApplication.builder(
                 labResponse.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
@@ -167,10 +167,8 @@ public class AcquireTokenSilentIT {
                 NationalCloud.AZURE_CLOUD,
                 false);
         String tenantSpecificAuthority = TestConstants.MICROSOFT_AUTHORITY_HOST + labResponse.getUser().getTenantId();
-
         acquireTokenSilent_returnCachedTokens(tenantSpecificAuthority);
     }
-
 
     @Test
     public void acquireTokenSilent_ConfidentialClient_acquireTokenSilent() throws Exception{
@@ -236,7 +234,7 @@ public class AcquireTokenSilentIT {
                 false);
         String password = labUserProvider.getUserPassword(labResponse.getUser());
 
-        PublicClientApplication pca = new PublicClientApplication.Builder(
+        PublicClientApplication pca = PublicClientApplication.builder(
                 labResponse.getAppId()).
                 authority(authority).
                 build();
@@ -267,7 +265,7 @@ public class AcquireTokenSilentIT {
                 false);
         String password = labUserProvider.getUserPassword(labResponse.getUser());
 
-        PublicClientApplication pca = new PublicClientApplication.Builder(
+        PublicClientApplication pca = PublicClientApplication.builder(
                 labResponse.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();

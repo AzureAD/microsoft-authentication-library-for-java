@@ -41,7 +41,7 @@ public class NationalCloudIT {
                 false);
         String password = labUserProvider.getUserPassword(labResponse.getUser());
 
-        PublicClientApplication pca = new PublicClientApplication.Builder(
+        PublicClientApplication pca = PublicClientApplication.builder(
                 labResponse.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();

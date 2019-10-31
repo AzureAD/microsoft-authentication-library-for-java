@@ -30,7 +30,7 @@ public class TokenCacheIT {
                 false);
         String password = labUserProvider.getUserPassword(labResponse.getUser());
 
-        PublicClientApplication pca = new PublicClientApplication.Builder(
+        PublicClientApplication pca = PublicClientApplication.builder(
                 labResponse.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
@@ -62,7 +62,7 @@ public class TokenCacheIT {
                 false);
         String password = labUserProvider.getUserPassword(labResponse1.getUser());
 
-        PublicClientApplication pca = new PublicClientApplication.Builder(
+        PublicClientApplication pca = PublicClientApplication.builder(
                 labResponse1.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
@@ -125,7 +125,7 @@ public class TokenCacheIT {
         ITokenCacheAccessAspect persistenceAspect = new TokenPersistence(dataToInitCache);
 
         // acquire tokens for home tenant, and serialize cache
-        PublicClientApplication pca = new PublicClientApplication.Builder(
+        PublicClientApplication pca = PublicClientApplication.builder(
                 labResponse.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY)
                 .setTokenCacheAccessAspect(persistenceAspect)
@@ -141,7 +141,7 @@ public class TokenCacheIT {
         String guestTenantAuthority = TestConstants.MICROSOFT_AUTHORITY_HOST + labResponse.getUser().getTenantId();
 
         // initialize pca with tenant where user is guest, deserialize cache, and acquire second token
-        PublicClientApplication pca2 = new PublicClientApplication.Builder(
+        PublicClientApplication pca2 = PublicClientApplication.builder(
                 labResponse.getAppId()).
                 authority(guestTenantAuthority).
                 setTokenCacheAccessAspect(persistenceAspect).
