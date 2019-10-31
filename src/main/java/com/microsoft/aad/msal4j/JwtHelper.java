@@ -20,7 +20,7 @@ import com.nimbusds.jwt.SignedJWT;
 
 final class JwtHelper {
 
-    static ClientAssertion buildJwt(String clientId, final AsymmetricKeyCredential credential,
+    static ClientAssertion buildJwt(String clientId, final ClientCertificate credential,
             final String jwtAudience) throws MsalClientException {
         if (StringHelper.isBlank(clientId)) {
             throw new IllegalArgumentException("clientId is null or empty");

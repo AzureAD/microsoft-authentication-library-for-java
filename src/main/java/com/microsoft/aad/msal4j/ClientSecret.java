@@ -7,13 +7,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
-
-/**
- * Representation of client credential containing a secret in string format
- */
 @EqualsAndHashCode
-public final class ClientSecret implements IClientCredential {
-
+final class ClientSecret implements IClientSecret {
 
     @Accessors(fluent = true)
     @Getter

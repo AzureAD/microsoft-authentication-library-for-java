@@ -74,11 +74,25 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
 
     private static String query;
 
-    public OAuthRequestValidationTest() throws MalformedURLException {
-    }
-
+    @SuppressWarnings("unchecked")
     @BeforeMethod
-    public void init() {
+    public void init() throws Exception{
+
+        PowerMock.mockStatic(HttpHelper.class);
+
+        EasyMock.expect(
+                HttpHelper.executeHttpRequest(
+                        EasyMock.isA(Logger.class),
+                        EasyMock.isA(HttpMethod.class),
+                        EasyMock.isA(String.class),
+                        EasyMock.isA(Map.class),
+                        EasyMock.isNull(),
+                        EasyMock.isA(RequestContext.class),
+                        EasyMock.isA(ServiceBundle.class)))
+                .andReturn(INSTANCE_DISCOVERY_RESPONSE);
+
+        PowerMock.replay(HttpHelper.class);
+
         replace(method(OAuthHttpRequest.class, "send")).
                 with(new InvocationHandler() {
                     @Override
@@ -176,24 +190,8 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
         Assert.assertEquals(CLIENT_INFO_VALUE, queryParams.get("client_info"));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
-    public void oAuthRequest_for_acquireTokenByAsymmetricKeyCredential() throws Exception {
-        PowerMock.mockStatic(HttpHelper.class);
-
-        EasyMock.expect(
-                HttpHelper.executeHttpRequest(
-                        EasyMock.isA(Logger.class),
-                        EasyMock.isA(HttpMethod.class),
-                        EasyMock.isA(String.class),
-                        EasyMock.isA(Map.class),
-                        EasyMock.isNull(),
-                        EasyMock.isA(RequestContext.class),
-                        EasyMock.isA(ServiceBundle.class)))
-                .andReturn(INSTANCE_DISCOVERY_RESPONSE);
-
-
-        PowerMock.replay(HttpHelper.class);
+    public void oAuthRequest_for_acquireTokenByClientCertificate() throws Exception {
 
         try {
             final KeyStore keystore = KeyStore.getInstance("PKCS12", "SunJSSE");
@@ -245,7 +243,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
 
     @Test
     public void oAuthRequest_for_acquireTokenByClientAssertion() throws Exception {
-        //String rsaJwt = getRSAjwt();
+
         try {
             final KeyStore keystore = KeyStore.getInstance("PKCS12", "SunJSSE");
             keystore.load(

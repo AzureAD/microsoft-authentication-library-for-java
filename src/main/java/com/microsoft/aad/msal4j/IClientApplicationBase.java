@@ -13,7 +13,7 @@ import java.util.concurrent.Future;
 /**
  * Interface representing an application for which tokens can be acquired.
  */
-public interface IClientApplicationBase {
+interface IClientApplicationBase {
 
     String DEFAULT_AUTHORITY = "https://login.microsoftonline.com/common/";
 
