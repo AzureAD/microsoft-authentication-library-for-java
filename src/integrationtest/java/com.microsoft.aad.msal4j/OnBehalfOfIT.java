@@ -50,7 +50,7 @@ public class OnBehalfOfIT {
         final String password = appProvider.getOboPassword();
 
         ConfidentialClientApplication cca =
-                ConfidentialClientApplication.builder(clientId, ClientCredentialFactory.create(password)).
+                ConfidentialClientApplication.builder(clientId, ClientCredentialFactory.createFromSecret(password)).
                         authority(msidlab4Authority).
                         build();
 

@@ -16,11 +16,11 @@ import org.testng.annotations.Test;
 
 @Test(groups = { "checkin" })
 @PrepareForTest({ RSAPrivateKey.class })
-public class AsymmetricKeyCredentialTest extends AbstractMsalTests {
+public class ClientCertificateTest extends AbstractMsalTests {
 
     @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "PrivateKey is null or empty")
     public void testNullKey() {
-        AsymmetricKeyCredential.create((PrivateKey) null, null);
+        ClientCertificate.create((PrivateKey) null, null);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "certificate key size must be at least 2048")
@@ -30,7 +30,7 @@ public class AsymmetricKeyCredentialTest extends AbstractMsalTests {
         EasyMock.expect(modulus.bitLength()).andReturn(2047).times(1);
         EasyMock.expect(key.getModulus()).andReturn(modulus).times(1);
         EasyMock.replay(modulus, key);
-        AsymmetricKeyCredential.create(key, null);
+        ClientCertificate.create(key, null);
     }
 
     @Test
@@ -40,7 +40,7 @@ public class AsymmetricKeyCredentialTest extends AbstractMsalTests {
         EasyMock.expect(modulus.bitLength()).andReturn(2048).times(1);
         EasyMock.expect(key.getModulus()).andReturn(modulus).times(1);
         EasyMock.replay(modulus, key);
-        final AsymmetricKeyCredential kc = AsymmetricKeyCredential.create(key, null);
+        final ClientCertificate kc = ClientCertificate.create(key, null);
         assertNotNull(kc);
     }
 
@@ -51,7 +51,7 @@ public class AsymmetricKeyCredentialTest extends AbstractMsalTests {
         EasyMock.expect(modulus.bitLength()).andReturn(2048).times(1);
         EasyMock.expect(key.getModulus()).andReturn(modulus).times(1);
         EasyMock.replay(modulus, key);
-        final AsymmetricKeyCredential kc = AsymmetricKeyCredential.create(key, null);
+        final ClientCertificate kc = ClientCertificate.create(key, null);
         assertNotNull(kc);
     }
 }

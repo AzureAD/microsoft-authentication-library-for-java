@@ -126,7 +126,7 @@ public class CacheFormatTests extends AbstractMsalTests {
 
         String tokenResponse = getTokenResponse(folder);
 
-        PublicClientApplication app = new PublicClientApplication.Builder(CLIENT_ID).build();
+        PublicClientApplication app = PublicClientApplication.builder(CLIENT_ID).build();
 
         AuthorizationCodeParameters parameters =
                 AuthorizationCodeParameters.builder

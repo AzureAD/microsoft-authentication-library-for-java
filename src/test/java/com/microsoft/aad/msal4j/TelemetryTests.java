@@ -41,7 +41,7 @@ public class TelemetryTests {
 
     @Test
     public void telemetryConsumerRegistration_ConsumerNotNullTest(){
-        PublicClientApplication app = new PublicClientApplication.Builder("a1b2c3")
+        PublicClientApplication app = PublicClientApplication.builder("a1b2c3")
                 .telemetryConsumer(new MyTelemetryConsumer().telemetryConsumer)
                 .build();
 

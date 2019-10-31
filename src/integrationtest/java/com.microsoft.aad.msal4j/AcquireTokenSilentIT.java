@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import labapi.AppIdentityProvider;
 import labapi.FederationProvider;
 import labapi.LabResponse;
 import labapi.LabUserProvider;
@@ -13,6 +14,10 @@ import org.testng.annotations.Test;
 
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+
+import static com.microsoft.aad.msal4j.TestConstants.GRAPH_DEFAULT_SCOPE;
+import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 
 public class AcquireTokenSilentIT {
     private LabUserProvider labUserProvider;
@@ -51,7 +56,7 @@ public class AcquireTokenSilentIT {
         String password = labUserProvider.getUserPassword(labResponse.getUser());
         String labAuthority = TestConstants.MICROSOFT_AUTHORITY_HOST + labResponse.getUser().getTenantId();
 
-        PublicClientApplication pca = new PublicClientApplication.Builder(
+        PublicClientApplication pca = PublicClientApplication.builder(
                 labResponse.getAppId()).
                 authority(labAuthority).
                 build();
@@ -85,7 +90,7 @@ public class AcquireTokenSilentIT {
                 false);
         String password = labUserProvider.getUserPassword(labResponse.getUser());
 
-        PublicClientApplication pca = new PublicClientApplication.Builder(
+        PublicClientApplication pca = PublicClientApplication.builder(
                 labResponse.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
@@ -151,50 +156,85 @@ public class AcquireTokenSilentIT {
         Assert.assertEquals(result.account().username(), labResponse.getUser().getUpn());
     }
 
-    private IPublicClientApplication getPublicClientApplicationWithTokensInCache()
-            throws Exception {
-        LabResponse labResponse = labUserProvider.getDefaultUser(
-                NationalCloud.AZURE_CLOUD,
-                false);
-        String password = labUserProvider.getUserPassword(labResponse.getUser());
-
-        PublicClientApplication pca = new PublicClientApplication.Builder(
-                labResponse.getAppId()).
-                authority(TestConstants.ORGANIZATIONS_AUTHORITY).
-                build();
-
-        pca.acquireToken(UserNamePasswordParameters.
-                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-                        labResponse.getUser().getUpn(),
-                        password.toCharArray())
-                .build())
-                .get();
-        return pca;
-    }
-
     @Test
-    private void acquireTokenSilent_usingCommonAuthority_returnCachedAt() throws Exception {
+    public void acquireTokenSilent_usingCommonAuthority_returnCachedAt() throws Exception {
         acquireTokenSilent_returnCachedTokens(TestConstants.ORGANIZATIONS_AUTHORITY);
     }
 
     @Test
-    private void acquireTokenSilent_usingTenantSpecificAuthority_returnCachedAt() throws Exception {
+    public void acquireTokenSilent_usingTenantSpecificAuthority_returnCachedAt() throws Exception {
         LabResponse labResponse = labUserProvider.getDefaultUser(
                 NationalCloud.AZURE_CLOUD,
                 false);
         String tenantSpecificAuthority = TestConstants.MICROSOFT_AUTHORITY_HOST + labResponse.getUser().getTenantId();
-
         acquireTokenSilent_returnCachedTokens(tenantSpecificAuthority);
     }
 
-    void acquireTokenSilent_returnCachedTokens(String authority) throws Exception {
+    @Test
+    public void acquireTokenSilent_ConfidentialClient_acquireTokenSilent() throws Exception{
+
+        IConfidentialClientApplication cca = getConfidentialClientApplications();
+
+        IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
+                .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                .build())
+                .get();
+
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.accessToken());
+
+        String cachedAt = result.accessToken();
+
+        result = cca.acquireTokenSilently(SilentParameters
+                .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                .build())
+                .get();
+
+        Assert.assertNotNull(result);
+        Assert.assertEquals(result.accessToken(), cachedAt);
+    }
+
+    @Test(expectedExceptions = ExecutionException.class)
+    public void acquireTokenSilent_ConfidentialClient_acquireTokenSilentDifferentScopeThrowsException()
+            throws Exception {
+
+        IConfidentialClientApplication cca = getConfidentialClientApplications();
+
+        IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
+                .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                .build())
+                .get();
+
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.accessToken());
+
+        //Acquiring token for different scope, expect exception to be thrown
+        cca.acquireTokenSilently(SilentParameters
+                .builder(Collections.singleton(GRAPH_DEFAULT_SCOPE))
+                .build())
+                .get();
+    }
+
+    private IConfidentialClientApplication getConfidentialClientApplications() throws Exception{
+        AppIdentityProvider appProvider = new AppIdentityProvider();
+        final String clientId = appProvider.getDefaultLabId();
+        final String password = appProvider.getDefaultLabPassword();
+        IClientCredential credential = ClientCredentialFactory.createFromSecret(password);
+
+        return ConfidentialClientApplication.builder(
+                clientId, credential).
+                authority(TestConstants.MICROSOFT_AUTHORITY).
+                build();
+    }
+
+    private void acquireTokenSilent_returnCachedTokens(String authority) throws Exception {
 
         LabResponse labResponse = labUserProvider.getDefaultUser(
                 NationalCloud.AZURE_CLOUD,
                 false);
         String password = labUserProvider.getUserPassword(labResponse.getUser());
 
-        PublicClientApplication pca = new PublicClientApplication.Builder(
+        PublicClientApplication pca = PublicClientApplication.builder(
                 labResponse.getAppId()).
                 authority(authority).
                 build();
@@ -216,5 +256,26 @@ public class AcquireTokenSilentIT {
 
         Assert.assertNotNull(silentAuthResult);
         Assert.assertEquals(interactiveAuthResult.accessToken(), silentAuthResult.accessToken());
+    }
+
+    private IPublicClientApplication getPublicClientApplicationWithTokensInCache()
+            throws Exception {
+        LabResponse labResponse = labUserProvider.getDefaultUser(
+                NationalCloud.AZURE_CLOUD,
+                false);
+        String password = labUserProvider.getUserPassword(labResponse.getUser());
+
+        PublicClientApplication pca = PublicClientApplication.builder(
+                labResponse.getAppId()).
+                authority(TestConstants.ORGANIZATIONS_AUTHORITY).
+                build();
+
+        pca.acquireToken(
+                UserNamePasswordParameters.builder(
+                        Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                        labResponse.getUser().getUpn(),
+                        password.toCharArray())
+                        .build()).get();
+        return pca;
     }
 }

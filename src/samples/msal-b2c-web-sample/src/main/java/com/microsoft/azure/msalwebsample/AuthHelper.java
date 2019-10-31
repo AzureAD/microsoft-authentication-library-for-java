@@ -35,7 +35,7 @@ class AuthHelper {
 
     private ConfidentialClientApplication createClientApplication() throws MalformedURLException {
         return ConfidentialClientApplication.builder(configuration.clientId,
-                ClientCredentialFactory.create(configuration.secret))
+                ClientCredentialFactory.createFromSecret(configuration.secret))
                 .b2cAuthority(configuration.signUpSignInAuthority)
                 .build();
     }

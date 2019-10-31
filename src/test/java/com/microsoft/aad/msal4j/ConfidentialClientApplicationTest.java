@@ -26,7 +26,7 @@ import static org.testng.Assert.assertNotNull;
 @PowerMockIgnore({"javax.net.ssl.*"})
 @Test(groups = { "checkin" })
 @PrepareForTest({ ConfidentialClientApplication.class,
-        AsymmetricKeyCredential.class, UserDiscoveryRequest.class })
+        ClientCertificate.class, UserDiscoveryRequest.class })
 public class ConfidentialClientApplicationTest extends PowerMockTestCase {
 
     private ConfidentialClientApplication app = null;
@@ -35,8 +35,8 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
     public void testAcquireTokenAuthCode_ClientCredential() throws Exception {
         app = PowerMock.createPartialMock(ConfidentialClientApplication.class,
                 new String[] { "acquireTokenCommon" },
-                new ConfidentialClientApplication.Builder(TestConfiguration.AAD_CLIENT_ID,
-                ClientCredentialFactory.create(TestConfiguration.AAD_CLIENT_SECRET))
+                ConfidentialClientApplication.builder(TestConfiguration.AAD_CLIENT_ID,
+                ClientCredentialFactory.createFromSecret(TestConfiguration.AAD_CLIENT_SECRET))
                         .authority(TestConfiguration.AAD_TENANT_ENDPOINT)
         );
 
@@ -78,11 +78,11 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
         final X509Certificate cert = (X509Certificate) keystore
                 .getCertificate(alias);
 
-        IClientCredential clientCredential =  ClientCredentialFactory.create(key, cert);
+        IClientCredential clientCredential =  ClientCredentialFactory.createFromCertificate(key, cert);
 
         app = PowerMock.createPartialMock(ConfidentialClientApplication.class,
                 new String[] { "acquireTokenCommon" },
-                new ConfidentialClientApplication.Builder(TestConfiguration.AAD_CLIENT_ID, clientCredential)
+                ConfidentialClientApplication.builder(TestConfiguration.AAD_CLIENT_ID, clientCredential)
                         .authority(TestConfiguration.AAD_TENANT_ENDPOINT));
 
         PowerMock.expectPrivate(app, "acquireTokenCommon",
@@ -123,11 +123,11 @@ public class ConfidentialClientApplicationTest extends PowerMockTestCase {
         final X509Certificate cert = (X509Certificate) keystore
                 .getCertificate(alias);
 
-        IClientCredential clientCredential =  ClientCredentialFactory.create(key, cert);
+        IClientCredential clientCredential =  ClientCredentialFactory.createFromCertificate(key, cert);
 
         app = PowerMock.createPartialMock(ConfidentialClientApplication.class,
                 new String[] { "acquireTokenCommon" },
-                new ConfidentialClientApplication.Builder(TestConfiguration.AAD_CLIENT_ID, clientCredential)
+                ConfidentialClientApplication.builder(TestConfiguration.AAD_CLIENT_ID, clientCredential)
                         .authority(TestConfiguration.AAD_TENANT_ENDPOINT));
 
         PowerMock.expectPrivate(app, "acquireTokenCommon",

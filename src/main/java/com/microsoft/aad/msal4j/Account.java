@@ -16,7 +16,7 @@ import lombok.experimental.Accessors;
 @Getter
 @Setter
 @AllArgsConstructor
-public class Account implements IAccount {
+class Account implements IAccount {
 
     String homeAccountId;
 

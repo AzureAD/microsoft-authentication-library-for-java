@@ -75,7 +75,7 @@ public class UsernamePasswordIT {
 
     public void assertAcquireTokenCommon(LabResponse labResponse, String password)
             throws Exception{
-        PublicClientApplication pca = new PublicClientApplication.Builder(
+        PublicClientApplication pca = PublicClientApplication.builder(
                 labResponse.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
@@ -103,7 +103,7 @@ public class UsernamePasswordIT {
         String b2CAppId = "e3b9ad76-9763-4827-b088-80c7a7888f79";
         String password = labUserProvider.getUserPassword(labResponse.getUser());
 
-        PublicClientApplication pca = new PublicClientApplication.Builder(
+        PublicClientApplication pca = PublicClientApplication.builder(
                 b2CAppId).
                 b2cAuthority(TestConstants.B2C_AUTHORITY_ROPC).
                 build();
@@ -129,7 +129,7 @@ public class UsernamePasswordIT {
         String b2CAppId = "e3b9ad76-9763-4827-b088-80c7a7888f79";
         String password = labUserProvider.getUserPassword(labResponse.getUser());
 
-        PublicClientApplication pca = new PublicClientApplication.Builder(
+        PublicClientApplication pca = PublicClientApplication.builder(
                 b2CAppId).
                 b2cAuthority(TestConstants.B2C_MICROSOFTLOGIN_ROPC).
                 build();

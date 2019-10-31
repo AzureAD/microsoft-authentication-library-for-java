@@ -1,3 +1,10 @@
+Version 0.7.0-preview
+=============
+- Added support for ClientAssertions in ClientCredentialFactory
+- Renamed AsymmetricKeyCredential to ClientCertificate
+- Made Account, IClientApplicationBase, TelemetryConsumer ClientSecret, ClientCertificate, ClientAssertion package-private
+- Added IClientSecret, IClientCertificate, IClientAssertion
+
 Version 0.6.0-preview
 =============
 - Updated TokenCache to be thread safe
