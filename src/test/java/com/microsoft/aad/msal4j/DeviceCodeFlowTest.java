@@ -63,7 +63,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
     public void deviceCodeFlowTest() throws Exception {
         app = PowerMock.createPartialMock(PublicClientApplication.class,
                 new String[] { "acquireTokenCommon" },
-                new PublicClientApplication.Builder(TestConfiguration.AAD_CLIENT_ID)
+                PublicClientApplication.builder(TestConfiguration.AAD_CLIENT_ID)
                         .authority(TestConfiguration.AAD_TENANT_ENDPOINT));
 
         Capture<MsalRequest> capturedMsalRequest = Capture.newInstance();
@@ -158,7 +158,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 //    public void executeAcquireDeviceCode_AdfsAuthorityUsed_IllegalArgumentExceptionThrown()
 //            throws Exception {
 //
-//        app = new PublicClientApplication.Builder("client_id")
+//        app = PublicClientApplication.builder("client_id")
 //                .authority(ADFS_TENANT_ENDPOINT)
 //                .validateAuthority(false).build();
 //
@@ -173,7 +173,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
     public void executeAcquireDeviceCode_B2CAuthorityUsed_IllegalArgumentExceptionThrown()
             throws Exception {
 
-        app = new PublicClientApplication.Builder("client_id")
+        app = PublicClientApplication.builder("client_id")
                 .b2cAuthority(TestConfiguration.B2C_AUTHORITY)
                 .validateAuthority(false).build();
 
@@ -195,7 +195,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> { };
 
-        app = new PublicClientApplication.Builder("client_id")
+        app = PublicClientApplication.builder("client_id")
                 .authority(AAD_TENANT_ENDPOINT)
                 .validateAuthority(false)
                 .build();

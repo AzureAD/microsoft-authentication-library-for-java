@@ -26,7 +26,7 @@ public class RefreshTokenIT {
                 NationalCloud.AZURE_CLOUD,
                 false);
         String password = labUserProvider.getUserPassword(labResponse.getUser());
-        pca = new PublicClientApplication.Builder(
+        pca = PublicClientApplication.builder(
                 labResponse.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
