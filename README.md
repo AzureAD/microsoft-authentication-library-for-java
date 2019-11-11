@@ -9,7 +9,7 @@ The Microsoft Authentication Library for Java (MSAL4J) enables applications to i
 Quick links:
 
 | [Getting Started](https://docs.microsoft.com/azure/active-directory/develop/quickstart-v2-java-webapp) | [Docs](https://github.com/AzureAD/microsoft-authentication-library-for-java/wiki) | [Samples](https://aka.ms/aaddevsamplesv2) | [Support](README.md#community-help-and-support)
-| --- | --- | --- |
+| --- | --- | --- | --- |
 
 ## Install
 Current version - 1.0.0
