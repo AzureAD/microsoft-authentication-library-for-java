@@ -5,30 +5,31 @@ package com.microsoft.aad.msal4j;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
 final class ClientDataHttpHeaders {
 
-    public final static String PRODUCT_HEADER_NAME = "x-client-SKU";
-    public final static String PRODUCT_HEADER_VALUE = "MSAL.Java";
+    private final static String PRODUCT_HEADER_NAME = "x-client-SKU";
+    private final static String PRODUCT_HEADER_VALUE = "MSAL.Java";
 
-    public final static String PRODUCT_VERSION_HEADER_NAME = "x-client-VER";
-    public final static String PRODUCT_VERSION_HEADER_VALUE = getProductVersion();
+    private  final static String PRODUCT_VERSION_HEADER_NAME = "x-client-VER";
+    private  final static String PRODUCT_VERSION_HEADER_VALUE = getProductVersion();
 
-    public final static String CPU_HEADER_NAME = "x-client-CPU";
-    public final static String CPU_HEADER_VALUE = System.getProperty("os.arch");
+    private final static String CPU_HEADER_NAME = "x-client-CPU";
+    private final static String CPU_HEADER_VALUE = System.getProperty("os.arch");
 
-    public final static String OS_HEADER_NAME = "x-client-OS";
-    public final static String OS_HEADER_VALUE = System.getProperty("os.name");
+    private final static String OS_HEADER_NAME = "x-client-OS";
+    private final static String OS_HEADER_VALUE = System.getProperty("os.name");
 
-    public final static String CORRELATION_ID_HEADER_NAME = "client-request-id";
-    public final String correlationIdHeaderValue;
+    final static String CORRELATION_ID_HEADER_NAME = "client-request-id";
+    private final String correlationIdHeaderValue;
 
-    public final static String REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_NAME = "return-client-request-id";
-    public final static String REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_VALUE = "true";
+    private  final static String REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_NAME = "return-client-request-id";
+    private final static String REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_VALUE = "true";
     private final String headerValues;
-    private final Map<String, String> headerMap = new HashMap<String, String>();
+    private final Map<String, List<String>> headerMap = new HashMap<>();
 
     ClientDataHttpHeaders(final String correlationId) {
         if (!StringHelper.isBlank(correlationId)) {
@@ -44,7 +45,7 @@ final class ClientDataHttpHeaders {
         StringBuilder sb = new StringBuilder();
 
         BiConsumer<String, String> init = (String key, String val) -> {
-            headerMap.put(key, val);
+            headerMap.put(key, Collections.singletonList(val));
             sb.append(key).append("=").append(val).append(";");
         };
         init.accept(PRODUCT_HEADER_NAME, PRODUCT_HEADER_VALUE);
@@ -57,7 +58,7 @@ final class ClientDataHttpHeaders {
         return sb.toString();
     }
 
-    Map<String, String> getReadonlyHeaderMap() {
+    Map<String, List<String>> getReadonlyHeaderMap() {
         return Collections.unmodifiableMap(this.headerMap);
     }
 

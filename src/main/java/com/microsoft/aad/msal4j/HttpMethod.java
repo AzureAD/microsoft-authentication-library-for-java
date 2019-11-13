@@ -3,6 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-enum HttpMethod {
+public enum HttpMethod {
     GET, POST
 }

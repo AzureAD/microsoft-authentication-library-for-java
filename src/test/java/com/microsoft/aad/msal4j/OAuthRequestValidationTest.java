@@ -79,17 +79,14 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
     public void init() throws Exception{
 
         PowerMock.mockStatic(HttpHelper.class);
-
+        HttpResponse httpResponse = new HttpResponse();
+        httpResponse.setBody(INSTANCE_DISCOVERY_RESPONSE);
         EasyMock.expect(
                 HttpHelper.executeHttpRequest(
-                        EasyMock.isA(Logger.class),
-                        EasyMock.isA(HttpMethod.class),
-                        EasyMock.isA(String.class),
-                        EasyMock.isA(Map.class),
-                        EasyMock.isNull(),
+                        EasyMock.isA(HttpRequest.class),
                         EasyMock.isA(RequestContext.class),
                         EasyMock.isA(ServiceBundle.class)))
-                .andReturn(INSTANCE_DISCOVERY_RESPONSE);
+                .andReturn(httpResponse);
 
         PowerMock.replay(HttpHelper.class);
 

@@ -18,23 +18,14 @@ import net.minidev.json.JSONObject;
 class TokenResponse extends OIDCTokenResponse {
 
     private String scope;
-
     private String clientInfo;
-
     private long expiresIn;
-
     private long extExpiresIn;
-
     private String foci;
-
-    TokenResponse(final AccessToken accessToken,
-                  final RefreshToken refreshToken, final String idToken) {
-        super(new OIDCTokens(idToken, accessToken, refreshToken));
-    }
 
     TokenResponse(final AccessToken accessToken, final RefreshToken refreshToken, final String idToken,
                   final String scope, String clientInfo, long expiresIn, long extExpiresIn, String foci) {
-        this(accessToken, refreshToken, idToken);
+        super(new OIDCTokens(idToken, accessToken, refreshToken));
         this.scope = scope;
         this.clientInfo = clientInfo;
         this.expiresIn = expiresIn;
@@ -42,14 +33,8 @@ class TokenResponse extends OIDCTokenResponse {
         this.foci = foci;
     }
 
-    /**
-     * 
-     * @param httpResponse
-     * @return
-     * @throws ParseException
-     */
-    static TokenResponse parseHttpResponse(
-            final HTTPResponse httpResponse) throws ParseException {
+
+    static TokenResponse parseHttpResponse(final HTTPResponse httpResponse) throws ParseException {
 
         httpResponse.ensureStatusCode(HTTPResponse.SC_OK);
 
@@ -58,12 +43,6 @@ class TokenResponse extends OIDCTokenResponse {
         return parseJsonObject(jsonObject);
     }
 
-    /**
-     * 
-     * @param jsonObject
-     * @return
-     * @throws ParseException
-     */
     static TokenResponse parseJsonObject(final JSONObject jsonObject)
             throws ParseException {
 
@@ -103,7 +82,7 @@ class TokenResponse extends OIDCTokenResponse {
             foci = JSONObjectUtils.getString(jsonObject, "foci");
         }
 
-        return new TokenResponse(accessToken, refreshToken,
-                idTokenValue, scopeValue, clientInfo, expiresIn, ext_expires_in, foci);
+        return new TokenResponse(accessToken, refreshToken,idTokenValue, scopeValue, clientInfo,
+                expiresIn, ext_expires_in, foci);
     }
 }

@@ -4,28 +4,18 @@
 package com.microsoft.aad.msal4j;
 
 import org.slf4j.Logger;
-
-import javax.net.ssl.HttpsURLConnection;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
+import org.slf4j.LoggerFactory;
 
 class HttpHelper {
 
-    static String executeHttpRequest(Logger log,
-                                     HttpMethod httpMethod,
-                                     final String url,
-                                     final Map<String, String> headers,
-                                     String postData,
-                                     RequestContext requestContext,
-                                     final ServiceBundle serviceBundle) throws Exception{
+    private final static Logger log = LoggerFactory.getLogger(HttpHelper.class);
 
-        HttpEvent httpEvent = new HttpEvent();
-        String response = null;
+    static IHttpResponse executeHttpRequest(final HttpRequest httpRequest,
+                                            final RequestContext requestContext,
+                                            final ServiceBundle serviceBundle) {
+
+        HttpEvent httpEvent = new HttpEvent(); // for tracking http telemetry
+        IHttpResponse httpResponse;
 
         try(TelemetryHelper telemetryHelper = serviceBundle.getTelemetryManager().createTelemetryHelper(
                 requestContext.getTelemetryRequestId(),
@@ -33,164 +23,82 @@ class HttpHelper {
                 httpEvent,
                 false)){
 
-            URL endpointUrl = new URL(url);
-            httpEvent.setHttpPath(endpointUrl.toURI());
-            if(!StringHelper.isBlank(endpointUrl.getQuery())){
-                httpEvent.setQueryParameters(endpointUrl.getQuery());
+            addRequestInfoToTelemetry(httpRequest, httpEvent);
+
+            try{
+                IHttpClient httpClient = serviceBundle.getHttpClient();
+                httpResponse = httpClient.send(httpRequest);
+            } catch(Exception e){
+                httpEvent.setOauthErrorCode(AuthenticationErrorCode.UNKNOWN);
+                throw new MsalException(e);
             }
 
-            if(httpMethod == HttpMethod.GET) {
-                httpEvent.setHttpMethod("GET");
-                response = executeHttpGet(log, endpointUrl, headers, serviceBundle, httpEvent);
-            } else if (httpMethod == HttpMethod.POST){
-                httpEvent.setHttpMethod("POST");
-                response = executeHttpPost(log, endpointUrl, postData, headers, serviceBundle, httpEvent);
+            addResponseInfoToTelemetry(httpResponse, httpEvent);
+
+            if (httpResponse.getHeaders() != null) {
+                HttpHelper.verifyReturnedCorrelationId(httpRequest, httpResponse);
             }
         }
-        return response;
+        return httpResponse;
     }
 
-    private static String executeHttpGet(final Logger log, final URL url,
-                                         final Map<String, String> headers,
-                                         final ServiceBundle serviceBundle,
-                                         HttpEvent httpEvent) throws Exception {
-        final HttpsURLConnection conn = HttpHelper.openConnection(url, serviceBundle);
-        configureAdditionalHeaders(conn, headers);
-
-        return getResponse(log, headers, conn, httpEvent);
-    }
-
-    private static String executeHttpPost(final Logger log, final URL url,
-                                          String postData, final Map<String, String> headers,
-                                          final ServiceBundle serviceBundle, HttpEvent httpEvent)
-            throws Exception {
-        final HttpsURLConnection conn = HttpHelper.openConnection(url, serviceBundle);
-        configureAdditionalHeaders(conn, headers);
-        conn.setRequestMethod("POST");
-        conn.setDoOutput(true);
-
-        DataOutputStream wr = null;
-        try {
-            wr = new DataOutputStream(conn.getOutputStream());
-            wr.writeBytes(postData);
-            wr.flush();
-
-            return getResponse(log, headers, conn, httpEvent);
-        }
-        finally {
-            if (wr != null) {
-                wr.close();
+    private static void addRequestInfoToTelemetry(final HttpRequest httpRequest, HttpEvent httpEvent){
+        try{
+            httpEvent.setHttpPath(httpRequest.getUrl().toURI());
+            httpEvent.setHttpMethod(httpRequest.getHttpMethod().toString());
+            if(!StringHelper.isBlank(httpRequest.getUrl().getQuery())){
+                httpEvent.setQueryParameters(httpRequest.getUrl().getQuery());
             }
+        } catch(Exception ex){
+            String correlationId = httpRequest.getHeaderValue(
+                    ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME);
+
+            log.warn(LogHelper.createMessage("Setting URL telemetry fields failed: " +
+                            LogHelper.getPiiScrubbedDetails(ex),
+                    correlationId != null ? correlationId : ""));
         }
     }
 
-    private static String getResponse(Logger log,
-                                      Map<String, String> headers,
-                                      HttpsURLConnection conn,
-                                      HttpEvent httpEvent) throws IOException {
-        String response = readResponseFromConnection(conn, httpEvent);
-        if (headers != null) {
-            HttpHelper.verifyReturnedCorrelationId(log, conn, headers
-                    .get(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME));
+    private static void addResponseInfoToTelemetry(IHttpResponse httpResponse, HttpEvent httpEvent){
+        if(!StringHelper.isBlank(httpResponse.getHeaderValue("User-Agent"))){
+            httpEvent.setUserAgent(httpResponse.getHeaderValue("User-Agent"));
+        }
+        httpEvent.setHttpResponseStatus(httpResponse.getStatusCode());
+
+        if(httpResponse.getHeaderValue("x-ms-request-id") != null){
+            httpEvent.setRequestIdHeader(httpResponse.getHeaderValue("x-ms-request-id"));
         }
 
-        if(!StringHelper.isBlank(conn.getHeaderField("User-Agent"))){
-            httpEvent.setUserAgent(conn.getHeaderField("User-Agent"));
-        }
-        setXmsClientTelemetryInfo(conn, httpEvent);
-
-        return response;
-    }
-
-    static HttpsURLConnection openConnection(final URL finalURL, final ServiceBundle serviceBundle)
-            throws IOException {
-        HttpsURLConnection connection;
-        if (serviceBundle.getProxy() != null) {
-            connection = (HttpsURLConnection) finalURL.openConnection(serviceBundle.getProxy());
-        }
-        else {
-            connection = (HttpsURLConnection) finalURL.openConnection();
-        }
-
-        if (serviceBundle.getSslSocketFactory() != null) {
-            connection.setSSLSocketFactory(serviceBundle.getSslSocketFactory());
-        }
-
-        return connection;
-    }
-
-    static void configureAdditionalHeaders(
-            final HttpsURLConnection conn, final Map<String, String> headers) {
-        if (headers != null) {
-            for (final Map.Entry<String, String> entry : headers.entrySet()) {
-                conn.setRequestProperty(entry.getKey(), entry.getValue());
+        if(httpResponse.getHeaderValue("x-ms-clitelem") != null){
+            XmsClientTelemetryInfo xmsClientTelemetryInfo =
+                    XmsClientTelemetryInfo.parseXmsTelemetryInfo(
+                            httpResponse.getHeaderValue("x-ms-clitelem"));
+            if(xmsClientTelemetryInfo != null){
+                httpEvent.setXmsClientTelemetryInfo(xmsClientTelemetryInfo);
             }
         }
     }
 
-    static void verifyReturnedCorrelationId(Logger log,
-                                            HttpsURLConnection conn, String sentCorrelationId) {
-        if (StringHelper
-                .isBlank(conn
-                        .getHeaderField(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME))
-                || !conn.getHeaderField(
-                ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME)
-                .equals(sentCorrelationId)) {
+    private static void verifyReturnedCorrelationId(final HttpRequest httpRequest,
+                                                    IHttpResponse httpResponse) {
+
+        String sentCorrelationId = httpRequest.getHeaderValue(
+                ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME);
+
+        String returnedCorrelationId = httpResponse.getHeaderValue(
+                ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME);
+
+        if (StringHelper.isBlank(returnedCorrelationId) ||
+                !returnedCorrelationId.equals(sentCorrelationId)) {
 
             String msg = LogHelper.createMessage(
                     String.format(
                             "Sent (%s) Correlation Id is not same as received (%s).",
                             sentCorrelationId,
-                            conn.getHeaderField(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME)),
+                            returnedCorrelationId),
                     sentCorrelationId);
+
             log.info(msg);
-        }
-    }
-
-    static String readResponseFromConnection(final HttpsURLConnection conn, HttpEvent httpEvent)
-            throws MsalServiceException, IOException {
-        InputStream is = null;
-        try {
-            int responseCode = conn.getResponseCode();
-            httpEvent.setHttpResponseStatus(responseCode);
-            if (responseCode != HttpURLConnection.HTTP_OK) {
-                String msg = "Server returned HTTP response code: " +
-                        responseCode + " for URL : " + conn.getURL();
-                is = conn.getErrorStream();
-                if (is != null) {
-                    msg = msg + ", Error details : " + inputStreamToString(is);
-                }
-                httpEvent.setOauthErrorCode(AuthenticationErrorCode.UNKNOWN);
-                throw new MsalServiceException(msg, AuthenticationErrorCode.UNKNOWN);
-            }
-
-            is = conn.getInputStream();
-            return inputStreamToString(is);
-        }
-        finally {
-            if(is != null){
-                is.close();
-            }
-        }
-    }
-
-    private static String inputStreamToString(java.io.InputStream is) {
-        java.util.Scanner s = new java.util.Scanner(is, StandardCharsets.UTF_8.name()).useDelimiter("\\A");
-        return s.hasNext() ? s.next() : "";
-    }
-
-    private static void setXmsClientTelemetryInfo(final HttpsURLConnection conn, HttpEvent httpEvent){
-        if(!StringHelper.isBlank(conn.getHeaderField("x-ms-request-id"))){
-            httpEvent.setRequestIdHeader(conn.getHeaderField("x-ms-request-id"));
-        }
-
-        if(!StringHelper.isBlank(conn.getHeaderField("x-ms-clitelem"))){
-            XmsClientTelemetryInfo xmsClientTelemetryInfo =
-                    XmsClientTelemetryInfo.parseXmsTelemetryInfo(
-                            conn.getHeaderField("x-ms-clitelem"));
-            if(xmsClientTelemetryInfo != null){
-                httpEvent.setXmsClientTelemetryInfo(xmsClientTelemetryInfo);
-            }
         }
     }
 }

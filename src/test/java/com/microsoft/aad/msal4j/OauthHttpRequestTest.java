@@ -28,90 +28,70 @@ public class OauthHttpRequestTest extends AbstractMsalTests {
 
     @Test
     public void testConstructor() throws MalformedURLException {
-        final OAuthHttpRequest request = new OAuthHttpRequest(Method.POST,
-                new URL("http://login.windows.net"), null, null);
+        final OAuthHttpRequest request = new OAuthHttpRequest(
+                Method.POST,
+                new URL("http://login.windows.net"),
+                null,
+                null,
+                null);
         assertNotNull(request);
     }
 
-
     @Test(expectedExceptions = IOException.class, expectedExceptionsMessageRegExp = "Couldn't parse Content-Type header: Invalid Content-Type value: In Content-Type string <invalid-content>, expected '/', got null")
-    public void testCreateResponseContentTypeParsingFailure()
-            throws Exception {
+    public void testCreateResponseContentTypeParsingFailure() throws Exception {
 
-        final OAuthHttpRequest request = new OAuthHttpRequest(Method.GET,
-                new URL("https://" + TestConfiguration.AAD_HOST_NAME), null, null);
-        final HttpURLConnection conn = PowerMock
-                .createMock(HttpURLConnection.class);
-        EasyMock.expect(conn.getResponseCode()).andReturn(200).times(1);
-        EasyMock.expect(conn.getHeaderField("Location"))
+        final OAuthHttpRequest request = new OAuthHttpRequest(
+                Method.GET,
+                new URL("https://" + TestConfiguration.AAD_HOST_NAME),
+                null,
+                null,
+                null);
+
+        final HttpResponse httpResponse = PowerMock
+                .createMock(HttpResponse.class);
+
+        EasyMock.expect(httpResponse.getStatusCode()).andReturn(200).times(1);
+        EasyMock.expect(httpResponse.getHeaderValue("Location"))
                 .andReturn("https://location.pl").times(1);
-        EasyMock.expect(conn.getContentType()).andReturn("invalid-content")
-                .times(1);
-        PowerMock.replay(conn);
-        Whitebox.invokeMethod(request, "createResponse", conn, null);
-    }
+        EasyMock.expect(httpResponse.getHeaderValue("Content-Type"))
+                .andReturn("invalid-content").times(1);
+        EasyMock.expect(httpResponse.getHeaders()).andReturn(new HashMap<>());
+        EasyMock.expect(httpResponse.getBody()).andReturn("").times(1);
+        PowerMock.replay(httpResponse);
 
-    @Test
-    public void testCreateResponseLocationNull()
-            throws Exception {
-        final OAuthHttpRequest request = new OAuthHttpRequest(Method.GET,
-                new URL("https://" + TestConfiguration.AAD_HOST_NAME), null, null);
-        final HttpURLConnection conn = PowerMock
-                .createMock(HttpURLConnection.class);
-        EasyMock.expect(conn.getResponseCode()).andReturn(200).times(1);
-        EasyMock.expect(conn.getHeaderField("Location")).andReturn(null)
-                .times(1);
-        EasyMock.expect(conn.getContentType())
-                .andReturn("application/x-www-form-urlencoded").times(1);
-        EasyMock.expect(conn.getHeaderFields()).andReturn(new HashMap<>());
-        PowerMock.replay(conn);
         final HTTPResponse response = Whitebox.invokeMethod(request,
-                "createResponse", conn, "content");
-        PowerMock.verifyAll();
-        Assert.assertNotNull(response);
-        Assert.assertNull(response.getLocation(), "location.pl");
-        Assert.assertEquals(response.getContent(), "content");
+                "createOauthHttpResponseFromHttpResponse", httpResponse);
     }
 
     @Test
     public void testCreateResponse() throws Exception {
-        final OAuthHttpRequest request = new OAuthHttpRequest(Method.GET,
-                new URL("https://" + TestConfiguration.AAD_HOST_NAME), null, null);
-        final HttpURLConnection conn = PowerMock
-                .createMock(HttpURLConnection.class);
-        EasyMock.expect(conn.getResponseCode()).andReturn(200).times(1);
-        EasyMock.expect(conn.getHeaderField("Location"))
+        final OAuthHttpRequest request = new OAuthHttpRequest(
+                Method.GET,
+                new URL("https://" + TestConfiguration.AAD_HOST_NAME),
+                null,
+                null,
+                null);
+
+        final HttpResponse httpResponse = PowerMock
+                .createMock(HttpResponse.class);
+
+        EasyMock.expect(httpResponse.getStatusCode()).andReturn(200).times(1);
+        EasyMock.expect(httpResponse.getHeaderValue("Location"))
                 .andReturn("https://location.pl").times(1);
-        EasyMock.expect(conn.getContentType())
+        EasyMock.expect(httpResponse.getHeaderValue("Content-Type"))
                 .andReturn("application/x-www-form-urlencoded").times(1);
-        EasyMock.expect(conn.getHeaderFields()).andReturn(new HashMap<>());
-        PowerMock.replay(conn);
+        EasyMock.expect(httpResponse.getHeaders()).andReturn(new HashMap<>());
+        EasyMock.expect(httpResponse.getBody()).andReturn("").times(1);
+        PowerMock.replay(httpResponse);
+
         final HTTPResponse response = Whitebox.invokeMethod(request,
-                "createResponse", conn, null);
-        PowerMock.verifyAll();
+                "createOauthHttpResponseFromHttpResponse", httpResponse);
+
         Assert.assertNotNull(response);
         Assert.assertEquals(response.getLocation().getAuthority(),
                 "location.pl");
         Assert.assertEquals(response.getLocation().getScheme(), "https");
         Assert.assertNull(response.getContent());
-    }
-    
-    @Test
-    public void testCreateResponseFor404() throws Exception {
-        final OAuthHttpRequest request = new OAuthHttpRequest(Method.GET,
-                new URL("https://" + TestConfiguration.AAD_HOST_NAME), null, null);
-        final HttpURLConnection conn = PowerMock
-                .createMock(HttpURLConnection.class);
-        EasyMock.expect(conn.getResponseCode()).andReturn(404);
-        EasyMock.expect(conn.getErrorStream()).andReturn(null);
-
-        InputStream stream = new ByteArrayInputStream("stream".getBytes());
-
-        EasyMock.expect(conn.getInputStream()).andReturn(stream);
-        PowerMock.replay(conn);
-        final String response = Whitebox.invokeMethod(request,
-                "processAndReadResponse", conn);
-        Assert.assertEquals(response, "stream");
         PowerMock.verifyAll();
     }
 }

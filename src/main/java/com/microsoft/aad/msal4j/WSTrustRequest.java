@@ -4,21 +4,19 @@
 package com.microsoft.aad.msal4j;
 
 import org.apache.commons.text.StringEscapeUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.UUID;
 
 class WSTrustRequest {
-
-    private final static Logger log = LoggerFactory.getLogger(WSTrustRequest.class);
 
     private final static int MAX_EXPECTED_MESSAGE_SIZE = 1024;
     final static String DEFAULT_APPLIES_TO = "urn:federation:MicrosoftOnline";
@@ -30,9 +28,9 @@ class WSTrustRequest {
                                    RequestContext requestContext,
                                    ServiceBundle serviceBundle) throws Exception {
 
-        Map<String, String> headers = new HashMap<String, String>();
-        headers.put("Content-Type", "application/soap+xml; charset=utf-8");
-        headers.put("return-client-request-id", "true");
+        Map<String, List<String>> headers = new HashMap<>();
+        headers.put("Content-Type", Collections.singletonList("application/soap+xml; charset=utf-8"));
+        headers.put("return-client-request-id", Collections.singletonList("true"));
 
         // default value (WSTrust 1.3)
         String soapAction = "http://docs.oasis-open.org/ws-sx/ws-trust/200512/RST/Issue";
@@ -43,15 +41,15 @@ class WSTrustRequest {
             soapAction = "http://schemas.xmlsoap.org/ws/2005/02/trust/RST/Issue";
         }
 
-        headers.put("SOAPAction", soapAction);
+        headers.put("SOAPAction", Collections.singletonList(soapAction));
 
         String body = buildMessage(policy.getUrl(), username, password,
                 policy.getVersion(), cloudAudienceUrn).toString();
 
-        String response = HttpHelper.executeHttpRequest(log, HttpMethod.POST, policy.getUrl(),
-                headers, body, requestContext , serviceBundle);
+        HttpRequest httpRequest = new HttpRequest(HttpMethod.POST, policy.getUrl(), headers, body);
+        IHttpResponse response = HttpHelper.executeHttpRequest(httpRequest, requestContext , serviceBundle);
 
-        return WSTrustResponse.parse(response, policy.getVersion());
+        return WSTrustResponse.parse(response.getBody(), policy.getVersion());
     }
 
     static WSTrustResponse execute(String url,
@@ -62,9 +60,10 @@ class WSTrustRequest {
                                    ServiceBundle serviceBundle,
                                    boolean logPii) throws Exception {
 
-        String mexResponse = HttpHelper.executeHttpRequest(log, HttpMethod.GET , url, null,null, requestContext, serviceBundle);
+        HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, url);
+        IHttpResponse mexResponse = HttpHelper.executeHttpRequest(httpRequest, requestContext, serviceBundle);
 
-        BindingPolicy policy = MexParser.getWsTrustEndpointFromMexResponse(mexResponse, logPii);
+        BindingPolicy policy = MexParser.getWsTrustEndpointFromMexResponse(mexResponse.getBody(), logPii);
 
         if(policy == null){
             throw new MsalServiceException(
@@ -81,16 +80,10 @@ class WSTrustRequest {
                                    ServiceBundle serviceBundle,
                                    boolean logPii) throws Exception {
 
-        String mexResponse = HttpHelper.executeHttpRequest(
-                log,
-                HttpMethod.GET,
-                mexURL,
-                null,
-                null,
-                requestContext,
-                serviceBundle);
+        HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, mexURL);
+        IHttpResponse mexResponse = HttpHelper.executeHttpRequest(httpRequest, requestContext,serviceBundle);
 
-        BindingPolicy policy = MexParser.getPolicyFromMexResponseForIntegrated(mexResponse, logPii);
+        BindingPolicy policy = MexParser.getPolicyFromMexResponseForIntegrated(mexResponse.getBody(), logPii);
 
         if(policy == null){
             throw new MsalServiceException("WsTrust endpoint not found in metadata document",
