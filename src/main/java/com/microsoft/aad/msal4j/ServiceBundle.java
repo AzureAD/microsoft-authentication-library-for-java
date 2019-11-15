@@ -3,8 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import javax.net.ssl.SSLSocketFactory;
-import java.net.Proxy;
 import java.util.concurrent.ExecutorService;
 
 class ServiceBundle {

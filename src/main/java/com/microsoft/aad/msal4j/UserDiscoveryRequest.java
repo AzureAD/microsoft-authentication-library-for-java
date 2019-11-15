@@ -3,34 +3,32 @@
 
 package com.microsoft.aad.msal4j;
 
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 class UserDiscoveryRequest {
 
     // private final static Logger log = LoggerFactory.getLogger(UserDiscoveryRequest.class);
 
-    private final static Map<String, List<String>> HEADERS;
+    private final static Map<String, String> HEADERS;
 
     static {
         HEADERS = new HashMap<>();
-        HEADERS.put("Accept", Collections.singletonList("application/json, text/javascript, */*"));
+        HEADERS.put("Accept", "application/json, text/javascript, */*");
     }
 
     static UserDiscoveryResponse execute(
             final String uri,
-            final Map<String, List<String>> clientDataHeaders,
+            final Map<String, String> clientDataHeaders,
             RequestContext requestContext,
             ServiceBundle serviceBundle) {
 
-        HashMap<String, List<String>> headers = new HashMap<>(HEADERS);
+        HashMap<String, String> headers = new HashMap<>(HEADERS);
         headers.putAll(clientDataHeaders);
 
         HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, uri, headers);
         IHttpResponse response = HttpHelper.executeHttpRequest(httpRequest, requestContext, serviceBundle);
 
-        return JsonHelper.convertJsonToObject(response.getBody(), UserDiscoveryResponse.class);
+        return JsonHelper.convertJsonToObject(response.body(), UserDiscoveryResponse.class);
     }
 }

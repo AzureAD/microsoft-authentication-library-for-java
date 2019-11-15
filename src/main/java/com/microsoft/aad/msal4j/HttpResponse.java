@@ -1,51 +1,45 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.microsoft.aad.msal4j;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
+/**
+ * HTTP response
+ */
+@Accessors(fluent=true)
+@Getter
 public class HttpResponse implements IHttpResponse {
 
+    /**
+     * HTTP response status code
+     */
+    @Setter
     private int statusCode;
-    private Map<String, List<String>> headers =  new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+
+    /**
+     * HTTP response headers
+     */
+    private Map<String, List<String>> headers =  new HashMap<>();
+
+    /**
+     * HTTP response body
+     */
+    @Setter
     private String body;
 
-    HttpResponse(){
-    }
-
-    public int getStatusCode(){
-        return this.statusCode;
-    }
-
-    public Map<String, List<String>> getHeaders(){
-        return this.headers;
-    }
-
-    public String getHeaderValue(String headerName){
-
-        if(headerName == null || headers == null){
-            return null;
-        }
-
-        List<String> headerValue = headers.get(headerName);
-
-        if(headerValue == null || headerValue.isEmpty()){
-            return null;
-        }
-
-        return headerValue.get(0);
-    }
-
-    public String getBody(){
-        return this.body;
-    }
-
-    public void setStatusCode(int statusCode) {
-        this.statusCode = statusCode;
-    }
-
-    public void setHeaders(Map<String, List<String>> responseHeaders) {
+    /**
+     * @param responseHeaders Map of HTTP headers returned from HTTP client
+     */
+    public void headers(Map<String, List<String>> responseHeaders) {
         for(Map.Entry<String, List<String>> entry: responseHeaders.entrySet()){
             if(entry.getKey() == null){
                 continue;
@@ -56,19 +50,15 @@ public class HttpResponse implements IHttpResponse {
                 continue;
             }
 
-            setHeader(entry.getKey(), values.toArray(new String[]{}));
+            header(entry.getKey(), values.toArray(new String[]{}));
         }
     }
 
-    private void setHeader(final String name, final String ... values){
+    private void header(final String name, final String ... values){
         if (values != null && values.length > 0) {
             headers.put(name, Arrays.asList(values));
         } else {
             headers.remove(name);
         }
-    }
-
-    public void setBody(String body) {
-        this.body = body;
     }
 }

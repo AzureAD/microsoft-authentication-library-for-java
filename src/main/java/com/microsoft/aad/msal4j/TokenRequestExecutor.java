@@ -121,8 +121,7 @@ class TokenRequestExecutor {
                     build();
 
         } else {
-            MsalServiceException exception = MsalServiceExceptionFactory.fromHttpResponse(oauthHttpResponse);
-            throw exception;
+            throw MsalServiceExceptionFactory.fromHttpResponse(oauthHttpResponse);
         }
         return result;
     }

@@ -186,7 +186,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
         Assert.assertNotNull(req);
         Assert.assertEquals(
                 "corr-id",
-                req.getExtraHeaderParams().get(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME).get(0));
+                req.getExtraHeaderParams().get(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME));
     }
 
     @Test

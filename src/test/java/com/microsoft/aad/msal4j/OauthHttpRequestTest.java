@@ -12,10 +12,7 @@ import org.powermock.reflect.Whitebox;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
@@ -50,13 +47,13 @@ public class OauthHttpRequestTest extends AbstractMsalTests {
         final HttpResponse httpResponse = PowerMock
                 .createMock(HttpResponse.class);
 
-        EasyMock.expect(httpResponse.getStatusCode()).andReturn(200).times(1);
-        EasyMock.expect(httpResponse.getHeaderValue("Location"))
+        EasyMock.expect(httpResponse.statusCode()).andReturn(200).times(1);
+        EasyMock.expect(HttpUtils.headerValue(httpResponse.headers(), "Location"))
                 .andReturn("https://location.pl").times(1);
-        EasyMock.expect(httpResponse.getHeaderValue("Content-Type"))
+        EasyMock.expect(HttpUtils.headerValue(httpResponse.headers(), "Content-Type"))
                 .andReturn("invalid-content").times(1);
-        EasyMock.expect(httpResponse.getHeaders()).andReturn(new HashMap<>());
-        EasyMock.expect(httpResponse.getBody()).andReturn("").times(1);
+        EasyMock.expect(httpResponse.headers()).andReturn(new HashMap<>());
+        EasyMock.expect(httpResponse.body()).andReturn("").times(1);
         PowerMock.replay(httpResponse);
 
         final HTTPResponse response = Whitebox.invokeMethod(request,
@@ -75,13 +72,13 @@ public class OauthHttpRequestTest extends AbstractMsalTests {
         final HttpResponse httpResponse = PowerMock
                 .createMock(HttpResponse.class);
 
-        EasyMock.expect(httpResponse.getStatusCode()).andReturn(200).times(1);
-        EasyMock.expect(httpResponse.getHeaderValue("Location"))
+        EasyMock.expect(httpResponse.statusCode()).andReturn(200).times(1);
+        EasyMock.expect(HttpUtils.headerValue(httpResponse.headers(), "Location"))
                 .andReturn("https://location.pl").times(1);
-        EasyMock.expect(httpResponse.getHeaderValue("Content-Type"))
+        EasyMock.expect(HttpUtils.headerValue(httpResponse.headers(), "Content-Type"))
                 .andReturn("application/x-www-form-urlencoded").times(1);
-        EasyMock.expect(httpResponse.getHeaders()).andReturn(new HashMap<>());
-        EasyMock.expect(httpResponse.getBody()).andReturn("").times(1);
+        EasyMock.expect(httpResponse.headers()).andReturn(new HashMap<>());
+        EasyMock.expect(httpResponse.body()).andReturn("").times(1);
         PowerMock.replay(httpResponse);
 
         final HTTPResponse response = Whitebox.invokeMethod(request,

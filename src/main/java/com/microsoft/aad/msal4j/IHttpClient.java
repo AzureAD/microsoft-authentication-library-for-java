@@ -1,5 +1,21 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.microsoft.aad.msal4j;
 
+/**
+ * Interface to be implemented when configuring http client for {@link IPublicClientApplication} or
+ * {@link IConfidentialClientApplication}.
+ */
 public interface IHttpClient {
-    IHttpResponse send(HttpRequest request) throws Exception;
+
+    /**
+     *  Should implement execution of outgoing http request with http client of choice. Adapts
+     *  response returned from http client to {@link IHttpResponse}
+     * @param httpRequest {@link HttpRequest}
+     * @return {@link IHttpResponse}.
+     * @throws Exception Non-recoverable exception. Recoverable exceptions should be handled by the
+     * IHttpClient implementation
+     */
+    IHttpResponse send(HttpRequest httpRequest) throws Exception;
 }

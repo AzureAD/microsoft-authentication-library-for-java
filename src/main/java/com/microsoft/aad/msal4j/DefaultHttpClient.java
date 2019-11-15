@@ -9,7 +9,6 @@ import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Map;
 
 class DefaultHttpClient implements IHttpClient {
@@ -22,20 +21,20 @@ class DefaultHttpClient implements IHttpClient {
         this.sslSocketFactory = sslSocketFactory;
     }
 
-    public IHttpResponse send(HttpRequest request) throws Exception{
+    public IHttpResponse send(HttpRequest httpRequest) throws Exception{
 
         HttpResponse response = null;
-        if (request.getHttpMethod() == HttpMethod.GET) {
-            response = executeHttpGet(request);
-        } else if (request.getHttpMethod() == HttpMethod.POST) {
-            response = executeHttpPost(request);
+        if (httpRequest.httpMethod() == HttpMethod.GET) {
+            response = executeHttpGet(httpRequest);
+        } else if (httpRequest.httpMethod() == HttpMethod.POST) {
+            response = executeHttpPost(httpRequest);
         }
         return response;
     }
 
     private HttpResponse executeHttpGet(HttpRequest httpRequest) throws Exception {
 
-        final HttpsURLConnection conn = openConnection(httpRequest.getUrl());
+        final HttpsURLConnection conn = openConnection(httpRequest.url());
         configureAdditionalHeaders(conn, httpRequest);
 
         return readResponseFromConnection(conn);
@@ -43,7 +42,7 @@ class DefaultHttpClient implements IHttpClient {
 
     private HttpResponse executeHttpPost(HttpRequest httpRequest) throws Exception {
 
-        final HttpsURLConnection conn = openConnection(httpRequest.getUrl());
+        final HttpsURLConnection conn = openConnection(httpRequest.url());
         configureAdditionalHeaders(conn, httpRequest);
         conn.setRequestMethod("POST");
         conn.setDoOutput(true);
@@ -51,7 +50,7 @@ class DefaultHttpClient implements IHttpClient {
         DataOutputStream wr = null;
         try {
             wr = new DataOutputStream(conn.getOutputStream());
-            wr.writeBytes(httpRequest.getPostData());
+            wr.writeBytes(httpRequest.body());
             wr.flush();
 
             return readResponseFromConnection(conn);
@@ -81,10 +80,10 @@ class DefaultHttpClient implements IHttpClient {
     }
 
     private void configureAdditionalHeaders(final HttpsURLConnection conn, final HttpRequest httpRequest) {
-        if (httpRequest.getHeaders() != null) {
-            for (final Map.Entry<String, List<String>> entry : httpRequest.getHeaders().entrySet()) {
-                for(String headerValue: entry.getValue()){
-                    conn.addRequestProperty(entry.getKey(), headerValue);
+        if (httpRequest.headers() != null) {
+            for (final Map.Entry<String, String> entry : httpRequest.headers().entrySet()) {
+                if (entry.getValue() != null) {
+                    conn.addRequestProperty(entry.getKey(), entry.getValue());
                 }
             }
         }
@@ -96,18 +95,18 @@ class DefaultHttpClient implements IHttpClient {
         try {
             HttpResponse httpResponse = new HttpResponse();
             int responseCode = conn.getResponseCode();
-            httpResponse.setStatusCode(responseCode);
+            httpResponse.statusCode(responseCode);
             if (responseCode != HttpURLConnection.HTTP_OK) {
                 is = conn.getErrorStream();
                 if (is != null) {
-                    httpResponse.setBody(inputStreamToString(is));
+                    httpResponse.body(inputStreamToString(is));
                 }
                 return httpResponse;
             }
 
             is = conn.getInputStream();
-            httpResponse.setHeaders(conn.getHeaderFields());
-            httpResponse.setBody(inputStreamToString(is));
+            httpResponse.headers(conn.getHeaderFields());
+            httpResponse.body(inputStreamToString(is));
             return httpResponse;
         }
         finally {

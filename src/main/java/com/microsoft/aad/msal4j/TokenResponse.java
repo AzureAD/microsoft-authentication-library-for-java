@@ -33,7 +33,6 @@ class TokenResponse extends OIDCTokenResponse {
         this.foci = foci;
     }
 
-
     static TokenResponse parseHttpResponse(final HTTPResponse httpResponse) throws ParseException {
 
         httpResponse.ensureStatusCode(HTTPResponse.SC_OK);

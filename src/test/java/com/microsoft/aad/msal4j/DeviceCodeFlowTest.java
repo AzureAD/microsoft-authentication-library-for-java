@@ -20,7 +20,6 @@ import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
@@ -79,8 +78,8 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         PowerMock.mockStatic(HttpHelper.class);
 
         HttpResponse instanceDiscoveryResponse = new HttpResponse();
-        instanceDiscoveryResponse.setStatusCode(200);
-        instanceDiscoveryResponse.setBody(INSTANCE_DISCOVERY_RESPONSE);
+        instanceDiscoveryResponse.statusCode(200);
+        instanceDiscoveryResponse.body(INSTANCE_DISCOVERY_RESPONSE);
 
         EasyMock.expect(
                 HttpHelper.executeHttpRequest(
@@ -90,8 +89,8 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
                 .andReturn(instanceDiscoveryResponse);
 
         HttpResponse deviceCodeResponse = new HttpResponse();
-        deviceCodeResponse.setStatusCode(200);
-        deviceCodeResponse.setBody(deviceCodeJsonResponse);
+        deviceCodeResponse.statusCode(200);
+        deviceCodeResponse.body(deviceCodeJsonResponse);
 
         Capture<HttpRequest> capturedHttpRequest = Capture.newInstance();
 
@@ -130,7 +129,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
                 .get();
 
         // validate HTTP GET request used to get device code
-        URL url = capturedHttpRequest.getValue().getUrl();
+        URL url = capturedHttpRequest.getValue().url();
         Assert.assertEquals(url.getAuthority(), AAD_PREFERRED_NETWORK_ENV_ALIAS);
         Assert.assertEquals(url.getPath(),
                 "/" + AAD_TENANT_NAME + AADAuthority.DEVICE_CODE_ENDPOINT);
@@ -144,9 +143,9 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         // make sure same correlation id is used for acquireDeviceCode and acquireTokenByDeviceCode calls
 
-        Map<String, List<String >> headers = capturedMsalRequest.getValue().headers().getReadonlyHeaderMap();
+        Map<String, String > headers = capturedMsalRequest.getValue().headers().getReadonlyHeaderMap();
         Assert.assertEquals(capturedMsalRequest.getValue().headers().getReadonlyHeaderMap().
-                get(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME).get(0), deviceCodeCorrelationId.get());
+                get(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME), deviceCodeCorrelationId.get());
         Assert.assertNotNull(authResult);
 
         PowerMock.verify();

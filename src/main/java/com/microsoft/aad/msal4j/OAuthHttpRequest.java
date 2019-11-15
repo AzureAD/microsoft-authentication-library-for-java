@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,13 +21,13 @@ import java.util.Map;
 class OAuthHttpRequest extends HTTPRequest {
 
     @Getter(AccessLevel.PACKAGE)
-    private final Map<String, List<String>> extraHeaderParams;
+    private final Map<String, String> extraHeaderParams;
     private final ServiceBundle serviceBundle;
     private final RequestContext requestContext;
 
     OAuthHttpRequest(final Method method,
                      final URL url,
-                     final Map<String, List<String>> extraHeaderParams,
+                     final Map<String, String> extraHeaderParams,
                      RequestContext requestContext,
                      final ServiceBundle serviceBundle) {
         super(method, url);
@@ -40,7 +39,7 @@ class OAuthHttpRequest extends HTTPRequest {
     @Override
     public HTTPResponse send() throws IOException {
 
-        Map<String, List<String>> httpHeaders = configureHttpHeaders();
+        Map<String, String> httpHeaders = configureHttpHeaders();
         HttpRequest httpRequest = new HttpRequest(
                 HttpMethod.POST,
                 this.getURL().toString(),
@@ -55,14 +54,13 @@ class OAuthHttpRequest extends HTTPRequest {
         return createOauthHttpResponseFromHttpResponse(httpResponse);
     }
 
-    private Map<String, List<String>> configureHttpHeaders(){
+    private Map<String, String> configureHttpHeaders(){
 
-        Map<String, List<String>> httpHeaders = new HashMap<>(extraHeaderParams);
-        httpHeaders.put("Content-Type", Collections.singletonList(
-                CommonContentTypes.APPLICATION_URLENCODED.toString()));
+        Map<String, String> httpHeaders = new HashMap<>(extraHeaderParams);
+        httpHeaders.put("Content-Type", CommonContentTypes.APPLICATION_URLENCODED.toString());
 
         if (this.getAuthorization() != null) {
-            httpHeaders.put("Authorization", Collections.singletonList(this.getAuthorization()));
+            httpHeaders.put("Authorization", this.getAuthorization());
         }
         return httpHeaders;
     }
@@ -70,9 +68,9 @@ class OAuthHttpRequest extends HTTPRequest {
     private HTTPResponse createOauthHttpResponseFromHttpResponse(IHttpResponse httpResponse)
             throws IOException {
 
-        final HTTPResponse response = new HTTPResponse(httpResponse.getStatusCode());
+        final HTTPResponse response = new HTTPResponse(httpResponse.statusCode());
 
-        final String location = httpResponse.getHeaderValue("Location");
+        final String location = HttpUtils.headerValue(httpResponse.headers(), "Location");
         if (!StringHelper.isBlank(location)) {
             try {
                 response.setLocation(new URI(location));
@@ -82,7 +80,7 @@ class OAuthHttpRequest extends HTTPRequest {
         }
 
         try {
-            String contentType = httpResponse.getHeaderValue("Content-Type");
+            String contentType = HttpUtils.headerValue(httpResponse.headers(), "Content-Type");
             if(!StringHelper.isBlank(contentType)){
                 response.setContentType(contentType);
             }
@@ -91,7 +89,7 @@ class OAuthHttpRequest extends HTTPRequest {
                     + e.getMessage(), e);
         }
 
-        Map<String, List<String>> headers = httpResponse.getHeaders();
+        Map<String, List<String>> headers = httpResponse.headers();
         for(Map.Entry<String, List<String>> header: headers.entrySet()){
 
             if(StringHelper.isBlank(header.getKey())){
@@ -104,8 +102,8 @@ class OAuthHttpRequest extends HTTPRequest {
             }
         }
 
-        if (!StringHelper.isBlank(httpResponse.getBody())) {
-            response.setContent(httpResponse.getBody());
+        if (!StringHelper.isBlank(httpResponse.body())) {
+            response.setContent(httpResponse.body());
         }
         return response;
     }

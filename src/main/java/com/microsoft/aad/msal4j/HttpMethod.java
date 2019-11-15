@@ -3,6 +3,18 @@
 
 package com.microsoft.aad.msal4j;
 
+/**
+ * Http request method
+ */
 public enum HttpMethod {
-    GET, POST
+
+    /**
+     * The HTTP GET method.
+     */
+    GET,
+
+    /**
+     * The HTTP POST method.
+     */
+    POST
 }

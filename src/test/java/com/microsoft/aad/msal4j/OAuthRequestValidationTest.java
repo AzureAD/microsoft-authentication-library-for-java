@@ -26,7 +26,6 @@ import java.io.FileInputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.net.URLDecoder;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -47,7 +46,6 @@ import java.util.concurrent.ExecutionException;
 
 import org.easymock.EasyMock;
 import org.powermock.api.easymock.PowerMock;
-import org.slf4j.Logger;
 
 @PowerMockIgnore({"javax.net.ssl.*"})
 @PrepareForTest({com.microsoft.aad.msal4j.OAuthHttpRequest.class, HttpHelper.class})
@@ -80,7 +78,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
 
         PowerMock.mockStatic(HttpHelper.class);
         HttpResponse httpResponse = new HttpResponse();
-        httpResponse.setBody(INSTANCE_DISCOVERY_RESPONSE);
+        httpResponse.body(INSTANCE_DISCOVERY_RESPONSE);
         EasyMock.expect(
                 HttpHelper.executeHttpRequest(
                         EasyMock.isA(HttpRequest.class),

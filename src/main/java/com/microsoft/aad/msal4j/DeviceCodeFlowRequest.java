@@ -7,8 +7,6 @@ import com.nimbusds.oauth2.sdk.util.URLUtils;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -40,11 +38,11 @@ class DeviceCodeFlowRequest extends MsalRequest {
 
     DeviceCode acquireDeviceCode(String url,
                                  String clientId,
-                                 Map<String, List<String>> clientDataHeaders,
+                                 Map<String, String> clientDataHeaders,
                                  ServiceBundle serviceBundle) throws Exception {
 
         String urlWithQueryParams = createQueryParamsAndAppendToURL(url, clientId);
-        Map<String, List<String>> headers = appendToHeaders(clientDataHeaders);
+        Map<String, String> headers = appendToHeaders(clientDataHeaders);
 
         HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, urlWithQueryParams, headers);
         final IHttpResponse response = HttpHelper.executeHttpRequest(
@@ -52,7 +50,7 @@ class DeviceCodeFlowRequest extends MsalRequest {
                 this.requestContext(),
                 serviceBundle);
 
-        return parseJsonToDeviceCodeAndSetParameters(response.getBody(), headers, clientId);
+        return parseJsonToDeviceCodeAndSetParameters(response.body(), headers, clientId);
     }
 
     void createAuthenticationGrant(DeviceCode deviceCode) {
@@ -72,25 +70,24 @@ class DeviceCodeFlowRequest extends MsalRequest {
         return url;
     }
 
-    private Map<String, List<String>> appendToHeaders(Map<String, List<String>> clientDataHeaders) {
-        Map<String, List<String>> headers = new HashMap<>(clientDataHeaders);
-        headers.put("Accept", Collections.singletonList("application/json"));
+    private Map<String, String> appendToHeaders(Map<String, String> clientDataHeaders) {
+        Map<String, String> headers = new HashMap<>(clientDataHeaders);
+        headers.put("Accept", "application/json");
 
         return headers;
     }
 
     private DeviceCode parseJsonToDeviceCodeAndSetParameters(
             String json,
-            Map<String, List<String>> headers,
+            Map<String, String> headers,
             String clientId) {
 
         DeviceCode result;
         result = JsonHelper.convertJsonToObject(json, DeviceCode.class);
 
-        List<String> correlationIdHeader = headers.get(
-                ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME);
-        if(correlationIdHeader != null && correlationIdHeader.size() > 0){
-            result.correlationId(correlationIdHeader.get(0));
+        String correlationIdHeader = headers.get(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME);
+        if(correlationIdHeader != null){
+            result.correlationId(correlationIdHeader);
         }
 
         result.clientId(clientId);

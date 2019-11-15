@@ -28,8 +28,9 @@ final class ClientDataHttpHeaders {
 
     private  final static String REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_NAME = "return-client-request-id";
     private final static String REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_VALUE = "true";
+
     private final String headerValues;
-    private final Map<String, List<String>> headerMap = new HashMap<>();
+    private final Map<String, String> headerMap = new HashMap<>();
 
     ClientDataHttpHeaders(final String correlationId) {
         if (!StringHelper.isBlank(correlationId)) {
@@ -45,7 +46,7 @@ final class ClientDataHttpHeaders {
         StringBuilder sb = new StringBuilder();
 
         BiConsumer<String, String> init = (String key, String val) -> {
-            headerMap.put(key, Collections.singletonList(val));
+            headerMap.put(key, val);
             sb.append(key).append("=").append(val).append(";");
         };
         init.accept(PRODUCT_HEADER_NAME, PRODUCT_HEADER_VALUE);
@@ -58,7 +59,7 @@ final class ClientDataHttpHeaders {
         return sb.toString();
     }
 
-    Map<String, List<String>> getReadonlyHeaderMap() {
+    Map<String, String> getReadonlyHeaderMap() {
         return Collections.unmodifiableMap(this.headerMap);
     }
 

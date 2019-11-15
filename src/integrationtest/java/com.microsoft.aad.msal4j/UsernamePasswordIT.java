@@ -73,7 +73,7 @@ public class UsernamePasswordIT {
         assertAcquireTokenCommon(labResponse, password);
     }
 
-    public void assertAcquireTokenCommon(LabResponse labResponse, String password)
+    private void assertAcquireTokenCommon(LabResponse labResponse, String password)
             throws Exception{
         PublicClientApplication pca = PublicClientApplication.builder(
                 labResponse.getAppId()).

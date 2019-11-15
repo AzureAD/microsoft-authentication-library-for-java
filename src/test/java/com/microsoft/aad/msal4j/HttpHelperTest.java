@@ -12,8 +12,8 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URL;
 
-//
-//
+
+
 //@Test(groups = { "checkin" })
 //public class HttpHelperTest extends AbstractMsalTests {
 //

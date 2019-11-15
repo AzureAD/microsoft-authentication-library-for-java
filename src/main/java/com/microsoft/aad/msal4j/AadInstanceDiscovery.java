@@ -62,7 +62,7 @@ class AadInstanceDiscovery {
 
     private static InstanceDiscoveryResponse sendInstanceDiscoveryRequest
             (URL authorityUrl, MsalRequest msalRequest,
-             ServiceBundle serviceBundle) throws Exception {
+             ServiceBundle serviceBundle) {
 
         String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpoint(authorityUrl.getAuthority()) +
                 INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE.replace("{authorizeEndpoint}",
@@ -76,7 +76,7 @@ class AadInstanceDiscovery {
 
         IHttpResponse httpResponse= HttpHelper.executeHttpRequest(httpRequest, msalRequest.requestContext(), serviceBundle);
 
-        return JsonHelper.convertJsonToObject(httpResponse.getBody(), InstanceDiscoveryResponse.class);
+        return JsonHelper.convertJsonToObject(httpResponse.body(), InstanceDiscoveryResponse.class);
     }
 
     private static void validate(InstanceDiscoveryResponse instanceDiscoveryResponse) {

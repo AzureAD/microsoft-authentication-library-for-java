@@ -1,59 +1,80 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.microsoft.aad.msal4j;
 
 import lombok.Getter;
+import lombok.experimental.Accessors;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.List;
 import java.util.Map;
 
+/**
+ * Contains information about outgoing HTTP request. Should be adapted to HTTP request for HTTP
+ * client of choice
+ */
 @Getter
+@Accessors(fluent = true)
 public class HttpRequest {
 
+    /**
+     * {@link HttpMethod}
+     */
     private HttpMethod httpMethod;
+
+    /**
+     * HTTP request url
+     */
     private URL url;
-    private Map<String, List<String>> headers;
-    private String postData;
 
-    public HttpRequest(HttpMethod httpMethod, String url){
+    /**
+     * HTTP request headers
+     */
+    private Map<String, String> headers;
+
+    /**
+     * HTTP request body
+     */
+    private String body;
+
+    HttpRequest(HttpMethod httpMethod, String url){
         this.httpMethod = httpMethod;
         this.url = createUrlFromString(url);
     }
 
-    public HttpRequest(HttpMethod httpMethod, String url, Map<String, List<String>> headers){
-        this.httpMethod = httpMethod;
-        this.url = createUrlFromString(url);
-        this.headers = headers;
-    }
-
-    public HttpRequest(HttpMethod httpMethod, String url, String postData){
-        this.httpMethod = httpMethod;
-        this.url = createUrlFromString(url);
-        this.postData = postData;
-    }
-
-    public HttpRequest(HttpMethod httpMethod,
-                       String url, Map<String, List<String>> headers,
-                       String postData){
+    HttpRequest(HttpMethod httpMethod, String url, Map<String, String> headers){
         this.httpMethod = httpMethod;
         this.url = createUrlFromString(url);
         this.headers = headers;
-        this.postData = postData;
     }
 
-    public String getHeaderValue(String headerName){
+    HttpRequest(HttpMethod httpMethod, String url, String body){
+        this.httpMethod = httpMethod;
+        this.url = createUrlFromString(url);
+        this.body = body;
+    }
+
+    HttpRequest(HttpMethod httpMethod,
+                       String url, Map<String, String> headers,
+                       String body){
+        this.httpMethod = httpMethod;
+        this.url = createUrlFromString(url);
+        this.headers = headers;
+        this.body = body;
+    }
+
+    /**
+     * @param headerName Name of HTTP header name
+     * @return Value of HTTP header
+     */
+    public String headerValue(String headerName){
 
         if(headerName == null || headers == null){
             return null;
         }
 
-        List<String> headerValue = headers.get(headerName);
-
-        if(headerValue == null || headerValue.isEmpty()){
-            return null;
-        }
-
-        return headerValue.get(0);
+        return headers.get(headerName);
     }
 
     private URL createUrlFromString(String stringUrl){

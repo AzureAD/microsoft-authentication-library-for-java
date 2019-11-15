@@ -6,6 +6,9 @@ package com.microsoft.aad.msal4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+import java.util.Map;
+
 class HttpHelper {
 
     private final static Logger log = LoggerFactory.getLogger(HttpHelper.class);
@@ -35,7 +38,7 @@ class HttpHelper {
 
             addResponseInfoToTelemetry(httpResponse, httpEvent);
 
-            if (httpResponse.getHeaders() != null) {
+            if (httpResponse.headers() != null) {
                 HttpHelper.verifyReturnedCorrelationId(httpRequest, httpResponse);
             }
         }
@@ -44,13 +47,13 @@ class HttpHelper {
 
     private static void addRequestInfoToTelemetry(final HttpRequest httpRequest, HttpEvent httpEvent){
         try{
-            httpEvent.setHttpPath(httpRequest.getUrl().toURI());
-            httpEvent.setHttpMethod(httpRequest.getHttpMethod().toString());
-            if(!StringHelper.isBlank(httpRequest.getUrl().getQuery())){
-                httpEvent.setQueryParameters(httpRequest.getUrl().getQuery());
+            httpEvent.setHttpPath(httpRequest.url().toURI());
+            httpEvent.setHttpMethod(httpRequest.httpMethod().toString());
+            if(!StringHelper.isBlank(httpRequest.url().getQuery())){
+                httpEvent.setQueryParameters(httpRequest.url().getQuery());
             }
         } catch(Exception ex){
-            String correlationId = httpRequest.getHeaderValue(
+            String correlationId = httpRequest.headerValue(
                     ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME);
 
             log.warn(LogHelper.createMessage("Setting URL telemetry fields failed: " +
@@ -60,19 +63,26 @@ class HttpHelper {
     }
 
     private static void addResponseInfoToTelemetry(IHttpResponse httpResponse, HttpEvent httpEvent){
-        if(!StringHelper.isBlank(httpResponse.getHeaderValue("User-Agent"))){
-            httpEvent.setUserAgent(httpResponse.getHeaderValue("User-Agent"));
-        }
-        httpEvent.setHttpResponseStatus(httpResponse.getStatusCode());
 
-        if(httpResponse.getHeaderValue("x-ms-request-id") != null){
-            httpEvent.setRequestIdHeader(httpResponse.getHeaderValue("x-ms-request-id"));
+        httpEvent.setHttpResponseStatus(httpResponse.statusCode());
+
+        Map<String, List<String>> headers = httpResponse.headers();
+
+        String userAgent = HttpUtils.headerValue(headers, "User-Agent");
+        if(!StringHelper.isBlank(userAgent)){
+            httpEvent.setUserAgent(userAgent);
         }
 
-        if(httpResponse.getHeaderValue("x-ms-clitelem") != null){
+        String xMsRequestId = HttpUtils.headerValue(headers, "x-ms-request-id");
+        if(!StringHelper.isBlank(xMsRequestId)){
+            httpEvent.setRequestIdHeader(xMsRequestId);
+        }
+
+        String xMsClientTelemetry = HttpUtils.headerValue(headers,"x-ms-clitelem");
+        if(xMsClientTelemetry != null){
             XmsClientTelemetryInfo xmsClientTelemetryInfo =
-                    XmsClientTelemetryInfo.parseXmsTelemetryInfo(
-                            httpResponse.getHeaderValue("x-ms-clitelem"));
+                    XmsClientTelemetryInfo.parseXmsTelemetryInfo(xMsClientTelemetry);
+
             if(xmsClientTelemetryInfo != null){
                 httpEvent.setXmsClientTelemetryInfo(xmsClientTelemetryInfo);
             }
@@ -82,10 +92,11 @@ class HttpHelper {
     private static void verifyReturnedCorrelationId(final HttpRequest httpRequest,
                                                     IHttpResponse httpResponse) {
 
-        String sentCorrelationId = httpRequest.getHeaderValue(
+        String sentCorrelationId = httpRequest.headerValue(
                 ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME);
 
-        String returnedCorrelationId = httpResponse.getHeaderValue(
+        String returnedCorrelationId = HttpUtils.headerValue(
+                httpResponse.headers(),
                 ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME);
 
         if (StringHelper.isBlank(returnedCorrelationId) ||
