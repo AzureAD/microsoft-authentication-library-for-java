@@ -15,7 +15,10 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.testng.Assert.assertNotNull;
 
@@ -48,11 +51,12 @@ public class OauthHttpRequestTest extends AbstractMsalTests {
                 .createMock(HttpResponse.class);
 
         EasyMock.expect(httpResponse.statusCode()).andReturn(200).times(1);
-        EasyMock.expect(HttpUtils.headerValue(httpResponse.headers(), "Location"))
-                .andReturn("https://location.pl").times(1);
-        EasyMock.expect(HttpUtils.headerValue(httpResponse.headers(), "Content-Type"))
-                .andReturn("invalid-content").times(1);
-        EasyMock.expect(httpResponse.headers()).andReturn(new HashMap<>());
+
+        Map<String, List<String>> headers = new HashMap<>();
+        headers.put("Location", Collections.singletonList("https://location.pl"));
+        headers.put("Content-Type", Collections.singletonList("invalid-content"));
+
+        EasyMock.expect(httpResponse.headers()).andReturn(headers).times(3);
         EasyMock.expect(httpResponse.body()).andReturn("").times(1);
         PowerMock.replay(httpResponse);
 
@@ -73,11 +77,12 @@ public class OauthHttpRequestTest extends AbstractMsalTests {
                 .createMock(HttpResponse.class);
 
         EasyMock.expect(httpResponse.statusCode()).andReturn(200).times(1);
-        EasyMock.expect(HttpUtils.headerValue(httpResponse.headers(), "Location"))
-                .andReturn("https://location.pl").times(1);
-        EasyMock.expect(HttpUtils.headerValue(httpResponse.headers(), "Content-Type"))
-                .andReturn("application/x-www-form-urlencoded").times(1);
-        EasyMock.expect(httpResponse.headers()).andReturn(new HashMap<>());
+
+        Map<String, List<String>> headers = new HashMap<>();
+        headers.put("Location", Collections.singletonList("https://location.pl"));
+        headers.put("Content-Type", Collections.singletonList("application/x-www-form-urlencoded"));
+
+        EasyMock.expect(httpResponse.headers()).andReturn(headers).times(3);
         EasyMock.expect(httpResponse.body()).andReturn("").times(1);
         PowerMock.replay(httpResponse);
 
