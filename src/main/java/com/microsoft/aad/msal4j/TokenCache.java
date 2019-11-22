@@ -166,10 +166,10 @@ public class TokenCache implements ITokenCache {
         }
     }
 
-    void saveTokens(TokenRequest tokenRequest, AuthenticationResult authenticationResult, String environment) {
+    void saveTokens(TokenRequestExecutor tokenRequestExecutor, AuthenticationResult authenticationResult, String environment) {
         try (CacheAspect cacheAspect = new CacheAspect(
                 TokenCacheAccessContext.builder().
-                        clientId(tokenRequest.getMsalRequest().application().clientId()).
+                        clientId(tokenRequestExecutor.getMsalRequest().application().clientId()).
                         tokenCache(this).
                         hasCacheChanged(true).build())) {
             try {
@@ -177,18 +177,18 @@ public class TokenCache implements ITokenCache {
 
                 if (!StringHelper.isBlank(authenticationResult.accessToken())) {
                     AccessTokenCacheEntity atEntity = createAccessTokenCacheEntity
-                            (tokenRequest, authenticationResult, environment);
+                            (tokenRequestExecutor, authenticationResult, environment);
                     accessTokens.put(atEntity.getKey(), atEntity);
                 }
                 if (!StringHelper.isBlank(authenticationResult.familyId())) {
                     AppMetadataCacheEntity appMetadataCacheEntity =
-                            createAppMetadataCacheEntity(tokenRequest, authenticationResult, environment);
+                            createAppMetadataCacheEntity(tokenRequestExecutor, authenticationResult, environment);
 
                     appMetadata.put(appMetadataCacheEntity.getKey(), appMetadataCacheEntity);
                 }
                 if (!StringHelper.isBlank(authenticationResult.refreshToken())) {
                     RefreshTokenCacheEntity rtEntity = createRefreshTokenCacheEntity
-                            (tokenRequest, authenticationResult, environment);
+                            (tokenRequestExecutor, authenticationResult, environment);
 
                     rtEntity.family_id(authenticationResult.familyId());
 
@@ -196,7 +196,7 @@ public class TokenCache implements ITokenCache {
                 }
                 if (!StringHelper.isBlank(authenticationResult.idToken())) {
                     IdTokenCacheEntity idTokenEntity = createIdTokenCacheEntity
-                            (tokenRequest, authenticationResult, environment);
+                            (tokenRequestExecutor, authenticationResult, environment);
                     idTokens.put(idTokenEntity.getKey(), idTokenEntity);
 
                     AccountCacheEntity accountCacheEntity = authenticationResult.accountCacheEntity();
@@ -209,7 +209,7 @@ public class TokenCache implements ITokenCache {
         }
     }
 
-    static private RefreshTokenCacheEntity createRefreshTokenCacheEntity(TokenRequest tokenRequest,
+    static private RefreshTokenCacheEntity createRefreshTokenCacheEntity(TokenRequestExecutor tokenRequestExecutor,
                                                                          AuthenticationResult authenticationResult,
                                                                          String environmentAlias) {
         RefreshTokenCacheEntity rt = new RefreshTokenCacheEntity();
@@ -221,14 +221,14 @@ public class TokenCache implements ITokenCache {
 
         rt.environment(environmentAlias);
 
-        rt.clientId(tokenRequest.getMsalRequest().application().clientId());
+        rt.clientId(tokenRequestExecutor.getMsalRequest().application().clientId());
 
         rt.secret(authenticationResult.refreshToken());
 
         return rt;
     }
 
-    static private AccessTokenCacheEntity createAccessTokenCacheEntity(TokenRequest tokenRequest,
+    static private AccessTokenCacheEntity createAccessTokenCacheEntity(TokenRequestExecutor tokenRequestExecutor,
                                                                        AuthenticationResult authenticationResult,
                                                                        String environmentAlias) {
         AccessTokenCacheEntity at = new AccessTokenCacheEntity();
@@ -238,12 +238,12 @@ public class TokenCache implements ITokenCache {
             at.homeAccountId(authenticationResult.account().homeAccountId());
         }
         at.environment(environmentAlias);
-        at.clientId(tokenRequest.getMsalRequest().application().clientId());
+        at.clientId(tokenRequestExecutor.getMsalRequest().application().clientId());
         at.secret(authenticationResult.accessToken());
-        at.realm(tokenRequest.requestAuthority.tenant());
+        at.realm(tokenRequestExecutor.requestAuthority.tenant());
 
         String scopes = !StringHelper.isBlank(authenticationResult.scopes()) ? authenticationResult.scopes() :
-                tokenRequest.getMsalRequest().msalAuthorizationGrant().getScopes();
+                tokenRequestExecutor.getMsalRequest().msalAuthorizationGrant().getScopes();
 
         at.target(scopes);
 
@@ -257,7 +257,7 @@ public class TokenCache implements ITokenCache {
         return at;
     }
 
-    static private IdTokenCacheEntity createIdTokenCacheEntity(TokenRequest tokenRequest,
+    static private IdTokenCacheEntity createIdTokenCacheEntity(TokenRequestExecutor tokenRequestExecutor,
                                                                AuthenticationResult authenticationResult,
                                                                String environmentAlias) {
         IdTokenCacheEntity idToken = new IdTokenCacheEntity();
@@ -267,19 +267,19 @@ public class TokenCache implements ITokenCache {
             idToken.homeAccountId(authenticationResult.account().homeAccountId());
         }
         idToken.environment(environmentAlias);
-        idToken.clientId(tokenRequest.getMsalRequest().application().clientId());
+        idToken.clientId(tokenRequestExecutor.getMsalRequest().application().clientId());
         idToken.secret(authenticationResult.idToken());
-        idToken.realm(tokenRequest.requestAuthority.tenant());
+        idToken.realm(tokenRequestExecutor.requestAuthority.tenant());
 
         return idToken;
     }
 
-    static private AppMetadataCacheEntity createAppMetadataCacheEntity(TokenRequest tokenRequest,
+    static private AppMetadataCacheEntity createAppMetadataCacheEntity(TokenRequestExecutor tokenRequestExecutor,
                                                                        AuthenticationResult authenticationResult,
                                                                        String environmentAlias) {
         AppMetadataCacheEntity appMetadataCacheEntity = new AppMetadataCacheEntity();
 
-        appMetadataCacheEntity.clientId(tokenRequest.getMsalRequest().application().clientId());
+        appMetadataCacheEntity.clientId(tokenRequestExecutor.getMsalRequest().application().clientId());
         appMetadataCacheEntity.environment(environmentAlias);
         appMetadataCacheEntity.familyId(authenticationResult.familyId());
 

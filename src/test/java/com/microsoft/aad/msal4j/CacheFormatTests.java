@@ -142,21 +142,19 @@ public class CacheFormatTests extends AbstractMsalTests {
         ServiceBundle serviceBundle = new ServiceBundle(
                 null,
                 null,
-                null,
                 new TelemetryManager(null, false));
 
-        TokenRequest request = PowerMock.createPartialMock(
-                TokenRequest.class, new String[] { "toOauthHttpRequest" },
+        TokenRequestExecutor request = PowerMock.createPartialMock(
+                TokenRequestExecutor.class, new String[] { "createOauthHttpRequest" },
                 new AADAuthority(new URL(AUTHORIZE_REQUEST_URL)), msalRequest, serviceBundle);
 
         OAuthHttpRequest msalOAuthHttpRequest = PowerMock.createMock(OAuthHttpRequest.class);
 
         HTTPResponse httpResponse = PowerMock.createMock(HTTPResponse.class);
 
-        EasyMock.expect(request.toOauthHttpRequest()).andReturn(msalOAuthHttpRequest).times(1);
+        EasyMock.expect(request.createOauthHttpRequest()).andReturn(msalOAuthHttpRequest).times(1);
         EasyMock.expect(msalOAuthHttpRequest.send()).andReturn(httpResponse).times(1);
-        EasyMock.expect(httpResponse.getHeaderValue(EasyMock.isA(String.class))).andReturn(null).times(3);
-        EasyMock.expect(httpResponse.getStatusCode()).andReturn(200).times(2);
+        EasyMock.expect(httpResponse.getStatusCode()).andReturn(200).times(1);
         EasyMock.expect(httpResponse.getContentAsJSONObject())
                 .andReturn(
                         JSONObjectUtils.parse(tokenResponse))
@@ -166,7 +164,7 @@ public class CacheFormatTests extends AbstractMsalTests {
 
         PowerMock.replay(request, msalOAuthHttpRequest, httpResponse);
 
-        final AuthenticationResult result = request.executeOauthRequestAndProcessResponse();
+        final AuthenticationResult result = request.executeTokenRequest();
 
         PowerMock.verifyAll();
 

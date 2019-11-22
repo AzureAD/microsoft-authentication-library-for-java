@@ -57,15 +57,13 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
     @Getter(AccessLevel.PACKAGE)
     private Consumer<List<HashMap<String, String>>> telemetryConsumer;
 
-    @Override
-    public Proxy proxy() {
-        return this.serviceBundle.getProxy();
-    }
+    @Accessors(fluent = true)
+    @Getter
+    public Proxy proxy;
 
-    @Override
-    public SSLSocketFactory sslSocketFactory() {
-        return this.serviceBundle.getSslSocketFactory();
-    }
+    @Accessors(fluent = true)
+    @Getter
+    public SSLSocketFactory sslSocketFactory;
 
     @Accessors(fluent = true)
     @Getter
@@ -159,18 +157,24 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
                     headers.getHeaderCorrelationIdValue()));
         }
 
-        TokenRequest request = new TokenRequest(requestAuthority, msalRequest, serviceBundle);
+        TokenRequestExecutor requestExecutor = new TokenRequestExecutor(
+                requestAuthority,
+                msalRequest,
+                serviceBundle);
 
-        AuthenticationResult result = request.executeOauthRequestAndProcessResponse();
+        AuthenticationResult result = requestExecutor.executeTokenRequest();
 
         if(authenticationAuthority.authorityType.equals(AuthorityType.B2C)){
-            tokenCache.saveTokens(request, result, authenticationAuthority.host);
+            tokenCache.saveTokens(requestExecutor, result, authenticationAuthority.host);
         } else {
             InstanceDiscoveryMetadataEntry instanceDiscoveryMetadata =
-                    AadInstanceDiscovery.GetMetadataEntry
-                            (requestAuthority.canonicalAuthorityUrl(), validateAuthority, msalRequest, serviceBundle);
+                    AadInstanceDiscovery.GetMetadataEntry(
+                            requestAuthority.canonicalAuthorityUrl(),
+                            validateAuthority,
+                            msalRequest,
+                            serviceBundle);
 
-            tokenCache.saveTokens(request, result, instanceDiscoveryMetadata.preferredCache);
+            tokenCache.saveTokens(requestExecutor, result, instanceDiscoveryMetadata.preferredCache);
         }
 
         return result;
@@ -226,6 +230,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         private ExecutorService executorService;
         private Proxy proxy;
         private SSLSocketFactory sslSocketFactory;
+        private IHttpClient httpClient;
         private Consumer<List<HashMap<String, String>>> telemetryConsumer;
         private Boolean onlySendFailureTelemetry = false;
         private ITokenCacheAccessAspect tokenCacheAccessAspect;
@@ -344,6 +349,14 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
             return self();
         }
 
+
+        public T httpClient(IHttpClient val){
+            validateNotNull("httpClient", val);
+
+            httpClient = val;
+            return self();
+        }
+
         /**
          * Sets SSLSocketFactory to be used by the client application for all network communication.
          *
@@ -403,10 +416,13 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         correlationId = builder.correlationId;
         logPii = builder.logPii;
         telemetryConsumer = builder.telemetryConsumer;
+        proxy = builder.proxy;
+        sslSocketFactory = builder.sslSocketFactory;
         serviceBundle = new ServiceBundle(
                 builder.executorService,
-                builder.proxy,
-                builder.sslSocketFactory,
+                builder.httpClient == null ?
+                        new DefaultHttpClient(builder.proxy, builder.sslSocketFactory) :
+                        builder.httpClient,
                 new TelemetryManager(telemetryConsumer, builder.onlySendFailureTelemetry));
         authenticationAuthority = builder.authenticationAuthority;
         tokenCache = new TokenCache(builder.tokenCacheAccessAspect);

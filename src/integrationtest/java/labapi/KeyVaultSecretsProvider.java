@@ -75,6 +75,7 @@ class KeyVaultSecretsProvider {
             key = (PrivateKey) keystore.getKey(CERTIFICATE_ALIAS, null);
             publicCertificate = (X509Certificate) keystore.getCertificate(
                     CERTIFICATE_ALIAS);
+
         } catch (Exception e){
             throw new RuntimeException("Error getting certificate from keystore: " + e.getMessage());
         }
