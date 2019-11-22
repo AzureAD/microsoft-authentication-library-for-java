@@ -7,8 +7,6 @@ import com.nimbusds.oauth2.sdk.util.URLUtils;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,7 +18,6 @@ import java.util.concurrent.atomic.AtomicReference;
 @Accessors(fluent = true)
 @Getter(AccessLevel.PACKAGE)
 class DeviceCodeFlowRequest extends MsalRequest {
-    private final Logger log = LoggerFactory.getLogger(DeviceCodeFlowRequest.class);
 
     private AtomicReference<CompletableFuture<IAuthenticationResult>> futureReference;
 
@@ -47,16 +44,13 @@ class DeviceCodeFlowRequest extends MsalRequest {
         String urlWithQueryParams = createQueryParamsAndAppendToURL(url, clientId);
         Map<String, String> headers = appendToHeaders(clientDataHeaders);
 
-        final String json = HttpHelper.executeHttpRequest(
-                log,
-                HttpMethod.GET,
-                urlWithQueryParams,
-                headers,
-                null,
+        HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, urlWithQueryParams, headers);
+        final IHttpResponse response = HttpHelper.executeHttpRequest(
+                httpRequest,
                 this.requestContext(),
                 serviceBundle);
 
-        return parseJsonToDeviceCodeAndSetParameters(json, headers, clientId);
+        return parseJsonToDeviceCodeAndSetParameters(response.body(), headers, clientId);
     }
 
     void createAuthenticationGrant(DeviceCode deviceCode) {
@@ -91,7 +85,11 @@ class DeviceCodeFlowRequest extends MsalRequest {
         DeviceCode result;
         result = JsonHelper.convertJsonToObject(json, DeviceCode.class);
 
-        result.correlationId(headers.get(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME));
+        String correlationIdHeader = headers.get(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME);
+        if(correlationIdHeader != null){
+            result.correlationId(correlationIdHeader);
+        }
+
         result.clientId(clientId);
         result.scopes(scopesStr);
 

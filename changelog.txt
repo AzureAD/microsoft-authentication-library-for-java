@@ -1,3 +1,7 @@
+Version 1.1.0
+=============
+- Added support for configuring HTTP client
+
 Version 1.0.0
 =============
 - API surface is now stable and production ready. No breaking changes will be introduced without incrementing MAJOR version

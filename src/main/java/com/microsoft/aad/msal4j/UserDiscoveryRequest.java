@@ -3,15 +3,12 @@
 
 package com.microsoft.aad.msal4j;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.Map;
 
 class UserDiscoveryRequest {
 
-    private final static Logger log = LoggerFactory.getLogger(UserDiscoveryRequest.class);
+    // private final static Logger log = LoggerFactory.getLogger(UserDiscoveryRequest.class);
 
     private final static Map<String, String> HEADERS;
 
@@ -24,19 +21,14 @@ class UserDiscoveryRequest {
             final String uri,
             final Map<String, String> clientDataHeaders,
             RequestContext requestContext,
-            ServiceBundle serviceBundle) throws Exception {
+            ServiceBundle serviceBundle) {
 
         HashMap<String, String> headers = new HashMap<>(HEADERS);
         headers.putAll(clientDataHeaders);
-        String response = HttpHelper.executeHttpRequest(
-                log,
-                HttpMethod.GET,
-                uri,
-                headers,
-                null,
-                requestContext,
-                serviceBundle);
 
-        return JsonHelper.convertJsonToObject(response, UserDiscoveryResponse.class);
+        HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, uri, headers);
+        IHttpResponse response = HttpHelper.executeHttpRequest(httpRequest, requestContext, serviceBundle);
+
+        return JsonHelper.convertJsonToObject(response.body(), UserDiscoveryResponse.class);
     }
 }

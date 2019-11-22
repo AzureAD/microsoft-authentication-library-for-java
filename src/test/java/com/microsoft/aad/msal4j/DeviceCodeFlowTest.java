@@ -10,7 +10,6 @@ import org.easymock.EasyMock;
 import org.powermock.api.easymock.PowerMock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
-import org.slf4j.Logger;
 import org.testng.Assert;
 import org.testng.IObjectFactory;
 import org.testng.annotations.ObjectFactory;
@@ -78,31 +77,31 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         PowerMock.mockStatic(HttpHelper.class);
 
-        Capture<String> capturedUrl = Capture.newInstance();
+        HttpResponse instanceDiscoveryResponse = new HttpResponse();
+        instanceDiscoveryResponse.statusCode(200);
+        instanceDiscoveryResponse.body(INSTANCE_DISCOVERY_RESPONSE);
 
         EasyMock.expect(
                 HttpHelper.executeHttpRequest(
-                        EasyMock.isA(Logger.class),
-                        EasyMock.isA(HttpMethod.class),
-                        EasyMock.capture(capturedUrl),
-                        EasyMock.isA(Map.class),
-                        EasyMock.isNull(),
+                        EasyMock.isA(HttpRequest.class),
                         EasyMock.isA(RequestContext.class),
                         EasyMock.isA(ServiceBundle.class)))
-                .andReturn(INSTANCE_DISCOVERY_RESPONSE);
+                .andReturn(instanceDiscoveryResponse);
+
+        HttpResponse deviceCodeResponse = new HttpResponse();
+        deviceCodeResponse.statusCode(200);
+        deviceCodeResponse.body(deviceCodeJsonResponse);
+
+        Capture<HttpRequest> capturedHttpRequest = Capture.newInstance();
 
         EasyMock.expect(
                 HttpHelper.executeHttpRequest(
-                        EasyMock.isA(Logger.class),
-                        EasyMock.isA(HttpMethod.class),
-                        EasyMock.capture(capturedUrl),
-                        EasyMock.isA(Map.class),
-                        EasyMock.isNull(),
+                        EasyMock.capture(capturedHttpRequest),
                         EasyMock.isA(RequestContext.class),
                         EasyMock.isA(ServiceBundle.class)))
-                .andReturn(deviceCodeJsonResponse);
+                .andReturn(deviceCodeResponse);
 
-        PowerMock.replay(HttpHelper.class);
+        PowerMock.replay(HttpHelper.class, HttpResponse.class);
 
         AtomicReference<String> deviceCodeCorrelationId = new AtomicReference<>();
 
@@ -124,13 +123,13 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         PowerMock.replay(app);
 
-        IAuthenticationResult authResult = app.acquireToken
-                (DeviceCodeFlowParameters.builder(Collections.singleton(AAD_RESOURCE_ID), deviceCodeConsumer)
+        IAuthenticationResult authResult = app.acquireToken(
+                DeviceCodeFlowParameters.builder(Collections.singleton(AAD_RESOURCE_ID), deviceCodeConsumer)
                         .build())
                 .get();
 
         // validate HTTP GET request used to get device code
-        URL url = new URL(capturedUrl.getValue());
+        URL url = capturedHttpRequest.getValue().url();
         Assert.assertEquals(url.getAuthority(), AAD_PREFERRED_NETWORK_ENV_ALIAS);
         Assert.assertEquals(url.getPath(),
                 "/" + AAD_TENANT_NAME + AADAuthority.DEVICE_CODE_ENDPOINT);
@@ -214,10 +213,10 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
                         PublicApi.ACQUIRE_TOKEN_BY_DEVICE_CODE_FLOW));
 
 
-        TokenRequest request = PowerMock.createPartialMock(
-                TokenRequest.class, new String[]{"toOauthHttpRequest"},
+        TokenRequestExecutor request = PowerMock.createPartialMock(
+                TokenRequestExecutor.class, new String[]{"createOauthHttpRequest"},
                 new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
-                dcr, new ServiceBundle(null, null, null, telemetryManager));
+                dcr, new ServiceBundle(null, null, telemetryManager));
 
         OAuthHttpRequest msalOAuthHttpRequest = PowerMock.createMock(OAuthHttpRequest.class);
 
@@ -235,13 +234,13 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         httpResponse.setContent(content);
         httpResponse.setContentType(CommonContentTypes.APPLICATION_JSON);
 
-        EasyMock.expect(request.toOauthHttpRequest()).andReturn(msalOAuthHttpRequest).times(1);
+        EasyMock.expect(request.createOauthHttpRequest()).andReturn(msalOAuthHttpRequest).times(1);
         EasyMock.expect(msalOAuthHttpRequest.send()).andReturn(httpResponse).times(1);
 
         PowerMock.replay(request, msalOAuthHttpRequest);
 
         try {
-            request.executeOauthRequestAndProcessResponse();
+            request.executeTokenRequest();
             Assert.fail("Expected MsalException was not thrown");
         } catch (MsalServiceException ex) {
 

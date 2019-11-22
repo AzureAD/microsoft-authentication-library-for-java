@@ -3,38 +3,30 @@
 
 package com.microsoft.aad.msal4j;
 
-import javax.net.ssl.SSLSocketFactory;
-import java.net.Proxy;
 import java.util.concurrent.ExecutorService;
 
 class ServiceBundle {
 
     private ExecutorService executorService;
-    private Proxy proxy;
-    private SSLSocketFactory sslSocketFactory;
     private TelemetryManager telemetryManager;
+    private IHttpClient httpClient;
 
-    ServiceBundle(ExecutorService executorService, Proxy proxy, SSLSocketFactory sslSocketFactory,
+    ServiceBundle(ExecutorService executorService, IHttpClient httpClient,
                   TelemetryManager telemetryManager){
         this.executorService = executorService;
-        this.proxy = proxy;
-        this.sslSocketFactory = sslSocketFactory;
         this.telemetryManager = telemetryManager;
+        this.httpClient = httpClient;
     }
 
-    public ExecutorService getExecutorService() {
+    ExecutorService getExecutorService() {
         return executorService;
     }
 
-    public Proxy getProxy() {
-        return proxy;
-    }
-
-    public SSLSocketFactory getSslSocketFactory() {
-        return sslSocketFactory;
-    }
-
-    public TelemetryManager getTelemetryManager(){
+    TelemetryManager getTelemetryManager(){
         return telemetryManager;
+    }
+
+    IHttpClient getHttpClient(){
+        return httpClient;
     }
 }

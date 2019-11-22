@@ -16,7 +16,7 @@ public class MexParserTest {
 
     @BeforeTest
     public void setup(){
-        System.setProperty("javax.xml.parsers.DocumentBuilderFactory","com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
+        System.setProperty("javax.xml.parsers.DocumentBuilderFactory", "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
     }
     
     @AfterTest
@@ -39,8 +39,8 @@ public class MexParserTest {
                 line = br.readLine();
             }
         }
-        BindingPolicy endpoint = MexParser.getWsTrustEndpointFromMexResponse(sb
-                .toString(), false);
+
+        BindingPolicy endpoint = MexParser.getWsTrustEndpointFromMexResponse(sb.toString(), false);
         Assert.assertEquals(endpoint.getUrl(),
                 "https://msft.sts.microsoft.com/adfs/services/trust/13/usernamemixed");
     }

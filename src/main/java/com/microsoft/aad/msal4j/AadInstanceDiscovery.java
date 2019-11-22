@@ -62,18 +62,21 @@ class AadInstanceDiscovery {
 
     private static InstanceDiscoveryResponse sendInstanceDiscoveryRequest
             (URL authorityUrl, MsalRequest msalRequest,
-             ServiceBundle serviceBundle) throws Exception {
+             ServiceBundle serviceBundle) {
 
         String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpoint(authorityUrl.getAuthority()) +
                 INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE.replace("{authorizeEndpoint}",
                         getAuthorizeEndpoint(authorityUrl.getAuthority(),
                                 Authority.getTenant(authorityUrl, Authority.detectAuthorityType(authorityUrl))));
 
-        String json = HttpHelper.executeHttpRequest
-                (log, HttpMethod.GET, instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(),
-                        null, msalRequest.requestContext(), serviceBundle);
+        HttpRequest httpRequest = new HttpRequest(
+                HttpMethod.GET,
+                instanceDiscoveryRequestUrl,
+                msalRequest.headers().getReadonlyHeaderMap());
 
-        return JsonHelper.convertJsonToObject(json, InstanceDiscoveryResponse.class);
+        IHttpResponse httpResponse= HttpHelper.executeHttpRequest(httpRequest, msalRequest.requestContext(), serviceBundle);
+
+        return JsonHelper.convertJsonToObject(httpResponse.body(), InstanceDiscoveryResponse.class);
     }
 
     private static void validate(InstanceDiscoveryResponse instanceDiscoveryResponse) {
