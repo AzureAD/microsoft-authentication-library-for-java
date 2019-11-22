@@ -20,7 +20,6 @@ public class IntegratedWindowsAuthFlow {
     private static IAuthenticationResult getAccessTokenByIntegratedAuth() throws Exception {
         PublicClientApplication app = PublicClientApplication.builder(TestData.PUBLIC_CLIENT_ID)
                 .authority(TestData.AUTHORITY_ORGANIZATION)
-                .telemetryConsumer(new Telemetry.MyTelemetryConsumer().telemetryConsumer)
                 .build();
 
         IntegratedWindowsAuthenticationParameters parameters =
