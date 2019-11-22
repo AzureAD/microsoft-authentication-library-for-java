@@ -33,7 +33,7 @@ class HttpHelper {
                 httpResponse = httpClient.send(httpRequest);
             } catch(Exception e){
                 httpEvent.setOauthErrorCode(AuthenticationErrorCode.UNKNOWN);
-                throw new MsalException(e);
+                throw new MsalClientException(e);
             }
 
             addResponseInfoToTelemetry(httpResponse, httpEvent);
