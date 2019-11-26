@@ -12,14 +12,27 @@ import lombok.experimental.Accessors;
 @Getter(AccessLevel.PACKAGE)
 @AllArgsConstructor
 abstract class MsalRequest {
-    private final ClientApplicationBase application;
 
     AbstractMsalAuthorizationGrant msalAuthorizationGrant;
 
+    private final ClientApplicationBase application;
+
     private final RequestContext requestContext;
 
-    @Getter(value = AccessLevel.PACKAGE, lazy = true)
+    @Getter(lazy = true)
     private final ClientDataHttpHeaders headers = new ClientDataHttpHeaders(requestContext.getCorrelationId());
+
+    MsalRequest(ClientApplicationBase clientApplicationBase,
+                AbstractMsalAuthorizationGrant abstractMsalAuthorizationGrant,
+                RequestContext requestContext){
+
+        this.application = clientApplicationBase;
+        this.msalAuthorizationGrant = abstractMsalAuthorizationGrant;
+        this.requestContext = requestContext;
+
+        CurrentRequest currentRequest = new CurrentRequest(requestContext.getAcquireTokenPublicApi());
+        application.getServiceBundle().getServerSideTelemetry().setCurrentRequest(currentRequest);
+    }
+
+
 }
-
-

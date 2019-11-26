@@ -225,7 +225,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         private String authority = DEFAULT_AUTHORITY;
         private Authority authenticationAuthority = createDefaultAADAuthority();
         private boolean validateAuthority = true;
-        private String correlationId = UUID.randomUUID().toString();
+        private String correlationId;
         private boolean logPii = false;
         private ExecutorService executorService;
         private Proxy proxy;
