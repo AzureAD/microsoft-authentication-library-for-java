@@ -5,11 +5,10 @@ package com.microsoft.aad.msal4j;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-final class ClientDataHttpHeaders {
+final class HttpHeaders {
 
     private final static String PRODUCT_HEADER_NAME = "x-client-SKU";
     private final static String PRODUCT_HEADER_VALUE = "MSAL.Java";
@@ -23,6 +22,12 @@ final class ClientDataHttpHeaders {
     private final static String OS_HEADER_NAME = "x-client-OS";
     private final static String OS_HEADER_VALUE = System.getProperty("os.name");
 
+    private final static String APPLICATION_NAME_HEADER_NAME = "x-app-name";
+    private final String applicationNameHeaderValue;
+
+    private final static String APPLICATION_VERSION_HEADER_NAME = "x-app-ver";
+    private final String applicationVersionHeaderValue;
+
     final static String CORRELATION_ID_HEADER_NAME = "client-request-id";
     private final String correlationIdHeaderValue;
 
@@ -32,13 +37,11 @@ final class ClientDataHttpHeaders {
     private final String headerValues;
     private final Map<String, String> headerMap = new HashMap<>();
 
-    ClientDataHttpHeaders(final String correlationId) {
-        if (!StringHelper.isBlank(correlationId)) {
-            this.correlationIdHeaderValue = correlationId;
-        }
-        else {
-            this.correlationIdHeaderValue = RequestContext.generateNewCorrelationId();
-        }
+    HttpHeaders(final RequestContext requestContext) {
+        correlationIdHeaderValue = requestContext.correlationId();
+        applicationNameHeaderValue = requestContext.applicationName();
+        applicationVersionHeaderValue = requestContext.applicationVersion();
+
         this.headerValues = initHeaderMap();
     }
 
@@ -55,6 +58,8 @@ final class ClientDataHttpHeaders {
         init.accept(CPU_HEADER_NAME, CPU_HEADER_VALUE);
         init.accept(REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_NAME, REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_VALUE);
         init.accept(CORRELATION_ID_HEADER_NAME, this.correlationIdHeaderValue);
+        init.accept(APPLICATION_NAME_HEADER_NAME, this.applicationNameHeaderValue);
+        init.accept(APPLICATION_VERSION_HEADER_NAME, this.applicationVersionHeaderValue);
 
         return sb.toString();
     }
@@ -73,10 +78,9 @@ final class ClientDataHttpHeaders {
     }
 
     private static String getProductVersion() {
-        if (ClientDataHttpHeaders.class.getPackage().getImplementationVersion() == null) {
+        if (HttpHeaders.class.getPackage().getImplementationVersion() == null) {
             return "1.0";
         }
-        return ClientDataHttpHeaders.class.getPackage()
-                .getImplementationVersion();
+        return HttpHeaders.class.getPackage().getImplementationVersion();
     }
 }

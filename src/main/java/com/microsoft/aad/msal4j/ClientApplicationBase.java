@@ -59,15 +59,23 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
 
     @Accessors(fluent = true)
     @Getter
-    public Proxy proxy;
+    private Proxy proxy;
 
     @Accessors(fluent = true)
     @Getter
-    public SSLSocketFactory sslSocketFactory;
+    private SSLSocketFactory sslSocketFactory;
 
     @Accessors(fluent = true)
     @Getter
     protected TokenCache tokenCache;
+
+    @Accessors(fluent = true)
+    @Getter
+    private String applicationName;
+
+    @Accessors(fluent = true)
+    @Getter
+    private String applicationVersion;
 
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(AuthorizationCodeParameters parameters) {
@@ -138,7 +146,10 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
 
     @Override
     public CompletableFuture removeAccount(IAccount account) {
-        RemoveAccountRunnable runnable = new RemoveAccountRunnable(this, account);
+        MsalRequest msalRequest = new MsalRequest(this, null,
+                        createRequestContext(PublicApi.REMOVE_ACCOUNTS)){};
+
+        RemoveAccountRunnable runnable = new RemoveAccountRunnable(msalRequest, account);
 
         CompletableFuture<Void> future =
                 serviceBundle.getExecutorService() != null ? CompletableFuture.runAsync(runnable, serviceBundle.getExecutorService())
@@ -149,7 +160,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
     AuthenticationResult acquireTokenCommon(MsalRequest msalRequest, Authority requestAuthority)
             throws Exception {
 
-        ClientDataHttpHeaders headers = msalRequest.headers();
+        HttpHeaders headers = msalRequest.headers();
 
         if (logPii) {
             log.debug(LogHelper.createMessage(
@@ -198,10 +209,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
     }
 
     RequestContext createRequestContext(PublicApi publicApi) {
-        return new RequestContext(
-                clientId,
-                correlationId(),
-                publicApi);
+        return new RequestContext(this, publicApi);
     }
 
     ServiceBundle getServiceBundle() {
@@ -233,6 +241,8 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         private IHttpClient httpClient;
         private Consumer<List<HashMap<String, String>>> telemetryConsumer;
         private Boolean onlySendFailureTelemetry = false;
+        private String applicationName;
+        private String applicationVersion;
         private ITokenCacheAccessAspect tokenCacheAccessAspect;
 
         /**
@@ -383,6 +393,16 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
             return self();
         }
 
+        T applicationName(String val) {
+            applicationName = val;
+            return self();
+        }
+
+        T applicationVersion(String val) {
+            applicationVersion = val;
+            return self();
+        }
+
         /**
          * Sets ITokenCacheAccessAspect to be used for cache_data persistence.
          *
@@ -415,6 +435,8 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         validateAuthority = builder.validateAuthority;
         correlationId = builder.correlationId;
         logPii = builder.logPii;
+        applicationName = builder.applicationName;
+        applicationVersion = builder.applicationVersion;
         telemetryConsumer = builder.telemetryConsumer;
         proxy = builder.proxy;
         sslSocketFactory = builder.sslSocketFactory;

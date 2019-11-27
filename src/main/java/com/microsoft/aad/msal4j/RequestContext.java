@@ -3,41 +3,42 @@
 
 package com.microsoft.aad.msal4j;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+
 import java.util.UUID;
 
+@Accessors(fluent = true)
+@Getter(AccessLevel.PACKAGE)
 class RequestContext {
 
+    @Setter(AccessLevel.PACKAGE)
     private String telemetryRequestId;
     private String clientId;
     private String correlationId;
     private PublicApi publicApi;
+    private String applicationName;
+    private String applicationVersion;
 
-    public RequestContext(String clientId, String correlationId, PublicApi publicApi){
-        this.clientId = StringHelper.isBlank(clientId) ? "unset_client_id" : clientId;
-        this.publicApi= publicApi;
-        this.correlationId = StringHelper.isBlank(correlationId) ?
+    public RequestContext(ClientApplicationBase clientApplication, PublicApi publicApi){
+        this.clientId = StringHelper.isBlank(clientApplication.clientId()) ?
+                "unset_client_id" :
+                clientApplication.clientId();
+        this.applicationName = StringHelper.isBlank(clientApplication.applicationName()) ?
+                "" :
+                clientApplication.applicationName();
+
+        this.applicationVersion = StringHelper.isBlank(clientApplication.applicationVersion()) ?
+                "" :
+                clientApplication.applicationVersion();
+
+        this.correlationId = StringHelper.isBlank(clientApplication.correlationId()) ?
                 generateNewCorrelationId() :
-                correlationId;
-    }
+                clientApplication.correlationId();
 
-    public String getTelemetryRequestId() {
-        return telemetryRequestId;
-    }
-
-    public void setTelemetryRequestId(String telemetryRequestId) {
-        this.telemetryRequestId = telemetryRequestId;
-    }
-
-    public String getClientId() {
-        return clientId;
-    }
-
-    public String getCorrelationId(){
-        return correlationId;
-    }
-
-    public PublicApi getAcquireTokenPublicApi(){
-        return publicApi;
+        this.publicApi = publicApi;
     }
 
     static String generateNewCorrelationId(){

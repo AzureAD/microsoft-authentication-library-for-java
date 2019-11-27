@@ -145,7 +145,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         Map<String, String > headers = capturedMsalRequest.getValue().headers().getReadonlyHeaderMap();
         Assert.assertEquals(capturedMsalRequest.getValue().headers().getReadonlyHeaderMap().
-                get(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME), deviceCodeCorrelationId.get());
+                get(HttpHeaders.CORRELATION_ID_HEADER_NAME), deviceCodeCorrelationId.get());
         Assert.assertNotNull(authResult);
 
         PowerMock.verify();
@@ -197,6 +197,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         app = PublicClientApplication.builder("client_id")
                 .authority(AAD_TENANT_ENDPOINT)
                 .validateAuthority(false)
+                .correlationId("corr_id")
                 .build();
 
         DeviceCodeFlowParameters parameters =
@@ -207,10 +208,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
                 parameters,
                 futureReference,
                 app,
-                new RequestContext(
-                        "id",
-                        "corr-id",
-                        PublicApi.ACQUIRE_TOKEN_BY_DEVICE_CODE_FLOW));
+                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_DEVICE_CODE_FLOW));
 
 
         TokenRequestExecutor request = PowerMock.createPartialMock(

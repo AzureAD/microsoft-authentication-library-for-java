@@ -49,7 +49,7 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
 
         try(TelemetryHelper telemetryHelper =
                     clientApplication.getServiceBundle().getTelemetryManager().createTelemetryHelper(
-                            msalRequest.requestContext().getTelemetryRequestId(),
+                            msalRequest.requestContext().telemetryRequestId(),
                             msalRequest.application().clientId(),
                             apiEvent,
                             true)) {
@@ -81,7 +81,7 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
         return result;
     }
 
-    void logResult(AuthenticationResult result, ClientDataHttpHeaders headers)
+    void logResult(AuthenticationResult result, HttpHeaders headers)
     {
         if (!StringHelper.isBlank(result.accessToken())) {
 
@@ -120,11 +120,11 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
 
     private ApiEvent initializeApiEvent(MsalRequest msalRequest){
         ApiEvent apiEvent = new ApiEvent(clientApplication.logPii());
-        msalRequest.requestContext().setTelemetryRequestId(
+        msalRequest.requestContext().telemetryRequestId(
                 clientApplication.getServiceBundle().getTelemetryManager().generateRequestId());
-        apiEvent.setApiId(msalRequest.requestContext().getAcquireTokenPublicApi().getApiId());
-        apiEvent.setCorrelationId(msalRequest.requestContext().getCorrelationId());
-        apiEvent.setRequestId(msalRequest.requestContext().getTelemetryRequestId());
+        apiEvent.setApiId(msalRequest.requestContext().publicApi().getApiId());
+        apiEvent.setCorrelationId(msalRequest.requestContext().correlationId());
+        apiEvent.setRequestId(msalRequest.requestContext().telemetryRequestId());
         apiEvent.setWasSuccessful(false);
 
         if(clientApplication instanceof ConfidentialClientApplication){

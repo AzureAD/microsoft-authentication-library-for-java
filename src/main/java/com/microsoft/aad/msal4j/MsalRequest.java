@@ -19,7 +19,7 @@ abstract class MsalRequest {
     private final RequestContext requestContext;
 
     @Getter(value = AccessLevel.PACKAGE, lazy = true)
-    private final ClientDataHttpHeaders headers = new ClientDataHttpHeaders(requestContext.getCorrelationId());
+    private final HttpHeaders headers = new HttpHeaders(requestContext);
 }
 
 
