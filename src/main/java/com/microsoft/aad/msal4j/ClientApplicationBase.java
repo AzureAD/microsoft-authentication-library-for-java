@@ -347,7 +347,9 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
 
         /**
          * Sets Proxy configuration to be used by the client application for all network communication.
-         * Default is null and system defined properties if any, would be used.
+         * Default is null and system defined properties if any, would be used. If HTTP client is set on
+         * the client application, proxy configuration should be configured on the HTTP client object,
+         * and not through this method.
          *
          * @param val an instance of Proxy
          * @return instance of the Builder on which method was called
@@ -359,7 +361,13 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
             return self();
         }
 
-
+        /**
+         * Sets HTTP client to be used by the client application for all HTTP requests. Allows for fine
+         * grained configuration of HTTP client.
+         *
+         * @param val Implementation of {@link IHttpClient}
+         * @return instance of the Builder on which method was called
+         */
         public T httpClient(IHttpClient val){
             validateNotNull("httpClient", val);
 
@@ -369,6 +377,8 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
 
         /**
          * Sets SSLSocketFactory to be used by the client application for all network communication.
+         * If HTTP client is set on the client application, any configuration of SSL should be done on the
+         * HTTP client and not through this method.
          *
          * @param val an instance of SSLSocketFactory
          * @return instance of the Builder on which method was called
@@ -393,12 +403,28 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
             return self();
         }
 
-        T applicationName(String val) {
+        /**
+         * Sets application name for telemetry purposes
+         *
+         * @param val application name
+         * @return instance of the Builder on which method was called
+         */
+        public T applicationName(String val) {
+            validateNotNull("applicationName", val);
+
             applicationName = val;
             return self();
         }
 
-        T applicationVersion(String val) {
+        /**
+         * Sets application version for telemetry purposes
+         * 
+         * @param val application version
+         * @return instance of the Builder on which method was called
+         */
+        public T applicationVersion(String val) {
+            validateNotNull("applicationVersion", val);
+
             applicationVersion = val;
             return self();
         }
