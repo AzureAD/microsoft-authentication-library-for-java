@@ -346,9 +346,11 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         }
 
         /**
-         * Sets Proxy configuration to be used by the client application for all network communication.
-         * Default is null and system defined properties if any, would be used. If HTTP client is set on
-         * the client application, proxy configuration should be configured on the HTTP client object,
+         * Sets Proxy configuration to be used by the client application (MSAL4J by default uses
+         * {@link javax.net.ssl.HttpsURLConnection}) for all network communication.
+         * If no proxy value is passed in, system defined properties are used. If HTTP client is set on
+         * the client application (via ClientApplication.builder().httpClient()),
+         * proxy configuration should be done on the HTTP client object being passed in,
          * and not through this method.
          *
          * @param val an instance of Proxy
@@ -377,8 +379,8 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
 
         /**
          * Sets SSLSocketFactory to be used by the client application for all network communication.
-         * If HTTP client is set on the client application, any configuration of SSL should be done on the
-         * HTTP client and not through this method.
+         * If HTTP client is set on the client application (via ClientApplication.builder().httpClient()),
+         * any configuration of SSL should be done on the HTTP client and not through this method.
          *
          * @param val an instance of SSLSocketFactory
          * @return instance of the Builder on which method was called

@@ -10,22 +10,22 @@ import java.util.function.BiConsumer;
 
 final class HttpHeaders {
 
-    private final static String PRODUCT_HEADER_NAME = "x-client-SKU";
-    private final static String PRODUCT_HEADER_VALUE = "MSAL.Java";
+    final static String PRODUCT_HEADER_NAME = "x-client-SKU";
+    final static String PRODUCT_HEADER_VALUE = "MSAL.Java";
 
-    private  final static String PRODUCT_VERSION_HEADER_NAME = "x-client-VER";
-    private  final static String PRODUCT_VERSION_HEADER_VALUE = getProductVersion();
+    final static String PRODUCT_VERSION_HEADER_NAME = "x-client-VER";
+    final static String PRODUCT_VERSION_HEADER_VALUE = getProductVersion();
 
-    private final static String CPU_HEADER_NAME = "x-client-CPU";
-    private final static String CPU_HEADER_VALUE = System.getProperty("os.arch");
+    final static String CPU_HEADER_NAME = "x-client-CPU";
+    final static String CPU_HEADER_VALUE = System.getProperty("os.arch");
 
-    private final static String OS_HEADER_NAME = "x-client-OS";
-    private final static String OS_HEADER_VALUE = System.getProperty("os.name");
+    final static String OS_HEADER_NAME = "x-client-OS";
+    final static String OS_HEADER_VALUE = System.getProperty("os.name");
 
-    private final static String APPLICATION_NAME_HEADER_NAME = "x-app-name";
+    final static String APPLICATION_NAME_HEADER_NAME = "x-app-name";
     private final String applicationNameHeaderValue;
 
-    private final static String APPLICATION_VERSION_HEADER_NAME = "x-app-ver";
+    final static String APPLICATION_VERSION_HEADER_NAME = "x-app-ver";
     private final String applicationVersionHeaderValue;
 
     final static String CORRELATION_ID_HEADER_NAME = "client-request-id";

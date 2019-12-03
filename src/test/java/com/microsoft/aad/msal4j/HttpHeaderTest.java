@@ -27,13 +27,13 @@ public class HttpHeaderTest {
 
         Map<String, String> httpHeaderMap = httpHeaders.getReadonlyHeaderMap();
 
-        Assert.assertEquals(httpHeaderMap.get("x-client-SKU"), "MSAL.Java");
-        Assert.assertEquals(httpHeaderMap.get("x-client-VER"), "1.0");
-        Assert.assertEquals(httpHeaderMap.get("x-client-CPU"), System.getProperty("os.arch"));
-        Assert.assertEquals(httpHeaderMap.get("x-client-OS"), System.getProperty("os.name"));
-        Assert.assertEquals(httpHeaderMap.get("x-app-name"), "app-name");
-        Assert.assertEquals(httpHeaderMap.get("x-app-ver"), "app-version");
-        Assert.assertEquals(httpHeaderMap.get("client-request-id"), "correlation-id");
+        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.PRODUCT_HEADER_NAME), HttpHeaders.PRODUCT_HEADER_VALUE);
+        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.PRODUCT_VERSION_HEADER_NAME), HttpHeaders.PRODUCT_VERSION_HEADER_VALUE);
+        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.OS_HEADER_NAME), HttpHeaders.OS_HEADER_VALUE);
+        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.CPU_HEADER_NAME), HttpHeaders.CPU_HEADER_VALUE);
+        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.APPLICATION_NAME_HEADER_NAME), "app-name");
+        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.APPLICATION_VERSION_HEADER_NAME), "app-version");
+        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.CORRELATION_ID_HEADER_NAME), "correlation-id");
     }
 
     @Test
@@ -49,12 +49,12 @@ public class HttpHeaderTest {
 
         Map<String, String> httpHeaderMap = httpHeaders.getReadonlyHeaderMap();
 
-        Assert.assertEquals(httpHeaderMap.get("x-client-SKU"), "MSAL.Java");
-        Assert.assertEquals(httpHeaderMap.get("x-client-VER"), "1.0");
-        Assert.assertEquals(httpHeaderMap.get("x-client-CPU"), System.getProperty("os.arch"));
-        Assert.assertEquals(httpHeaderMap.get("x-client-OS"), System.getProperty("os.name"));
-        Assert.assertNull(httpHeaderMap.get("x-app-name"));
-        Assert.assertNull(httpHeaderMap.get("x-app-ver"));
-        Assert.assertNotNull(httpHeaderMap.get("client-request-id"));
+        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.PRODUCT_HEADER_NAME), HttpHeaders.PRODUCT_HEADER_VALUE);
+        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.PRODUCT_VERSION_HEADER_NAME), HttpHeaders.PRODUCT_VERSION_HEADER_VALUE);
+        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.OS_HEADER_NAME), HttpHeaders.OS_HEADER_VALUE);
+        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.CPU_HEADER_NAME), HttpHeaders.CPU_HEADER_VALUE);
+        Assert.assertNull(httpHeaderMap.get(HttpHeaders.APPLICATION_NAME_HEADER_NAME));
+        Assert.assertNull(httpHeaderMap.get(HttpHeaders.APPLICATION_VERSION_HEADER_NAME));
+        Assert.assertNotNull(httpHeaderMap.get(HttpHeaders.CORRELATION_ID_HEADER_NAME));
     }
 }
