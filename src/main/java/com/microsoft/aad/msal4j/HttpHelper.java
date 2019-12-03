@@ -21,8 +21,8 @@ class HttpHelper {
         IHttpResponse httpResponse;
 
         try(TelemetryHelper telemetryHelper = serviceBundle.getTelemetryManager().createTelemetryHelper(
-                requestContext.getTelemetryRequestId(),
-                requestContext.getClientId(),
+                requestContext.telemetryRequestId(),
+                requestContext.clientId(),
                 httpEvent,
                 false)){
 
@@ -54,7 +54,7 @@ class HttpHelper {
             }
         } catch(Exception ex){
             String correlationId = httpRequest.headerValue(
-                    ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME);
+                    HttpHeaders.CORRELATION_ID_HEADER_NAME);
 
             log.warn(LogHelper.createMessage("Setting URL telemetry fields failed: " +
                             LogHelper.getPiiScrubbedDetails(ex),
@@ -93,11 +93,11 @@ class HttpHelper {
                                                     IHttpResponse httpResponse) {
 
         String sentCorrelationId = httpRequest.headerValue(
-                ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME);
+                HttpHeaders.CORRELATION_ID_HEADER_NAME);
 
         String returnedCorrelationId = HttpUtils.headerValue(
                 httpResponse.headers(),
-                ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME);
+                HttpHeaders.CORRELATION_ID_HEADER_NAME);
 
         if (StringHelper.isBlank(returnedCorrelationId) ||
                 !returnedCorrelationId.equals(sentCorrelationId)) {

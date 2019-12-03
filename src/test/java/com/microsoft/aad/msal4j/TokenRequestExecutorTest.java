@@ -106,7 +106,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
     }
 
     private TokenRequestExecutor createMockedTokenRequest() throws URISyntaxException, MalformedURLException {
-        PublicClientApplication app = PublicClientApplication.builder("id").build();
+        PublicClientApplication app = PublicClientApplication.builder("id").correlationId("corr_id").build();
 
         AuthorizationCodeParameters parameters = AuthorizationCodeParameters
                 .builder("code", new URI("http://my.redirect.com"))
@@ -116,9 +116,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
         final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
                 parameters,
                 app,
-                new RequestContext("id",
-                        "corr-id",
-                        PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         ServiceBundle serviceBundle = new ServiceBundle(
                 null,
@@ -136,7 +134,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
     public void testConstructor() throws MalformedURLException,
             URISyntaxException {
 
-        PublicClientApplication app = PublicClientApplication.builder("id").build();
+        PublicClientApplication app = PublicClientApplication.builder("id").correlationId("corr-id").build();
 
         AuthorizationCodeParameters parameters = AuthorizationCodeParameters
                 .builder("code", new URI("http://my.redirect.com"))
@@ -146,10 +144,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
         final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
                 parameters,
                 app,
-                new RequestContext(
-                        "id",
-                        "corr-id",
-                        PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         final TokenRequestExecutor request = new TokenRequestExecutor(
                 new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
@@ -162,7 +157,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
     public void testToOAuthRequestNonEmptyCorrelationId()
             throws MalformedURLException, SerializeException, URISyntaxException {
 
-        PublicClientApplication app = PublicClientApplication.builder("id").build();
+        PublicClientApplication app = PublicClientApplication.builder("id").correlationId("corr-id").build();
 
         AuthorizationCodeParameters parameters = AuthorizationCodeParameters
                 .builder("code", new URI("http://my.redirect.com"))
@@ -172,10 +167,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
         AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
                 parameters,
                 app,
-                new RequestContext(
-                        "id",
-                        "corr-id",
-                        PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         TokenRequestExecutor request = new TokenRequestExecutor(
                 new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
@@ -186,7 +178,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
         Assert.assertNotNull(req);
         Assert.assertEquals(
                 "corr-id",
-                req.getExtraHeaderParams().get(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME));
+                req.getExtraHeaderParams().get(HttpHeaders.CORRELATION_ID_HEADER_NAME));
     }
 
     @Test
@@ -194,7 +186,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
             throws MalformedURLException, SerializeException,
             URISyntaxException {
 
-        PublicClientApplication app = PublicClientApplication.builder("id").build();
+        PublicClientApplication app = PublicClientApplication.builder("id").correlationId("corr-id").build();
 
         AuthorizationCodeParameters parameters = AuthorizationCodeParameters
                 .builder("code", new URI("http://my.redirect.com"))
@@ -204,10 +196,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
         final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
                 parameters,
                 app,
-                new RequestContext(
-                        "id",
-                        "corr-id",
-                        PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         final TokenRequestExecutor request = new TokenRequestExecutor(
                 new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
@@ -222,7 +211,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
     public void testExecuteOAuth_Success() throws SerializeException, ParseException, MsalException,
             IOException, URISyntaxException {
 
-        PublicClientApplication app = PublicClientApplication.builder("id").build();
+        PublicClientApplication app = PublicClientApplication.builder("id").correlationId("corr-id").build();
 
         AuthorizationCodeParameters parameters = AuthorizationCodeParameters
                 .builder("code", new URI("http://my.redirect.com"))
@@ -232,10 +221,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
         final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
                 parameters,
                 app,
-                new RequestContext(
-                        "id",
-                        "corr-id",
-                        PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         ServiceBundle serviceBundle = new ServiceBundle(
                 null,
@@ -283,7 +269,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
     public void testExecuteOAuth_Failure() throws SerializeException,
             ParseException, MsalException, IOException, URISyntaxException {
 
-        PublicClientApplication app = PublicClientApplication.builder("id").build();
+        PublicClientApplication app = PublicClientApplication.builder("id").correlationId("corr-id").build();
 
         AuthorizationCodeParameters parameters = AuthorizationCodeParameters
                 .builder("code", new URI("http://my.redirect.com"))
@@ -293,10 +279,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
         final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
                 parameters,
                 app,
-                new RequestContext(
-                        "id",
-                        "corr-id",
-                        PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         ServiceBundle serviceBundle = new ServiceBundle(
                 null,

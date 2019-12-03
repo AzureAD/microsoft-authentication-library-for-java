@@ -126,7 +126,7 @@ public class CacheFormatTests extends AbstractMsalTests {
 
         String tokenResponse = getTokenResponse(folder);
 
-        PublicClientApplication app = PublicClientApplication.builder(CLIENT_ID).build();
+        PublicClientApplication app = PublicClientApplication.builder(CLIENT_ID).correlationId("correlation_id").build();
 
         AuthorizationCodeParameters parameters =
                 AuthorizationCodeParameters.builder
@@ -136,8 +136,7 @@ public class CacheFormatTests extends AbstractMsalTests {
         MsalRequest msalRequest = new AuthorizationCodeRequest(
                 parameters,
                 app,
-                new RequestContext(CLIENT_ID, "correlation_id",
-                        PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
         ServiceBundle serviceBundle = new ServiceBundle(
                 null,

@@ -85,7 +85,7 @@ class DeviceCodeFlowRequest extends MsalRequest {
         DeviceCode result;
         result = JsonHelper.convertJsonToObject(json, DeviceCode.class);
 
-        String correlationIdHeader = headers.get(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME);
+        String correlationIdHeader = headers.get(HttpHeaders.CORRELATION_ID_HEADER_NAME);
         if(correlationIdHeader != null){
             result.correlationId(correlationIdHeader);
         }
