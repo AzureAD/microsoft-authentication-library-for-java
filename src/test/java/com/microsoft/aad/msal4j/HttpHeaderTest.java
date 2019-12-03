@@ -53,8 +53,8 @@ public class HttpHeaderTest {
         Assert.assertEquals(httpHeaderMap.get("x-client-VER"), "1.0");
         Assert.assertEquals(httpHeaderMap.get("x-client-CPU"), System.getProperty("os.arch"));
         Assert.assertEquals(httpHeaderMap.get("x-client-OS"), System.getProperty("os.name"));
-        Assert.assertEquals(httpHeaderMap.get("x-app-name"), "");
-        Assert.assertEquals(httpHeaderMap.get("x-app-ver"), "");
+        Assert.assertNull(httpHeaderMap.get("x-app-name"));
+        Assert.assertNull(httpHeaderMap.get("x-app-ver"));
         Assert.assertNotNull(httpHeaderMap.get("client-request-id"));
     }
 }

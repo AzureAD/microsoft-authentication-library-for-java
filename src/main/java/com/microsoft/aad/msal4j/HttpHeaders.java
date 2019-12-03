@@ -52,14 +52,20 @@ final class HttpHeaders {
             headerMap.put(key, val);
             sb.append(key).append("=").append(val).append(";");
         };
+
         init.accept(PRODUCT_HEADER_NAME, PRODUCT_HEADER_VALUE);
         init.accept(PRODUCT_VERSION_HEADER_NAME, PRODUCT_VERSION_HEADER_VALUE);
         init.accept(OS_HEADER_NAME, OS_HEADER_VALUE);
         init.accept(CPU_HEADER_NAME, CPU_HEADER_VALUE);
         init.accept(REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_NAME, REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_VALUE);
         init.accept(CORRELATION_ID_HEADER_NAME, this.correlationIdHeaderValue);
-        init.accept(APPLICATION_NAME_HEADER_NAME, this.applicationNameHeaderValue);
-        init.accept(APPLICATION_VERSION_HEADER_NAME, this.applicationVersionHeaderValue);
+
+        if(!StringHelper.isBlank(this.applicationNameHeaderValue)){
+            init.accept(APPLICATION_NAME_HEADER_NAME, this.applicationNameHeaderValue);
+        }
+        if(!StringHelper.isBlank(this.applicationVersionHeaderValue)){
+            init.accept(APPLICATION_VERSION_HEADER_NAME, this.applicationVersionHeaderValue);
+        }
 
         return sb.toString();
     }

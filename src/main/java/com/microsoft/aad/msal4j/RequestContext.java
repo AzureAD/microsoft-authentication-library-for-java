@@ -26,22 +26,16 @@ class RequestContext {
         this.clientId = StringHelper.isBlank(clientApplication.clientId()) ?
                 "unset_client_id" :
                 clientApplication.clientId();
-        this.applicationName = StringHelper.isBlank(clientApplication.applicationName()) ?
-                "" :
-                clientApplication.applicationName();
-
-        this.applicationVersion = StringHelper.isBlank(clientApplication.applicationVersion()) ?
-                "" :
-                clientApplication.applicationVersion();
-
         this.correlationId = StringHelper.isBlank(clientApplication.correlationId()) ?
                 generateNewCorrelationId() :
                 clientApplication.correlationId();
 
+        this.applicationVersion = clientApplication.applicationVersion();
+        this.applicationName = clientApplication.applicationName();
         this.publicApi = publicApi;
     }
 
-    static String generateNewCorrelationId(){
+    private static String generateNewCorrelationId(){
         return UUID.randomUUID().toString();
     }
 }
