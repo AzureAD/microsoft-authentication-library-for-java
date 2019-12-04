@@ -77,7 +77,9 @@ public class TcpListener implements AutoCloseable{
     }
 
     public ServerSocket createSocket() throws IOException {
-        int[] ports = { 3843,4584, 4843, 60000 };
+        //int[] ports = { 3843,4584, 4843, 60000 };
+        int[] ports = { 8080 };
+
         for (int port : ports) {
             try {
                 return new ServerSocket(port);

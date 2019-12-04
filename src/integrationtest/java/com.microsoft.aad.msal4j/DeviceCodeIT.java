@@ -4,10 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import infrastructure.SeleniumExtensions;
-import labapi.LabResponse;
-import labapi.LabUser;
-import labapi.LabUserProvider;
-import labapi.NationalCloud;
+import labapi.*;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -37,20 +34,16 @@ public class DeviceCodeIT {
 
     @Test
     public void DeviceCodeFlowTest() throws Exception {
-        LabResponse labResponse = labUserProvider.getDefaultUser(
-                NationalCloud.AZURE_CLOUD,
-                false);
-        labUserProvider.getUserPassword(labResponse.getUser());
+        User user = labUserProvider.getDefaultUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                labResponse.getAppId()).
+                user.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
-            runAutomatedDeviceCodeFlow(deviceCode, labResponse.getUser());
+            runAutomatedDeviceCodeFlow(deviceCode, user);
         };
-
 
         IAuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
                 .builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
@@ -62,7 +55,7 @@ public class DeviceCodeIT {
         Assert.assertTrue(!Strings.isNullOrEmpty(result.accessToken()));
     }
 
-    private void runAutomatedDeviceCodeFlow(DeviceCode deviceCode, LabUser user){
+    private void runAutomatedDeviceCodeFlow(DeviceCode deviceCode, User user){
         boolean isRunningLocally = true; /*!Strings.isNullOrEmpty(
                 System.getenv(TestConstants.LOCAL_FLAG_ENV_VAR));*/
 

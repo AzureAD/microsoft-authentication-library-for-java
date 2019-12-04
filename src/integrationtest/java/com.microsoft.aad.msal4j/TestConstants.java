@@ -3,13 +3,17 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.util.stream.Stream;
+
 public class TestConstants {
     public final static String KEYVAULT_DEFAULT_SCOPE = "https://vault.azure.net/.default";
     public final static String GRAPH_DEFAULT_SCOPE = "https://graph.windows.net/.default";
+    public final static String USER_READ_SCOPE = "user.read";
     public final static String B2C_LAB_SCOPE = "https://msidlabb2c.onmicrosoft.com/msaapp/user_impersonation";
 
     public final static String MICROSOFT_AUTHORITY_HOST = "https://login.microsoftonline.com/";
     public final static String ORGANIZATIONS_AUTHORITY = MICROSOFT_AUTHORITY_HOST + "organizations/";
+    public final static String COMMON_AUTHORITY = MICROSOFT_AUTHORITY_HOST + "common/";
     public final static String MICROSOFT_AUTHORITY = MICROSOFT_AUTHORITY_HOST + "microsoft.onmicrosoft.com";
 
     public final static String B2C_AUTHORITY = "https://msidlabb2c.b2clogin.com/tfp/msidlabb2c.onmicrosoft.com/";
@@ -24,4 +28,8 @@ public class TestConstants {
 
     public final static String LOCALHOST = "http://localhost:";
     public final static String LOCAL_FLAG_ENV_VAR = "MSAL_JAVA_RUN_LOCAL";
+
+    public final static String ADFS_AUTHORITY = "https://fs.msidlab8.com/adfs/";
+    public final static String ADFS_SCOPE = "user.read";
+    public final static String ADFS_APP_ID = "PublicClientId";
 }

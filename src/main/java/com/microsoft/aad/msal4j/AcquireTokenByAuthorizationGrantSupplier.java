@@ -45,7 +45,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
             requestAuthority = clientApplication.authenticationAuthority;
         }
 
-        if(requestAuthority.authorityType != AuthorityType.B2C){
+        if(requestAuthority.authorityType == AuthorityType.AAD){
             requestAuthority = getAuthorityWithPrefNetworkHost(requestAuthority.authority());
         }
 
@@ -59,7 +59,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
             return authGrant;
         }
 
-        if(msalRequest.application().authenticationAuthority.authorityType == AuthorityType.B2C){
+        if(msalRequest.application().authenticationAuthority.authorityType != AuthorityType.AAD){
             return authGrant;
         }
 

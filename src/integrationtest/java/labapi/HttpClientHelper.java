@@ -1,9 +1,5 @@
-//----------------------------------------------------------------------
-//
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
-//
-//------------------------------------------------------------------------------
 
 package labapi;
 
@@ -19,9 +15,18 @@ import java.util.Map;
 
 class HttpClientHelper {
 
-    static String sendRequestToLab( Map<String, String> queryMap, boolean useBetaEndpoint) throws
+    static String sendRequestToLab(String url, Map<String, String> queryMap) throws
             IOException {
-        final URL labUrl = buildUrl(queryMap, useBetaEndpoint);
+        return sendRequestToLab(buildUrl(url, queryMap));
+    }
+
+    static String sendRequestToLab(String url, String id) throws
+            IOException {
+        return sendRequestToLab(new URL(url + "/" + id));
+    }
+
+    static String sendRequestToLab(URL labUrl) throws
+            IOException {
         HttpsURLConnection conn = (HttpsURLConnection) labUrl.openConnection();
         conn.setReadTimeout(20000);
         conn.setConnectTimeout(20000);
@@ -38,7 +43,7 @@ class HttpClientHelper {
         return content.toString();
     }
 
-    private static URL buildUrl(Map<String, String> queryMap, boolean useBetaEndpoint) throws
+    private static URL buildUrl(String url, Map<String, String> queryMap) throws
             MalformedURLException, UnsupportedOperationException {
         String queryParameters;
         queryParameters = queryMap.entrySet().stream()
@@ -46,10 +51,7 @@ class HttpClientHelper {
                 .reduce((p1, p2) -> p1 + "&" + p2)
                 .orElse("");
 
-        String labEndpoint = (useBetaEndpoint)?
-                LabConstants.LAB_BETA_ENDPOINT :
-                LabConstants.LAB_ENDPOINT;
-        String urlString = labEndpoint + "?" + queryParameters;
+        String urlString = url + "?" + queryParameters;
         return new URL(urlString);
     }
 
