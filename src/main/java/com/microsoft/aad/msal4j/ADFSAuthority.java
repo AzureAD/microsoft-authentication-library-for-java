@@ -15,5 +15,6 @@ class ADFSAuthority extends Authority{
         super(authorityUrl);
         this.authority = String.format(ADFSAuthorityFormat, host, tenant);
         this.tokenEndpoint = authority + TOKEN_ENDPOINT;
+        this.selfSignedJwtAudience = this.tokenEndpoint;
     }
 }

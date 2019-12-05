@@ -30,6 +30,6 @@ public class TestConstants {
     public final static String LOCAL_FLAG_ENV_VAR = "MSAL_JAVA_RUN_LOCAL";
 
     public final static String ADFS_AUTHORITY = "https://fs.msidlab8.com/adfs/";
-    public final static String ADFS_SCOPE = "user.read";
+    public final static String ADFS_SCOPE = USER_READ_SCOPE;
     public final static String ADFS_APP_ID = "PublicClientId";
 }
