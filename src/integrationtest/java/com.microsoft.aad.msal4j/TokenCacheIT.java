@@ -97,9 +97,7 @@ public class TokenCacheIT {
         Assert.assertEquals(accountLabResponse2.username(), adfsUser.getUpn());
     }
 
-    //@Test
-    // TODO guest user upn returned from lab contains # so user discovery request
-    // fails, in upn url encoded userrealm fails to identify user
+    @Test
     public void twoAccountsInCache_SameUserDifferentTenants_RemoveAccountTest() throws Exception{
 
         UserQueryParameters query = new UserQueryParameters();
@@ -126,7 +124,7 @@ public class TokenCacheIT {
 
         pca.acquireToken(UserNamePasswordParameters.
                 builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-                        guestUser.getUpn(),
+                        guestUser.getHomeUPN(),
                         guestUser.getPassword().toCharArray())
                 .build())
                 .get();
@@ -142,7 +140,7 @@ public class TokenCacheIT {
 
         pca2.acquireToken(UserNamePasswordParameters.
                 builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-                        guestUser.getUpn(),
+                        guestUser.getHomeUPN(),
                         guestUser.getPassword().toCharArray())
                 .build())
                 .get();
