@@ -78,14 +78,23 @@ public class TcpListener implements AutoCloseable{
 
     public ServerSocket createSocket() throws IOException {
         //int[] ports = { 3843,4584, 4843, 60000 };
-        int[] ports = { 8080 };
+        int[] ports = {8080};
+        int tryCount = 5;
 
-        for (int port : ports) {
-            try {
-                return new ServerSocket(port);
-            } catch (IOException ex) {
-                LOG.warn("Port: " + port + "is blocked");
+        while (tryCount > 0) {
+            for (int port : ports) {
+                try {
+                    return new ServerSocket(port);
+                } catch (IOException ex) {
+                    LOG.warn("Port: " + port + "is blocked");
+                }
             }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            tryCount--;
         }
         throw new IOException("no free port found");
     }
