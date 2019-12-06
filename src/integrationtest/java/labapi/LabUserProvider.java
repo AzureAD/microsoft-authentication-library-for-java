@@ -7,7 +7,6 @@
 
 package labapi;
 
-import org.testng.util.Strings;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,7 +16,7 @@ public class LabUserProvider {
 
     private final KeyVaultSecretsProvider keyVaultSecretsProvider;
     private final LabService labService;
-    private Map<UserQuery, LabResponse> userCache;
+    private Map<UserQueryParameters, User> userCache;
 
     private LabUserProvider(){
         keyVaultSecretsProvider = new KeyVaultSecretsProvider();
@@ -32,85 +31,37 @@ public class LabUserProvider {
         return instance;
     }
 
-    public LabResponse getDefaultUser(NationalCloud cloud, boolean useBetaEndpoint) {
-        UserQuery query =  new UserQuery.Builder().
-                isMamUser(false).
-                isMfaUser(false).
-                isFederatedUser(false).
-                nationalCloud(cloud).
-                useBetaEnpoint(useBetaEndpoint).
-                build();
+    public User getDefaultUser() {
+
+        UserQueryParameters query = new UserQueryParameters();
+        query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT,  AzureEnvironment.AZURE);
+
         return getLabUser(query);
     }
 
-    public LabResponse getAdfsUser(FederationProvider federationProvider,
-                                   boolean federated,
-                                   boolean useBetaEndpoint){
-        UserQuery query = new UserQuery.Builder().
-                isMamUser(false).
-                isMfaUser(false).
-                isFederatedUser(federated).
-                federationProvider(federationProvider).
-                useBetaEnpoint(useBetaEndpoint).
-                build();
+    public User getUserByAzureEnvironment(String azureEnvironment) {
+
+        UserQueryParameters query = new UserQueryParameters();
+        query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT,  azureEnvironment);
+
         return getLabUser(query);
     }
 
-    public LabResponse getB2cUser(B2CIdentityProvider b2CIdentityProvider,
-                                  boolean useBetaEndpoint){
-        UserQuery query = new UserQuery.Builder().
-                userType(UserType.B2C).
-                b2CIdentityProvider(b2CIdentityProvider).
-                useBetaEnpoint(useBetaEndpoint).
-                build();
+    public User getFederatedAdfsUser(String federationProvider){
+
+        UserQueryParameters query = new UserQueryParameters();
+        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER,  federationProvider);
+        query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
+
         return getLabUser(query);
     }
 
-    public LabResponse getExternalUser(boolean useBetaEndpoint){
-        UserQuery query = new UserQuery.Builder().
-                isExternalUser(true).
-                isMamUser(false).
-                isMfaUser(false).
-                isFederatedUser(false).
-                useBetaEnpoint(useBetaEndpoint).
-                build();
-        return getLabUser(query);
-    }
-
-    // MSA users are not exposed in lab users API. Have to get them directly from keyvault.
-    public LabResponse getMsaUser(){
-        String userName =  keyVaultSecretsProvider.getSecret(LabConstants.USER_MSA_USERNAME_URL);
-        String password = keyVaultSecretsProvider.getSecret(LabConstants.USER_MSA_PASSWORD_URL);
-
-        LabUser user = new LabUser();
-        user.setUpn(userName);
-        user.setPassword(password);
-
-        return new LabResponse(LabConstants.MSA_APP_ID, user);
-    }
-
-    public LabResponse getLabUser(UserQuery userQuery){
+    public User getLabUser(UserQueryParameters userQuery){
         if(userCache.containsKey(userQuery)){
             return userCache.get(userQuery);
         }
-        LabResponse response = labService.getLabResponse(userQuery);
+        User response = labService.getUser(userQuery);
         userCache.put(userQuery, response);
         return response;
-    }
-
-    public String getUserPassword(LabUser user){
-        if(!Strings.isNullOrEmpty(user.getPassword())){
-            return user.getPassword();
-        }
-        if(Strings.isNullOrEmpty(user.getCredentialUrl())){
-            throw new IllegalArgumentException("LabUser credential URL cannot be null");
-        }
-        try{
-            String password = keyVaultSecretsProvider.getSecret(user.getCredentialUrl());
-            user.setPassword(password);
-            return password;
-        } catch (Exception e){
-            throw new RuntimeException("Error getting LabUser password: " + e.getMessage());
-        }
     }
 }

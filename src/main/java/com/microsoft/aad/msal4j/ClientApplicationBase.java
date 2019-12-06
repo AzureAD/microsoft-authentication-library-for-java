@@ -175,9 +175,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
 
         AuthenticationResult result = requestExecutor.executeTokenRequest();
 
-        if(authenticationAuthority.authorityType.equals(AuthorityType.B2C)){
-            tokenCache.saveTokens(requestExecutor, result, authenticationAuthority.host);
-        } else {
+        if(authenticationAuthority.authorityType.equals(AuthorityType.AAD)){
             InstanceDiscoveryMetadataEntry instanceDiscoveryMetadata =
                     AadInstanceDiscovery.GetMetadataEntry(
                             requestAuthority.canonicalAuthorityUrl(),
@@ -186,6 +184,8 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
                             serviceBundle);
 
             tokenCache.saveTokens(requestExecutor, result, instanceDiscoveryMetadata.preferredCache);
+        } else {
+            tokenCache.saveTokens(requestExecutor, result, authenticationAuthority.host);
         }
 
         return result;
@@ -270,11 +270,16 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         public T authority(String val) throws MalformedURLException {
             authority = canonicalizeUrl(val);
 
-            if (Authority.detectAuthorityType(new URL(authority)) != AuthorityType.AAD) {
-                throw new IllegalArgumentException("Unsupported authority type. Please use AAD authority");
+            switch (Authority.detectAuthorityType(new URL(authority))) {
+                case AAD:
+                    authenticationAuthority = new AADAuthority(new URL(authority));
+                    break;
+                case ADFS:
+                    authenticationAuthority = new ADFSAuthority(new URL(authority));
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unsupported authority type.");
             }
-
-            authenticationAuthority = new AADAuthority(new URL(authority));
 
             return self();
         }

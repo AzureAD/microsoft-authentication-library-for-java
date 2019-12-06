@@ -18,6 +18,7 @@ import java.util.List;
 class AccountCacheEntity implements Serializable {
 
     static final String MSSTS_ACCOUNT_TYPE = "MSSTS";
+    static final String ADFS_ACCOUNT_TYPE = "ADFS";
 
     @SerializedName("home_account_id")
     protected String homeAccountId;
@@ -77,6 +78,20 @@ class AccountCacheEntity implements Serializable {
             account.username(idToken.preferredUsername);
             account.name(idToken.name);
         }
+
+        return account;
+    }
+
+    static AccountCacheEntity createADFSAccount(Authority requestAuthority, IdToken idToken) {
+
+        AccountCacheEntity account = new AccountCacheEntity();
+        account.authorityType(ADFS_ACCOUNT_TYPE);
+        account.homeAccountId(idToken.subject);
+
+        account.environment(requestAuthority.host());
+
+        account.username(idToken.upn);
+        account.name(idToken.uniqueName);
 
         return account;
     }

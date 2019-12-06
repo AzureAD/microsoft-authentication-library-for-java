@@ -3,16 +3,14 @@
 
 package com.microsoft.aad.msal4j;
 
-import labapi.LabResponse;
-import labapi.LabUserProvider;
-import labapi.NationalCloud;
+import labapi.*;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
 
-public class NationalCloudIT {
+public class AzureEnvironmentIT {
     private LabUserProvider labUserProvider;
 
     @BeforeClass
@@ -22,41 +20,40 @@ public class NationalCloudIT {
 
     @Test
     public void acquireTokenWithUsernamePassword_AzureGermany() throws Exception {
-        assertAcquireTokenCommon(NationalCloud.GERMAN_CLOUD);
+        assertAcquireTokenCommon(AzureEnvironment.AZURE_GERMANY);
     }
 
     @Test
     public void acquireTokenWithUsernamePassword_AzureChina() throws Exception {
-        assertAcquireTokenCommon(NationalCloud.CHINA_CLOUD);
+        assertAcquireTokenCommon(AzureEnvironment.AZURE_CHINA);
     }
 
     @Test
     public void acquireTokenWithUsernamePassword_AzureGovernment() throws Exception {
-        assertAcquireTokenCommon(NationalCloud.GOVERNMENT_CLOUD);
+        assertAcquireTokenCommon(AzureEnvironment.AZURE_US_GOVERNMENT);
     }
 
-    private void assertAcquireTokenCommon(NationalCloud cloud) throws Exception{
-        LabResponse labResponse = labUserProvider.getDefaultUser(
-                cloud,
-                false);
-        String password = labUserProvider.getUserPassword(labResponse.getUser());
+    private void assertAcquireTokenCommon(String azureEnvironment) throws Exception{
+        User user = labUserProvider.getUserByAzureEnvironment(azureEnvironment);
+
+        App app = LabService.getApp(user.getAppId());
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                labResponse.getAppId()).
-                authority(TestConstants.ORGANIZATIONS_AUTHORITY).
+                user.getAppId()).
+                authority(app.getAuthority() + "organizations/").
                 build();
 
         IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters
-                        .builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-                                labResponse.getUser().getUpn(),
-                                password.toCharArray())
+                        .builder(Collections.singleton(TestConstants.USER_READ_SCOPE),
+                                user.getUpn(),
+                                user.getPassword().toCharArray())
                         .build())
                 .get();
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
         Assert.assertNotNull(result.idToken());
-        // TODO AuthenticationResult should have an getAccountInfo API
-        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+
+        Assert.assertEquals(user.getUpn(), result.account().username());
     }
 }
