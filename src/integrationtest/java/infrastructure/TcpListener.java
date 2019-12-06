@@ -21,6 +21,7 @@ public class TcpListener implements AutoCloseable{
     private BlockingQueue<Boolean> tcpStartUpNotificationQueue;
     private int port;
     private Thread serverThread;
+    private ServerSocket serverSocket;
 
     public TcpListener(BlockingQueue<String> authorizationCodeQueue,
                        BlockingQueue<Boolean> tcpStartUpNotificationQueue){
@@ -31,9 +32,12 @@ public class TcpListener implements AutoCloseable{
     public void startServer(){
         Runnable serverTask = () -> {
             try(ServerSocket serverSocket = createSocket()) {
+                this.serverSocket = serverSocket;
                 port = serverSocket.getLocalPort();
                 tcpStartUpNotificationQueue.put(Boolean.TRUE);
+
                 Socket clientSocket = serverSocket.accept();
+
                 new ClientTask(clientSocket).run();
             } catch (Exception e) {
                 LOG.error("Unable to process client request: " + e.getMessage());
@@ -77,7 +81,7 @@ public class TcpListener implements AutoCloseable{
     }
 
     public ServerSocket createSocket() throws IOException {
-        //int[] ports = { 3843,4584, 4843, 60000 };
+        //int[] ports = { 3843, 4584, 4843, 60000 };
         int[] ports = {8080};
         int tryCount = 5;
 
@@ -104,6 +108,10 @@ public class TcpListener implements AutoCloseable{
     }
 
     public void close(){
-        serverThread.interrupt();
+        try {
+            serverSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
