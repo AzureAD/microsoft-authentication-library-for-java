@@ -33,7 +33,7 @@ public class LabService {
             initLabApp();
         }
         return labApp.acquireToken(ClientCredentialParameters
-                .builder(Collections.singleton(TestConstants.KEYVAULT_DEFAULT_SCOPE))
+                .builder(Collections.singleton(TestConstants.MSIDLAB_DEFAULT_SCOPE))
                 .build()).
                 get().accessToken();
     }
@@ -41,8 +41,8 @@ public class LabService {
     User getUser(UserQueryParameters query){
         try {
             Map<String, String> queryMap = query.parameters;
-            String result = HttpClientHelper.sendRequestToLab
-                    (LabConstants.LAB_USER_ENDPOINT, queryMap, getLabAccessToken());
+            String result = HttpClientHelper.sendRequestToLab(
+                    LabConstants.LAB_USER_ENDPOINT, queryMap, getLabAccessToken());
 
             User[] users = new Gson().fromJson(result, User[].class);
             User user = users[0];
@@ -60,8 +60,8 @@ public class LabService {
 
     public static App getApp(String appId){
         try {
-            String result = HttpClientHelper.sendRequestToLab
-                    (LabConstants.LAB_APP_ENDPOINT, appId, getLabAccessToken());
+            String result = HttpClientHelper.sendRequestToLab(
+                    LabConstants.LAB_APP_ENDPOINT, appId, getLabAccessToken());
             App[] apps = new Gson().fromJson(result, App[].class);
             return apps[0];
         } catch (Exception ex) {
@@ -69,11 +69,11 @@ public class LabService {
         }
     }
 
-    public static Lab getLab(String labId){
+    public static Lab getLab(String labId) {
         String result;
         try {
-            result = HttpClientHelper.sendRequestToLab
-                    (LabConstants.LAB_LAB_ENDPOINT, labId, getLabAccessToken());
+            result = HttpClientHelper.sendRequestToLab(
+                    LabConstants.LAB_LAB_ENDPOINT, labId, getLabAccessToken());
             Lab[] labs = new Gson().fromJson(result, Lab[].class);
             return labs[0];
         } catch (Exception ex) {
@@ -86,8 +86,8 @@ public class LabService {
         try {
             Map<String, String> queryMap = new HashMap<>();
             queryMap.put("secret", labName);
-            result = HttpClientHelper.sendRequestToLab
-                    (LabConstants.LAB_USER_SECRET_ENDPOINT, queryMap, getLabAccessToken());
+            result = HttpClientHelper.sendRequestToLab(
+                    LabConstants.LAB_USER_SECRET_ENDPOINT, queryMap, getLabAccessToken());
 
             return new Gson().fromJson(result, UserSecret.class).value;
         } catch (Exception ex) {

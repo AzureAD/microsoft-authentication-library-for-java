@@ -6,7 +6,8 @@ package com.microsoft.aad.msal4j;
 import java.util.stream.Stream;
 
 public class TestConstants {
-    public final static String KEYVAULT_DEFAULT_SCOPE = "https://msidlab.com/.default";
+    public final static String KEYVAULT_DEFAULT_SCOPE = "https://vault.azure.net/.default";
+    public final static String MSIDLAB_DEFAULT_SCOPE = "https://msidlab.com/.default";
     public final static String GRAPH_DEFAULT_SCOPE = "https://graph.windows.net/.default";
     public final static String USER_READ_SCOPE = "user.read";
     public final static String B2C_LAB_SCOPE = "https://msidlabb2c.onmicrosoft.com/msaapp/user_impersonation";
