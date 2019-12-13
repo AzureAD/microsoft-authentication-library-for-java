@@ -15,19 +15,22 @@ import java.util.Map;
 
 class HttpClientHelper {
 
-    static String sendRequestToLab(String url, Map<String, String> queryMap) throws
+    static String sendRequestToLab(String url, Map<String, String> queryMap, String accessToken) throws
             IOException {
-        return sendRequestToLab(buildUrl(url, queryMap));
+        return sendRequestToLab(buildUrl(url, queryMap), accessToken);
     }
 
-    static String sendRequestToLab(String url, String id) throws
+    static String sendRequestToLab(String url, String id, String accessToken) throws
             IOException {
-        return sendRequestToLab(new URL(url + "/" + id));
+        return sendRequestToLab(new URL(url + "/" + id), accessToken);
     }
 
-    static String sendRequestToLab(URL labUrl) throws
+    static String sendRequestToLab(URL labUrl, String accessToken) throws
             IOException {
         HttpsURLConnection conn = (HttpsURLConnection) labUrl.openConnection();
+
+        conn.setRequestProperty("Authorization", "Bearer " + accessToken);
+
         conn.setReadTimeout(20000);
         conn.setConnectTimeout(20000);
 
