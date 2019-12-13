@@ -29,9 +29,10 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
         URL authorityUrl = new URL(authority);
 
         InstanceDiscoveryMetadataEntry discoveryMetadataEntry =
-                AadInstanceDiscovery.GetMetadataEntry
-                        (authorityUrl, clientApplication.validateAuthority(), msalRequest,
-                                clientApplication.getServiceBundle());
+                AadInstanceDiscovery.GetMetadataEntry(
+                        authorityUrl,
+                        clientApplication,
+                        msalRequest);
 
         URL updatedAuthorityUrl =
                 new URL(authorityUrl.getProtocol(), discoveryMetadataEntry.preferredNetwork, authorityUrl.getFile());

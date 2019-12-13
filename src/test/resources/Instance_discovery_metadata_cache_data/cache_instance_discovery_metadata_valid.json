@@ -74,7 +74,8 @@
       "preferred_network":"login.microsoftonline.com",
       "preferred_cache":"login.windows.net",
       "aliases":["login.microsoftonline.com","login.windows.net","login.microsoft.com","sts.windows.net"],
-      "expires_on":3469639314000},
+      "expires_on":3469639314000
+    },
     "login.partner.microsoftonline.cn":{
       "preferred_network":"login.partner.microsoftonline.cn",
       "preferred_cache":"login.partner.microsoftonline.cn",

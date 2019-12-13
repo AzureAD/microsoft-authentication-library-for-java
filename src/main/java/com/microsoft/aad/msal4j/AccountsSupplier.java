@@ -23,14 +23,13 @@ class AccountsSupplier implements Supplier<Set<IAccount>> {
     public Set<IAccount> get() {
         try {
             InstanceDiscoveryMetadataEntry instanceDiscoveryData =
-                    AadInstanceDiscovery.GetMetadataEntry
-                            (new URL(clientApplication.authority()),
-                                    clientApplication.validateAuthority(),
-                                    msalRequest,
-                                    clientApplication.getServiceBundle());
+                    AadInstanceDiscovery.GetMetadataEntry(
+                            new URL(clientApplication.authority()),
+                            clientApplication,
+                            msalRequest);
 
-            return clientApplication.tokenCache.getAccounts
-                    (clientApplication.clientId(), instanceDiscoveryData.aliases);
+            return clientApplication.tokenCache.getAccounts(
+                    clientApplication.clientId(), instanceDiscoveryData.aliases);
 
         } catch (Exception ex) {
             clientApplication.log.error(
