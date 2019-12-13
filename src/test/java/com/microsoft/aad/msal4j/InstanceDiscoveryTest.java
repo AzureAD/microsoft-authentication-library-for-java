@@ -44,8 +44,21 @@ public class InstanceDiscoveryTest extends PowerMockTestCase {
                 app,
                 new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
+        URL authority = new URL(app.authority());
+
+        PowerMock.mockStaticPartial(AadInstanceDiscovery.class, "sendInstanceDiscoveryRequest");
+
+        PowerMock.expectPrivate(
+                AadInstanceDiscovery.class,
+                "sendInstanceDiscoveryRequest",
+                authority,
+                msalRequest,
+                app.getServiceBundle()).andThrow(new AssertionError()).anyTimes();
+
+        PowerMock.replay(AadInstanceDiscovery.class);
+
         InstanceDiscoveryMetadataEntry entry = AadInstanceDiscovery.GetMetadataEntry(
-                new URL(app.authority()),
+               authority,
                 app,
                 msalRequest);
 
@@ -65,7 +78,7 @@ public class InstanceDiscoveryTest extends PowerMockTestCase {
                 this.getClass(),
                 "/Instance_discovery_metadata_cache_data/cache_instance_discovery_metadata_expired.json");
 
-        assertInstanceDiscoveryMetadataReturned(tokenCacheData);
+        assertInstanceDiscoveryMetadataReturnedFromNetworkAndCached(tokenCacheData);
     }
 
     @Test
@@ -75,10 +88,12 @@ public class InstanceDiscoveryTest extends PowerMockTestCase {
                 this.getClass(),
                 "/Instance_discovery_metadata_cache_data/cache_no_instance_discovery_metadata.json");
 
-        assertInstanceDiscoveryMetadataReturned(tokenCacheData);
+        assertInstanceDiscoveryMetadataReturnedFromNetworkAndCached(tokenCacheData);
     }
 
-    private void assertInstanceDiscoveryMetadataReturned(String tokenCacheData) throws Exception{
+    private void assertInstanceDiscoveryMetadataReturnedFromNetworkAndCached(String tokenCacheData)
+            throws Exception {
+
         PublicClientApplication app = PublicClientApplication.builder("client_id")
                 .correlationId("correlation_id")
                 .authority("https://login.microsoftonline.com/my_tenant")
