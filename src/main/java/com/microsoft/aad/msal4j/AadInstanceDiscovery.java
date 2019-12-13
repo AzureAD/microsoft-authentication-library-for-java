@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 class AadInstanceDiscovery {
     private static final Logger log = LoggerFactory.getLogger(AadInstanceDiscovery.class);
@@ -29,7 +30,6 @@ class AadInstanceDiscovery {
     }
 
     private final static String DEFAULT_TRUSTED_HOST = "login.microsoftonline.com";
-
     private final static String AUTHORIZE_ENDPOINT_TEMPLATE = "https://{host}/{tenant}/oauth2/v2.0/authorize";
     private final static String INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE = "https://{host}/common/discovery/instance";
     private final static String INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE =
@@ -44,6 +44,60 @@ class AadInstanceDiscovery {
         else{
             return Collections.singleton(host);
         }
+    }
+
+    static InstanceDiscoveryMetadataEntry GetMetadataEntry(
+            URL authority,
+            ClientApplicationBase clientApplication,
+            MsalRequest msalRequest) {
+
+        if(cache.isEmpty() && !clientApplication.tokenCache().instanceDiscoveryMetadata.isEmpty()){
+
+            clientApplication.tokenCache().lock.readLock().lock();
+            try {
+
+                log.info("Instance discovery metadata populated from token cache");
+
+                cache.putAll(clientApplication.tokenCache().instanceDiscoveryMetadata);
+            } finally {
+                clientApplication.tokenCache().lock.readLock().unlock();
+            }
+        }
+
+        InstanceDiscoveryMetadataEntry result = cache.get(authority.getAuthority());
+
+        if (result == null ||
+                result.expiresOn < TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())) {
+
+            doInstanceDiscoveryAndCache(
+                    authority,
+                    clientApplication.validateAuthority(),
+                    msalRequest,
+                    clientApplication.getServiceBundle());
+
+            clientApplication.tokenCache().saveInstanceDiscoveryMetadata(msalRequest, cache);
+        }
+
+        return cache.get(authority.getAuthority());
+    }
+
+    private static void doInstanceDiscoveryAndCache(
+            URL authorityUrl,
+            boolean validateAuthority,
+            MsalRequest msalRequest,
+            ServiceBundle serviceBundle) {
+
+        log.info("Instance Discovery information not found in cache. Sending instance discovery " +
+                "request to AAD");
+
+        InstanceDiscoveryResponse instanceDiscoveryResponse =
+                sendInstanceDiscoveryRequest(authorityUrl, msalRequest, serviceBundle);
+
+        if (validateAuthority) {
+            validate(instanceDiscoveryResponse);
+        }
+
+        cacheInstanceDiscoveryMetadata(authorityUrl.getAuthority(), instanceDiscoveryResponse);
     }
 
     private static String getAuthorizeEndpoint(String host, String tenant) {
@@ -74,7 +128,10 @@ class AadInstanceDiscovery {
                 instanceDiscoveryRequestUrl,
                 msalRequest.headers().getReadonlyHeaderMap());
 
-        IHttpResponse httpResponse= HttpHelper.executeHttpRequest(httpRequest, msalRequest.requestContext(), serviceBundle);
+        IHttpResponse httpResponse= HttpHelper.executeHttpRequest(
+                httpRequest,
+                msalRequest.requestContext(),
+                serviceBundle);
 
         return JsonHelper.convertJsonToObject(httpResponse.body(), InstanceDiscoveryResponse.class);
     }
@@ -85,41 +142,28 @@ class AadInstanceDiscovery {
         }
     }
 
-    private static void doInstanceDiscoveryAndCache
-            (URL authorityUrl, boolean validateAuthority, MsalRequest msalRequest, ServiceBundle serviceBundle) throws Exception {
-
-        InstanceDiscoveryResponse instanceDiscoveryResponse =
-                sendInstanceDiscoveryRequest(authorityUrl, msalRequest, serviceBundle);
-
-        if (validateAuthority) {
-            validate(instanceDiscoveryResponse);
-        }
-
-        cacheInstanceDiscoveryMetadata(authorityUrl.getAuthority(), instanceDiscoveryResponse);
-    }
-
-    static InstanceDiscoveryMetadataEntry GetMetadataEntry
-            (URL authorityUrl, boolean validateAuthority, MsalRequest msalRequest, ServiceBundle serviceBundle) throws Exception {
-
-        InstanceDiscoveryMetadataEntry result = cache.get(authorityUrl.getAuthority());
-
-        if (result == null) {
-            doInstanceDiscoveryAndCache(authorityUrl, validateAuthority, msalRequest, serviceBundle);
-        }
-
-        return cache.get(authorityUrl.getAuthority());
-    }
-
-    private static void cacheInstanceDiscoveryMetadata(String host, InstanceDiscoveryResponse instanceDiscoveryResponse) {
+    private static void cacheInstanceDiscoveryMetadata(
+            String host,
+            InstanceDiscoveryResponse instanceDiscoveryResponse) {
         if (instanceDiscoveryResponse.metadata() != null) {
             for (InstanceDiscoveryMetadataEntry entry : instanceDiscoveryResponse.metadata()) {
+
+                // expiry time of 96 hours
+                // millis/sec * sec/min * min/hour * hour/day * days
+                entry.expiresOn =
+                        TimeUnit.MILLISECONDS.toSeconds(
+                                System.currentTimeMillis() + 1000*60*60*24*4);
+
                 for (String alias : entry.aliases) {
                     cache.put(alias, entry);
                 }
             }
         }
         cache.putIfAbsent(host, InstanceDiscoveryMetadataEntry.builder().
-                preferredCache(host).
-                preferredNetwork(host).build());
+                expiresOn(TimeUnit.MILLISECONDS.toSeconds(
+                        System.currentTimeMillis() + 1000*60*60*24*4))
+                .preferredCache(host)
+                .preferredNetwork(host)
+                .build());
     }
 }

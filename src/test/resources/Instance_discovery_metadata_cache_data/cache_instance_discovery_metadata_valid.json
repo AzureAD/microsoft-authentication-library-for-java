@@ -62,60 +62,60 @@
       "preferred_network":"login.microsoftonline.com",
       "preferred_cache":"login.windows.net",
       "aliases":["login.microsoftonline.com","login.windows.net","login.microsoft.com","sts.windows.net"],
-      "expires_on":1576520216
+      "expires_on":3469639314000
     },
     "login.usgovcloudapi.net":{
       "preferred_network":"login.microsoftonline.us",
       "preferred_cache":"login.microsoftonline.us",
       "aliases":["login.microsoftonline.us","login.usgovcloudapi.net"],
-      "expires_on":1576520216
+      "expires_on":3469639314000
     },
     "sts.windows.net":{
       "preferred_network":"login.microsoftonline.com",
       "preferred_cache":"login.windows.net",
       "aliases":["login.microsoftonline.com","login.windows.net","login.microsoft.com","sts.windows.net"],
-      "expires_on":1576520216},
+      "expires_on":3469639314000},
     "login.partner.microsoftonline.cn":{
       "preferred_network":"login.partner.microsoftonline.cn",
       "preferred_cache":"login.partner.microsoftonline.cn",
       "aliases":["login.partner.microsoftonline.cn","login.chinacloudapi.cn"],
-      "expires_on":1576520216
+      "expires_on":3469639314000
     },
     "login-us.microsoftonline.com":{
       "preferred_network":"login-us.microsoftonline.com",
       "preferred_cache":"login-us.microsoftonline.com",
       "aliases":["login-us.microsoftonline.com"],
-      "expires_on":1576520216
+      "expires_on":3469639314000
     },
     "login.microsoft.com":{
       "preferred_network":"login.microsoftonline.com",
       "preferred_cache":"login.windows.net",
       "aliases":["login.microsoftonline.com","login.windows.net","login.microsoft.com","sts.windows.net"],
-      "expires_on":1576520216
+      "expires_on":3469639314000
     },
     "login.chinacloudapi.cn":{
       "preferred_network":"login.partner.microsoftonline.cn",
       "preferred_cache":"login.partner.microsoftonline.cn",
       "aliases":["login.partner.microsoftonline.cn","login.chinacloudapi.cn"],
-      "expires_on":1576520216
+      "expires_on":3469639314000
     },
     "login.microsoftonline.com":{
       "preferred_network":"login.microsoftonline.com",
       "preferred_cache":"login.windows.net",
       "aliases":["login.microsoftonline.com","login.windows.net","login.microsoft.com","sts.windows.net"],
-      "expires_on":1576520216
+      "expires_on":3469639314000
     },
     "login.microsoftonline.de": {
       "preferred_network":"login.microsoftonline.de",
       "preferred_cache":"login.microsoftonline.de",
       "aliases":["login.microsoftonline.de"],
-      "expires_on":1576520216
+      "expires_on":3469639314000
     },
     "login.microsoftonline.us":{
       "preferred_network":"login.microsoftonline.us",
       "preferred_cache":"login.microsoftonline.us",
       "aliases":["login.microsoftonline.us", "login.usgovcloudapi.net"],
-      "expires_on":1576520216
+      "expires_on":3469639314000
     }
   }
 }

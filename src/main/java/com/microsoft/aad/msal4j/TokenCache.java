@@ -8,6 +8,7 @@ import com.google.gson.annotations.SerializedName;
 import com.google.gson.internal.LinkedTreeMap;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
@@ -20,7 +21,7 @@ public class TokenCache implements ITokenCache {
 
     protected static final int MIN_ACCESS_TOKEN_EXPIRE_IN_SEC = 5 * 60;
 
-    transient private ReadWriteLock lock = new ReentrantReadWriteLock();
+    transient ReadWriteLock lock = new ReentrantReadWriteLock();
 
     /**
      * Constructor for token cache
@@ -53,6 +54,9 @@ public class TokenCache implements ITokenCache {
     @SerializedName("AppMetadata")
     Map<String, AppMetadataCacheEntity> appMetadata = new LinkedTreeMap<>();
 
+    @SerializedName("InstanceDiscoveryMetadata")
+    Map<String, InstanceDiscoveryMetadataEntry> instanceDiscoveryMetadata = new LinkedTreeMap<>();
+
     transient ITokenCacheAccessAspect tokenCacheAccessAspect;
 
     private transient String serializedCachedSnapshot;
@@ -74,6 +78,7 @@ public class TokenCache implements ITokenCache {
             this.refreshTokens = deserializedCache.refreshTokens;
             this.idTokens = deserializedCache.idTokens;
             this.appMetadata = deserializedCache.appMetadata;
+            this.instanceDiscoveryMetadata = deserializedCache.instanceDiscoveryMetadata;
         } finally {
             lock.writeLock().unlock();
         }
@@ -203,6 +208,26 @@ public class TokenCache implements ITokenCache {
                     accountCacheEntity.environment(environment);
                     accounts.put(accountCacheEntity.getKey(), accountCacheEntity);
                 }
+            } finally {
+                lock.writeLock().unlock();
+            }
+        }
+    }
+
+    void saveInstanceDiscoveryMetadata(
+            MsalRequest msalRequest,
+            ConcurrentMap<String, InstanceDiscoveryMetadataEntry> cache){
+
+        try(CacheAspect cacheAspect = new CacheAspect(
+                TokenCacheAccessContext.builder()
+                        .clientId(msalRequest.application().clientId())
+                        .tokenCache(this)
+                        .hasCacheChanged(true).build())) {
+
+            try {
+                lock.writeLock().lock();
+
+                instanceDiscoveryMetadata.putAll(cache);
             } finally {
                 lock.writeLock().unlock();
             }

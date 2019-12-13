@@ -179,9 +179,8 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
             InstanceDiscoveryMetadataEntry instanceDiscoveryMetadata =
                     AadInstanceDiscovery.GetMetadataEntry(
                             requestAuthority.canonicalAuthorityUrl(),
-                            validateAuthority,
-                            msalRequest,
-                            serviceBundle);
+                            this,
+                            msalRequest);
 
             tokenCache.saveTokens(requestExecutor, result, instanceDiscoveryMetadata.preferredCache);
         } else {

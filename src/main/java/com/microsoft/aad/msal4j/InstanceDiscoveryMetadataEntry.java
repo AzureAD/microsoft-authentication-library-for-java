@@ -25,6 +25,9 @@ class InstanceDiscoveryMetadataEntry {
     @SerializedName("aliases")
     Set<String> aliases;
 
+    @SerializedName("expires_on")
+    long expiresOn;
+
     public static class InstanceDiscoveryMetadataEntryBuilder{
         public InstanceDiscoveryMetadataEntryBuilder aliases(String[] aliasesArray) {
             Set<String> set =  new TreeSet<>(String.CASE_INSENSITIVE_ORDER);

@@ -43,6 +43,7 @@ public class CachePersistenceIT {
         Assert.assertEquals(app.tokenCache.refreshTokens.size(), 1);
         Assert.assertEquals(app.tokenCache.idTokens.size(), 1);
         Assert.assertEquals(app.tokenCache.appMetadata.size(), 1);
+        Assert.assertEquals(app.tokenCache.instanceDiscoveryMetadata.size(), 10);
 
         // create new instance of app to make sure in memory cache cleared
         app = PublicClientApplication.builder("my_client_id")
@@ -54,6 +55,7 @@ public class CachePersistenceIT {
         Assert.assertEquals(app.tokenCache.refreshTokens.size(), 1);
         Assert.assertEquals(app.tokenCache.idTokens.size(), 1);
         Assert.assertEquals(app.tokenCache.appMetadata.size(), 1);
+        Assert.assertEquals(app.tokenCache.instanceDiscoveryMetadata.size(), 10);
 
         app.removeAccount(app.getAccounts().join().iterator().next()).join();
 
@@ -63,6 +65,7 @@ public class CachePersistenceIT {
         Assert.assertEquals(app.tokenCache.refreshTokens.size(), 0);
         Assert.assertEquals(app.tokenCache.idTokens.size(), 0);
         Assert.assertEquals(app.tokenCache.appMetadata.size(), 1);
+        Assert.assertEquals(app.tokenCache.instanceDiscoveryMetadata.size(), 10);
 
         app = PublicClientApplication.builder("my_client_id")
                 .setTokenCacheAccessAspect(persistenceAspect).build();
@@ -73,5 +76,6 @@ public class CachePersistenceIT {
         Assert.assertEquals(app.tokenCache.refreshTokens.size(), 0);
         Assert.assertEquals(app.tokenCache.idTokens.size(), 0);
         Assert.assertEquals(app.tokenCache.appMetadata.size(), 1);
+        Assert.assertEquals(app.tokenCache.instanceDiscoveryMetadata.size(), 10);
     }
 }
