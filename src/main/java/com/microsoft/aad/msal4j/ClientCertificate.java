@@ -47,7 +47,8 @@ final class ClientCertificate implements IClientCertificate {
                         "certificate key size must be at least " + MIN_KEY_SIZE_IN_BITS);
             }
         }
-        else if("sun.security.mscapi.RSAPrivateKey".equals(key.getClass().getName())){
+        else if("sun.security.mscapi.RSAPrivateKey".equals(key.getClass().getName()) ||
+                "sun.security.mscapi.CPrivateKey".equals(key.getClass().getName())){
             try {
                 Method method = key.getClass().getMethod("length");
                 method.setAccessible(true);

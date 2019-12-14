@@ -145,27 +145,26 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         Map<String, String > headers = capturedMsalRequest.getValue().headers().getReadonlyHeaderMap();
         Assert.assertEquals(capturedMsalRequest.getValue().headers().getReadonlyHeaderMap().
-                get(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME), deviceCodeCorrelationId.get());
+                get(HttpHeaders.CORRELATION_ID_HEADER_NAME), deviceCodeCorrelationId.get());
         Assert.assertNotNull(authResult);
 
         PowerMock.verify();
     }
 
-    // TODO uncomment when ADFS support is added
-//    @Test(expectedExceptions = IllegalArgumentException.class,
-//            expectedExceptionsMessageRegExp = "Invalid authority type. Device Flow is only supported by AAD authority")
-//    public void executeAcquireDeviceCode_AdfsAuthorityUsed_IllegalArgumentExceptionThrown()
-//            throws Exception {
-//
-//        app = PublicClientApplication.builder("client_id")
-//                .authority(ADFS_TENANT_ENDPOINT)
-//                .validateAuthority(false).build();
-//
-//        app.acquireToken
-//                (DeviceCodeFlowParameters
-//                        .builder(Collections.singleton(AAD_RESOURCE_ID), (DeviceCode deviceCode) -> {})
-//                        .build());
-//    }
+    @Test(expectedExceptions = IllegalArgumentException.class,
+            expectedExceptionsMessageRegExp = "Invalid authority type. Device Flow is only supported by AAD authority")
+    public void executeAcquireDeviceCode_AdfsAuthorityUsed_IllegalArgumentExceptionThrown()
+            throws Exception {
+
+        app = PublicClientApplication.builder("client_id")
+                .authority(ADFS_TENANT_ENDPOINT)
+                .validateAuthority(false).build();
+
+        app.acquireToken
+                (DeviceCodeFlowParameters
+                        .builder(Collections.singleton(AAD_RESOURCE_ID), (DeviceCode deviceCode) -> {})
+                        .build());
+    }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Invalid authority type. Device Flow is only supported by AAD authority")
@@ -197,6 +196,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         app = PublicClientApplication.builder("client_id")
                 .authority(AAD_TENANT_ENDPOINT)
                 .validateAuthority(false)
+                .correlationId("corr_id")
                 .build();
 
         DeviceCodeFlowParameters parameters =
@@ -207,10 +207,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
                 parameters,
                 futureReference,
                 app,
-                new RequestContext(
-                        "id",
-                        "corr-id",
-                        PublicApi.ACQUIRE_TOKEN_BY_DEVICE_CODE_FLOW));
+                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_DEVICE_CODE_FLOW));
 
 
         TokenRequestExecutor request = PowerMock.createPartialMock(

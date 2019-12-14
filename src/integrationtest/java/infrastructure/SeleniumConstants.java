@@ -8,12 +8,18 @@
 package infrastructure;
 
 public class SeleniumConstants {
-
-    final static String WEB_UPN_INPUT_ID = "i0116";
+    //ADFS v4
     final static String ADFSV4_WEB_PASSWORD_ID = "passwordInput";
     final static String ADFSV4_WEB_SUBMIT_ID = "submitButton";
+
+    final static String WEB_UPN_INPUT_ID = "i0116";
     final static String WEB_PASSWORD_ID = "i0118";
     final static String WEB_SUBMIT_ID = "idSIButton9";
+
+    //ADFS2019
+    final static String ADFS2019_UPN_INPUT_ID = "userNameInput";
+    final static String ADFS2019_PASSWORD_ID = "passwordInput";
+    final static String ADFS2019_SUBMIT_ID = "submitButton";
 
     // ADFSv2 fields
     final static String ADFSV2_WEB_USERNAME_INPUT_ID = "ContentPlaceHolder1_UsernameTextBox";

@@ -86,13 +86,10 @@ class TokenRequestExecutor {
                 String idTokenJson = tokens.getIDToken().getParsedParts()[1].decodeToString();
                 IdToken idToken = JsonHelper.convertJsonToObject(idTokenJson, IdToken.class);
 
+                AuthorityType type = msalRequest.application().authenticationAuthority.authorityType;
                 if (!StringHelper.isBlank(response.getClientInfo())) {
-
-                    AuthorityType type = msalRequest.application().authenticationAuthority.authorityType;
                     if(type == AuthorityType.B2C){
-
                         B2CAuthority authority = (B2CAuthority) msalRequest.application().authenticationAuthority;
-
                         accountCacheEntity = AccountCacheEntity.create(
                                 response.getClientInfo(),
                                 requestAuthority,
@@ -104,6 +101,9 @@ class TokenRequestExecutor {
                                 requestAuthority,
                                 idToken);
                     }
+                }
+                else if(type == AuthorityType.ADFS){
+                    accountCacheEntity = AccountCacheEntity.createADFSAccount(requestAuthority, idToken);
                 }
             }
             long currTimestampSec = new Date().getTime() / 1000;

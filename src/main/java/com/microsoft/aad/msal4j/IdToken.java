@@ -20,6 +20,8 @@ class IdToken {
     static final String PREFERRED_USERNAME = "preferred_username";
     static final String OBJECT_IDENTIFIER = "oid";
     static final String TENANT_IDENTIFIER = "tid";
+    static final String UPN = "upn";
+    static final String UNIQUE_NAME = "unique_name";
 
     @SerializedName("iss")
     protected String issuer;
@@ -51,6 +53,12 @@ class IdToken {
     @SerializedName("tid")
     protected String tenantIdentifier;
 
+    @SerializedName("upn")
+    protected String upn;
+
+    @SerializedName("unique_name")
+    protected String uniqueName;
+
     static IdToken createFromJWTClaims(final JWTClaimsSet claims) throws ParseException {
         IdToken idToken = new IdToken();
 
@@ -66,6 +74,9 @@ class IdToken {
         idToken.preferredUsername = claims.getStringClaim(PREFERRED_USERNAME);
         idToken.objectIdentifier = claims.getStringClaim(OBJECT_IDENTIFIER);
         idToken.tenantIdentifier = claims.getStringClaim(TENANT_IDENTIFIER);
+
+        idToken.upn = claims.getStringClaim(UPN);
+        idToken.uniqueName = claims.getStringClaim(UNIQUE_NAME);
 
         return idToken;
     }
