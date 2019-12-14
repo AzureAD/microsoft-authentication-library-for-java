@@ -1,3 +1,9 @@
+Version 1.2.0
+=============
+- Added support for ADFS 2019
+- Added option to add application name and version for telemetry
+- Bug fix: support for ClientCredential on Windows for JDK12+ #128
+
 Version 1.1.0
 =============
 - Added support for configuring HTTP client
