@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import org.apache.commons.text.StringEscapeUtils;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -40,5 +41,14 @@ public class WSTrustRequestTest {
 
         Assert.assertTrue(msg.contains("<a:EndpointReference><a:Address>cloudAudienceUrn</a:Address></a:EndpointReference>"));
         Assert.assertTrue(!msg.contains("<o:Security s:mustUnderstand"));
+    }
+
+    @Test void escapeXMLElementDataTest(){
+        String DATA_TO_ESCAPE = "o_!as & a34~'fe<> \" a1";
+        String XML_ESCAPED_DATA = "o_!as &amp; a34~&apos;fe&lt;&gt; &quot; a1";
+
+        Assert.assertEquals(WSTrustRequest.escapeXMLElementData(DATA_TO_ESCAPE), XML_ESCAPED_DATA);
+        Assert.assertEquals(WSTrustRequest.escapeXMLElementData(DATA_TO_ESCAPE),
+                StringEscapeUtils.escapeXml10(DATA_TO_ESCAPE));
     }
 }

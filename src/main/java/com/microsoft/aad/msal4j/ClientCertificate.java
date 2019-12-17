@@ -22,7 +22,7 @@ import java.util.Enumeration;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import org.apache.commons.codec.binary.Base64;
+import java.util.Base64;
 
 final class ClientCertificate implements IClientCertificate {
 
@@ -72,12 +72,12 @@ final class ClientCertificate implements IClientCertificate {
 
     public String publicCertificateHash()
             throws CertificateEncodingException, NoSuchAlgorithmException {
-        return Base64.encodeBase64String(ClientCertificate
+        return Base64.getEncoder().encodeToString(ClientCertificate
                 .getHash(this.publicCertificate.getEncoded()));
     }
 
     public String publicCertificate() throws CertificateEncodingException {
-        return Base64.encodeBase64String(this.publicCertificate.getEncoded());
+        return Base64.getEncoder().encodeToString(this.publicCertificate.getEncoded());
     }
 
     static ClientCertificate create(final InputStream pkcs12Certificate, final String password)
