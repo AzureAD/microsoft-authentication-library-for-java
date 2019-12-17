@@ -3,7 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import org.apache.commons.codec.binary.Base64;
+import java.util.Base64;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -154,7 +154,7 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             digest.update(input.getBytes("UTF-8"));
             byte[] hash = digest.digest();
-            return Base64.encodeBase64URLSafeString(hash);
+            return Base64.getUrlEncoder().encodeToString(hash);
         }
         catch (NoSuchAlgorithmException | UnsupportedEncodingException ex){
             clientApplication.log.warn(LogHelper.createMessage(

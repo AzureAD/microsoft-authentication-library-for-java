@@ -186,6 +186,32 @@ class WSTrustRequest {
         return messageBuilder;
     }
 
+    static String escapeXMLElementData(String data){
+        StringBuilder sb = new StringBuilder();
+        for(char ch : data.toCharArray()){
+            switch (ch){
+                case '<':
+                    sb.append("&lt;");
+                    break;
+                case '>':
+                    sb.append("&gt;");
+                    break;
+                case '\"':
+                    sb.append("&quot;");
+                    break;
+                case '\'':
+                    sb.append("&apos;");
+                    break;
+                case '&':
+                    sb.append("&amp;");
+                    break;
+                default:
+                    sb.append(ch);
+            }
+        }
+        return sb.toString();
+    }
+
     private static StringBuilder buildSecurityHeader(
             StringBuilder securityHeaderBuilder, String username,
             String password, WSTrustVersion version) {
