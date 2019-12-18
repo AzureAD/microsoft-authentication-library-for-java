@@ -3,8 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import org.apache.commons.text.StringEscapeUtils;
-
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -219,8 +217,8 @@ class WSTrustRequest {
         StringBuilder messageCredentialsBuilder = new StringBuilder(
                 MAX_EXPECTED_MESSAGE_SIZE);
         String guid = UUID.randomUUID().toString();
-        username = StringEscapeUtils.escapeXml10(username);
-        password = StringEscapeUtils.escapeXml10(password);
+        username = escapeXMLElementData(username);
+        password = escapeXMLElementData(password);
 
         DateFormat dateFormat = new SimpleDateFormat(
                 "yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
