@@ -7,11 +7,11 @@ import com.nimbusds.jose.util.Base64URL;
 import com.nimbusds.oauth2.sdk.AuthorizationGrant;
 import com.nimbusds.oauth2.sdk.ResourceOwnerPasswordCredentialsGrant;
 import com.nimbusds.oauth2.sdk.SAML2BearerGrant;
-import org.apache.commons.codec.binary.Base64;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSupplier {
 
@@ -93,10 +93,10 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
         AuthorizationGrant updatedGrant;
         if (response.isTokenSaml2()) {
             updatedGrant = new SAML2BearerGrant(new Base64URL(
-                    Base64.encodeBase64String(response.getToken().getBytes(StandardCharsets.UTF_8))));
+                    Base64.getEncoder().encodeToString(response.getToken().getBytes(StandardCharsets.UTF_8))));
         } else {
             updatedGrant = new SAML11BearerGrant(new Base64URL(
-                    Base64.encodeBase64String(response.getToken()
+                    Base64.getEncoder().encodeToString(response.getToken()
                             .getBytes(StandardCharsets.UTF_8))));
         }
         return updatedGrant;

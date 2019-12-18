@@ -3,8 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import org.apache.commons.text.StringEscapeUtils;
-
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -186,6 +184,32 @@ class WSTrustRequest {
         return messageBuilder;
     }
 
+    static String escapeXMLElementData(String data){
+        StringBuilder sb = new StringBuilder();
+        for(char ch : data.toCharArray()){
+            switch (ch){
+                case '<':
+                    sb.append("&lt;");
+                    break;
+                case '>':
+                    sb.append("&gt;");
+                    break;
+                case '\"':
+                    sb.append("&quot;");
+                    break;
+                case '\'':
+                    sb.append("&apos;");
+                    break;
+                case '&':
+                    sb.append("&amp;");
+                    break;
+                default:
+                    sb.append(ch);
+            }
+        }
+        return sb.toString();
+    }
+
     private static StringBuilder buildSecurityHeader(
             StringBuilder securityHeaderBuilder, String username,
             String password, WSTrustVersion version) {
@@ -193,8 +217,8 @@ class WSTrustRequest {
         StringBuilder messageCredentialsBuilder = new StringBuilder(
                 MAX_EXPECTED_MESSAGE_SIZE);
         String guid = UUID.randomUUID().toString();
-        username = StringEscapeUtils.escapeXml10(username);
-        password = StringEscapeUtils.escapeXml10(password);
+        username = escapeXMLElementData(username);
+        password = escapeXMLElementData(password);
 
         DateFormat dateFormat = new SimpleDateFormat(
                 "yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
