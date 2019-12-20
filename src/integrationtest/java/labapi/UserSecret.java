@@ -3,13 +3,13 @@
 
 package labapi;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class UserSecret {
 
-    @SerializedName("secret")
+    @JsonProperty("secret")
     String secret;
 
-    @SerializedName("value")
+    @JsonProperty("value")
     String value;
 }

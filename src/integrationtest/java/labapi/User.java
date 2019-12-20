@@ -3,53 +3,53 @@
 
 package labapi;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 public class User
 {
-    @SerializedName("appId")
+    @JsonProperty("appId")
     private String appId;
 
-    @SerializedName("objectId")
+    @JsonProperty("objectId")
     private String objectId;
 
-    @SerializedName("userType")
+    @JsonProperty("userType")
     private String userType;
 
-    @SerializedName("displayName")
+    @JsonProperty("displayName")
     private String displayName;
 
-    @SerializedName("licenses")
+    @JsonProperty("licenses")
     private String licenses;
 
-    @SerializedName("upn")
+    @JsonProperty("upn")
     private String upn;
 
-    @SerializedName("mfa")
+    @JsonProperty("mfa")
     private String mfa;
 
-    @SerializedName("protectionPolicy")
+    @JsonProperty("protectionPolicy")
     private String protectionPolicy;
 
-    @SerializedName("homeDomain")
+    @JsonProperty("homeDomain")
     private String homeDomain;
 
-    @SerializedName("homeUPN")
+    @JsonProperty("homeUPN")
     private String homeUPN;
 
-    @SerializedName("b2cProvider")
+    @JsonProperty("b2cProvider")
     private String b2cProvider;
 
-    @SerializedName("labName")
+    @JsonProperty("labName")
     private String labName;
 
-    @SerializedName("lastUpdatedBy")
+    @JsonProperty("lastUpdatedBy")
     private String lastUpdatedBy;
 
-    @SerializedName("lastUpdatedDate")
+    @JsonProperty("lastUpdatedDate")
     private String lastUpdatedDate;
 
     @Setter

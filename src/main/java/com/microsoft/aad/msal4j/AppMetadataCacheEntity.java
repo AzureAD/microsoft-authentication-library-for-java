@@ -3,7 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -18,13 +18,13 @@ class AppMetadataCacheEntity {
 
     public static final String APP_METADATA_CACHE_ENTITY_ID = "appmetadata";
 
-    @SerializedName("client_id")
+    @JsonProperty("client_id")
     private String clientId;
 
-    @SerializedName("environment")
+    @JsonProperty("environment")
     private String environment;
 
-    @SerializedName("family_id")
+    @JsonProperty("family_id")
     private String familyId;
 
     String getKey(){

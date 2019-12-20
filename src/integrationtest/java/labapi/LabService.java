@@ -3,7 +3,9 @@
 
 package labapi;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.aad.msal4j.*;
 
 import java.net.MalformedURLException;
@@ -15,6 +17,17 @@ import java.util.concurrent.ExecutionException;
 public class LabService {
 
     static ConfidentialClientApplication labApp;
+
+    static ObjectMapper mapper = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+    static <T> T convertJsonToObject(final String json, final Class<T> clazz) {
+        try {
+            return mapper.readValue(json, clazz);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("JsonProcessingException: " + e.getMessage(), e);
+        }
+    }
 
     static void initLabApp() throws MalformedURLException {
         KeyVaultSecretsProvider keyVaultSecretsProvider = new KeyVaultSecretsProvider();
@@ -44,7 +57,7 @@ public class LabService {
             String result = HttpClientHelper.sendRequestToLab(
                     LabConstants.LAB_USER_ENDPOINT, queryMap, getLabAccessToken());
 
-            User[] users = new Gson().fromJson(result, User[].class);
+            User[] users = convertJsonToObject(result, User[].class);
             User user = users[0];
             user.setPassword(getUserSecret(user.getLabName()));
             if (query.parameters.containsKey(UserQueryParameters.FEDERATION_PROVIDER)) {
@@ -62,7 +75,7 @@ public class LabService {
         try {
             String result = HttpClientHelper.sendRequestToLab(
                     LabConstants.LAB_APP_ENDPOINT, appId, getLabAccessToken());
-            App[] apps = new Gson().fromJson(result, App[].class);
+            App[] apps = convertJsonToObject(result, App[].class);
             return apps[0];
         } catch (Exception ex) {
             throw new RuntimeException("Error getting app from lab: " + ex.getMessage());
@@ -74,7 +87,7 @@ public class LabService {
         try {
             result = HttpClientHelper.sendRequestToLab(
                     LabConstants.LAB_LAB_ENDPOINT, labId, getLabAccessToken());
-            Lab[] labs = new Gson().fromJson(result, Lab[].class);
+            Lab[] labs = convertJsonToObject(result, Lab[].class);
             return labs[0];
         } catch (Exception ex) {
             throw new RuntimeException("Error getting lab from lab: " + ex.getMessage());
@@ -89,7 +102,7 @@ public class LabService {
             result = HttpClientHelper.sendRequestToLab(
                     LabConstants.LAB_USER_SECRET_ENDPOINT, queryMap, getLabAccessToken());
 
-            return new Gson().fromJson(result, UserSecret.class).value;
+            return convertJsonToObject(result, UserSecret.class).value;
         } catch (Exception ex) {
             throw new RuntimeException("Error getting user secret from lab: " + ex.getMessage());
         }
