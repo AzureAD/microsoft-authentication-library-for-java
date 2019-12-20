@@ -24,17 +24,4 @@ class InstanceDiscoveryMetadataEntry {
 
     @SerializedName("aliases")
     Set<String> aliases;
-
-    public static class InstanceDiscoveryMetadataEntryBuilder{
-        public InstanceDiscoveryMetadataEntryBuilder aliases(String[] aliasesArray) {
-            Set<String> set =  new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-
-            if(aliasesArray != null){
-                set.addAll(Arrays.asList(aliasesArray));
-            }
-            aliases = Collections.unmodifiableSet(set);
-
-            return this;
-        }
-    }
 }

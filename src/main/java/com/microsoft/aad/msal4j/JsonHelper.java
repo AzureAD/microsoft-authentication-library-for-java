@@ -9,19 +9,11 @@ import java.io.StringReader;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-/**
- *
- */
 class JsonHelper {
-    /**
-     * 
-     * @param json
-     * @param clazz
-     * @return
-     */
-    static <T> T convertJsonToObject(final String json, final Class<T> clazz) {
+
+    static <T> T convertJsonToObject(final String json, final Class<T> classOfT) {
         final Reader reader = new StringReader(json);
         final Gson gson = new GsonBuilder().create();
-        return gson.fromJson(reader, clazz);
+        return gson.fromJson(reader, classOfT);
     }
 }
