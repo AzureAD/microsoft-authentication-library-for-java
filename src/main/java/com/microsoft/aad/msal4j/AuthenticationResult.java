@@ -45,8 +45,8 @@ final class AuthenticationResult implements Serializable, IAuthenticationResult 
         }
         try {
             String idTokenJson = JWTParser.parse(idToken).getParsedParts()[1].decodeToString();
-            return JsonHelper.convertJsonToObject(idTokenJson, IdToken.class);
 
+            return JsonHelper.convertJsonToObject(idTokenJson, IdToken.class);
         } catch (ParseException e) {
             e.printStackTrace();
         }

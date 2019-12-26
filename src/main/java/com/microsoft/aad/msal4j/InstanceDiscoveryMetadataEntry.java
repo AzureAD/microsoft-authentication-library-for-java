@@ -3,7 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,13 +16,13 @@ import java.util.*;
 @Builder
 class InstanceDiscoveryMetadataEntry {
 
-    @SerializedName("preferred_network")
+    @JsonProperty("preferred_network")
     String preferredNetwork;
 
-    @SerializedName("preferred_cache")
+    @JsonProperty("preferred_cache")
     String preferredCache;
 
-    @SerializedName("aliases")
+    @JsonProperty("aliases")
     Set<String> aliases;
 
     public static class InstanceDiscoveryMetadataEntryBuilder{

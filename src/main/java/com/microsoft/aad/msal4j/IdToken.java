@@ -3,7 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.nimbusds.jwt.JWTClaimsSet;
 
 import java.text.ParseException;
@@ -23,40 +23,40 @@ class IdToken {
     static final String UPN = "upn";
     static final String UNIQUE_NAME = "unique_name";
 
-    @SerializedName("iss")
+    @JsonProperty("iss")
     protected String issuer;
 
-    @SerializedName("sub")
+    @JsonProperty("sub")
     protected String subject;
 
-    @SerializedName("aud")
+    @JsonProperty("aud")
     protected String audience ;
 
-    @SerializedName("exp")
+    @JsonProperty("exp")
     protected Long expirationTime;
 
-    @SerializedName("iat")
+    @JsonProperty("iat")
     protected Long issuedAt;
 
-    @SerializedName("nbf")
+    @JsonProperty("nbf")
     protected Long notBefore;
 
-    @SerializedName("name")
+    @JsonProperty("name")
     protected String name;
 
-    @SerializedName("preferred_username")
+    @JsonProperty("preferred_username")
     protected String preferredUsername;
 
-    @SerializedName("oid")
+    @JsonProperty("oid")
     protected String objectIdentifier;
 
-    @SerializedName("tid")
+    @JsonProperty("tid")
     protected String tenantIdentifier;
 
-    @SerializedName("upn")
+    @JsonProperty("upn")
     protected String upn;
 
-    @SerializedName("unique_name")
+    @JsonProperty("unique_name")
     protected String uniqueName;
 
     static IdToken createFromJWTClaims(final JWTClaimsSet claims) throws ParseException {
