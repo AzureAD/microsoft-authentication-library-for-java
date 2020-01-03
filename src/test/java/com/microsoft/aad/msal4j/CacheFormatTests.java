@@ -110,21 +110,25 @@ public class CacheFormatTests extends AbstractMsalTests {
     }
 
     @Test
-    public void AADTokenCacheEntitiesFormatTest() throws JSONException, IOException, ParseException, URISyntaxException {
+    public void AADTokenCacheEntitiesFormatTest() throws JSONException, IOException, ParseException, URISyntaxException,
+            java.text.ParseException {
         tokenCacheEntitiesFormatTest("/AAD_cache_data");
     }
 
     @Test
-    public void MSATokenCacheEntitiesFormatTest() throws JSONException, IOException, ParseException, URISyntaxException {
+    public void MSATokenCacheEntitiesFormatTest() throws JSONException, IOException, ParseException, URISyntaxException,
+            java.text.ParseException {
         tokenCacheEntitiesFormatTest("/MSA_cache_data");
     }
 
     @Test
-    public void FociTokenCacheEntitiesFormatTest() throws JSONException, IOException, ParseException, URISyntaxException {
+    public void FociTokenCacheEntitiesFormatTest() throws JSONException, IOException, ParseException, URISyntaxException,
+            java.text.ParseException {
         tokenCacheEntitiesFormatTest("/Foci_cache_data");
     }
 
-    public void tokenCacheEntitiesFormatTest(String folder) throws URISyntaxException, IOException, ParseException, JSONException {
+    public void tokenCacheEntitiesFormatTest(String folder) throws
+            URISyntaxException, IOException, ParseException, JSONException, java.text.ParseException {
         String CLIENT_ID = "b6c69a37-df96-4db0-9088-2ab96e1d8215";
         String AUTHORIZE_REQUEST_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize";
 

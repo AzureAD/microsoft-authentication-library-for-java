@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import com.nimbusds.jwt.JWTParser;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.SerializeException;
 import com.nimbusds.oauth2.sdk.http.CommonContentTypes;
@@ -37,7 +38,7 @@ class TokenRequestExecutor {
     }
 
     AuthenticationResult executeTokenRequest() throws ParseException,
-            MsalServiceException, SerializeException, IOException {
+            MsalServiceException, SerializeException, IOException, java.text.ParseException {
 
         OAuthHttpRequest oAuthHttpRequest = createOauthHttpRequest();
         HTTPResponse oauthHttpResponse = oAuthHttpRequest.send();
@@ -68,22 +69,16 @@ class TokenRequestExecutor {
     }
 
     private AuthenticationResult createAuthenticationResultFromOauthHttpResponse(
-            HTTPResponse oauthHttpResponse) throws ParseException{
+            HTTPResponse oauthHttpResponse) throws ParseException, java.text.ParseException {
         AuthenticationResult result;
 
         if (oauthHttpResponse.getStatusCode() == HTTPResponse.SC_OK) {
             final TokenResponse response = TokenResponse.parseHttpResponse(oauthHttpResponse);
 
-            OIDCTokens tokens = response.getOIDCTokens();
-            String refreshToken = null;
-            if (tokens.getRefreshToken() != null) {
-                refreshToken = tokens.getRefreshToken().getValue();
-            }
-
             AccountCacheEntity accountCacheEntity = null;
 
-            if (tokens.getIDToken() != null) {
-                String idTokenJson = tokens.getIDToken().getParsedParts()[1].decodeToString();
+            if (response.getIdToken() != null) {
+                String idTokenJson = JWTParser.parse(response.getIdToken()).getParsedParts()[1].decodeToString();
                 IdToken idToken = JsonHelper.convertJsonToObject(idTokenJson, IdToken.class);
 
                 AuthorityType type = msalRequest.application().authenticationAuthority.authorityType;
@@ -109,10 +104,10 @@ class TokenRequestExecutor {
             long currTimestampSec = new Date().getTime() / 1000;
 
             result = AuthenticationResult.builder().
-                    accessToken(tokens.getAccessToken().getValue()).
-                    refreshToken(refreshToken).
+                    accessToken(response.getAccessToken()).
+                    refreshToken(response.getRefreshToken()).
                     familyId(response.getFoci()).
-                    idToken(tokens.getIDTokenString()).
+                    idToken(response.getIdToken()).
                     environment(requestAuthority.host()).
                     expiresOn(currTimestampSec + response.getExpiresIn()).
                     extExpiresOn(response.getExtExpiresIn() > 0 ? currTimestampSec + response.getExtExpiresIn() : 0).

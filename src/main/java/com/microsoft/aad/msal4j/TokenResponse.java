@@ -5,27 +5,29 @@ package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
-import com.nimbusds.oauth2.sdk.token.AccessToken;
-import com.nimbusds.oauth2.sdk.token.RefreshToken;
 import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
-import com.nimbusds.openid.connect.sdk.OIDCTokenResponse;
-import com.nimbusds.openid.connect.sdk.token.OIDCTokens;
 import lombok.AccessLevel;
 import lombok.Getter;
 import net.minidev.json.JSONObject;
 
 @Getter(AccessLevel.PACKAGE)
-class TokenResponse extends OIDCTokenResponse {
+class TokenResponse {
 
+    private String accessToken;
+    private String refreshToken;
+    private String idToken;
     private String scope;
     private String clientInfo;
     private long expiresIn;
     private long extExpiresIn;
     private String foci;
 
-    TokenResponse(final AccessToken accessToken, final RefreshToken refreshToken, final String idToken,
+    TokenResponse(final String accessToken, final String refreshToken, final String idToken,
                   final String scope, String clientInfo, long expiresIn, long extExpiresIn, String foci) {
-        super(new OIDCTokens(idToken, accessToken, refreshToken));
+
+        this.accessToken = accessToken;
+        this.refreshToken = refreshToken;
+        this.idToken = idToken; //TODO: Do we assume that IdToken won't be null or empty
         this.scope = scope;
         this.clientInfo = clientInfo;
         this.expiresIn = expiresIn;
@@ -45,17 +47,23 @@ class TokenResponse extends OIDCTokenResponse {
     static TokenResponse parseJsonObject(final JSONObject jsonObject)
             throws ParseException {
 
-        final AccessToken accessToken = AccessToken.parse(jsonObject);
-        final RefreshToken refreshToken = RefreshToken.parse(jsonObject);
-
-        // In same cases such as client credentials there isn't an id token. Instead of a null value
-        // use an empty string in order to avoid an IllegalArgumentException from OIDCTokens.
-        String idTokenValue = "";
-        if (jsonObject.containsKey("id_token")) {
-            idTokenValue =  jsonObject.getAsString("id_token");
+        // In some B2C scenarios, no access or refresh tokens will be returned.
+        String accessToken = null;
+        if (jsonObject.containsKey("access_token")) {
+            accessToken = jsonObject.getAsString("access_token");
         }
 
-        // Parse value
+        String refreshToken = null;
+        if (jsonObject.containsKey("refresh_token")) {
+            refreshToken = jsonObject.getAsString("refresh_token");
+        }
+
+        // In some cases such as client credentials there isn't an id token.
+        String idTokenValue = null;
+        if (jsonObject.containsKey("id_token")) {
+            idTokenValue = jsonObject.getAsString("id_token");
+        }
+
         String scopeValue = null;
         if (jsonObject.containsKey("scope")) {
             scopeValue = jsonObject.getAsString("scope");
@@ -81,7 +89,7 @@ class TokenResponse extends OIDCTokenResponse {
             foci = JSONObjectUtils.getString(jsonObject, "foci");
         }
 
-        return new TokenResponse(accessToken, refreshToken,idTokenValue, scopeValue, clientInfo,
+        return new TokenResponse(accessToken, refreshToken, idTokenValue, scopeValue, clientInfo,
                 expiresIn, ext_expires_in, foci);
     }
 }

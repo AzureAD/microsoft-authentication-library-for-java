@@ -28,9 +28,49 @@ import java.util.HashMap;
 public class TokenRequestExecutorTest extends AbstractMsalTests {
 
     @Test
+    public void executeOauthRequest_NoAccessTokenOrRefreshTokenInResponse()
+            throws URISyntaxException, IOException, ParseException, java.text.ParseException {
+
+        TokenRequestExecutor request = createMockedTokenRequest();
+
+        OAuthHttpRequest msalOAuthHttpRequest = PowerMock.createMock(OAuthHttpRequest.class);
+
+        HTTPResponse httpResponse = new HTTPResponse(HTTPResponse.SC_OK);
+
+        // Response returned from B2C when you chose not to request AT or RT in azure portal.
+        String content = "{\"id_token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Ilg1ZVhrNHh5b2pORnVtMWtsMll0djhk" +
+                "bE5QNC1jNTdkTzZRR1RWQndhTmsifQ.eyJleHAiOjE1NzgwODgxOTksIm5iZiI6MTU3ODA4NDU5OSwidmVyIjoiMS4wIiwiaXNzIjo" +
+                "iaHR0cHM6Ly9zYWdvbnphbGIyYy5iMmNsb2dpbi5jb20vZGRjYmVhMGMtZDM5Yi00MzY2LTg0MzUtODEwMjg0Nzk1MWY5L3YyLjAvI" +
+                "iwic3ViIjoiMGIzOTBkNWQtOTE2ZS00MmY5LWI2ZjItZWUwNWEzNzlkMDA4IiwiYXVkIjoiZTU0NmE4ZTktZDZmMi00OTNmLWE3ZDc" +
+                "tNDFjMDEzMDc0ZWVlIiwibm9uY2UiOiIzZWE5Y2MzNi01MzM0LTQwMjctYjI0OC0wNjM4ZWVkYWEwYWMiLCJpYXQiOjE1NzgwODQ1" +
+                "OTksImF1dGhfdGltZSI6MTU3ODA4NDU5OSwiZ2l2ZW5fbmFtZSI6IlNhbnRpYWdvIiwidGZwIjoiQjJDXzFfZWRpdF9wcm9maWxlIn0" +
+                ".j_Cym4POWxgrMQ1CcOV4gwSASpbXzVhAMw6eL74ZGy-eevb_Wn-n7sJ0Mj0gte6gEatONRUee6xlRxLaslwopm89XgQ30z5IEauG7aTg" +
+                "w_Qb4rvCT8kEIlCSUl37R72R-vJpw2t-TM2rrbjz7hYSV9QopBUYxm3BDEnVkmCvLgs0tmcbPvF3i46iLpB4P4yWC9Gdn_udJ67_dTUgQQ_" +
+                "Sz2kGCmB0urdv7bCaazw7YFtOifWV-DQTym_lfVQadBCpqpDRdRsM42-HFarCOgQenq9AVQ4WmPLXG_RudbtIp07Flqlxg-Cq2wdDfNI" +
+                "tkSZpLZLQGpKWTfGWPFUPjb6H9Q\",\"token_type\":\"Bearer\",\"not_before\":1578084599,\"client_info\":\"eyJ1aW" +
+                "QiOiIwYjM5MGQ1ZC05MTZlLTQyZjktYjZmMi1lZTA1YTM3OWQwMDgtYjJjXzFfZWRpdF9wcm9maWxlIiwidXRpZCI6ImRkY2JlYTBjLWQzOW" +
+                "ItNDM2Ni04NDM1LTgxMDI4NDc5NTFmOSJ9\",\"scope\":\"\"}";
+
+        httpResponse.setContent(content);
+        httpResponse.setContentType(CommonContentTypes.APPLICATION_JSON);
+
+        EasyMock.expect(request.createOauthHttpRequest()).andReturn(msalOAuthHttpRequest).times(1);
+        EasyMock.expect(msalOAuthHttpRequest.send()).andReturn(httpResponse).times(1);
+        PowerMock.replay(request, msalOAuthHttpRequest);
+
+        AuthenticationResult result = request.executeTokenRequest();
+
+        Assert.assertNotNull(result.idToken());
+        Assert.assertNotNull(result.account());
+        Assert.assertNull(result.accessToken());
+        Assert.assertNull(result.refreshToken());
+        // Assert.assertEquals(); //TODO: what should be the expiry date in AuthenticationResult when response does not contain expires_on?
+    }
+
+    @Test
     public void executeOAuthRequest_SCBadRequestErrorInvalidGrant_InteractionRequiredException()
             throws SerializeException, ParseException, MsalException,
-            IOException, URISyntaxException {
+            IOException, URISyntaxException, java.text.ParseException {
 
         TokenRequestExecutor request = createMockedTokenRequest();
 
@@ -68,7 +108,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
     @Test
     public void executeOAuthRequest_SCBadRequestErrorInvalidGrant_SubErrorFilteredServiceExceptionThrown()
             throws SerializeException, ParseException, MsalException,
-            IOException, URISyntaxException {
+            IOException, URISyntaxException, java.text.ParseException {
 
         TokenRequestExecutor request = createMockedTokenRequest();
 
@@ -209,7 +249,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
 
     @Test
     public void testExecuteOAuth_Success() throws SerializeException, ParseException, MsalException,
-            IOException, URISyntaxException {
+            IOException, URISyntaxException, java.text.ParseException {
 
         PublicClientApplication app = PublicClientApplication.builder("id").correlationId("corr-id").build();
 
@@ -267,7 +307,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
 
     @Test(expectedExceptions = MsalException.class)
     public void testExecuteOAuth_Failure() throws SerializeException,
-            ParseException, MsalException, IOException, URISyntaxException {
+            ParseException, MsalException, IOException, URISyntaxException, java.text.ParseException {
 
         PublicClientApplication app = PublicClientApplication.builder("id").correlationId("corr-id").build();
 

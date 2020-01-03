@@ -34,15 +34,11 @@ public class TokenResponseTest extends AbstractMsalTests {
     private final long  extExpiresIn = 12345678910L;
 
     @Test
-    public void testConstructor() throws ParseException {
+    public void testConstructor() {
         final TokenResponse response = new TokenResponse(
-                new BearerAccessToken("access_token"), new RefreshToken(
-                        "refresh_token"), idToken, null, null, expiresIn, extExpiresIn, null);
+                "access_token", "refresh_token", idToken, null, null, expiresIn,
+                extExpiresIn, null);
         Assert.assertNotNull(response);
-        OIDCTokens tokens = response.getOIDCTokens();
-        Assert.assertNotNull(tokens);
-        final JWT jwt = tokens.getIDToken();
-        Assert.assertTrue(jwt.getJWTClaimsSet().getClaims().size() >= 0);
     }
 
     @Test
@@ -52,24 +48,17 @@ public class TokenResponseTest extends AbstractMsalTests {
                 .parseJsonObject(JSONObjectUtils
                         .parse(TestConfiguration.HTTP_RESPONSE_FROM_AUTH_CODE));
         Assert.assertNotNull(response);
-        OIDCTokens tokens = response.getOIDCTokens();
-        Assert.assertNotNull(tokens);
-        Assert.assertNotNull(tokens.getIDToken());
-        Assert.assertFalse(StringHelper.isBlank(tokens.getIDTokenString()));
+        Assert.assertNotNull(response.getIdToken());
         Assert.assertFalse(StringHelper.isBlank(response.getScope()));
     }
 
     @Test
     public void testEmptyIdToken() {
         final TokenResponse response = new TokenResponse(
-                new BearerAccessToken(idToken),
-                new RefreshToken("refresh_token"),
+                idToken, "refresh_token",
                 "", null, null, expiresIn, extExpiresIn, null);
 
         Assert.assertNotNull(response);
-        OIDCTokens tokens = response.getOIDCTokens();
-        Assert.assertNotNull(tokens);
-        final AccessToken accessToken = tokens.getAccessToken();
-        Assert.assertNotNull(accessToken);
+        Assert.assertNotNull(response.getAccessToken());
     }
 }
