@@ -3,9 +3,10 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.gson.*;
-import com.google.gson.annotations.SerializedName;
-import com.google.gson.internal.LinkedTreeMap;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -38,20 +39,20 @@ public class TokenCache implements ITokenCache {
     public TokenCache() {
     }
 
-    @SerializedName("AccessToken")
-    Map<String, AccessTokenCacheEntity> accessTokens = new LinkedTreeMap<>();
+    @JsonProperty("AccessToken")
+    Map<String, AccessTokenCacheEntity> accessTokens = new LinkedHashMap<>();
 
-    @SerializedName("RefreshToken")
-    Map<String, RefreshTokenCacheEntity> refreshTokens = new LinkedTreeMap<>();
+    @JsonProperty("RefreshToken")
+    Map<String, RefreshTokenCacheEntity> refreshTokens = new LinkedHashMap<>();
 
-    @SerializedName("IdToken")
-    Map<String, IdTokenCacheEntity> idTokens = new LinkedTreeMap<>();
+    @JsonProperty("IdToken")
+    Map<String, IdTokenCacheEntity> idTokens = new LinkedHashMap<>();
 
-    @SerializedName("Account")
-    Map<String, AccountCacheEntity> accounts = new LinkedTreeMap<>();
+    @JsonProperty("Account")
+    Map<String, AccountCacheEntity> accounts = new LinkedHashMap<>();
 
-    @SerializedName("AppMetadata")
-    Map<String, AppMetadataCacheEntity> appMetadata = new LinkedTreeMap<>();
+    @JsonProperty("AppMetadata")
+    Map<String, AppMetadataCacheEntity> appMetadata = new LinkedHashMap<>();
 
     transient ITokenCacheAccessAspect tokenCacheAccessAspect;
 
@@ -63,9 +64,8 @@ public class TokenCache implements ITokenCache {
             return;
         }
         serializedCachedSnapshot = data;
-        Gson gson = new GsonBuilder().create();
 
-        TokenCache deserializedCache = gson.fromJson(data, TokenCache.class);
+        TokenCache deserializedCache = JsonHelper.convertJsonToObject(data, TokenCache.class);
 
         lock.writeLock().lock();
         try {
@@ -79,47 +79,48 @@ public class TokenCache implements ITokenCache {
         }
     }
 
-    private static void mergeJsonObjects(JsonObject old, JsonObject update) {
+    private static void mergeJsonObjects(JsonNode old, JsonNode update) {
         mergeRemovals(old, update);
         mergeUpdates(old, update);
     }
 
-    private static void mergeUpdates(JsonObject old, JsonObject update) {
-        for (Map.Entry<String, JsonElement> uEntry : update.entrySet()) {
-            String key = uEntry.getKey();
-            JsonElement uValue = uEntry.getValue();
+    private static void mergeUpdates(JsonNode old, JsonNode update) {
+        Iterator<String> fieldNames = update.fieldNames();
+        while (fieldNames.hasNext()) {
+            String uKey = fieldNames.next();
+            JsonNode uValue = update.get(uKey);
 
             // add new property
-            if (!old.has(key)) {
-                if (!uValue.isJsonNull() &&
-                        !(uValue.isJsonObject() && uValue.getAsJsonObject().size() == 0)) {
-                    old.add(key, uValue);
+            if (!old.has(uKey)) {
+                if (!uValue.isNull() &&
+                        !(uValue.isObject() && uValue.size() == 0)) {
+                    ((ObjectNode)old).set(uKey, uValue);
                 }
             }
             // merge old and new property
             else {
-                JsonElement oValue = old.get(key);
-                if (uValue.isJsonObject()) {
-                    mergeUpdates(oValue.getAsJsonObject(), uValue.getAsJsonObject());
+                JsonNode oValue = old.get(uKey);
+                if (uValue.isObject()) {
+                    mergeUpdates(oValue, uValue);
                 } else {
-                    old.add(key, uValue);
+                    ((ObjectNode)old).set(uKey, uValue);
                 }
             }
         }
     }
 
-    private static void mergeRemovals(JsonObject old, JsonObject update) {
+    private static void mergeRemovals(JsonNode old, JsonNode update) {
         Set<String> msalEntities =
                 new HashSet<>(Arrays.asList("Account", "AccessToken", "RefreshToken", "IdToken", "AppMetadata"));
 
         for (String msalEntity : msalEntities) {
-            JsonObject oldEntries = old.getAsJsonObject(msalEntity);
-            JsonObject newEntries = update.getAsJsonObject(msalEntity);
+            JsonNode oldEntries = old.get(msalEntity);
+            JsonNode newEntries = update.get(msalEntity);
             if (oldEntries != null) {
-                Iterator<Map.Entry<String, JsonElement>> iterator = oldEntries.entrySet().iterator();
+                Iterator<Map.Entry<String, JsonNode>> iterator = oldEntries.fields();
 
                 while (iterator.hasNext()) {
-                    Map.Entry<String, JsonElement> oEntry = iterator.next();
+                    Map.Entry<String, JsonNode> oEntry = iterator.next();
 
                     String key = oEntry.getKey();
                     if (newEntries == null || !newEntries.has(key)) {
@@ -135,15 +136,18 @@ public class TokenCache implements ITokenCache {
         lock.readLock().lock();
         try {
             if (!StringHelper.isBlank(serializedCachedSnapshot)) {
-                JsonObject cache = new JsonParser().parse(serializedCachedSnapshot).getAsJsonObject();
-                JsonObject update = new Gson().toJsonTree(this).getAsJsonObject();
+                JsonNode cache = JsonHelper.mapper.readTree(serializedCachedSnapshot);
+                JsonNode update = JsonHelper.mapper.valueToTree(this);
 
                 mergeJsonObjects(cache, update);
 
-                return cache.toString();
+                return JsonHelper.mapper.writeValueAsString(cache);
             }
-            return new GsonBuilder().create().toJson(this);
-        } finally {
+            return JsonHelper.mapper.writeValueAsString(this);
+        }
+        catch (JsonProcessingException e) {
+            throw new MsalClientException(e);
+        }finally {
             lock.readLock().unlock();
         }
     }

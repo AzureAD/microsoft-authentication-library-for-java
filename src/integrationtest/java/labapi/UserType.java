@@ -3,8 +3,6 @@
 
 package labapi;
 
-import com.google.gson.annotations.SerializedName;
-
 public class UserType {
     public static final String CLOUD = "cloud";
     public static final String FEDERATED = "federated";

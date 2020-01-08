@@ -3,26 +3,26 @@
 
 package labapi;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
 @Getter
 public class Lab {
-    @SerializedName("labName")
+    @JsonProperty("labName")
     String labName;
 
-    @SerializedName("domain")
+    @JsonProperty("domain")
     String domain;
 
-    @SerializedName("tenantId")
+    @JsonProperty("tenantId")
     String tenantId;
 
-    @SerializedName("federationProvider")
+    @JsonProperty("federationProvider")
     String federationProvider;
 
-    @SerializedName("azureEnvironment")
+    @JsonProperty("azureEnvironment")
     String azureEnvironment;
 
-    @SerializedName("authority")
+    @JsonProperty("authority")
     String authority;
 }
