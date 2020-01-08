@@ -77,7 +77,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
 
     @Accessors(fluent = true)
     @Getter
-    private InstanceDiscoveryResponse instanceDiscoveryResponse;
+    private AadInstanceDiscoveryResponse aadAadInstanceDiscoveryResponse;
 
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(AuthorizationCodeParameters parameters) {
@@ -246,7 +246,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         private String applicationName;
         private String applicationVersion;
         private ITokenCacheAccessAspect tokenCacheAccessAspect;
-        private InstanceDiscoveryResponse instanceDiscoveryResponse;
+        private AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse;
 
         /**
          * Constructor to create instance of Builder of client application
@@ -301,7 +301,10 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
 
         /**
          * Set a boolean value telling the application if the authority needs to be verified
-         * against a list of known authorities.
+         * against a list of known authorities. Authority is only validated when:
+         * 1 - It is an Azure Active Directory authority (not B2C or ADFS)
+         * 2 - Instance discovery metadata is not set via {@link ClientApplicationBase#aadAadInstanceDiscoveryResponse}
+         *
          * The default value is true.
          *
          * @param val a boolean value for validateAuthority
@@ -454,15 +457,20 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
 
         /**
          * Sets instance discovery response data which will be used for determining tenant discovery
-         * endpoint and authority aliases. For more information, see
+         * endpoint and authority aliases.
+         *
+         * Note that authority validation is not done even if {@link ClientApplicationBase#validateAuthority}
+         * is set to true.
+         *
+         * For more information, see
          * https://aka.ms/msal4j-instance-discovery
          * @param val JSON formatted value of response from AAD instance discovery endpoint
          * @return instance of the Builder on which method was called
          */
-        public T instanceDiscoveryResponse(String val) {
-            validateNotNull("InstanceDiscoveryResponse", val);
+        public T aadInstanceDiscoveryResponse(String val) {
+            validateNotNull("aadInstanceDiscoveryResponse", val);
 
-            instanceDiscoveryResponse =
+            aadInstanceDiscoveryResponse =
                     AadInstanceDiscoveryProvider.parseInstanceDiscoveryMetadata(val);
 
             return self();
@@ -500,12 +508,12 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
                 new TelemetryManager(telemetryConsumer, builder.onlySendFailureTelemetry));
         authenticationAuthority = builder.authenticationAuthority;
         tokenCache = new TokenCache(builder.tokenCacheAccessAspect);
-        instanceDiscoveryResponse = builder.instanceDiscoveryResponse;
+        aadAadInstanceDiscoveryResponse = builder.aadInstanceDiscoveryResponse;
 
-        if(instanceDiscoveryResponse != null){
+        if(aadAadInstanceDiscoveryResponse != null){
             AadInstanceDiscoveryProvider.cacheInstanceDiscoveryMetadata(
                     authenticationAuthority.host,
-                    instanceDiscoveryResponse);
+                    aadAadInstanceDiscoveryResponse);
         }
     }
 }

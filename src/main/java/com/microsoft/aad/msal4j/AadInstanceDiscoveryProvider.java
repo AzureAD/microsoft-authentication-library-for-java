@@ -54,31 +54,28 @@ class AadInstanceDiscoveryProvider {
         }
     }
 
-    static InstanceDiscoveryResponse parseInstanceDiscoveryMetadata(String instanceDiscoveryJson) {
+    static AadInstanceDiscoveryResponse parseInstanceDiscoveryMetadata(String instanceDiscoveryJson) {
 
-        InstanceDiscoveryResponse instanceDiscoveryResponse;
+        AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse;
         try {
-            instanceDiscoveryResponse = JsonHelper.convertJsonToObject(
+            aadInstanceDiscoveryResponse = JsonHelper.convertJsonToObject(
                     instanceDiscoveryJson,
-                    InstanceDiscoveryResponse.class);
-
-            validate(instanceDiscoveryResponse);
+                    AadInstanceDiscoveryResponse.class);
 
         } catch(Exception ex){
-            throw new MsalClientException("Error parsing instance discovery response. Data must be" +
-                    "in valid JSON format and must include 'tenant_discovery_endpoint' field. " +
-                    "For more information, see https://aka.ms/msal4j-instance-discovery",
+            throw new MsalClientException("Error parsing instance discovery response. Data must be " +
+                    "in valid JSON format. For more information, see https://aka.ms/msal4j-instance-discovery",
                     AuthenticationErrorCode.INVALID_INSTANCE_DISCOVERY_METADATA);
         }
 
-        return instanceDiscoveryResponse;
+        return aadInstanceDiscoveryResponse;
     }
 
     static void cacheInstanceDiscoveryMetadata(String host,
-                                               InstanceDiscoveryResponse instanceDiscoveryResponse) {
+                                               AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse) {
 
-        if (instanceDiscoveryResponse.metadata() != null) {
-            for (InstanceDiscoveryMetadataEntry entry : instanceDiscoveryResponse.metadata()) {
+        if (aadInstanceDiscoveryResponse.metadata() != null) {
+            for (InstanceDiscoveryMetadataEntry entry : aadInstanceDiscoveryResponse.metadata()) {
                 for (String alias: entry.aliases()) {
                     cache.put(alias, entry);
                 }
@@ -103,9 +100,9 @@ class AadInstanceDiscoveryProvider {
                 replace("{host}", discoveryHost);
     }
 
-    private static InstanceDiscoveryResponse sendInstanceDiscoveryRequest(URL authorityUrl,
-                                                                          MsalRequest msalRequest,
-                                                                          ServiceBundle serviceBundle) {
+    private static AadInstanceDiscoveryResponse sendInstanceDiscoveryRequest(URL authorityUrl,
+                                                                             MsalRequest msalRequest,
+                                                                             ServiceBundle serviceBundle) {
 
         String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpoint(authorityUrl.getAuthority()) +
                 INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE.replace("{authorizeEndpoint}",
@@ -122,7 +119,7 @@ class AadInstanceDiscoveryProvider {
                 msalRequest.requestContext(),
                 serviceBundle);
 
-        return JsonHelper.convertJsonToObject(httpResponse.body(), InstanceDiscoveryResponse.class);
+        return JsonHelper.convertJsonToObject(httpResponse.body(), AadInstanceDiscoveryResponse.class);
     }
 
     private static void doInstanceDiscoveryAndCache(URL authorityUrl,
@@ -130,19 +127,19 @@ class AadInstanceDiscoveryProvider {
                                                     MsalRequest msalRequest,
                                                     ServiceBundle serviceBundle) {
 
-        InstanceDiscoveryResponse instanceDiscoveryResponse =
+        AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse =
                 sendInstanceDiscoveryRequest(authorityUrl, msalRequest, serviceBundle);
 
         if (validateAuthority) {
-            validate(instanceDiscoveryResponse);
+            validate(aadInstanceDiscoveryResponse);
         }
 
-        cacheInstanceDiscoveryMetadata(authorityUrl.getAuthority(), instanceDiscoveryResponse);
+        cacheInstanceDiscoveryMetadata(authorityUrl.getAuthority(), aadInstanceDiscoveryResponse);
     }
 
-    private static void validate(InstanceDiscoveryResponse instanceDiscoveryResponse) {
-        if (StringHelper.isBlank(instanceDiscoveryResponse.tenantDiscoveryEndpoint())) {
-            throw new MsalServiceException(instanceDiscoveryResponse);
+    private static void validate(AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse) {
+        if (StringHelper.isBlank(aadInstanceDiscoveryResponse.tenantDiscoveryEndpoint())) {
+            throw new MsalServiceException(aadInstanceDiscoveryResponse);
         }
     }
 }

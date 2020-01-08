@@ -48,7 +48,7 @@ public class AuthenticationErrorCode {
 
     /**
      * Not able to parse instance discovery metadata. Ensure data is in valid JSON format, and that
-     * it contains all necessary fields. For more information, see https://aka.ms/msal4j-instance-discovery
+     * it contains relevant fields. For more information, see https://aka.ms/msal4j-instance-discovery
      */
     public final static String INVALID_INSTANCE_DISCOVERY_METADATA = "invalid_instance_discovery_metadata";
 

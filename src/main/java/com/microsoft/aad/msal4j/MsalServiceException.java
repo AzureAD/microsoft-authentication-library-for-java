@@ -79,7 +79,7 @@ public class MsalServiceException extends MsalException {
      * Initializes a new instance of the exception class
      * @param discoveryResponse response object from instance discovery network call
      */
-    public MsalServiceException(final InstanceDiscoveryResponse discoveryResponse){
+    public MsalServiceException(final AadInstanceDiscoveryResponse discoveryResponse){
         super(discoveryResponse.errorDescription(), discoveryResponse.error());
 
         this.correlationId = discoveryResponse.correlationId();

@@ -42,9 +42,9 @@ public class AadInstanceDiscoveryTest extends PowerMockTestCase {
                 this.getClass(),
                 "/instance_discovery_data/aad_instance_discovery_response_valid.json");
 
-        InstanceDiscoveryResponse expectedResponse = JsonHelper.convertJsonToObject(
+        AadInstanceDiscoveryResponse expectedResponse = JsonHelper.convertJsonToObject(
                 instanceDiscoveryData,
-                InstanceDiscoveryResponse.class);
+                AadInstanceDiscoveryResponse.class);
 
         PowerMock.mockStaticPartial(AadInstanceDiscoveryProvider.class, "sendInstanceDiscoveryRequest");
 
@@ -82,7 +82,7 @@ public class AadInstanceDiscoveryTest extends PowerMockTestCase {
                 "/instance_discovery_data/aad_instance_discovery_response_valid.json");
 
         PublicClientApplication app = PublicClientApplication.builder("client_id")
-                .instanceDiscoveryResponse(instanceDiscoveryResponse)
+                .aadInstanceDiscoveryResponse(instanceDiscoveryResponse)
                 .build();
 
         AuthorizationCodeParameters parameters = AuthorizationCodeParameters.builder(
@@ -132,7 +132,7 @@ public class AadInstanceDiscoveryTest extends PowerMockTestCase {
                 "/instance_discovery_data/aad_instance_discovery_response_invalid_json.json");
 
         PublicClientApplication app = PublicClientApplication.builder("client_id")
-                .instanceDiscoveryResponse(instanceDiscoveryResponse)
+                .aadInstanceDiscoveryResponse(instanceDiscoveryResponse)
                 .build();
     }
 
@@ -144,7 +144,7 @@ public class AadInstanceDiscoveryTest extends PowerMockTestCase {
                 "/instance_discovery_data/aad_instance_discovery_response_invalid_fields.json");
 
         PublicClientApplication app = PublicClientApplication.builder("client_id")
-                .instanceDiscoveryResponse(instanceDiscoveryResponse)
+                .aadInstanceDiscoveryResponse(instanceDiscoveryResponse)
                 .build();
     }
 }

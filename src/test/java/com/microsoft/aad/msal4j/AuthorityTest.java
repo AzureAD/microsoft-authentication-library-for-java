@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 
 @Test(groups = { "checkin" })
 @PrepareForTest({ AADAuthority.class, HttpHelper.class,
-        JsonHelper.class, InstanceDiscoveryResponse.class })
+        JsonHelper.class, AadInstanceDiscoveryResponse.class })
 public class AuthorityTest extends AbstractMsalTests {
 
     @Test
