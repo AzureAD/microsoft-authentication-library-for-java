@@ -18,11 +18,6 @@ class JsonHelper {
             .serializationInclusion(JsonInclude.Include.NON_NULL)
             .build();
 
-    /**
-     * @param json
-     * @param clazz
-     * @return
-     */
     static <T> T convertJsonToObject(final String json, final Class<T> clazz) {
         try {
             return mapper.readValue(json, clazz);

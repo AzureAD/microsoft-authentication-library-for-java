@@ -135,16 +135,4 @@ public class AadInstanceDiscoveryTest extends PowerMockTestCase {
                 .aadInstanceDiscoveryResponse(instanceDiscoveryResponse)
                 .build();
     }
-
-    @Test(expectedExceptions = MsalClientException.class)
-    public void aadInstanceDiscoveryTest_responseSetByDeveloper_invalidFields() throws Exception{
-
-        String instanceDiscoveryResponse = TestHelper.readResource(
-                this.getClass(),
-                "/instance_discovery_data/aad_instance_discovery_response_invalid_fields.json");
-
-        PublicClientApplication app = PublicClientApplication.builder("client_id")
-                .aadInstanceDiscoveryResponse(instanceDiscoveryResponse)
-                .build();
-    }
 }
