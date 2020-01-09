@@ -28,6 +28,8 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
 
     protected Logger log;
     protected ClientAuthentication clientAuthentication;
+    protected Authority authenticationAuthority;
+    private ServiceBundle serviceBundle;
 
     @Accessors(fluent = true)
     @Getter
@@ -36,8 +38,6 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
     @Accessors(fluent = true)
     @Getter
     private String authority;
-
-    protected Authority authenticationAuthority;
 
     @Accessors(fluent = true)
     @Getter
@@ -50,8 +50,6 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
     @Accessors(fluent = true)
     @Getter
     private boolean logPii;
-
-    private ServiceBundle serviceBundle;
 
     @Accessors(fluent = true)
     @Getter(AccessLevel.PACKAGE)
@@ -76,6 +74,10 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
     @Accessors(fluent = true)
     @Getter
     private String applicationVersion;
+
+    @Accessors(fluent = true)
+    @Getter
+    private AadInstanceDiscoveryResponse aadAadInstanceDiscoveryResponse;
 
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(AuthorizationCodeParameters parameters) {
@@ -177,7 +179,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
 
         if(authenticationAuthority.authorityType.equals(AuthorityType.AAD)){
             InstanceDiscoveryMetadataEntry instanceDiscoveryMetadata =
-                    AadInstanceDiscovery.GetMetadataEntry(
+                    AadInstanceDiscoveryProvider.getMetadataEntry(
                             requestAuthority.canonicalAuthorityUrl(),
                             validateAuthority,
                             msalRequest,
@@ -244,6 +246,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         private String applicationName;
         private String applicationVersion;
         private ITokenCacheAccessAspect tokenCacheAccessAspect;
+        private AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse;
 
         /**
          * Constructor to create instance of Builder of client application
@@ -298,7 +301,10 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
 
         /**
          * Set a boolean value telling the application if the authority needs to be verified
-         * against a list of known authorities.
+         * against a list of known authorities. Authority is only validated when:
+         * 1 - It is an Azure Active Directory authority (not B2C or ADFS)
+         * 2 - Instance discovery metadata is not set via {@link ClientApplicationBase#aadAadInstanceDiscoveryResponse}
+         *
          * The default value is true.
          *
          * @param val a boolean value for validateAuthority
@@ -449,6 +455,27 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
             return self();
         }
 
+        /**
+         * Sets instance discovery response data which will be used for determining tenant discovery
+         * endpoint and authority aliases.
+         *
+         * Note that authority validation is not done even if {@link ClientApplicationBase#validateAuthority}
+         * is set to true.
+         *
+         * For more information, see
+         * https://aka.ms/msal4j-instance-discovery
+         * @param val JSON formatted value of response from AAD instance discovery endpoint
+         * @return instance of the Builder on which method was called
+         */
+        public T aadInstanceDiscoveryResponse(String val) {
+            validateNotNull("aadInstanceDiscoveryResponse", val);
+
+            aadInstanceDiscoveryResponse =
+                    AadInstanceDiscoveryProvider.parseInstanceDiscoveryMetadata(val);
+
+            return self();
+        }
+
         private static Authority createDefaultAADAuthority() {
             Authority authority;
             try {
@@ -481,5 +508,12 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
                 new TelemetryManager(telemetryConsumer, builder.onlySendFailureTelemetry));
         authenticationAuthority = builder.authenticationAuthority;
         tokenCache = new TokenCache(builder.tokenCacheAccessAspect);
+        aadAadInstanceDiscoveryResponse = builder.aadInstanceDiscoveryResponse;
+
+        if(aadAadInstanceDiscoveryResponse != null){
+            AadInstanceDiscoveryProvider.cacheInstanceDiscoveryMetadata(
+                    authenticationAuthority.host,
+                    aadAadInstanceDiscoveryResponse);
+        }
     }
 }

@@ -10,7 +10,7 @@ import lombok.experimental.Accessors;
 
 @Accessors(fluent = true)
 @Getter(AccessLevel.PACKAGE)
-class InstanceDiscoveryResponse {
+class AadInstanceDiscoveryResponse {
 
     @JsonProperty("tenant_discovery_endpoint")
     private String tenantDiscoveryEndpoint;

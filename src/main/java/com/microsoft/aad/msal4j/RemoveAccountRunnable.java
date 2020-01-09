@@ -21,7 +21,8 @@ class RemoveAccountRunnable implements Runnable {
     @Override
     public void run() {
         try {
-            Set<String> aliases = AadInstanceDiscovery.getAliases(clientApplication.authenticationAuthority.host());
+            Set<String> aliases = AadInstanceDiscoveryProvider.getAliases(
+                    clientApplication.authenticationAuthority.host());
 
             clientApplication.tokenCache.removeAccount
                     (clientApplication.clientId(), account, aliases);

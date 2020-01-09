@@ -8,7 +8,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,7 +44,7 @@ abstract class Event extends HashMap<String, String>{
         if(!uri.isAbsolute()){
             throw new IllegalArgumentException("Requires an absolute URI");
         }
-        if(!AadInstanceDiscovery.TRUSTED_HOSTS_SET.contains(uri.getHost())){
+        if(!AadInstanceDiscoveryProvider.TRUSTED_HOSTS_SET.contains(uri.getHost())){
             return null;
         }
 
