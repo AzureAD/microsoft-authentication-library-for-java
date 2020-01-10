@@ -12,6 +12,10 @@ Quick links:
 | --- | --- | --- | --- |
 
 ## Install
+
+The library supports the following Java environments:
+- Java 8 (or higher)
+
 Current version - 1.2.0
 
 You can find the changes for each version in the [change log](https://github.com/AzureAD/microsoft-authentication-library-for-java/blob/master/changelog.txt).
