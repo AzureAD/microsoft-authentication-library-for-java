@@ -3,7 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.nimbusds.jose.util.StandardCharset;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -13,10 +13,10 @@ import java.util.Base64;
 @Getter(AccessLevel.PACKAGE)
 class ClientInfo {
 
-    @SerializedName("uid")
+    @JsonProperty("uid")
     private String uniqueIdentifier;
 
-    @SerializedName("utid")
+    @JsonProperty("utid")
     private String unqiueTenantIdentifier;
 
     public static ClientInfo createFromJson(String clientInfoJsonBase64Encoded){

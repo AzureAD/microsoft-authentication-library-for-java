@@ -3,28 +3,28 @@
 
 package labapi;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
 @Getter
 public class App {
 
-    @SerializedName("appType")
+    @JsonProperty("appType")
     String appType;
 
-    @SerializedName("appName")
+    @JsonProperty("appName")
     String appName;
 
-    @SerializedName("appId")
+    @JsonProperty("appId")
     String appId;
 
-    @SerializedName("redirectUri")
+    @JsonProperty("redirectUri")
     String redirectUri;
 
-    @SerializedName("authority")
+    @JsonProperty("authority")
     String authority;
 
-    @SerializedName("labName")
+    @JsonProperty("labName")
     String labName;
 
 }

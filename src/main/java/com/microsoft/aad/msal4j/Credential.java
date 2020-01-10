@@ -3,7 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -13,15 +13,15 @@ import lombok.experimental.Accessors;
 @Setter
 class Credential {
 
-    @SerializedName("home_account_id")
+    @JsonProperty("home_account_id")
     protected String homeAccountId;
 
-    @SerializedName("environment")
+    @JsonProperty("environment")
     protected String environment;
 
-    @SerializedName("client_id")
+    @JsonProperty("client_id")
     protected String clientId;
 
-    @SerializedName("secret")
+    @JsonProperty("secret")
     protected String secret;
 }
