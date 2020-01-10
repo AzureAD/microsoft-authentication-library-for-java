@@ -1,3 +1,9 @@
+Version 1.3.0
+=============
+- Added option to pass in AAD instance discovery data
+- Removed runtime dependency on commons-codec.commons-codec, org.apache.commons.commons-text, org.apache.httpcomponents.httpclient, com.google.code.gson
+- Added runtime dependency on com.fasterxml.jackson.databind
+
 Version 1.2.0
 =============
 - Added support for ADFS 2019
