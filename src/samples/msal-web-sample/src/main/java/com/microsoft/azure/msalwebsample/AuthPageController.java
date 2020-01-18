@@ -56,7 +56,7 @@ public class AuthPageController {
 
         httpRequest.getSession().invalidate();
 
-        String redirectUrl = "http://localhost:8080/msal4jsample/";
+        String redirectUrl = "https://localhost:8081/msal4jsample/";
         response.sendRedirect(AuthHelper.END_SESSION_ENDPOINT +
                 "?post_logout_redirect_uri=" + URLEncoder.encode(redirectUrl, "UTF-8"));
     }
