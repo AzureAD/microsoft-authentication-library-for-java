@@ -78,12 +78,17 @@ public class PublicClientApplication extends ClientApplicationBase implements IP
 
         validateNotNull("parameters", parameters);
 
+        AtomicReference<CompletableFuture<IAuthenticationResult>> futureReference = new AtomicReference<>();
+
         InteractiveRequest interactiveRequest = new InteractiveRequest(
                 parameters,
+                futureReference,
                 this,
                 createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
 
-        return executeRequest(interactiveRequest);
+        CompletableFuture<IAuthenticationResult> future = executeRequest(interactiveRequest);
+        futureReference.set(future);
+        return future;
     }
 
     private PublicClientApplication(Builder builder) {

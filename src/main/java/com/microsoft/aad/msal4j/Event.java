@@ -65,16 +65,4 @@ abstract class Event extends HashMap<String, String>{
         String scrubbedPath = String.join("/", segment);
         return uri.getScheme() + "://" + uri.getAuthority() + scrubbedPath;
     }
-
-    static String hashPii(String stringToHash){
-        String base64EncodedSha256Hash;
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hashedString = digest.digest(stringToHash.getBytes(StandardCharsets.UTF_8));
-            base64EncodedSha256Hash = new String(Base64.getEncoder().encode(hashedString), StandardCharsets.UTF_8);
-        } catch(NoSuchAlgorithmException e){
-            base64EncodedSha256Hash = null;
-        }
-        return base64EncodedSha256Hash;
-    }
 }

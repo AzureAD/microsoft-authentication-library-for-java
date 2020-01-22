@@ -184,6 +184,10 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
                     (DeviceCodeFlowRequest) msalRequest);
         } else if (msalRequest instanceof SilentRequest) {
             supplier = new AcquireTokenSilentSupplier(this, (SilentRequest) msalRequest);
+        } else if(msalRequest instanceof  InteractiveRequest){
+            supplier = new AcquireTokenByInteractiveFlowSupplier(
+                    (PublicClientApplication) this,
+                    (InteractiveRequest) msalRequest);
         } else {
             supplier = new AcquireTokenByAuthorizationGrantSupplier(
                     this,

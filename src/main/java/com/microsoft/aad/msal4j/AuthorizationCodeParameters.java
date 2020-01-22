@@ -22,6 +22,11 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotBlank
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class AuthorizationCodeParameters {
 
+    /**
+     * Code verifier used for PKCE
+     */
+    private String codeVerifier;
+
     private Set<String> scopes;
 
     @NonNull

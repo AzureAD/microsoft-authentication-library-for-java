@@ -1,6 +1,7 @@
 package com.microsoft.aad.msal4j;
 
 import java.awt.*;
+import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -24,10 +25,9 @@ public class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultS
     }
 
     // This where the high level logic for the flow will go
-    AuthenticationResult execute() {
+    AuthenticationResult execute() throws Exception{
         String authorizationCode = getAuthorizationCode();
-        acquireTokenWithAuthorizationCode(authorizationCode);
-
+        return acquireTokenWithAuthorizationCode(authorizationCode);
     }
 
     private String getAuthorizationCode(){
@@ -45,7 +45,8 @@ public class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultS
                 throw new RuntimeException("Could not start TCP listener");
             }
 
-            if(interactiveRequest.interactiveRequestParameters.systemBrowserOptions().openBrowserAction() != null){
+            SystemBrowserOptions options = interactiveRequest.interactiveRequestParameters.systemBrowserOptions();
+            if(options != null && options.openBrowserAction() != null){
                 interactiveRequest.interactiveRequestParameters.systemBrowserOptions().openBrowserAction().openBrowser(
                         interactiveRequest.authorizationURI);
             } else {
@@ -58,10 +59,6 @@ public class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultS
         }
 
         return parseServerResponse(authServerResponse, clientApplication.authenticationAuthority.authorityType);
-    }
-
-    private AuthenticationResult acquireTokenWithAuthorizationCode(String authorizationCode){
-
     }
 
     private void startTcpListener(BlockingQueue<Boolean> tcpStartUpNotifierQueue){
@@ -79,20 +76,32 @@ public class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultS
     }
 
     private void openDefaultSystemBrowser(URI uri){
-
-        if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-            Desktop.getDesktop().browse(uri);
+        try{
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                Desktop.getDesktop().browse(uri);
+            }
+        } catch(IOException e){
+            throw new MsalClientException(e);
         }
     }
 
     private String getResponseFromTcpListener(){
-        String response;
+
+        String response = null;
         try {
-            response = AuthorizationCodeQueue.poll(300, TimeUnit.SECONDS);
-            if (StringHelper.isBlank(response)){
+            long expirationTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) + 300;
+
+            while(StringHelper.isBlank(response) && !interactiveRequest.futureReference.get().isCancelled() &&
+                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) < expirationTime) {
+
+                response = AuthorizationCodeQueue.poll(100, TimeUnit.MILLISECONDS);
+            }
+
+            if (StringHelper.isBlank(response)) {
                 throw new MsalClientException("No Authorization code was returned from the server",
                         AuthenticationErrorCode.AUTHORIZATION_CODE_BLANK);
             }
+
         } catch(Exception e){
             throw new MsalClientException(e);
         }
@@ -119,4 +128,26 @@ public class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultS
         return matcher.group(0);
     }
 
+    private AuthenticationResult acquireTokenWithAuthorizationCode(String authorizationCode)
+            throws Exception{
+
+        AuthorizationCodeParameters parameters = AuthorizationCodeParameters
+                .builder(authorizationCode, interactiveRequest.interactiveRequestParameters.redirectUri())
+                .scopes(interactiveRequest.interactiveRequestParameters.scopes())
+                .codeVerifier(interactiveRequest.verifier())
+                .build();
+
+        AuthorizationCodeRequest authCodeRequest = new AuthorizationCodeRequest(
+                parameters,
+                clientApplication,
+                clientApplication.createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+
+        AcquireTokenByAuthorizationGrantSupplier acquireTokenByAuthorizationGrantSupplier =
+            new AcquireTokenByAuthorizationGrantSupplier(
+                    clientApplication,
+                    authCodeRequest,
+                    clientApplication.authenticationAuthority);
+
+        return acquireTokenByAuthorizationGrantSupplier.execute();
+    }
 }

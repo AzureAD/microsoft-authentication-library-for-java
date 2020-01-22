@@ -13,7 +13,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty
 
 /**
  * Object containing parameters for Integrated Windows Authentication. Can be used as parameter to
- *  {@link PublicClientApplication#acquireToken(IntegratedWindowsAuthenticationParameters)}
+ *  {@link PublicClientApplication#acquireToken(IntegratedWindowsAuthenticationParameters)}`
  */
 @Builder
 @Accessors(fluent = true)
