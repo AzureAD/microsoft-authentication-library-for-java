@@ -4,6 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.slf4j.Logger;
@@ -27,6 +28,8 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
 
     protected Logger log;
     protected ClientAuthentication clientAuthentication;
+    protected Authority authenticationAuthority;
+    private ServiceBundle serviceBundle;
 
     @Accessors(fluent = true)
     @Getter
@@ -35,8 +38,6 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
     @Accessors(fluent = true)
     @Getter
     private String authority;
-
-    protected Authority authenticationAuthority;
 
     @Accessors(fluent = true)
     @Getter
@@ -50,25 +51,33 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
     @Getter
     private boolean logPii;
 
-    private ServiceBundle serviceBundle;
+    @Accessors(fluent = true)
+    @Getter(AccessLevel.PACKAGE)
+    private Consumer<List<HashMap<String, String>>> telemetryConsumer;
 
     @Accessors(fluent = true)
     @Getter
-    private Consumer<List<HashMap<String, String>>> telemetryConsumer;
+    private Proxy proxy;
 
-    @Override
-    public Proxy proxy() {
-        return this.serviceBundle.getProxy();
-    }
-
-    @Override
-    public SSLSocketFactory sslSocketFactory() {
-        return this.serviceBundle.getSslSocketFactory();
-    }
+    @Accessors(fluent = true)
+    @Getter
+    private SSLSocketFactory sslSocketFactory;
 
     @Accessors(fluent = true)
     @Getter
     protected TokenCache tokenCache;
+
+    @Accessors(fluent = true)
+    @Getter
+    private String applicationName;
+
+    @Accessors(fluent = true)
+    @Getter
+    private String applicationVersion;
+
+    @Accessors(fluent = true)
+    @Getter
+    private AadInstanceDiscoveryResponse aadAadInstanceDiscoveryResponse;
 
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(AuthorizationCodeParameters parameters) {
@@ -139,7 +148,10 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
 
     @Override
     public CompletableFuture removeAccount(IAccount account) {
-        RemoveAccountRunnable runnable = new RemoveAccountRunnable(this, account);
+        MsalRequest msalRequest = new MsalRequest(this, null,
+                        createRequestContext(PublicApi.REMOVE_ACCOUNTS)){};
+
+        RemoveAccountRunnable runnable = new RemoveAccountRunnable(msalRequest, account);
 
         CompletableFuture<Void> future =
                 serviceBundle.getExecutorService() != null ? CompletableFuture.runAsync(runnable, serviceBundle.getExecutorService())
@@ -150,7 +162,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
     AuthenticationResult acquireTokenCommon(MsalRequest msalRequest, Authority requestAuthority)
             throws Exception {
 
-        ClientDataHttpHeaders headers = msalRequest.headers();
+        HttpHeaders headers = msalRequest.headers();
 
         if (logPii) {
             log.debug(LogHelper.createMessage(
@@ -158,18 +170,24 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
                     headers.getHeaderCorrelationIdValue()));
         }
 
-        TokenRequest request = new TokenRequest(requestAuthority, msalRequest, serviceBundle);
+        TokenRequestExecutor requestExecutor = new TokenRequestExecutor(
+                requestAuthority,
+                msalRequest,
+                serviceBundle);
 
-        AuthenticationResult result = request.executeOauthRequestAndProcessResponse();
+        AuthenticationResult result = requestExecutor.executeTokenRequest();
 
-        if(authenticationAuthority.authorityType.equals(AuthorityType.B2C)){
-            tokenCache.saveTokens(request, result, authenticationAuthority.host);
-        } else {
+        if(authenticationAuthority.authorityType.equals(AuthorityType.AAD)){
             InstanceDiscoveryMetadataEntry instanceDiscoveryMetadata =
-                    AadInstanceDiscovery.GetMetadataEntry
-                            (requestAuthority.canonicalAuthorityUrl(), validateAuthority, msalRequest, serviceBundle);
+                    AadInstanceDiscoveryProvider.getMetadataEntry(
+                            requestAuthority.canonicalAuthorityUrl(),
+                            validateAuthority,
+                            msalRequest,
+                            serviceBundle);
 
-            tokenCache.saveTokens(request, result, instanceDiscoveryMetadata.preferredCache);
+            tokenCache.saveTokens(requestExecutor, result, instanceDiscoveryMetadata.preferredCache);
+        } else {
+            tokenCache.saveTokens(requestExecutor, result, authenticationAuthority.host);
         }
 
         return result;
@@ -197,10 +215,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
     }
 
     RequestContext createRequestContext(PublicApi publicApi) {
-        return new RequestContext(
-                clientId,
-                correlationId(),
-                publicApi);
+        return new RequestContext(this, publicApi);
     }
 
     ServiceBundle getServiceBundle() {
@@ -229,9 +244,13 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         private ExecutorService executorService;
         private Proxy proxy;
         private SSLSocketFactory sslSocketFactory;
+        private IHttpClient httpClient;
         private Consumer<List<HashMap<String, String>>> telemetryConsumer;
         private Boolean onlySendFailureTelemetry = false;
+        private String applicationName;
+        private String applicationVersion;
         private ITokenCacheAccessAspect tokenCacheAccessAspect;
+        private AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse;
 
         /**
          * Constructor to create instance of Builder of client application
@@ -258,11 +277,16 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         public T authority(String val) throws MalformedURLException {
             authority = canonicalizeUrl(val);
 
-            if (Authority.detectAuthorityType(new URL(authority)) != AuthorityType.AAD) {
-                throw new IllegalArgumentException("Unsupported authority type. Please use AAD authority");
+            switch (Authority.detectAuthorityType(new URL(authority))) {
+                case AAD:
+                    authenticationAuthority = new AADAuthority(new URL(authority));
+                    break;
+                case ADFS:
+                    authenticationAuthority = new ADFSAuthority(new URL(authority));
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unsupported authority type.");
             }
-
-            authenticationAuthority = new AADAuthority(new URL(authority));
 
             return self();
         }
@@ -281,7 +305,10 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
 
         /**
          * Set a boolean value telling the application if the authority needs to be verified
-         * against a list of known authorities.
+         * against a list of known authorities. Authority is only validated when:
+         * 1 - It is an Azure Active Directory authority (not B2C or ADFS)
+         * 2 - Instance discovery metadata is not set via {@link ClientApplicationBase#aadAadInstanceDiscoveryResponse}
+         *
          * The default value is true.
          *
          * @param val a boolean value for validateAuthority
@@ -334,8 +361,12 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         }
 
         /**
-         * Sets Proxy configuration to be used by the client application for all network communication.
-         * Default is null and system defined properties if any, would be used.
+         * Sets Proxy configuration to be used by the client application (MSAL4J by default uses
+         * {@link javax.net.ssl.HttpsURLConnection}) for all network communication.
+         * If no proxy value is passed in, system defined properties are used. If HTTP client is set on
+         * the client application (via ClientApplication.builder().httpClient()),
+         * proxy configuration should be done on the HTTP client object being passed in,
+         * and not through this method.
          *
          * @param val an instance of Proxy
          * @return instance of the Builder on which method was called
@@ -348,7 +379,23 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         }
 
         /**
+         * Sets HTTP client to be used by the client application for all HTTP requests. Allows for fine
+         * grained configuration of HTTP client.
+         *
+         * @param val Implementation of {@link IHttpClient}
+         * @return instance of the Builder on which method was called
+         */
+        public T httpClient(IHttpClient val){
+            validateNotNull("httpClient", val);
+
+            httpClient = val;
+            return self();
+        }
+
+        /**
          * Sets SSLSocketFactory to be used by the client application for all network communication.
+         * If HTTP client is set on the client application (via ClientApplication.builder().httpClient()),
+         * any configuration of SSL should be done on the HTTP client and not through this method.
          *
          * @param val an instance of SSLSocketFactory
          * @return instance of the Builder on which method was called
@@ -360,16 +407,42 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
             return self();
         }
 
-        public T telemetryConsumer(Consumer<List<HashMap<String, String>>> val) {
+        T telemetryConsumer(Consumer<List<HashMap<String, String>>> val) {
             validateNotNull("telemetryConsumer", val);
 
             telemetryConsumer = val;
             return self();
         }
 
-        public T onlySendFailureTelemetry(Boolean val) {
+        T onlySendFailureTelemetry(Boolean val) {
 
             onlySendFailureTelemetry = val;
+            return self();
+        }
+
+        /**
+         * Sets application name for telemetry purposes
+         *
+         * @param val application name
+         * @return instance of the Builder on which method was called
+         */
+        public T applicationName(String val) {
+            validateNotNull("applicationName", val);
+
+            applicationName = val;
+            return self();
+        }
+
+        /**
+         * Sets application version for telemetry purposes
+         * 
+         * @param val application version
+         * @return instance of the Builder on which method was called
+         */
+        public T applicationVersion(String val) {
+            validateNotNull("applicationVersion", val);
+
+            applicationVersion = val;
             return self();
         }
 
@@ -383,6 +456,27 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
             validateNotNull("tokenCacheAccessAspect", val);
 
             tokenCacheAccessAspect = val;
+            return self();
+        }
+
+        /**
+         * Sets instance discovery response data which will be used for determining tenant discovery
+         * endpoint and authority aliases.
+         *
+         * Note that authority validation is not done even if {@link ClientApplicationBase#validateAuthority}
+         * is set to true.
+         *
+         * For more information, see
+         * https://aka.ms/msal4j-instance-discovery
+         * @param val JSON formatted value of response from AAD instance discovery endpoint
+         * @return instance of the Builder on which method was called
+         */
+        public T aadInstanceDiscoveryResponse(String val) {
+            validateNotNull("aadInstanceDiscoveryResponse", val);
+
+            aadInstanceDiscoveryResponse =
+                    AadInstanceDiscoveryProvider.parseInstanceDiscoveryMetadata(val);
+
             return self();
         }
 
@@ -405,13 +499,25 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         validateAuthority = builder.validateAuthority;
         correlationId = builder.correlationId;
         logPii = builder.logPii;
+        applicationName = builder.applicationName;
+        applicationVersion = builder.applicationVersion;
         telemetryConsumer = builder.telemetryConsumer;
+        proxy = builder.proxy;
+        sslSocketFactory = builder.sslSocketFactory;
         serviceBundle = new ServiceBundle(
                 builder.executorService,
-                builder.proxy,
-                builder.sslSocketFactory,
+                builder.httpClient == null ?
+                        new DefaultHttpClient(builder.proxy, builder.sslSocketFactory) :
+                        builder.httpClient,
                 new TelemetryManager(telemetryConsumer, builder.onlySendFailureTelemetry));
         authenticationAuthority = builder.authenticationAuthority;
         tokenCache = new TokenCache(builder.tokenCacheAccessAspect);
+        aadAadInstanceDiscoveryResponse = builder.aadInstanceDiscoveryResponse;
+
+        if(aadAadInstanceDiscoveryResponse != null){
+            AadInstanceDiscoveryProvider.cacheInstanceDiscoveryMetadata(
+                    authenticationAuthority.host,
+                    aadAadInstanceDiscoveryResponse);
+        }
     }
 }

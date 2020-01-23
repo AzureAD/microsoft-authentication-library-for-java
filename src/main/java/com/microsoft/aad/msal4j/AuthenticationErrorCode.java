@@ -42,6 +42,17 @@ public class AuthenticationErrorCode {
     public final static String USER_REALM_DISCOVERY_FAILED = "user_realm_discovery_failed";
 
     /**
+     * Not found in the cache
+     */
+    public final static String CACHE_MISS = "cache_miss";
+
+    /**
+     * Not able to parse instance discovery metadata. Ensure data is in valid JSON format, and that
+     * it contains relevant fields. For more information, see https://aka.ms/msal4j-instance-discovery
+     */
+    public final static String INVALID_INSTANCE_DISCOVERY_METADATA = "invalid_instance_discovery_metadata";
+
+    /**
      * Unknown error occurred
      */
     public final static String UNKNOWN = "unknown";

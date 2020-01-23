@@ -3,7 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.nimbusds.jwt.JWTClaimsSet;
 
 import java.text.ParseException;
@@ -20,36 +20,44 @@ class IdToken {
     static final String PREFERRED_USERNAME = "preferred_username";
     static final String OBJECT_IDENTIFIER = "oid";
     static final String TENANT_IDENTIFIER = "tid";
+    static final String UPN = "upn";
+    static final String UNIQUE_NAME = "unique_name";
 
-    @SerializedName("iss")
+    @JsonProperty("iss")
     protected String issuer;
 
-    @SerializedName("sub")
+    @JsonProperty("sub")
     protected String subject;
 
-    @SerializedName("aud")
+    @JsonProperty("aud")
     protected String audience ;
 
-    @SerializedName("exp")
+    @JsonProperty("exp")
     protected Long expirationTime;
 
-    @SerializedName("iat")
+    @JsonProperty("iat")
     protected Long issuedAt;
 
-    @SerializedName("nbf")
+    @JsonProperty("nbf")
     protected Long notBefore;
 
-    @SerializedName("name")
+    @JsonProperty("name")
     protected String name;
 
-    @SerializedName("preferred_username")
+    @JsonProperty("preferred_username")
     protected String preferredUsername;
 
-    @SerializedName("oid")
+    @JsonProperty("oid")
     protected String objectIdentifier;
 
-    @SerializedName("tid")
+    @JsonProperty("tid")
     protected String tenantIdentifier;
+
+    @JsonProperty("upn")
+    protected String upn;
+
+    @JsonProperty("unique_name")
+    protected String uniqueName;
 
     static IdToken createFromJWTClaims(final JWTClaimsSet claims) throws ParseException {
         IdToken idToken = new IdToken();
@@ -66,6 +74,9 @@ class IdToken {
         idToken.preferredUsername = claims.getStringClaim(PREFERRED_USERNAME);
         idToken.objectIdentifier = claims.getStringClaim(OBJECT_IDENTIFIER);
         idToken.tenantIdentifier = claims.getStringClaim(TENANT_IDENTIFIER);
+
+        idToken.upn = claims.getStringClaim(UPN);
+        idToken.uniqueName = claims.getStringClaim(UNIQUE_NAME);
 
         return idToken;
     }

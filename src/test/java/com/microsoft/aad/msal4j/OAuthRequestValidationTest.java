@@ -26,7 +26,6 @@ import java.io.FileInputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.net.URLDecoder;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -47,7 +46,6 @@ import java.util.concurrent.ExecutionException;
 
 import org.easymock.EasyMock;
 import org.powermock.api.easymock.PowerMock;
-import org.slf4j.Logger;
 
 @PowerMockIgnore({"javax.net.ssl.*"})
 @PrepareForTest({com.microsoft.aad.msal4j.OAuthHttpRequest.class, HttpHelper.class})
@@ -74,11 +72,22 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
 
     private static String query;
 
-    public OAuthRequestValidationTest() throws MalformedURLException {
-    }
-
+    @SuppressWarnings("unchecked")
     @BeforeMethod
-    public void init() {
+    public void init() throws Exception{
+
+        PowerMock.mockStatic(HttpHelper.class);
+        HttpResponse httpResponse = new HttpResponse();
+        httpResponse.body(INSTANCE_DISCOVERY_RESPONSE);
+        EasyMock.expect(
+                HttpHelper.executeHttpRequest(
+                        EasyMock.isA(HttpRequest.class),
+                        EasyMock.isA(RequestContext.class),
+                        EasyMock.isA(ServiceBundle.class)))
+                .andReturn(httpResponse);
+
+        PowerMock.replay(HttpHelper.class);
+
         replace(method(OAuthHttpRequest.class, "send")).
                 with(new InvocationHandler() {
                     @Override
@@ -141,7 +150,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
     @Test
     public void oAuthRequest_for_acquireTokenByUserAssertion() throws Exception {
         ConfidentialClientApplication app =
-                new ConfidentialClientApplication.Builder(CLIENT_ID, ClientCredentialFactory.create(CLIENT_SECRET))
+                ConfidentialClientApplication.builder(CLIENT_ID, ClientCredentialFactory.createFromSecret(CLIENT_SECRET))
                         .authority(AUTHORITY)
                         .validateAuthority(false).build();
 
@@ -177,22 +186,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
     }
 
     @Test
-    public void oAuthRequest_for_acquireTokenByAsymmetricKeyCredential() throws Exception {
-        PowerMock.mockStatic(HttpHelper.class);
-
-        EasyMock.expect(
-                HttpHelper.executeHttpRequest(
-                        EasyMock.isA(Logger.class),
-                        EasyMock.isA(HttpMethod.class),
-                        EasyMock.isA(String.class),
-                        EasyMock.isA(Map.class),
-                        EasyMock.isNull(),
-                        EasyMock.isA(RequestContext.class),
-                        EasyMock.isA(ServiceBundle.class)))
-                .andReturn(INSTANCE_DISCOVERY_RESPONSE);
-
-
-        PowerMock.replay(HttpHelper.class);
+    public void oAuthRequest_for_acquireTokenByClientCertificate() throws Exception {
 
         try {
             final KeyStore keystore = KeyStore.getInstance("PKCS12", "SunJSSE");
@@ -207,9 +201,9 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
             final X509Certificate cert = (X509Certificate) keystore
                     .getCertificate(alias);
 
-            IClientCredential clientCredential = ClientCredentialFactory.create(key, cert);
+            IClientCredential clientCredential = ClientCredentialFactory.createFromCertificate(key, cert);
 
-            ConfidentialClientApplication app = new ConfidentialClientApplication.Builder(CLIENT_ID, clientCredential)
+            ConfidentialClientApplication app = ConfidentialClientApplication.builder(CLIENT_ID, clientCredential)
                     .authority(AUTHORITY)
                     .validateAuthority(false).build();
 
@@ -244,7 +238,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
 
     @Test
     public void oAuthRequest_for_acquireTokenByClientAssertion() throws Exception {
-        //String rsaJwt = getRSAjwt();
+
         try {
             final KeyStore keystore = KeyStore.getInstance("PKCS12", "SunJSSE");
             keystore.load(
@@ -259,7 +253,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
                     .getCertificate(alias);
 
             ConfidentialClientApplication app =
-                    new ConfidentialClientApplication.Builder(CLIENT_ID, ClientCredentialFactory.create(key, cert))
+                    ConfidentialClientApplication.builder(CLIENT_ID, ClientCredentialFactory.createFromCertificate(key, cert))
                             .authority(AUTHORITY)
                             .validateAuthority(false)
                             .build();

@@ -3,16 +3,17 @@
 
 package com.microsoft.aad.msal4j;
 
-import labapi.FederationProvider;
-import labapi.LabResponse;
-import labapi.LabUserProvider;
-import labapi.NationalCloud;
+import labapi.*;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+
+import static com.microsoft.aad.msal4j.TestConstants.GRAPH_DEFAULT_SCOPE;
+import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 
 public class AcquireTokenSilentIT {
     private LabUserProvider labUserProvider;
@@ -45,21 +46,19 @@ public class AcquireTokenSilentIT {
     public void acquireTokenSilent_LabAuthority_TokenNotRefreshed() throws Exception {
         // Access token should be returned from cache, and not using refresh token
 
-        LabResponse labResponse = labUserProvider.getDefaultUser(
-                NationalCloud.AZURE_CLOUD,
-                false);
-        String password = labUserProvider.getUserPassword(labResponse.getUser());
-        String labAuthority = TestConstants.MICROSOFT_AUTHORITY_HOST + labResponse.getUser().getTenantId();
+        User user = labUserProvider.getDefaultUser();
 
-        PublicClientApplication pca = new PublicClientApplication.Builder(
-                labResponse.getAppId()).
+        String labAuthority = TestConstants.ORGANIZATIONS_AUTHORITY;
+
+        PublicClientApplication pca = PublicClientApplication.builder(
+                user.getAppId()).
                 authority(labAuthority).
                 build();
 
         IAuthenticationResult result =  pca.acquireToken(UserNamePasswordParameters.
                 builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-                        labResponse.getUser().getUpn(),
-                        password.toCharArray())
+                        user.getUpn(),
+                        user.getPassword().toCharArray())
                 .build())
                 .get();
 
@@ -80,20 +79,17 @@ public class AcquireTokenSilentIT {
     @Test
     public void acquireTokenSilent_ForceRefresh() throws Exception {
 
-        LabResponse labResponse = labUserProvider.getDefaultUser(
-                NationalCloud.AZURE_CLOUD,
-                false);
-        String password = labUserProvider.getUserPassword(labResponse.getUser());
+        User user = labUserProvider.getDefaultUser();
 
-        PublicClientApplication pca = new PublicClientApplication.Builder(
-                labResponse.getAppId()).
+        PublicClientApplication pca = PublicClientApplication.builder(
+                user.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
 
         IAuthenticationResult result =  pca.acquireToken(UserNamePasswordParameters.
                 builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-                        labResponse.getUser().getUpn(),
-                        password.toCharArray())
+                        user.getUpn(),
+                        user.getPassword().toCharArray())
                 .build())
                 .get();
 
@@ -119,24 +115,20 @@ public class AcquireTokenSilentIT {
         IPublicClientApplication pca = getPublicClientApplicationWithTokensInCache();
 
         // get lab user for different account
-        LabResponse labResponse = labUserProvider.getAdfsUser(
-                FederationProvider.ADFSV4,
-                true,
-                false);
-        String password = labUserProvider.getUserPassword(labResponse.getUser());
+        User user = labUserProvider.getFederatedAdfsUser(FederationProvider.ADFS_4);
 
         // acquire token for different account
         pca.acquireToken(UserNamePasswordParameters.
                 builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-                        labResponse.getUser().getUpn(),
-                        password.toCharArray())
+                        user.getUpn(),
+                        user.getPassword().toCharArray())
                 .build())
                 .get();
 
         Set<IAccount> accounts = pca.getAccounts().join();
         IAccount account = accounts.stream().filter(
                 x -> x.username().equalsIgnoreCase(
-                        labResponse.getUser().getUpn())).findFirst().orElse(null);
+                        user.getUpn())).findFirst().orElse(null);
 
         SilentParameters parameters =  SilentParameters.builder(
                 Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE), account).
@@ -148,27 +140,121 @@ public class AcquireTokenSilentIT {
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
         Assert.assertNotNull(result.idToken());
-        Assert.assertEquals(result.account().username(), labResponse.getUser().getUpn());
+        Assert.assertEquals(result.account().username(), user.getUpn());
+    }
+
+    @Test
+    public void acquireTokenSilent_usingCommonAuthority_returnCachedAt() throws Exception {
+        acquireTokenSilent_returnCachedTokens(TestConstants.ORGANIZATIONS_AUTHORITY);
+    }
+
+    @Test
+    public void acquireTokenSilent_usingTenantSpecificAuthority_returnCachedAt() throws Exception {
+        String tenantSpecificAuthority = TestConstants.ORGANIZATIONS_AUTHORITY;
+
+        acquireTokenSilent_returnCachedTokens(tenantSpecificAuthority);
+    }
+
+    @Test
+    public void acquireTokenSilent_ConfidentialClient_acquireTokenSilent() throws Exception{
+
+        IConfidentialClientApplication cca = getConfidentialClientApplications();
+
+        IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
+                .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                .build())
+                .get();
+
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.accessToken());
+
+        String cachedAt = result.accessToken();
+
+        result = cca.acquireTokenSilently(SilentParameters
+                .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                .build())
+                .get();
+
+        Assert.assertNotNull(result);
+        Assert.assertEquals(result.accessToken(), cachedAt);
+    }
+
+    @Test(expectedExceptions = ExecutionException.class)
+    public void acquireTokenSilent_ConfidentialClient_acquireTokenSilentDifferentScopeThrowsException()
+            throws Exception {
+
+        IConfidentialClientApplication cca = getConfidentialClientApplications();
+
+        IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
+                .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                .build())
+                .get();
+
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.accessToken());
+
+        //Acquiring token for different scope, expect exception to be thrown
+        cca.acquireTokenSilently(SilentParameters
+                .builder(Collections.singleton(GRAPH_DEFAULT_SCOPE))
+                .build())
+                .get();
+    }
+
+    private IConfidentialClientApplication getConfidentialClientApplications() throws Exception{
+        AppIdentityProvider appProvider = new AppIdentityProvider();
+        final String clientId = appProvider.getDefaultLabId();
+        final String password = appProvider.getDefaultLabPassword();
+        IClientCredential credential = ClientCredentialFactory.createFromSecret(password);
+
+        return ConfidentialClientApplication.builder(
+                clientId, credential).
+                authority(TestConstants.MICROSOFT_AUTHORITY).
+                build();
+    }
+
+    private void acquireTokenSilent_returnCachedTokens(String authority) throws Exception {
+
+        User user = labUserProvider.getDefaultUser();
+
+        PublicClientApplication pca = PublicClientApplication.builder(
+                user.getAppId()).
+                authority(authority).
+                build();
+
+        IAuthenticationResult interactiveAuthResult = pca.acquireToken(UserNamePasswordParameters.
+                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                        user.getUpn(),
+                        user.getPassword().toCharArray())
+                .build())
+                .get();
+
+        Assert.assertNotNull(interactiveAuthResult);
+
+        IAuthenticationResult silentAuthResult = pca.acquireTokenSilently(
+                SilentParameters.builder(
+                        Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE), interactiveAuthResult.account())
+                        .build())
+                .get();
+
+        Assert.assertNotNull(silentAuthResult);
+        Assert.assertEquals(interactiveAuthResult.accessToken(), silentAuthResult.accessToken());
     }
 
     private IPublicClientApplication getPublicClientApplicationWithTokensInCache()
             throws Exception {
-        LabResponse labResponse = labUserProvider.getDefaultUser(
-                NationalCloud.AZURE_CLOUD,
-                false);
-        String password = labUserProvider.getUserPassword(labResponse.getUser());
+        User user = labUserProvider.getDefaultUser();
 
-        PublicClientApplication pca = new PublicClientApplication.Builder(
-                labResponse.getAppId()).
+        PublicClientApplication pca = PublicClientApplication.builder(
+                user.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
 
-        pca.acquireToken(UserNamePasswordParameters.
-                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-                        labResponse.getUser().getUpn(),
-                        password.toCharArray())
-                .build())
-                .get();
+        pca.acquireToken(
+                UserNamePasswordParameters.builder(
+                        Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                        user.getUpn(),
+                        user.getPassword().toCharArray())
+                        .build()).get();
         return pca;
     }
 }

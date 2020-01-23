@@ -3,9 +3,9 @@
 
 package com.microsoft.aad.msal4j;
 
-import labapi.LabResponse;
 import labapi.LabUserProvider;
-import labapi.NationalCloud;
+import labapi.AzureEnvironment;
+import labapi.User;
 import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -22,19 +22,17 @@ public class RefreshTokenIT {
     @BeforeTest
     public void setUp() throws Exception {
         LabUserProvider labUserProvider = LabUserProvider.getInstance();
-        LabResponse labResponse = labUserProvider.getDefaultUser(
-                NationalCloud.AZURE_CLOUD,
-                false);
-        String password = labUserProvider.getUserPassword(labResponse.getUser());
-        pca = new PublicClientApplication.Builder(
-                labResponse.getAppId()).
+        User user = labUserProvider.getDefaultUser();
+
+        pca = PublicClientApplication.builder(
+                user.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
 
         AuthenticationResult result = (AuthenticationResult)pca.acquireToken(UserNamePasswordParameters
                         .builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-                                labResponse.getUser().getUpn(),
-                                password.toCharArray())
+                                user.getUpn(),
+                                user.getPassword().toCharArray())
                         .build())
                 .get();
 

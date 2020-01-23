@@ -10,7 +10,6 @@ import org.easymock.EasyMock;
 import org.powermock.api.easymock.PowerMock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
-import org.slf4j.Logger;
 import org.testng.Assert;
 import org.testng.IObjectFactory;
 import org.testng.annotations.ObjectFactory;
@@ -58,11 +57,12 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
             "  \"message\": \"To sign in, use a web browser to open the page https://aka.ms/devicelogin and enter the code DW83JNP2P to authenticate.\"\n" +
             "}";
 
+    @SuppressWarnings("unchecked")
     @Test
     public void deviceCodeFlowTest() throws Exception {
         app = PowerMock.createPartialMock(PublicClientApplication.class,
                 new String[] { "acquireTokenCommon" },
-                new PublicClientApplication.Builder(TestConfiguration.AAD_CLIENT_ID)
+                PublicClientApplication.builder(TestConfiguration.AAD_CLIENT_ID)
                         .authority(TestConfiguration.AAD_TENANT_ENDPOINT));
 
         Capture<MsalRequest> capturedMsalRequest = Capture.newInstance();
@@ -77,31 +77,31 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         PowerMock.mockStatic(HttpHelper.class);
 
-        Capture<String> capturedUrl = Capture.newInstance();
+        HttpResponse instanceDiscoveryResponse = new HttpResponse();
+        instanceDiscoveryResponse.statusCode(200);
+        instanceDiscoveryResponse.body(INSTANCE_DISCOVERY_RESPONSE);
 
         EasyMock.expect(
                 HttpHelper.executeHttpRequest(
-                        EasyMock.isA(Logger.class),
-                        EasyMock.isA(HttpMethod.class),
-                        EasyMock.capture(capturedUrl),
-                        EasyMock.isA(Map.class),
-                        EasyMock.isNull(),
+                        EasyMock.isA(HttpRequest.class),
                         EasyMock.isA(RequestContext.class),
                         EasyMock.isA(ServiceBundle.class)))
-                .andReturn(INSTANCE_DISCOVERY_RESPONSE);
+                .andReturn(instanceDiscoveryResponse);
+
+        HttpResponse deviceCodeResponse = new HttpResponse();
+        deviceCodeResponse.statusCode(200);
+        deviceCodeResponse.body(deviceCodeJsonResponse);
+
+        Capture<HttpRequest> capturedHttpRequest = Capture.newInstance();
 
         EasyMock.expect(
                 HttpHelper.executeHttpRequest(
-                        EasyMock.isA(Logger.class),
-                        EasyMock.isA(HttpMethod.class),
-                        EasyMock.capture(capturedUrl),
-                        EasyMock.isA(Map.class),
-                        EasyMock.isNull(),
+                        EasyMock.capture(capturedHttpRequest),
                         EasyMock.isA(RequestContext.class),
                         EasyMock.isA(ServiceBundle.class)))
-                .andReturn(deviceCodeJsonResponse);
+                .andReturn(deviceCodeResponse);
 
-        PowerMock.replay(HttpHelper.class);
+        PowerMock.replay(HttpHelper.class, HttpResponse.class);
 
         AtomicReference<String> deviceCodeCorrelationId = new AtomicReference<>();
 
@@ -123,13 +123,13 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         PowerMock.replay(app);
 
-        IAuthenticationResult authResult = app.acquireToken
-                (DeviceCodeFlowParameters.builder(Collections.singleton(AAD_RESOURCE_ID), deviceCodeConsumer)
+        IAuthenticationResult authResult = app.acquireToken(
+                DeviceCodeFlowParameters.builder(Collections.singleton(AAD_RESOURCE_ID), deviceCodeConsumer)
                         .build())
                 .get();
 
         // validate HTTP GET request used to get device code
-        URL url = new URL(capturedUrl.getValue());
+        URL url = capturedHttpRequest.getValue().url();
         Assert.assertEquals(url.getAuthority(), AAD_PREFERRED_NETWORK_ENV_ALIAS);
         Assert.assertEquals(url.getPath(),
                 "/" + AAD_TENANT_NAME + AADAuthority.DEVICE_CODE_ENDPOINT);
@@ -137,7 +137,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         Map<String, String> expectedQueryParams = new HashMap<>();
         expectedQueryParams.put("client_id", AAD_CLIENT_ID);
         expectedQueryParams.put("scope", URLEncoder.encode(AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM +
-                AbstractMsalAuthorizationGrant.SCOPES_DELIMITER + AAD_RESOURCE_ID));
+                AbstractMsalAuthorizationGrant.SCOPES_DELIMITER + AAD_RESOURCE_ID, "UTF-8" ));
 
         Assert.assertEquals(getQueryMap(url.getQuery()), expectedQueryParams);
 
@@ -145,34 +145,33 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         Map<String, String > headers = capturedMsalRequest.getValue().headers().getReadonlyHeaderMap();
         Assert.assertEquals(capturedMsalRequest.getValue().headers().getReadonlyHeaderMap().
-                get(ClientDataHttpHeaders.CORRELATION_ID_HEADER_NAME), deviceCodeCorrelationId.get());
+                get(HttpHeaders.CORRELATION_ID_HEADER_NAME), deviceCodeCorrelationId.get());
         Assert.assertNotNull(authResult);
 
         PowerMock.verify();
     }
 
-    // TODO uncomment when ADFS support is added
-//    @Test(expectedExceptions = IllegalArgumentException.class,
-//            expectedExceptionsMessageRegExp = "Invalid authority type. Device Flow is only supported by AAD authority")
-//    public void executeAcquireDeviceCode_AdfsAuthorityUsed_IllegalArgumentExceptionThrown()
-//            throws Exception {
-//
-//        app = new PublicClientApplication.Builder("client_id")
-//                .authority(ADFS_TENANT_ENDPOINT)
-//                .validateAuthority(false).build();
-//
-//        app.acquireToken
-//                (DeviceCodeFlowParameters
-//                        .builder(Collections.singleton(AAD_RESOURCE_ID), (DeviceCode deviceCode) -> {})
-//                        .build());
-//    }
+    @Test(expectedExceptions = IllegalArgumentException.class,
+            expectedExceptionsMessageRegExp = "Invalid authority type. Device Flow is only supported by AAD authority")
+    public void executeAcquireDeviceCode_AdfsAuthorityUsed_IllegalArgumentExceptionThrown()
+            throws Exception {
+
+        app = PublicClientApplication.builder("client_id")
+                .authority(ADFS_TENANT_ENDPOINT)
+                .validateAuthority(false).build();
+
+        app.acquireToken
+                (DeviceCodeFlowParameters
+                        .builder(Collections.singleton(AAD_RESOURCE_ID), (DeviceCode deviceCode) -> {})
+                        .build());
+    }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Invalid authority type. Device Flow is only supported by AAD authority")
     public void executeAcquireDeviceCode_B2CAuthorityUsed_IllegalArgumentExceptionThrown()
             throws Exception {
 
-        app = new PublicClientApplication.Builder("client_id")
+        app = PublicClientApplication.builder("client_id")
                 .b2cAuthority(TestConfiguration.B2C_AUTHORITY)
                 .validateAuthority(false).build();
 
@@ -194,9 +193,10 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> { };
 
-        app = new PublicClientApplication.Builder("client_id")
+        app = PublicClientApplication.builder("client_id")
                 .authority(AAD_TENANT_ENDPOINT)
                 .validateAuthority(false)
+                .correlationId("corr_id")
                 .build();
 
         DeviceCodeFlowParameters parameters =
@@ -207,16 +207,13 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
                 parameters,
                 futureReference,
                 app,
-                new RequestContext(
-                        "id",
-                        "corr-id",
-                        PublicApi.ACQUIRE_TOKEN_BY_DEVICE_CODE_FLOW));
+                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_DEVICE_CODE_FLOW));
 
 
-        TokenRequest request = PowerMock.createPartialMock(
-                TokenRequest.class, new String[]{"toOauthHttpRequest"},
+        TokenRequestExecutor request = PowerMock.createPartialMock(
+                TokenRequestExecutor.class, new String[]{"createOauthHttpRequest"},
                 new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
-                dcr, new ServiceBundle(null, null, null, telemetryManager));
+                dcr, new ServiceBundle(null, null, telemetryManager));
 
         OAuthHttpRequest msalOAuthHttpRequest = PowerMock.createMock(OAuthHttpRequest.class);
 
@@ -234,13 +231,13 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         httpResponse.setContent(content);
         httpResponse.setContentType(CommonContentTypes.APPLICATION_JSON);
 
-        EasyMock.expect(request.toOauthHttpRequest()).andReturn(msalOAuthHttpRequest).times(1);
+        EasyMock.expect(request.createOauthHttpRequest()).andReturn(msalOAuthHttpRequest).times(1);
         EasyMock.expect(msalOAuthHttpRequest.send()).andReturn(httpResponse).times(1);
 
         PowerMock.replay(request, msalOAuthHttpRequest);
 
         try {
-            request.executeOauthRequestAndProcessResponse();
+            request.executeTokenRequest();
             Assert.fail("Expected MsalException was not thrown");
         } catch (MsalServiceException ex) {
 

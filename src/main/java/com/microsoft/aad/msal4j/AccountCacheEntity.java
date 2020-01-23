@@ -3,7 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import lombok.experimental.Accessors;
 
@@ -18,34 +18,35 @@ import java.util.List;
 class AccountCacheEntity implements Serializable {
 
     static final String MSSTS_ACCOUNT_TYPE = "MSSTS";
+    static final String ADFS_ACCOUNT_TYPE = "ADFS";
 
-    @SerializedName("home_account_id")
+    @JsonProperty("home_account_id")
     protected String homeAccountId;
 
-    @SerializedName("environment")
+    @JsonProperty("environment")
     protected String environment;
 
     @EqualsAndHashCode.Exclude
-    @SerializedName("realm")
+    @JsonProperty("realm")
     protected String realm;
 
-    @SerializedName("local_account_id")
+    @JsonProperty("local_account_id")
     protected String localAccountId;
 
-    @SerializedName("username")
+    @JsonProperty("username")
     protected String username;
 
-    @SerializedName("name")
+    @JsonProperty("name")
     protected String name;
 
-    @SerializedName("client_info")
+    @JsonProperty("client_info")
     protected String clientInfoStr;
 
     ClientInfo clientInfo() {
         return ClientInfo.createFromJson(clientInfoStr);
     }
 
-    @SerializedName("authority_type")
+    @JsonProperty("authority_type")
     protected String authorityType;
 
     String getKey() {
@@ -59,7 +60,7 @@ class AccountCacheEntity implements Serializable {
         return String.join(Constants.CACHE_KEY_SEPARATOR, keyParts).toLowerCase();
     }
 
-    static AccountCacheEntity create(String clientInfoStr, String environment, IdToken idToken, String policy) {
+    static AccountCacheEntity create(String clientInfoStr, Authority requestAuthority, IdToken idToken, String policy) {
 
         AccountCacheEntity account = new AccountCacheEntity();
         account.authorityType(MSSTS_ACCOUNT_TYPE);
@@ -67,10 +68,10 @@ class AccountCacheEntity implements Serializable {
         account.homeAccountId(policy != null ?
                 account.clientInfo().toAccountIdentifier() + Constants.CACHE_KEY_SEPARATOR + policy :
                 account.clientInfo().toAccountIdentifier());
-        account.environment(environment);
+        account.environment(requestAuthority.host());
+        account.realm(requestAuthority.tenant());
 
         if (idToken != null) {
-            account.realm(idToken.tenantIdentifier);
             String localAccountId = !StringHelper.isBlank(idToken.objectIdentifier)
                     ? idToken.objectIdentifier : idToken.subject;
             account.localAccountId(localAccountId);
@@ -81,8 +82,22 @@ class AccountCacheEntity implements Serializable {
         return account;
     }
 
-    static AccountCacheEntity create(String clientInfoStr, String environment, IdToken idToken){
-        return create(clientInfoStr, environment, idToken, null);
+    static AccountCacheEntity createADFSAccount(Authority requestAuthority, IdToken idToken) {
+
+        AccountCacheEntity account = new AccountCacheEntity();
+        account.authorityType(ADFS_ACCOUNT_TYPE);
+        account.homeAccountId(idToken.subject);
+
+        account.environment(requestAuthority.host());
+
+        account.username(idToken.upn);
+        account.name(idToken.uniqueName);
+
+        return account;
+    }
+
+    static AccountCacheEntity create(String clientInfoStr, Authority requestAuthority, IdToken idToken){
+        return create(clientInfoStr, requestAuthority, idToken, null);
     }
 
     IAccount toAccount(){

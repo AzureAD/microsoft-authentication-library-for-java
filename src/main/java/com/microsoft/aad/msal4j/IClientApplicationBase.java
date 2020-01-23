@@ -13,7 +13,7 @@ import java.util.concurrent.Future;
 /**
  * Interface representing an application for which tokens can be acquired.
  */
-public interface IClientApplicationBase {
+interface IClientApplicationBase {
 
     String DEFAULT_AUTHORITY = "https://login.microsoftonline.com/common/";
 
@@ -61,10 +61,10 @@ public interface IClientApplicationBase {
      */
     ITokenCache tokenCache();
 
-    /**
-     * @return Telemetry consumer that will receive telemetry events emitted by the library.
-     */
-    java.util.function.Consumer<java.util.List<java.util.HashMap<String, String>>> telemetryConsumer();
+//    /**
+//     * @return Telemetry consumer that will receive telemetry events emitted by the library.
+//     */
+//     java.util.function.Consumer<java.util.List<java.util.HashMap<String, String>>> telemetryConsumer();
 
     /**
      * Acquires security token from the authority using an authorization code previously received.

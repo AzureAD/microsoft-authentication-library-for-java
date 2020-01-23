@@ -3,7 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -16,27 +16,27 @@ class ErrorResponse {
     private Integer statusCode;
     private String statusMessage;
 
-    @SerializedName("error")
+    @JsonProperty("error")
     protected String error;
 
-    @SerializedName("error_description")
+    @JsonProperty("error_description")
     protected String errorDescription;
 
-    @SerializedName("error_codes")
+    @JsonProperty("error_codes")
     protected long[] errorCodes;
 
-    @SerializedName("suberror")
+    @JsonProperty("suberror")
     protected String subError;
 
-    @SerializedName("trace_id")
+    @JsonProperty("trace_id")
     protected String traceId;
 
-    @SerializedName("timestamp")
+    @JsonProperty("timestamp")
     protected String timestamp;
 
-    @SerializedName("correlation_id")
+    @JsonProperty("correlation_id")
     protected String correlation_id;
 
-    @SerializedName("claims")
+    @JsonProperty("claims")
     private String claims;
 }

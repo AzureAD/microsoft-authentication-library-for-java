@@ -3,11 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -19,8 +14,6 @@ import java.util.UUID;
 
 class WSTrustRequest {
 
-    private final static Logger log = LoggerFactory.getLogger(WSTrustRequest.class);
-
     private final static int MAX_EXPECTED_MESSAGE_SIZE = 1024;
     final static String DEFAULT_APPLIES_TO = "urn:federation:MicrosoftOnline";
 
@@ -31,7 +24,7 @@ class WSTrustRequest {
                                    RequestContext requestContext,
                                    ServiceBundle serviceBundle) throws Exception {
 
-        Map<String, String> headers = new HashMap<String, String>();
+        Map<String, String> headers = new HashMap<>();
         headers.put("Content-Type", "application/soap+xml; charset=utf-8");
         headers.put("return-client-request-id", "true");
 
@@ -49,10 +42,10 @@ class WSTrustRequest {
         String body = buildMessage(policy.getUrl(), username, password,
                 policy.getVersion(), cloudAudienceUrn).toString();
 
-        String response = HttpHelper.executeHttpRequest(log, HttpMethod.POST, policy.getUrl(),
-                headers, body, requestContext , serviceBundle);
+        HttpRequest httpRequest = new HttpRequest(HttpMethod.POST, policy.getUrl(), headers, body);
+        IHttpResponse response = HttpHelper.executeHttpRequest(httpRequest, requestContext , serviceBundle);
 
-        return WSTrustResponse.parse(response, policy.getVersion());
+        return WSTrustResponse.parse(response.body(), policy.getVersion());
     }
 
     static WSTrustResponse execute(String url,
@@ -63,9 +56,10 @@ class WSTrustRequest {
                                    ServiceBundle serviceBundle,
                                    boolean logPii) throws Exception {
 
-        String mexResponse = HttpHelper.executeHttpRequest(log, HttpMethod.GET , url, null,null, requestContext, serviceBundle);
+        HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, url);
+        IHttpResponse mexResponse = HttpHelper.executeHttpRequest(httpRequest, requestContext, serviceBundle);
 
-        BindingPolicy policy = MexParser.getWsTrustEndpointFromMexResponse(mexResponse, logPii);
+        BindingPolicy policy = MexParser.getWsTrustEndpointFromMexResponse(mexResponse.body(), logPii);
 
         if(policy == null){
             throw new MsalServiceException(
@@ -82,16 +76,10 @@ class WSTrustRequest {
                                    ServiceBundle serviceBundle,
                                    boolean logPii) throws Exception {
 
-        String mexResponse = HttpHelper.executeHttpRequest(
-                log,
-                HttpMethod.GET,
-                mexURL,
-                null,
-                null,
-                requestContext,
-                serviceBundle);
+        HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, mexURL);
+        IHttpResponse mexResponse = HttpHelper.executeHttpRequest(httpRequest, requestContext,serviceBundle);
 
-        BindingPolicy policy = MexParser.getPolicyFromMexResponseForIntegrated(mexResponse, logPii);
+        BindingPolicy policy = MexParser.getPolicyFromMexResponseForIntegrated(mexResponse.body(), logPii);
 
         if(policy == null){
             throw new MsalServiceException("WsTrust endpoint not found in metadata document",
@@ -189,11 +177,37 @@ class WSTrustRequest {
                                 guid, address,
                                 integrated ? "" : securityHeaderBuilder.toString(),
                                 rstTrustNamespace,
-                                StringUtils.isNotEmpty(cloudAudienceUrn) ? cloudAudienceUrn : DEFAULT_APPLIES_TO,
+                                StringHelper.isBlank(cloudAudienceUrn) ? DEFAULT_APPLIES_TO : cloudAudienceUrn,
                                 keyType,
                                 requestType));
 
         return messageBuilder;
+    }
+
+    static String escapeXMLElementData(String data){
+        StringBuilder sb = new StringBuilder();
+        for(char ch : data.toCharArray()){
+            switch (ch){
+                case '<':
+                    sb.append("&lt;");
+                    break;
+                case '>':
+                    sb.append("&gt;");
+                    break;
+                case '\"':
+                    sb.append("&quot;");
+                    break;
+                case '\'':
+                    sb.append("&apos;");
+                    break;
+                case '&':
+                    sb.append("&amp;");
+                    break;
+                default:
+                    sb.append(ch);
+            }
+        }
+        return sb.toString();
     }
 
     private static StringBuilder buildSecurityHeader(
@@ -203,8 +217,8 @@ class WSTrustRequest {
         StringBuilder messageCredentialsBuilder = new StringBuilder(
                 MAX_EXPECTED_MESSAGE_SIZE);
         String guid = UUID.randomUUID().toString();
-        username = StringEscapeUtils.escapeXml10(username);
-        password = StringEscapeUtils.escapeXml10(password);
+        username = escapeXMLElementData(username);
+        password = escapeXMLElementData(password);
 
         DateFormat dateFormat = new SimpleDateFormat(
                 "yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);

@@ -118,13 +118,7 @@ public class PublicClientApplication extends ClientApplicationBase implements IP
 
     public static class Builder extends ClientApplicationBase.Builder<Builder> {
 
-        /**
-         * Constructor to create instance of Builder of PublicClientApplication
-         *
-         * @param clientId Client ID (Application ID) of the application as registered
-         *                 in the application registration portal (portal.azure.com)
-         */
-        Builder(String clientId) {
+        private Builder(String clientId) {
             super(clientId);
         }
 

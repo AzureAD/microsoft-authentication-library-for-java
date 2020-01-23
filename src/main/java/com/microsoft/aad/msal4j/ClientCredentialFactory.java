@@ -15,19 +15,19 @@ import java.security.cert.X509Certificate;
 public class ClientCredentialFactory {
 
     /**
-     *
+     * Static method to create a {@link ClientSecret} instance from a client secret
      * @param secret secret of application requesting a token
      * @return {@link ClientSecret}
      */
-    public static IClientCredential create(String secret){
+    public static IClientSecret createFromSecret(String secret){
         return new ClientSecret(secret);
     }
 
     /**
-     *
+     * Static method to create a {@link ClientCertificate} instance from a certificate
      * @param pkcs12Certificate InputStream containing PCKS12 formatted certificate
      * @param password certificate password
-     * @return {@link IClientCredential}
+     * @return {@link ClientCertificate}
      * @throws CertificateException
      * @throws UnrecoverableKeyException
      * @throws NoSuchAlgorithmException
@@ -35,21 +35,28 @@ public class ClientCredentialFactory {
      * @throws NoSuchProviderException
      * @throws IOException
      */
-    public static IClientCredential create
-            (final InputStream pkcs12Certificate, final String password)
+    public static IClientCertificate createFromCertificate(final InputStream pkcs12Certificate, final String password)
             throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException,
             KeyStoreException, NoSuchProviderException, IOException {
-        return AsymmetricKeyCredential.create(pkcs12Certificate, password);
+        return ClientCertificate.create(pkcs12Certificate, password);
     }
 
     /**
-     *
+     * Static method to create a {@link ClientCertificate} instance.
      * @param key  RSA private key to sign the assertion.
      * @param publicCertificate x509 public certificate used for thumbprint
-     * @return {@link IClientCredential}
+     * @return {@link ClientCertificate}
      */
-    public static IClientCredential create
-            (final PrivateKey key, final X509Certificate publicCertificate) {
-        return AsymmetricKeyCredential.create(key, publicCertificate);
+    public static IClientCertificate createFromCertificate(final PrivateKey key, final X509Certificate publicCertificate) {
+        return ClientCertificate.create(key, publicCertificate);
+    }
+
+    /**
+     * Static method to create a {@link ClientAssertion} instance.
+     * @param clientAssertion Jwt token encoded as a base64 URL encoded string
+     * @return {@link ClientAssertion}
+     */
+    public static IClientAssertion createFromClientAssertion(String clientAssertion){
+        return new ClientAssertion(clientAssertion);
     }
 }

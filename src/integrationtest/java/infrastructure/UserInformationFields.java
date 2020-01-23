@@ -4,17 +4,16 @@
 package infrastructure;
 
 import labapi.FederationProvider;
-import labapi.LabUser;
-import labapi.UserType;
+import labapi.User;
 import org.testng.util.Strings;
 
 class UserInformationFields {
-    private final LabUser labUser;
+    private final User user;
     private String passwordInputId;
     private String passwordSigInButtonId;
 
-    UserInformationFields(LabUser labUser){
-        this.labUser = labUser;
+    UserInformationFields(User labUser){
+        this.user = labUser;
     }
 
     String getPasswordInputId() {
@@ -39,18 +38,28 @@ class UserInformationFields {
         return SeleniumConstants.WEB_UPN_INPUT_ID;
     }
 
+    String getADFS2019UserNameInputId() {
+        return SeleniumConstants.ADFS2019_UPN_INPUT_ID;
+    }
+
     private void determineFieldIds(){
-        if(labUser.isFederated()){
-            if(labUser.getFederationProvider() == FederationProvider.ADFSV2){
+        switch (user.getFederationProvider()){
+            case FederationProvider.ADFS_3:
+            case FederationProvider.ADFS_2019 :
+                passwordInputId = SeleniumConstants.ADFS2019_PASSWORD_ID;
+                passwordSigInButtonId = SeleniumConstants.ADFS2019_SUBMIT_ID;
+                break;
+            case FederationProvider.ADFS_2:
                 passwordInputId = SeleniumConstants.ADFSV2_WEB_PASSWORD_INPUT_ID;
                 passwordSigInButtonId = SeleniumConstants.ADFSV2_WEB_SUBMIT_BUTTON_ID;
-                return;
-            }
-            passwordInputId = SeleniumConstants.ADFSV4_WEB_PASSWORD_ID;
-            passwordSigInButtonId = SeleniumConstants.ADFSV4_WEB_SUBMIT_ID;
-            return;
+                break;
+            case FederationProvider.ADFS_4:
+                passwordInputId = SeleniumConstants.ADFSV4_WEB_PASSWORD_ID;
+                passwordSigInButtonId = SeleniumConstants.ADFSV4_WEB_SUBMIT_ID;
+                break;
+            default:
+                passwordInputId = SeleniumConstants.WEB_PASSWORD_ID;
+                passwordSigInButtonId = SeleniumConstants.WEB_SUBMIT_ID;
         }
-        passwordInputId = SeleniumConstants.WEB_PASSWORD_ID;
-        passwordSigInButtonId = SeleniumConstants.WEB_SUBMIT_ID;
     }
 }

@@ -3,7 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.Accessors;
@@ -12,22 +12,22 @@ import lombok.experimental.Accessors;
 @Getter(AccessLevel.PACKAGE)
 class UserDiscoveryResponse {
 
-    @SerializedName("ver")
+    @JsonProperty("ver")
     private float version;
 
-    @SerializedName("account_type")
+    @JsonProperty("account_type")
     private String accountType;
 
-    @SerializedName("federation_metadata_url")
+    @JsonProperty("federation_metadata_url")
     private String federationMetadataUrl;
 
-    @SerializedName("federation_protocol")
+    @JsonProperty("federation_protocol")
     private String federationProtocol;
 
-    @SerializedName("federation_active_auth_url")
+    @JsonProperty("federation_active_auth_url")
     private String federationActiveAuthUrl;
 
-    @SerializedName("cloud_audience_urn")
+    @JsonProperty("cloud_audience_urn")
     private String cloudAudienceUrn;
 
     boolean isAccountFederated() {

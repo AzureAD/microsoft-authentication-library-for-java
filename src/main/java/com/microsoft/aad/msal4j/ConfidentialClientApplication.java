@@ -67,13 +67,15 @@ public class ConfidentialClientApplication extends ClientApplicationBase impleme
             clientAuthentication = new ClientSecretPost(
                     new ClientID(clientId()),
                     new Secret(((ClientSecret) clientCredential).clientSecret()));
-        } else if (clientCredential instanceof AsymmetricKeyCredential) {
+        } else if (clientCredential instanceof ClientCertificate) {
             ClientAssertion clientAssertion = JwtHelper.buildJwt(
                     clientId(),
-                    (AsymmetricKeyCredential) clientCredential,
+                    (ClientCertificate) clientCredential,
                     this.authenticationAuthority.selfSignedJwtAudience());
 
             clientAuthentication = createClientAuthFromClientAssertion(clientAssertion);
+        } else if (clientCredential instanceof ClientAssertion){
+            clientAuthentication = createClientAuthFromClientAssertion((ClientAssertion) clientCredential);
         } else {
             throw new IllegalArgumentException("Unsupported client credential");
         }
@@ -109,14 +111,7 @@ public class ConfidentialClientApplication extends ClientApplicationBase impleme
 
         private IClientCredential clientCredential;
 
-        /**
-         * Constructor to create instance of Builder of ConfidentialClientApplication
-         *
-         * @param clientId         Client ID (Application ID) of the application as registered
-         *                         in the application registration portal (portal.azure.com)
-         * @param clientCredential The client credential to use for token acquisition.
-         */
-        Builder(String clientId, IClientCredential clientCredential) {
+        private Builder(String clientId, IClientCredential clientCredential) {
             super(clientId);
             this.clientCredential = clientCredential;
         }

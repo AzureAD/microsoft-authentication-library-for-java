@@ -3,11 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import labapi.B2CIdentityProvider;
-import labapi.FederationProvider;
-import labapi.LabResponse;
-import labapi.LabUserProvider;
-import labapi.NationalCloud;
+import labapi.*;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -25,93 +21,112 @@ public class UsernamePasswordIT {
 
     @Test
     public void acquireTokenWithUsernamePassword_Managed() throws Exception {
+        User user = labUserProvider.getDefaultUser();
 
-        LabResponse labResponse = labUserProvider.getDefaultUser(
-                NationalCloud.AZURE_CLOUD,
-                false);
-        String password = labUserProvider.getUserPassword(labResponse.getUser());
-        assertAcquireTokenCommon(labResponse, password);
+        assertAcquireTokenCommonAAD(user);
     }
 
     @Test
-    public void acquireTokenWithUsernamePassword_ADFSv2019() throws Exception{
-        LabResponse labResponse = labUserProvider.getAdfsUser(
-                FederationProvider.ADFSv2019,
-                true,
-                true);
-        String password = labUserProvider.getUserPassword(labResponse.getUser());
-        assertAcquireTokenCommon(labResponse, password);
+    public void acquireTokenWithUsernamePassword_ADFSv2019_Federated() throws Exception{
+        UserQueryParameters query = new UserQueryParameters();
+        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER,  FederationProvider.ADFS_2019);
+        query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
+
+        User user = labUserProvider.getLabUser(query);
+
+        assertAcquireTokenCommonAAD(user);
+    }
+
+    @Test
+    public void acquireTokenWithUsernamePassword_ADFSv2019_OnPrem() throws Exception{
+        UserQueryParameters query = new UserQueryParameters();
+        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER,  FederationProvider.ADFS_2019);
+        query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.ON_PREM);
+
+        User user = labUserProvider.getLabUser(query);
+
+        assertAcquireTokenCommonADFS(user);
     }
 
     @Test
     public void acquireTokenWithUsernamePassword_ADFSv4() throws Exception{
-        LabResponse labResponse = labUserProvider.getAdfsUser(
-                FederationProvider.ADFSV4,
-                true,
-                false);
-        String password = labUserProvider.getUserPassword(labResponse.getUser());
-        assertAcquireTokenCommon(labResponse, password);
+        UserQueryParameters query = new UserQueryParameters();
+        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER,  FederationProvider.ADFS_4);
+        query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
+
+        User user = labUserProvider.getLabUser(query);
+
+        assertAcquireTokenCommonAAD(user);
     }
 
     @Test
     public void acquireTokenWithUsernamePassword_ADFSv3() throws Exception{
-        LabResponse labResponse = labUserProvider.getAdfsUser(
-                FederationProvider.ADFSV3,
-                true,
-                false);
-        String password = labUserProvider.getUserPassword(labResponse.getUser());
-        assertAcquireTokenCommon(labResponse, password);
+        UserQueryParameters query = new UserQueryParameters();
+        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER,  FederationProvider.ADFS_3);
+        query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
+
+        User user = labUserProvider.getLabUser(query);
+
+        assertAcquireTokenCommonAAD(user);
     }
 
     @Test
     public void acquireTokenWithUsernamePassword_ADFSv2() throws Exception{
-        LabResponse labResponse = labUserProvider.getAdfsUser(
-                FederationProvider.ADFSV2,
-                true,
-                false);
-        String password = labUserProvider.getUserPassword(labResponse.getUser());
-        assertAcquireTokenCommon(labResponse, password);
+        UserQueryParameters query = new UserQueryParameters();
+        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER,  FederationProvider.ADFS_2);
+        query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
+
+        User user = labUserProvider.getLabUser(query);
+
+        assertAcquireTokenCommonAAD(user);
     }
 
-    public void assertAcquireTokenCommon(LabResponse labResponse, String password)
+    private void assertAcquireTokenCommonADFS(User user) throws Exception {
+        assertAcquireTokenCommon(user, TestConstants.ADFS_AUTHORITY, TestConstants.ADFS_SCOPE,
+                TestConstants.ADFS_APP_ID);
+    }
+
+    private void assertAcquireTokenCommonAAD(User user) throws Exception {
+        assertAcquireTokenCommon(user, TestConstants.ORGANIZATIONS_AUTHORITY, TestConstants.GRAPH_DEFAULT_SCOPE,
+                user.getAppId());
+    }
+
+    private void assertAcquireTokenCommon(User user, String authority, String scope, String appId)
             throws Exception{
-        PublicClientApplication pca = new PublicClientApplication.Builder(
-                labResponse.getAppId()).
-                authority(TestConstants.ORGANIZATIONS_AUTHORITY).
+        PublicClientApplication pca = PublicClientApplication.builder(
+                appId).
+                authority(authority).
                 build();
 
         IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters.
-                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-                        labResponse.getUser().getUpn(),
-                        password.toCharArray())
+                builder(Collections.singleton(scope),
+                        user.getUpn(),
+                        user.getPassword().toCharArray())
                 .build())
                 .get();
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
         Assert.assertNotNull(result.idToken());
-        // TODO AuthenticationResult should have an getAccountInfo API
-        // Assert.assertEquals(labResponse.getUser().getUpn(), result.getAccountInfo().getUsername());
+        Assert.assertEquals(user.getUpn(), result.account().username());
     }
 
     @Test
     public void acquireTokenWithUsernamePassword_B2C_CustomAuthority() throws Exception{
-        LabResponse labResponse = labUserProvider.getB2cUser(
-                B2CIdentityProvider.LOCAL,
-                false);
+        UserQueryParameters query = new UserQueryParameters();
+        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.B2C);
+        query.parameters.put(UserQueryParameters.B2C_PROVIDER, B2CProvider.LOCAL);
+        User user = labUserProvider.getLabUser(query);
 
-        String b2CAppId = "e3b9ad76-9763-4827-b088-80c7a7888f79";
-        String password = labUserProvider.getUserPassword(labResponse.getUser());
-
-        PublicClientApplication pca = new PublicClientApplication.Builder(
-                b2CAppId).
+        PublicClientApplication pca = PublicClientApplication.builder(
+                user.getAppId()).
                 b2cAuthority(TestConstants.B2C_AUTHORITY_ROPC).
                 build();
 
         IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters.
                 builder(Collections.singleton(TestConstants.B2C_READ_SCOPE),
-                        labResponse.getUser().getUpn(),
-                        password.toCharArray())
+                        user.getUpn(),
+                        user.getPassword().toCharArray())
                 .build())
                 .get();
 
@@ -122,22 +137,20 @@ public class UsernamePasswordIT {
 
     @Test
     public void acquireTokenWithUsernamePassword_B2C_LoginMicrosoftOnline() throws Exception{
-        LabResponse labResponse = labUserProvider.getB2cUser(
-                B2CIdentityProvider.LOCAL,
-                false);
+        UserQueryParameters query = new UserQueryParameters();
+        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.B2C);
+        query.parameters.put(UserQueryParameters.B2C_PROVIDER, B2CProvider.LOCAL);
+        User user = labUserProvider.getLabUser(query);
 
-        String b2CAppId = "e3b9ad76-9763-4827-b088-80c7a7888f79";
-        String password = labUserProvider.getUserPassword(labResponse.getUser());
-
-        PublicClientApplication pca = new PublicClientApplication.Builder(
-                b2CAppId).
+        PublicClientApplication pca = PublicClientApplication.builder(
+                user.getAppId()).
                 b2cAuthority(TestConstants.B2C_MICROSOFTLOGIN_ROPC).
                 build();
 
         IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters.
                 builder(Collections.singleton(TestConstants.B2C_READ_SCOPE),
-                        labResponse.getUser().getUpn(),
-                        password.toCharArray())
+                        user.getUpn(),
+                        user.getPassword().toCharArray())
                 .build())
                 .get();
 

@@ -25,7 +25,7 @@ public class InteractiveFlow {
 
         InteractiveRequestParameters parameters = InteractiveRequestParameters.builder()
                 .redirectUri(new URI("http://localhost:8080"))
-                .scopes(Collections.singleton(TestData.testScope))
+                //.scopes(Collections.singleton(TestData.testScope))
                 .build();
 
         IAuthenticationResult result = publicClientApplication.acquireToken(parameters).join();

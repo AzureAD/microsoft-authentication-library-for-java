@@ -7,13 +7,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
-
-/**
- * Representation of client credential containing a secret in string format
- */
 @EqualsAndHashCode
-public final class ClientSecret implements IClientCredential {
-
+final class ClientSecret implements IClientSecret {
 
     @Accessors(fluent = true)
     @Getter
@@ -25,7 +20,7 @@ public final class ClientSecret implements IClientCredential {
      * @param clientSecret
      *            Secret of the client requesting the token.
      */
-    public ClientSecret(final String clientSecret) {
+    ClientSecret(final String clientSecret) {
         if (StringHelper.isBlank(clientSecret)) {
             throw new IllegalArgumentException("clientSecret is null or empty");
         }
