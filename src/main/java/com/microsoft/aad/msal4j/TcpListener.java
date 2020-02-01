@@ -15,6 +15,7 @@ import java.util.concurrent.BlockingQueue;
 
 public class TcpListener implements AutoCloseable{
 
+
     private final static Logger LOG = LoggerFactory.getLogger(TcpListener.class);
 
     private BlockingQueue<String> authorizationCodeQueue;
@@ -62,10 +63,10 @@ public class TcpListener implements AutoCloseable{
             StringBuilder builder = new StringBuilder();
             try(BufferedReader in = new BufferedReader(
                     new InputStreamReader(clientSocket.getInputStream()))) {
-                String line = in.readLine();
-                while(!line.equals("")){
+                String line;
+                while((line = in.readLine()) != null){
                     builder.append(line);
-                    line = in.readLine();
+                    //line = in.readLine();
                 }
                 authorizationCodeQueue.put(builder.toString());
             } catch (Exception e) {

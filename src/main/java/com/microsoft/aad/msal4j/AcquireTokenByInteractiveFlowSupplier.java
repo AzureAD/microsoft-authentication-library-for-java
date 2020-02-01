@@ -6,16 +6,15 @@ import java.net.URI;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-public class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier {
-
-    private BlockingQueue<String> AuthorizationCodeQueue;
-    private TcpListener tcpListener;
+class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier {
 
     private PublicClientApplication clientApplication;
     private InteractiveRequest interactiveRequest;
+
+    private BlockingQueue<AuthorizationResult> authorizationCodeQueue;
+    private HttpListener httpListener;
+    private AuthorizationResponseHandler authorizationResponseHandler;
 
     AcquireTokenByInteractiveFlowSupplier(PublicClientApplication clientApplication,
                                           InteractiveRequest request){
@@ -24,55 +23,41 @@ public class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultS
         this.interactiveRequest = request;
     }
 
-    // This where the high level logic for the flow will go
+    @Override
     AuthenticationResult execute() throws Exception{
-        String authorizationCode = getAuthorizationCode();
-        return acquireTokenWithAuthorizationCode(authorizationCode);
+        AuthorizationResult authorizationResult = getAuthorizationResult();
+        return acquireTokenWithAuthorizationCode(authorizationResult);
     }
 
-    private String getAuthorizationCode(){
+    private AuthorizationResult getAuthorizationResult(){
+        SystemBrowserOptions systemBrowserOptions=
+                interactiveRequest.interactiveRequestParameters.systemBrowserOptions();
 
-        BlockingQueue<Boolean> tcpStartUpNotificationQueue = new LinkedBlockingQueue<>();
-        startTcpListener(tcpStartUpNotificationQueue);
+        authorizationCodeQueue = new LinkedBlockingQueue<>();
+        authorizationResponseHandler = new AuthorizationResponseHandler(
+                authorizationCodeQueue,
+                systemBrowserOptions);
+        startHttpListener(authorizationResponseHandler);
 
-        String authServerResponse;
-        try{
 
-            Boolean tcpListenerStarted = tcpStartUpNotificationQueue.poll(
-                    30,
-                    TimeUnit.SECONDS);
-            if (tcpListenerStarted == null || !tcpListenerStarted){
-                throw new RuntimeException("Could not start TCP listener");
-            }
-
-            SystemBrowserOptions options = interactiveRequest.interactiveRequestParameters.systemBrowserOptions();
-            if(options != null && options.openBrowserAction() != null){
-                interactiveRequest.interactiveRequestParameters.systemBrowserOptions().openBrowserAction().openBrowser(
-                        interactiveRequest.authorizationURI);
-            } else {
-                openDefaultSystemBrowser(interactiveRequest.authorizationURI);
-            }
-
-            authServerResponse = getResponseFromTcpListener();
-        } catch(Exception e){
-            throw new MsalClientException("Error", AuthenticationErrorCode.AUTHORIZATION_CODE_BLANK);
+        if (systemBrowserOptions != null && systemBrowserOptions.openBrowserAction() != null) {
+            interactiveRequest.interactiveRequestParameters.systemBrowserOptions().openBrowserAction()
+                    .openBrowser(interactiveRequest.authorizationURI);
+        } else {
+            openDefaultSystemBrowser(interactiveRequest.authorizationURI);
         }
 
-        return parseServerResponse(authServerResponse, clientApplication.authenticationAuthority.authorityType);
-    }
+        return getAuthorizationResultFromHttpListener();
+}
 
-    private void startTcpListener(BlockingQueue<Boolean> tcpStartUpNotifierQueue){
-        AuthorizationCodeQueue = new LinkedBlockingQueue<>();
-
-        tcpListener = new TcpListener(
-                AuthorizationCodeQueue,
-                tcpStartUpNotifierQueue);
-
+    private void startHttpListener(AuthorizationResponseHandler handler){
         // if port is unspecified, set to 0, which will cause socket to find a free port
         int port = interactiveRequest.interactiveRequestParameters.redirectUri().getPort() == -1 ?
                 0 :
                 interactiveRequest.interactiveRequestParameters.redirectUri().getPort();
-        tcpListener.startServer(new int[] {port});
+
+        httpListener = new HttpListener();
+        httpListener.startListener(port, handler);
     }
 
     private void openDefaultSystemBrowser(URI uri){
@@ -85,54 +70,36 @@ public class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultS
         }
     }
 
-    private String getResponseFromTcpListener(){
-
-        String response = null;
+    private AuthorizationResult getAuthorizationResultFromHttpListener(){
+        AuthorizationResult result = null;
         try {
-            long expirationTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) + 300;
+            long expirationTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) + 120;
 
-            while(StringHelper.isBlank(response) && !interactiveRequest.futureReference.get().isCancelled() &&
+            while(result == null && !interactiveRequest.futureReference.get().isCancelled() &&
                     TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) < expirationTime) {
 
-                response = AuthorizationCodeQueue.poll(100, TimeUnit.MILLISECONDS);
+                result = authorizationCodeQueue.poll(100, TimeUnit.MILLISECONDS);
             }
-
-            if (StringHelper.isBlank(response)) {
-                throw new MsalClientException("No Authorization code was returned from the server",
-                        AuthenticationErrorCode.AUTHORIZATION_CODE_BLANK);
-            }
-
         } catch(Exception e){
             throw new MsalClientException(e);
+        } finally {
+            if(httpListener != null){
+                httpListener.stopListener();
+            }
         }
-        return response;
+
+        if (result == null || StringHelper.isBlank(result.code())) {
+            throw new MsalClientException("No Authorization code was returned from the server",
+                    AuthenticationErrorCode.AUTHORIZATION_RESULT_BLANK);
+        }
+        return result;
     }
 
-    //TODO: Bring up difference in between auth code response and ask B2C team if it's possible to standardize
-    private String parseServerResponse(String serverResponse, AuthorityType authorityType){
-        // Response will be a GET request with query parameter ?code=authCode
-        String regexp;
-        if(authorityType == AuthorityType.B2C){
-            regexp = "(?<=code=)(?:(?! HTTP).)*";
-        } else {
-            regexp = "(?<=code=)(?:(?!&).)*";
-        }
-
-        Pattern pattern = Pattern.compile(regexp);
-        Matcher matcher = pattern.matcher(serverResponse);
-
-        if(!matcher.find()){
-            throw new MsalClientException("No authorization code in server response",
-                    AuthenticationErrorCode.AUTHORIZATION_CODE_BLANK);
-        }
-        return matcher.group(0);
-    }
-
-    private AuthenticationResult acquireTokenWithAuthorizationCode(String authorizationCode)
+    private AuthenticationResult acquireTokenWithAuthorizationCode(AuthorizationResult authorizationResult)
             throws Exception{
 
         AuthorizationCodeParameters parameters = AuthorizationCodeParameters
-                .builder(authorizationCode, interactiveRequest.interactiveRequestParameters.redirectUri())
+                .builder(authorizationResult.code(), interactiveRequest.interactiveRequestParameters.redirectUri())
                 .scopes(interactiveRequest.interactiveRequestParameters.scopes())
                 .codeVerifier(interactiveRequest.verifier())
                 .build();

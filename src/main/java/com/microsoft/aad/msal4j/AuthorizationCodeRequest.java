@@ -7,6 +7,7 @@ import com.nimbusds.oauth2.sdk.AuthorizationCode;
 import com.nimbusds.oauth2.sdk.AuthorizationCodeGrant;
 import com.nimbusds.oauth2.sdk.AuthorizationGrant;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
+import com.nimbusds.oauth2.sdk.pkce.CodeVerifier;
 import lombok.Builder;
 
 import java.net.URI;
@@ -22,8 +23,17 @@ class AuthorizationCodeRequest extends MsalRequest {
 
     private static AbstractMsalAuthorizationGrant createMsalGrant(AuthorizationCodeParameters parameters){
 
-        AuthorizationGrant authorizationGrant = new AuthorizationCodeGrant(
-                new AuthorizationCode(parameters.authorizationCode()), parameters.redirectUri());
+        AuthorizationGrant authorizationGrant;
+        if(parameters.codeVerifier() != null){
+            authorizationGrant = new AuthorizationCodeGrant(
+                    new AuthorizationCode(parameters.authorizationCode()),
+                    parameters.redirectUri(),
+                    new CodeVerifier(parameters.codeVerifier()));
+
+        } else {
+            authorizationGrant =new AuthorizationCodeGrant(
+                    new AuthorizationCode(parameters.authorizationCode()),parameters.redirectUri());
+        }
 
         return new OAuthAuthorizationGrant(authorizationGrant, parameters.scopes());
     }
