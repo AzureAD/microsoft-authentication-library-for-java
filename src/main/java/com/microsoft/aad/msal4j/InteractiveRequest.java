@@ -72,8 +72,8 @@ class InteractiveRequest extends MsalRequest{
         String[] commonScopes = AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM.split(" ");
         scopesParam.addAll(Arrays.asList(commonScopes));
 
-        AuthorizationRequestUrl.Builder authorizationRequestUrlBuilder =
-                AuthorizationRequestUrl
+        AuthorizationRequestUrlParameters.Builder authorizationRequestUrlBuilder =
+                AuthorizationRequestUrlParameters
                         .builder(publicClientApplication.clientId(),
                                 interactiveRequestParameters.redirectUri().toString(),
                                 scopesParam)
@@ -133,7 +133,7 @@ class InteractiveRequest extends MsalRequest{
 //        return requestParameters;
 //    }
 
-    private void addPkceAndState(AuthorizationRequestUrl.Builder builder) {
+    private void addPkceAndState(AuthorizationRequestUrlParameters.Builder builder) {
 
         // Create code verifier and code challenge as described in https://tools.ietf.org/html/rfc7636
         SecureRandom secureRandom = new SecureRandom();

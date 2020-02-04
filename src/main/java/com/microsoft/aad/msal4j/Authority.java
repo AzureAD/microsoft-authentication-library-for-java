@@ -21,7 +21,6 @@ abstract class Authority {
     private static final String ADFS_PATH_SEGMENT = "adfs";
     private static final String B2C_PATH_SEGMENT = "tfp";
 
-    final static String TOKEN_ENDPOINT = "/oauth2/v2.0/token";
     private final static String USER_REALM_ENDPOINT = "common/userrealm";
     private final static String userRealmEndpointFormat = "https://%s/" + USER_REALM_ENDPOINT + "/%s?api-version=1.0";
 
@@ -34,6 +33,7 @@ abstract class Authority {
     String tenant;
     boolean isTenantless;
 
+    String authorizationEndpoint;
     String tokenEndpoint;
 
     URL tokenEndpointUrl() throws MalformedURLException {

@@ -159,6 +159,18 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         return future;
     }
 
+    public URL getAuthorizationRequestUrl(AuthorizationRequestUrlParameters parameters) {
+
+        validateNotNull("parameters", parameters);
+
+        parameters.requestParameters.put("client_id", Collections.singletonList(this.clientId));
+
+        return parameters.createAuthorizationURL(
+                this.authenticationAuthority,
+                parameters.requestParameters());
+    }
+
+
     AuthenticationResult acquireTokenCommon(MsalRequest msalRequest, Authority requestAuthority)
             throws Exception {
 

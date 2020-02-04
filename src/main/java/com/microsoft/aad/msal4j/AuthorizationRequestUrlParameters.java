@@ -17,17 +17,12 @@ import java.util.Set;
 
 @Accessors(fluent = true)
 @Getter
-public class AuthorizationRequestUrl {
+public class AuthorizationRequestUrlParameters {
 
-    private URL authorizationRequestUrl;
-
-    @NonNull
-    private String clientId;
     @NonNull
     private String redirectUri;
     @NonNull
     private Set<String> scopes;
-    private String authority;
     private String codeChallenge;
     private String codeChallengeMethod;
     private String state;
@@ -37,16 +32,15 @@ public class AuthorizationRequestUrl {
     private Prompt prompt;
     private String correlationId;
 
-    public static Builder builder(String clientId,
-                                  String redirectUri,
+    Map<String, List<String>> requestParameters  = new HashMap<>();
+
+    public static Builder builder(String redirectUri,
                                   Set<String> scopes) {
 
-        ParameterValidationUtils.validateNotBlank("clientId", clientId);
         ParameterValidationUtils.validateNotBlank("redirect_uri", redirectUri);
         ParameterValidationUtils.validateNotEmpty("scopes", scopes);
 
         return builder()
-                .clientId(clientId)
                 .redirectUri(redirectUri)
                 .scopes(scopes);
     }
@@ -55,12 +49,8 @@ public class AuthorizationRequestUrl {
         return new Builder();
     }
 
-    private AuthorizationRequestUrl(Builder builder){
-        Map<String, List<String>> requestParameters = new HashMap<>();
-
+    private AuthorizationRequestUrlParameters(Builder builder){
         //required parameters
-        this.clientId = builder.clientId;
-        requestParameters.put("client_id", Collections.singletonList(this.clientId));
         this.redirectUri = builder.redirectUri;
         requestParameters.put("redirect_uri", Collections.singletonList(this.redirectUri));
         this.scopes = builder.scopes;
@@ -73,14 +63,6 @@ public class AuthorizationRequestUrl {
         requestParameters.put("response_type",Collections.singletonList("code"));
 
         // Optional parameters
-        if(builder.authority != null){
-            this.authority = ClientApplicationBase.canonicalizeUrl(builder.authority);
-        }
-
-        if(builder.b2cAuthority != null){
-            this.authority = ClientApplicationBase.canonicalizeUrl(builder.authority);
-        }
-
         if(builder.claims != null){
             String claimsParam = String.join(" ", builder.claims);
             requestParameters.put("claims", Collections.singletonList(claimsParam));
@@ -130,42 +112,25 @@ public class AuthorizationRequestUrl {
             this.correlationId = builder.correlationId;
             requestParameters.put("correlation_id", Collections.singletonList(builder.correlationId));
         }
+    }
 
+    URL createAuthorizationURL(Authority authority,
+                               Map<String, List<String>> requestParameters){
+        URL authorizationRequestUrl;
         try {
-            if(this.authority == null){
-                this.authority = IClientApplicationBase.DEFAULT_AUTHORITY;
-            }
-
-            String authorizationCodeEndpoint = buildAuthorizationCodeEndpoint(requestParameters);
+            String authorizationCodeEndpoint = authority.authorizationEndpoint();
             String uriString = authorizationCodeEndpoint + "?" +
                     URLUtils.serializeParameters(requestParameters);
 
-            this.authorizationRequestUrl = new URL(uriString);
+            authorizationRequestUrl = new URL(uriString);
         } catch(MalformedURLException ex){
             throw new MsalClientException(ex);
         }
+        return authorizationRequestUrl;
     }
-
-    private String buildAuthorizationCodeEndpoint(Map<String, String> requestParameters){
-        AuthorityType authorityType = Authority.detectAuthorityType(this.authority);
-
-        String authorizationCodeEndpoint = null;
-        if(authorityType == AuthorityType.AAD){
-            authorizationCodeEndpoint = this.authority + "oauth2/v2.0/authorize";
-        } else if(authorityType == AuthorityType.ADFS){
-            authorizationCodeEndpoint = this.authority = "oauth2/authorize";
-        } else if(authorityType == AuthorityType.B2C){
-            
-        }
-        return authorizationCodeEndpoint;
-    }
-
 
     public static class Builder {
 
-        private String authority;
-        private String b2cAuthority;
-        private String clientId;
         private String redirectUri;
         private Set<String> scopes;
         private Set<String> claims;
@@ -178,17 +143,12 @@ public class AuthorizationRequestUrl {
         private Prompt prompt;
         private String correlationId;
 
-        public AuthorizationRequestUrl build(){
-            return new AuthorizationRequestUrl(this);
+        public AuthorizationRequestUrlParameters build(){
+            return new AuthorizationRequestUrlParameters(this);
         }
 
         private Builder self() {
             return this;
-        }
-
-        public Builder clientId(String val){
-            this.clientId = val;
-            return self();
         }
 
         public Builder redirectUri(String val){
@@ -198,16 +158,6 @@ public class AuthorizationRequestUrl {
 
         public Builder scopes(Set<String> val){
             this.scopes = val;
-            return self();
-        }
-
-        public Builder authority(String val){
-            this.authority = val;
-            return self();
-        }
-
-        public Builder b2cAuthority(String val){
-            this.b2cAuthority = val;
             return self();
         }
 

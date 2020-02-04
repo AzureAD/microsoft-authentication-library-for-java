@@ -13,8 +13,12 @@ import java.net.URL;
 @Getter(AccessLevel.PACKAGE)
 class B2CAuthority extends Authority{
 
-    final static String B2CTokenEndpointFormat = "https://%s/{tenant}" + TOKEN_ENDPOINT + "?p={policy}";
-    String policy;
+    private final static String AUTHORIZATION_ENDPOINT = "/oauth2/v2.0/authorize";
+    private final static String TOKEN_ENDPOINT = "/oauth2/v2.0/token";
+
+    private final static String B2C_AUTHORIZATION_ENDPOINT_FORMAT = "https://%s/%s/%s" + AUTHORIZATION_ENDPOINT;
+    private final static String B2C_TOKEN_ENDPOINT_FORMAT = "https://%s/%s" + TOKEN_ENDPOINT + "?p=%s";
+    private String policy;
 
     B2CAuthority(final URL authorityUrl){
         super(authorityUrl);
@@ -40,9 +44,8 @@ class B2CAuthority extends Authority{
                 segments[1],
                 segments[2]);
 
-        this.tokenEndpoint = String.format(B2CTokenEndpointFormat, host);
-        this.tokenEndpoint = this.tokenEndpoint.replace("{tenant}", tenant);
-        this.tokenEndpoint = this.tokenEndpoint.replace("{policy}", policy);
+        this.authorizationEndpoint = String.format(B2C_TOKEN_ENDPOINT_FORMAT, host, tenant, policy);
+        this.tokenEndpoint = String.format(B2C_TOKEN_ENDPOINT_FORMAT, host, tenant, policy);
         this.selfSignedJwtAudience = this.tokenEndpoint;
     }
 }
