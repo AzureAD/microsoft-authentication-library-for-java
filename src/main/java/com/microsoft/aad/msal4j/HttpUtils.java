@@ -20,6 +20,6 @@ class HttpUtils {
             return null;
         }
 
-        return headerValue.get(0);
+        return String.join(",", headerValue);
     }
 }

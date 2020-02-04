@@ -3,7 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import org.apache.commons.codec.binary.Base64;
+import java.util.Base64;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -29,9 +29,11 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
         URL authorityUrl = new URL(authority);
 
         InstanceDiscoveryMetadataEntry discoveryMetadataEntry =
-                AadInstanceDiscovery.GetMetadataEntry
-                        (authorityUrl, clientApplication.validateAuthority(), msalRequest,
-                                clientApplication.getServiceBundle());
+                AadInstanceDiscoveryProvider.getMetadataEntry(
+                        authorityUrl,
+                        clientApplication.validateAuthority(),
+                        msalRequest,
+                        clientApplication.getServiceBundle());
 
         URL updatedAuthorityUrl =
                 new URL(authorityUrl.getProtocol(), discoveryMetadataEntry.preferredNetwork, authorityUrl.getFile());
@@ -49,7 +51,7 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
 
         try(TelemetryHelper telemetryHelper =
                     clientApplication.getServiceBundle().getTelemetryManager().createTelemetryHelper(
-                            msalRequest.requestContext().getTelemetryRequestId(),
+                            msalRequest.requestContext().telemetryRequestId(),
                             msalRequest.application().clientId(),
                             apiEvent,
                             true)) {
@@ -79,8 +81,8 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
                 }
 
                 ServerSideTelemetry.addFailedRequestTelemetry(
-                        String.valueOf(msalRequest.requestContext().getAcquireTokenPublicApi().getApiId()),
-                        msalRequest.requestContext().getCorrelationId(),
+                        String.valueOf(msalRequest.requestContext().publicApi().getApiId()),
+                        msalRequest.requestContext().correlationId(),
                         error);
 
                 clientApplication.log.error(
@@ -94,8 +96,7 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
         return result;
     }
 
-    private void logResult(AuthenticationResult result, ClientDataHttpHeaders headers)
-    {
+    private void logResult(AuthenticationResult result, HttpHeaders headers) {
         if (!StringHelper.isBlank(result.accessToken())) {
 
             String accessTokenHash = this.computeSha256Hash(result
@@ -133,11 +134,11 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
 
     private ApiEvent initializeApiEvent(MsalRequest msalRequest){
         ApiEvent apiEvent = new ApiEvent(clientApplication.logPii());
-        msalRequest.requestContext().setTelemetryRequestId(
+        msalRequest.requestContext().telemetryRequestId(
                 clientApplication.getServiceBundle().getTelemetryManager().generateRequestId());
-        apiEvent.setApiId(msalRequest.requestContext().getAcquireTokenPublicApi().getApiId());
-        apiEvent.setCorrelationId(msalRequest.requestContext().getCorrelationId());
-        apiEvent.setRequestId(msalRequest.requestContext().getTelemetryRequestId());
+        apiEvent.setApiId(msalRequest.requestContext().publicApi().getApiId());
+        apiEvent.setCorrelationId(msalRequest.requestContext().correlationId());
+        apiEvent.setRequestId(msalRequest.requestContext().telemetryRequestId());
         apiEvent.setWasSuccessful(false);
 
         if(clientApplication instanceof ConfidentialClientApplication){
@@ -167,7 +168,7 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             digest.update(input.getBytes("UTF-8"));
             byte[] hash = digest.digest();
-            return Base64.encodeBase64URLSafeString(hash);
+            return Base64.getUrlEncoder().encodeToString(hash);
         }
         catch (NoSuchAlgorithmException | UnsupportedEncodingException ex){
             clientApplication.log.warn(LogHelper.createMessage(

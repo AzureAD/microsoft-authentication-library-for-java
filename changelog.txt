@@ -1,3 +1,19 @@
+Version 1.3.0
+=============
+- Added option to pass in AAD instance discovery data
+- Removed runtime dependency on commons-codec.commons-codec, org.apache.commons.commons-text, org.apache.httpcomponents.httpclient, com.google.code.gson
+- Added runtime dependency on com.fasterxml.jackson.databind
+
+Version 1.2.0
+=============
+- Added support for ADFS 2019
+- Added option to add application name and version for telemetry
+- Bug fix: support for ClientCredential on Windows for JDK12+ #128
+
+Version 1.1.0
+=============
+- Added support for configuring HTTP client
+
 Version 1.0.0
 =============
 - API surface is now stable and production ready. No breaking changes will be introduced without incrementing MAJOR version

@@ -3,7 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -16,10 +16,10 @@ import java.util.List;
 @Setter
 class RefreshTokenCacheEntity extends Credential {
 
-    @SerializedName("credential_type")
+    @JsonProperty("credential_type")
     private String credentialType;
 
-    @SerializedName("family_id")
+    @JsonProperty("family_id")
     private String family_id;
 
     boolean isFamilyRT(){

@@ -50,7 +50,6 @@ public class ClientCredentialsIT {
                 (ClientCertificate) certificateFromKeyStore,
                 "https://login.microsoftonline.com/common/oauth2/v2.0/token");
 
-
         IClientCredential credential = ClientCredentialFactory.createFromClientAssertion(
                 clientAssertion.assertion());
 

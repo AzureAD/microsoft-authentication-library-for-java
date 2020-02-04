@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 
 @Test(groups = { "checkin" })
 @PrepareForTest({ AADAuthority.class, HttpHelper.class,
-        JsonHelper.class, InstanceDiscoveryResponse.class })
+        JsonHelper.class, AadInstanceDiscoveryResponse.class })
 public class AuthorityTest extends AbstractMsalTests {
 
     @Test
@@ -21,12 +21,11 @@ public class AuthorityTest extends AbstractMsalTests {
         Assert.assertEquals(Authority.detectAuthorityType(url), AuthorityType.AAD);
     }
 
-    //TODO uncomment when ADFS support is added
-//    @Test
-//    public void testDetectAuthorityType_ADFS() throws Exception {
-//        URL url = new URL(TestConfiguration.ADFS_TENANT_ENDPOINT);
-//        Assert.assertEquals(Authority.detectAuthorityType(url), AuthorityType.ADFS);
-//    }
+    @Test
+    public void testDetectAuthorityType_ADFS() throws Exception {
+        URL url = new URL(TestConfiguration.ADFS_TENANT_ENDPOINT);
+        Assert.assertEquals(Authority.detectAuthorityType(url), AuthorityType.ADFS);
+    }
 
     @Test
     public void testDetectAuthorityType_B2C() throws Exception {
@@ -112,23 +111,21 @@ public class AuthorityTest extends AbstractMsalTests {
         Assert.assertFalse(aa.isTenantless());
     }
 
-    //TODO uncomment when ADFS support is added
-//    @Test
-//    public void testConstructor_ADFSAuthority() throws MalformedURLException {
-//        final ADFSAuthority aa = new ADFSAuthority(new URL(TestConfiguration.ADFS_TENANT_ENDPOINT));
-//        Assert.assertNotNull(aa);
-//        Assert.assertEquals(aa.getAuthority(),
-//                TestConfiguration.ADFS_TENANT_ENDPOINT);
-//        Assert.assertEquals(aa.getHost(), TestConfiguration.ADFS_HOST_NAME);
-//        Assert.assertEquals(aa.getSelfSignedJwtAudience(),
-//                TestConfiguration.ADFS_TENANT_ENDPOINT + "oauth2/v2.0/token");
-//        Assert.assertEquals(aa.getTokenEndpoint(),
-//                TestConfiguration.ADFS_TENANT_ENDPOINT + "oauth2/v2.0/token");
-//        Assert.assertEquals(aa.getAuthorityType(), AuthorityType.ADFS);
-//        Assert.assertEquals(aa.getTokenEndpoint(),
-//                TestConfiguration.ADFS_TENANT_ENDPOINT + "oauth2/v2.0/token");
-//        Assert.assertFalse(aa.isTenantless());
-//    }
+    @Test
+    public void testConstructor_ADFSAuthority() throws MalformedURLException {
+        final ADFSAuthority a = new ADFSAuthority(new URL(TestConfiguration.ADFS_TENANT_ENDPOINT));
+        Assert.assertNotNull(a);
+        Assert.assertEquals(a.authority(), TestConfiguration.ADFS_TENANT_ENDPOINT);
+        Assert.assertEquals(a.host(), TestConfiguration.ADFS_HOST_NAME);
+        Assert.assertEquals(a.selfSignedJwtAudience(),
+                TestConfiguration.ADFS_TENANT_ENDPOINT + ADFSAuthority.TOKEN_ENDPOINT);
+
+        Assert.assertEquals(a.authorityType(), AuthorityType.ADFS);
+
+        Assert.assertEquals(a.tokenEndpoint(),
+                TestConfiguration.ADFS_TENANT_ENDPOINT + ADFSAuthority.TOKEN_ENDPOINT);
+        Assert.assertFalse(a.isTenantless());
+    }
 
     @Test
     public void testB2CAuthority_SameCanonicalAuthority() throws MalformedURLException{

@@ -3,7 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import lombok.experimental.Accessors;
 
@@ -18,34 +18,35 @@ import java.util.List;
 class AccountCacheEntity implements Serializable {
 
     static final String MSSTS_ACCOUNT_TYPE = "MSSTS";
+    static final String ADFS_ACCOUNT_TYPE = "ADFS";
 
-    @SerializedName("home_account_id")
+    @JsonProperty("home_account_id")
     protected String homeAccountId;
 
-    @SerializedName("environment")
+    @JsonProperty("environment")
     protected String environment;
 
     @EqualsAndHashCode.Exclude
-    @SerializedName("realm")
+    @JsonProperty("realm")
     protected String realm;
 
-    @SerializedName("local_account_id")
+    @JsonProperty("local_account_id")
     protected String localAccountId;
 
-    @SerializedName("username")
+    @JsonProperty("username")
     protected String username;
 
-    @SerializedName("name")
+    @JsonProperty("name")
     protected String name;
 
-    @SerializedName("client_info")
+    @JsonProperty("client_info")
     protected String clientInfoStr;
 
     ClientInfo clientInfo() {
         return ClientInfo.createFromJson(clientInfoStr);
     }
 
-    @SerializedName("authority_type")
+    @JsonProperty("authority_type")
     protected String authorityType;
 
     String getKey() {
@@ -77,6 +78,20 @@ class AccountCacheEntity implements Serializable {
             account.username(idToken.preferredUsername);
             account.name(idToken.name);
         }
+
+        return account;
+    }
+
+    static AccountCacheEntity createADFSAccount(Authority requestAuthority, IdToken idToken) {
+
+        AccountCacheEntity account = new AccountCacheEntity();
+        account.authorityType(ADFS_ACCOUNT_TYPE);
+        account.homeAccountId(idToken.subject);
+
+        account.environment(requestAuthority.host());
+
+        account.username(idToken.upn);
+        account.name(idToken.uniqueName);
 
         return account;
     }

@@ -3,9 +3,9 @@
 
 package com.microsoft.aad.msal4j;
 
-import labapi.LabResponse;
 import labapi.LabUserProvider;
-import labapi.NationalCloud;
+import labapi.AzureEnvironment;
+import labapi.User;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -22,45 +22,34 @@ public class HttpClientIT {
 
     @Test
     public void acquireToken_okHttpClient() throws Exception {
-
-        LabResponse labResponse = getManagedUserAccountWithPassword();
-        assertAcquireTokenCommon(labResponse, new OkHttpClientAdapter());
+        User user = labUserProvider.getDefaultUser();
+        assertAcquireTokenCommon(user, new OkHttpClientAdapter());
     }
 
     @Test
     public void acquireToken_apacheHttpClient() throws Exception {
-
-        LabResponse labResponse = getManagedUserAccountWithPassword();
-        assertAcquireTokenCommon(labResponse, new ApacheHttpClientAdapter());
+        User user = labUserProvider.getDefaultUser();
+        assertAcquireTokenCommon(user, new ApacheHttpClientAdapter());
     }
 
-    private void assertAcquireTokenCommon(LabResponse labResponse, IHttpClient httpClient)
+    private void assertAcquireTokenCommon(User user, IHttpClient httpClient)
             throws Exception{
         PublicClientApplication pca = PublicClientApplication.builder(
-                labResponse.getAppId()).
+                user.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 httpClient(httpClient).
                 build();
 
         IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters.
                 builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-                        labResponse.getUser().getUpn(),
-                        labResponse.getUser().getPassword().toCharArray())
+                        user.getUpn(),
+                        user.getPassword().toCharArray())
                 .build())
                 .get();
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
         Assert.assertNotNull(result.idToken());
-        Assert.assertEquals(labResponse.getUser().getUpn(), result.account().username());
-    }
-
-    private LabResponse getManagedUserAccountWithPassword(){
-        LabResponse labResponse = labUserProvider.getDefaultUser(
-                NationalCloud.AZURE_CLOUD,
-                false);
-        labUserProvider.getUserPassword(labResponse.getUser());
-
-        return labResponse;
+        Assert.assertEquals(user.getUpn(), result.account().username());
     }
 }

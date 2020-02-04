@@ -3,30 +3,30 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
 @Accessors(fluent = true)
 @Getter(AccessLevel.PACKAGE)
-class InstanceDiscoveryResponse {
+class AadInstanceDiscoveryResponse {
 
-    @SerializedName("tenant_discovery_endpoint")
+    @JsonProperty("tenant_discovery_endpoint")
     private String tenantDiscoveryEndpoint;
 
-    @SerializedName("metadata")
+    @JsonProperty("metadata")
     private InstanceDiscoveryMetadataEntry[] metadata;
 
-    @SerializedName("error_description")
+    @JsonProperty("error_description")
     private String errorDescription;
 
-    @SerializedName("error_codes")
+    @JsonProperty("error_codes")
     private long[] errorCodes;
 
-    @SerializedName("error")
+    @JsonProperty("error")
     private String error;
 
-    @SerializedName("correlation_id")
+    @JsonProperty("correlation_id")
     private String correlationId;
 }

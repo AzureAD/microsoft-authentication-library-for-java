@@ -3,7 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -16,22 +16,22 @@ import java.util.List;
 @Setter
 class AccessTokenCacheEntity extends Credential {
 
-    @SerializedName("credential_type")
+    @JsonProperty("credential_type")
     private String credentialType;
 
-    @SerializedName("realm")
+    @JsonProperty("realm")
     protected String realm;
 
-    @SerializedName("target")
+    @JsonProperty("target")
     private String target;
 
-    @SerializedName("cached_at")
+    @JsonProperty("cached_at")
     private String cachedAt;
 
-    @SerializedName("expires_on")
+    @JsonProperty("expires_on")
     private String expiresOn;
 
-    @SerializedName("extended_expires_on")
+    @JsonProperty("extended_expires_on")
     private String extExpiresOn;
 
     String getKey() {

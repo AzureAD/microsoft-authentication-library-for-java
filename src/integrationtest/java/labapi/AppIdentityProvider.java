@@ -13,11 +13,11 @@ public class AppIdentityProvider {
     }
 
     public String getDefaultLabId(){
-        return keyVaultSecretsProvider.getSecret(LabConstants.APP_ID_URL);
+        return keyVaultSecretsProvider.getSecret(LabConstants.APP_ID_KEY_VAULT_SECRET);
     }
 
     public String getDefaultLabPassword(){
-        return keyVaultSecretsProvider.getSecret(LabConstants.APP_PASSWORD_URL);
+        return keyVaultSecretsProvider.getSecret(LabConstants.APP_PASSWORD_KEY_VAULT_SECRET);
     }
 
     public String getOboPassword(){

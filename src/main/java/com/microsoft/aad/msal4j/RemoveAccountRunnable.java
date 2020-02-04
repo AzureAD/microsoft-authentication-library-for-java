@@ -8,21 +8,21 @@ import java.util.concurrent.CompletionException;
 
 class RemoveAccountRunnable implements Runnable {
 
-    ClientDataHttpHeaders headers;
-    ClientApplicationBase clientApplication;
+    private RequestContext requestContext;
+    private ClientApplicationBase clientApplication;
     IAccount account;
 
-    RemoveAccountRunnable
-            (ClientApplicationBase clientApplication, IAccount account) {
-        this.clientApplication = clientApplication;
-        this.headers = new ClientDataHttpHeaders(clientApplication.correlationId());
+    RemoveAccountRunnable(MsalRequest msalRequest, IAccount account) {
+        this.clientApplication = msalRequest.application();
+        this.requestContext = msalRequest.requestContext();
         this.account = account;
     }
 
     @Override
     public void run() {
         try {
-            Set<String> aliases = AadInstanceDiscovery.getAliases(clientApplication.authenticationAuthority.host());
+            Set<String> aliases = AadInstanceDiscoveryProvider.getAliases(
+                    clientApplication.authenticationAuthority.host());
 
             clientApplication.tokenCache.removeAccount
                     (clientApplication.clientId(), account, aliases);
@@ -30,7 +30,7 @@ class RemoveAccountRunnable implements Runnable {
         } catch (Exception ex) {
             clientApplication.log.error(
                     LogHelper.createMessage("Execution of " + this.getClass() + " failed.",
-                            this.headers.getHeaderCorrelationIdValue()), ex);
+                            requestContext.correlationId()), ex);
 
             throw new CompletionException(ex);
         }

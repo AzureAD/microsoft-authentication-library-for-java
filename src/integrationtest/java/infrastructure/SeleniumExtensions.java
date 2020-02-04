@@ -4,7 +4,7 @@
 package infrastructure;
 
 import labapi.FederationProvider;
-import labapi.LabUser;
+import labapi.User;
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.OutputType;
@@ -55,7 +55,7 @@ public class SeleniumExtensions {
         });
     }
 
-    public static void performADLogin(WebDriver driver, LabUser user){
+    public static void performADLogin(WebDriver driver, User user){
         LOG.info("PerformADLogin");
 
         UserInformationFields fields = new UserInformationFields(user);
@@ -66,7 +66,7 @@ public class SeleniumExtensions {
         LOG.info("Loggin in ... Clicking <Next> after username");
         driver.findElement(new By.ById(fields.getAadSignInButtonId())).click();
 
-        if (user.getFederationProvider() == FederationProvider.ADFSV2 && user.isFederated()){
+        if (user.getFederationProvider() == FederationProvider.ADFS_2){
             LOG.info("Loggin in ... ADFS-V2 - Entering the username in ADFSv2 form");
             driver.findElement(new By.ById(SeleniumConstants.ADFSV2_WEB_USERNAME_INPUT_ID)).
                     sendKeys(user.getUpn());
@@ -81,7 +81,24 @@ public class SeleniumExtensions {
                 click();
     }
 
-    public static void performLocalLogin(WebDriver driver, LabUser user){
+    public static void performADFS2019Login(WebDriver driver, User user){
+        LOG.info("PerformADFS2019Login");
+
+        UserInformationFields fields = new UserInformationFields(user);
+
+        LOG.info("Loggin in ... Entering username");
+        driver.findElement(new By.ById(fields.getADFS2019UserNameInputId())).sendKeys(user.getUpn());
+
+        LOG.info("Loggin in ... Entering password");
+        By by = new By.ById(fields.getPasswordInputId());
+        waitForElementToBeVisibleAndEnable(driver, by).sendKeys(user.getPassword());
+
+        LOG.info("Loggin in ... click submit");
+        waitForElementToBeVisibleAndEnable(driver, new By.ById(fields.getPasswordSigInButtonId())).
+                click();
+    }
+
+    public static void performLocalLogin(WebDriver driver, User user){
         LOG.info("PerformLocalLogin");
 
         driver.findElement(new By.ById(SeleniumConstants.B2C_LOCAL_ACCOUNT_ID)).click();
@@ -97,7 +114,7 @@ public class SeleniumExtensions {
                 click();
     }
 
-    public static void performGoogleLogin(WebDriver driver, LabUser user){
+    public static void performGoogleLogin(WebDriver driver, User user){
         LOG.info("PerformGoogleLogin");
 
         driver.findElement(new By.ById(SeleniumConstants.GOOGLE_ACCOUNT_ID)).click();
@@ -117,7 +134,7 @@ public class SeleniumExtensions {
         waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.GOOGLE_NEXT_BUTTON_ID)).click();
     }
 
-    public static void performFacebookLogin(WebDriver driver, LabUser user){
+    public static void performFacebookLogin(WebDriver driver, User user){
         LOG.info("PerformFacebookLogin");
 
         driver.findElement(new By.ById(SeleniumConstants.FACEBOOK_ACCOUNT_ID)).click();

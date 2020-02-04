@@ -3,7 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,37 +20,37 @@ public final class DeviceCode {
     /**
      * code which user needs to provide when authenticating at the verification URI
      */
-    @SerializedName("user_code")
+    @JsonProperty("user_code")
     private String userCode;
 
     /**
      * code which should be included in the request for the access token
      */
-    @SerializedName("device_code")
+    @JsonProperty("device_code")
     private String deviceCode;
 
     /**
      * URI where user can authenticate
      */
-    @SerializedName("verification_uri")
+    @JsonProperty("verification_uri")
     private String verificationUri;
 
     /**
      * expiration time of device code in seconds.
      */
-    @SerializedName("expires_in")
+    @JsonProperty("expires_in")
     private long expiresIn;
 
     /**
      * interval at which the STS should be polled at
      */
-    @SerializedName("interval")
+    @JsonProperty("interval")
     private long interval;
 
     /**
      * message which should be displayed to the user.
      */
-    @SerializedName("message")
+    @JsonProperty("message")
     private String message;
 
     @Getter(AccessLevel.PROTECTED)
