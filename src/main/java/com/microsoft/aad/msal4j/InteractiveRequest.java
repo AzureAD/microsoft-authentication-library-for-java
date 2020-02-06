@@ -74,64 +74,14 @@ class InteractiveRequest extends MsalRequest{
 
         AuthorizationRequestUrlParameters.Builder authorizationRequestUrlBuilder =
                 AuthorizationRequestUrlParameters
-                        .builder(publicClientApplication.clientId(),
-                                interactiveRequestParameters.redirectUri().toString(),
-                                scopesParam)
-                .correlationId(publicClientApplication.correlationId());
+                        .builder(interactiveRequestParameters.redirectUri().toString(), scopesParam)
+                        .correlationId(publicClientApplication.correlationId());
 
-        AuthorityType authorityType = publicClientApplication.authenticationAuthority.authorityType;
-        if(authorityType == AuthorityType.AAD || authorityType == AuthorityType.ADFS) {
-            authorizationRequestUrlBuilder
-                    .authority(publicClientApplication.authority());
-        } else if(authorityType == AuthorityType.B2C){
-            authorizationRequestUrlBuilder
-                    .b2cAuthority(publicClientApplication.authority());
-        }
+
         addPkceAndState(authorizationRequestUrlBuilder);
-
-        return authorizationRequestUrlBuilder.build().authorizationRequestUrl();
+        return publicClientApplication.getAuthorizationRequestUrl(
+                authorizationRequestUrlBuilder.build());
     }
-
-
-//    private URI createAuthorizationURI() {
-//
-//        URI uri;
-//        try{
-//            Map<String, List<String>> authorizationRequestParameters = createAuthorizationRequestParameters();
-//            String authorizationCodeEndpoint = publicClientApplication.authority() + "oauth2/v2.0/authorize";
-//            String uriString = authorizationCodeEndpoint + "?" +
-//                    URLUtils.serializeParameters(authorizationRequestParameters);
-//
-//            uri = new URI(uriString);
-//        } catch (URISyntaxException exception) {
-//            throw new MsalClientException(exception);
-//        }
-//
-//    return uri;
-//    }
-//
-//    private Map<String, List<String>> createAuthorizationRequestParameters(){
-//
-//        Map<String, List<String>> requestParameters = new HashMap<>();
-//
-//        addPkceAndState(requestParameters);
-//
-//        String scopesParam = AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM +
-//                AbstractMsalAuthorizationGrant.SCOPES_DELIMITER +
-//                String.join(" ", interactiveRequestParameters.scopes());
-//
-//        requestParameters.put("scope", Collections.singletonList(scopesParam));
-//        requestParameters.put("response_type", Collections.singletonList("code"));
-//        requestParameters.put("response_mode", Collections.singletonList("form_post"));
-//        requestParameters.put("clientId", Collections.singletonList(
-//                publicClientApplication.clientId()));
-//        requestParameters.put("redirect_uri", Collections.singletonList(
-//                interactiveRequestParameters.redirectUri().toString()));
-//        requestParameters.put("correlation_id", Collections.singletonList(
-//                publicClientApplication.correlationId()));
-//
-//        return requestParameters;
-//    }
 
     private void addPkceAndState(AuthorizationRequestUrlParameters.Builder builder) {
 
@@ -144,7 +94,7 @@ class InteractiveRequest extends MsalRequest{
         state = UUID.randomUUID().toString() + UUID.randomUUID().toString();
 
         builder.codeChallenge(StringHelper.createBase64EncodedSha256Hash(verifier))
-                .codeChallengeMethod("256")
+                .codeChallengeMethod("S256")
                 .state(state);
     }
 }

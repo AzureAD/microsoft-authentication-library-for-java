@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 @Accessors(fluent = true)
 class AuthorizationResponseHandler implements HttpHandler {
 
-    private final static Logger LOG = LoggerFactory.getLogger(TcpListener.class);
+    private final static Logger LOG = LoggerFactory.getLogger(AuthorizationResponseHandler.class);
     private final static String DEFAULT_SUCCESS_MESSAGE = "<html><head><title>Authentication Complete</title></head>"+
             "  <body> Authentication complete. You can close the browser and return to the application."+
             "  </body></html>" ;

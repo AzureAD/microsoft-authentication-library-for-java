@@ -16,7 +16,7 @@ class AADAuthority extends Authority {
     private final static String TENANTLESS_TENANT_NAME = "common";
     private final static String AUTHORIZATION_ENDPOINT = "oauth2/v2.0/authorize";
     private final static String TOKEN_ENDPOINT = "oauth2/v2.0/token";
-    final static String DEVICE_CODE_ENDPOINT = "/oauth2/v2.0/devicecode";
+    final static String DEVICE_CODE_ENDPOINT = "oauth2/v2.0/devicecode";
 
     private final static String AAD_AUTHORITY_FORMAT = "https://%s/%s/";
     private final static String AAD_AUTHORIZATION_ENDPOINT_FORMAT = AAD_AUTHORITY_FORMAT + AUTHORIZATION_ENDPOINT;

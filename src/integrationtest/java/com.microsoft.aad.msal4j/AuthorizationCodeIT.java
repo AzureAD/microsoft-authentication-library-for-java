@@ -13,26 +13,21 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import org.testng.util.Strings;
 
-import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class AuthorizationCodeIT {
     private final static Logger LOG = LoggerFactory.getLogger(AuthorizationCodeIT.class);
 
     private LabUserProvider labUserProvider;
     private WebDriver seleniumDriver;
-    private TcpListener tcpListener;
-    private BlockingQueue<String> AuthorizationCodeQueue;
+    private HttpListener httpListener;
 
     @BeforeClass
     public void setUpLapUserProvider() {
@@ -42,10 +37,7 @@ public class AuthorizationCodeIT {
     @AfterMethod
     public void cleanUp(){
         seleniumDriver.quit();
-        if(AuthorizationCodeQueue != null){
-            AuthorizationCodeQueue.clear();
-        }
-        tcpListener.close();
+        httpListener.stopListener();
     }
 
     @BeforeMethod
@@ -56,7 +48,6 @@ public class AuthorizationCodeIT {
     @Test
     public void acquireTokenWithAuthorizationCode_ManagedUser(){
         User user = labUserProvider.getDefaultUser();
-
         assertAcquireTokenAAD(user);
     }
 
@@ -67,7 +58,6 @@ public class AuthorizationCodeIT {
         query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
 
         User user = labUserProvider.getLabUser(query);
-
         assertAcquireTokenAAD(user);
     }
 
@@ -78,7 +68,6 @@ public class AuthorizationCodeIT {
         query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.ON_PREM);
 
         User user = labUserProvider.getLabUser(query);
-
         assertAcquireTokenADFS2019(user);
     }
 
@@ -89,7 +78,6 @@ public class AuthorizationCodeIT {
         query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
 
         User user = labUserProvider.getLabUser(query);
-
         assertAcquireTokenAAD(user);
     }
 
@@ -100,7 +88,6 @@ public class AuthorizationCodeIT {
         query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
 
         User user = labUserProvider.getLabUser(query);
-
         assertAcquireTokenAAD(user);
     }
 
@@ -111,7 +98,6 @@ public class AuthorizationCodeIT {
         query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
 
         User user = labUserProvider.getLabUser(query);
-
         assertAcquireTokenAAD(user);
     }
 
@@ -179,10 +165,21 @@ public class AuthorizationCodeIT {
     }
 
     private void assertAcquireTokenADFS2019(User user){
-        String authCode = acquireAuthorizationCodeAutomated(user, AuthorityType.ADFS);
-        IAuthenticationResult result = acquireTokenInteractive(authCode,
-                TestConstants.ADFS_AUTHORITY, Collections.singleton(TestConstants.ADFS_SCOPE),
-                TestConstants.ADFS_APP_ID);
+        PublicClientApplication pca;
+        try {
+             pca = PublicClientApplication.builder(
+                    TestConstants.ADFS_APP_ID).
+                    authority(TestConstants.ADFS_AUTHORITY).
+                    build();
+        } catch(MalformedURLException ex){
+            throw new RuntimeException(ex.getMessage());
+        }
+
+        String authCode = acquireAuthorizationCodeAutomated(user, pca);
+        IAuthenticationResult result = acquireTokenAuthorizationCodeFlow(
+                pca,
+                authCode,
+                Collections.singleton(TestConstants.ADFS_SCOPE));
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
@@ -191,8 +188,22 @@ public class AuthorizationCodeIT {
     }
 
     private void assertAcquireTokenAAD(User user){
-        String authCode = acquireAuthorizationCodeAutomated(user, AuthorityType.AAD);
-        IAuthenticationResult result = acquireTokenInteractiveAAD(user, authCode);
+
+        PublicClientApplication pca;
+        try {
+            pca = PublicClientApplication.builder(
+                    user.getAppId()).
+                    authority(TestConstants.ORGANIZATIONS_AUTHORITY).
+                    build();
+        } catch(MalformedURLException ex){
+            throw new RuntimeException(ex.getMessage());
+        }
+
+        String authCode = acquireAuthorizationCodeAutomated(user, pca);
+        IAuthenticationResult result = acquireTokenAuthorizationCodeFlow(
+                pca,
+                authCode,
+                Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE));
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
@@ -201,8 +212,21 @@ public class AuthorizationCodeIT {
     }
 
     private void assertAcquireTokenB2C(User user){
-        String authCode = acquireAuthorizationCodeAutomated(user, AuthorityType.B2C);
-        IAuthenticationResult result = acquireTokenInteractiveB2C(user, authCode);
+
+        ConfidentialClientApplication cca;
+        try {
+            IClientCredential credential = ClientCredentialFactory.createFromSecret("");
+            cca = ConfidentialClientApplication.builder(
+                    user.getAppId(),
+                    credential)
+                    .b2cAuthority(TestConstants.B2C_AUTHORITY_SIGN_IN)
+                    .build();
+        } catch(Exception ex){
+            throw new RuntimeException(ex.getMessage());
+        }
+
+        String authCode = acquireAuthorizationCodeAutomated(user, cca);
+        IAuthenticationResult result = acquireTokenInteractiveB2C(cca, authCode);
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
@@ -210,22 +234,16 @@ public class AuthorizationCodeIT {
         Assert.assertEquals(user.getUpn(), result.account().username());
     }
 
-    private IAuthenticationResult acquireTokenInteractive(
+    private IAuthenticationResult acquireTokenAuthorizationCodeFlow(
+            PublicClientApplication pca,
             String authCode,
-            String authority,
-            Set<String> scopes,
-            String clientId){
+            Set<String> scopes){
 
         IAuthenticationResult result;
         try {
-            PublicClientApplication pca = PublicClientApplication.builder(
-                    clientId).
-                    authority(authority).
-                    build();
-
             result = pca.acquireToken(AuthorizationCodeParameters
                     .builder(authCode,
-                            new URI(TestConstants.LOCALHOST + tcpListener.getPort()))
+                            new URI(TestConstants.LOCALHOST + httpListener.port()))
                     .scopes(scopes)
                     .build())
                     .get();
@@ -237,29 +255,13 @@ public class AuthorizationCodeIT {
         return result;
     }
 
-    private IAuthenticationResult acquireTokenInteractiveAAD(
-            User user,
-            String authCode){
-        return acquireTokenInteractive(authCode,
-                TestConstants.ORGANIZATIONS_AUTHORITY,
-                Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-                user.getAppId());
-    }
-
-    private IAuthenticationResult acquireTokenInteractiveB2C(User user,
+    private IAuthenticationResult acquireTokenInteractiveB2C(ConfidentialClientApplication cca,
                                                             String authCode) {
         IAuthenticationResult result;
         try{
-            IClientCredential credential = ClientCredentialFactory.createFromSecret("");
-            ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
-                    user.getAppId(),
-                    credential)
-                    .b2cAuthority(TestConstants.B2C_AUTHORITY_SIGN_IN)
-                    .build();
-
             result = cca.acquireToken(AuthorizationCodeParameters.builder(
                     authCode,
-                    new URI(TestConstants.LOCALHOST + tcpListener.getPort()))
+                    new URI(TestConstants.LOCALHOST + httpListener.port()))
                     .scopes(Collections.singleton(TestConstants.B2C_LAB_SCOPE))
                     .build())
                     .get();
@@ -270,40 +272,50 @@ public class AuthorizationCodeIT {
         return result;
     }
 
-
     private String acquireAuthorizationCodeAutomated(
             User user,
-            AuthorityType authorityType){
-        BlockingQueue<Boolean> tcpStartUpNotificationQueue = new LinkedBlockingQueue<>();
-        startTcpListener(tcpStartUpNotificationQueue);
+            ClientApplicationBase app){
 
-        String authServerResponse;
+        BlockingQueue<AuthorizationResult> authorizationCodeQueue = new LinkedBlockingQueue<>();
+
+        AuthorizationResponseHandler authorizationResponseHandler = new AuthorizationResponseHandler(
+                authorizationCodeQueue,
+                new SystemBrowserOptions());
+
+        int[] ports = {3843, 4584, 4843, 60000};
+        httpListener = new HttpListener();
+        httpListener.startListener(ports[0], authorizationResponseHandler);
+
+        AuthorizationResult result = null;
         try {
-            Boolean tcpListenerStarted = tcpStartUpNotificationQueue.poll(
-                    30,
-                    TimeUnit.SECONDS);
-            if (tcpListenerStarted == null || !tcpListenerStarted){
-                throw new RuntimeException("Could not start TCP listener");
+            runSeleniumAutomatedLogin(user, app);
+            long expirationTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) + 120;
+
+            while(result == null &&
+                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) < expirationTime) {
+
+                result = authorizationCodeQueue.poll(100, TimeUnit.MILLISECONDS);
             }
-            runSeleniumAutomatedLogin(user, authorityType);
-            String page  = seleniumDriver.getPageSource();
-            authServerResponse = getResponseFromTcpListener();
         } catch(Exception e){
-            if(!Strings.isNullOrEmpty(
-                    System.getenv(TestConstants.LOCAL_FLAG_ENV_VAR))){
-                SeleniumExtensions.takeScreenShot(seleniumDriver);
+            throw new MsalClientException(e);
+        } finally {
+            if(httpListener != null){
+                httpListener.stopListener();
             }
-            LOG.error("Error running automated selenium login: " + e.getMessage());
-            throw new RuntimeException("Error running automated selenium login: " + e.getMessage());
         }
-        return parseServerResponse(authServerResponse,authorityType);
+
+        if (result == null || StringHelper.isBlank(result.code())) {
+            throw new MsalClientException("No Authorization code was returned from the server",
+                    AuthenticationErrorCode.AUTHORIZATION_RESULT_BLANK);
+        }
+        return result.code();
     }
 
-    private void runSeleniumAutomatedLogin(User user, AuthorityType authorityType)
-            throws UnsupportedEncodingException{
-        String url = buildAuthenticationCodeURL(user.getAppId(), authorityType);
+    private void runSeleniumAutomatedLogin(User user, ClientApplicationBase app) {
+        String url = buildAuthenticationCodeURL(app);
         seleniumDriver.navigate().to(url);
 
+        AuthorityType authorityType = app.authenticationAuthority.authorityType;
         if(authorityType == AuthorityType.B2C){
             switch(user.getB2cProvider().toLowerCase()){
                 case B2CProvider.LOCAL:
@@ -324,86 +336,28 @@ public class AuthorizationCodeIT {
         }
     }
 
-    private void startTcpListener(BlockingQueue<Boolean> tcpStartUpNotifierQueue){
-        AuthorizationCodeQueue = new LinkedBlockingQueue<>();
-        tcpListener = new TcpListener(AuthorizationCodeQueue, tcpStartUpNotifierQueue);
-
-        // these are the ports that are registered for B2C tests
-        int[] ports = { 3843,4584, 4843, 60000 };
-        tcpListener.startServer(ports);
-    }
-
-    private String getResponseFromTcpListener(){
-        String response;
-        try {
-            response = AuthorizationCodeQueue.poll(30, TimeUnit.SECONDS);
-            if (Strings.isNullOrEmpty(response)){
-                LOG.error("Server response is null");
-                throw new NullPointerException("Server response is null");
-            }
-        } catch(Exception e){
-            LOG.error("Error reading from server response AuthorizationCodeQueue: " + e.getMessage());
-            throw new RuntimeException("Error reading from server response AuthorizationCodeQueue: " +
-                    e.getMessage());
-        }
-        return response;
-    }
-
-    private String parseServerResponse(String serverResponse, AuthorityType authorityType){
-        // Response will be a GET request with query parameter ?code=authCode
-        String regexp;
-        if(authorityType == AuthorityType.B2C){
-            regexp = "(?<=code=)(?:(?! HTTP).)*";
-        } else {
-            regexp = "(?<=code=)(?:(?!&).)*";
-        }
-
-        Pattern pattern = Pattern.compile(regexp);
-        Matcher matcher = pattern.matcher(serverResponse);
-
-        if(!matcher.find()){
-            LOG.error("No authorization code in server response: " + serverResponse);
-            throw new IllegalStateException("No authorization code in server response: " +
-                    serverResponse);
-        }
-        return matcher.group(0);
-    }
-
-    private String buildAuthenticationCodeURL(String appId, AuthorityType authorityType)
-            throws UnsupportedEncodingException{
-        String redirectUrl;
-        int portNumber = tcpListener.getPort();
-
-        String authority;
+    private String buildAuthenticationCodeURL(ClientApplicationBase app) {
         String scope;
+
+        AuthorityType authorityType= app.authenticationAuthority.authorityType;
         if(authorityType == AuthorityType.AAD){
-            authority = TestConstants.ORGANIZATIONS_AUTHORITY;
             scope = TestConstants.GRAPH_DEFAULT_SCOPE;
         } else if (authorityType == AuthorityType.B2C) {
-            authority = TestConstants.B2C_AUTHORITY_URL;
             scope = TestConstants.B2C_LAB_SCOPE;
         }
         else if (authorityType == AuthorityType.ADFS){
-            authority = TestConstants.ADFS_AUTHORITY;
             scope = TestConstants.ADFS_SCOPE;
         }
         else{
-            return null;
+            throw new RuntimeException("Authority type not recognized");
         }
 
-        redirectUrl = authority + "oauth2/" +
-                (authorityType != AuthorityType.ADFS ? "v2.0/" : "") +
-                "authorize?" +
-                "response_type=code" +
-                "&response_mode=query" +
-                "&client_id=" + (authorityType == AuthorityType.ADFS ? TestConstants.ADFS_APP_ID : appId) +
-                "&redirect_uri=" + URLEncoder.encode(TestConstants.LOCALHOST + portNumber, "UTF-8") +
-                "&scope=" + URLEncoder.encode("openid offline_access profile " + scope, "UTF-8");
+        AuthorizationRequestUrlParameters parameters =
+                AuthorizationRequestUrlParameters
+                        .builder(TestConstants.LOCALHOST + httpListener.port(),
+                                Collections.singleton(scope))
+                        .build();
 
-        if(authorityType == AuthorityType.B2C){
-            redirectUrl = redirectUrl + "&p=" + TestConstants.B2C_SIGN_IN_POLICY;
-        }
-
-        return redirectUrl;
+        return app.getAuthorizationRequestUrl(parameters).toString();
     }
 }

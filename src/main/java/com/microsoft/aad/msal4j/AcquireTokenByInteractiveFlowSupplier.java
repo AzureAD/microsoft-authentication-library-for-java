@@ -3,6 +3,7 @@ package com.microsoft.aad.msal4j;
 import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -39,12 +40,11 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
                 systemBrowserOptions);
         startHttpListener(authorizationResponseHandler);
 
-
         if (systemBrowserOptions != null && systemBrowserOptions.openBrowserAction() != null) {
             interactiveRequest.interactiveRequestParameters.systemBrowserOptions().openBrowserAction()
-                    .openBrowser(interactiveRequest.authorizationURI);
+                    .openBrowser(interactiveRequest.authorizationUrl());
         } else {
-            openDefaultSystemBrowser(interactiveRequest.authorizationURI);
+            openDefaultSystemBrowser(interactiveRequest.authorizationUrl());
         }
 
         return getAuthorizationResultFromHttpListener();
@@ -60,12 +60,12 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
         httpListener.startListener(port, handler);
     }
 
-    private void openDefaultSystemBrowser(URI uri){
+    private void openDefaultSystemBrowser(URL url){
         try{
             if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-                Desktop.getDesktop().browse(uri);
+                Desktop.getDesktop().browse(url.toURI());
             }
-        } catch(IOException e){
+        } catch(Exception e){
             throw new MsalClientException(e);
         }
     }
