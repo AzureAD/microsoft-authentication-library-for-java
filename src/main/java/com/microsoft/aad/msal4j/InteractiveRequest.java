@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.microsoft.aad.msal4j;
 
 import lombok.AccessLevel;
@@ -7,28 +10,29 @@ import lombok.experimental.Accessors;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.security.SecureRandom;
-import java.util.Arrays;
 import java.util.Base64;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
-@Getter(AccessLevel.PACKAGE)
 @Accessors(fluent = true)
 class InteractiveRequest extends MsalRequest{
 
-    AtomicReference<CompletableFuture<IAuthenticationResult>> futureReference;
-    private PublicClientApplication publicClientApplication;
+    @Getter(AccessLevel.PACKAGE)
+    private AtomicReference<CompletableFuture<IAuthenticationResult>> futureReference;
 
-    URL authorizationUrl;
-    InteractiveRequestParameters interactiveRequestParameters;
+    @Getter(AccessLevel.PACKAGE)
+    private InteractiveRequestParameters interactiveRequestParameters;
 
+    @Getter(AccessLevel.PACKAGE)
     private String verifier;
+
+    @Getter(AccessLevel.PACKAGE)
     private String state;
+
+    private PublicClientApplication publicClientApplication;
+    private URL authorizationUrl;
 
     InteractiveRequest(InteractiveRequestParameters parameters,
                        AtomicReference<CompletableFuture<IAuthenticationResult>> futureReference,
@@ -40,41 +44,44 @@ class InteractiveRequest extends MsalRequest{
         this.interactiveRequestParameters = parameters;
         this.futureReference = futureReference;
         this.publicClientApplication = publicClientApplication;
-        this.authorizationUrl = createAuthorizationUrl();
-        validateRedirectURI(parameters.redirectUri());
+        validateRedirectUrl(parameters.redirectUri());
     }
 
-    private void validateRedirectURI(URI redirectURI) {
+    URL authorizationUrl(){
+        if(this.authorizationUrl == null) {
+            authorizationUrl = createAuthorizationUrl();
+        }
+        return authorizationUrl;
+    }
+
+    private void validateRedirectUrl(URI redirectUri) {
         try {
-            if (!InetAddress.getByName(redirectURI.getHost()).isLoopbackAddress()) {
+            if (!InetAddress.getByName(redirectUri.getHost()).isLoopbackAddress()) {
                 throw new MsalClientException(String.format(
                         "Only loopback redirect uri is supported, but %s was found " +
                                 "Configure http://localhost or http://localhost:port both during app registration" +
-                                "and when you create the create the InteractiveRequestParameters object", redirectURI.getHost()),
+                                "and when you create the create the InteractiveRequestParameters object", redirectUri.getHost()),
                         AuthenticationErrorCode.LOOPBACK_REDIRECT_URI);
             }
 
-            if (!redirectURI.getScheme().equals("http")) {
+            if (!redirectUri.getScheme().equals("http")) {
                 throw new MsalClientException(String.format(
                         "Only http uri scheme is supported but %s was found. Configure http://localhost" +
                                 "or http://localhost:port both during app registration and when you create" +
-                                " the create the InteractiveRequestParameters object", redirectURI.toString()),
+                                " the create the InteractiveRequestParameters object", redirectUri.toString()),
                         AuthenticationErrorCode.LOOPBACK_REDIRECT_URI);
             }
-        } catch (UnknownHostException exception){
+        } catch (Exception exception){
             throw new MsalClientException(exception);
         }
     }
 
     private URL createAuthorizationUrl(){
 
-        Set<String> scopesParam = new HashSet<>(interactiveRequestParameters.scopes());
-        String[] commonScopes = AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM.split(" ");
-        scopesParam.addAll(Arrays.asList(commonScopes));
-
         AuthorizationRequestUrlParameters.Builder authorizationRequestUrlBuilder =
                 AuthorizationRequestUrlParameters
-                        .builder(interactiveRequestParameters.redirectUri().toString(), scopesParam)
+                        .builder(interactiveRequestParameters.redirectUri().toString(),
+                                interactiveRequestParameters.scopes())
                         .correlationId(publicClientApplication.correlationId());
 
 

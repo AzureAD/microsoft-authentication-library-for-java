@@ -73,5 +73,9 @@ public class AuthenticationErrorCode {
     public final static String PORT_BLOCKED = "port_blocked";
 
     public final static String AUTHORIZATION_RESULT_BLANK = "authorization_code_blank";
+
+    public final static String INVALID_AUTHORIZATION_RESULT_STATE = "invalid_authorization_result_state";
+
+    public final static String INVALID_REDIRECT_URI = "incalid_redirect_uri";
 }
 

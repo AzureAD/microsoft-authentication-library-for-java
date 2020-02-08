@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.microsoft.aad.msal4j;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -48,8 +51,8 @@ class AuthorizationResponseHandler implements HttpHandler {
                     httpExchange.getRequestBody())).lines().collect(Collectors.joining("\n"));
 
             AuthorizationResult result = AuthorizationResult.fromResponseBody(responseBody);
-            sendResponse(httpExchange, result);
             authorizationResultQueue.put(result);
+            sendResponse(httpExchange, result);
 
         } catch (InterruptedException ex){
             LOG.error("Error reading response from socket: " + ex.getMessage());
@@ -72,7 +75,7 @@ class AuthorizationResponseHandler implements HttpHandler {
                 break;
             default:
                 //TODO better exception
-                throw new RuntimeException();
+                throw new MsalClientException("Received unknown result from authorization response", "error");
         }
 
         httpExchange.sendResponseHeaders(200, response.length());

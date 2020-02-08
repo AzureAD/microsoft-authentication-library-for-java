@@ -1,8 +1,14 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.microsoft.aad.msal4j;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.awt.*;
-import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -10,12 +16,13 @@ import java.util.concurrent.TimeUnit;
 
 class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier {
 
+    private final static Logger LOG = LoggerFactory.getLogger(AcquireTokenByAuthorizationGrantSupplier.class);
+
     private PublicClientApplication clientApplication;
     private InteractiveRequest interactiveRequest;
 
     private BlockingQueue<AuthorizationResult> authorizationCodeQueue;
     private HttpListener httpListener;
-    private AuthorizationResponseHandler authorizationResponseHandler;
 
     AcquireTokenByInteractiveFlowSupplier(PublicClientApplication clientApplication,
                                           InteractiveRequest request){
@@ -27,37 +34,77 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
     @Override
     AuthenticationResult execute() throws Exception{
         AuthorizationResult authorizationResult = getAuthorizationResult();
+        validateState(authorizationResult);
         return acquireTokenWithAuthorizationCode(authorizationResult);
     }
 
     private AuthorizationResult getAuthorizationResult(){
-        SystemBrowserOptions systemBrowserOptions=
-                interactiveRequest.interactiveRequestParameters.systemBrowserOptions();
 
-        authorizationCodeQueue = new LinkedBlockingQueue<>();
-        authorizationResponseHandler = new AuthorizationResponseHandler(
-                authorizationCodeQueue,
-                systemBrowserOptions);
-        startHttpListener(authorizationResponseHandler);
+        AuthorizationResult result;
+        try {
+            SystemBrowserOptions systemBrowserOptions =
+                    interactiveRequest.interactiveRequestParameters().systemBrowserOptions();
 
-        if (systemBrowserOptions != null && systemBrowserOptions.openBrowserAction() != null) {
-            interactiveRequest.interactiveRequestParameters.systemBrowserOptions().openBrowserAction()
-                    .openBrowser(interactiveRequest.authorizationUrl());
-        } else {
-            openDefaultSystemBrowser(interactiveRequest.authorizationUrl());
+            authorizationCodeQueue = new LinkedBlockingQueue<>();
+            AuthorizationResponseHandler authorizationResponseHandler =
+                    new AuthorizationResponseHandler(
+                            authorizationCodeQueue,
+                            systemBrowserOptions);
+
+            startHttpListener(authorizationResponseHandler);
+
+            if (systemBrowserOptions != null && systemBrowserOptions.openBrowserAction() != null) {
+                interactiveRequest.interactiveRequestParameters().systemBrowserOptions().openBrowserAction()
+                        .openBrowser(interactiveRequest.authorizationUrl());
+            } else {
+                openDefaultSystemBrowser(interactiveRequest.authorizationUrl());
+            }
+
+             result = getAuthorizationResultFromHttpListener();
+        } finally {
+            if(httpListener != null){
+                httpListener.stopListener();
+            }
         }
 
-        return getAuthorizationResultFromHttpListener();
-}
+        return result;
+    }
+
+    private void validateState(AuthorizationResult authorizationResult){
+        if(StringHelper.isBlank(authorizationResult.state()) ||
+                !authorizationResult.state().equals(interactiveRequest.state())){
+
+            throw new MsalClientException("State returned in authorization result is blank or does " +
+                    "not match state sent on outgoing request",
+                    AuthenticationErrorCode.INVALID_AUTHORIZATION_RESULT_STATE);
+        }
+    }
 
     private void startHttpListener(AuthorizationResponseHandler handler){
         // if port is unspecified, set to 0, which will cause socket to find a free port
-        int port = interactiveRequest.interactiveRequestParameters.redirectUri().getPort() == -1 ?
+        int port = interactiveRequest.interactiveRequestParameters().redirectUri().getPort() == -1 ?
                 0 :
-                interactiveRequest.interactiveRequestParameters.redirectUri().getPort();
+                interactiveRequest.interactiveRequestParameters().redirectUri().getPort();
 
         httpListener = new HttpListener();
         httpListener.startListener(port, handler);
+
+        //If no port is passed, http listener finds a free one. We should update redirect URL to
+        // point to this port.
+        if(port != httpListener.port()){
+            updateRedirectUrl();
+        }
+    }
+
+    private void updateRedirectUrl(){
+        try {
+            URI updatedRedirectUrl = new URI("http://localhost:" + httpListener.port());
+            interactiveRequest.interactiveRequestParameters().redirectUri(updatedRedirectUrl);
+            LOG.debug("Redirect URI updated to" + updatedRedirectUrl);
+        } catch (URISyntaxException ex){
+            throw new MsalClientException("Error updating redirect URI. Not a valid URI format",
+                    AuthenticationErrorCode.INVALID_REDIRECT_URI);
+        }
     }
 
     private void openDefaultSystemBrowser(URL url){
@@ -75,17 +122,13 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
         try {
             long expirationTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) + 120;
 
-            while(result == null && !interactiveRequest.futureReference.get().isCancelled() &&
+            while(result == null && !interactiveRequest.futureReference().get().isCancelled() &&
                     TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) < expirationTime) {
 
                 result = authorizationCodeQueue.poll(100, TimeUnit.MILLISECONDS);
             }
         } catch(Exception e){
             throw new MsalClientException(e);
-        } finally {
-            if(httpListener != null){
-                httpListener.stopListener();
-            }
         }
 
         if (result == null || StringHelper.isBlank(result.code())) {
@@ -99,8 +142,8 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
             throws Exception{
 
         AuthorizationCodeParameters parameters = AuthorizationCodeParameters
-                .builder(authorizationResult.code(), interactiveRequest.interactiveRequestParameters.redirectUri())
-                .scopes(interactiveRequest.interactiveRequestParameters.scopes())
+                .builder(authorizationResult.code(), interactiveRequest.interactiveRequestParameters().redirectUri())
+                .scopes(interactiveRequest.interactiveRequestParameters().scopes())
                 .codeVerifier(interactiveRequest.verifier())
                 .build();
 

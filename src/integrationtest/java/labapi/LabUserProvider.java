@@ -39,19 +39,35 @@ public class LabUserProvider {
         return getLabUser(query);
     }
 
-    public User getUserByAzureEnvironment(String azureEnvironment) {
-
-        UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT,  azureEnvironment);
-
-        return getLabUser(query);
-    }
-
     public User getFederatedAdfsUser(String federationProvider){
 
         UserQueryParameters query = new UserQueryParameters();
         query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER,  federationProvider);
         query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
+
+        return getLabUser(query);
+    }
+
+    public User getOnPremAdfsUser(String federationProvider){
+        UserQueryParameters query = new UserQueryParameters();
+        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, federationProvider);
+        query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.ON_PREM);
+
+        return getLabUser(query);
+    }
+
+    public User getB2cUser(String b2cProvider) {
+        UserQueryParameters query = new UserQueryParameters();
+        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.B2C);
+        query.parameters.put(UserQueryParameters.B2C_PROVIDER, b2cProvider);
+
+        return getLabUser(query);
+    }
+
+    public User getUserByAzureEnvironment(String azureEnvironment) {
+
+        UserQueryParameters query = new UserQueryParameters();
+        query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT,  azureEnvironment);
 
         return getLabUser(query);
     }

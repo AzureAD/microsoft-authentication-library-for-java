@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.util.URLUtils;
@@ -14,6 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 @Accessors(fluent = true)
 @Getter
@@ -55,11 +59,12 @@ public class AuthorizationRequestUrlParameters {
         requestParameters.put("redirect_uri", Collections.singletonList(this.redirectUri));
         this.scopes = builder.scopes;
 
-        String scopesParam = AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM +
-                AbstractMsalAuthorizationGrant.SCOPES_DELIMITER +
-                String.join(" ", builder.scopes);
-        this.scopes = new HashSet<>(Arrays.asList(scopesParam.split(" ")));
-        requestParameters.put("scope", Collections.singletonList(scopesParam));
+        Set<String> scopesParam = new TreeSet<>(builder.scopes);
+        String[] commonScopes = AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM.split(" ");
+        scopesParam.addAll(Arrays.asList(commonScopes));
+
+        this.scopes = scopesParam;
+        requestParameters.put("scope", Collections.singletonList(String.join(" ", scopesParam)));
         requestParameters.put("response_type",Collections.singletonList("code"));
 
         // Optional parameters

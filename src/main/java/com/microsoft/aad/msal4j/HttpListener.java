@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.microsoft.aad.msal4j;
 
 import com.sun.net.httpserver.HttpHandler;
@@ -18,13 +21,15 @@ class HttpListener {
 
     void startListener(int port, HttpHandler httpHandler) {
         try {
-            this.port = port;
             server = HttpServer.create(new InetSocketAddress(port), 0);
             server.createContext("/", httpHandler);
+            this.port = server.getAddress().getPort();
             server.start();
+
         } catch (Exception e){
             //TODO handle exception
             System.out.println(e.getMessage());
+            throw new MsalClientException(e);
         }
     }
 

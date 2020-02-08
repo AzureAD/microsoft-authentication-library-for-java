@@ -44,7 +44,7 @@ class B2CAuthority extends Authority{
                 segments[1],
                 segments[2]);
 
-        this.authorizationEndpoint = String.format(B2C_TOKEN_ENDPOINT_FORMAT, host, tenant, policy);
+        this.authorizationEndpoint = String.format(B2C_AUTHORIZATION_ENDPOINT_FORMAT, host, tenant, policy);
         this.tokenEndpoint = String.format(B2C_TOKEN_ENDPOINT_FORMAT, host, tenant, policy);
         this.selfSignedJwtAudience = this.tokenEndpoint;
     }

@@ -31,7 +31,7 @@ class AuthorizationCodeRequest extends MsalRequest {
                     new CodeVerifier(parameters.codeVerifier()));
 
         } else {
-            authorizationGrant =new AuthorizationCodeGrant(
+            authorizationGrant = new AuthorizationCodeGrant(
                     new AuthorizationCode(parameters.authorizationCode()),parameters.redirectUri());
         }
 

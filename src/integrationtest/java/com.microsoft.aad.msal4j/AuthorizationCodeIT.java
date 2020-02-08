@@ -3,15 +3,10 @@
 
 package com.microsoft.aad.msal4j;
 
-import infrastructure.SeleniumExtensions;
 import labapi.*;
-import org.openqa.selenium.WebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.net.MalformedURLException;
@@ -22,28 +17,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-public class AuthorizationCodeIT {
+public class AuthorizationCodeIT extends SeleniumTest {
     private final static Logger LOG = LoggerFactory.getLogger(AuthorizationCodeIT.class);
-
-    private LabUserProvider labUserProvider;
-    private WebDriver seleniumDriver;
-    private HttpListener httpListener;
-
-    @BeforeClass
-    public void setUpLapUserProvider() {
-        labUserProvider = LabUserProvider.getInstance();
-    }
-
-    @AfterMethod
-    public void cleanUp(){
-        seleniumDriver.quit();
-        httpListener.stopListener();
-    }
-
-    @BeforeMethod
-    public void startUpBrowser(){
-        seleniumDriver = SeleniumExtensions.createDefaultWebDriver();
-    }
 
     @Test
     public void acquireTokenWithAuthorizationCode_ManagedUser(){
@@ -52,74 +27,40 @@ public class AuthorizationCodeIT {
     }
 
     @Test
-    public void acquireTokenWithAuthorizationCode_ADFSv2019_Federated(){
-        UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER,  FederationProvider.ADFS_2019);
-        query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
-
-        User user = labUserProvider.getLabUser(query);
-        assertAcquireTokenAAD(user);
-    }
-
-    @Test
     public void acquireTokenWithAuthorizationCode_ADFSv2019_OnPrem(){
-        UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER,  FederationProvider.ADFS_2019);
-        query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.ON_PREM);
-
-        User user = labUserProvider.getLabUser(query);
+        User user = labUserProvider.getOnPremAdfsUser(FederationProvider.ADFS_2019);
         assertAcquireTokenADFS2019(user);
     }
 
     @Test
-    public void acquireTokenWithAuthorizationCode_ADFSv4_Federated(){
-        UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER,  FederationProvider.ADFS_4);
-        query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
+    public void acquireTokenWithAuthorizationCode_ADFSv2019_Federated(){
+        User user = labUserProvider.getFederatedAdfsUser(FederationProvider.ADFS_2019);
+        assertAcquireTokenAAD(user);
+    }
 
-        User user = labUserProvider.getLabUser(query);
+    @Test
+    public void acquireTokenWithAuthorizationCode_ADFSv4_Federated(){
+        User user = labUserProvider.getFederatedAdfsUser(FederationProvider.ADFS_4);
+
         assertAcquireTokenAAD(user);
     }
 
     @Test
     public void acquireTokenWithAuthorizationCode_ADFSv3_Federated(){
-        UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER,  FederationProvider.ADFS_3);
-        query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
-
-        User user = labUserProvider.getLabUser(query);
+        User user = labUserProvider.getFederatedAdfsUser(FederationProvider.ADFS_3);
         assertAcquireTokenAAD(user);
     }
 
     @Test
     public void acquireTokenWithAuthorizationCode_ADFSv2_Federated(){
-        UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER,  FederationProvider.ADFS_2);
-        query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
-
-        User user = labUserProvider.getLabUser(query);
+        User user = labUserProvider.getFederatedAdfsUser(FederationProvider.ADFS_2);
         assertAcquireTokenAAD(user);
     }
 
-    //@Test
+    @Test
     // TODO Redirect URI localhost in not registered
     public void acquireTokenWithAuthorizationCode_B2C_Local(){
-/*        User labResponse = labUserProvider.getLabUser(
-                B2CIdentityProvider.LOCAL,
-                false);
-        labUserProvider.getUserPassword(labResponse.getUser());
-
-        String b2CAppId = "b876a048-55a5-4fc5-9403-f5d90cb1c852";
-        labResponse.setAppId(b2CAppId);*/
-
-        UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.B2C);
-        query.parameters.put(UserQueryParameters.B2C_PROVIDER, B2CProvider.LOCAL);
-        User user = labUserProvider.getLabUser(query);
-
-        /*String b2CAppId = "b876a048-55a5-4fc5-9403-f5d90cb1c852";
-        labResponse.setAppId(b2CAppId);
-*/
+        User user = labUserProvider.getB2cUser(B2CProvider.LOCAL);
         assertAcquireTokenB2C(user);
     }
 
@@ -134,13 +75,7 @@ public class AuthorizationCodeIT {
 
         String b2CAppId = "b876a048-55a5-4fc5-9403-f5d90cb1c852";
         labResponse.setAppId(b2CAppId);*/
-
-        UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.B2C);
-        query.parameters.put(UserQueryParameters.B2C_PROVIDER, B2CProvider.GOOGLE);
-
-        User user = labUserProvider.getLabUser(query);
-
+        User user = labUserProvider.getB2cUser(B2CProvider.GOOGLE);
         assertAcquireTokenB2C(user);
     }
 
@@ -155,11 +90,7 @@ public class AuthorizationCodeIT {
 
         String b2CAppId = "b876a048-55a5-4fc5-9403-f5d90cb1c852";
         labResponse.setAppId(b2CAppId);*/
-        UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.B2C);
-        query.parameters.put(UserQueryParameters.B2C_PROVIDER, B2CProvider.FACEBOOK);
-
-        User user = labUserProvider.getLabUser(query);
+        User user = labUserProvider.getB2cUser(B2CProvider.FACEBOOK);
 
         assertAcquireTokenB2C(user);
     }
@@ -213,12 +144,14 @@ public class AuthorizationCodeIT {
 
     private void assertAcquireTokenB2C(User user){
 
+        String appId = LabService.getSecret(TestConstants.B2C_LAB_APP_ID);
+        String appSecret = LabService.getSecret(TestConstants.B2C_LAB_APP_SECRET);
+
         ConfidentialClientApplication cca;
         try {
-            IClientCredential credential = ClientCredentialFactory.createFromSecret("");
-            cca = ConfidentialClientApplication.builder(
-                    user.getAppId(),
-                    credential)
+            IClientCredential credential = ClientCredentialFactory.createFromSecret(appSecret);
+            cca = ConfidentialClientApplication
+                    .builder(appId, credential)
                     .b2cAuthority(TestConstants.B2C_AUTHORITY_SIGN_IN)
                     .build();
         } catch(Exception ex){
@@ -231,7 +164,6 @@ public class AuthorizationCodeIT {
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
         Assert.assertNotNull(result.idToken());
-        Assert.assertEquals(user.getUpn(), result.account().username());
     }
 
     private IAuthenticationResult acquireTokenAuthorizationCodeFlow(
@@ -259,9 +191,8 @@ public class AuthorizationCodeIT {
                                                             String authCode) {
         IAuthenticationResult result;
         try{
-            result = cca.acquireToken(AuthorizationCodeParameters.builder(
-                    authCode,
-                    new URI(TestConstants.LOCALHOST + httpListener.port()))
+            result = cca.acquireToken(AuthorizationCodeParameters
+                    .builder(authCode, new URI(TestConstants.LOCALHOST + httpListener.port()))
                     .scopes(Collections.singleton(TestConstants.B2C_LAB_SCOPE))
                     .build())
                     .get();
@@ -282,13 +213,15 @@ public class AuthorizationCodeIT {
                 authorizationCodeQueue,
                 new SystemBrowserOptions());
 
-        int[] ports = {3843, 4584, 4843, 60000};
         httpListener = new HttpListener();
-        httpListener.startListener(ports[0], authorizationResponseHandler);
+        httpListener.startListener(8080, authorizationResponseHandler);
 
         AuthorizationResult result = null;
         try {
+            String url = buildAuthenticationCodeURL(app);
+            seleniumDriver.navigate().to(url);
             runSeleniumAutomatedLogin(user, app);
+
             long expirationTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) + 120;
 
             while(result == null &&
@@ -310,32 +243,6 @@ public class AuthorizationCodeIT {
         }
         return result.code();
     }
-
-    private void runSeleniumAutomatedLogin(User user, ClientApplicationBase app) {
-        String url = buildAuthenticationCodeURL(app);
-        seleniumDriver.navigate().to(url);
-
-        AuthorityType authorityType = app.authenticationAuthority.authorityType;
-        if(authorityType == AuthorityType.B2C){
-            switch(user.getB2cProvider().toLowerCase()){
-                case B2CProvider.LOCAL:
-                    SeleniumExtensions.performLocalLogin(seleniumDriver, user);
-                    break;
-                case B2CProvider.GOOGLE:
-                    SeleniumExtensions.performGoogleLogin(seleniumDriver, user);
-                    break;
-                case B2CProvider.FACEBOOK:
-                    SeleniumExtensions.performFacebookLogin(seleniumDriver, user);
-                    break;
-            }
-        } else if (authorityType == AuthorityType.AAD) {
-            SeleniumExtensions.performADLogin(seleniumDriver, user);
-        }
-        else if (authorityType == AuthorityType.ADFS) {
-            SeleniumExtensions.performADFS2019Login(seleniumDriver, user);
-        }
-    }
-
     private String buildAuthenticationCodeURL(ClientApplicationBase app) {
         String scope;
 

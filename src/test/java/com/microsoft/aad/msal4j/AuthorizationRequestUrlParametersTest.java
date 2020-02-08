@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.microsoft.aad.msal4j;
 
 import org.testng.Assert;
@@ -53,7 +56,7 @@ public class AuthorizationRequestUrlParametersTest {
                     URLDecoder.decode(pair.substring(idx+1), "UTF-8"));
         }
 
-        Assert.assertEquals(queryParameters.get("scope"), "openid profile offline_access scope");
+        Assert.assertEquals(queryParameters.get("scope"), "offline_access openid profile scope");
         Assert.assertEquals(queryParameters.get("response_type"), "code");
         Assert.assertEquals(queryParameters.get("redirect_uri"), "http://localhost:8080");
         Assert.assertEquals(queryParameters.get("client_id"), "client_id");
@@ -104,7 +107,7 @@ public class AuthorizationRequestUrlParametersTest {
                     URLDecoder.decode(pair.substring(idx+1), "UTF-8"));
         }
 
-        Assert.assertEquals(queryParameters.get("scope"), "openid profile offline_access scope");
+        Assert.assertEquals(queryParameters.get("scope"), "offline_access openid profile scope");
         Assert.assertEquals(queryParameters.get("response_type"), "code");
         Assert.assertEquals(queryParameters.get("redirect_uri"), "http://localhost:8080");
         Assert.assertEquals(queryParameters.get("client_id"), "client_id");
