@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import lombok.Getter;
@@ -22,12 +23,12 @@ import java.util.stream.Collectors;
 class AuthorizationResponseHandler implements HttpHandler {
 
     private final static Logger LOG = LoggerFactory.getLogger(AuthorizationResponseHandler.class);
+
     private final static String DEFAULT_SUCCESS_MESSAGE = "<html><head><title>Authentication Complete</title></head>"+
             "  <body> Authentication complete. You can close the browser and return to the application."+
             "  </body></html>" ;
 
-    private final static String DEFAULT_FAILURE_MESSAGE = "<html> " +
-            "<head><title>Authentication Failed</title></head> " +
+    private final static String DEFAULT_FAILURE_MESSAGE = "<html><head><title>Authentication Failed</title></head> " +
             "<body> Authentication failed. You can return to the application. Feel free to close this browser tab. " +
             "</br></br></br></br> Error details: error {0} error_description: {1} </body> </html>";
 
@@ -65,22 +66,55 @@ class AuthorizationResponseHandler implements HttpHandler {
     private void sendResponse(HttpExchange httpExchange, AuthorizationResult result)
             throws IOException{
 
-        String response;
         switch (result.status()){
             case Success:
-                response = DEFAULT_SUCCESS_MESSAGE;
+                sendSuccessResponse(httpExchange, getSuccessfulResponseMessage());
                 break;
             case ProtocolError:
-                response = DEFAULT_FAILURE_MESSAGE;
+            case UnknownError:
+                sendErrorResponse(httpExchange, getErrorResponseMessage());
                 break;
-            default:
-                //TODO better exception
-                throw new MsalClientException("Received unknown result from authorization response", "error");
         }
+    }
 
+    private void sendSuccessResponse(HttpExchange httpExchange, String response) throws IOException {
+        if (systemBrowserOptions().browserRedirectSuccess() != null) {
+            send302Response(httpExchange, systemBrowserOptions().browserRedirectSuccess().toString());
+        } else {
+            send200Response(httpExchange, response);
+        }
+    }
+
+    private void sendErrorResponse(HttpExchange httpExchange, String response) throws IOException {
+        if(systemBrowserOptions().browserRedirectError() != null){
+            send302Response(httpExchange, systemBrowserOptions().browserRedirectError().toString());
+        } else {
+            send200Response(httpExchange, response);
+        }
+    }
+
+    private void send302Response(HttpExchange httpExchange, String redirectUri) throws IOException{
+        Headers responseHeaders = httpExchange.getResponseHeaders();
+        responseHeaders.set("Location", redirectUri);
+        httpExchange.sendResponseHeaders(302, 0);
+    }
+
+    private void send200Response(HttpExchange httpExchange, String response) throws IOException{
         httpExchange.sendResponseHeaders(200, response.length());
         OutputStream os = httpExchange.getResponseBody();
         os.write(response.getBytes());
         os.close();
+    }
+
+    private String getSuccessfulResponseMessage(){
+        return systemBrowserOptions().htmlMessageSuccess() != null ?
+                systemBrowserOptions().htmlMessageSuccess() :
+                DEFAULT_SUCCESS_MESSAGE;
+    }
+
+    private String getErrorResponseMessage(){
+        return systemBrowserOptions().htmlMessageError() != null ?
+                systemBrowserOptions().htmlMessageError() :
+                DEFAULT_FAILURE_MESSAGE;
     }
 }

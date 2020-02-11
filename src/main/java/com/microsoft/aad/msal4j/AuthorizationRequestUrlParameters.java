@@ -13,12 +13,14 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+/**
+ * Parameters for {@link ClientApplicationBase#getAuthorizationRequestUrl(AuthorizationRequestUrlParameters)}
+ */
 @Accessors(fluent = true)
 @Getter
 public class AuthorizationRequestUrlParameters {
@@ -33,6 +35,7 @@ public class AuthorizationRequestUrlParameters {
     private String nonce;
     private ResponseMode responseMode;
     private String loginHint;
+    private String domainHint;
     private Prompt prompt;
     private String correlationId;
 
@@ -108,6 +111,11 @@ public class AuthorizationRequestUrlParameters {
             requestParameters.put("login_hint", Collections.singletonList(builder.loginHint));
         }
 
+        if(builder.domainHint != null){
+            this.domainHint = domainHint();
+            requestParameters.put("domain_hint", Collections.singletonList(builder.domainHint));
+        }
+
         if(builder.prompt != null){
             this.prompt = builder.prompt;
             requestParameters.put("prompt", Collections.singletonList(builder.prompt.toString()));
@@ -145,6 +153,7 @@ public class AuthorizationRequestUrlParameters {
         private String nonce;
         private ResponseMode responseMode;
         private String loginHint;
+        private String domainHint;
         private Prompt prompt;
         private String correlationId;
 
@@ -156,56 +165,113 @@ public class AuthorizationRequestUrlParameters {
             return this;
         }
 
+        /**
+         * The redirect URI where authentication responses can be received by your application. It
+         * must exactly match one of the redirect URIs registered in the Azure portal.
+         */
         public Builder redirectUri(String val){
             this.redirectUri = val;
             return self();
         }
 
+        /**
+         * Scopes which the application is requesting access to and the user will consent to.
+         */
         public Builder scopes(Set<String> val){
             this.scopes = val;
             return self();
         }
 
+        /**
+         * In cases where Azure AD tenant admin has enabled conditional access policies, and the
+         * policy has not been met,{@link MsalServiceException} will contain claims that need be
+         * consented to.
+         */
         public Builder claims(Set<String> val){
             this.claims = val;
             return self();
         }
 
+        /**
+         * Used to secure authorization code grant via Proof of Key for Code Exchange (PKCE).
+         * Required if codeChallenge is included. For more information, see the PKCE RCF:
+         * https://tools.ietf.org/html/rfc7636
+         */
         public Builder codeChallenge(String val){
             this.codeChallenge = val;
             return self();
         }
 
+        /**
+         * The method used to encode the code verifier for the code challenge parameter. Can be one
+         * of plain or S256. If excluded, code challenge is assumed to be plaintext. For more
+         * information, see the PKCE RCF: https://tools.ietf.org/html/rfc7636
+         */
         public Builder codeChallengeMethod(String val){
             this.codeChallengeMethod = val;
             return self();
         }
 
+        /**
+         * A value included in the request that is also returned in the token response. A randomly
+         * generated unique value is typically used for preventing cross site request forgery attacks.
+         * The state is also used to encode information about the user's state in the app before the
+         * authentication request occurred.
+         * */
         public Builder state(String val){
             this.state = val;
             return self();
         }
 
+        /**
+         *  A value included in the request that is also returned in the token response. A randomly
+         *  generated unique value is typically used for preventing cross site request forgery attacks.
+         */
         public Builder nonce(String val){
             this.nonce = val;
             return self();
         }
 
+        /**
+         * Specifies the method that should be used to send the authentication result to your app.
+         */
         public Builder responseMode(ResponseMode val){
             this.responseMode = val;
             return self();
         }
 
+        /**
+         * Can be used to pre-fill the username/email address field of the sign-in page for the user,
+         * if you know the username/email address ahead of time. Often apps use this parameter during
+         * re-authentication, having already extracted the username from a previous sign-in using the
+         * preferred_username claim.
+         */
         public Builder loginHint(String val){
             this.loginHint = val;
             return self();
         }
 
+        /**
+         * Provides a hint about the tenant or domain that the user should use to sign in. The value
+         * of the domain hint is a registered domain for the tenant.
+         **/
+        public Builder domainHint(String val){
+            this.domainHint = val;
+            return self();
+        }
+
+        /**
+         * Indicates the type of user interaction that is required. Possible values are
+         * {@link Prompt}
+         */
         public Builder prompt(Prompt val){
             this.prompt = val;
             return self();
         }
 
+        /**
+         * Identifier used to correlate requests for telemetry purposes. Usually a GUID.
+         */
         public Builder correlationId(String val){
             this.correlationId = val;
             return self();

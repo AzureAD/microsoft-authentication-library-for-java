@@ -91,6 +91,7 @@ public class AuthorizationRequestUrlParametersTest {
                         .nonce("app_nonce")
                         .correlationId("corr_id")
                         .loginHint("hint")
+                        .domainHint("domain_hint")
                         .prompt(Prompt.SELECT_ACCOUNT)
                         .build();
 
@@ -119,5 +120,6 @@ public class AuthorizationRequestUrlParametersTest {
         Assert.assertEquals(queryParameters.get("nonce"), "app_nonce");
         Assert.assertEquals(queryParameters.get("correlation_id"), "corr_id");
         Assert.assertEquals(queryParameters.get("login_hint"), "hint");
+        Assert.assertEquals(queryParameters.get("domain_hint"), "domain_hint");
     }
 }

@@ -159,6 +159,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         return future;
     }
 
+    @Override
     public URL getAuthorizationRequestUrl(AuthorizationRequestUrlParameters parameters) {
 
         validateNotNull("parameters", parameters);

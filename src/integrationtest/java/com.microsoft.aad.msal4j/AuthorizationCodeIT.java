@@ -239,7 +239,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
 
         if (result == null || StringHelper.isBlank(result.code())) {
             throw new MsalClientException("No Authorization code was returned from the server",
-                    AuthenticationErrorCode.AUTHORIZATION_RESULT_BLANK);
+                    AuthenticationErrorCode.INVALID_AUTHORIZATION_RESULT);
         }
         return result.code();
     }

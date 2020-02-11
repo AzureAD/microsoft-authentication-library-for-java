@@ -24,19 +24,18 @@ class AuthorizationResult {
 
     enum AuthorizationStatus {
         Success,
-        ErrorHttp,
         ProtocolError,
-        UserCancel,
         UnknownError
     }
 
-    public static AuthorizationResult fromResponseBody(String responseBody){
+    static AuthorizationResult fromResponseBody(String responseBody){
 
         if(StringHelper.isBlank(responseBody)){
             return new AuthorizationResult(
                     AuthorizationStatus.UnknownError,
-                    AuthenticationErrorCode.AUTHORIZATION_RESULT_BLANK,
-                    "The authorization server returned an invalid response");
+                    AuthenticationErrorCode.INVALID_AUTHORIZATION_RESULT,
+                    "The authorization server returned an invalid response: response " +
+                            "is null or empty");
         }
 
         Map<String, String > queryParameters = parseParameters(responseBody);
@@ -50,21 +49,27 @@ class AuthorizationResult {
                             null);
         }
 
-        AuthorizationResult result = new AuthorizationResult();
-
-        if(queryParameters.containsKey("code")){
-            result.code = queryParameters.get("code");
-            result.status = AuthorizationStatus.Success;
+        if(!queryParameters.containsKey("code")){
+            return new AuthorizationResult(
+                    AuthorizationStatus.UnknownError,
+                    AuthenticationErrorCode.INVALID_AUTHORIZATION_RESULT,
+                    "Authorization result response does not contain authorization code");
         }
+
+        AuthorizationResult result = new AuthorizationResult();
+        result.code = queryParameters.get("code");
+        result.status = AuthorizationStatus.Success;
 
         if(queryParameters.containsKey("state")){
             result.state = queryParameters.get("state");
         }
+
         return result;
     }
 
     private AuthorizationResult(){
     }
+
     private AuthorizationResult(AuthorizationStatus status, String error, String errorDescription){
         this.status = status;
         this.error = error;
@@ -82,12 +87,11 @@ class AuthorizationResult {
                 query_pairs.put(key, value);
             }
         } catch(Exception ex){
-            //TODO better exception
-            System.out.println(ex.getMessage());
+            throw new MsalClientException(
+                    AuthenticationErrorCode.INVALID_AUTHORIZATION_RESULT,
+                    String.format("Error parsing authorization result:  %s", ex.getMessage()));
         }
 
         return query_pairs;
     }
-
-
 }

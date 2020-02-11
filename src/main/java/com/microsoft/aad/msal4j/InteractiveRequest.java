@@ -82,8 +82,10 @@ class InteractiveRequest extends MsalRequest{
                 AuthorizationRequestUrlParameters
                         .builder(interactiveRequestParameters.redirectUri().toString(),
                                 interactiveRequestParameters.scopes())
+                        .prompt(interactiveRequestParameters.prompt())
+                        .loginHint(interactiveRequestParameters.loginHint())
+                        .domainHint(interactiveRequestParameters.domainHint())
                         .correlationId(publicClientApplication.correlationId());
-
 
         addPkceAndState(authorizationRequestUrlBuilder);
         return publicClientApplication.getAuthorizationRequestUrl(

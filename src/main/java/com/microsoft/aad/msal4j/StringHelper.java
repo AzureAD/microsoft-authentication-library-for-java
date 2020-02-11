@@ -25,6 +25,4 @@ final class StringHelper {
         }
         return base64EncodedSha256Hash;
     }
-
-
 }

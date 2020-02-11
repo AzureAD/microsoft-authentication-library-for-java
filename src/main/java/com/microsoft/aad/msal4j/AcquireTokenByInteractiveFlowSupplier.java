@@ -76,7 +76,7 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
 
             throw new MsalClientException("State returned in authorization result is blank or does " +
                     "not match state sent on outgoing request",
-                    AuthenticationErrorCode.INVALID_AUTHORIZATION_RESULT_STATE);
+                    AuthenticationErrorCode.INVALID_AUTHORIZATION_RESULT);
         }
     }
 
@@ -133,7 +133,7 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
 
         if (result == null || StringHelper.isBlank(result.code())) {
             throw new MsalClientException("No Authorization code was returned from the server",
-                    AuthenticationErrorCode.AUTHORIZATION_RESULT_BLANK);
+                    AuthenticationErrorCode.INVALID_AUTHORIZATION_RESULT);
         }
         return result;
     }

@@ -64,18 +64,20 @@ public class AuthenticationErrorCode {
      */
     public final static String LOOPBACK_REDIRECT_URI = "loopback_redirect_uri";
 
-
     /**
      * Unable to start Http listener to the specified port. This might be because the port is unable.
      */
     public final static String UNABLE_TO_START_HTTP_LISTENER = "unable_to_start_http_listener";
 
-    public final static String PORT_BLOCKED = "port_blocked";
+    /**
+     * Authorization result response is invalid, either because is valid or it does not contain
+     * an authorization code.
+     */
+    public final static String INVALID_AUTHORIZATION_RESULT = "invalid_authorization_result";
 
-    public final static String AUTHORIZATION_RESULT_BLANK = "authorization_code_blank";
-
-    public final static String INVALID_AUTHORIZATION_RESULT_STATE = "invalid_authorization_result_state";
-
-    public final static String INVALID_REDIRECT_URI = "incalid_redirect_uri";
+    /**
+     * Redirect URI provided to MSAL is of invalid format. Redirect URL must be a loopback URL.
+     */
+    public final static String INVALID_REDIRECT_URI = "invalid_redirect_uri";
 }
 
