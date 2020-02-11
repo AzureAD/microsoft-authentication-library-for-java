@@ -3,7 +3,9 @@
 
 package com.microsoft.aad.msal4j;
 
+import labapi.B2CProvider;
 import labapi.FederationProvider;
+import labapi.LabService;
 import labapi.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +57,12 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         assertAcquireTokenAAD(user);
     }
 
+    @Test
+    public void acquireTokenWithAuthorizationCode_B2C_Local(){
+        User user = labUserProvider.getB2cUser(B2CProvider.LOCAL);
+        assertAcquireTokenB2C(user);
+    }
+
     private void assertAcquireTokenAAD(User user){
 
         PublicClientApplication pca;
@@ -95,6 +103,24 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         Assert.assertNotNull(result.accessToken());
         Assert.assertNotNull(result.idToken());
         Assert.assertEquals(user.getUpn(), result.account().username());
+    }
+
+    private void assertAcquireTokenB2C(User user){
+
+        PublicClientApplication pca;
+        try {
+            pca = PublicClientApplication.builder(
+                    user.getAppId()).
+                    b2cAuthority(TestConstants.B2C_AUTHORITY_SIGN_IN).
+                    build();
+        } catch(MalformedURLException ex){
+            throw new RuntimeException(ex.getMessage());
+        }
+
+        IAuthenticationResult result = acquireTokenInteractive(user, pca, user.getAppId());
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.accessToken());
+        Assert.assertNotNull(result.idToken());
     }
 
     private IAuthenticationResult acquireTokenInteractive(

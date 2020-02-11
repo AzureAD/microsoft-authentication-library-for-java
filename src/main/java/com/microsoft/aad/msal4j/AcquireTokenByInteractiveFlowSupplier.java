@@ -21,7 +21,7 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
     private PublicClientApplication clientApplication;
     private InteractiveRequest interactiveRequest;
 
-    private BlockingQueue<AuthorizationResult> authorizationCodeQueue;
+    private BlockingQueue<AuthorizationResult> authorizationResultQueue;
     private HttpListener httpListener;
 
     AcquireTokenByInteractiveFlowSupplier(PublicClientApplication clientApplication,
@@ -45,10 +45,10 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
             SystemBrowserOptions systemBrowserOptions =
                     interactiveRequest.interactiveRequestParameters().systemBrowserOptions();
 
-            authorizationCodeQueue = new LinkedBlockingQueue<>();
+            authorizationResultQueue = new LinkedBlockingQueue<>();
             AuthorizationResponseHandler authorizationResponseHandler =
                     new AuthorizationResponseHandler(
-                            authorizationCodeQueue,
+                            authorizationResultQueue,
                             systemBrowserOptions);
 
             startHttpListener(authorizationResponseHandler);
@@ -66,7 +66,6 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
                 httpListener.stopListener();
             }
         }
-
         return result;
     }
 
@@ -125,7 +124,7 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
             while(result == null && !interactiveRequest.futureReference().get().isCancelled() &&
                     TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) < expirationTime) {
 
-                result = authorizationCodeQueue.poll(100, TimeUnit.MILLISECONDS);
+                result = authorizationResultQueue.poll(100, TimeUnit.MILLISECONDS);
             }
         } catch(Exception e){
             throw new MsalClientException(e);

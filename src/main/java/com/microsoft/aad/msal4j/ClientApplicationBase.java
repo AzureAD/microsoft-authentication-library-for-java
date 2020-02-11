@@ -171,7 +171,6 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
                 parameters.requestParameters());
     }
 
-
     AuthenticationResult acquireTokenCommon(MsalRequest msalRequest, Authority requestAuthority)
             throws Exception {
 

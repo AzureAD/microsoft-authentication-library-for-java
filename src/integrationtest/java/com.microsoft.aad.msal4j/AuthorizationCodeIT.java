@@ -58,7 +58,6 @@ public class AuthorizationCodeIT extends SeleniumTest {
     }
 
     @Test
-    // TODO Redirect URI localhost in not registered
     public void acquireTokenWithAuthorizationCode_B2C_Local(){
         User user = labUserProvider.getB2cUser(B2CProvider.LOCAL);
         assertAcquireTokenB2C(user);
@@ -144,8 +143,8 @@ public class AuthorizationCodeIT extends SeleniumTest {
 
     private void assertAcquireTokenB2C(User user){
 
-        String appId = LabService.getSecret(TestConstants.B2C_LAB_APP_ID);
-        String appSecret = LabService.getSecret(TestConstants.B2C_LAB_APP_SECRET);
+        String appId = LabService.getSecret(TestConstants.B2C_CONFIDENTIAL_CLIENT_LAB_APP_ID);
+        String appSecret = LabService.getSecret(TestConstants.B2C_CONFIDENTIAL_CLIENT_APP_SECRET);
 
         ConfidentialClientApplication cca;
         try {

@@ -27,8 +27,6 @@ class HttpListener {
             server.start();
 
         } catch (Exception e){
-            //TODO handle exception
-            System.out.println(e.getMessage());
             throw new MsalClientException(e);
         }
     }

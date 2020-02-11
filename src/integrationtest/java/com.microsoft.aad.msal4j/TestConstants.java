@@ -9,8 +9,8 @@ public class TestConstants {
     public final static String GRAPH_DEFAULT_SCOPE = "https://graph.windows.net/.default";
     public final static String USER_READ_SCOPE = "user.read";
     public final static String B2C_LAB_SCOPE = "https://msidlabb2c.onmicrosoft.com/msaapp/user_impersonation";
-    public final static String B2C_LAB_APP_SECRET = "MSIDLABB2C-MSAapp-AppSecret";
-    public final static String B2C_LAB_APP_ID = "MSIDLABB2C-MSAapp-AppID";
+    public final static String B2C_CONFIDENTIAL_CLIENT_APP_SECRET = "MSIDLABB2C-MSAapp-AppSecret";
+    public final static String B2C_CONFIDENTIAL_CLIENT_LAB_APP_ID = "MSIDLABB2C-MSAapp-AppID";
 
     public final static String MICROSOFT_AUTHORITY_HOST = "https://login.microsoftonline.com/";
     public final static String ORGANIZATIONS_AUTHORITY = MICROSOFT_AUTHORITY_HOST + "organizations/";
