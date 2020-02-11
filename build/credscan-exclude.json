@@ -14,10 +14,6 @@
       "_justification" : "credential used for testing. not associated with any tenant"
     },
     {
-      "placeholder": "ClientPassword",
-      "_justification" : "credential used for testing. not associated with any tenant"
-    },
-    {
       "placeholder": "B2C_CONFIDENTIAL_CLIENT_APP_SECRET",
       "_justification" : "Not a credential, just the identifier of the secret exposed by test lab API"
     },
