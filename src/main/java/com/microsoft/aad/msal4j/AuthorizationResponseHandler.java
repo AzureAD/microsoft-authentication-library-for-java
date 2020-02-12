@@ -52,9 +52,9 @@ class AuthorizationResponseHandler implements HttpHandler {
                     httpExchange.getRequestBody())).lines().collect(Collectors.joining("\n"));
 
             AuthorizationResult result = AuthorizationResult.fromResponseBody(responseBody);
-            authorizationResultQueue.put(result);
             sendResponse(httpExchange, result);
-
+            authorizationResultQueue.put(result);
+            
         } catch (InterruptedException ex){
             LOG.error("Error reading response from socket: " + ex.getMessage());
             throw new MsalClientException(ex);
@@ -78,18 +78,18 @@ class AuthorizationResponseHandler implements HttpHandler {
     }
 
     private void sendSuccessResponse(HttpExchange httpExchange, String response) throws IOException {
-        if (systemBrowserOptions().browserRedirectSuccess() != null) {
-            send302Response(httpExchange, systemBrowserOptions().browserRedirectSuccess().toString());
-        } else {
+        if (systemBrowserOptions == null || systemBrowserOptions.browserRedirectSuccess() == null) {
             send200Response(httpExchange, response);
+        } else {
+            send302Response(httpExchange, systemBrowserOptions().browserRedirectSuccess().toString());
         }
     }
 
     private void sendErrorResponse(HttpExchange httpExchange, String response) throws IOException {
-        if(systemBrowserOptions().browserRedirectError() != null){
-            send302Response(httpExchange, systemBrowserOptions().browserRedirectError().toString());
-        } else {
+        if(systemBrowserOptions == null || systemBrowserOptions.browserRedirectError() == null){
             send200Response(httpExchange, response);
+        } else {
+            send302Response(httpExchange, systemBrowserOptions().browserRedirectError().toString());
         }
     }
 
@@ -107,14 +107,16 @@ class AuthorizationResponseHandler implements HttpHandler {
     }
 
     private String getSuccessfulResponseMessage(){
-        return systemBrowserOptions().htmlMessageSuccess() != null ?
-                systemBrowserOptions().htmlMessageSuccess() :
-                DEFAULT_SUCCESS_MESSAGE;
+        if(systemBrowserOptions == null || systemBrowserOptions.htmlMessageSuccess() == null) {
+            return DEFAULT_SUCCESS_MESSAGE;
+        }
+        return systemBrowserOptions().htmlMessageSuccess();
     }
 
     private String getErrorResponseMessage(){
-        return systemBrowserOptions().htmlMessageError() != null ?
-                systemBrowserOptions().htmlMessageError() :
-                DEFAULT_FAILURE_MESSAGE;
+        if(systemBrowserOptions == null || systemBrowserOptions.htmlMessageError() == null) {
+            return DEFAULT_FAILURE_MESSAGE;
+        }
+        return systemBrowserOptions().htmlMessageSuccess();
     }
 }
