@@ -210,7 +210,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
 
         AuthorizationResponseHandler authorizationResponseHandler = new AuthorizationResponseHandler(
                 authorizationCodeQueue,
-                new SystemBrowserOptions());
+                SystemBrowserOptions.builder().build());
 
         httpListener = new HttpListener();
         httpListener.startListener(8080, authorizationResponseHandler);

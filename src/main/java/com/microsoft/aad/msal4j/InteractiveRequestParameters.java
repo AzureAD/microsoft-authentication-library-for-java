@@ -30,12 +30,6 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 public class InteractiveRequestParameters {
 
     /**
-     * Scopes that the application is requesting access to and the user will consent to.
-     */
-    @NonNull
-    private Set<String> scopes;
-
-    /**
      * Redirect URI where MSAL will listen to for the authorization code returned by Azure AD.
      * Should be a loopback URL with a port specified (for example, http://localhost:3671). If no
      * port is specified, MSAL will find an open port. For more information, see
@@ -44,6 +38,11 @@ public class InteractiveRequestParameters {
     @Setter(AccessLevel.PACKAGE)
     @NonNull
     private URI redirectUri;
+
+    /**
+     * Scopes that the application is requesting access to and the user will consent to.
+     */
+    private Set<String> scopes;
 
     /**
      * Indicate the type of user interaction that is required.
@@ -73,13 +72,11 @@ public class InteractiveRequestParameters {
         return new InteractiveRequestParametersBuilder();
     }
 
-    public static InteractiveRequestParametersBuilder builder(Set<String> scopes, URI redirectUri) {
+    public static InteractiveRequestParametersBuilder builder(URI redirectUri) {
 
-        validateNotEmpty("scopes", scopes);
         validateNotNull("redirect_uri", redirectUri);
 
         return builder()
-                .scopes(scopes)
                 .redirectUri(redirectUri);
     }
 }

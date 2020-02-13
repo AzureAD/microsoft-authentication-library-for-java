@@ -3,8 +3,10 @@
 
 package com.microsoft.aad.msal4j;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.net.URI;
@@ -13,11 +15,12 @@ import java.net.URI;
  * Options for using the default OS browser as a separate process to handle interactive authentication.
  *  MSAL will listen for the OS browser to finish authenticating, but it cannot close the browser.
  *  It can however response with a HTTP 200 OK message or a 302 Redirect, which can be configured here.
- *  For more details, see https://aka.ms/msal4j-os-browser
+ *  For more details, see https://aka.ms/msal4j-interactive-request
  */
+@Builder
 @Accessors(fluent = true)
 @Getter
-@Setter
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class SystemBrowserOptions {
 
     /**
@@ -51,4 +54,11 @@ public class SystemBrowserOptions {
      * browser will be used.
      */
     private OpenBrowserAction openBrowserAction;
+
+    /**
+     * Builder for {@link SystemBrowserOptions}
+     */
+    public static SystemBrowserOptionsBuilder builder() {
+        return new SystemBrowserOptionsBuilder();
+    }
 }

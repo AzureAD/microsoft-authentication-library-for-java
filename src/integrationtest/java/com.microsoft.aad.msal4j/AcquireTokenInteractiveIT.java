@@ -5,7 +5,6 @@ package com.microsoft.aad.msal4j;
 
 import labapi.B2CProvider;
 import labapi.FederationProvider;
-import labapi.LabService;
 import labapi.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,12 +131,15 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         try {
             URI url = new URI("http://localhost:8080");
 
-            SystemBrowserOptions browserOptions = new SystemBrowserOptions();
-            browserOptions.openBrowserAction(
-                    new SeleniumOpenBrowserAction(user, pca));
+            SystemBrowserOptions browserOptions =
+                    SystemBrowserOptions
+                            .builder()
+                            .openBrowserAction(new SeleniumOpenBrowserAction(user, pca))
+                            .build();
 
             InteractiveRequestParameters parameters = InteractiveRequestParameters
-                    .builder(Collections.singleton(scope), url)
+                    .builder(url)
+                    .scopes(Collections.singleton(scope))
                     .systemBrowserOptions(browserOptions)
                     .build();
 
