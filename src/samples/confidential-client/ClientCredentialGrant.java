@@ -5,50 +5,66 @@ import com.microsoft.aad.msal4j.ClientCredentialFactory;
 import com.microsoft.aad.msal4j.ClientCredentialParameters;
 import com.microsoft.aad.msal4j.ConfidentialClientApplication;
 import com.microsoft.aad.msal4j.IAuthenticationResult;
+import com.microsoft.aad.msal4j.IClientCredential;
+import com.microsoft.aad.msal4j.MsalException;
 import com.microsoft.aad.msal4j.SilentParameters;
 
 import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.BiConsumer;
+import java.util.Set;
 
 class ClientCredentialGrant {
 
+    private final static String CLIENT_ID = "";
+    private final static String AUTHORITY = "https://login.microsoftonline.com/<tenant>/";
+    private final static String CLIENT_SECRET = "";
+    private final static Set<String> SCOPE = Collections.singleton("");
+
     public static void main(String args[]) throws Exception {
-        getAccessTokenByClientCredentialGrant();
+        IAuthenticationResult result = acquireToken();
+        System.out.println("Access token: " + result.accessToken());
     }
 
-    private static void getAccessTokenByClientCredentialGrant() throws Exception {
+    private static IAuthenticationResult acquireToken() throws Exception {
 
-        ConfidentialClientApplication app = ConfidentialClientApplication.builder(
-                TestData.CONFIDENTIAL_CLIENT_ID,
-                ClientCredentialFactory.createFromSecret(TestData.CONFIDENTIAL_CLIENT_SECRET))
-                .authority(TestData.TENANT_SPECIFIC_AUTHORITY)
-                .build();
+        // Load token cache from file and initialize token cache aspect. The token cache will have
+        // dummy data, so the acquireTokenSilently call will fail.
+        TokenCacheAspect tokenCacheAspect = new TokenCacheAspect("sample_cache.json");
 
-        ClientCredentialParameters clientCredentialParam = ClientCredentialParameters.builder(
-                Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE))
-                .build();
+        // This is the secret that is created in the Azure AD portal
+        IClientCredential credential = ClientCredentialFactory.createFromSecret(CLIENT_SECRET);
+        ConfidentialClientApplication cca =
+                ConfidentialClientApplication
+                        .builder(CLIENT_ID, credential)
+                        .authority(AUTHORITY)
+                        .setTokenCacheAccessAspect(tokenCacheAspect)
+                        .build();
 
-        CompletableFuture<IAuthenticationResult> future = app.acquireToken(clientCredentialParam);
+        IAuthenticationResult result;
+        try {
+            SilentParameters silentParameters =
+                    SilentParameters
+                            .builder(SCOPE)
+                            .build();
 
-        BiConsumer<IAuthenticationResult, Throwable> processAuthResult = (res, ex) -> {
-            if (ex != null) {
-                System.out.println("Oops! We have an exception - " + ex.getMessage());
+            // try to acquire token silently. This call will fail since the token cache does not
+            // have a token for the application you are requesting an access token for
+            result = cca.acquireTokenSilently(silentParameters).join();
+        } catch (Exception ex) {
+            if (ex.getCause() instanceof MsalException) {
+
+                ClientCredentialParameters parameters =
+                        ClientCredentialParameters
+                                .builder(SCOPE)
+                                .build();
+
+                // Try to acquire a token. If successful, you should see
+                // the token information printed out to console
+                result = cca.acquireToken(parameters).join();
+            } else {
+                // Handle other exceptions accordingly
+                throw ex;
             }
-            System.out.println("Returned ok - " + res);
-            System.out.println("Access Token - " + res.accessToken());
-            System.out.println("ID Token - " + res.idToken());
-        };
-
-        future.whenCompleteAsync(processAuthResult);
-        future.join();
-
-        SilentParameters silentParameters =
-                SilentParameters.builder(Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE)).build();
-
-        future = app.acquireTokenSilently(silentParameters);
-
-        future.whenCompleteAsync(processAuthResult);
-        future.join();
+        }
+        return result;
     }
 }
