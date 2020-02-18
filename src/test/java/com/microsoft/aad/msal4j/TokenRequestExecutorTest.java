@@ -298,7 +298,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
                 .andReturn(msalOAuthHttpRequest).times(1);
         EasyMock.expect(msalOAuthHttpRequest.send()).andReturn(httpResponse)
                 .times(1);
-        EasyMock.expect(httpResponse.getStatusCode()).andReturn(402).times(2);
+        EasyMock.expect(httpResponse.getStatusCode()).andReturn(402).times(3);
         EasyMock.expect(httpResponse.getStatusMessage()).andReturn("403 Forbidden");
         EasyMock.expect(httpResponse.getHeaderMap()).andReturn(new HashMap<>());
         EasyMock.expect(httpResponse.getContent()).andReturn(TestConfiguration.HTTP_ERROR_RESPONSE);
