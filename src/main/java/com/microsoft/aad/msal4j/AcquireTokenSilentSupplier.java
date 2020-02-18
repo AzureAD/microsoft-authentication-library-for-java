@@ -58,7 +58,7 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
             throw new MsalClientException(AuthenticationErrorMessage.NO_TOKEN_IN_CACHE, AuthenticationErrorCode.CACHE_MISS);
         }
 
-        ServerSideTelemetry.incrementSilentSuccessfulCount();
+        clientApplication.getServiceBundle().getServerSideTelemetry().incrementSilentSuccessfulCount();
         return res;
     }
 }

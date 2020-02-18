@@ -121,6 +121,12 @@ class TokenRequestExecutor {
                     build();
 
         } else {
+            // http codes indicating that STS did not log request
+            if(oauthHttpResponse.getStatusCode() == 429 || oauthHttpResponse.getStatusCode() >= 500){
+                serviceBundle.getServerSideTelemetry().previousRequests.putAll(
+                        serviceBundle.getServerSideTelemetry().previousRequestInProgress);
+            }
+
             throw MsalServiceExceptionFactory.fromHttpResponse(oauthHttpResponse);
         }
         return result;

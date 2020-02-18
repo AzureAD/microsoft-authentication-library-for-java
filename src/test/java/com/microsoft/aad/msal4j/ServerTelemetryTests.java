@@ -1,7 +1,6 @@
 package com.microsoft.aad.msal4j;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -10,12 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 
-@Test(groups = { "checkin" })
 public class ServerTelemetryTests {
 
     private static final String SCHEMA_VERSION = "2";
@@ -24,12 +20,6 @@ public class ServerTelemetryTests {
 
     private final static String PUBLIC_API_ID = String.valueOf(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE.getApiId());
     private final static String ERROR = "invalid_grant";
-
-    @AfterMethod
-    public void resetLastRequestHeader(){
-        ServerSideTelemetry.previousRequests = new ConcurrentHashMap<>();
-        ServerSideTelemetry.silentSuccessfulCount = new AtomicInteger(0);
-    }
 
     @Test
     public void serverTelemetryHeaders_correctSchema(){
@@ -41,14 +31,14 @@ public class ServerTelemetryTests {
         serverSideTelemetry.setCurrentRequest(currentRequest);
 
         String correlationId = "936732c6-74b9-4783-aad9-fa205eae8763";
-        ServerSideTelemetry.addFailedRequestTelemetry(PUBLIC_API_ID, correlationId, ERROR);
+        serverSideTelemetry.addFailedRequestTelemetry(PUBLIC_API_ID, correlationId, ERROR);
 
         Map<String, String> headers = serverSideTelemetry.getServerTelemetryHeaderMap();
 
         //Current request tests
         List<String> currentRequestHeader = Arrays.asList(headers.get(CURRENT_REQUEST_HEADER_NAME).split("\\|"));
 
-        // ["2", "831,false"]
+        // ["2", "831, false"]
         Assert.assertEquals(currentRequestHeader.size(), 2);
         Assert.assertEquals(currentRequestHeader.get(0), SCHEMA_VERSION);
 
@@ -76,11 +66,11 @@ public class ServerTelemetryTests {
     @Test
     public void serverTelemetryHeaders_previewsRequestNull(){
 
+        ServerSideTelemetry serverSideTelemetry = new ServerSideTelemetry();
         for(int i = 0; i < 3; i++){
-            ServerSideTelemetry.incrementSilentSuccessfulCount();
+            serverSideTelemetry.incrementSilentSuccessfulCount();
         }
 
-        ServerSideTelemetry serverSideTelemetry = new ServerSideTelemetry();
         Map<String, String> headers = serverSideTelemetry.getServerTelemetryHeaderMap();
 
         Assert.assertEquals(headers.get(LAST_REQUEST_HEADER_NAME), "2|3|||");
@@ -93,7 +83,7 @@ public class ServerTelemetryTests {
 
         for(int i = 0; i <100; i++){
             String correlationId = UUID.randomUUID().toString();
-            ServerSideTelemetry.addFailedRequestTelemetry(PUBLIC_API_ID, correlationId, ERROR);
+            serverSideTelemetry.addFailedRequestTelemetry(PUBLIC_API_ID, correlationId, ERROR);
         }
 
        Map<String, String> headers = serverSideTelemetry.getServerTelemetryHeaderMap();
@@ -109,19 +99,18 @@ public class ServerTelemetryTests {
     @Test
     public void serverTelemetryHeaders_multipleThreadsWrite(){
 
+        ServerSideTelemetry serverSideTelemetry = new ServerSideTelemetry();
         ExecutorService executor = Executors.newFixedThreadPool(10);
 
         try{
-            for ( int i=0; i < 10; i++){
-                executor.execute(new FailedRequestRunnable());
-                executor.execute(new SilentSuccessfulRequestRunnable());
+            for (int i=0; i < 10; i++){
+                executor.execute(new FailedRequestRunnable(serverSideTelemetry));
+                executor.execute(new SilentSuccessfulRequestRunnable(serverSideTelemetry));
             }
         } catch (Exception ex){
             ex.printStackTrace();
         }
         executor.shutdown();
-
-        ServerSideTelemetry serverSideTelemetry = new ServerSideTelemetry();
 
         try{
             Thread.sleep( 1000);
@@ -144,6 +133,13 @@ public class ServerTelemetryTests {
 
     class FailedRequestRunnable implements Runnable {
 
+        ServerSideTelemetry telemetry;
+
+        FailedRequestRunnable(ServerSideTelemetry telemetry){
+            this.telemetry = telemetry;
+        }
+
+        @Override
         public void run(){
 
             Random rand = new Random();
@@ -154,14 +150,21 @@ public class ServerTelemetryTests {
                 ex.printStackTrace();
             }
             String correlationId = UUID.randomUUID().toString();
-            ServerSideTelemetry.addFailedRequestTelemetry(PUBLIC_API_ID, correlationId, ERROR);
+            telemetry.addFailedRequestTelemetry(PUBLIC_API_ID, correlationId, ERROR);
         }
     }
 
     class SilentSuccessfulRequestRunnable implements Runnable {
 
+        ServerSideTelemetry telemetry;
+
+        SilentSuccessfulRequestRunnable(ServerSideTelemetry telemetry){
+            this.telemetry = telemetry;
+        }
+
+        @Override
         public void run(){
-            ServerSideTelemetry.incrementSilentSuccessfulCount();
+            telemetry.incrementSilentSuccessfulCount();
         }
     }
 }

@@ -17,9 +17,10 @@ class ServerSideTelemetry {
     private final static String LAST_REQUEST_HEADER_NAME = "x-client-last-telemetry";
 
     private CurrentRequest currentRequest;
+    private AtomicInteger silentSuccessfulCount = new AtomicInteger(0);
 
-    static AtomicInteger silentSuccessfulCount = new AtomicInteger(0);
-    static ConcurrentMap<String, String[]> previousRequests = new ConcurrentHashMap<>();
+    ConcurrentMap<String, String[]> previousRequests = new ConcurrentHashMap<>();
+    ConcurrentMap<String, String[]> previousRequestInProgress = new ConcurrentHashMap<>();
 
     synchronized Map<String, String> getServerTelemetryHeaderMap(){
         Map<String, String> headerMap = new HashMap<>();
@@ -30,7 +31,7 @@ class ServerSideTelemetry {
         return headerMap;
     }
 
-    static void addFailedRequestTelemetry(String publicApiId, String correlationId, String error){
+    void addFailedRequestTelemetry(String publicApiId, String correlationId, String error){
 
         String[] previousRequest = new String[]{publicApiId, error};
         previousRequests.put(
@@ -38,7 +39,7 @@ class ServerSideTelemetry {
                 previousRequest);
     }
 
-    static void incrementSilentSuccessfulCount(){
+    void incrementSilentSuccessfulCount(){
         silentSuccessfulCount.incrementAndGet();
     }
 
@@ -91,8 +92,7 @@ class ServerSideTelemetry {
 
         // Total header size should be less than 8kb. At max, we will use 4kb for telemetry.
         while (it.hasNext()
-                && (middleSegmentBuilder.length() + errorSegmentBuilder.length()) < 3800)
-        {
+                && (middleSegmentBuilder.length() + errorSegmentBuilder.length()) < 3800) {
             String correlationId = it.next();
             String[] previousRequest = previousRequests.get(correlationId);
             String apiId = (String)Array.get(previousRequest, 0);
@@ -106,6 +106,7 @@ class ServerSideTelemetry {
                 errorSegmentBuilder.append(SCHEMA_COMMA_DELIMITER);
             }
 
+            previousRequestInProgress.put(correlationId, previousRequest);
             it.remove();
         }
 

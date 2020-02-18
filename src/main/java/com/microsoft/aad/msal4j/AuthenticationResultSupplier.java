@@ -80,7 +80,7 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
                     }
                 }
 
-                ServerSideTelemetry.addFailedRequestTelemetry(
+                clientApplication.getServiceBundle().getServerSideTelemetry().addFailedRequestTelemetry(
                         String.valueOf(msalRequest.requestContext().publicApi().getApiId()),
                         msalRequest.requestContext().correlationId(),
                         error);
