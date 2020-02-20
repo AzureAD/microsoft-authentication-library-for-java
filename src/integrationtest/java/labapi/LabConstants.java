@@ -5,7 +5,7 @@ package labapi;
 
 public class LabConstants {
     public final static String LAB_USER_ENDPOINT = "https://msidlab.com/api/user";
-    public final static String LAB_USER_SECRET_ENDPOINT = "https://msidlab.com/api/LabUserSecret";
+    public final static String LAB_USER_SECRET_ENDPOINT = "https://msidlab.com/api/LabSecret";
     public final static String LAB_APP_ENDPOINT = "https://msidlab.com/api/App";
     public final static String LAB_LAB_ENDPOINT = "https://msidlab.com/api/Lab";
 

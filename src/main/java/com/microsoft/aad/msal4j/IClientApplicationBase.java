@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j;
 import javax.net.ssl.SSLSocketFactory;
 import java.net.MalformedURLException;
 import java.net.Proxy;
+import java.net.URL;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -65,6 +66,19 @@ interface IClientApplicationBase {
 //     * @return Telemetry consumer that will receive telemetry events emitted by the library.
 //     */
 //     java.util.function.Consumer<java.util.List<java.util.HashMap<String, String>>> telemetryConsumer();
+
+    /**
+     * Computes the URL of the authorization request letting the user sign-in and consent to the
+     * application. The URL target the /authorize endpoint of the authority configured in the
+     * application object.
+     *
+     * Once the user successfully authenticates, the response should contain an authorization code,
+     * which can then be passed in to{@link ClientApplicationBase#acquireToken(AuthorizationCodeParameters)}
+     * to be exchanged for a token
+     * @param parameters {@link AuthorizationRequestUrlParameters}
+     * @return url of the authorization endpoint where the user can sign-in and consent to the application.
+     */
+    URL getAuthorizationRequestUrl(AuthorizationRequestUrlParameters parameters);
 
     /**
      * Acquires security token from the authority using an authorization code previously received.

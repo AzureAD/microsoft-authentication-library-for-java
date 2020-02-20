@@ -41,7 +41,7 @@ class ApiEvent extends Event{
 
     public void setTenantId(String tenantId){
         if(!StringHelper.isBlank(tenantId) && logPii){
-            this.put(TENANT_ID_KEY, hashPii(tenantId));
+            this.put(TENANT_ID_KEY, StringHelper.createBase64EncodedSha256Hash(tenantId));
         } else {
             this.put(TENANT_ID_KEY, null);
         }
@@ -49,7 +49,7 @@ class ApiEvent extends Event{
 
     public void setAccountId(String accountId){
         if(!StringHelper.isBlank(accountId) && logPii){
-            this.put(USER_ID_KEY, hashPii(accountId));
+            this.put(USER_ID_KEY, StringHelper.createBase64EncodedSha256Hash(accountId));
         } else {
             this.put(USER_ID_KEY, null);
         }

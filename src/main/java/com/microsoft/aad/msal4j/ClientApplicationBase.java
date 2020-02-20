@@ -159,6 +159,18 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         return future;
     }
 
+    @Override
+    public URL getAuthorizationRequestUrl(AuthorizationRequestUrlParameters parameters) {
+
+        validateNotNull("parameters", parameters);
+
+        parameters.requestParameters.put("client_id", Collections.singletonList(this.clientId));
+
+        return parameters.createAuthorizationURL(
+                this.authenticationAuthority,
+                parameters.requestParameters());
+    }
+
     AuthenticationResult acquireTokenCommon(MsalRequest msalRequest, Authority requestAuthority)
             throws Exception {
 
@@ -202,6 +214,10 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
                     (DeviceCodeFlowRequest) msalRequest);
         } else if (msalRequest instanceof SilentRequest) {
             supplier = new AcquireTokenSilentSupplier(this, (SilentRequest) msalRequest);
+        } else if(msalRequest instanceof  InteractiveRequest){
+            supplier = new AcquireTokenByInteractiveFlowSupplier(
+                    (PublicClientApplication) this,
+                    (InteractiveRequest) msalRequest);
         } else {
             supplier = new AcquireTokenByAuthorizationGrantSupplier(
                     this,

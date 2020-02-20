@@ -94,7 +94,7 @@ class TokenRequestExecutor {
                                 response.getClientInfo(),
                                 requestAuthority,
                                 idToken,
-                                authority.policy);
+                                authority.policy());
                     } else {
                         accountCacheEntity = AccountCacheEntity.create(
                                 response.getClientInfo(),
