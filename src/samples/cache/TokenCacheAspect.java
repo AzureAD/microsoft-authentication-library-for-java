@@ -24,7 +24,7 @@ public class TokenCacheAspect implements ITokenCacheAccessAspect {
     @Override
     public void afterCacheAccess(ITokenCacheAccessContext iTokenCacheAccessContext) {
         data = iTokenCacheAccessContext.tokenCache().serialize();
-        // you could implement logic here to write changes to file here
+        // you could implement logic here to write changes to file
     }
 
     private static String readDataFromFile(String resource) {
@@ -34,7 +34,7 @@ public class TokenCacheAspect implements ITokenCacheAccessAspect {
                     Files.readAllBytes(
                             Paths.get(path.toURI())));
         } catch (Exception ex){
-            System.out.println("Error reading data from file");
+            System.out.println("Error reading data from file: " + ex.getMessage());
             throw new RuntimeException(ex);
         }
     }

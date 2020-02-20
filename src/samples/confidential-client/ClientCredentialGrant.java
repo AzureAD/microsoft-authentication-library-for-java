@@ -30,7 +30,7 @@ class ClientCredentialGrant {
         // dummy data, so the acquireTokenSilently call will fail.
         TokenCacheAspect tokenCacheAspect = new TokenCacheAspect("sample_cache.json");
 
-        // This is the secret that is created in the Azure AD portal
+        // This is the secret that is created in the Azure portal when registering the application
         IClientCredential credential = ClientCredentialFactory.createFromSecret(CLIENT_SECRET);
         ConfidentialClientApplication cca =
                 ConfidentialClientApplication
