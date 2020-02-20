@@ -12,11 +12,8 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.net.URI;
-import java.net.URL;
 import java.util.Set;
 
-import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotBlank;
-import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty;
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 
 /**
@@ -31,7 +28,7 @@ public class InteractiveRequestParameters {
 
     /**
      * Redirect URI where MSAL will listen to for the authorization code returned by Azure AD.
-     * Should be a loopback URL with a port specified (for example, http://localhost:3671). If no
+     * Should be a loopback address with a port specified (for example, http://localhost:3671). If no
      * port is specified, MSAL will find an open port. For more information, see
      * https://aka.ms/msal4j-interactive-request.
      */

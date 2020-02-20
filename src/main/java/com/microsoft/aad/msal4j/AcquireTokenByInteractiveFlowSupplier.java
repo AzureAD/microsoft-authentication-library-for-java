@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -110,15 +111,20 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
         try{
             if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
                 Desktop.getDesktop().browse(url.toURI());
+                LOG.debug("Opened default system browser");
+            } else {
+                throw new MsalClientException("Unable to open default system browser",
+                        AuthenticationErrorCode.DESKTOP_BROWSER_NOT_SUPPORTED);
             }
-        } catch(Exception e){
-            throw new MsalClientException(e);
+        } catch(URISyntaxException | IOException ex){
+            throw new MsalClientException(ex);
         }
     }
 
     private AuthorizationResult getAuthorizationResultFromHttpListener(){
         AuthorizationResult result = null;
         try {
+            LOG.debug("Listening for authorization result");
             long expirationTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) + 120;
 
             while(result == null && !interactiveRequest.futureReference().get().isCancelled() &&
@@ -139,7 +145,6 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
 
     private AuthenticationResult acquireTokenWithAuthorizationCode(AuthorizationResult authorizationResult)
             throws Exception{
-
         AuthorizationCodeParameters parameters = AuthorizationCodeParameters
                 .builder(authorizationResult.code(), interactiveRequest.interactiveRequestParameters().redirectUri())
                 .scopes(interactiveRequest.interactiveRequestParameters().scopes())
