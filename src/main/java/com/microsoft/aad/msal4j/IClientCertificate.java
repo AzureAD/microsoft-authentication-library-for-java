@@ -9,6 +9,8 @@ import java.security.cert.CertificateEncodingException;
 
 /**
  * Credential type containing X509 public certificate and RSA private key.
+ *
+ *  For more details, see https://aka.ms/msal4j-client-credentials
  */
 public interface IClientCertificate extends IClientCredential{
 

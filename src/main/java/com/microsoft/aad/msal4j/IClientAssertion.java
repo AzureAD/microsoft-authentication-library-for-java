@@ -6,6 +6,8 @@ package com.microsoft.aad.msal4j;
 /**
  * Credential type containing an assertion of type
  * "urn:ietf:params:oauth:token-type:jwt".
+ *
+ * For more details, see https://aka.ms/msal4j-client-credentials
  */
 public interface IClientAssertion extends IClientCredential{
 

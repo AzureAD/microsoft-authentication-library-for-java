@@ -18,6 +18,9 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 
 /**
  * Class to be used to acquire tokens for public client applications (Desktop, Mobile).
+ * For details see {@link IPublicClientApplication}
+ * 
+ * Conditionally thread-safe
  */
 public class PublicClientApplication extends ClientApplicationBase implements IPublicClientApplication {
 

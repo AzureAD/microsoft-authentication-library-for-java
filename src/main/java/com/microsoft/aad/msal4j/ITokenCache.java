@@ -5,6 +5,8 @@ package com.microsoft.aad.msal4j;
 
 /**
  * Interface representing security token cache persistence
+ *
+ * For more details, see https://aka.ms/msal4j-token-cache
  */
 public interface ITokenCache {
 
