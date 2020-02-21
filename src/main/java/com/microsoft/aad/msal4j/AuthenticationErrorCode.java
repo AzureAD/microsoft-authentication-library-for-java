@@ -56,5 +56,33 @@ public class AuthenticationErrorCode {
      * Unknown error occurred
      */
     public final static String UNKNOWN = "unknown";
-}
 
+    /**
+     * The current redirect URI is not a loopback URL. To use the OS browser, a loopback URL must be
+     * configured both during app registration as well as when initializing the InteractiveRequestParameters
+     * object
+     */
+    public final static String LOOPBACK_REDIRECT_URI = "loopback_redirect_uri";
+
+    /**
+     * Unable to start Http listener to the specified port. This might be because the port is busy.
+     */
+    public final static String UNABLE_TO_START_HTTP_LISTENER = "unable_to_start_http_listener";
+
+    /**
+     * Authorization result response is invalid, either because format is invalid or it does not contain
+     * an authorization code.
+     */
+    public final static String INVALID_AUTHORIZATION_RESULT = "invalid_authorization_result";
+
+    /**
+     * Redirect URI provided to MSAL is of invalid format. Redirect URL must be a loopback URL.
+     */
+    public final static String INVALID_REDIRECT_URI = "invalid_redirect_uri";
+
+    /**
+     * MSAL was unable to open the user-default browser. This is either because the current platform
+     * does not support {@link java.awt.Desktop} or {@link java.awt.Desktop.Action#BROWSE}
+     */
+    public final static String DESKTOP_BROWSER_NOT_SUPPORTED = "desktop_browser_not_supported";
+}

@@ -44,4 +44,15 @@ public interface IPublicClientApplication extends IClientApplicationBase {
      *                                 SHOULD wait between polling requests to the token endpoint
      */
     CompletableFuture<IAuthenticationResult> acquireToken(DeviceCodeFlowParameters parameters);
+
+    /**
+     * Acquires tokens from the authority using authorization code grant. Will attempt to open the
+     * default system browser where the user can input the credentials interactively, consent to scopes,
+     * and do multi-factor authentication if such a policy is enabled on the Azure AD tenant.
+     * System browser can behavior can be customized via {@link InteractiveRequestParameters#systemBrowserOptions}.
+     * For more information, see https://aka.ms/msal4j-interactive-request
+     * @param parameters instance of {@link InteractiveRequestParameters}
+     * @return {@link CompletableFuture} containing an {@link IAuthenticationResult}
+     */
+    CompletableFuture<IAuthenticationResult> acquireToken(InteractiveRequestParameters parameters);
 }
