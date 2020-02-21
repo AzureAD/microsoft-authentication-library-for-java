@@ -10,6 +10,8 @@ import java.util.Base64;
 
 final class StringHelper {
 
+    static String EMPTY_STRING = "";
+
     static boolean isBlank(final String str) {
         return str == null || str.trim().length() == 0;
     }
