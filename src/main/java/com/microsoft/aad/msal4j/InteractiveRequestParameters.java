@@ -19,6 +19,8 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 /**
  * Object containing parameters for interactive requests. Can be used as parameter to
  * {@link PublicClientApplication#acquireToken(InteractiveRequestParameters)}.
+ *
+ * For more details, see https://aka.ms/msal4j-interactive-request.
  */
 @Builder
 @Accessors(fluent = true)

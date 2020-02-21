@@ -4,7 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 /**
- * Http request method
+ * Http request method.
  */
 public enum HttpMethod {
 

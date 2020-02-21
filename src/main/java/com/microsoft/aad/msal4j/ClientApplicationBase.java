@@ -22,7 +22,8 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotBlank
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 
 /**
- * Abstract class containing common API methods and properties.
+ * Abstract class containing common methods and properties to both {@link PublicClientApplication}
+ * and {@link ConfidentialClientApplication}.
  */
 abstract class ClientApplicationBase implements IClientApplicationBase {
 

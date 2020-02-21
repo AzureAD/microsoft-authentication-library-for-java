@@ -13,7 +13,8 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty
 
 /**
  * Object containing parameters for device code flow. Can be used as parameter to
- * {@link PublicClientApplication#acquireToken(DeviceCodeFlowParameters)}
+ * {@link PublicClientApplication#acquireToken(DeviceCodeFlowParameters)}. For more details,
+ * see https://aka.ms/msal4j-device-code
  */
 @Builder
 @Accessors(fluent = true)
@@ -21,9 +22,19 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class DeviceCodeFlowParameters {
 
+    /**
+     * Scopes to which the application is requesting access to.
+     */
     @NonNull
     private Set<String> scopes;
 
+    /**
+     * Receives the device code returned from the first step of Oauth2.0 device code flow. The
+     * {@link DeviceCode#verificationUri} and the {@link DeviceCode#userCode} should be shown
+     * to the end user.
+     *
+     * For more details, see https://aka.ms/msal4j-device-code
+     */
     @NonNull
     private Consumer<DeviceCode> deviceCodeConsumer;
 

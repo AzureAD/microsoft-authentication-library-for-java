@@ -22,16 +22,27 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotBlank
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class AuthorizationCodeParameters {
 
+    /**
+     * Authorization code acquired in the first step of OAuth2.0 authorization code flow. For more
+     * details, see https://aka.ms/msal4j-authorization-code-flow
+     */
     @NonNull
     private String authorizationCode;
 
+    /**
+     * Redirect URI registered in the Azure portal, and which was used in the first step of OAuth2.0
+     * authorization code flow. For more details, see https://aka.ms/msal4j-authorization-code-flow
+     */
     @NonNull
     private URI redirectUri;
 
+    /**
+     * Scopes to which the application is requesting access
+     */
     private Set<String> scopes;
 
     /**
-     * Code verifier used for PKCE.
+     * Code verifier used for PKCE. For more details, see https://tools.ietf.org/html/rfc7636
      */
     private String codeVerifier;
 

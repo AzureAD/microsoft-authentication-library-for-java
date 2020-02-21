@@ -15,6 +15,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
  * Object containing parameters for silent requests. Can be used as parameter to
  * {@link PublicClientApplication#acquireTokenSilently(SilentParameters)} or to
  * {@link ConfidentialClientApplication#acquireTokenSilently(SilentParameters)}
+ *
  */
 @Builder
 @Accessors(fluent = true)

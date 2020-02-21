@@ -15,7 +15,9 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * Cache used for storing tokens.
+ * Cache used for storing tokens. For more details, see https://aka.ms/msal4j-token-cache
+ *
+ * Conditionally thread-safe
  */
 public class TokenCache implements ITokenCache {
 
