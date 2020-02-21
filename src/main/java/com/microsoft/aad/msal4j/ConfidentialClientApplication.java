@@ -22,6 +22,9 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 /**
  * Class to be used to acquire tokens for confidential client applications (Web Apps, Web APIs,
  * and daemon applications).
+ * For details see {@link IConfidentialClientApplication}
+ *
+ * Conditionally thread-safe
  */
 public class ConfidentialClientApplication extends ClientApplicationBase implements IConfidentialClientApplication {
 

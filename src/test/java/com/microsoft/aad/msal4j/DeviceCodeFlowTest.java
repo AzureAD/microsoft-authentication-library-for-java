@@ -132,7 +132,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         URL url = capturedHttpRequest.getValue().url();
         Assert.assertEquals(url.getAuthority(), AAD_PREFERRED_NETWORK_ENV_ALIAS);
         Assert.assertEquals(url.getPath(),
-                "/" + AAD_TENANT_NAME + AADAuthority.DEVICE_CODE_ENDPOINT);
+                "/" + AAD_TENANT_NAME + "/" + AADAuthority.DEVICE_CODE_ENDPOINT);
 
         Map<String, String> expectedQueryParams = new HashMap<>();
         expectedQueryParams.put("client_id", AAD_CLIENT_ID);

@@ -5,27 +5,24 @@ package com.microsoft.azure.msalwebsample;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.text.ParseException;
 import java.util.*;
 import java.util.concurrent.*;
 
-import javax.naming.ServiceUnavailableException;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import com.microsoft.aad.msal4j.*;
 import com.nimbusds.jwt.JWTParser;
-import com.nimbusds.oauth2.sdk.AuthorizationCode;
 import com.nimbusds.openid.connect.sdk.AuthenticationErrorResponse;
 import com.nimbusds.openid.connect.sdk.AuthenticationResponse;
 import com.nimbusds.openid.connect.sdk.AuthenticationResponseParser;
@@ -37,10 +34,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class AuthFilter implements Filter {
 
-    private static final String STATES = "states";
     private static final String STATE = "state";
-    private static final Integer STATE_TTL = 3600;
     private static final String FAILED_TO_VALIDATE_MESSAGE = "Failed to validate data received from Authorization service - ";
+    public static final String MSAL_WEB_APP_STATE_COOKIE = "msal_web_app_auth_state";
+    public static final String MSAL_WEB_APP_NONCE_COOKIE = "msal_web_app_auth_nonce";
 
     private List<String> excludedUrls = Arrays.asList("/", "/msal4jsample/");
 
@@ -69,6 +66,8 @@ public class AuthFilter implements Filter {
                     if(AuthHelper.containsAuthenticationCode(httpRequest)){
                         // response should have authentication code, which will be used to acquire access token
                         processAuthenticationCodeRedirect(httpRequest, currentUri, fullUrl);
+
+                        CookieHelper.removeStateNonceCookies(httpResponse);
                     } else {
                         // not authenticated, redirecting to login.microsoft.com so user can authenticate
                         sendAuthRedirect(httpRequest, httpResponse);
@@ -107,7 +106,7 @@ public class AuthFilter implements Filter {
             params.put(key, Collections.singletonList(httpRequest.getParameterMap().get(key)[0]));
         }
         // validate that state in response equals to state in request
-        StateData stateData = validateState(httpRequest.getSession(), params.get(STATE).get(0));
+        validateState(CookieHelper.getCookie(httpRequest, MSAL_WEB_APP_STATE_COOKIE), params.get(STATE).get(0));
 
         AuthenticationResponse authResponse = AuthenticationResponseParser.parse(new URI(fullUrl), params);
         if (AuthHelper.isAuthenticationSuccessful(authResponse)) {
@@ -121,7 +120,8 @@ public class AuthFilter implements Filter {
                     currentUri);
 
             // validate nonce to prevent reply attacks (code maybe substituted to one with broader access)
-            validateNonce(stateData, getNonceClaimValueFromIdToken(result.idToken()));
+            validateNonce(CookieHelper.getCookie(httpRequest, MSAL_WEB_APP_NONCE_COOKIE), getNonceClaimValueFromIdToken(result.idToken()));
+
             authHelper.setSessionPrincipal(httpRequest, result);
         } else {
             AuthenticationErrorResponse oidcResponse = (AuthenticationErrorResponse) authResponse;
@@ -135,72 +135,35 @@ public class AuthFilter implements Filter {
         // state parameter to validate response from Authorization server and nonce parameter to validate idToken
         String state = UUID.randomUUID().toString();
         String nonce = UUID.randomUUID().toString();
-        storeStateInSession(httpRequest.getSession(), state, nonce);
+
+        CookieHelper.setStateNonceCookies(httpRequest, httpResponse, state, nonce);
 
         httpResponse.setStatus(302);
         String redirectUrl = getRedirectUrl(httpRequest.getParameter("claims"), state, nonce);
-        httpResponse.sendRedirect(redirectUrl);
-    }
 
-    private void validateNonce(StateData stateData, String nonce) throws Exception {
-        if (StringUtils.isEmpty(nonce) || !nonce.equals(stateData.getNonce())) {
-            throw new Exception(FAILED_TO_VALIDATE_MESSAGE + "could not validate nonce");
-        }
+        httpResponse.sendRedirect(redirectUrl);
     }
 
     private String getNonceClaimValueFromIdToken(String idToken) throws ParseException {
         return (String) JWTParser.parse(idToken).getJWTClaimsSet().getClaim("nonce");
     }
 
-    private StateData validateState(HttpSession session, String state) throws Exception {
-        if (StringUtils.isNotEmpty(state)) {
-            StateData stateDataInSession = removeStateFromSession(session, state);
-            if (stateDataInSession != null) {
-                return stateDataInSession;
-            }
+    private void validateState(String cookieValue, String state) throws Exception {
+        if (StringUtils.isEmpty(state) || !state.equals(cookieValue)) {
+            throw new Exception(FAILED_TO_VALIDATE_MESSAGE + "could not validate state");
         }
-        throw new Exception(FAILED_TO_VALIDATE_MESSAGE + "could not validate state");
+    }
+
+    private void validateNonce(String cookieValue, String nonce) throws Exception {
+        if (StringUtils.isEmpty(nonce) || !nonce.equals(cookieValue)) {
+            throw new Exception(FAILED_TO_VALIDATE_MESSAGE + "could not validate nonce");
+        }
     }
 
     private void validateAuthRespMatchesAuthCodeFlow(AuthenticationSuccessResponse oidcResponse) throws Exception {
         if (oidcResponse.getIDToken() != null || oidcResponse.getAccessToken() != null ||
                 oidcResponse.getAuthorizationCode() == null) {
             throw new Exception(FAILED_TO_VALIDATE_MESSAGE + "unexpected set of artifacts received");
-        }
-    }
-
-    private void storeStateInSession(HttpSession session, String state, String nonce) {
-        if (session.getAttribute(STATES) == null) {
-            session.setAttribute(STATES, new HashMap<String, StateData>());
-        }
-        ((Map<String, StateData>) session.getAttribute(STATES)).put(state, new StateData(nonce, new Date()));
-    }
-
-    private StateData removeStateFromSession(HttpSession session, String state) {
-        Map<String, StateData> states = (Map<String, StateData>) session.getAttribute(STATES);
-        if (states != null) {
-            eliminateExpiredStates(states);
-            StateData stateData = states.get(state);
-            if (stateData != null) {
-                states.remove(state);
-                return stateData;
-            }
-        }
-        return null;
-    }
-
-    private void eliminateExpiredStates(Map<String, StateData> map) {
-        Iterator<Map.Entry<String, StateData>> it = map.entrySet().iterator();
-
-        Date currTime = new Date();
-        while (it.hasNext()) {
-            Map.Entry<String, StateData> entry = it.next();
-            long diffInSeconds = TimeUnit.MILLISECONDS.
-                    toSeconds(currTime.getTime() - entry.getValue().getExpirationDate().getTime());
-
-            if (diffInSeconds > STATE_TTL) {
-                it.remove();
-            }
         }
     }
 

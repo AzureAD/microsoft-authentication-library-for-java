@@ -20,6 +20,9 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ClientCredentialParameters {
 
+    /**
+     * Scopes for which the application is requesting access to.
+     */
     @NonNull
     private Set<String> scopes;
 

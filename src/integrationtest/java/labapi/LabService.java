@@ -59,7 +59,7 @@ public class LabService {
 
             User[] users = convertJsonToObject(result, User[].class);
             User user = users[0];
-            user.setPassword(getUserSecret(user.getLabName()));
+            user.setPassword(getSecret(user.getLabName()));
             if (query.parameters.containsKey(UserQueryParameters.FEDERATION_PROVIDER)) {
                 user.setFederationProvider(query.parameters.get(UserQueryParameters.FEDERATION_PROVIDER));
             } else {
@@ -94,7 +94,7 @@ public class LabService {
         }
     }
 
-    private String getUserSecret(String labName){
+    public static String getSecret(String labName){
         String result;
         try {
             Map<String, String> queryMap = new HashMap<>();

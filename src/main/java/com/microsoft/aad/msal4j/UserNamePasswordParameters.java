@@ -14,6 +14,8 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty
 /**
  * Object containing parameters for Username/Password flow. Can be used as parameter to
  * {@link PublicClientApplication#acquireToken(UserNamePasswordParameters)}
+ *
+ * For more details, see https://aka.ms/msal4j-username-password
  */
 @Builder
 @Accessors(fluent = true)
@@ -21,12 +23,21 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserNamePasswordParameters {
 
+    /**
+     * Scopes application is requesting access to
+     */
     @NonNull
     private Set<String> scopes;
 
+    /**
+     * Username of the account
+     */
     @NonNull
     private String username;
 
+    /**
+     * Char array containing credentials for the username
+     */
     @NonNull
     private char[] password;
 

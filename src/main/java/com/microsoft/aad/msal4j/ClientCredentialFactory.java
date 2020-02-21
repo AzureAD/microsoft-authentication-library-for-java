@@ -10,7 +10,8 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
 /**
- * Factory for creating client credentials used in confidential client flows
+ * Factory for creating client credentials used in confidential client flows. For more details, see
+ * https://aka.ms/msal4j-client-credentials
  */
 public class ClientCredentialFactory {
 

@@ -13,7 +13,9 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty
 
 /**
  * Object containing parameters for Integrated Windows Authentication. Can be used as parameter to
- *  {@link PublicClientApplication#acquireToken(IntegratedWindowsAuthenticationParameters)}
+ *  {@link PublicClientApplication#acquireToken(IntegratedWindowsAuthenticationParameters)}`
+ *
+ *  For more details, see https://aka.ms/msal4j-iwa
  */
 @Builder
 @Accessors(fluent = true)
@@ -21,9 +23,15 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class IntegratedWindowsAuthenticationParameters {
 
+    /**
+     * Scopes that the application is requesting access to
+     */
     @NonNull
     private Set<String> scopes;
 
+    /**
+     * Identifier of user account for which to acquire tokens for
+     */
     @NonNull
     private String username;
 

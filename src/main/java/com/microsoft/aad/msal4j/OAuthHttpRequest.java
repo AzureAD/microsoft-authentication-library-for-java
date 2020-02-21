@@ -62,6 +62,11 @@ class OAuthHttpRequest extends HTTPRequest {
         if (this.getAuthorization() != null) {
             httpHeaders.put("Authorization", this.getAuthorization());
         }
+
+        Map<String, String> telemetryHeaders =
+                serviceBundle.getServerSideTelemetry().getServerTelemetryHeaderMap();
+        httpHeaders.putAll(telemetryHeaders);
+
         return httpHeaders;
     }
 
