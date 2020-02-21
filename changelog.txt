@@ -1,3 +1,10 @@
+Version 1.4.0
+=============
+- Added acquire token interactive API, using system default browser
+- Added authorization code url builder
+- Added OSGi support via bnd-maven-plugin
+- Added server-side telemetry support
+
 Version 1.3.0
 =============
 - Added option to pass in AAD instance discovery data
