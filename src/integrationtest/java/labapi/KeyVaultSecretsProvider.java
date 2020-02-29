@@ -11,12 +11,14 @@ import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 class KeyVaultSecretsProvider {
 
     private KeyVaultClient keyVaultClient;
     private final static String CLIENT_ID = "55e7e5af-ca53-482d-9aa3-5cb1cc8eecb5";
-    private final static String CERTIFICATE_ALIAS = "JavaAutomationRunner";
+    private final static String CERTIFICATE_ALIAS = "MsalJavaAutomationRunner";
 
     private final static String WIN_KEYSTORE = "Windows-MY";
     private final static String KEYSTORE_PROVIDER = "SunMSCAPI";
@@ -27,8 +29,16 @@ class KeyVaultSecretsProvider {
         keyVaultClient = getAuthenticatedKeyVaultClient();
     }
 
+    static Map<String, String> cache = new ConcurrentHashMap<>();
+
     String getSecret(String secretUrl){
-        return keyVaultClient.getSecret(secretUrl).value();
+        if(cache.containsKey(secretUrl)){
+            return cache.get(secretUrl);
+        }
+        String secret = keyVaultClient.getSecret(secretUrl).value();
+        cache.put(secretUrl, secret);
+
+        return secret;
     }
 
     private KeyVaultClient getAuthenticatedKeyVaultClient() {

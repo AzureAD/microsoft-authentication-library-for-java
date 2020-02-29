@@ -12,19 +12,21 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
-import static com.microsoft.aad.msal4j.TestConstants.GRAPH_DEFAULT_SCOPE;
 import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 
 public class AcquireTokenSilentIT {
     private LabUserProvider labUserProvider;
 
+    private Config cfg;
+
     @BeforeClass
-    public void setUp() {
+    public void setUp(){
         labUserProvider = LabUserProvider.getInstance();
     }
 
-    @Test
-    public void acquireTokenSilent_OrganizationAuthority_TokenRefreshed() throws Exception {
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenSilent_OrganizationAuthority_TokenRefreshed(String environment) throws Exception {
+        cfg = new Config(environment);
 
         // When using common, organization, or consumer tenants, cache has no way
         // of determining which access token to return therefore token is always refreshed
@@ -32,7 +34,7 @@ public class AcquireTokenSilentIT {
 
         IAccount account = pca.getAccounts().join().iterator().next();
         SilentParameters parameters =  SilentParameters.builder(
-                Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                Collections.singleton(cfg.graphDefaultScope()),
                 account).build();
 
         IAuthenticationResult result =  pca.acquireTokenSilently(parameters).get();
@@ -42,21 +44,22 @@ public class AcquireTokenSilentIT {
         Assert.assertNotNull(result.idToken());
     }
 
-    @Test
-    public void acquireTokenSilent_LabAuthority_TokenNotRefreshed() throws Exception {
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenSilent_LabAuthority_TokenNotRefreshed(String environment) throws Exception {
+        cfg = new Config(environment);
+
         // Access token should be returned from cache, and not using refresh token
 
-        User user = labUserProvider.getDefaultUser();
+        User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
 
-        String labAuthority = TestConstants.ORGANIZATIONS_AUTHORITY;
 
         PublicClientApplication pca = PublicClientApplication.builder(
                 user.getAppId()).
-                authority(labAuthority).
+                authority(cfg.organizationsAuthority()).
                 build();
 
         IAuthenticationResult result =  pca.acquireToken(UserNamePasswordParameters.
-                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                builder(Collections.singleton(cfg.graphDefaultScope()),
                         user.getUpn(),
                         user.getPassword().toCharArray())
                 .build())
@@ -64,7 +67,7 @@ public class AcquireTokenSilentIT {
 
         IAccount account = pca.getAccounts().join().iterator().next();
         SilentParameters parameters =  SilentParameters.builder(
-                Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE), account).
+                Collections.singleton(cfg.graphDefaultScope()), account).
                 build();
 
         IAuthenticationResult acquireSilentResult =  pca.acquireTokenSilently(parameters).get();
@@ -76,18 +79,19 @@ public class AcquireTokenSilentIT {
         Assert.assertEquals(result.idToken(), acquireSilentResult.idToken());
     }
 
-    @Test
-    public void acquireTokenSilent_ForceRefresh() throws Exception {
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenSilent_ForceRefresh(String environment) throws Exception {
+        cfg = new Config(environment);
 
         User user = labUserProvider.getDefaultUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
                 user.getAppId()).
-                authority(TestConstants.ORGANIZATIONS_AUTHORITY).
+                authority(cfg.organizationsAuthority()).
                 build();
 
         IAuthenticationResult result =  pca.acquireToken(UserNamePasswordParameters.
-                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                builder(Collections.singleton(cfg.graphDefaultScope()),
                         user.getUpn(),
                         user.getPassword().toCharArray())
                 .build())
@@ -95,7 +99,7 @@ public class AcquireTokenSilentIT {
 
         IAccount account = pca.getAccounts().join().iterator().next();
         SilentParameters parameters =  SilentParameters.builder(
-                Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE), account).
+                Collections.singleton(cfg.graphDefaultScope()), account).
                 forceRefresh(true).
                 build();
 
@@ -109,17 +113,18 @@ public class AcquireTokenSilentIT {
         Assert.assertNotEquals(result.idToken(), resultAfterRefresh.idToken());
     }
 
-    @Test
-    public void acquireTokenSilent_MultipleAccountsInCache_UseCorrectAccount() throws Exception {
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenSilent_MultipleAccountsInCache_UseCorrectAccount(String environment) throws Exception {
+        cfg = new Config(environment);
 
         IPublicClientApplication pca = getPublicClientApplicationWithTokensInCache();
 
         // get lab user for different account
-        User user = labUserProvider.getFederatedAdfsUser(FederationProvider.ADFS_4);
+        User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_4);
 
         // acquire token for different account
         pca.acquireToken(UserNamePasswordParameters.
-                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                builder(Collections.singleton(cfg.graphDefaultScope()),
                         user.getUpn(),
                         user.getPassword().toCharArray())
                 .build())
@@ -131,7 +136,7 @@ public class AcquireTokenSilentIT {
                         user.getUpn())).findFirst().orElse(null);
 
         SilentParameters parameters =  SilentParameters.builder(
-                Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE), account).
+                Collections.singleton(cfg.graphDefaultScope()), account).
                 forceRefresh(true).
                 build();
 
@@ -145,23 +150,22 @@ public class AcquireTokenSilentIT {
 
     @Test
     public void acquireTokenSilent_usingCommonAuthority_returnCachedAt() throws Exception {
-        acquireTokenSilent_returnCachedTokens(TestConstants.ORGANIZATIONS_AUTHORITY);
+        acquireTokenSilent_returnCachedTokens(cfg.organizationsAuthority());
     }
 
     @Test
     public void acquireTokenSilent_usingTenantSpecificAuthority_returnCachedAt() throws Exception {
-        String tenantSpecificAuthority = TestConstants.ORGANIZATIONS_AUTHORITY;
-
-        acquireTokenSilent_returnCachedTokens(tenantSpecificAuthority);
+        acquireTokenSilent_returnCachedTokens(cfg.tenantSpecificAuthority());
     }
 
-    @Test
-    public void acquireTokenSilent_ConfidentialClient_acquireTokenSilent() throws Exception{
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenSilent_ConfidentialClient_acquireTokenSilent(String environment) throws Exception{
+        cfg = new Config(environment);
 
         IConfidentialClientApplication cca = getConfidentialClientApplications();
 
         IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
-                .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                .builder(Collections.singleton(cfg.graphDefaultScope()))
                 .build())
                 .get();
 
@@ -171,7 +175,7 @@ public class AcquireTokenSilentIT {
         String cachedAt = result.accessToken();
 
         result = cca.acquireTokenSilently(SilentParameters
-                .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                .builder(Collections.singleton(cfg.graphDefaultScope()))
                 .build())
                 .get();
 
@@ -182,6 +186,7 @@ public class AcquireTokenSilentIT {
     @Test(expectedExceptions = ExecutionException.class)
     public void acquireTokenSilent_ConfidentialClient_acquireTokenSilentDifferentScopeThrowsException()
             throws Exception {
+        cfg = new Config(AzureEnvironment.AZURE);
 
         IConfidentialClientApplication cca = getConfidentialClientApplications();
 
@@ -195,26 +200,26 @@ public class AcquireTokenSilentIT {
 
         //Acquiring token for different scope, expect exception to be thrown
         cca.acquireTokenSilently(SilentParameters
-                .builder(Collections.singleton(GRAPH_DEFAULT_SCOPE))
+                .builder(Collections.singleton(cfg.graphDefaultScope()))
                 .build())
                 .get();
     }
 
     private IConfidentialClientApplication getConfidentialClientApplications() throws Exception{
-        AppIdentityProvider appProvider = new AppIdentityProvider();
-        final String clientId = appProvider.getDefaultLabId();
-        final String password = appProvider.getDefaultLabPassword();
+        String clientId = cfg.appProvider.getOboAppId();
+        String password = cfg.appProvider.getOboAppPassword();
+
         IClientCredential credential = ClientCredentialFactory.createFromSecret(password);
 
         return ConfidentialClientApplication.builder(
                 clientId, credential).
-                authority(TestConstants.MICROSOFT_AUTHORITY).
+                //authority(MICROSOFT_AUTHORITY)
+                authority(cfg.tenantSpecificAuthority()).
                 build();
     }
 
     private void acquireTokenSilent_returnCachedTokens(String authority) throws Exception {
-
-        User user = labUserProvider.getDefaultUser();
+        User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
 
         PublicClientApplication pca = PublicClientApplication.builder(
                 user.getAppId()).
@@ -222,7 +227,7 @@ public class AcquireTokenSilentIT {
                 build();
 
         IAuthenticationResult interactiveAuthResult = pca.acquireToken(UserNamePasswordParameters.
-                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                builder(Collections.singleton(cfg.graphDefaultScope()),
                         user.getUpn(),
                         user.getPassword().toCharArray())
                 .build())
@@ -232,7 +237,7 @@ public class AcquireTokenSilentIT {
 
         IAuthenticationResult silentAuthResult = pca.acquireTokenSilently(
                 SilentParameters.builder(
-                        Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE), interactiveAuthResult.account())
+                        Collections.singleton(cfg.graphDefaultScope()), interactiveAuthResult.account())
                         .build())
                 .get();
 
@@ -242,16 +247,16 @@ public class AcquireTokenSilentIT {
 
     private IPublicClientApplication getPublicClientApplicationWithTokensInCache()
             throws Exception {
-        User user = labUserProvider.getDefaultUser();
+        User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
 
         PublicClientApplication pca = PublicClientApplication.builder(
                 user.getAppId()).
-                authority(TestConstants.ORGANIZATIONS_AUTHORITY).
+                authority(cfg.organizationsAuthority()).
                 build();
 
         pca.acquireToken(
                 UserNamePasswordParameters.builder(
-                        Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                        Collections.singleton(cfg.graphDefaultScope()),
                         user.getUpn(),
                         user.getPassword().toCharArray())
                         .build()).get();

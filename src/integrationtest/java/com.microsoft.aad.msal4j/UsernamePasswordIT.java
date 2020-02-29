@@ -14,21 +14,28 @@ import java.util.Collections;
 public class UsernamePasswordIT {
     private LabUserProvider labUserProvider;
 
+    private Config cfg;
+
     @BeforeClass
     public void setUp() {
         labUserProvider = LabUserProvider.getInstance();
     }
 
-    @Test
-    public void acquireTokenWithUsernamePassword_Managed() throws Exception {
-        User user = labUserProvider.getDefaultUser();
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenWithUsernamePassword_Managed(String environment) throws Exception {
+        cfg = new Config(environment);
+
+        User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
 
         assertAcquireTokenCommonAAD(user);
     }
 
-    @Test
-    public void acquireTokenWithUsernamePassword_ADFSv2019_Federated() throws Exception{
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenWithUsernamePassword_ADFSv2019_Federated(String environment) throws Exception{
+        cfg = new Config(environment);
+
         UserQueryParameters query = new UserQueryParameters();
+        query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT, cfg.azureEnvironment);
         query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER,  FederationProvider.ADFS_2019);
         query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
 
@@ -48,9 +55,12 @@ public class UsernamePasswordIT {
         assertAcquireTokenCommonADFS(user);
     }
 
-    @Test
-    public void acquireTokenWithUsernamePassword_ADFSv4() throws Exception{
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenWithUsernamePassword_ADFSv4(String environment) throws Exception{
+        cfg = new Config(environment);
+
         UserQueryParameters query = new UserQueryParameters();
+        query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT, cfg.azureEnvironment);
         query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER,  FederationProvider.ADFS_4);
         query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
 
@@ -59,9 +69,12 @@ public class UsernamePasswordIT {
         assertAcquireTokenCommonAAD(user);
     }
 
-    @Test
-    public void acquireTokenWithUsernamePassword_ADFSv3() throws Exception{
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenWithUsernamePassword_ADFSv3(String environment) throws Exception{
+        cfg = new Config(environment);
+
         UserQueryParameters query = new UserQueryParameters();
+        query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT, cfg.azureEnvironment);
         query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER,  FederationProvider.ADFS_3);
         query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
 
@@ -70,9 +83,12 @@ public class UsernamePasswordIT {
         assertAcquireTokenCommonAAD(user);
     }
 
-    @Test
-    public void acquireTokenWithUsernamePassword_ADFSv2() throws Exception{
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenWithUsernamePassword_ADFSv2(String environment) throws Exception{
+        cfg = new Config(environment);
+
         UserQueryParameters query = new UserQueryParameters();
+        query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT, cfg.azureEnvironment);
         query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER,  FederationProvider.ADFS_2);
         query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
 
@@ -87,7 +103,7 @@ public class UsernamePasswordIT {
     }
 
     private void assertAcquireTokenCommonAAD(User user) throws Exception {
-        assertAcquireTokenCommon(user, TestConstants.ORGANIZATIONS_AUTHORITY, TestConstants.GRAPH_DEFAULT_SCOPE,
+        assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope(),
                 user.getAppId());
     }
 

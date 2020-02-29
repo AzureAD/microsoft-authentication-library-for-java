@@ -3,7 +3,8 @@
 
 package com.microsoft.aad.msal4j;
 
-import labapi.AppIdentityProvider;
+import labapi.AppCredentialProvider;
+import labapi.AzureEnvironment;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -32,9 +33,9 @@ public class ClientCredentialsIT {
 
     @Test
     public void acquireTokenClientCredentials_ClientSecret() throws Exception{
-        AppIdentityProvider appProvider = new AppIdentityProvider();
-        final String clientId = appProvider.getDefaultLabId();
-        final String password = appProvider.getDefaultLabPassword();
+        AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.AZURE);
+        final String clientId = appProvider.getLabVaultAppId();
+        final String password = appProvider.getLabVaultPassword();
         IClientCredential credential = ClientCredentialFactory.createFromSecret(password);
 
         assertAcquireTokenCommon(clientId, credential);

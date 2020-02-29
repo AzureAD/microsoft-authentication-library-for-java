@@ -5,52 +5,53 @@ package com.microsoft.aad.msal4j;
 
 import labapi.*;
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
 
 @Test
 public class OnBehalfOfIT {
-
     private String accessToken;
-    private String msidlab4Authority = "https://login.microsoftonline.com/msidlab4.onmicrosoft.com/";
 
-    @BeforeClass
-    public void setUp() throws Exception{
+    private Config cfg;
+
+    private void setUp() throws Exception{
         LabUserProvider labUserProvider = LabUserProvider.getInstance();
-        User user = labUserProvider.getDefaultUser();
+        User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
 
-        String clientId = "c0485386-1e9a-4663-bc96-7ab30656de7f";
-        String apiReadScope = "api://f4aa5217-e87c-42b2-82af-5624dd14ee72/read";
+        String clientId = cfg.appProvider.getAppId();
+        String apiReadScope = cfg.appProvider.getOboAppIdURI()  + "/user_impersonation";
 
         PublicClientApplication pca = PublicClientApplication.builder(
                 clientId).
-                authority(msidlab4Authority).
+                authority(cfg.tenantSpecificAuthority()).
                 build();
 
         IAuthenticationResult result = pca.acquireToken(
                 UserNamePasswordParameters.builder(Collections.singleton(apiReadScope),
                         user.getUpn(),
                         user.getPassword().toCharArray()).build()).get();
+
         accessToken = result.accessToken();
     }
 
-    @Test
-    public void acquireTokenWithOBO_Managed() throws Exception {
-        final String clientId = "f4aa5217-e87c-42b2-82af-5624dd14ee72";
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenWithOBO_Managed(String environment) throws Exception {
+        cfg = new Config(environment);
 
-        AppIdentityProvider appProvider = new AppIdentityProvider();
-        final String password = appProvider.getOboPassword();
+        setUp();
+
+        final String clientId = cfg.appProvider.getOboAppId();
+        final String password = cfg.appProvider.getOboAppPassword();
 
         ConfidentialClientApplication cca =
                 ConfidentialClientApplication.builder(clientId, ClientCredentialFactory.createFromSecret(password)).
-                        authority(msidlab4Authority).
+                        authority(cfg.tenantSpecificAuthority()).
                         build();
 
         IAuthenticationResult result =
                 cca.acquireToken(OnBehalfOfParameters.builder(
-                        Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                        Collections.singleton(cfg.graphDefaultScope()),
                         new UserAssertion(accessToken)).build()).
                         get();
 
