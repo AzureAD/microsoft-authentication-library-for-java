@@ -68,15 +68,15 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
                 }
             } catch(Exception ex) {
 
-                String error;
-                if (ex instanceof MsalServiceException) {
-                    error = ((MsalServiceException) ex).errorCode();
-                    apiEvent.setApiErrorCode(error);
+                String error = StringHelper.EMPTY_STRING;
+                if (ex instanceof MsalException) {
+                    MsalException exception = ((MsalException) ex);
+                    if(exception.errorCode() != null){
+                        apiEvent.setApiErrorCode(exception.errorCode());
+                    }
                 } else {
                     if(ex.getCause() != null){
                         error = ex.getCause().toString();
-                    } else {
-                        error = StringHelper.EMPTY_STRING;
                     }
                 }
 

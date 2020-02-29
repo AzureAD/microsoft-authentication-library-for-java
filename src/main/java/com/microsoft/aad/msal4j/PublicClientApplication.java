@@ -87,7 +87,7 @@ public class PublicClientApplication extends ClientApplicationBase implements IP
                 parameters,
                 futureReference,
                 this,
-                createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                createRequestContext(PublicApi.ACQUIRE_TOKEN_INTERACTIVE));
 
         CompletableFuture<IAuthenticationResult> future = executeRequest(interactiveRequest);
         futureReference.set(future);
