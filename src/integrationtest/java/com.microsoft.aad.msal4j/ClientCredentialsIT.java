@@ -5,6 +5,7 @@ package com.microsoft.aad.msal4j;
 
 import labapi.AppCredentialProvider;
 import labapi.AzureEnvironment;
+import labapi.KeyVaultSecretsProvider;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -78,10 +79,9 @@ public class ClientCredentialsIT {
         KeyStore keystore = KeyStore.getInstance("Windows-MY", "SunMSCAPI");
         keystore.load(null, null);
 
-        String certificateAlias = "JavaAutomationRunner";
-        PrivateKey key = (PrivateKey)keystore.getKey(certificateAlias, null);
+        PrivateKey key = (PrivateKey)keystore.getKey(KeyVaultSecretsProvider.CERTIFICATE_ALIAS, null);
         X509Certificate publicCertificate = (X509Certificate)keystore.getCertificate(
-                certificateAlias);
+                KeyVaultSecretsProvider.CERTIFICATE_ALIAS);
 
         return ClientCredentialFactory.createFromCertificate(key, publicCertificate);
     }
