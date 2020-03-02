@@ -19,18 +19,19 @@ public class RefreshTokenIT {
     private String refreshToken;
     private PublicClientApplication pca;
 
-    @BeforeTest
-    public void setUp() throws Exception {
+    private Config cfg;
+
+    private void setUp() throws Exception {
         LabUserProvider labUserProvider = LabUserProvider.getInstance();
         User user = labUserProvider.getDefaultUser();
 
         pca = PublicClientApplication.builder(
                 user.getAppId()).
-                authority(TestConstants.ORGANIZATIONS_AUTHORITY).
+                authority(cfg.organizationsAuthority()).
                 build();
 
         AuthenticationResult result = (AuthenticationResult)pca.acquireToken(UserNamePasswordParameters
-                        .builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                        .builder(Collections.singleton(cfg.graphDefaultScope()),
                                 user.getUpn(),
                                 user.getPassword().toCharArray())
                         .build())
@@ -39,12 +40,15 @@ public class RefreshTokenIT {
         refreshToken = result.refreshToken();
     }
 
-    @Test
-    public void acquireTokenWithRefreshToken() throws Exception{
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenWithRefreshToken(String environment) throws Exception{
+        cfg = new Config(environment);
+
+        setUp();
 
         IAuthenticationResult result = pca.acquireToken(RefreshTokenParameters
                 .builder(
-                        Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                        Collections.singleton(cfg.graphDefaultScope()),
                         refreshToken)
                 .build())
                 .get();

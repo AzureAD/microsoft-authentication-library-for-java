@@ -3,7 +3,9 @@
 
 package infrastructure;
 
+import com.microsoft.aad.msal4j.TestConstants;
 import labapi.FederationProvider;
+import labapi.LabConstants;
 import labapi.User;
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.By;
@@ -66,7 +68,9 @@ public class SeleniumExtensions {
         LOG.info("Loggin in ... Clicking <Next> after username");
         driver.findElement(new By.ById(fields.getAadSignInButtonId())).click();
 
-        if (user.getFederationProvider() == FederationProvider.ADFS_2){
+        if (user.getFederationProvider() == FederationProvider.ADFS_2 &&
+                !user.getLabName().equals(LabConstants.ARLINGTON_LAB_NAME)){
+
             LOG.info("Loggin in ... ADFS-V2 - Entering the username in ADFSv2 form");
             driver.findElement(new By.ById(SeleniumConstants.ADFSV2_WEB_USERNAME_INPUT_ID)).
                     sendKeys(user.getUpn());

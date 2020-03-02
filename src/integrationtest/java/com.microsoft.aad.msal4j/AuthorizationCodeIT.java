@@ -20,9 +20,13 @@ import java.util.concurrent.TimeUnit;
 public class AuthorizationCodeIT extends SeleniumTest {
     private final static Logger LOG = LoggerFactory.getLogger(AuthorizationCodeIT.class);
 
-    @Test
-    public void acquireTokenWithAuthorizationCode_ManagedUser(){
-        User user = labUserProvider.getDefaultUser();
+    private Config cfg;
+
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenWithAuthorizationCode_ManagedUser(String environment){
+        cfg = new Config(environment);
+
+        User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
         assertAcquireTokenAAD(user);
     }
 
@@ -32,34 +36,44 @@ public class AuthorizationCodeIT extends SeleniumTest {
         assertAcquireTokenADFS2019(user);
     }
 
-    @Test
-    public void acquireTokenWithAuthorizationCode_ADFSv2019_Federated(){
-        User user = labUserProvider.getFederatedAdfsUser(FederationProvider.ADFS_2019);
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenWithAuthorizationCode_ADFSv2019_Federated(String environment){
+        cfg = new Config(environment);
+
+        User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_2019);
         assertAcquireTokenAAD(user);
     }
 
-    @Test
-    public void acquireTokenWithAuthorizationCode_ADFSv4_Federated(){
-        User user = labUserProvider.getFederatedAdfsUser(FederationProvider.ADFS_4);
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenWithAuthorizationCode_ADFSv4_Federated(String environment){
+        cfg = new Config(environment);
+
+        User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_4);
 
         assertAcquireTokenAAD(user);
     }
 
-    @Test
-    public void acquireTokenWithAuthorizationCode_ADFSv3_Federated(){
-        User user = labUserProvider.getFederatedAdfsUser(FederationProvider.ADFS_3);
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenWithAuthorizationCode_ADFSv3_Federated(String environment){
+        cfg = new Config(environment);
+
+        User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_3);
         assertAcquireTokenAAD(user);
     }
 
-    @Test
-    public void acquireTokenWithAuthorizationCode_ADFSv2_Federated(){
-        User user = labUserProvider.getFederatedAdfsUser(FederationProvider.ADFS_2);
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenWithAuthorizationCode_ADFSv2_Federated(String environment){
+        cfg = new Config(environment);
+
+        User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_2);
         assertAcquireTokenAAD(user);
     }
 
-    @Test
-    public void acquireTokenWithAuthorizationCode_B2C_Local(){
-        User user = labUserProvider.getB2cUser(B2CProvider.LOCAL);
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenWithAuthorizationCode_B2C_Local(String environment){
+        cfg = new Config(environment);
+
+        User user = labUserProvider.getB2cUser(environment, B2CProvider.LOCAL);
         assertAcquireTokenB2C(user);
     }
 
@@ -123,7 +137,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
         try {
             pca = PublicClientApplication.builder(
                     user.getAppId()).
-                    authority(TestConstants.ORGANIZATIONS_AUTHORITY).
+                    authority(cfg.organizationsAuthority()).
                     build();
         } catch(MalformedURLException ex){
             throw new RuntimeException(ex.getMessage());
@@ -133,7 +147,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
         IAuthenticationResult result = acquireTokenAuthorizationCodeFlow(
                 pca,
                 authCode,
-                Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE));
+                Collections.singleton(cfg.graphDefaultScope()));
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());

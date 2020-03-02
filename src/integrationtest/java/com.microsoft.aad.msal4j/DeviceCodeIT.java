@@ -26,19 +26,23 @@ public class DeviceCodeIT {
     private LabUserProvider labUserProvider;
     private WebDriver seleniumDriver;
 
+    private Config cfg;
+
     @BeforeClass
     public void setUp(){
         labUserProvider = LabUserProvider.getInstance();
         seleniumDriver = SeleniumExtensions.createDefaultWebDriver();
     }
 
-    @Test
-    public void DeviceCodeFlowTest() throws Exception {
-        User user = labUserProvider.getDefaultUser();
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void DeviceCodeFlowTest(String environment) throws Exception {
+        cfg = new Config(environment);
+
+        User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
 
         PublicClientApplication pca = PublicClientApplication.builder(
                 user.getAppId()).
-                authority(TestConstants.ORGANIZATIONS_AUTHORITY).
+                authority(cfg.tenantSpecificAuthority()).
         build();
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
@@ -46,7 +50,7 @@ public class DeviceCodeIT {
         };
 
         IAuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
-                .builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                .builder(Collections.singleton(cfg.graphDefaultScope()),
                         deviceCodeConsumer)
                 .build())
                 .get();
