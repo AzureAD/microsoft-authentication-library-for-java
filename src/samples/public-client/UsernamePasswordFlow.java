@@ -1,65 +1,72 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-import com.microsoft.aad.msal4j.*;
+import com.microsoft.aad.msal4j.IAccount;
+import com.microsoft.aad.msal4j.IAuthenticationResult;
+import com.microsoft.aad.msal4j.MsalException;
+import com.microsoft.aad.msal4j.PublicClientApplication;
+import com.microsoft.aad.msal4j.SilentParameters;
+import com.microsoft.aad.msal4j.UserNamePasswordParameters;
 
-import java.net.MalformedURLException;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
+import java.util.Set;
 
 public class UsernamePasswordFlow {
 
+    private final static String CLIENT_ID = "";
+    private final static String AUTHORITY = "https://login.microsoftonline.com/organizations/";
+    private final static Set<String> SCOPE = Collections.singleton("");
+    private final static String USER_NAME = "";
+    private final static String USER_PASSWORD = "";
+
     public static void main(String args[]) throws Exception {
-        getAccessTokenFromUserCredentials();
+
+        IAuthenticationResult result = acquireTokenUsernamePassword();
+        System.out.println("Access token: " + result.accessToken());
+        System.out.println("Id token: " + result.idToken());
+        System.out.println("Account username: " + result.account().username());
     }
 
-    private static void getAccessTokenFromUserCredentials() throws Exception {
-        PublicClientApplication app = PublicClientApplication.builder(TestData.PUBLIC_CLIENT_ID)
-                .authority(TestData.AUTHORITY_ORGANIZATION)
+    private static IAuthenticationResult acquireTokenUsernamePassword() throws Exception {
+
+        // Load token cache from file and initialize token cache aspect. The token cache will have
+        // dummy data, so the acquireTokenSilently call will fail.
+        TokenCacheAspect tokenCacheAspect = new TokenCacheAspect("sample_cache.json");
+
+        PublicClientApplication pca = PublicClientApplication.builder(CLIENT_ID)
+                .authority(AUTHORITY)
+                .setTokenCacheAccessAspect(tokenCacheAspect)
                 .build();
 
-        UserNamePasswordParameters parameters = UserNamePasswordParameters.builder(
-                Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE),
-                TestData.USER_NAME,
-                TestData.USER_PASSWORD.toCharArray())
-                .build();
+        Set<IAccount> accountsInCache = pca.getAccounts().join();
+        // Take first account in the cache. In a production application, you would filter
+        // accountsInCache to get the right account for the user authenticating.
+        IAccount account = accountsInCache.iterator().next();
 
-        CompletableFuture<IAuthenticationResult> future = app.acquireToken(parameters);
+        IAuthenticationResult result;
+        try {
+            SilentParameters silentParameters =
+                    SilentParameters
+                            .builder(SCOPE, account)
+                            .build();
+            // try to acquire token silently. This call will fail since the token cache
+            // does not have any data for the user you are trying to acquire a token for
+            result = pca.acquireTokenSilently(silentParameters).join();
+        } catch (Exception ex) {
+            if (ex.getCause() instanceof MsalException) {
 
-        future.handle((res, ex) -> {
-            if(ex != null) {
-                System.out.println("Oops! We have an exception - " + ex.getMessage());
-                return "Unknown!";
+                UserNamePasswordParameters parameters =
+                        UserNamePasswordParameters
+                                .builder(SCOPE, USER_NAME, USER_PASSWORD.toCharArray())
+                                .build();
+                // Try to acquire a token via username/password. If successful, you should see
+                // the token and account information printed out to console
+                result = pca.acquireToken(parameters).join();
+            } else {
+                // Handle other exceptions accordingly
+                throw ex;
             }
-
-            Collection<IAccount> accounts = app.getAccounts().join();
-
-            CompletableFuture<IAuthenticationResult> future1;
-            try {
-                future1 = app.acquireTokenSilently
-                        (SilentParameters.builder(Collections.singleton(TestData.GRAPH_DEFAULT_SCOPE),
-                                accounts.iterator().next())
-                                .forceRefresh(true)
-                                .build());
-
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-                throw new RuntimeException();
-            }
-
-            future1.join();
-
-            IAccount account = app.getAccounts().join().iterator().next();
-            app.removeAccount(account).join();
-            accounts = app.getAccounts().join();
-
-            System.out.println("Num of account - " + accounts.size());
-            System.out.println("Returned ok - " + res);
-            System.out.println("Access Token - " + res.accessToken());
-            System.out.println("ID Token - " + res.idToken());
-            return res;
-        }).join();
-
+        }
+        return result;
     }
 }

@@ -13,6 +13,8 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty
 /**
  * Object containing parameters for On-Behalf-Of flow. Can be used as parameter to
  * {@link ConfidentialClientApplication#acquireToken(OnBehalfOfParameters)}
+ *
+ * For more details, see https://aka.ms/msal4j-on-behalf-of
  */
 @Builder
 @Accessors(fluent = true)

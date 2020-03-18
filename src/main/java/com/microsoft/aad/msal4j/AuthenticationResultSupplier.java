@@ -68,9 +68,22 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
                 }
             } catch(Exception ex) {
 
-                if (ex instanceof MsalServiceException) {
-                    apiEvent.setApiErrorCode(((MsalServiceException) ex).errorCode());
+                String error = StringHelper.EMPTY_STRING;
+                if (ex instanceof MsalException) {
+                    MsalException exception = ((MsalException) ex);
+                    if(exception.errorCode() != null){
+                        apiEvent.setApiErrorCode(exception.errorCode());
+                    }
+                } else {
+                    if(ex.getCause() != null){
+                        error = ex.getCause().toString();
+                    }
                 }
+
+                clientApplication.getServiceBundle().getServerSideTelemetry().addFailedRequestTelemetry(
+                        String.valueOf(msalRequest.requestContext().publicApi().getApiId()),
+                        msalRequest.requestContext().correlationId(),
+                        error);
 
                 clientApplication.log.error(
                         LogHelper.createMessage(
@@ -83,8 +96,7 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
         return result;
     }
 
-    void logResult(AuthenticationResult result, HttpHeaders headers)
-    {
+    private void logResult(AuthenticationResult result, HttpHeaders headers) {
         if (!StringHelper.isBlank(result.accessToken())) {
 
             String accessTokenHash = this.computeSha256Hash(result

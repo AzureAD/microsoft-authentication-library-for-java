@@ -27,4 +27,6 @@ public class App {
     @JsonProperty("labName")
     String labName;
 
+    @JsonProperty("clientSecret")
+    String clientSecret;
 }

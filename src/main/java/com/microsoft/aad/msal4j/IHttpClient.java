@@ -6,6 +6,8 @@ package com.microsoft.aad.msal4j;
 /**
  * Interface to be implemented when configuring http client for {@link IPublicClientApplication} or
  * {@link IConfidentialClientApplication}.
+ *
+ * For more details, see https://aka.ms/msal4j-http-client
  */
 public interface IHttpClient {
 

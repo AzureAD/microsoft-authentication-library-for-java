@@ -15,6 +15,9 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty
  * Object containing parameters for refresh token request. Can be used as parameter to
  * {@link PublicClientApplication#acquireToken(RefreshTokenParameters)} or to
  * {@link ConfidentialClientApplication#acquireToken(RefreshTokenParameters)}
+ *
+ *  RefreshTokenParameters should only be used for migration scenarios (when moving from ADAL to
+ *  MSAL). To acquire tokens silently, use {@link ClientApplicationBase#acquireTokenSilently(SilentParameters)}
  */
 @Builder
 @Accessors(fluent = true)
@@ -22,9 +25,15 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class RefreshTokenParameters {
 
+    /**
+     * Scopes the application is requesting access to
+     */
     @NonNull
     private Set<String> scopes;
 
+    /**
+     * Refresh token received from the STS
+     */
     @NonNull
     private String refreshToken;
 

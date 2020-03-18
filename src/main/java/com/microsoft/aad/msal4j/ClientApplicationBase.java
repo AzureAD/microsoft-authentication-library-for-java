@@ -22,7 +22,8 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotBlank
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 
 /**
- * Abstract class containing common API methods and properties.
+ * Abstract class containing common methods and properties to both {@link PublicClientApplication}
+ * and {@link ConfidentialClientApplication}.
  */
 abstract class ClientApplicationBase implements IClientApplicationBase {
 
@@ -159,6 +160,18 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         return future;
     }
 
+    @Override
+    public URL getAuthorizationRequestUrl(AuthorizationRequestUrlParameters parameters) {
+
+        validateNotNull("parameters", parameters);
+
+        parameters.requestParameters.put("client_id", Collections.singletonList(this.clientId));
+
+        return parameters.createAuthorizationURL(
+                this.authenticationAuthority,
+                parameters.requestParameters());
+    }
+
     AuthenticationResult acquireTokenCommon(MsalRequest msalRequest, Authority requestAuthority)
             throws Exception {
 
@@ -202,6 +215,10 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
                     (DeviceCodeFlowRequest) msalRequest);
         } else if (msalRequest instanceof SilentRequest) {
             supplier = new AcquireTokenSilentSupplier(this, (SilentRequest) msalRequest);
+        } else if(msalRequest instanceof  InteractiveRequest){
+            supplier = new AcquireTokenByInteractiveFlowSupplier(
+                    (PublicClientApplication) this,
+                    (InteractiveRequest) msalRequest);
         } else {
             supplier = new AcquireTokenByAuthorizationGrantSupplier(
                     this,
@@ -235,7 +252,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         private String authority = DEFAULT_AUTHORITY;
         private Authority authenticationAuthority = createDefaultAADAuthority();
         private boolean validateAuthority = true;
-        private String correlationId = UUID.randomUUID().toString();
+        private String correlationId;
         private boolean logPii = false;
         private ExecutorService executorService;
         private Proxy proxy;

@@ -3,7 +3,9 @@
 
 package infrastructure;
 
+import com.microsoft.aad.msal4j.TestConstants;
 import labapi.FederationProvider;
+import labapi.LabConstants;
 import labapi.User;
 import org.testng.util.Strings;
 
@@ -50,8 +52,14 @@ class UserInformationFields {
                 passwordSigInButtonId = SeleniumConstants.ADFS2019_SUBMIT_ID;
                 break;
             case FederationProvider.ADFS_2:
-                passwordInputId = SeleniumConstants.ADFSV2_WEB_PASSWORD_INPUT_ID;
-                passwordSigInButtonId = SeleniumConstants.ADFSV2_WEB_SUBMIT_BUTTON_ID;
+                if(LabConstants.ARLINGTON_LAB_NAME.equals(user.getLabName())){
+                    passwordInputId = SeleniumConstants.ADFSV2_ARLINGTON_WEB_PASSWORD_INPUT_ID;
+                    passwordSigInButtonId = SeleniumConstants.ADFSV2_ARLINGTON_WEB_SUBMIT_BUTTON_ID;
+                }
+                else {
+                    passwordInputId = SeleniumConstants.ADFSV2_WEB_PASSWORD_INPUT_ID;
+                    passwordSigInButtonId = SeleniumConstants.ADFSV2_WEB_SUBMIT_BUTTON_ID;
+                }
                 break;
             case FederationProvider.ADFS_4:
                 passwordInputId = SeleniumConstants.ADFSV4_WEB_PASSWORD_ID;

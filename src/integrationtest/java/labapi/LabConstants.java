@@ -5,7 +5,7 @@ package labapi;
 
 public class LabConstants {
     public final static String LAB_USER_ENDPOINT = "https://msidlab.com/api/user";
-    public final static String LAB_USER_SECRET_ENDPOINT = "https://msidlab.com/api/LabUserSecret";
+    public final static String LAB_USER_SECRET_ENDPOINT = "https://msidlab.com/api/LabSecret";
     public final static String LAB_APP_ENDPOINT = "https://msidlab.com/api/App";
     public final static String LAB_LAB_ENDPOINT = "https://msidlab.com/api/Lab";
 
@@ -15,5 +15,10 @@ public class LabConstants {
     public final static String USER_MSA_PASSWORD_URL= "https://msidlabs.vault.azure.net/secrets/MSA-MSIDLAB4-Password/69850200618d43cf86c5b51e4cf8a7e5";
     public final static String OBO_APP_PASSWORD_URL = "https://msidlabs.vault.azure.net/secrets/TodoListServiceV2-OBO/c58ba97c34ca4464886943a847d1db56";
 
+    public final static String ARLINGTON_APP_ID = "cb7faed4-b8c0-49ee-b421-f5ed16894c83";
+    public final static String ARLINGTON_OBO_APP_ID = "c0555d2d-02f2-4838-802e-3463422e571d";
+
     public final static String MSA_APP_ID = "9668f2bd-6103-4292-9024-84fa2d1b6fb2";
+
+    public final static String ARLINGTON_LAB_NAME = "ARLMSIDLAB1";
 }
