@@ -27,4 +27,19 @@ final class StringHelper {
         }
         return base64EncodedSha256Hash;
     }
+
+    static String createSha256Hash(String stringToHash){
+        String res;
+        try {
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+
+            res = new String(
+                    messageDigest.digest(stringToHash.getBytes(StandardCharsets.UTF_8)),
+                    StandardCharsets.UTF_8);
+
+        } catch(NoSuchAlgorithmException e){
+            res = null;
+        }
+        return res;
+    }
 }

@@ -36,7 +36,7 @@ abstract class SeleniumTest {
         seleniumDriver = SeleniumExtensions.createDefaultWebDriver();
     }
 
-    void runSeleniumAutomatedLogin(User user, ClientApplicationBase app) {
+    void runSeleniumAutomatedLogin(User user, AbstractClientApplicationBase app) {
         AuthorityType authorityType = app.authenticationAuthority.authorityType;
         if(authorityType == AuthorityType.B2C){
             switch(user.getB2cProvider().toLowerCase()){

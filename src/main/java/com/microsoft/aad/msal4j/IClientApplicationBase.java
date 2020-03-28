@@ -9,7 +9,6 @@ import java.net.Proxy;
 import java.net.URL;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 /**
  * Interface representing an application for which tokens can be acquired.
@@ -73,7 +72,7 @@ interface IClientApplicationBase {
      * application object.
      *
      * Once the user successfully authenticates, the response should contain an authorization code,
-     * which can then be passed in to{@link ClientApplicationBase#acquireToken(AuthorizationCodeParameters)}
+     * which can then be passed in to{@link AbstractClientApplicationBase#acquireToken(AuthorizationCodeParameters)}
      * to be exchanged for a token
      * @param parameters {@link AuthorizationRequestUrlParameters}
      * @return url of the authorization endpoint where the user can sign-in and consent to the application.

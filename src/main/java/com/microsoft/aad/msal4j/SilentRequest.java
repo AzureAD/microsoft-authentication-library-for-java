@@ -8,6 +8,8 @@ import lombok.experimental.Accessors;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Set;
+import java.util.TreeSet;
 
 @Accessors(fluent = true)
 @Getter
@@ -18,7 +20,7 @@ class SilentRequest extends MsalRequest {
     private Authority requestAuthority;
 
     SilentRequest(SilentParameters parameters,
-                  ClientApplicationBase application,
+                  AbstractClientApplicationBase application,
                   RequestContext requestContext) throws MalformedURLException {
 
         super(application, null, requestContext);
@@ -30,5 +32,21 @@ class SilentRequest extends MsalRequest {
 
         application.getServiceBundle().getServerSideTelemetry().getCurrentRequest().forceRefresh(
                 parameters.forceRefresh());
+    }
+
+    String getFullThumbprint(){
+        String DELIMITER = ".";
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(application().clientId() + DELIMITER);
+        sb.append(application().authority() + DELIMITER);
+
+        Set<String> sortedScopes = new TreeSet<>(parameters.scopes());
+        sb.append(String.join(" ", sortedScopes) + DELIMITER);
+
+        sb.append(parameters.account().homeAccountId() + DELIMITER);
+        sb.append(parameters.authorityUrl());
+
+        return StringHelper.createSha256Hash(sb.toString());
     }
 }

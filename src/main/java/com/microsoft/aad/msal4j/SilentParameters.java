@@ -21,7 +21,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 @Accessors(fluent = true)
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class SilentParameters {
+public class SilentParameters implements IApiParameters {
 
     @NonNull
     private Set<String> scopes;

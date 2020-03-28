@@ -140,7 +140,7 @@ public class CacheFormatTests extends AbstractMsalTests {
         MsalRequest msalRequest = new AuthorizationCodeRequest(
                 parameters,
                 app,
-                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
 
         ServiceBundle serviceBundle = new ServiceBundle(
                 null,
