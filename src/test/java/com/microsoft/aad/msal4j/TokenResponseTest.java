@@ -3,7 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
@@ -50,7 +49,7 @@ public class TokenResponseTest extends AbstractMsalTests {
             throws com.nimbusds.oauth2.sdk.ParseException {
         final TokenResponse response = TokenResponse
                 .parseJsonObject(JSONObjectUtils
-                        .parse(TestConfiguration.HTTP_RESPONSE_FROM_AUTH_CODE));
+                        .parse(TestConfiguration.TOKEN_ENDPOINT_OK_RESPONSE));
         Assert.assertNotNull(response);
         OIDCTokens tokens = response.getOIDCTokens();
         Assert.assertNotNull(tokens);

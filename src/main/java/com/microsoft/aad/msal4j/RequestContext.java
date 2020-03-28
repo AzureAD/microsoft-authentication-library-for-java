@@ -21,8 +21,15 @@ class RequestContext {
     private PublicApi publicApi;
     private String applicationName;
     private String applicationVersion;
+    private String authority;
+    private IApiParameters apiParameters;
+    private IClientApplicationBase clientApplication;
 
-    public RequestContext(ClientApplicationBase clientApplication, PublicApi publicApi){
+    public RequestContext(AbstractClientApplicationBase clientApplication,
+                          PublicApi publicApi,
+                          IApiParameters apiParameters) {
+        this.clientApplication = clientApplication;
+
         this.clientId = StringHelper.isBlank(clientApplication.clientId()) ?
                 "unset_client_id" :
                 clientApplication.clientId();
@@ -33,9 +40,11 @@ class RequestContext {
         this.applicationVersion = clientApplication.applicationVersion();
         this.applicationName = clientApplication.applicationName();
         this.publicApi = publicApi;
+        this.authority = clientApplication.authority();
+        this.apiParameters = apiParameters;
     }
 
-    private static String generateNewCorrelationId(){
+    private static String generateNewCorrelationId() {
         return UUID.randomUUID().toString();
     }
 }

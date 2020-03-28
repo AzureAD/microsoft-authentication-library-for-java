@@ -11,13 +11,13 @@ import java.util.Set;
 
 class MsalServiceExceptionFactory {
 
-    private MsalServiceExceptionFactory(){
+    private MsalServiceExceptionFactory() {
     }
 
-    static MsalServiceException fromHttpResponse(HTTPResponse httpResponse){
+    static MsalServiceException fromHttpResponse(HTTPResponse httpResponse, boolean isRefreshTokenGrantRequest) {
 
         String responseContent = httpResponse.getContent();
-        if(responseContent == null || StringHelper.isBlank(responseContent)){
+        if (responseContent == null || StringHelper.isBlank(responseContent)) {
             return new MsalServiceException(
                     "Unknown Service Exception",
                     AuthenticationErrorCode.UNKNOWN);
@@ -30,10 +30,11 @@ class MsalServiceExceptionFactory {
         errorResponse.statusCode(httpResponse.getStatusCode());
         errorResponse.statusMessage(httpResponse.getStatusMessage());
 
-        if(errorResponse.error() != null &&
+        if (isRefreshTokenGrantRequest &&
+                errorResponse.error() != null &&
                 errorResponse.error().equalsIgnoreCase(AuthenticationErrorCode.INVALID_GRANT)) {
 
-            if(isInteractionRequired(errorResponse.subError)){
+            if (isInteractionRequired(errorResponse.subError)) {
                 return new MsalInteractionRequiredException(errorResponse, httpResponse.getHeaderMap());
             }
         }
@@ -41,14 +42,14 @@ class MsalServiceExceptionFactory {
         return new MsalServiceException(
                 errorResponse,
                 httpResponse.getHeaderMap());
-        }
+    }
 
-    private static boolean isInteractionRequired(String subError){
+    private static boolean isInteractionRequired(String subError) {
 
         String[] nonUiSubErrors = {"client_mismatch", "protection_policy_required"};
         Set<String> set = new HashSet<>(Arrays.asList(nonUiSubErrors));
 
-        if(StringHelper.isBlank(subError)){
+        if (StringHelper.isBlank(subError)) {
             return true;
         }
 

@@ -21,7 +21,7 @@ public class MsalInteractionRequiredException extends MsalServiceException{
      */
     @Accessors(fluent = true)
     @Getter
-    private InteractionRequiredExceptionReason reason;
+    private final InteractionRequiredExceptionReason reason;
 
     /**
      * Initializes a new instance of the exception class

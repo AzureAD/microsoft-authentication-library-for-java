@@ -50,7 +50,7 @@ public final class TestConfiguration {
     public final static String AAD_PREFERRED_NETWORK_ENV_ALIAS = "login.microsoftonline.com";
     public final static String AAD_PREFERRED_CACHE__ENV_ALIAS = "login.windows.net";
 
-    public final static String HTTP_RESPONSE_FROM_AUTH_CODE = "{\"access_token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6I"
+    public final static String TOKEN_ENDPOINT_OK_RESPONSE = "{\"access_token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6I"
             + "k5HVEZ2ZEstZnl0aEV1THdqcHdBSk9NOW4tQSJ9.eyJhdWQiOiJiN2E2NzFkOC1hNDA4LTQyZmYtODZlMC1hYWY0NDdmZDE3YzQiLCJpc3MiOiJod"
             + "HRwczovL3N0cy53aW5kb3dzLm5ldC8zMGJhYTY2Ni04ZGY4LTQ4ZTctOTdlNi03N2NmZDA5OTU5NjMvIiwiaWF0IjoxMzkzODQ0NTA0LCJuYmYiOj"
             + "EzOTM4NDQ1MDQsImV4cCI6MTM5Mzg0ODQwNCwidmVyIjoiMS4wIiwidGlkIjoiMzBiYWE2NjYtOGRmOC00OGU3LTk3ZTYtNzdjZmQwOTk1OTYzIiwi"
@@ -81,4 +81,12 @@ public final class TestConfiguration {
             + "is ambiguous, multiple application identifiers found. Application identifiers: 'd09bb6da-4d46-4a16-880c-7885d8291fb9"
             + ", 216ef81d-f3b2-47d4-ad21-a4df49b56dee'.\r\nTrace ID: 428a1f68-767d-4a1c-ae8e-f710eeaf4e9b\r\nCorrelation ID: 1e0955"
             + "88-68e4-4bb4-a54e-71ad81e7f013\r\nTimestamp: 2014-03-11 20:19:02Z\"}";
+
+    public final static String TOKEN_ENDPOINT_INVALID_GRANT_ERROR_RESPONSE = "{\"error\":\"invalid_grant\"," +
+            "\"error_description\":\"AADSTS65001: description\\r\\nCorrelation ID: 3a...5a\\r\\nTimestamp:2017-07-15 02:35:05Z\"," +
+            "\"error_codes\":[50076]," +
+            "\"timestamp\":\"2017-07-15 02:35:05Z\"," +
+            "\"trace_id\":\"0788...000\"," +
+            "\"correlation_id\":\"3a...95a\"," +
+            "\"suberror\":\"basic_action\"}";
 }

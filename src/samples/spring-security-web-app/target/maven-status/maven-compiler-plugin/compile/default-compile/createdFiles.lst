@@ -1,0 +1,5 @@
+com/microsoft/azure/springsecuritywebapp/SessionConfig.class
+com/microsoft/azure/springsecuritywebapp/SpringSecurityWebAppApplication.class
+com/microsoft/azure/springsecuritywebapp/SessionConfig$BrowserAwareSameSiteAttributeSerializer.class
+com/microsoft/azure/springsecuritywebapp/AppConfiguration.class
+com/microsoft/azure/springsecuritywebapp/SecurePageController.class

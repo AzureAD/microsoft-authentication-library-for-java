@@ -9,7 +9,7 @@ import java.util.concurrent.CompletionException;
 class RemoveAccountRunnable implements Runnable {
 
     private RequestContext requestContext;
-    private ClientApplicationBase clientApplication;
+    private AbstractClientApplicationBase clientApplication;
     IAccount account;
 
     RemoveAccountRunnable(MsalRequest msalRequest, IAccount account) {

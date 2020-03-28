@@ -1,0 +1,12 @@
+com/microsoft/azure/msalwebsample/HttpClientHelper.class
+com/microsoft/azure/msalwebsample/ErrorHandlerController.class
+com/microsoft/azure/msalwebsample/JSONHelper.class
+com/microsoft/azure/msalwebsample/AuthHelper.class
+com/microsoft/azure/msalwebsample/SessionConfig.class
+com/microsoft/azure/msalwebsample/User.class
+com/microsoft/azure/msalwebsample/AuthFilter.class
+com/microsoft/azure/msalwebsample/AuthPageController.class
+com/microsoft/azure/msalwebsample/StateData.class
+com/microsoft/azure/msalwebsample/MsalWebSampleApplication.class
+com/microsoft/azure/msalwebsample/BasicConfiguration.class
+com/microsoft/azure/msalwebsample/SessionConfig$BrowserAwareSameSiteAttributeSerializer.class

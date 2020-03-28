@@ -16,10 +16,10 @@ import java.util.function.Supplier;
 
 abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationResult> {
 
-    ClientApplicationBase clientApplication;
+    AbstractClientApplicationBase clientApplication;
     MsalRequest msalRequest;
 
-    AuthenticationResultSupplier(ClientApplicationBase clientApplication, MsalRequest msalRequest) {
+    AuthenticationResultSupplier(AbstractClientApplicationBase clientApplication, MsalRequest msalRequest) {
         this.clientApplication = clientApplication;
         this.msalRequest = msalRequest;
     }

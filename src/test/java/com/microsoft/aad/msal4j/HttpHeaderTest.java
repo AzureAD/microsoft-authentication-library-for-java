@@ -21,7 +21,8 @@ public class HttpHeaderTest {
                 .applicationVersion("app-version")
                 .build();
 
-        RequestContext requestContext = new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE);
+        RequestContext requestContext = new RequestContext(
+                app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, null);
 
         HttpHeaders httpHeaders = new HttpHeaders(requestContext);
 
@@ -43,7 +44,8 @@ public class HttpHeaderTest {
                 .builder("client-id")
                 .build();
 
-        RequestContext requestContext = new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE);
+        RequestContext requestContext = new RequestContext(
+                app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, null);
 
         HttpHeaders httpHeaders = new HttpHeaders(requestContext);
 
