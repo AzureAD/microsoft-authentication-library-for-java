@@ -59,6 +59,8 @@ abstract class Authority {
             return new AADAuthority(authorityUrl);
         } else if (authorityType == AuthorityType.B2C) {
             return new B2CAuthority(authorityUrl);
+        } else if (authorityType == AuthorityType.ADFS) {
+            return new ADFSAuthority(authorityUrl);
         } else {
             throw new IllegalArgumentException("Unsupported Authority Type");
         }
@@ -76,7 +78,6 @@ abstract class Authority {
         }
 
         final String firstPath = path.substring(0, path.indexOf("/"));
-
 
         if (isB2CAuthority(firstPath)) {
             return AuthorityType.B2C;
@@ -107,20 +108,20 @@ abstract class Authority {
 
         if (path.length() == 0) {
             throw new IllegalArgumentException(
-                    "authority Uri should have at least one segment in the path (i.e. https://<host>/<path>/...)");
+                    IllegalArgumentExceptionMessages.AUTHORITY_URI_EMPTY_PATH);
         }
 
         String[] segments = path.substring(1).split("/");
 
         if (segments.length == 0) {
             throw new IllegalArgumentException(
-                    "authority Uri should not have empty path segments");
+                    IllegalArgumentExceptionMessages.AUTHORITY_URI_EMPTY_PATH_SEGMENT);
         }
 
         for (String segment : segments) {
             if (StringHelper.isBlank(segment)) {
                 throw new IllegalArgumentException(
-                        "authority Uri should not have empty path segments");
+                        IllegalArgumentExceptionMessages.AUTHORITY_URI_EMPTY_PATH_SEGMENT);
             }
         }
     }

@@ -8,6 +8,7 @@ import java.net.URL;
 
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 @Test(groups = {"checkin"})
@@ -153,38 +154,24 @@ public class AuthorityTest extends AbstractMsalTests {
         //PS Assert.assertTrue(aa.doStaticInstanceDiscovery(false));
     }
 
-    @Test
-    public void testValidateAuthorityPath() {
-        String[] authoritiesWithInvalidPath = {
-                "https://login.microsoftonline.com/",
-                "https://login.microsoftonline.com//",
-                "https://login.microsoftonline.com//tenant",
-                "https://login.microsoftonline.com/tenant//",
-                "https://login.microsoftonline.com////tenant//path1"};
 
-        for (String testAuthority : authoritiesWithInvalidPath) {
-            try {
-                URL authorityUrl = new URL(testAuthority);
-                Authority.validateAuthority(authorityUrl);
-            } catch (Exception ex) {
-                Assert.assertTrue(ex instanceof IllegalArgumentException);
-                Assert.assertEquals
-                        (ex.getMessage(), "authority Uri should not have empty path segments");
-            }
-        }
+    @DataProvider(name = "authoritiesWithEmptyPath")
+    public static Object[][] createData() {
+        return new Object[][]{{"https://login.microsoftonline.com/"},
+                {"https://login.microsoftonline.com//"},
+                {"https://login.microsoftonline.com//tenant"},
+                {"https://login.microsoftonline.com////tenant//path1"}};
+    }
 
-        authoritiesWithInvalidPath = new String[]{
-                "https://login.microsoftonline.com"};
+    @Test(dataProvider = "authoritiesWithEmptyPath", expectedExceptions = IllegalArgumentException.class,
+            expectedExceptionsMessageRegExp = IllegalArgumentExceptionMessages.AUTHORITY_URI_EMPTY_PATH_SEGMENT)
+    public void testValidateAuthorityEmptyPathSegments(String authority) throws MalformedURLException {
+        Authority.validateAuthority(new URL(authority));
+    }
 
-        for (String testAuthority : authoritiesWithInvalidPath) {
-            try {
-                URL authorityUrl = new URL(testAuthority);
-                Authority.validateAuthority(authorityUrl);
-            } catch (Exception ex) {
-                Assert.assertTrue(ex instanceof IllegalArgumentException);
-                Assert.assertEquals(ex.getMessage(),
-                        "authority Uri should have at least one segment in the path (i.e. https://<host>/<path>/...)");
-            }
-        }
+    @Test(expectedExceptions = IllegalArgumentException.class,
+            expectedExceptionsMessageRegExp = IllegalArgumentExceptionMessages.AUTHORITY_URI_EMPTY_PATH)
+    public void testValidateAuthorityEmptyPath() throws MalformedURLException {
+        Authority.validateAuthority(new URL("https://login.microsoftonline.com"));
     }
 }
