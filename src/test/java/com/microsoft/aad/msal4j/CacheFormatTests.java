@@ -30,6 +30,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
+import static com.microsoft.aad.msal4j.Constants.POINT_DELIMITER;
+
 public class CacheFormatTests extends AbstractMsalTests {
     String TOKEN_RESPONSE = "/token_response.json";
     String TOKEN_RESPONSE_ID_TOKEN = "/token_response_id_token.json";
@@ -306,7 +308,9 @@ public class CacheFormatTests extends AbstractMsalTests {
 
         String encodedIdToken = new String(Base64.getEncoder().encode(tokenResponseIdToken.getBytes()), "UTF-8");
 
-        encodedIdToken = getJWTHeaderBase64EncodedJson() + "." + encodedIdToken + "." + getEmptyBase64EncodedJson();
+        encodedIdToken = getJWTHeaderBase64EncodedJson() + POINT_DELIMITER +
+                encodedIdToken + POINT_DELIMITER +
+                getEmptyBase64EncodedJson();
 
         return encodedIdToken;
     }

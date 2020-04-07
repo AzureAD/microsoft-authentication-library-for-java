@@ -9,6 +9,8 @@ import com.nimbusds.oauth2.sdk.token.RefreshToken;
 import java.util.Set;
 import java.util.TreeSet;
 
+import static com.microsoft.aad.msal4j.Constants.POINT_DELIMITER;
+
 class RefreshTokenRequest extends MsalRequest {
 
     private SilentRequest parentSilentRequest;
@@ -37,14 +39,12 @@ class RefreshTokenRequest extends MsalRequest {
     }
 
     private String getRefreshTokenRequestFullThumbprint() {
-        String DELIMITER = ".";
-
         StringBuilder sb = new StringBuilder();
-        sb.append(application().clientId() + DELIMITER);
-        sb.append(application().authority() + DELIMITER);
+        sb.append(application().clientId() + POINT_DELIMITER);
+        sb.append(application().authority() + POINT_DELIMITER);
 
         Set<String> sortedScopes = new TreeSet<>(parameters.scopes());
-        sb.append(String.join(" ", sortedScopes) + DELIMITER);
+        sb.append(String.join(" ", sortedScopes) + POINT_DELIMITER);
 
         return StringHelper.createSha256Hash(sb.toString());
     }

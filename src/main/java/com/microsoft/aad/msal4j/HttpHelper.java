@@ -8,24 +8,26 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+import static com.microsoft.aad.msal4j.Constants.POINT_DELIMITER;
+
 class HttpHelper {
 
     private final static Logger log = LoggerFactory.getLogger(HttpHelper.class);
     public static final String RETRY_AFTER_HEADER = "Retry-After";
+    public static final int RETRY_NUM = 2;
+    public static final int RETRY_DELAY_MS = 1000;
 
     private static String getRequestThumbprint(RequestContext requestContext) {
-        String DELIMITER = ".";
-
         StringBuilder sb = new StringBuilder();
-        sb.append(requestContext.clientId() + DELIMITER);
-        sb.append(requestContext.authority() + DELIMITER);
+        sb.append(requestContext.clientId() + POINT_DELIMITER);
+        sb.append(requestContext.authority() + POINT_DELIMITER);
 
         IApiParameters apiParameters = requestContext.apiParameters();
 
         if (apiParameters instanceof SilentParameters) {
             IAccount account = ((SilentParameters) apiParameters).account();
             if (account != null) {
-                sb.append(account.homeAccountId() + DELIMITER);
+                sb.append(account.homeAccountId() + POINT_DELIMITER);
             }
         }
 
@@ -35,13 +37,17 @@ class HttpHelper {
         return StringHelper.createSha256Hash(sb.toString());
     }
 
+    static private boolean isRetriable(IHttpResponse httpResponse) {
+        return httpResponse.statusCode() >= 500 && httpResponse.statusCode() < 600;
+    }
+
     static IHttpResponse executeHttpRequest(HttpRequest httpRequest,
                                             RequestContext requestContext,
                                             ServiceBundle serviceBundle) {
         checkForThrottling(requestContext);
 
         HttpEvent httpEvent = new HttpEvent(); // for tracking http telemetry
-        IHttpResponse httpResponse;
+        IHttpResponse httpResponse = null;
 
         try (TelemetryHelper telemetryHelper = serviceBundle.getTelemetryManager().createTelemetryHelper(
                 requestContext.telemetryRequestId(),
@@ -53,7 +59,9 @@ class HttpHelper {
 
             try {
                 IHttpClient httpClient = serviceBundle.getHttpClient();
-                httpResponse = httpClient.send(httpRequest);
+
+                httpResponse = executeHttpRequestWithRetries(httpRequest, httpClient);
+
             } catch (Exception e) {
                 httpEvent.setOauthErrorCode(AuthenticationErrorCode.UNKNOWN);
                 throw new MsalClientException(e);
@@ -67,6 +75,19 @@ class HttpHelper {
         }
         processThrottlingInstructions(httpResponse, requestContext);
 
+        return httpResponse;
+    }
+
+    private static IHttpResponse executeHttpRequestWithRetries(HttpRequest httpRequest, IHttpClient httpClient)
+            throws Exception {
+        IHttpResponse httpResponse = null;
+        for (int i = 0; i < RETRY_NUM; i++) {
+            httpResponse = httpClient.send(httpRequest);
+            if (!isRetriable(httpResponse)) {
+                break;
+            }
+            Thread.sleep(RETRY_DELAY_MS);
+        }
         return httpResponse;
     }
 
