@@ -235,7 +235,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         return serviceBundle;
     }
 
-    protected static String canonicalizeUrl(String authority) {
+    protected static String enforceTrailingSlash(String authority) {
         authority = authority.toLowerCase();
 
         if (!authority.endsWith("/")) {
@@ -288,14 +288,17 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
          * @throws MalformedURLException if val is malformed URL
          */
         public T authority(String val) throws MalformedURLException {
-            authority = canonicalizeUrl(val);
+            authority = enforceTrailingSlash(val);
 
-            switch (Authority.detectAuthorityType(new URL(authority))) {
+            URL authorityURL = new URL(authority);
+            Authority.validateAuthority(authorityURL);
+
+            switch (Authority.detectAuthorityType(authorityURL)) {
                 case AAD:
-                    authenticationAuthority = new AADAuthority(new URL(authority));
+                    authenticationAuthority = new AADAuthority(authorityURL);
                     break;
                 case ADFS:
-                    authenticationAuthority = new ADFSAuthority(new URL(authority));
+                    authenticationAuthority = new ADFSAuthority(authorityURL);
                     break;
                 default:
                     throw new IllegalArgumentException("Unsupported authority type.");
@@ -305,12 +308,15 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         }
 
         public T b2cAuthority(String val) throws MalformedURLException{
-            authority = canonicalizeUrl(val);
+            authority = enforceTrailingSlash(val);
 
-            if(Authority.detectAuthorityType(new URL(authority)) != AuthorityType.B2C){
+            URL authorityURL = new URL(authority);
+            Authority.validateAuthority(authorityURL);
+
+            if(Authority.detectAuthorityType(authorityURL) != AuthorityType.B2C){
                 throw new IllegalArgumentException("Unsupported authority type. Please use B2C authority");
             }
-            authenticationAuthority = new B2CAuthority(new URL(authority));
+            authenticationAuthority = new B2CAuthority(authorityURL);
 
             validateAuthority = false;
             return self();
