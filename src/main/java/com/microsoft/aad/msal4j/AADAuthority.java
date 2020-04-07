@@ -26,8 +26,7 @@ class AADAuthority extends Authority {
     String deviceCodeEndpoint;
 
     AADAuthority(final URL authorityUrl) {
-        super(authorityUrl);
-        validateAuthorityUrl();
+        super(authorityUrl, AuthorityType.AAD);
         setAuthorityProperties();
         this.authority = String.format(AAD_AUTHORITY_FORMAT, host, tenant);
     }

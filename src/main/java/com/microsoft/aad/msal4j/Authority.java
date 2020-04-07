@@ -14,7 +14,7 @@ import java.net.URL;
  * Represents Authentication Authority responsible for issuing access tokens.
  */
 
-@Accessors(fluent=true)
+@Accessors(fluent = true)
 @Getter(AccessLevel.PACKAGE)
 abstract class Authority {
 
@@ -40,9 +40,9 @@ abstract class Authority {
         return new URL(tokenEndpoint);
     }
 
-    Authority(URL canonicalAuthorityUrl){
+    Authority(URL canonicalAuthorityUrl, AuthorityType authorityType) {
         this.canonicalAuthorityUrl = canonicalAuthorityUrl;
-        this.authorityType = detectAuthorityType(canonicalAuthorityUrl);
+        this.authorityType = authorityType;
         setCommonAuthorityProperties();
     }
 
@@ -51,15 +51,19 @@ abstract class Authority {
         this.host = canonicalAuthorityUrl.getAuthority().toLowerCase();
     }
 
-    static Authority createAuthority(URL authorityUrl){
-       AuthorityType authorityType = detectAuthorityType(authorityUrl);
-       if(authorityType == AuthorityType.AAD){
-           return new AADAuthority(authorityUrl);
-       } else if(authorityType == AuthorityType.B2C) {
-           return new B2CAuthority(authorityUrl);
-       } else {
-           throw new IllegalArgumentException("Unsupported Authority Type");
-       }
+    static Authority createAuthority(URL authorityUrl) {
+        validateAuthority(authorityUrl);
+
+        AuthorityType authorityType = detectAuthorityType(authorityUrl);
+        if (authorityType == AuthorityType.AAD) {
+            return new AADAuthority(authorityUrl);
+        } else if (authorityType == AuthorityType.B2C) {
+            return new B2CAuthority(authorityUrl);
+        } else if (authorityType == AuthorityType.ADFS) {
+            return new ADFSAuthority(authorityUrl);
+        } else {
+            throw new IllegalArgumentException("Unsupported Authority Type");
+        }
     }
 
     static AuthorityType detectAuthorityType(URL authorityUrl) {
@@ -75,36 +79,56 @@ abstract class Authority {
 
         final String firstPath = path.substring(0, path.indexOf("/"));
 
-
-        if(isB2CAuthority(firstPath)){
+        if (isB2CAuthority(firstPath)) {
             return AuthorityType.B2C;
-        } else if(isAdfsAuthority(firstPath)) {
+        } else if (isAdfsAuthority(firstPath)) {
             return AuthorityType.ADFS;
         } else {
             return AuthorityType.AAD;
         }
     }
 
-    void validateAuthorityUrl() {
-        if (!this.canonicalAuthorityUrl.getProtocol().equalsIgnoreCase("https")) {
+    static void validateAuthority(URL authorityUrl) {
+        if (!authorityUrl.getProtocol().equalsIgnoreCase("https")) {
             throw new IllegalArgumentException(
                     "authority should use the 'https' scheme");
         }
 
-        if (this.canonicalAuthorityUrl.toString().contains("#")) {
+        if (authorityUrl.toString().contains("#")) {
             throw new IllegalArgumentException(
                     "authority is invalid format (contains fragment)");
         }
 
-        if (!StringHelper.isBlank(this.canonicalAuthorityUrl.getQuery())) {
+        if (!StringHelper.isBlank(authorityUrl.getQuery())) {
             throw new IllegalArgumentException(
                     "authority cannot contain query parameters");
+        }
+
+        final String path = authorityUrl.getPath();
+
+        if (path.length() == 0) {
+            throw new IllegalArgumentException(
+                    IllegalArgumentExceptionMessages.AUTHORITY_URI_EMPTY_PATH);
+        }
+
+        String[] segments = path.substring(1).split("/");
+
+        if (segments.length == 0) {
+            throw new IllegalArgumentException(
+                    IllegalArgumentExceptionMessages.AUTHORITY_URI_EMPTY_PATH_SEGMENT);
+        }
+
+        for (String segment : segments) {
+            if (StringHelper.isBlank(segment)) {
+                throw new IllegalArgumentException(
+                        IllegalArgumentExceptionMessages.AUTHORITY_URI_EMPTY_PATH_SEGMENT);
+            }
         }
     }
 
     static String getTenant(URL authorityUrl, AuthorityType authorityType) {
         String[] segments = authorityUrl.getPath().substring(1).split("/");
-        if(authorityType == AuthorityType.B2C){
+        if (authorityType == AuthorityType.B2C) {
             return segments[1];
         }
         return segments[0];
@@ -118,7 +142,7 @@ abstract class Authority {
         return firstPath.compareToIgnoreCase(ADFS_PATH_SEGMENT) == 0;
     }
 
-    private static boolean isB2CAuthority(final String firstPath){
+    private static boolean isB2CAuthority(final String firstPath) {
         return firstPath.compareToIgnoreCase(B2C_PATH_SEGMENT) == 0;
     }
 }
