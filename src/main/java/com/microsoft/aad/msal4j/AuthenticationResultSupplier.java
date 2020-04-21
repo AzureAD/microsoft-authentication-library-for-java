@@ -130,8 +130,9 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
 
      private void logException(Exception ex) {
 
-         String logMessage = LogHelper.createMessage("Execution of " + this.getClass()
-                 + " failed.", msalRequest.headers().getHeaderCorrelationIdValue());
+         String logMessage = LogHelper.createMessage(
+                 "Execution of " + this.getClass() + " failed.",
+                 msalRequest.headers().getHeaderCorrelationIdValue());
 
          if (ex instanceof MsalClientException) {
              MsalClientException exception = (MsalClientException) ex;
@@ -139,9 +140,9 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
                  clientApplication.log.debug(logMessage, ex);
                  return;
              }
-
-             clientApplication.log.error(logMessage, ex);
          }
+
+         clientApplication.log.error(logMessage, ex);
      }
 
     private ApiEvent initializeApiEvent(MsalRequest msalRequest){
