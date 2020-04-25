@@ -13,7 +13,10 @@ import javax.net.ssl.SSLSocketFactory;
 import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
@@ -28,7 +31,6 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 abstract class ClientApplicationBase implements IClientApplicationBase {
 
     protected Logger log;
-    protected ClientAuthentication clientAuthentication;
     protected Authority authenticationAuthority;
     private ServiceBundle serviceBundle;
 
@@ -79,6 +81,8 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
     @Accessors(fluent = true)
     @Getter
     private AadInstanceDiscoveryResponse aadAadInstanceDiscoveryResponse;
+
+    protected abstract ClientAuthentication clientAuthentication();
 
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(AuthorizationCodeParameters parameters) {
