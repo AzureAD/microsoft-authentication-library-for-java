@@ -38,22 +38,24 @@ class RefreshTokenRequest extends MsalRequest {
         return new OAuthAuthorizationGrant(refreshTokenGrant, parameters.scopes());
     }
 
-    private String getRefreshTokenRequestFullThumbprint() {
+    String getFullThumbprint() {
         StringBuilder sb = new StringBuilder();
+
         sb.append(application().clientId() + POINT_DELIMITER);
-        sb.append(application().authority() + POINT_DELIMITER);
+
+        String authority = (parentSilentRequest != null && parentSilentRequest.requestAuthority() != null)
+                ? parentSilentRequest.requestAuthority().authority() : application().authority();
+        sb.append(authority + POINT_DELIMITER);
+
+        if(parentSilentRequest != null && parentSilentRequest.parameters().account() != null){
+            sb.append(parentSilentRequest.parameters().account().homeAccountId() + POINT_DELIMITER);
+        }
+
+        sb.append(parameters.refreshToken() + POINT_DELIMITER);
 
         Set<String> sortedScopes = new TreeSet<>(parameters.scopes());
         sb.append(String.join(" ", sortedScopes) + POINT_DELIMITER);
 
         return StringHelper.createSha256Hash(sb.toString());
-    }
-
-    String getFullThumbprint() {
-        if (parentSilentRequest != null) {
-            return parentSilentRequest.getFullThumbprint();
-        } else {
-            return getRefreshTokenRequestFullThumbprint();
-        }
     }
 }

@@ -37,8 +37,9 @@ class HttpHelper {
         return StringHelper.createSha256Hash(sb.toString());
     }
 
-    static private boolean isRetriable(IHttpResponse httpResponse) {
-        return httpResponse.statusCode() >= 500 && httpResponse.statusCode() < 600;
+    static private boolean isRetryable(IHttpResponse httpResponse) {
+        return httpResponse.statusCode() >= 500 && httpResponse.statusCode() < 600 &&
+                getRetryAfterHeader(httpResponse) == null;
     }
 
     static IHttpResponse executeHttpRequest(HttpRequest httpRequest,
@@ -83,7 +84,7 @@ class HttpHelper {
         IHttpResponse httpResponse = null;
         for (int i = 0; i < RETRY_NUM; i++) {
             httpResponse = httpClient.send(httpRequest);
-            if (!isRetriable(httpResponse)) {
+            if (!isRetryable(httpResponse)) {
                 break;
             }
             Thread.sleep(RETRY_DELAY_MS);
@@ -129,9 +130,15 @@ class HttpHelper {
             headers.putAll(httpResponse.headers());
 
             if (headers.containsKey(RETRY_AFTER_HEADER) && headers.get(RETRY_AFTER_HEADER).size() == 1) {
-                int headerValue = Integer.parseInt(headers.get(RETRY_AFTER_HEADER).get(0));
-                if (headerValue > 0 && headerValue <= ThrottlingCache.MAX_THROTTLING_TIME_SEC) {
-                    return headerValue;
+                try {
+                    int headerValue = Integer.parseInt(headers.get(RETRY_AFTER_HEADER).get(0));
+
+                    if (headerValue > 0 && headerValue <= ThrottlingCache.MAX_THROTTLING_TIME_SEC) {
+                        return headerValue;
+                    }
+                }
+                catch (NumberFormatException ex){
+                    log.warn("Failed to parse value of Retry-After header - NumberFormatException");
                 }
             }
         }

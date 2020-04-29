@@ -8,10 +8,6 @@ import lombok.experimental.Accessors;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Set;
-import java.util.TreeSet;
-
-import static com.microsoft.aad.msal4j.Constants.POINT_DELIMITER;
 
 @Accessors(fluent = true)
 @Getter
@@ -34,19 +30,5 @@ class SilentRequest extends MsalRequest {
 
         application.getServiceBundle().getServerSideTelemetry().getCurrentRequest().forceRefresh(
                 parameters.forceRefresh());
-    }
-
-    String getFullThumbprint(){
-        StringBuilder sb = new StringBuilder();
-        sb.append(application().clientId() + POINT_DELIMITER);
-        sb.append(application().authority() + POINT_DELIMITER);
-
-        Set<String> sortedScopes = new TreeSet<>(parameters.scopes());
-        sb.append(String.join(" ", sortedScopes) + POINT_DELIMITER);
-
-        sb.append(parameters.account().homeAccountId() + POINT_DELIMITER);
-        sb.append(parameters.authorityUrl());
-
-        return StringHelper.createSha256Hash(sb.toString());
     }
 }

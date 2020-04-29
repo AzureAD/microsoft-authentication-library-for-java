@@ -14,7 +14,7 @@ class MsalServiceExceptionFactory {
     private MsalServiceExceptionFactory() {
     }
 
-    static MsalServiceException fromHttpResponse(HTTPResponse httpResponse, boolean isRefreshTokenGrantRequest) {
+    static MsalServiceException fromHttpResponse(HTTPResponse httpResponse) {
 
         String responseContent = httpResponse.getContent();
         if (responseContent == null || StringHelper.isBlank(responseContent)) {
@@ -30,8 +30,7 @@ class MsalServiceExceptionFactory {
         errorResponse.statusCode(httpResponse.getStatusCode());
         errorResponse.statusMessage(httpResponse.getStatusMessage());
 
-        if (isRefreshTokenGrantRequest &&
-                errorResponse.error() != null &&
+        if (errorResponse.error() != null &&
                 errorResponse.error().equalsIgnoreCase(AuthenticationErrorCode.INVALID_GRANT)) {
 
             if (isInteractionRequired(errorResponse.subError)) {

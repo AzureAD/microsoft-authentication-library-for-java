@@ -41,8 +41,7 @@ class TokenRequestExecutor {
 
         OAuthHttpRequest oAuthHttpRequest = createOauthHttpRequest();
         HTTPResponse oauthHttpResponse = oAuthHttpRequest.send();
-        return createAuthenticationResultFromOauthHttpResponse(oauthHttpResponse,
-                getMsalRequest() instanceof RefreshTokenRequest);
+        return createAuthenticationResultFromOauthHttpResponse(oauthHttpResponse);
     }
 
     OAuthHttpRequest createOauthHttpRequest() throws SerializeException, MalformedURLException {
@@ -69,7 +68,7 @@ class TokenRequestExecutor {
     }
 
     private AuthenticationResult createAuthenticationResultFromOauthHttpResponse(
-            HTTPResponse oauthHttpResponse, boolean isRefreshTokenGrantRequest) throws ParseException{
+            HTTPResponse oauthHttpResponse) throws ParseException{
         AuthenticationResult result;
 
         if (oauthHttpResponse.getStatusCode() == HTTPResponse.SC_OK) {
@@ -128,7 +127,7 @@ class TokenRequestExecutor {
                         serviceBundle.getServerSideTelemetry().previousRequestInProgress);
             }
 
-            throw MsalServiceExceptionFactory.fromHttpResponse(oauthHttpResponse, isRefreshTokenGrantRequest);
+            throw MsalServiceExceptionFactory.fromHttpResponse(oauthHttpResponse);
         }
         return result;
     }
