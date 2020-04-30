@@ -90,4 +90,9 @@ public class AuthenticationErrorCode {
      * https://aka.ms/msal4j-interactive-request
      */
     public final static String DESKTOP_BROWSER_NOT_SUPPORTED = "desktop_browser_not_supported";
+
+    /**
+     * A JsonProcessingException was thrown, indicating the JSON provided to MSAL is of invalid format.
+     */
+    public final static String INVALID_JSON = "invalid_json";
 }

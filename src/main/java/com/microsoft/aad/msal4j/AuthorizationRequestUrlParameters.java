@@ -72,8 +72,18 @@ public class AuthorizationRequestUrlParameters {
 
         // Optional parameters
         if(builder.claims != null){
-            String claimsParam = String.join(" ", builder.claims);
+            String claimsParam = JsonHelper.mergeJSONString(builder.claims);
             requestParameters.put("claims", Collections.singletonList(claimsParam));
+        }
+
+        if(builder.clientCapabilities != null){
+            String capabilitiesParam = JsonHelper.mergeJSONString(builder.clientCapabilities);
+            if (requestParameters.containsKey("claims")) {
+                String mergedClaimsAndCapabilities = JsonHelper.mergeJSONString(String.valueOf(requestParameters.get("claims").get(0)), capabilitiesParam);
+                requestParameters.replace("claims", Collections.singletonList(mergedClaimsAndCapabilities));
+            } else {
+                requestParameters.put("claims", Collections.singletonList(capabilitiesParam));
+            }
         }
 
         if(builder.codeChallenge != null){
@@ -147,6 +157,7 @@ public class AuthorizationRequestUrlParameters {
         private String redirectUri;
         private Set<String> scopes;
         private Set<String> claims;
+        private Set<String> clientCapabilities;
         private String codeChallenge;
         private String codeChallengeMethod;
         private String state;
@@ -189,6 +200,15 @@ public class AuthorizationRequestUrlParameters {
          */
         public Builder claims(Set<String> val){
             this.claims = val;
+            return self();
+        }
+
+        /**
+         * Allows the client to indicate to the token service what policies or features it is
+         * capable of handling
+         */
+        public Builder clientCapabilities(Set<String> val){
+            this.clientCapabilities = val;
             return self();
         }
 
