@@ -92,6 +92,8 @@ public class AuthorizationRequestUrlParametersTest {
                         .correlationId("corr_id")
                         .loginHint("hint")
                         .domainHint("domain_hint")
+                        .claims(Collections.singleton("{\"userinfo\":{\"given_name\":{\"essential\":true},\"nickname\":null,\"email\":{\"essential\":true},\"email_verified\":{\"essential\":true},\"picture\":null,\"http://example.info/claims/groups\":null}}"))
+                        .clientCapabilities(Collections.singleton("{\"access_token\":{\"xms_cc\":{\"values\":[]}}}"))
                         .prompt(Prompt.SELECT_ACCOUNT)
                         .build();
 
@@ -121,5 +123,6 @@ public class AuthorizationRequestUrlParametersTest {
         Assert.assertEquals(queryParameters.get("correlation_id"), "corr_id");
         Assert.assertEquals(queryParameters.get("login_hint"), "hint");
         Assert.assertEquals(queryParameters.get("domain_hint"), "domain_hint");
+        Assert.assertEquals(queryParameters.get("claims"), "{\"userinfo\":{\"given_name\":{\"essential\":true},\"nickname\":null,\"email\":{\"essential\":true},\"email_verified\":{\"essential\":true},\"picture\":null,\"http://example.info/claims/groups\":null},\"access_token\":{\"xms_cc\":{\"values\":[]}}}");
     }
 }

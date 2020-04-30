@@ -12,6 +12,7 @@ import org.testng.annotations.Test;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -28,6 +29,14 @@ public class AuthorizationCodeIT extends SeleniumTest {
 
         User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
         assertAcquireTokenAAD(user);
+    }
+
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenWithAuthorizationCode_ManagedUserWithClaims(String environment){
+        cfg = new Config(environment);
+
+        User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
+        assertAcquireTokenAADWithClaims(user);
     }
 
     @Test
@@ -144,6 +153,30 @@ public class AuthorizationCodeIT extends SeleniumTest {
         }
 
         String authCode = acquireAuthorizationCodeAutomated(user, pca);
+        IAuthenticationResult result = acquireTokenAuthorizationCodeFlow(
+                pca,
+                authCode,
+                Collections.singleton(cfg.graphDefaultScope()));
+
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.accessToken());
+        Assert.assertNotNull(result.idToken());
+        Assert.assertEquals(user.getUpn(), result.account().username());
+    }
+
+    private void assertAcquireTokenAADWithClaims(User user){
+
+        PublicClientApplication pca;
+        try {
+            pca = PublicClientApplication.builder(
+                    user.getAppId()).
+                    authority(cfg.organizationsAuthority()).
+                    build();
+        } catch(MalformedURLException ex){
+            throw new RuntimeException(ex.getMessage());
+        }
+
+        String authCode = acquireAuthorizationCodeAutomatedWithClaims(user, pca);
         IAuthenticationResult result = acquireTokenAuthorizationCodeFlow(
                 pca,
                 authCode,
@@ -276,6 +309,82 @@ public class AuthorizationCodeIT extends SeleniumTest {
                 AuthorizationRequestUrlParameters
                         .builder(TestConstants.LOCALHOST + httpListener.port(),
                                 Collections.singleton(scope))
+                        .build();
+
+        return app.getAuthorizationRequestUrl(parameters).toString();
+    }
+
+    private String acquireAuthorizationCodeAutomatedWithClaims(
+            User user,
+            ClientApplicationBase app){
+
+        BlockingQueue<AuthorizationResult> authorizationCodeQueue = new LinkedBlockingQueue<>();
+
+        AuthorizationResponseHandler authorizationResponseHandler = new AuthorizationResponseHandler(
+                authorizationCodeQueue,
+                SystemBrowserOptions.builder().build());
+
+        httpListener = new HttpListener();
+        httpListener.startListener(8080, authorizationResponseHandler);
+
+        AuthorizationResult result = null;
+        try {
+            String url = buildAuthenticationCodeURLWithClaims(app);
+            seleniumDriver.navigate().to(url);
+            runSeleniumAutomatedLogin(user, app);
+
+            long expirationTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) + 120;
+
+            while(result == null &&
+                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) < expirationTime) {
+
+                result = authorizationCodeQueue.poll(100, TimeUnit.MILLISECONDS);
+            }
+        } catch(Exception e){
+            throw new MsalClientException(e);
+        } finally {
+            if(httpListener != null){
+                httpListener.stopListener();
+            }
+        }
+
+        if (result == null || StringHelper.isBlank(result.code())) {
+            throw new MsalClientException("No Authorization code was returned from the server",
+                    AuthenticationErrorCode.INVALID_AUTHORIZATION_RESULT);
+        }
+        return result.code();
+    }
+
+    private String buildAuthenticationCodeURLWithClaims(ClientApplicationBase app) {
+        String scope;
+        Set<String> claims = new HashSet<>();
+
+        //Two separate claims used to test merging claim JSONs
+        claims.add("{\"userinfo\":{\"given_name\":{\"essential\":true},\"nickname\":null,\"email\":{\"essential\":true},\"email_verified\":{\"essential\":true},\"picture\":null,\"http://example.info/claims/groups\":null}}");
+        claims.add("{\"id_token\":{\"auth_time\":{\"essential\":true}}}");
+
+        //Client Capabilities with no values, as client capabilities were not yet supported when this test was written
+        String clientCapabilities = "{\"access_token\":{\"xms_cc\":{\"values\":[]}}}";
+
+        AuthorityType authorityType= app.authenticationAuthority.authorityType;
+        if(authorityType == AuthorityType.AAD){
+            scope = TestConstants.GRAPH_DEFAULT_SCOPE;
+        } else if (authorityType == AuthorityType.B2C) {
+            scope = TestConstants.B2C_LAB_SCOPE;
+        }
+        else if (authorityType == AuthorityType.ADFS){
+            scope = TestConstants.ADFS_SCOPE;
+        }
+        else{
+            throw new RuntimeException("Authority type not recognized");
+        }
+
+        AuthorizationRequestUrlParameters parameters =
+                AuthorizationRequestUrlParameters
+                        .builder(TestConstants.LOCALHOST + httpListener.port(),
+                                Collections.singleton(scope))
+                        .claims(claims)
+                        .clientCapabilities(Collections.singleton(clientCapabilities))
                         .build();
 
         return app.getAuthorizationRequestUrl(parameters).toString();
