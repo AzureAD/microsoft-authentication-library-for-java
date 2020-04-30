@@ -53,11 +53,13 @@ class JsonHelper {
      * Merges set of given JSON strings into one Jackson JsonNode object, which is returned as a String
      */
     static String mergeJSONString(Set<String> jsonStrings) {
-        JsonNode mainJson, addJson;
+        JsonNode mainJson = null, addJson;
 
         Iterator<String> jsons = jsonStrings.iterator();
         try {
-            mainJson = mapper.readTree(jsons.next());
+            if (jsons.hasNext()) {
+                mainJson = mapper.readTree(jsons.next());
+            }
         } catch (JsonProcessingException e) {
             throw new MsalClientException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
         }
@@ -83,8 +85,8 @@ class JsonHelper {
         }
 
         Iterator<String> fieldNames = addNode.fieldNames();
-
         while (fieldNames.hasNext()) {
+
             String fieldName = fieldNames.next();
             JsonNode jsonNode = mainNode.get(fieldName);
 
