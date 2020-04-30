@@ -7,7 +7,7 @@ import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import org.easymock.EasyMock;
 import org.powermock.api.easymock.PowerMock;
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.net.URI;
@@ -18,9 +18,9 @@ import static org.easymock.EasyMock.anyObject;
 
 public class RequestThrottlingTest extends AbstractMsalTests {
 
-    public final Integer THROTTLE_IN_SEC = 2;
+    public final Integer THROTTLE_IN_SEC = 1;
 
-    @BeforeClass
+    @BeforeMethod
     void init(){
         ThrottlingCache.DEFAULT_THROTTLING_TIME_SEC = THROTTLE_IN_SEC;
     }
@@ -60,7 +60,9 @@ public class RequestThrottlingTest extends AbstractMsalTests {
     private enum TokenEndpointResponseType {
         RETRY_AFTER_HEADER,
         STATUS_CODE_429,
-        STATUS_CODE_500
+        STATUS_CODE_429_RETRY_AFTER_HEADER,
+        STATUS_CODE_500,
+        STATUS_CODE_500_RETRY_AFTER_HEADER
     }
 
     private PublicClientApplication getClientApplicationMockedWithOneTokenEndpointResponse(
@@ -82,15 +84,31 @@ public class RequestThrottlingTest extends AbstractMsalTests {
                 httpResponse.statusCode(429);
                 httpResponse.body(TestConfiguration.TOKEN_ENDPOINT_INVALID_GRANT_ERROR_RESPONSE);
                 break;
+            case STATUS_CODE_429_RETRY_AFTER_HEADER:
+                httpResponse.statusCode(429);
+                httpResponse.body(TestConfiguration.TOKEN_ENDPOINT_INVALID_GRANT_ERROR_RESPONSE);
+                headers.put("Retry-After", Arrays.asList(THROTTLE_IN_SEC.toString()));
+                break;
             case STATUS_CODE_500:
                 httpResponse.statusCode(500);
                 httpResponse.body(TestConfiguration.TOKEN_ENDPOINT_INVALID_GRANT_ERROR_RESPONSE);
+                break;
+            case STATUS_CODE_500_RETRY_AFTER_HEADER:
+                httpResponse.statusCode(500);
+                httpResponse.body(TestConfiguration.TOKEN_ENDPOINT_INVALID_GRANT_ERROR_RESPONSE);
+                headers.put("Retry-After", Arrays.asList(THROTTLE_IN_SEC.toString()));
                 break;
         }
         headers.put("Content-Type", Arrays.asList("application/json"));
         httpResponse.addHeaders(headers);
 
-        EasyMock.expect(httpClientMock.send(anyObject())).andReturn(httpResponse).times(1);
+        if(responseType == TokenEndpointResponseType.STATUS_CODE_500){
+            // expected to called two times due to retry logic
+            EasyMock.expect(httpClientMock.send(anyObject())).andReturn(httpResponse).times(2);
+        }
+        else{
+            EasyMock.expect(httpClientMock.send(anyObject())).andReturn(httpResponse).times(1);
+        }
 
         PublicClientApplication app = getPublicClientApp(httpClientMock);
 
@@ -152,17 +170,31 @@ public class RequestThrottlingTest extends AbstractMsalTests {
     }
 
     @Test
-    public void STSResponseContainsRetryAfterHeader_repeatedRequestsThrottled() throws Exception {
+    public void STSResponseContains_RetryAfterHeader() throws Exception {
         throttlingTest(TokenEndpointResponseType.RETRY_AFTER_HEADER);
     }
 
     @Test
-    public void STSResponseContainsStatusCode429_repeatedRequestsThrottled() throws Exception {
+    public void STSResponseContains_StatusCode429() throws Exception {
         throttlingTest(TokenEndpointResponseType.STATUS_CODE_429);
     }
 
     @Test
-    public void STSResponseContainsStatusCode500_repeatedRequestsThrottled() throws Exception  {
-        throttlingTest(TokenEndpointResponseType.STATUS_CODE_429);
+    public void STSResponseContains_StatusCode429_RetryAfterHeader() throws Exception {
+        // using big value for DEFAULT_THROTTLING_TIME_SEC to make sure that RetryAfterHeader value used instead
+        ThrottlingCache.DEFAULT_THROTTLING_TIME_SEC = 1000;
+        throttlingTest(TokenEndpointResponseType.STATUS_CODE_429_RETRY_AFTER_HEADER);
+    }
+
+    @Test
+    public void STSResponseContains_StatusCode500() throws Exception  {
+        throttlingTest(TokenEndpointResponseType.STATUS_CODE_500);
+    }
+
+    @Test
+    public void STSResponseContains_StatusCode500_RetryAfterHeader() throws Exception  {
+        // using big value for DEFAULT_THROTTLING_TIME_SEC to make sure that RetryAfterHeader value used instead
+        ThrottlingCache.DEFAULT_THROTTLING_TIME_SEC = 1000;
+        throttlingTest(TokenEndpointResponseType.STATUS_CODE_500_RETRY_AFTER_HEADER);
     }
 }

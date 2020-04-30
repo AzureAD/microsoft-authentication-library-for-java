@@ -31,7 +31,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
 
         if (IsUiRequiredCacheSupported()) {
             MsalInteractionRequiredException cachedEx =
-                    UiRequiredCache.getCachedInteractionRequiredException(
+                    InteractionRequiredCache.getCachedInteractionRequiredException(
                             ((RefreshTokenRequest) msalRequest).getFullThumbprint());
             if (cachedEx != null) {
                 throw cachedEx;
@@ -63,7 +63,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
             return clientApplication.acquireTokenCommon(msalRequest, requestAuthority);
         } catch (MsalInteractionRequiredException ex) {
             if (IsUiRequiredCacheSupported()) {
-                UiRequiredCache.set(((RefreshTokenRequest) msalRequest).getFullThumbprint(), ex);
+                InteractionRequiredCache.set(((RefreshTokenRequest) msalRequest).getFullThumbprint(), ex);
             }
             throw ex;
         }

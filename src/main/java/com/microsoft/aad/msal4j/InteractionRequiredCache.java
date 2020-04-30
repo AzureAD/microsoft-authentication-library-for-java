@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Cache to hold MsalInteractionRequiredException responses for Silent and RefreshToken API requests
  */
-class UiRequiredCache {
+class InteractionRequiredCache {
 
     static int DEFAULT_CACHING_TIME_SEC = 120;
     static final int CACHE_SIZE_LIMIT_TO_TRIGGER_EXPIRED_ENTITIES_REMOVAL = 10;
