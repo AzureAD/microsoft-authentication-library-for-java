@@ -10,10 +10,10 @@ import java.util.function.Supplier;
 
 class AccountsSupplier implements Supplier<Set<IAccount>> {
 
-    ClientApplicationBase clientApplication;
+    AbstractClientApplicationBase clientApplication;
     MsalRequest msalRequest;
 
-    AccountsSupplier(ClientApplicationBase clientApplication, MsalRequest msalRequest) {
+    AccountsSupplier(AbstractClientApplicationBase clientApplication, MsalRequest msalRequest) {
 
         this.clientApplication = clientApplication;
         this.msalRequest = msalRequest;

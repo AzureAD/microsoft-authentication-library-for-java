@@ -7,6 +7,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -72,7 +73,7 @@ public class MsalServiceException extends MsalException {
         this.subError = errorResponse.subError();
         this.correlationId = errorResponse.correlation_id();
         this.claims = errorResponse.claims();
-        this.headers =  httpHeaders;
+        this.headers = Collections.unmodifiableMap(httpHeaders);
     }
 
     /**

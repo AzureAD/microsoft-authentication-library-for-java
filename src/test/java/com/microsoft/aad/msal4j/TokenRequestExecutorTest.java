@@ -106,17 +106,16 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
     }
 
     private TokenRequestExecutor createMockedTokenRequest() throws URISyntaxException, MalformedURLException {
-        PublicClientApplication app = PublicClientApplication.builder("id").correlationId("corr_id").build();
+        PublicClientApplication app = PublicClientApplication.builder("id")
+                .correlationId("corr_id").build();
 
-        AuthorizationCodeParameters parameters = AuthorizationCodeParameters
-                .builder("code", new URI("http://my.redirect.com"))
-                .scopes(Collections.singleton("default-scope"))
-                .build();
+        RefreshTokenParameters refreshTokenParameters = RefreshTokenParameters.
+                builder(Collections.singleton("default-scope"), "rt").build();
 
-        final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
-                parameters,
+        RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(
+                refreshTokenParameters,
                 app,
-                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, refreshTokenParameters));
 
         ServiceBundle serviceBundle = new ServiceBundle(
                 null,
@@ -126,7 +125,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
         return PowerMock.createPartialMock(
                 TokenRequestExecutor.class, new String[]{"createOauthHttpRequest"},
                 new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
-                acr,
+                refreshTokenRequest,
                 serviceBundle);
     }
 
@@ -144,7 +143,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
         final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
                 parameters,
                 app,
-                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
 
         final TokenRequestExecutor request = new TokenRequestExecutor(
                 new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
@@ -167,7 +166,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
         AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
                 parameters,
                 app,
-                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
 
         TokenRequestExecutor request = new TokenRequestExecutor(
                 new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
@@ -196,7 +195,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
         final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
                 parameters,
                 app,
-                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
 
         final TokenRequestExecutor request = new TokenRequestExecutor(
                 new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
@@ -221,7 +220,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
         final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
                 parameters,
                 app,
-                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
 
         ServiceBundle serviceBundle = new ServiceBundle(
                 null,
@@ -245,7 +244,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
         EasyMock.expect(httpResponse.getContentAsJSONObject())
                 .andReturn(
                         JSONObjectUtils
-                                .parse(TestConfiguration.HTTP_RESPONSE_FROM_AUTH_CODE))
+                                .parse(TestConfiguration.TOKEN_ENDPOINT_OK_RESPONSE))
                 .times(1);
         httpResponse.ensureStatusCode(200);
         EasyMock.expectLastCall();
@@ -279,7 +278,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
         final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
                 parameters,
                 app,
-                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
 
         ServiceBundle serviceBundle = new ServiceBundle(
                 null,

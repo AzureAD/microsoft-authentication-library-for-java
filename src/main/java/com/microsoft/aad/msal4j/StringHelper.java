@@ -16,15 +16,28 @@ final class StringHelper {
         return str == null || str.trim().length() == 0;
     }
 
-    static String createBase64EncodedSha256Hash(String stringToHash){
-        String base64EncodedSha256Hash;
+    static String createBase64EncodedSha256Hash(String stringToHash) {
+        return createSha256Hash(stringToHash, true);
+    }
+
+    static String createSha256Hash(String stringToHash) {
+        return createSha256Hash(stringToHash, false);
+    }
+
+    static private String createSha256Hash(String stringToHash, boolean base64Encode) {
+        String res;
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hashedString = digest.digest(stringToHash.getBytes(StandardCharsets.UTF_8));
-            base64EncodedSha256Hash = Base64.getUrlEncoder().withoutPadding().encodeToString(hashedString);
-        } catch(NoSuchAlgorithmException e){
-            base64EncodedSha256Hash = null;
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = messageDigest.digest(stringToHash.getBytes(StandardCharsets.UTF_8));
+
+            if (base64Encode) {
+                res = Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
+            } else {
+                res = new String(hash, StandardCharsets.UTF_8);
+            }
+        } catch (NoSuchAlgorithmException e) {
+            res = null;
         }
-        return base64EncodedSha256Hash;
+        return res;
     }
 }

@@ -27,7 +27,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
  * <p>
  * Conditionally thread-safe
  */
-public class ConfidentialClientApplication extends ClientApplicationBase implements IConfidentialClientApplication {
+public class ConfidentialClientApplication extends AbstractClientApplicationBase implements IConfidentialClientApplication {
 
     private ClientAuthentication clientAuthentication;
     private boolean clientCertAuthentication = false;
@@ -42,7 +42,7 @@ public class ConfidentialClientApplication extends ClientApplicationBase impleme
                 new ClientCredentialRequest(
                         parameters,
                         this,
-                        createRequestContext(PublicApi.ACQUIRE_TOKEN_FOR_CLIENT));
+                        createRequestContext(PublicApi.ACQUIRE_TOKEN_FOR_CLIENT, parameters));
 
         return this.executeRequest(clientCredentialRequest);
     }
@@ -55,7 +55,7 @@ public class ConfidentialClientApplication extends ClientApplicationBase impleme
         OnBehalfOfRequest oboRequest = new OnBehalfOfRequest(
                 parameters,
                 this,
-                createRequestContext(PublicApi.ACQUIRE_TOKEN_ON_BEHALF_OF));
+                createRequestContext(PublicApi.ACQUIRE_TOKEN_ON_BEHALF_OF, parameters));
 
         return this.executeRequest(oboRequest);
     }
@@ -132,7 +132,7 @@ public class ConfidentialClientApplication extends ClientApplicationBase impleme
         return new Builder(clientId, clientCredential);
     }
 
-    public static class Builder extends ClientApplicationBase.Builder<Builder> {
+    public static class Builder extends AbstractClientApplicationBase.Builder<Builder> {
 
         private IClientCredential clientCredential;
 

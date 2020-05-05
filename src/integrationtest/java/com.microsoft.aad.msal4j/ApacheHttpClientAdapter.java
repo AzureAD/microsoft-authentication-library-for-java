@@ -84,7 +84,7 @@ class ApacheHttpClientAdapter implements IHttpClient {
         for(Header header: apacheResponse.getAllHeaders()){
             headers.put(header.getName(), Collections.singletonList(header.getValue()));
         }
-        ((HttpResponse) httpResponse).headers(headers);
+        ((HttpResponse) httpResponse).addHeaders(headers);
 
         String responseBody = EntityUtils.toString(apacheResponse.getEntity(), "UTF-8");
         ((HttpResponse) httpResponse).body(responseBody);

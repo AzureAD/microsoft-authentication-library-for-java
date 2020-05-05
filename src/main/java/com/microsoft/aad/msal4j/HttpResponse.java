@@ -39,7 +39,7 @@ public class HttpResponse implements IHttpResponse {
     /**
      * @param responseHeaders Map of HTTP headers returned from HTTP client
      */
-    public void headers(Map<String, List<String>> responseHeaders) {
+    public void addHeaders(Map<String, List<String>> responseHeaders) {
         for(Map.Entry<String, List<String>> entry: responseHeaders.entrySet()){
             if(entry.getKey() == null){
                 continue;
@@ -50,11 +50,11 @@ public class HttpResponse implements IHttpResponse {
                 continue;
             }
 
-            header(entry.getKey(), values.toArray(new String[]{}));
+            addHeader(entry.getKey(), values.toArray(new String[]{}));
         }
     }
 
-    private void header(final String name, final String ... values){
+    private void addHeader(final String name, final String ... values){
         if (values != null && values.length > 0) {
             headers.put(name, Arrays.asList(values));
         } else {

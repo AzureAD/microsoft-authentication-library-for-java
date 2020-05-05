@@ -21,7 +21,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty
 @Accessors(fluent = true)
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class UserNamePasswordParameters {
+public class UserNamePasswordParameters implements IApiParameters {
 
     /**
      * Scopes application is requesting access to

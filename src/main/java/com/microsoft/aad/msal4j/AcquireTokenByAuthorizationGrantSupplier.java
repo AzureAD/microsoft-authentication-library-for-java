@@ -18,7 +18,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
     private Authority requestAuthority;
     private MsalRequest msalRequest;
 
-    AcquireTokenByAuthorizationGrantSupplier(ClientApplicationBase clientApplication,
+    AcquireTokenByAuthorizationGrantSupplier(AbstractClientApplicationBase clientApplication,
                                              MsalRequest msalRequest,
                                              Authority authority) {
         super(clientApplication, msalRequest);
@@ -28,6 +28,16 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
 
     AuthenticationResult execute() throws Exception {
         AbstractMsalAuthorizationGrant authGrant = msalRequest.msalAuthorizationGrant();
+
+        if (IsUiRequiredCacheSupported()) {
+            MsalInteractionRequiredException cachedEx =
+                    InteractionRequiredCache.getCachedInteractionRequiredException(
+                            ((RefreshTokenRequest) msalRequest).getFullThumbprint());
+            if (cachedEx != null) {
+                throw cachedEx;
+            }
+        }
+
         if (authGrant instanceof OAuthAuthorizationGrant) {
             msalRequest.msalAuthorizationGrant =
                     processPasswordGrant((OAuthAuthorizationGrant) authGrant);
@@ -41,15 +51,27 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
                             integratedAuthGrant.getUserName()), integratedAuthGrant.getScopes());
         }
 
-        if(requestAuthority == null){
+        if (requestAuthority == null) {
             requestAuthority = clientApplication.authenticationAuthority;
         }
 
-        if(requestAuthority.authorityType == AuthorityType.AAD){
+        if (requestAuthority.authorityType == AuthorityType.AAD) {
             requestAuthority = getAuthorityWithPrefNetworkHost(requestAuthority.authority());
         }
 
-        return clientApplication.acquireTokenCommon(msalRequest, requestAuthority);
+        try {
+            return clientApplication.acquireTokenCommon(msalRequest, requestAuthority);
+        } catch (MsalInteractionRequiredException ex) {
+            if (IsUiRequiredCacheSupported()) {
+                InteractionRequiredCache.set(((RefreshTokenRequest) msalRequest).getFullThumbprint(), ex);
+            }
+            throw ex;
+        }
+    }
+
+    private boolean IsUiRequiredCacheSupported() {
+        return msalRequest instanceof RefreshTokenRequest &&
+                clientApplication instanceof PublicClientApplication;
     }
 
     private OAuthAuthorizationGrant processPasswordGrant(
@@ -59,7 +81,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
             return authGrant;
         }
 
-        if(msalRequest.application().authenticationAuthority.authorityType != AuthorityType.AAD){
+        if (msalRequest.application().authenticationAuthority.authorityType != AuthorityType.AAD) {
             return authGrant;
         }
 
@@ -131,13 +153,11 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
                     this.clientApplication.logPii());
 
             updatedGrant = getSAMLAuthorizationGrant(wsTrustResponse);
-        }
-        else if (userRealmResponse.isAccountManaged()) {
+        } else if (userRealmResponse.isAccountManaged()) {
             throw new MsalClientException(
                     "Password is required for managed user",
                     AuthenticationErrorCode.PASSWORD_REQUIRED_FOR_MANAGED_USER);
-        }
-        else{
+        } else {
             throw new MsalClientException(
                     "User Realm request failed",
                     AuthenticationErrorCode.USER_REALM_DISCOVERY_FAILED);

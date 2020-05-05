@@ -7,7 +7,7 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
 
     private SilentRequest silentRequest;
 
-    AcquireTokenSilentSupplier(ClientApplicationBase clientApplication, SilentRequest silentRequest) {
+    AcquireTokenSilentSupplier(AbstractClientApplicationBase clientApplication, SilentRequest silentRequest) {
         super(clientApplication, silentRequest);
 
         this.silentRequest = silentRequest;
@@ -40,12 +40,12 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
             }
 
             if (silentRequest.parameters().forceRefresh() || StringHelper.isBlank(res.accessToken())) {
-
                 if (!StringHelper.isBlank(res.refreshToken())) {
                     RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(
                             RefreshTokenParameters.builder(silentRequest.parameters().scopes(), res.refreshToken()).build(),
                             silentRequest.application(),
-                            silentRequest.requestContext());
+                            silentRequest.requestContext(),
+                            silentRequest);
 
                     AcquireTokenByAuthorizationGrantSupplier acquireTokenByAuthorisationGrantSupplier =
                             new AcquireTokenByAuthorizationGrantSupplier(clientApplication, refreshTokenRequest, requestAuthority);

@@ -90,4 +90,9 @@ public class AuthenticationErrorCode {
      * https://aka.ms/msal4j-interactive-request
      */
     public final static String DESKTOP_BROWSER_NOT_SUPPORTED = "desktop_browser_not_supported";
+
+    /**
+     * Request was throttled according to instructions from STS.
+     */
+    public final static String THROTTLED_REQUEST = "throttled_request";
 }

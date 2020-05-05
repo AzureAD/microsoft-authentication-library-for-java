@@ -20,7 +20,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotBlank
 @Accessors(fluent = true)
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class AuthorizationCodeParameters {
+public class AuthorizationCodeParameters implements IApiParameters {
 
     /**
      * Authorization code acquired in the first step of OAuth2.0 authorization code flow. For more
