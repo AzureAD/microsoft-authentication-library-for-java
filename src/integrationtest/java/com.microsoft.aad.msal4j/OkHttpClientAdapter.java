@@ -76,7 +76,7 @@ class OkHttpClientAdapter implements IHttpClient{
 
         Headers headers = okHttpResponse.headers();
         if(headers != null){
-            ((HttpResponse) httpResponse).headers(headers.toMultimap());
+            ((HttpResponse) httpResponse).addHeaders(headers.toMultimap());
         }
         return httpResponse;
     }

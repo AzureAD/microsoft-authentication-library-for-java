@@ -207,7 +207,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
                 parameters,
                 futureReference,
                 app,
-                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_DEVICE_CODE_FLOW));
+                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_DEVICE_CODE_FLOW, parameters));
 
 
         TokenRequestExecutor request = PowerMock.createPartialMock(

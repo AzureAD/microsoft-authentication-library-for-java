@@ -20,7 +20,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty
 @Accessors(fluent = true)
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class OnBehalfOfParameters {
+public class OnBehalfOfParameters implements IApiParameters {
 
     @NonNull
     private Set<String> scopes;

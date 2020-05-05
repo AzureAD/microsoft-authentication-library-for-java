@@ -28,7 +28,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
  * Abstract class containing common methods and properties to both {@link PublicClientApplication}
  * and {@link ConfidentialClientApplication}.
  */
-abstract class ClientApplicationBase implements IClientApplicationBase {
+abstract class AbstractClientApplicationBase implements IClientApplicationBase {
 
     protected Logger log;
     protected Authority authenticationAuthority;
@@ -92,7 +92,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         AuthorizationCodeRequest authorizationCodeRequest = new AuthorizationCodeRequest(
                 parameters,
                 this,
-                createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
 
         return this.executeRequest(authorizationCodeRequest);
     }
@@ -105,7 +105,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(
                 parameters,
                 this,
-                createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_REFRESH_TOKEN));
+                createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_REFRESH_TOKEN, parameters));
 
         return executeRequest(refreshTokenRequest);
     }
@@ -132,7 +132,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         SilentRequest silentRequest = new SilentRequest(
                 parameters,
                 this,
-                createRequestContext(PublicApi.ACQUIRE_TOKEN_SILENTLY));
+                createRequestContext(PublicApi.ACQUIRE_TOKEN_SILENTLY, parameters));
 
         return executeRequest(silentRequest);
     }
@@ -141,7 +141,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
     public CompletableFuture<Set<IAccount>> getAccounts() {
         MsalRequest msalRequest =
                 new MsalRequest(this, null,
-                        createRequestContext(PublicApi.GET_ACCOUNTS)){};
+                        createRequestContext(PublicApi.GET_ACCOUNTS, null)){};
 
         AccountsSupplier supplier = new AccountsSupplier(this, msalRequest);
 
@@ -154,7 +154,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
     @Override
     public CompletableFuture removeAccount(IAccount account) {
         MsalRequest msalRequest = new MsalRequest(this, null,
-                        createRequestContext(PublicApi.REMOVE_ACCOUNTS)){};
+                        createRequestContext(PublicApi.REMOVE_ACCOUNTS, null)){};
 
         RemoveAccountRunnable runnable = new RemoveAccountRunnable(msalRequest, account);
 
@@ -231,8 +231,8 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         return supplier;
     }
 
-    RequestContext createRequestContext(PublicApi publicApi) {
-        return new RequestContext(this, publicApi);
+    RequestContext createRequestContext(PublicApi publicApi, IApiParameters apiParameters) {
+        return new RequestContext(this, publicApi, apiParameters);
     }
 
     ServiceBundle getServiceBundle() {
@@ -285,7 +285,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         /**
          * Set URL of the authenticating authority or security token service (STS) from which MSAL
          * will acquire security tokens.
-         * The default value is {@link ClientApplicationBase#DEFAULT_AUTHORITY}
+         * The default value is {@link AbstractClientApplicationBase#DEFAULT_AUTHORITY}
          *
          * @param val a string value of authority
          * @return instance of the Builder on which method was called
@@ -330,7 +330,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
          * Set a boolean value telling the application if the authority needs to be verified
          * against a list of known authorities. Authority is only validated when:
          * 1 - It is an Azure Active Directory authority (not B2C or ADFS)
-         * 2 - Instance discovery metadata is not set via {@link ClientApplicationBase#aadAadInstanceDiscoveryResponse}
+         * 2 - Instance discovery metadata is not set via {@link AbstractClientApplicationBase#aadAadInstanceDiscoveryResponse}
          *
          * The default value is true.
          *
@@ -486,7 +486,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
          * Sets instance discovery response data which will be used for determining tenant discovery
          * endpoint and authority aliases.
          *
-         * Note that authority validation is not done even if {@link ClientApplicationBase#validateAuthority}
+         * Note that authority validation is not done even if {@link AbstractClientApplicationBase#validateAuthority}
          * is set to true.
          *
          * For more information, see
@@ -513,10 +513,10 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
             return authority;
         }
 
-        abstract ClientApplicationBase build();
+        abstract AbstractClientApplicationBase build();
     }
 
-    ClientApplicationBase(Builder<?> builder) {
+    AbstractClientApplicationBase(Builder<?> builder) {
         clientId = builder.clientId;
         authority = builder.authority;
         validateAuthority = builder.validateAuthority;

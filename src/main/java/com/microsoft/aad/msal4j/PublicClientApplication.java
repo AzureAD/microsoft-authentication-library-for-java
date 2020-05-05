@@ -20,7 +20,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
  * 
  * Conditionally thread-safe
  */
-public class PublicClientApplication extends ClientApplicationBase implements IPublicClientApplication {
+public class PublicClientApplication extends AbstractClientApplicationBase implements IPublicClientApplication {
 
     private final ClientAuthenticationPost clientAuthentication;
 
@@ -32,7 +32,7 @@ public class PublicClientApplication extends ClientApplicationBase implements IP
         UserNamePasswordRequest userNamePasswordRequest =
                 new UserNamePasswordRequest(parameters,
                         this,
-                        createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_USERNAME_PASSWORD));
+                        createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_USERNAME_PASSWORD, parameters));
 
         return this.executeRequest(userNamePasswordRequest);
     }
@@ -47,7 +47,7 @@ public class PublicClientApplication extends ClientApplicationBase implements IP
                         parameters,
                         this,
                         createRequestContext(
-                                PublicApi.ACQUIRE_TOKEN_BY_INTEGRATED_WINDOWS_AUTH));
+                                PublicApi.ACQUIRE_TOKEN_BY_INTEGRATED_WINDOWS_AUTH, parameters));
 
         return this.executeRequest(integratedWindowsAuthenticationRequest);
     }
@@ -69,7 +69,7 @@ public class PublicClientApplication extends ClientApplicationBase implements IP
                 parameters,
                 futureReference,
                 this,
-                createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_DEVICE_CODE_FLOW));
+                createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_DEVICE_CODE_FLOW, parameters));
 
         CompletableFuture<IAuthenticationResult> future = executeRequest(deviceCodeRequest);
         futureReference.set(future);
@@ -87,7 +87,7 @@ public class PublicClientApplication extends ClientApplicationBase implements IP
                 parameters,
                 futureReference,
                 this,
-                createRequestContext(PublicApi.ACQUIRE_TOKEN_INTERACTIVE));
+                createRequestContext(PublicApi.ACQUIRE_TOKEN_INTERACTIVE, parameters));
 
         CompletableFuture<IAuthenticationResult> future = executeRequest(interactiveRequest);
         futureReference.set(future);
@@ -117,7 +117,7 @@ public class PublicClientApplication extends ClientApplicationBase implements IP
         return new Builder(clientId);
     }
 
-    public static class Builder extends ClientApplicationBase.Builder<Builder> {
+    public static class Builder extends AbstractClientApplicationBase.Builder<Builder> {
 
         private Builder(String clientId) {
             super(clientId);

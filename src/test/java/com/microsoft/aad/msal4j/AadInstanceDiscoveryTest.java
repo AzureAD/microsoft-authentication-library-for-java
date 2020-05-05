@@ -34,7 +34,7 @@ public class AadInstanceDiscoveryTest extends PowerMockTestCase {
         MsalRequest msalRequest = new AuthorizationCodeRequest(
                 parameters,
                 app,
-                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
 
         URL authority = new URL(app.authority());
 
@@ -91,7 +91,7 @@ public class AadInstanceDiscoveryTest extends PowerMockTestCase {
         MsalRequest msalRequest = new AuthorizationCodeRequest(
                 parameters,
                 app,
-                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
 
         URL authority = new URL(app.authority());
 
