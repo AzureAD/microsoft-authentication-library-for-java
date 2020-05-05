@@ -315,7 +315,6 @@ public class AuthorizationCodeIT extends SeleniumTest {
 
     private String buildAuthenticationCodeURLWithParameters(ClientApplicationBase app, Map<String, Set<String>> parameters) {
         String scope;
-        Set<String> claims = new HashSet<>();
 
         AuthorityType authorityType= app.authenticationAuthority.authorityType;
         if(authorityType == AuthorityType.AAD){
