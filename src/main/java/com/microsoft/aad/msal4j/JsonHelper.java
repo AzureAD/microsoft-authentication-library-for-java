@@ -36,7 +36,9 @@ class JsonHelper {
      * Merges given JSON strings into one Jackson JSONNode object, which is returned as a String
      */
     static String mergeJSONString(String mainJsonString, String addJsonString) {
-        JsonNode mainJson, addJson;
+        JsonNode mainJson;
+        JsonNode addJson;
+
         try {
             mainJson = mapper.readTree(mainJsonString);
             addJson = mapper.readTree(addJsonString);
@@ -53,7 +55,8 @@ class JsonHelper {
      * Merges set of given JSON strings into one Jackson JsonNode object, which is returned as a String
      */
     static String mergeJSONString(Set<String> jsonStrings) {
-        JsonNode mainJson = null, addJson;
+        JsonNode mainJson = null;
+        JsonNode addJson;
 
         Iterator<String> jsons = jsonStrings.iterator();
         try {
