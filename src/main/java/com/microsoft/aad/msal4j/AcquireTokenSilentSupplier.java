@@ -16,25 +16,28 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
     @Override
     AuthenticationResult execute() throws Exception {
         Authority requestAuthority = silentRequest.requestAuthority();
-        if(requestAuthority.authorityType != AuthorityType.B2C){
+        if (requestAuthority.authorityType != AuthorityType.B2C) {
             requestAuthority =
                     getAuthorityWithPrefNetworkHost(silentRequest.requestAuthority().authority());
         }
 
         AuthenticationResult res;
 
-        if(silentRequest.parameters().account() == null){
+        if (silentRequest.parameters().account() == null) {
             res = clientApplication.tokenCache.getCachedAuthenticationResult(
                     requestAuthority,
                     silentRequest.parameters().scopes(),
                     clientApplication.clientId());
-        }
-        else {
+        } else {
             res = clientApplication.tokenCache.getCachedAuthenticationResult(
                     silentRequest.parameters().account(),
                     requestAuthority,
                     silentRequest.parameters().scopes(),
                     clientApplication.clientId());
+
+            if (!StringHelper.isBlank(res.accessToken())) {
+                clientApplication.getServiceBundle().getServerSideTelemetry().incrementSilentSuccessfulCount();
+            }
 
             if (silentRequest.parameters().forceRefresh() || StringHelper.isBlank(res.accessToken())) {
 
@@ -48,17 +51,15 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
                             new AcquireTokenByAuthorizationGrantSupplier(clientApplication, refreshTokenRequest, requestAuthority);
 
                     res = acquireTokenByAuthorisationGrantSupplier.execute();
-                }
-                else{
+                } else {
                     res = null;
                 }
             }
         }
-        if(res == null || StringHelper.isBlank(res.accessToken())){
+        if (res == null || StringHelper.isBlank(res.accessToken())) {
             throw new MsalClientException(AuthenticationErrorMessage.NO_TOKEN_IN_CACHE, AuthenticationErrorCode.CACHE_MISS);
         }
 
-        clientApplication.getServiceBundle().getServerSideTelemetry().incrementSilentSuccessfulCount();
         return res;
     }
 }
