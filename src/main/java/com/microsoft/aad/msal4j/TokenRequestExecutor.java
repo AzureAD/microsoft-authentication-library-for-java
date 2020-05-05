@@ -3,12 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.SerializeException;
 import com.nimbusds.oauth2.sdk.http.CommonContentTypes;
@@ -16,11 +10,16 @@ import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import com.nimbusds.oauth2.sdk.util.URLUtils;
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens;
+import lombok.AccessLevel;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import lombok.AccessLevel;
-import lombok.Getter;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 @Getter(AccessLevel.PACKAGE)
 class TokenRequestExecutor {
@@ -61,8 +60,8 @@ class TokenRequestExecutor {
         final Map<String, List<String>> params = msalRequest.msalAuthorizationGrant().toParameters();
         oauthHttpRequest.setQuery(URLUtils.serializeParameters(params));
 
-        if (msalRequest.application().clientAuthentication != null) {
-            msalRequest.application().clientAuthentication.applyTo(oauthHttpRequest);
+        if (msalRequest.application().clientAuthentication() != null) {
+            msalRequest.application().clientAuthentication().applyTo(oauthHttpRequest);
         }
         return oauthHttpRequest;
     }
