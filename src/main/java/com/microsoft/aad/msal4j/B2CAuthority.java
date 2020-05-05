@@ -21,19 +21,23 @@ class B2CAuthority extends Authority{
     private String policy;
 
     B2CAuthority(final URL authorityUrl){
-        super(authorityUrl);
-        validateAuthorityUrl();
+        super(authorityUrl, AuthorityType.B2C);
         setAuthorityProperties();
     }
 
-    private void setAuthorityProperties() {
-        String[] segments = canonicalAuthorityUrl.getPath().substring(1).split("/");
-
+    private void validatePathSegments(String[] segments){
         if(segments.length < 3){
             throw new IllegalArgumentException(
                     "B2C 'authority' Uri should have at least 3 segments in the path " +
                             "(i.e. https://<host>/tfp/<tenant>/<policy>/...)");
         }
+    }
+
+    private void setAuthorityProperties() {
+        String[] segments = canonicalAuthorityUrl.getPath().substring(1).split("/");
+
+        validatePathSegments(segments);
+
         policy = segments[2];
 
         final String b2cAuthorityFormat = "https://%s/%s/%s/%s/";

@@ -35,6 +35,10 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
                     silentRequest.parameters().scopes(),
                     clientApplication.clientId());
 
+            if (!StringHelper.isBlank(res.accessToken())) {
+                clientApplication.getServiceBundle().getServerSideTelemetry().incrementSilentSuccessfulCount();
+            }
+
             if (silentRequest.parameters().forceRefresh() || StringHelper.isBlank(res.accessToken())) {
                 if (!StringHelper.isBlank(res.refreshToken())) {
                     RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(
@@ -56,7 +60,6 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
             throw new MsalClientException(AuthenticationErrorMessage.NO_TOKEN_IN_CACHE, AuthenticationErrorCode.CACHE_MISS);
         }
 
-        clientApplication.getServiceBundle().getServerSideTelemetry().incrementSilentSuccessfulCount();
         return res;
     }
 }

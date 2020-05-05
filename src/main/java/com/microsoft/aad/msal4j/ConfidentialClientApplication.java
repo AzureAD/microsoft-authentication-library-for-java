@@ -12,6 +12,7 @@ import com.nimbusds.oauth2.sdk.id.ClientID;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,10 +24,14 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
  * Class to be used to acquire tokens for confidential client applications (Web Apps, Web APIs,
  * and daemon applications).
  * For details see {@link IConfidentialClientApplication}
- *
+ * <p>
  * Conditionally thread-safe
  */
 public class ConfidentialClientApplication extends AbstractClientApplicationBase implements IConfidentialClientApplication {
+
+    private ClientAuthentication clientAuthentication;
+    private boolean clientCertAuthentication = false;
+    private ClientCertificate clientCertificate;
 
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(ClientCredentialParameters parameters) {
@@ -71,17 +76,35 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
                     new ClientID(clientId()),
                     new Secret(((ClientSecret) clientCredential).clientSecret()));
         } else if (clientCredential instanceof ClientCertificate) {
-            ClientAssertion clientAssertion = JwtHelper.buildJwt(
-                    clientId(),
-                    (ClientCertificate) clientCredential,
-                    this.authenticationAuthority.selfSignedJwtAudience());
-
-            clientAuthentication = createClientAuthFromClientAssertion(clientAssertion);
-        } else if (clientCredential instanceof ClientAssertion){
+            this.clientCertAuthentication = true;
+            this.clientCertificate = (ClientCertificate) clientCredential;
+            clientAuthentication = buildValidClientCertificateAuthority();
+        } else if (clientCredential instanceof ClientAssertion) {
             clientAuthentication = createClientAuthFromClientAssertion((ClientAssertion) clientCredential);
         } else {
             throw new IllegalArgumentException("Unsupported client credential");
         }
+    }
+
+    @Override
+    protected ClientAuthentication clientAuthentication() {
+        if (clientCertAuthentication) {
+            final Date currentDateTime = new Date(System.currentTimeMillis());
+            final Date expirationTime = ((PrivateKeyJWT) clientAuthentication).getJWTAuthenticationClaimsSet().getExpirationTime();
+            if (expirationTime.before(currentDateTime)) {
+                //The asserted private jwt with the client certificate can expire so rebuild it when the
+                clientAuthentication = buildValidClientCertificateAuthority();
+            }
+        }
+        return clientAuthentication;
+    }
+
+    private ClientAuthentication buildValidClientCertificateAuthority() {
+        ClientAssertion clientAssertion = JwtHelper.buildJwt(
+                clientId(),
+                clientCertificate,
+                this.authenticationAuthority.selfSignedJwtAudience());
+        return createClientAuthFromClientAssertion(clientAssertion);
     }
 
     private ClientAuthentication createClientAuthFromClientAssertion(
@@ -102,7 +125,6 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
      * @param clientId         Client ID (Application ID) of the application as registered
      *                         in the application registration portal (portal.azure.com)
      * @param clientCredential The client credential to use for token acquisition.
-     *
      * @return instance of Builder of ConfidentialClientApplication
      */
     public static Builder builder(String clientId, IClientCredential clientCredential) {

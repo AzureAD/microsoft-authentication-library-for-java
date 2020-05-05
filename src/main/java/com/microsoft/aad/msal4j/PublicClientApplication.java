@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod;
 import com.nimbusds.oauth2.sdk.id.ClientID;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,8 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
  * Conditionally thread-safe
  */
 public class PublicClientApplication extends AbstractClientApplicationBase implements IPublicClientApplication {
+
+    private final ClientAuthenticationPost clientAuthentication;
 
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(UserNamePasswordParameters parameters) {
@@ -93,17 +96,15 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
 
     private PublicClientApplication(Builder builder) {
         super(builder);
-
+        validateNotBlank("clientId", clientId());
         log = LoggerFactory.getLogger(PublicClientApplication.class);
-
-        initClientAuthentication(clientId());
+        this.clientAuthentication = new ClientAuthenticationPost(ClientAuthenticationMethod.NONE,
+                new ClientID(clientId()));
     }
 
-    private void initClientAuthentication(String clientId) {
-        validateNotBlank("clientId", clientId);
-
-        clientAuthentication = new ClientAuthenticationPost(ClientAuthenticationMethod.NONE,
-                new ClientID(clientId));
+    @Override
+    protected ClientAuthentication clientAuthentication() {
+        return clientAuthentication;
     }
 
     /**
