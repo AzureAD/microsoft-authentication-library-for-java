@@ -37,7 +37,7 @@ public class OauthHttpRequestTest extends AbstractMsalTests {
         assertNotNull(request);
     }
 
-    @Test(expectedExceptions = IOException.class, expectedExceptionsMessageRegExp = "Couldn't parse Content-Type header: Invalid Content-Type value: In Content-Type string <invalid-content>, expected '/', got null")
+    @Test(expectedExceptions = IOException.class, expectedExceptionsMessageRegExp = "Couldn't parse Content-Type header: Invalid Content-Type value: Invalid content type string")
     public void testCreateResponseContentTypeParsingFailure() throws Exception {
 
         final OAuthHttpRequest request = new OAuthHttpRequest(
