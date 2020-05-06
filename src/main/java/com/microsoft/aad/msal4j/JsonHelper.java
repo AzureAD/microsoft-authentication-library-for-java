@@ -48,20 +48,22 @@ class JsonHelper {
 
         mergeJSONNode(mainJson, addJson);
 
-        return mainJson != null ? mainJson.toString() : null;
+        return mainJson.toString();
     }
 
     /**
      * Merges set of given JSON strings into one Jackson JsonNode object, which is returned as a String
      */
     static String mergeJSONString(Set<String> jsonStrings) {
-        JsonNode mainJson = null;
+        JsonNode mainJson;
         JsonNode addJson;
 
         Iterator<String> jsons = jsonStrings.iterator();
         try {
             if (jsons.hasNext()) {
                 mainJson = mapper.readTree(jsons.next());
+            } else {
+                return "";
             }
         } catch (JsonProcessingException e) {
             throw new MsalClientException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
@@ -76,7 +78,7 @@ class JsonHelper {
             mergeJSONNode(mainJson, addJson);
         }
 
-        return mainJson != null ? mainJson.toString() : null;
+        return mainJson.toString();
     }
 
     /**
