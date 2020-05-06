@@ -3,6 +3,9 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.util.Arrays;
+import java.util.HashSet;
+
 public class TestConstants {
     public final static String KEYVAULT_DEFAULT_SCOPE = "https://vault.azure.net/.default";
     public final static String MSIDLAB_DEFAULT_SCOPE = "https://msidlab.com/.default";
@@ -42,4 +45,8 @@ public class TestConstants {
     public final static String ADFS_AUTHORITY = "https://fs.msidlab8.com/adfs/";
     public final static String ADFS_SCOPE = USER_READ_SCOPE;
     public final static String ADFS_APP_ID = "PublicClientId";
+
+    public final static String CLAIMS_USERINFO = "{\"userinfo\":{\"given_name\":{\"essential\":true},\"nickname\":null,\"email\":{\"essential\":true},\"email_verified\":{\"essential\":true},\"picture\":null,\"http://example.info/claims/groups\":null}}";
+    public final static String CLAIMS_IDTOKEN = "{\"id_token\":{\"auth_time\":{\"essential\":true}}}";
+    public final static String CLIENT_CAPABILITIES = "{\"access_token\":{\"xms_cc\":{\"values\":[]}}}";
 }

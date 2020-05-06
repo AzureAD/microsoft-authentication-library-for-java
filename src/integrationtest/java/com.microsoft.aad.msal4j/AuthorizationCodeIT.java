@@ -44,10 +44,10 @@ public class AuthorizationCodeIT extends SeleniumTest {
         Map<String, Set<String>> claimsAndCapabilities = new HashMap<>();
 
         //Two separate claims used to test merging claim JSONs
-        claims.add("{\"userinfo\":{\"given_name\":{\"essential\":true},\"nickname\":null,\"email\":{\"essential\":true},\"email_verified\":{\"essential\":true},\"picture\":null,\"http://example.info/claims/groups\":null}}");
-        claims.add("{\"id_token\":{\"auth_time\":{\"essential\":true}}}");
+        claims.add(TestConstants.CLAIMS_USERINFO);
+        claims.add(TestConstants.CLAIMS_IDTOKEN);
         //Client Capabilities with no values, as client capabilities were not yet supported when this test was written
-        clientCapabilities.add("{\"access_token\":{\"xms_cc\":{\"values\":[]}}}");
+        clientCapabilities.add(TestConstants.CLIENT_CAPABILITIES);
 
         claimsAndCapabilities.put("claims", claims);
         claimsAndCapabilities.put("clientCapabilities", clientCapabilities);
