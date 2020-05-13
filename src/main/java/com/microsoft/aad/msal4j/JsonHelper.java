@@ -33,6 +33,31 @@ class JsonHelper {
     }
 
     /**
+     * Throws exception if given String does not follow JSON syntax
+     */
+    static void validateJsonFormat(String jsonString) {
+        try {
+            mapper.readTree(jsonString);
+        } catch (JsonProcessingException e) {
+            throw new MsalClientException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
+        }
+    }
+
+    /**
+     * Take a set of Strings and return a String representing a JSON object of the format:
+     *  {
+     *    "access_token": {
+     *      "xms_cc": {
+     *        "values": [ clientCapabilities ]
+     *      }
+     *    }
+     *  }
+     */
+    public static String formCapabilitiesJson(Set<String> clientCapabilities) {
+        return "{\"access_token\":{\"xms_cc\":{\"values\":[\"" + String.join("\",\"", clientCapabilities) + "\"]}}}\"";
+    }
+
+    /**
      * Merges given JSON strings into one Jackson JSONNode object, which is returned as a String
      */
     static String mergeJSONString(String mainJsonString, String addJsonString) {

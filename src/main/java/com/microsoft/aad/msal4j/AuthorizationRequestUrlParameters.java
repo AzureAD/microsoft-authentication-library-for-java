@@ -72,12 +72,13 @@ public class AuthorizationRequestUrlParameters {
 
         // Optional parameters
         if(builder.claims != null){
-            String claimsParam = JsonHelper.mergeJSONString(builder.claims);
-            requestParameters.put("claims", Collections.singletonList(claimsParam));
+            JsonHelper.validateJsonFormat(builder.claims);
+            requestParameters.put("claims", Collections.singletonList(builder.claims));
         }
 
-        if(builder.clientCapabilities != null){
-            String capabilitiesParam = JsonHelper.mergeJSONString(builder.clientCapabilities);
+        if(!builder.clientCapabilities.isEmpty()){
+            String capabilitiesParam = JsonHelper.formCapabilitiesJson(builder.clientCapabilities);
+            JsonHelper.validateJsonFormat(capabilitiesParam);
             if (requestParameters.containsKey("claims")) {
                 String mergedClaimsAndCapabilities = JsonHelper.mergeJSONString(String.valueOf(requestParameters.get("claims").get(0)), capabilitiesParam);
                 requestParameters.replace("claims", Collections.singletonList(mergedClaimsAndCapabilities));
@@ -156,7 +157,7 @@ public class AuthorizationRequestUrlParameters {
 
         private String redirectUri;
         private Set<String> scopes;
-        private Set<String> claims;
+        private String claims;
         private Set<String> clientCapabilities;
         private String codeChallenge;
         private String codeChallengeMethod;
@@ -198,7 +199,7 @@ public class AuthorizationRequestUrlParameters {
          * policy has not been met,{@link MsalServiceException} will contain claims that need be
          * consented to.
          */
-        public Builder claims(Set<String> val){
+        public Builder claims(String val){
             this.claims = val;
             return self();
         }

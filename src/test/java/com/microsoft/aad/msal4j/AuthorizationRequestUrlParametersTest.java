@@ -92,8 +92,8 @@ public class AuthorizationRequestUrlParametersTest {
                         .correlationId("corr_id")
                         .loginHint("hint")
                         .domainHint("domain_hint")
-                        .claims(Collections.singleton("{\"userinfo\":{\"given_name\":{\"essential\":true},\"nickname\":null,\"email\":{\"essential\":true},\"email_verified\":{\"essential\":true},\"picture\":null,\"http://example.info/claims/groups\":null}}"))
-                        .clientCapabilities(Collections.singleton("{\"access_token\":{\"xms_cc\":{\"values\":[]}}}"))
+                        .claims("{\"userinfo\":{\"given_name\":{\"essential\":true},\"nickname\":null,\"email\":{\"essential\":true},\"email_verified\":{\"essential\":true},\"picture\":null,\"http://example.info/claims/groups\":null}}")
+                        .clientCapabilities(Collections.emptySet())
                         .prompt(Prompt.SELECT_ACCOUNT)
                         .build();
 

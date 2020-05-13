@@ -39,18 +39,10 @@ public class AuthorizationCodeIT extends SeleniumTest {
 
         User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
 
-        Set<String> claims = new HashSet<>();
-        Set<String> clientCapabilities = new HashSet<>();
         Map<String, Set<String>> claimsAndCapabilities = new HashMap<>();
 
-        //Two separate claims used to test merging claim JSONs
-        claims.add(TestConstants.CLAIMS_USERINFO);
-        claims.add(TestConstants.CLAIMS_IDTOKEN);
-        //Client Capabilities with no values, as client capabilities were not yet supported when this test was written
-        clientCapabilities.add(TestConstants.CLIENT_CAPABILITIES);
-
-        claimsAndCapabilities.put("claims", claims);
-        claimsAndCapabilities.put("clientCapabilities", clientCapabilities);
+        claimsAndCapabilities.put("claims", Collections.singleton(TestConstants.CLAIMS));
+        claimsAndCapabilities.put("clientCapabilities", TestConstants.CLIENT_CAPABILITIES_LLT);
 
         assertAcquireTokenAAD(user, claimsAndCapabilities);
     }
@@ -333,7 +325,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
                 AuthorizationRequestUrlParameters
                         .builder(TestConstants.LOCALHOST + httpListener.port(),
                                 Collections.singleton(scope))
-                        .claims(parameters.getOrDefault("claims", null))
+                        .claims(String.valueOf(parameters.getOrDefault("claims", null).toArray()[0]))
                         .clientCapabilities(parameters.getOrDefault("clientCapabilities", null))
                         .build();
 
