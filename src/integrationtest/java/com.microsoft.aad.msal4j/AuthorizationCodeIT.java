@@ -42,7 +42,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
         Map<String, Set<String>> claimsAndCapabilities = new HashMap<>();
 
         claimsAndCapabilities.put("claims", Collections.singleton(TestConstants.CLAIMS));
-        claimsAndCapabilities.put("clientCapabilities", TestConstants.CLIENT_CAPABILITIES_LLT);
+        claimsAndCapabilities.put("clientCapabilities", TestConstants.CLIENT_CAPABILITIES_EMPTY);
 
         assertAcquireTokenAAD(user, claimsAndCapabilities);
     }
