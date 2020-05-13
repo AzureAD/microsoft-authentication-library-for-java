@@ -83,6 +83,8 @@ class InteractiveRequest extends MsalRequest{
                         .builder(interactiveRequestParameters.redirectUri().toString(),
                                 interactiveRequestParameters.scopes())
                         .prompt(interactiveRequestParameters.prompt())
+                        .claims(interactiveRequestParameters.claims())
+                        .clientCapabilities(interactiveRequestParameters.clientCapabilities())
                         .loginHint(interactiveRequestParameters.loginHint())
                         .domainHint(interactiveRequestParameters.domainHint())
                         .correlationId(publicClientApplication.correlationId());

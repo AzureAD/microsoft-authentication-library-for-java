@@ -67,6 +67,10 @@ public class InteractiveRequestParameters {
      */
     private SystemBrowserOptions systemBrowserOptions;
 
+    private String claims;
+
+    private Set<String> clientCapabilities;
+
     private static InteractiveRequestParametersBuilder builder() {
         return new InteractiveRequestParametersBuilder();
     }
