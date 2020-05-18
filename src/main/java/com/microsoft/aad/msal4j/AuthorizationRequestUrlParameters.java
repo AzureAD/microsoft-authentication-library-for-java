@@ -76,7 +76,7 @@ public class AuthorizationRequestUrlParameters {
             requestParameters.put("claims", Collections.singletonList(builder.claims));
         }
 
-        if(!builder.clientCapabilities.isEmpty()){
+        if(builder.clientCapabilities != null && !builder.clientCapabilities.isEmpty()){
             String capabilitiesParam = JsonHelper.formCapabilitiesJson(builder.clientCapabilities);
             JsonHelper.validateJsonFormat(capabilitiesParam);
             if (requestParameters.containsKey("claims")) {

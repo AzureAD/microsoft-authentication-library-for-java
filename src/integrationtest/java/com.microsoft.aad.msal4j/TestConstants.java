@@ -47,7 +47,7 @@ public class TestConstants {
     public final static String ADFS_SCOPE = USER_READ_SCOPE;
     public final static String ADFS_APP_ID = "PublicClientId";
 
-    public final static String CLAIMS = "{\"userinfo\":{\"given_name\":{\"essential\":true},\"nickname\":null,\"email\":{\"essential\":true},\"email_verified\":{\"essential\":true},\"picture\":null,\"http://example.info/claims/groups\":null},\"id_token\":{\"auth_time\":{\"essential\":true},\"acr\":{\"values\":[\"urn:mace:incommon:iap:silver\"]}}}";
+    public final static String CLAIMS = "{\"id_token\":{\"auth_time\":{\"essential\":true}}}";
     public final static Set<String> CLIENT_CAPABILITIES_EMPTY = new HashSet<String>(Collections.emptySet());
     public final static Set<String> CLIENT_CAPABILITIES_LLT = new HashSet<String>(Collections.singletonList("llt"));
 }
