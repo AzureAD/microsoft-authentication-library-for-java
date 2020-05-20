@@ -97,7 +97,7 @@ public class AuthorizationRequestUrlParametersTest {
                         .correlationId("corr_id")
                         .loginHint("hint")
                         .domainHint("domain_hint")
-                        .claims("{\"id_token\":{\"auth_time\":{\"essential\":true}}}")
+                        .claims("{\"id_token\":{\"auth_time\":{\"essential\":true}},\"access_token\":{\"auth_time\":{\"essential\":true}}}")
                         .prompt(Prompt.SELECT_ACCOUNT)
                         .build();
 
@@ -127,6 +127,6 @@ public class AuthorizationRequestUrlParametersTest {
         Assert.assertEquals(queryParameters.get("correlation_id"), "corr_id");
         Assert.assertEquals(queryParameters.get("login_hint"), "hint");
         Assert.assertEquals(queryParameters.get("domain_hint"), "domain_hint");
-        Assert.assertEquals(queryParameters.get("claims"), "{\"id_token\":{\"auth_time\":{\"essential\":true}},\"access_token\":{\"xms_cc\":{\"values\":[\"llt\",\"ssm\"]}}}");
+        Assert.assertEquals(queryParameters.get("claims"), "{\"access_token\":{\"auth_time\":{\"essential\":true},\"xms_cc\":{\"values\":[\"llt\",\"ssm\"]}}}");
     }
 }
