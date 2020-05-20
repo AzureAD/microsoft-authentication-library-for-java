@@ -80,6 +80,10 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
     @Getter
     private AadInstanceDiscoveryResponse aadAadInstanceDiscoveryResponse;
 
+    @Accessors(fluent = true)
+    @Getter
+    private String clientCapabilities;
+
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(AuthorizationCodeParameters parameters) {
 
@@ -166,6 +170,14 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         validateNotNull("parameters", parameters);
 
         parameters.requestParameters.put("client_id", Collections.singletonList(this.clientId));
+
+        if (this.clientCapabilities != null) {
+            if (parameters.requestParameters.containsKey("claims")) {
+                parameters.requestParameters.put("claims", Collections.singletonList(JsonHelper.mergeJSONString(String.valueOf(parameters.requestParameters.get("claims").get(0)), this.clientCapabilities)));
+            } else {
+                parameters.requestParameters.put("claims", Collections.singletonList(this.clientCapabilities));
+            }
+        }
 
         return parameters.createAuthorizationURL(
                 this.authenticationAuthority,
@@ -264,6 +276,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         private String applicationVersion;
         private ITokenCacheAccessAspect tokenCacheAccessAspect;
         private AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse;
+        private String clientCapabilities;
 
         /**
          * Constructor to create instance of Builder of client application
@@ -503,6 +516,12 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
             return authority;
         }
 
+        public T clientCapabilities(Set<String> capabilities) {
+            clientCapabilities = JsonHelper.formCapabilitiesJson(capabilities);
+
+            return self();
+        }
+
         abstract ClientApplicationBase build();
     }
 
@@ -526,6 +545,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         authenticationAuthority = builder.authenticationAuthority;
         tokenCache = new TokenCache(builder.tokenCacheAccessAspect);
         aadAadInstanceDiscoveryResponse = builder.aadInstanceDiscoveryResponse;
+        clientCapabilities = builder.clientCapabilities;
 
         if(aadAadInstanceDiscoveryResponse != null){
             AadInstanceDiscoveryProvider.cacheInstanceDiscoveryMetadata(

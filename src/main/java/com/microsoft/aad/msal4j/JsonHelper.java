@@ -54,7 +54,12 @@ class JsonHelper {
      *  }
      */
     public static String formCapabilitiesJson(Set<String> clientCapabilities) {
-        return "{\"access_token\":{\"xms_cc\":{\"values\":[\"" + String.join("\",\"", clientCapabilities) + "\"]}}}\"";
+        if (clientCapabilities != null && !clientCapabilities.isEmpty()) {
+            return "{\"access_token\":{\"xms_cc\":{\"values\":[\"" + String.join("\",\"", clientCapabilities) + "\"]}}}";
+        }
+        else {
+            return null;
+        }
     }
 
     /**

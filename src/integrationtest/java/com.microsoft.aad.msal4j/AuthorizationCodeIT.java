@@ -152,10 +152,18 @@ public class AuthorizationCodeIT extends SeleniumTest {
 
         PublicClientApplication pca;
         try {
-            pca = PublicClientApplication.builder(
-                    user.getAppId()).
-                    authority(cfg.organizationsAuthority()).
-                    build();
+            if (parameters != null) {
+                pca = PublicClientApplication.builder(
+                        user.getAppId()).
+                        authority(cfg.organizationsAuthority()).
+                        clientCapabilities(parameters.getOrDefault("clientCapabilities", null)).
+                        build();
+            } else {
+                pca = PublicClientApplication.builder(
+                        user.getAppId()).
+                        authority(cfg.organizationsAuthority()).
+                        build();
+            }
         } catch(MalformedURLException ex){
             throw new RuntimeException(ex.getMessage());
         }
@@ -325,8 +333,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
                 AuthorizationRequestUrlParameters
                         .builder(TestConstants.LOCALHOST + httpListener.port(),
                                 Collections.singleton(scope))
-                        .claims(String.valueOf(parameters.getOrDefault("claims", null).toArray()[0]))
-                        .clientCapabilities(parameters.getOrDefault("clientCapabilities", null))
+                        .claims(String.valueOf(parameters.getOrDefault("claims", Collections.singleton("")).toArray()[0]))
                         .build();
 
         return app.getAuthorizationRequestUrl(requestUrlParameters).toString();

@@ -69,8 +69,6 @@ public class InteractiveRequestParameters {
 
     private String claims;
 
-    private Set<String> clientCapabilities;
-
     private static InteractiveRequestParametersBuilder builder() {
         return new InteractiveRequestParametersBuilder();
     }

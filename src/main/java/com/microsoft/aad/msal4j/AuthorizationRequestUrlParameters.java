@@ -71,20 +71,9 @@ public class AuthorizationRequestUrlParameters {
         requestParameters.put("response_type",Collections.singletonList("code"));
 
         // Optional parameters
-        if(builder.claims != null){
+        if(builder.claims != null && builder.claims.trim().length() > 0){
             JsonHelper.validateJsonFormat(builder.claims);
             requestParameters.put("claims", Collections.singletonList(builder.claims));
-        }
-
-        if(builder.clientCapabilities != null && !builder.clientCapabilities.isEmpty()){
-            String capabilitiesParam = JsonHelper.formCapabilitiesJson(builder.clientCapabilities);
-            JsonHelper.validateJsonFormat(capabilitiesParam);
-            if (requestParameters.containsKey("claims")) {
-                String mergedClaimsAndCapabilities = JsonHelper.mergeJSONString(String.valueOf(requestParameters.get("claims").get(0)), capabilitiesParam);
-                requestParameters.replace("claims", Collections.singletonList(mergedClaimsAndCapabilities));
-            } else {
-                requestParameters.put("claims", Collections.singletonList(capabilitiesParam));
-            }
         }
 
         if(builder.codeChallenge != null){
@@ -158,7 +147,6 @@ public class AuthorizationRequestUrlParameters {
         private String redirectUri;
         private Set<String> scopes;
         private String claims;
-        private Set<String> clientCapabilities;
         private String codeChallenge;
         private String codeChallengeMethod;
         private String state;
@@ -201,15 +189,6 @@ public class AuthorizationRequestUrlParameters {
          */
         public Builder claims(String val){
             this.claims = val;
-            return self();
-        }
-
-        /**
-         * Allows the client to indicate to the token service what policies or features it is
-         * capable of handling
-         */
-        public Builder clientCapabilities(Set<String> val){
-            this.clientCapabilities = val;
             return self();
         }
 

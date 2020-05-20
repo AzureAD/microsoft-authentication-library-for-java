@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.HashSet;
 
 public class AuthorizationRequestUrlParametersTest {
 
@@ -76,7 +77,11 @@ public class AuthorizationRequestUrlParametersTest {
 
     @Test
     public void testBuilder_optionalParameters() throws UnsupportedEncodingException{
-        PublicClientApplication app = PublicClientApplication.builder("client_id").build();
+        Set<String> clientCapabilities = new HashSet<>();
+        clientCapabilities.add("llt");
+        clientCapabilities.add("ssm");
+
+        PublicClientApplication app = PublicClientApplication.builder("client_id").clientCapabilities(clientCapabilities).build();
 
         String redirectUri = "http://localhost:8080";
         Set<String> scope = Collections.singleton("scope");
@@ -92,8 +97,7 @@ public class AuthorizationRequestUrlParametersTest {
                         .correlationId("corr_id")
                         .loginHint("hint")
                         .domainHint("domain_hint")
-                        .claims("{\"userinfo\":{\"given_name\":{\"essential\":true},\"nickname\":null,\"email\":{\"essential\":true},\"email_verified\":{\"essential\":true},\"picture\":null,\"http://example.info/claims/groups\":null}}")
-                        .clientCapabilities(Collections.emptySet())
+                        .claims("{\"id_token\":{\"auth_time\":{\"essential\":true}}}")
                         .prompt(Prompt.SELECT_ACCOUNT)
                         .build();
 
@@ -123,6 +127,6 @@ public class AuthorizationRequestUrlParametersTest {
         Assert.assertEquals(queryParameters.get("correlation_id"), "corr_id");
         Assert.assertEquals(queryParameters.get("login_hint"), "hint");
         Assert.assertEquals(queryParameters.get("domain_hint"), "domain_hint");
-        Assert.assertEquals(queryParameters.get("claims"), "{\"userinfo\":{\"given_name\":{\"essential\":true},\"nickname\":null,\"email\":{\"essential\":true},\"email_verified\":{\"essential\":true},\"picture\":null,\"http://example.info/claims/groups\":null},\"access_token\":{\"xms_cc\":{\"values\":[]}}}");
+        Assert.assertEquals(queryParameters.get("claims"), "{\"id_token\":{\"auth_time\":{\"essential\":true}},\"access_token\":{\"xms_cc\":{\"values\":[\"llt\",\"ssm\"]}}}");
     }
 }
