@@ -1,3 +1,10 @@
+Version 1.5.0
+=============
+- Support of server side throttling instructions
+- Rebuild client assertion when expired
+- Update nimbus SDK version from 6.5 to 7.4
+- Validation of Authority path segments
+
 Version 1.4.0
 =============
 - Added acquire token interactive API, using system default browser

@@ -15,14 +15,14 @@ abstract class MsalRequest {
 
     AbstractMsalAuthorizationGrant msalAuthorizationGrant;
 
-    private final ClientApplicationBase application;
+    private final AbstractClientApplicationBase application;
 
     private final RequestContext requestContext;
 
     @Getter(value = AccessLevel.PACKAGE, lazy = true)
     private final HttpHeaders headers = new HttpHeaders(requestContext);
 
-    MsalRequest(ClientApplicationBase clientApplicationBase,
+    MsalRequest(AbstractClientApplicationBase clientApplicationBase,
                 AbstractMsalAuthorizationGrant abstractMsalAuthorizationGrant,
                 RequestContext requestContext){
 

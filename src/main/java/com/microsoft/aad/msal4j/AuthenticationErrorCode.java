@@ -92,6 +92,11 @@ public class AuthenticationErrorCode {
     public final static String DESKTOP_BROWSER_NOT_SUPPORTED = "desktop_browser_not_supported";
 
     /**
+     * Request was throttled according to instructions from STS.
+     */
+    public final static String THROTTLED_REQUEST = "throttled_request";
+
+    /**
      * A JsonProcessingException was thrown, indicating the JSON provided to MSAL is of invalid format.
      */
     public final static String INVALID_JSON = "invalid_json";

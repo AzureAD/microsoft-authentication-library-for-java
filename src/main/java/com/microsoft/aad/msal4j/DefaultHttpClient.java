@@ -99,14 +99,14 @@ class DefaultHttpClient implements IHttpClient {
             if (responseCode != HttpURLConnection.HTTP_OK) {
                 is = conn.getErrorStream();
                 if (is != null) {
-                    httpResponse.headers(conn.getHeaderFields());
+                    httpResponse.addHeaders(conn.getHeaderFields());
                     httpResponse.body(inputStreamToString(is));
                 }
                 return httpResponse;
             }
 
             is = conn.getInputStream();
-            httpResponse.headers(conn.getHeaderFields());
+            httpResponse.addHeaders(conn.getHeaderFields());
             httpResponse.body(inputStreamToString(is));
             return httpResponse;
         }

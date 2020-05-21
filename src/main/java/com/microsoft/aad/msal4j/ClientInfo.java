@@ -10,6 +10,8 @@ import lombok.Getter;
 
 import java.util.Base64;
 
+import static com.microsoft.aad.msal4j.Constants.POINT_DELIMITER;
+
 @Getter(AccessLevel.PACKAGE)
 class ClientInfo {
 
@@ -29,6 +31,6 @@ class ClientInfo {
     }
 
     String toAccountIdentifier(){
-        return uniqueIdentifier + "." + unqiueTenantIdentifier;
+        return uniqueIdentifier + POINT_DELIMITER + unqiueTenantIdentifier;
     }
 }

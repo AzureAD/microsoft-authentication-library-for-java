@@ -8,11 +8,12 @@ import java.net.URL;
 
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-@Test(groups = { "checkin" })
-@PrepareForTest({ AADAuthority.class, HttpHelper.class,
-        JsonHelper.class, AadInstanceDiscoveryResponse.class })
+@Test(groups = {"checkin"})
+@PrepareForTest({AADAuthority.class, HttpHelper.class,
+        JsonHelper.class, AadInstanceDiscoveryResponse.class})
 public class AuthorityTest extends AbstractMsalTests {
 
     @Test
@@ -35,43 +36,26 @@ public class AuthorityTest extends AbstractMsalTests {
 
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp =
-                    "authority Uri should have at least one segment in the path \\(i.e. https://<host>/<path>/...\\)")
-    public void testAADAuthorityConstructor_NoPathAuthority() throws MalformedURLException {
-        new AADAuthority(new URL("https://something.com/"));
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp =
                     "B2C 'authority' Uri should have at least 3 segments in the path \\(i.e. https://<host>/tfp/<tenant>/<policy>/...\\)")
     public void testB2CAuthorityConstructor_NotEnoughSegments() throws MalformedURLException {
         new B2CAuthority(new URL("https://something.com/tfp/somethingelse/"));
     }
 
-    @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "canonicalAuthorityUrl")
-    public void testAADAuthorityConstructor_NullAuthority() {
-        new AADAuthority(null);
-    }
-
-    @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "canonicalAuthorityUrl")
-    public void testB2CAuthorityConstructor_NullAuthority() {
-        new B2CAuthority(null);
-    }
-
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "authority should use the 'https' scheme")
     public void testAADAuthorityConstructor_HttpAuthority() throws MalformedURLException {
-        new AADAuthority(new URL("http://I.com/not/h/t/t/p/s/"));
+        Authority.validateAuthority(new URL("http://I.com/not/h/t/t/p/s/"));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "authority is invalid format \\(contains fragment\\)")
     public void testAADAuthorityConstructor_UrlHasFragment() throws MalformedURLException {
-        new AADAuthority(new URL("https://I.com/something/#haha"));
+        Authority.validateAuthority(new URL("https://I.com/something/#haha"));
     }
 
 
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "authority cannot contain query parameters")
     public void testAADAuthorityConstructor_AuthorityHasQuery()
             throws MalformedURLException {
-        new AADAuthority(new URL("https://I.com/not/?query=not-allowed"));
+        Authority.validateAuthority(new URL("https://I.com/not/?query=not-allowed"));
     }
 
 
@@ -96,7 +80,7 @@ public class AuthorityTest extends AbstractMsalTests {
 
     @Test
     public void testConstructor_B2CAuthority() throws MalformedURLException {
-        final B2CAuthority aa = new B2CAuthority (new URL(TestConfiguration.B2C_AUTHORITY));
+        final B2CAuthority aa = new B2CAuthority(new URL(TestConfiguration.B2C_AUTHORITY));
         Assert.assertNotNull(aa);
         Assert.assertEquals(aa.authority(),
                 TestConfiguration.B2C_AUTHORITY + "/");
@@ -128,22 +112,22 @@ public class AuthorityTest extends AbstractMsalTests {
     }
 
     @Test
-    public void testB2CAuthority_SameCanonicalAuthority() throws MalformedURLException{
+    public void testB2CAuthority_SameCanonicalAuthority() throws MalformedURLException {
 
-        PublicClientApplication pca =  PublicClientApplication.builder("client_id").
+        PublicClientApplication pca = PublicClientApplication.builder("client_id").
                 b2cAuthority(TestConfiguration.B2C_AUTHORITY_CUSTOM_PORT).build();
         Assert.assertEquals(pca.authenticationAuthority.authority,
                 TestConfiguration.B2C_AUTHORITY_CUSTOM_PORT_TAIL_SLASH);
 
-        PublicClientApplication pca2 =  PublicClientApplication.builder("client_id").
+        PublicClientApplication pca2 = PublicClientApplication.builder("client_id").
                 b2cAuthority(TestConfiguration.B2C_AUTHORITY_CUSTOM_PORT_TAIL_SLASH).build();
         Assert.assertEquals(pca2.authenticationAuthority.authority,
                 TestConfiguration.B2C_AUTHORITY_CUSTOM_PORT_TAIL_SLASH);
     }
 
     @Test
-    public void testNoAuthorityPassedIn_DefaultsToCommonAuthority(){
-        PublicClientApplication pca =  PublicClientApplication.builder("client_id").build();
+    public void testNoAuthorityPassedIn_DefaultsToCommonAuthority() {
+        PublicClientApplication pca = PublicClientApplication.builder("client_id").build();
 
         Assert.assertEquals(pca.authority(), TestConfiguration.AAD_COMMON_AUTHORITY);
         Assert.assertNotNull(pca.authenticationAuthority);
@@ -153,7 +137,7 @@ public class AuthorityTest extends AbstractMsalTests {
     public void testDoStaticInstanceDiscovery_ValidateTrue_TrustedAuthority()
             throws MalformedURLException, Exception {
         final AADAuthority aa = new AADAuthority(new URL(TestConfiguration.AAD_TENANT_ENDPOINT));
-       //PS Assert.assertTrue(aa.doStaticInstanceDiscovery(true));
+        //PS Assert.assertTrue(aa.doStaticInstanceDiscovery(true));
     }
 
     @Test
@@ -168,5 +152,26 @@ public class AuthorityTest extends AbstractMsalTests {
             throws MalformedURLException, Exception {
         final AADAuthority aa = new AADAuthority(new URL(TestConfiguration.AAD_UNKNOWN_TENANT_ENDPOINT));
         //PS Assert.assertTrue(aa.doStaticInstanceDiscovery(false));
+    }
+
+
+    @DataProvider(name = "authoritiesWithEmptyPath")
+    public static Object[][] createData() {
+        return new Object[][]{{"https://login.microsoftonline.com/"},
+                {"https://login.microsoftonline.com//"},
+                {"https://login.microsoftonline.com//tenant"},
+                {"https://login.microsoftonline.com////tenant//path1"}};
+    }
+
+    @Test(dataProvider = "authoritiesWithEmptyPath", expectedExceptions = IllegalArgumentException.class,
+            expectedExceptionsMessageRegExp = IllegalArgumentExceptionMessages.AUTHORITY_URI_EMPTY_PATH_SEGMENT)
+    public void testValidateAuthorityEmptyPathSegments(String authority) throws MalformedURLException {
+        Authority.validateAuthority(new URL(authority));
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class,
+            expectedExceptionsMessageRegExp = IllegalArgumentExceptionMessages.AUTHORITY_URI_EMPTY_PATH)
+    public void testValidateAuthorityEmptyPath() throws MalformedURLException {
+        Authority.validateAuthority(new URL("https://login.microsoftonline.com"));
     }
 }

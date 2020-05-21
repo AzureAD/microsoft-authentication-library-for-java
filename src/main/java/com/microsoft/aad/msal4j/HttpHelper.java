@@ -6,32 +6,64 @@ package com.microsoft.aad.msal4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static com.microsoft.aad.msal4j.Constants.POINT_DELIMITER;
 
 class HttpHelper {
 
     private final static Logger log = LoggerFactory.getLogger(HttpHelper.class);
+    public static final String RETRY_AFTER_HEADER = "Retry-After";
+    public static final int RETRY_NUM = 2;
+    public static final int RETRY_DELAY_MS = 1000;
 
-    static IHttpResponse executeHttpRequest(final HttpRequest httpRequest,
-                                            final RequestContext requestContext,
-                                            final ServiceBundle serviceBundle) {
+    private static String getRequestThumbprint(RequestContext requestContext) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(requestContext.clientId() + POINT_DELIMITER);
+        sb.append(requestContext.authority() + POINT_DELIMITER);
+
+        IApiParameters apiParameters = requestContext.apiParameters();
+
+        if (apiParameters instanceof SilentParameters) {
+            IAccount account = ((SilentParameters) apiParameters).account();
+            if (account != null) {
+                sb.append(account.homeAccountId() + POINT_DELIMITER);
+            }
+        }
+
+        Set<String> sortedScopes = new TreeSet<>(apiParameters.scopes());
+        sb.append(String.join(" ", sortedScopes));
+
+        return StringHelper.createSha256Hash(sb.toString());
+    }
+
+    static private boolean isRetryable(IHttpResponse httpResponse) {
+        return httpResponse.statusCode() >= 500 && httpResponse.statusCode() < 600 &&
+                getRetryAfterHeader(httpResponse) == null;
+    }
+
+    static IHttpResponse executeHttpRequest(HttpRequest httpRequest,
+                                            RequestContext requestContext,
+                                            ServiceBundle serviceBundle) {
+        checkForThrottling(requestContext);
 
         HttpEvent httpEvent = new HttpEvent(); // for tracking http telemetry
-        IHttpResponse httpResponse;
+        IHttpResponse httpResponse = null;
 
-        try(TelemetryHelper telemetryHelper = serviceBundle.getTelemetryManager().createTelemetryHelper(
+        try (TelemetryHelper telemetryHelper = serviceBundle.getTelemetryManager().createTelemetryHelper(
                 requestContext.telemetryRequestId(),
                 requestContext.clientId(),
                 httpEvent,
-                false)){
+                false)) {
 
             addRequestInfoToTelemetry(httpRequest, httpEvent);
 
-            try{
+            try {
                 IHttpClient httpClient = serviceBundle.getHttpClient();
-                httpResponse = httpClient.send(httpRequest);
-            } catch(Exception e){
+
+                httpResponse = executeHttpRequestWithRetries(httpRequest, httpClient);
+
+            } catch (Exception e) {
                 httpEvent.setOauthErrorCode(AuthenticationErrorCode.UNKNOWN);
                 throw new MsalClientException(e);
             }
@@ -42,17 +74,85 @@ class HttpHelper {
                 HttpHelper.verifyReturnedCorrelationId(httpRequest, httpResponse);
             }
         }
+        processThrottlingInstructions(httpResponse, requestContext);
+
         return httpResponse;
     }
 
-    private static void addRequestInfoToTelemetry(final HttpRequest httpRequest, HttpEvent httpEvent){
-        try{
+    private static IHttpResponse executeHttpRequestWithRetries(HttpRequest httpRequest, IHttpClient httpClient)
+            throws Exception {
+        IHttpResponse httpResponse = null;
+        for (int i = 0; i < RETRY_NUM; i++) {
+            httpResponse = httpClient.send(httpRequest);
+            if (!isRetryable(httpResponse)) {
+                break;
+            }
+            Thread.sleep(RETRY_DELAY_MS);
+        }
+        return httpResponse;
+    }
+
+    private static void checkForThrottling(RequestContext requestContext) {
+        if (requestContext.clientApplication() instanceof PublicClientApplication &&
+                requestContext.apiParameters() != null) {
+            String requestThumbprint = getRequestThumbprint(requestContext);
+
+            long retryInMs = ThrottlingCache.retryInMs(requestThumbprint);
+
+            if (retryInMs > 0) {
+                throw new MsalThrottlingException(retryInMs);
+            }
+        }
+    }
+
+    private static void processThrottlingInstructions(IHttpResponse httpResponse, RequestContext requestContext) {
+        if (requestContext.clientApplication() instanceof PublicClientApplication) {
+            Long expirationTimestamp = null;
+
+            Integer retryAfterHeaderVal = getRetryAfterHeader(httpResponse);
+            if (retryAfterHeaderVal != null) {
+                expirationTimestamp = System.currentTimeMillis() + retryAfterHeaderVal * 1000;
+            } else if (httpResponse.statusCode() == 429 ||
+                    (httpResponse.statusCode() >= 500 && httpResponse.statusCode() < 600)) {
+
+                expirationTimestamp = System.currentTimeMillis() + ThrottlingCache.DEFAULT_THROTTLING_TIME_SEC * 1000;
+            }
+            if (expirationTimestamp != null) {
+                ThrottlingCache.set(getRequestThumbprint(requestContext), expirationTimestamp);
+            }
+        }
+    }
+
+    private static Integer getRetryAfterHeader(IHttpResponse httpResponse) {
+
+        if (httpResponse.headers() != null) {
+            TreeMap<String, List<String>> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+            headers.putAll(httpResponse.headers());
+
+            if (headers.containsKey(RETRY_AFTER_HEADER) && headers.get(RETRY_AFTER_HEADER).size() == 1) {
+                try {
+                    int headerValue = Integer.parseInt(headers.get(RETRY_AFTER_HEADER).get(0));
+
+                    if (headerValue > 0 && headerValue <= ThrottlingCache.MAX_THROTTLING_TIME_SEC) {
+                        return headerValue;
+                    }
+                }
+                catch (NumberFormatException ex){
+                    log.warn("Failed to parse value of Retry-After header - NumberFormatException");
+                }
+            }
+        }
+        return null;
+    }
+
+    private static void addRequestInfoToTelemetry(final HttpRequest httpRequest, HttpEvent httpEvent) {
+        try {
             httpEvent.setHttpPath(httpRequest.url().toURI());
             httpEvent.setHttpMethod(httpRequest.httpMethod().toString());
-            if(!StringHelper.isBlank(httpRequest.url().getQuery())){
+            if (!StringHelper.isBlank(httpRequest.url().getQuery())) {
                 httpEvent.setQueryParameters(httpRequest.url().getQuery());
             }
-        } catch(Exception ex){
+        } catch (Exception ex) {
             String correlationId = httpRequest.headerValue(
                     HttpHeaders.CORRELATION_ID_HEADER_NAME);
 
@@ -62,28 +162,28 @@ class HttpHelper {
         }
     }
 
-    private static void addResponseInfoToTelemetry(IHttpResponse httpResponse, HttpEvent httpEvent){
+    private static void addResponseInfoToTelemetry(IHttpResponse httpResponse, HttpEvent httpEvent) {
 
         httpEvent.setHttpResponseStatus(httpResponse.statusCode());
 
         Map<String, List<String>> headers = httpResponse.headers();
 
         String userAgent = HttpUtils.headerValue(headers, "User-Agent");
-        if(!StringHelper.isBlank(userAgent)){
+        if (!StringHelper.isBlank(userAgent)) {
             httpEvent.setUserAgent(userAgent);
         }
 
         String xMsRequestId = HttpUtils.headerValue(headers, "x-ms-request-id");
-        if(!StringHelper.isBlank(xMsRequestId)){
+        if (!StringHelper.isBlank(xMsRequestId)) {
             httpEvent.setRequestIdHeader(xMsRequestId);
         }
 
-        String xMsClientTelemetry = HttpUtils.headerValue(headers,"x-ms-clitelem");
-        if(xMsClientTelemetry != null){
+        String xMsClientTelemetry = HttpUtils.headerValue(headers, "x-ms-clitelem");
+        if (xMsClientTelemetry != null) {
             XmsClientTelemetryInfo xmsClientTelemetryInfo =
                     XmsClientTelemetryInfo.parseXmsTelemetryInfo(xMsClientTelemetry);
 
-            if(xmsClientTelemetryInfo != null){
+            if (xmsClientTelemetryInfo != null) {
                 httpEvent.setXmsClientTelemetryInfo(xmsClientTelemetryInfo);
             }
         }

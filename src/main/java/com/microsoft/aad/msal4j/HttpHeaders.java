@@ -34,6 +34,9 @@ final class HttpHeaders {
     private  final static String REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_NAME = "return-client-request-id";
     private final static String REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_VALUE = "true";
 
+    private  final static String X_MS_LIB_CAPABILITY_NAME = "x-ms-lib-capability";
+    private final static String X_MS_LIB_CAPABILITY_VALUE = "retry-after, h429";
+
     private final String headerValues;
     private final Map<String, String> headerMap = new HashMap<>();
 
@@ -66,6 +69,8 @@ final class HttpHeaders {
         if(!StringHelper.isBlank(this.applicationVersionHeaderValue)){
             init.accept(APPLICATION_VERSION_HEADER_NAME, this.applicationVersionHeaderValue);
         }
+
+        init.accept(X_MS_LIB_CAPABILITY_NAME, this.X_MS_LIB_CAPABILITY_VALUE);
 
         return sb.toString();
     }

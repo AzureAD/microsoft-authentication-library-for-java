@@ -18,7 +18,7 @@ class SilentRequest extends MsalRequest {
     private Authority requestAuthority;
 
     SilentRequest(SilentParameters parameters,
-                  ClientApplicationBase application,
+                  AbstractClientApplicationBase application,
                   RequestContext requestContext) throws MalformedURLException {
 
         super(application, null, requestContext);

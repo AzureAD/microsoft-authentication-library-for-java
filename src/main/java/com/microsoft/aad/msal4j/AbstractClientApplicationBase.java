@@ -13,7 +13,10 @@ import javax.net.ssl.SSLSocketFactory;
 import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
@@ -25,10 +28,9 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
  * Abstract class containing common methods and properties to both {@link PublicClientApplication}
  * and {@link ConfidentialClientApplication}.
  */
-abstract class ClientApplicationBase implements IClientApplicationBase {
+abstract class AbstractClientApplicationBase implements IClientApplicationBase {
 
     protected Logger log;
-    protected ClientAuthentication clientAuthentication;
     protected Authority authenticationAuthority;
     private ServiceBundle serviceBundle;
 
@@ -80,6 +82,8 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
     @Getter
     private AadInstanceDiscoveryResponse aadAadInstanceDiscoveryResponse;
 
+    protected abstract ClientAuthentication clientAuthentication();
+
     @Accessors(fluent = true)
     @Getter
     private String clientCapabilities;
@@ -92,7 +96,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         AuthorizationCodeRequest authorizationCodeRequest = new AuthorizationCodeRequest(
                 parameters,
                 this,
-                createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
 
         return this.executeRequest(authorizationCodeRequest);
     }
@@ -105,7 +109,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(
                 parameters,
                 this,
-                createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_REFRESH_TOKEN));
+                createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_REFRESH_TOKEN, parameters));
 
         return executeRequest(refreshTokenRequest);
     }
@@ -132,7 +136,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         SilentRequest silentRequest = new SilentRequest(
                 parameters,
                 this,
-                createRequestContext(PublicApi.ACQUIRE_TOKEN_SILENTLY));
+                createRequestContext(PublicApi.ACQUIRE_TOKEN_SILENTLY, parameters));
 
         return executeRequest(silentRequest);
     }
@@ -141,7 +145,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
     public CompletableFuture<Set<IAccount>> getAccounts() {
         MsalRequest msalRequest =
                 new MsalRequest(this, null,
-                        createRequestContext(PublicApi.GET_ACCOUNTS)){};
+                        createRequestContext(PublicApi.GET_ACCOUNTS, null)){};
 
         AccountsSupplier supplier = new AccountsSupplier(this, msalRequest);
 
@@ -154,7 +158,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
     @Override
     public CompletableFuture removeAccount(IAccount account) {
         MsalRequest msalRequest = new MsalRequest(this, null,
-                        createRequestContext(PublicApi.REMOVE_ACCOUNTS)){};
+                        createRequestContext(PublicApi.REMOVE_ACCOUNTS, null)){};
 
         RemoveAccountRunnable runnable = new RemoveAccountRunnable(msalRequest, account);
 
@@ -239,15 +243,15 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         return supplier;
     }
 
-    RequestContext createRequestContext(PublicApi publicApi) {
-        return new RequestContext(this, publicApi);
+    RequestContext createRequestContext(PublicApi publicApi, IApiParameters apiParameters) {
+        return new RequestContext(this, publicApi, apiParameters);
     }
 
     ServiceBundle getServiceBundle() {
         return serviceBundle;
     }
 
-    protected static String canonicalizeUrl(String authority) {
+    protected static String enforceTrailingSlash(String authority) {
         authority = authority.toLowerCase();
 
         if (!authority.endsWith("/")) {
@@ -294,21 +298,24 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         /**
          * Set URL of the authenticating authority or security token service (STS) from which MSAL
          * will acquire security tokens.
-         * The default value is {@link ClientApplicationBase#DEFAULT_AUTHORITY}
+         * The default value is {@link AbstractClientApplicationBase#DEFAULT_AUTHORITY}
          *
          * @param val a string value of authority
          * @return instance of the Builder on which method was called
          * @throws MalformedURLException if val is malformed URL
          */
         public T authority(String val) throws MalformedURLException {
-            authority = canonicalizeUrl(val);
+            authority = enforceTrailingSlash(val);
 
-            switch (Authority.detectAuthorityType(new URL(authority))) {
+            URL authorityURL = new URL(authority);
+            Authority.validateAuthority(authorityURL);
+
+            switch (Authority.detectAuthorityType(authorityURL)) {
                 case AAD:
-                    authenticationAuthority = new AADAuthority(new URL(authority));
+                    authenticationAuthority = new AADAuthority(authorityURL);
                     break;
                 case ADFS:
-                    authenticationAuthority = new ADFSAuthority(new URL(authority));
+                    authenticationAuthority = new ADFSAuthority(authorityURL);
                     break;
                 default:
                     throw new IllegalArgumentException("Unsupported authority type.");
@@ -318,12 +325,15 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
         }
 
         public T b2cAuthority(String val) throws MalformedURLException{
-            authority = canonicalizeUrl(val);
+            authority = enforceTrailingSlash(val);
 
-            if(Authority.detectAuthorityType(new URL(authority)) != AuthorityType.B2C){
+            URL authorityURL = new URL(authority);
+            Authority.validateAuthority(authorityURL);
+
+            if(Authority.detectAuthorityType(authorityURL) != AuthorityType.B2C){
                 throw new IllegalArgumentException("Unsupported authority type. Please use B2C authority");
             }
-            authenticationAuthority = new B2CAuthority(new URL(authority));
+            authenticationAuthority = new B2CAuthority(authorityURL);
 
             validateAuthority = false;
             return self();
@@ -333,7 +343,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
          * Set a boolean value telling the application if the authority needs to be verified
          * against a list of known authorities. Authority is only validated when:
          * 1 - It is an Azure Active Directory authority (not B2C or ADFS)
-         * 2 - Instance discovery metadata is not set via {@link ClientApplicationBase#aadAadInstanceDiscoveryResponse}
+         * 2 - Instance discovery metadata is not set via {@link AbstractClientApplicationBase#aadAadInstanceDiscoveryResponse}
          *
          * The default value is true.
          *
@@ -489,7 +499,7 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
          * Sets instance discovery response data which will be used for determining tenant discovery
          * endpoint and authority aliases.
          *
-         * Note that authority validation is not done even if {@link ClientApplicationBase#validateAuthority}
+         * Note that authority validation is not done even if {@link AbstractClientApplicationBase#validateAuthority}
          * is set to true.
          *
          * For more information, see
@@ -522,10 +532,10 @@ abstract class ClientApplicationBase implements IClientApplicationBase {
             return self();
         }
 
-        abstract ClientApplicationBase build();
+        abstract AbstractClientApplicationBase build();
     }
 
-    ClientApplicationBase(Builder<?> builder) {
+    AbstractClientApplicationBase(Builder<?> builder) {
         clientId = builder.clientId;
         authority = builder.authority;
         validateAuthority = builder.validateAuthority;

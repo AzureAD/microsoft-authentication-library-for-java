@@ -154,7 +154,7 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
         AuthorizationCodeRequest authCodeRequest = new AuthorizationCodeRequest(
                 parameters,
                 clientApplication,
-                clientApplication.createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE));
+                clientApplication.createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
 
         AcquireTokenByAuthorizationGrantSupplier acquireTokenByAuthorizationGrantSupplier =
             new AcquireTokenByAuthorizationGrantSupplier(

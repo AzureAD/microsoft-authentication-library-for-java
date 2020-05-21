@@ -13,7 +13,7 @@ class ADFSAuthority extends Authority{
     private final static String ADFS_AUTHORITY_FORMAT = "https://%s/%s/";
 
     ADFSAuthority(final URL authorityUrl) {
-        super(authorityUrl);
+        super(authorityUrl, AuthorityType.ADFS);
         this.authority = String.format(ADFS_AUTHORITY_FORMAT, host, tenant);
         this.authorizationEndpoint = authority + AUTHORIZATION_ENDPOINT;
         this.tokenEndpoint = authority + TOKEN_ENDPOINT;

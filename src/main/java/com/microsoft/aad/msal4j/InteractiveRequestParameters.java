@@ -26,7 +26,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 @Accessors(fluent = true)
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class InteractiveRequestParameters {
+public class InteractiveRequestParameters implements IApiParameters {
 
     /**
      * Redirect URI where MSAL will listen to for the authorization code returned by Azure AD.

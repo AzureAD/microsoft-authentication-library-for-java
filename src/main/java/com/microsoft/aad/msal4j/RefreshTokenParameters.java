@@ -17,13 +17,13 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty
  * {@link ConfidentialClientApplication#acquireToken(RefreshTokenParameters)}
  *
  *  RefreshTokenParameters should only be used for migration scenarios (when moving from ADAL to
- *  MSAL). To acquire tokens silently, use {@link ClientApplicationBase#acquireTokenSilently(SilentParameters)}
+ *  MSAL). To acquire tokens silently, use {@link AbstractClientApplicationBase#acquireTokenSilently(SilentParameters)}
  */
 @Builder
 @Accessors(fluent = true)
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class RefreshTokenParameters {
+public class RefreshTokenParameters implements IApiParameters {
 
     /**
      * Scopes the application is requesting access to

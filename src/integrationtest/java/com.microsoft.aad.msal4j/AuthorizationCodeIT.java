@@ -244,7 +244,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
 
     private String acquireAuthorizationCodeAutomated(
             User user,
-            ClientApplicationBase app,
+            AbstractClientApplicationBase app,
             Map<String, Set<String>> parameters){
 
         BlockingQueue<AuthorizationResult> authorizationCodeQueue = new LinkedBlockingQueue<>();
@@ -289,7 +289,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
         return result.code();
     }
 
-    private String buildAuthenticationCodeURL(ClientApplicationBase app) {
+    private String buildAuthenticationCodeURL(AbstractClientApplicationBase app) {
         String scope;
 
         AuthorityType authorityType= app.authenticationAuthority.authorityType;

@@ -19,7 +19,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * Parameters for {@link ClientApplicationBase#getAuthorizationRequestUrl(AuthorizationRequestUrlParameters)}
+ * Parameters for {@link AbstractClientApplicationBase#getAuthorizationRequestUrl(AuthorizationRequestUrlParameters)}
  */
 @Accessors(fluent = true)
 @Getter

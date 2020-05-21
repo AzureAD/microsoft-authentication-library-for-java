@@ -6,17 +6,12 @@ package com.microsoft.aad.msal4j;
 import com.nimbusds.oauth2.sdk.AuthorizationCode;
 import com.nimbusds.oauth2.sdk.AuthorizationCodeGrant;
 import com.nimbusds.oauth2.sdk.AuthorizationGrant;
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import com.nimbusds.oauth2.sdk.pkce.CodeVerifier;
-import lombok.Builder;
-
-import java.net.URI;
-import java.util.Set;
 
 class AuthorizationCodeRequest extends MsalRequest {
 
     AuthorizationCodeRequest(AuthorizationCodeParameters parameters,
-                             ClientApplicationBase application,
+                             AbstractClientApplicationBase application,
                              RequestContext requestContext){
         super(application, createMsalGrant(parameters), requestContext);
     }
