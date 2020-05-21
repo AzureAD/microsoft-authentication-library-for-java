@@ -33,7 +33,8 @@ public class AuthorizationCodeIT extends SeleniumTest {
         assertAcquireTokenAAD(user, null);
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    //TODO: Re-enable test once list of claims/capabilities and their expected behavior is known
+    //@Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
     public void acquireTokenWithAuthorizationCode_ManagedUserWithClaimsAndCapabilities(String environment){
         cfg = new Config(environment);
 
