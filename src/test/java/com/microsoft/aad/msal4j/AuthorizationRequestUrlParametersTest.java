@@ -97,7 +97,7 @@ public class AuthorizationRequestUrlParametersTest {
                         .correlationId("corr_id")
                         .loginHint("hint")
                         .domainHint("domain_hint")
-                        .claims("{\"id_token\":{\"auth_time\":{\"essential\":true}},\"access_token\":{\"auth_time\":{\"essential\":true}}}")
+                        .claimsChallenge("{\"id_token\":{\"auth_time\":{\"essential\":true}},\"access_token\":{\"auth_time\":{\"essential\":true}}}")
                         .prompt(Prompt.SELECT_ACCOUNT)
                         .build();
 

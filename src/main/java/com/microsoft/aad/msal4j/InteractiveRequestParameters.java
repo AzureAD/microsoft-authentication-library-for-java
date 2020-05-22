@@ -67,7 +67,7 @@ public class InteractiveRequestParameters implements IApiParameters {
      */
     private SystemBrowserOptions systemBrowserOptions;
 
-    private String claims;
+    private String claimsChallenge;
 
     private static InteractiveRequestParametersBuilder builder() {
         return new InteractiveRequestParametersBuilder();

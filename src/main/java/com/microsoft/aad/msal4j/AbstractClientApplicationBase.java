@@ -175,9 +175,12 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
 
         parameters.requestParameters.put("client_id", Collections.singletonList(this.clientId));
 
+        //If the client application has any client capabilities set, they must be merged into the claims parameter
         if (this.clientCapabilities != null) {
             if (parameters.requestParameters.containsKey("claims")) {
-                parameters.requestParameters.put("claims", Collections.singletonList(JsonHelper.mergeJSONString(String.valueOf(parameters.requestParameters.get("claims").get(0)), this.clientCapabilities)));
+                String claims = String.valueOf(parameters.requestParameters.get("claims").get(0));
+                String mergedClaimsCapabilities = JsonHelper.mergeJSONString(claims, this.clientCapabilities);
+                parameters.requestParameters.put("claims", Collections.singletonList(mergedClaimsCapabilities));
             } else {
                 parameters.requestParameters.put("claims", Collections.singletonList(this.clientCapabilities));
             }

@@ -71,9 +71,14 @@ public class AuthorizationRequestUrlParameters {
         requestParameters.put("response_type",Collections.singletonList("code"));
 
         // Optional parameters
-        if(builder.claims != null && builder.claims.trim().length() > 0){
-            JsonHelper.validateJsonFormat(builder.claims);
-            requestParameters.put("claims", Collections.singletonList(builder.claims));
+        if(builder.claims != null) {
+            String claimsParam = String.join(" ", builder.claims);
+            requestParameters.put("claims", Collections.singletonList(claimsParam));
+        }
+
+        if(builder.claimsChallenge != null && builder.claimsChallenge.trim().length() > 0){
+            JsonHelper.validateJsonFormat(builder.claimsChallenge);
+            requestParameters.put("claims", Collections.singletonList(builder.claimsChallenge));
         }
 
         if(builder.codeChallenge != null){
@@ -146,7 +151,8 @@ public class AuthorizationRequestUrlParameters {
 
         private String redirectUri;
         private Set<String> scopes;
-        private String claims;
+        private Set<String> claims;
+        private String claimsChallenge;
         private String codeChallenge;
         private String codeChallengeMethod;
         private String state;
@@ -186,9 +192,22 @@ public class AuthorizationRequestUrlParameters {
          * In cases where Azure AD tenant admin has enabled conditional access policies, and the
          * policy has not been met,{@link MsalServiceException} will contain claims that need be
          * consented to.
+         *
+         * Deprecated in favor of {@link #claimsChallenge(String)}
          */
-        public Builder claims(String val){
+        @Deprecated
+        public Builder claims(Set<String> val){
             this.claims = val;
+            return self();
+        }
+
+        /**
+         * In cases where Azure AD tenant admin has enabled conditional access policies, and the
+         * policy has not been met,{@link MsalServiceException} will contain claims that need be
+         * consented to.
+         */
+        public Builder claimsChallenge(String val){
+            this.claimsChallenge = val;
             return self();
         }
 

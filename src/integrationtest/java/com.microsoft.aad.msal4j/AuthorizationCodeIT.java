@@ -152,19 +152,16 @@ public class AuthorizationCodeIT extends SeleniumTest {
     private void assertAcquireTokenAAD(User user, Map<String, Set<String>> parameters){
 
         PublicClientApplication pca;
+        Set<String> clientCapabilities = null;
+        if (parameters != null) {
+            clientCapabilities = parameters.getOrDefault("clientCapabilities", null);
+        }
         try {
-            if (parameters != null) {
                 pca = PublicClientApplication.builder(
                         user.getAppId()).
                         authority(cfg.organizationsAuthority()).
-                        clientCapabilities(parameters.getOrDefault("clientCapabilities", null)).
+                        clientCapabilities(clientCapabilities).
                         build();
-            } else {
-                pca = PublicClientApplication.builder(
-                        user.getAppId()).
-                        authority(cfg.organizationsAuthority()).
-                        build();
-            }
         } catch(MalformedURLException ex){
             throw new RuntimeException(ex.getMessage());
         }
@@ -258,12 +255,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
 
         AuthorizationResult result = null;
         try {
-            String url;
-            if (parameters == null) {
-                url = buildAuthenticationCodeURL(app);
-            } else {
-                url = buildAuthenticationCodeURLWithParameters(app, parameters);
-            }
+            String url = buildAuthenticationCodeURL(app, parameters);
             seleniumDriver.navigate().to(url);
             runSeleniumAutomatedLogin(user, app);
 
@@ -289,8 +281,13 @@ public class AuthorizationCodeIT extends SeleniumTest {
         return result.code();
     }
 
-    private String buildAuthenticationCodeURL(AbstractClientApplicationBase app) {
+    private String buildAuthenticationCodeURL(AbstractClientApplicationBase app, Map<String, Set<String>> parameters) {
         String scope;
+
+        String claims = null;
+        if (parameters != null) {
+            claims = String.valueOf(parameters.getOrDefault("claims", Collections.singleton("")).toArray()[0]);
+        }
 
         AuthorityType authorityType= app.authenticationAuthority.authorityType;
         if(authorityType == AuthorityType.AAD){
@@ -305,38 +302,13 @@ public class AuthorizationCodeIT extends SeleniumTest {
             throw new RuntimeException("Authority type not recognized");
         }
 
-        AuthorizationRequestUrlParameters parameters =
+        AuthorizationRequestUrlParameters authParameters =
                 AuthorizationRequestUrlParameters
                         .builder(TestConstants.LOCALHOST + httpListener.port(),
                                 Collections.singleton(scope))
+                        .claimsChallenge(claims)
                         .build();
 
-        return app.getAuthorizationRequestUrl(parameters).toString();
-    }
-
-    private String buildAuthenticationCodeURLWithParameters(AbstractClientApplicationBase app, Map<String, Set<String>> parameters) {
-        String scope;
-
-        AuthorityType authorityType= app.authenticationAuthority.authorityType;
-        if(authorityType == AuthorityType.AAD){
-            scope = TestConstants.GRAPH_DEFAULT_SCOPE;
-        } else if (authorityType == AuthorityType.B2C) {
-            scope = TestConstants.B2C_LAB_SCOPE;
-        }
-        else if (authorityType == AuthorityType.ADFS){
-            scope = TestConstants.ADFS_SCOPE;
-        }
-        else{
-            throw new RuntimeException("Authority type not recognized");
-        }
-
-        AuthorizationRequestUrlParameters requestUrlParameters =
-                AuthorizationRequestUrlParameters
-                        .builder(TestConstants.LOCALHOST + httpListener.port(),
-                                Collections.singleton(scope))
-                        .claims(String.valueOf(parameters.getOrDefault("claims", Collections.singleton("")).toArray()[0]))
-                        .build();
-
-        return app.getAuthorizationRequestUrl(requestUrlParameters).toString();
+        return app.getAuthorizationRequestUrl(authParameters).toString();
     }
 }
