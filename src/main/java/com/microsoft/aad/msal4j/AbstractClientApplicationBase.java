@@ -84,6 +84,10 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
 
     protected abstract ClientAuthentication clientAuthentication();
 
+    @Accessors(fluent = true)
+    @Getter
+    private String clientCapabilities;
+
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(AuthorizationCodeParameters parameters) {
 
@@ -170,6 +174,17 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
         validateNotNull("parameters", parameters);
 
         parameters.requestParameters.put("client_id", Collections.singletonList(this.clientId));
+
+        //If the client application has any client capabilities set, they must be merged into the claims parameter
+        if (this.clientCapabilities != null) {
+            if (parameters.requestParameters.containsKey("claims")) {
+                String claims = String.valueOf(parameters.requestParameters.get("claims").get(0));
+                String mergedClaimsCapabilities = JsonHelper.mergeJSONString(claims, this.clientCapabilities);
+                parameters.requestParameters.put("claims", Collections.singletonList(mergedClaimsCapabilities));
+            } else {
+                parameters.requestParameters.put("claims", Collections.singletonList(this.clientCapabilities));
+            }
+        }
 
         return parameters.createAuthorizationURL(
                 this.authenticationAuthority,
@@ -268,6 +283,7 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
         private String applicationVersion;
         private ITokenCacheAccessAspect tokenCacheAccessAspect;
         private AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse;
+        private String clientCapabilities;
 
         /**
          * Constructor to create instance of Builder of client application
@@ -513,6 +529,12 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
             return authority;
         }
 
+        public T clientCapabilities(Set<String> capabilities) {
+            clientCapabilities = JsonHelper.formCapabilitiesJson(capabilities);
+
+            return self();
+        }
+
         abstract AbstractClientApplicationBase build();
     }
 
@@ -536,6 +558,7 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
         authenticationAuthority = builder.authenticationAuthority;
         tokenCache = new TokenCache(builder.tokenCacheAccessAspect);
         aadAadInstanceDiscoveryResponse = builder.aadInstanceDiscoveryResponse;
+        clientCapabilities = builder.clientCapabilities;
 
         if(aadAadInstanceDiscoveryResponse != null){
             AadInstanceDiscoveryProvider.cacheInstanceDiscoveryMetadata(
