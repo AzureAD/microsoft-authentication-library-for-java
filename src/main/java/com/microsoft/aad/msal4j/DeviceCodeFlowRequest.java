@@ -41,10 +41,17 @@ class DeviceCodeFlowRequest extends MsalRequest {
                                  Map<String, String> clientDataHeaders,
                                  ServiceBundle serviceBundle) throws Exception {
 
-        String urlWithQueryParams = createQueryParamsAndAppendToURL(url, clientId);
         Map<String, String> headers = appendToHeaders(clientDataHeaders);
 
-        HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, urlWithQueryParams, headers);
+        String scopesParam = AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM +
+                AbstractMsalAuthorizationGrant.SCOPES_DELIMITER + scopesStr;
+
+        Map<String, List<String>> queryParameters = new HashMap<>();
+        queryParameters.put("client_id", Collections.singletonList(clientId));
+        queryParameters.put("scope", Collections.singletonList(scopesParam));
+
+        HttpRequest httpRequest = new HttpRequest(HttpMethod.POST, url, headers, URLUtils.serializeParameters(queryParameters));
+
         final IHttpResponse response = HttpHelper.executeHttpRequest(
                 httpRequest,
                 this.requestContext(),

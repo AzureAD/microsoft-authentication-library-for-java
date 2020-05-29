@@ -134,53 +134,20 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         Assert.assertEquals(url.getPath(),
                 "/" + AAD_TENANT_NAME + "/" + AADAuthority.DEVICE_CODE_ENDPOINT);
 
-        Map<String, String> expectedQueryParams = new HashMap<>();
-        expectedQueryParams.put("client_id", AAD_CLIENT_ID);
-        expectedQueryParams.put("scope", URLEncoder.encode(AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM +
-                AbstractMsalAuthorizationGrant.SCOPES_DELIMITER + AAD_RESOURCE_ID, "UTF-8" ));
+        String expectedScope = URLEncoder.encode(AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM +
+                AbstractMsalAuthorizationGrant.SCOPES_DELIMITER + AAD_RESOURCE_ID, "UTF-8");
+        String expectedBody = String.format("scope=%s&client_id=%s", expectedScope, AAD_CLIENT_ID);
 
-        Assert.assertEquals(getQueryMap(url.getQuery()), expectedQueryParams);
+        String body = capturedHttpRequest.getValue().body();
+        Assert.assertEquals(body, expectedBody);
 
         // make sure same correlation id is used for acquireDeviceCode and acquireTokenByDeviceCode calls
-
-        Map<String, String > headers = capturedMsalRequest.getValue().headers().getReadonlyHeaderMap();
         Assert.assertEquals(capturedMsalRequest.getValue().headers().getReadonlyHeaderMap().
                 get(HttpHeaders.CORRELATION_ID_HEADER_NAME), deviceCodeCorrelationId.get());
         Assert.assertNotNull(authResult);
 
         PowerMock.verify();
     }
-
-    @Test(expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "Invalid authority type. Device Flow is only supported by AAD authority")
-    public void executeAcquireDeviceCode_AdfsAuthorityUsed_IllegalArgumentExceptionThrown()
-            throws Exception {
-
-        app = PublicClientApplication.builder("client_id")
-                .authority(ADFS_TENANT_ENDPOINT)
-                .validateAuthority(false).build();
-
-        app.acquireToken
-                (DeviceCodeFlowParameters
-                        .builder(Collections.singleton(AAD_RESOURCE_ID), (DeviceCode deviceCode) -> {})
-                        .build());
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "Invalid authority type. Device Flow is only supported by AAD authority")
-    public void executeAcquireDeviceCode_B2CAuthorityUsed_IllegalArgumentExceptionThrown()
-            throws Exception {
-
-        app = PublicClientApplication.builder("client_id")
-                .b2cAuthority(TestConfiguration.B2C_AUTHORITY)
-                .validateAuthority(false).build();
-
-        app.acquireToken
-                (DeviceCodeFlowParameters
-                        .builder(Collections.singleton(AAD_RESOURCE_ID), (DeviceCode deviceCode) -> {})
-                        .build());
-    }
-
 
     @Test
     public void executeAcquireDeviceCode_AuthenticaionPendingErrorReturned_AuthenticationExceptionThrown()

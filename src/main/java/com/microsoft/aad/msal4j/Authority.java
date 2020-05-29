@@ -36,6 +36,17 @@ abstract class Authority {
     String authorizationEndpoint;
     String tokenEndpoint;
 
+    final static String DEVICE_CODE_ENDPOINT = "oauth2/devicecode";
+
+    private final static String ADFS_AUTHORITY_FORMAT = "https://%s/%s/";
+    private final static String DEVICE_CODE_ENDPOINT_FORMAT = ADFS_AUTHORITY_FORMAT + DEVICE_CODE_ENDPOINT;
+
+    String deviceCodeEndpoint;
+
+    String deviceCodeEndpoint() {
+        return deviceCodeEndpoint;
+    }
+
     URL tokenEndpointUrl() throws MalformedURLException {
         return new URL(tokenEndpoint);
     }
@@ -49,6 +60,7 @@ abstract class Authority {
     private void setCommonAuthorityProperties() {
         this.tenant = getTenant(canonicalAuthorityUrl, authorityType);
         this.host = canonicalAuthorityUrl.getAuthority().toLowerCase();
+        this.deviceCodeEndpoint = String.format(DEVICE_CODE_ENDPOINT_FORMAT, host, tenant);
     }
 
     static Authority createAuthority(URL authorityUrl) {
