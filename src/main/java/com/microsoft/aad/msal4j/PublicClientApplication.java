@@ -55,6 +55,12 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(DeviceCodeFlowParameters parameters) {
 
+        if (!(AuthorityType.AAD.equals(authenticationAuthority.authorityType()) ||
+                AuthorityType.ADFS.equals(authenticationAuthority.authorityType()))) {
+            throw new IllegalArgumentException(
+                    "Invalid authority type. Device Flow is only supported by AAD and ADFS authority");
+        }
+
         validateNotNull("parameters", parameters);
 
         AtomicReference<CompletableFuture<IAuthenticationResult>> futureReference =

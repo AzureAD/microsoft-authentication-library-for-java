@@ -149,6 +149,21 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         PowerMock.verify();
     }
 
+    @Test(expectedExceptions = IllegalArgumentException.class,
+            expectedExceptionsMessageRegExp = "Invalid authority type. Device Flow is only supported by AAD and ADFS authority")
+    public void executeAcquireDeviceCode_B2CAuthorityUsed_IllegalArgumentExceptionThrown()
+            throws Exception {
+
+        app = PublicClientApplication.builder("client_id")
+                .b2cAuthority(TestConfiguration.B2C_AUTHORITY)
+                .validateAuthority(false).build();
+
+        app.acquireToken
+                (DeviceCodeFlowParameters
+                        .builder(Collections.singleton(AAD_RESOURCE_ID), (DeviceCode deviceCode) -> {})
+                        .build());
+    }
+
     @Test
     public void executeAcquireDeviceCode_AuthenticaionPendingErrorReturned_AuthenticationExceptionThrown()
             throws Exception {
