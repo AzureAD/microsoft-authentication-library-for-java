@@ -25,7 +25,7 @@ public class LabService {
         try {
             return mapper.readValue(json, clazz);
         } catch (IOException e) {
-            throw new RuntimeException("JsonProcessingException: " + e.getMessage(), e);
+            throw new RuntimeException("JSON processing error: " + e.getMessage(), e);
         }
     }
 
