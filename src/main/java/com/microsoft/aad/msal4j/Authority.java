@@ -35,6 +35,8 @@ abstract class Authority {
 
     String authorizationEndpoint;
     String tokenEndpoint;
+    
+    String deviceCodeEndpoint;
 
     URL tokenEndpointUrl() throws MalformedURLException {
         return new URL(tokenEndpoint);
@@ -144,5 +146,9 @@ abstract class Authority {
 
     private static boolean isB2CAuthority(final String firstPath) {
         return firstPath.compareToIgnoreCase(B2C_PATH_SEGMENT) == 0;
+    }
+
+    String deviceCodeEndpoint() {
+        return deviceCodeEndpoint;
     }
 }

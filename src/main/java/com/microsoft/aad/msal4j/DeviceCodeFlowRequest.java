@@ -39,12 +39,13 @@ class DeviceCodeFlowRequest extends MsalRequest {
     DeviceCode acquireDeviceCode(String url,
                                  String clientId,
                                  Map<String, String> clientDataHeaders,
-                                 ServiceBundle serviceBundle) throws Exception {
+                                 ServiceBundle serviceBundle) {
 
-        String urlWithQueryParams = createQueryParamsAndAppendToURL(url, clientId);
         Map<String, String> headers = appendToHeaders(clientDataHeaders);
+        String bodyParams = createQueryParams(clientId);
 
-        HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, urlWithQueryParams, headers);
+        HttpRequest httpRequest = new HttpRequest(HttpMethod.POST, url, headers, bodyParams);
+
         final IHttpResponse response = HttpHelper.executeHttpRequest(
                 httpRequest,
                 this.requestContext(),
@@ -57,7 +58,7 @@ class DeviceCodeFlowRequest extends MsalRequest {
         msalAuthorizationGrant = new DeviceCodeAuthorizationGrant(deviceCode, deviceCode.scopes());
     }
 
-    private String createQueryParamsAndAppendToURL(String url, String clientId) {
+    private String createQueryParams(String clientId) {
         Map<String, List<String>> queryParameters = new HashMap<>();
         queryParameters.put("client_id", Collections.singletonList(clientId));
 
@@ -66,8 +67,7 @@ class DeviceCodeFlowRequest extends MsalRequest {
 
         queryParameters.put("scope", Collections.singletonList(scopesParam));
 
-        url = url + "?" + URLUtils.serializeParameters(queryParameters);
-        return url;
+        return URLUtils.serializeParameters(queryParameters);
     }
 
     private Map<String, String> appendToHeaders(Map<String, String> clientDataHeaders) {

@@ -23,8 +23,6 @@ class AADAuthority extends Authority {
     private final static String AAD_TOKEN_ENDPOINT_FORMAT = AAD_AUTHORITY_FORMAT + TOKEN_ENDPOINT;
     private final static String DEVICE_CODE_ENDPOINT_FORMAT = AAD_AUTHORITY_FORMAT + DEVICE_CODE_ENDPOINT;
 
-    String deviceCodeEndpoint;
-
     AADAuthority(final URL authorityUrl) {
         super(authorityUrl, AuthorityType.AAD);
         setAuthorityProperties();
