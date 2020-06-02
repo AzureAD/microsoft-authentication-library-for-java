@@ -4,10 +4,10 @@
 package com.microsoft.aad.msal4j;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -147,7 +147,7 @@ public class TokenCache implements ITokenCache {
             }
             return JsonHelper.mapper.writeValueAsString(this);
         }
-        catch (JsonProcessingException e) {
+        catch (IOException e) {
             throw new MsalClientException(e);
         }finally {
             lock.readLock().unlock();

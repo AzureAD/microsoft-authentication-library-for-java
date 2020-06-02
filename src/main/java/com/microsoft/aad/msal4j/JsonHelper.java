@@ -5,12 +5,12 @@ package com.microsoft.aad.msal4j;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -27,7 +27,7 @@ class JsonHelper {
     static <T> T convertJsonToObject(final String json, final Class<T> clazz) {
         try {
             return mapper.readValue(json, clazz);
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             throw new MsalClientException(e);
         }
     }
@@ -38,7 +38,7 @@ class JsonHelper {
     static void validateJsonFormat(String jsonString) {
         try {
             mapper.readTree(jsonString);
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             throw new MsalClientException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
         }
     }
@@ -72,7 +72,7 @@ class JsonHelper {
         try {
             mainJson = mapper.readTree(mainJsonString);
             addJson = mapper.readTree(addJsonString);
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             throw new MsalClientException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
         }
 
@@ -95,14 +95,14 @@ class JsonHelper {
             } else {
                 return "";
             }
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             throw new MsalClientException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
         }
 
         while (jsons.hasNext()) {
             try {
                 addJson = mapper.readTree(jsons.next());
-            } catch (JsonProcessingException e) {
+            } catch (IOException e) {
                 throw new MsalClientException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
             }
             mergeJSONNode(mainJson, addJson);

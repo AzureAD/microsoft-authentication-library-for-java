@@ -3,11 +3,11 @@
 
 package labapi;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.aad.msal4j.*;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,7 +24,7 @@ public class LabService {
     static <T> T convertJsonToObject(final String json, final Class<T> clazz) {
         try {
             return mapper.readValue(json, clazz);
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             throw new RuntimeException("JsonProcessingException: " + e.getMessage(), e);
         }
     }
