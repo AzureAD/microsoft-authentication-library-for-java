@@ -61,7 +61,6 @@ public class DeviceCodeIT {
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
     public void DeviceCodeFlowADFSv2019Test(String environment) throws Exception {
-        cfg = new Config(environment);
 
         User user = labUserProvider.getOnPremAdfsUser(FederationProvider.ADFS_2019);
 

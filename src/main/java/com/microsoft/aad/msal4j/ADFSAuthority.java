@@ -14,8 +14,6 @@ class ADFSAuthority extends Authority{
     private final static String ADFS_AUTHORITY_FORMAT = "https://%s/%s/";
     private final static String DEVICE_CODE_ENDPOINT_FORMAT = ADFS_AUTHORITY_FORMAT + DEVICE_CODE_ENDPOINT;
 
-    String deviceCodeEndpoint;
-
     ADFSAuthority(final URL authorityUrl) {
         super(authorityUrl, AuthorityType.ADFS);
         this.authority = String.format(ADFS_AUTHORITY_FORMAT, host, tenant);
@@ -25,7 +23,5 @@ class ADFSAuthority extends Authority{
         this.deviceCodeEndpoint = String.format(DEVICE_CODE_ENDPOINT_FORMAT, host, tenant);
     }
 
-    String deviceCodeEndpoint() {
-        return deviceCodeEndpoint;
-    }
+
 }

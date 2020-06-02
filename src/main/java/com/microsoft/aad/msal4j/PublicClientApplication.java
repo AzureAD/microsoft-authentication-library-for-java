@@ -58,7 +58,7 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
         if (!(AuthorityType.AAD.equals(authenticationAuthority.authorityType()) ||
                 AuthorityType.ADFS.equals(authenticationAuthority.authorityType()))) {
             throw new IllegalArgumentException(
-                    "Invalid authority type. Device Flow is only supported by AAD and ADFS authority");
+                    "Invalid authority type. Device Flow is only supported by AAD and ADFS authorities");
         }
 
         validateNotNull("parameters", parameters);

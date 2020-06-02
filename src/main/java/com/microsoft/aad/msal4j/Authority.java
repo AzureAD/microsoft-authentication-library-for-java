@@ -147,4 +147,8 @@ abstract class Authority {
     private static boolean isB2CAuthority(final String firstPath) {
         return firstPath.compareToIgnoreCase(B2C_PATH_SEGMENT) == 0;
     }
+
+    String deviceCodeEndpoint() {
+        return deviceCodeEndpoint;
+    }
 }
