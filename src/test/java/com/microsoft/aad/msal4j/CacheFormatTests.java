@@ -197,8 +197,8 @@ public class CacheFormatTests extends AbstractMsalTests {
         String valueExpected = readResource(folder + AT_CACHE_ENTITY);
 
         JSONObject tokenResponseJsonObj = JSONObjectUtils.parse(tokenResponse);
-        long expireIn = JSONObjectUtils.getLong(tokenResponseJsonObj, "expires_in");
-        long extExpireIn = JSONObjectUtils.getLong(tokenResponseJsonObj, "ext_expires_in");
+        long expireIn = Long.parseLong(tokenResponseJsonObj.getAsString("expires_in"));
+        long extExpireIn = Long.parseLong(tokenResponseJsonObj.getAsString("ext_expires_in"));
 
         JSONAssert.assertEquals(valueExpected, valueActual,
                 new DynamicTimestampsComparator(JSONCompareMode.STRICT, expireIn, extExpireIn));

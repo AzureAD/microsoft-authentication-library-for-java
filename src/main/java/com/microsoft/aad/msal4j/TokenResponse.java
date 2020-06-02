@@ -68,12 +68,12 @@ class TokenResponse extends OIDCTokenResponse {
 
         long expiresIn = 0;
         if (jsonObject.containsKey("expires_in")) {
-            expiresIn = JSONObjectUtils.getLong(jsonObject, "expires_in");
+            expiresIn = Long.parseLong(jsonObject.getAsString("expires_in"));
         }
 
         long ext_expires_in = 0;
         if (jsonObject.containsKey("ext_expires_in")) {
-            ext_expires_in = JSONObjectUtils.getLong(jsonObject, "ext_expires_in");
+            ext_expires_in = Long.parseLong(jsonObject.getAsString("ext_expires_in"));
         }
 
         String foci = null;
