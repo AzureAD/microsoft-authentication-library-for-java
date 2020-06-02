@@ -35,9 +35,7 @@ abstract class Authority {
 
     String authorizationEndpoint;
     String tokenEndpoint;
-
-    private final static String ADFS_AUTHORITY_FORMAT = "https://%s/%s/";
-
+    
     String deviceCodeEndpoint;
 
     URL tokenEndpointUrl() throws MalformedURLException {
