@@ -6,15 +6,11 @@ package com.microsoft.aad.msal4j;
 import labapi.KeyVaultSecretsProvider;
 import org.apache.commons.lang3.SystemUtils;
 import org.powermock.modules.testng.PowerMockTestCase;
-import org.testng.annotations.BeforeClass;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Properties;
 
 public class AbstractMsalTests extends PowerMockTestCase {
     KeyStore createKeyStore() throws KeyStoreException, NoSuchProviderException {
