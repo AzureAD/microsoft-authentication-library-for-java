@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j;
 import labapi.AppCredentialProvider;
 import labapi.AzureEnvironment;
 import labapi.KeyVaultSecretsProvider;
+import org.apache.commons.lang3.SystemUtils;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -73,10 +74,20 @@ public class ClientCredentialsIT {
         Assert.assertNotNull(result.accessToken());
     }
 
+    private KeyStore createKeyStore() throws KeyStoreException, NoSuchProviderException {
+        String os = SystemUtils.OS_NAME;
+        if(os.contains("Mac")){
+            return KeyStore.getInstance("KeychainStore");
+        }
+        else{
+            return KeyStore.getInstance("Windows-MY", "SunMSCAPI");
+        }
+    }
+
     private IClientCredential getCertificateFromKeyStore() throws
             NoSuchProviderException, KeyStoreException, IOException, NoSuchAlgorithmException,
             CertificateException, UnrecoverableKeyException {
-        KeyStore keystore = KeyStore.getInstance("Windows-MY", "SunMSCAPI");
+        KeyStore keystore = createKeyStore();
         keystore.load(null, null);
 
         PrivateKey key = (PrivateKey)keystore.getKey(KeyVaultSecretsProvider.CERTIFICATE_ALIAS, null);

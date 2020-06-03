@@ -3,30 +3,42 @@
 
 package com.microsoft.aad.msal4j;
 
+import labapi.KeyVaultSecretsProvider;
+import org.apache.commons.lang3.SystemUtils;
 import org.powermock.modules.testng.PowerMockTestCase;
+import org.testng.annotations.BeforeClass;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.*;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Properties;
 
 public class AbstractMsalTests extends PowerMockTestCase {
-
-    public void beforeClass() throws IOException {
-
-        Properties prop = new Properties();
-        InputStream input = null;
-
-        try {
-
-            input = new FileInputStream(this.getClass()
-                    .getResource(TestConfiguration.AAD_CERTIFICATE_PATH)
-                    .getFile());
-            prop.getProperty("database");
-        } finally {
-            if (input != null) {
-                input.close();
-            }
+    KeyStore createKeyStore() throws KeyStoreException, NoSuchProviderException {
+        String os = SystemUtils.OS_NAME;
+        if(os.contains("Mac")){
+            return KeyStore.getInstance("KeychainStore");
         }
+        else{
+            return KeyStore.getInstance("Windows-MY", "SunMSCAPI");
+        }
+    }
+
+    IClientCertificate getClientCertificate() throws
+            KeyStoreException, IOException, NoSuchAlgorithmException,
+            CertificateException, UnrecoverableKeyException, NoSuchProviderException {
+
+        KeyStore keystore = createKeyStore();
+
+        keystore.load(null, null);
+
+        PrivateKey key = (PrivateKey) keystore.getKey(KeyVaultSecretsProvider.CERTIFICATE_ALIAS, null);
+        X509Certificate publicCertificate = (X509Certificate) keystore.getCertificate(
+                KeyVaultSecretsProvider.CERTIFICATE_ALIAS);
+
+        return ClientCredentialFactory.createFromCertificate(key, publicCertificate);
     }
 }

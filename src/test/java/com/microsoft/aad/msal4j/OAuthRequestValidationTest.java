@@ -49,12 +49,12 @@ import org.powermock.api.easymock.PowerMock;
 
 @PowerMockIgnore({"javax.net.ssl.*"})
 @PrepareForTest({com.microsoft.aad.msal4j.OAuthHttpRequest.class, HttpHelper.class})
-public class OAuthRequestValidationTest extends PowerMockTestCase {
+public class OAuthRequestValidationTest extends AbstractMsalTests {
 
     private final static String AUTHORITY = "https://loginXXX.windows.net/path/";
 
     private final static String CLIENT_ID = "ClientId";
-    private final static String CLIENT_SECRET = "ClientPassword";
+    private final static String CLIENT_DUMMYSECRET = "ClientDummyPsw";
 
     private final static String SCOPES = "https://SomeResource.azure.net";
     private final static String DEFAULT_SCOPES = "openid profile offline_access";
@@ -150,7 +150,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
     @Test
     public void oAuthRequest_for_acquireTokenByUserAssertion() throws Exception {
         ConfidentialClientApplication app =
-                ConfidentialClientApplication.builder(CLIENT_ID, ClientCredentialFactory.createFromSecret(CLIENT_SECRET))
+                ConfidentialClientApplication.builder(CLIENT_ID, ClientCredentialFactory.createFromSecret(CLIENT_DUMMYSECRET))
                         .authority(AUTHORITY)
                         .validateAuthority(false).build();
 
@@ -175,7 +175,7 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
 
         // validate Client Authentication query params
         Assert.assertEquals(CLIENT_ID, queryParams.get("client_id"));
-        Assert.assertEquals(CLIENT_SECRET, queryParams.get("client_secret"));
+        Assert.assertEquals(CLIENT_DUMMYSECRET, queryParams.get("client_secret"));
 
         // to do validate scopes
         Assert.assertEquals(SCOPES, queryParams.get("scope"));
@@ -189,21 +189,9 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
     public void oAuthRequest_for_acquireTokenByClientCertificate() throws Exception {
 
         try {
-            final KeyStore keystore = KeyStore.getInstance("PKCS12", "SunJSSE");
-            keystore.load(
-                    new FileInputStream(this.getClass()
-                            .getResource(TestConfiguration.AAD_CERTIFICATE_PATH)
-                            .getFile()),
-                    TestConfiguration.AAD_CERTIFICATE_PASSWORD.toCharArray());
-            final String alias = keystore.aliases().nextElement();
-            final PrivateKey key = (PrivateKey) keystore.getKey(alias,
-                    TestConfiguration.AAD_CERTIFICATE_PASSWORD.toCharArray());
-            final X509Certificate cert = (X509Certificate) keystore
-                    .getCertificate(alias);
+            IClientCertificate clientCertificate = getClientCertificate();
 
-            IClientCredential clientCredential = ClientCredentialFactory.createFromCertificate(key, cert);
-
-            ConfidentialClientApplication app = ConfidentialClientApplication.builder(CLIENT_ID, clientCredential)
+            ConfidentialClientApplication app = ConfidentialClientApplication.builder(CLIENT_ID, clientCertificate)
                     .authority(AUTHORITY)
                     .validateAuthority(false).build();
 
@@ -240,20 +228,12 @@ public class OAuthRequestValidationTest extends PowerMockTestCase {
     public void oAuthRequest_for_acquireTokenByClientAssertion() throws Exception {
 
         try {
-            final KeyStore keystore = KeyStore.getInstance("PKCS12", "SunJSSE");
-            keystore.load(
-                    new FileInputStream(this.getClass()
-                            .getResource(TestConfiguration.AAD_CERTIFICATE_PATH)
-                            .getFile()),
-                    TestConfiguration.AAD_CERTIFICATE_PASSWORD.toCharArray());
-            final String alias = keystore.aliases().nextElement();
-            final PrivateKey key = (PrivateKey) keystore.getKey(alias,
-                    TestConfiguration.AAD_CERTIFICATE_PASSWORD.toCharArray());
-            final X509Certificate cert = (X509Certificate) keystore
-                    .getCertificate(alias);
+            IClientCertificate clientCertificate = getClientCertificate();
 
             ConfidentialClientApplication app =
-                    ConfidentialClientApplication.builder(CLIENT_ID, ClientCredentialFactory.createFromCertificate(key, cert))
+                    ConfidentialClientApplication.builder(
+                            CLIENT_ID,
+                            clientCertificate)
                             .authority(AUTHORITY)
                             .validateAuthority(false)
                             .build();
