@@ -97,7 +97,7 @@ public class AuthenticationErrorCode {
     public final static String THROTTLED_REQUEST = "throttled_request";
 
     /**
-     * A JsonProcessingException was thrown, indicating the JSON provided to MSAL is of invalid format.
+     * A JSON processing failure, indicating the JSON provided to MSAL is of invalid format.
      */
     public final static String INVALID_JSON = "invalid_json";
 }

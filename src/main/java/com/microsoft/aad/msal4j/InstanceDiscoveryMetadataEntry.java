@@ -4,9 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
+import lombok.*;
 import lombok.experimental.Accessors;
 
 import java.util.*;
@@ -14,6 +12,8 @@ import java.util.*;
 @Accessors(fluent = true)
 @Getter(AccessLevel.PACKAGE)
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 class InstanceDiscoveryMetadataEntry {
 
     @JsonProperty("preferred_network")
