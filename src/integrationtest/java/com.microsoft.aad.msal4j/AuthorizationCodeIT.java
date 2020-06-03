@@ -12,7 +12,6 @@ import org.testng.annotations.Test;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Set;
@@ -181,7 +180,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
     private void assertAcquireTokenB2C(User user){
 
         String appId = LabService.getSecret(TestConstants.B2C_CONFIDENTIAL_CLIENT_LAB_APP_ID);
-        String appSecret = LabService.getSecret(TestConstants.B2C_CONFIDENTIAL_CLIENT_APP_SECRET);
+        String appSecret = LabService.getSecret(TestConstants.B2C_CONFIDENTIAL_CLIENT_APP_SECRETID);
 
         ConfidentialClientApplication cca;
         try {
