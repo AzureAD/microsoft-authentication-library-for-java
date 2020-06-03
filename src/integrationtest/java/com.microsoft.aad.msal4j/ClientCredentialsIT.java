@@ -5,32 +5,33 @@ package com.microsoft.aad.msal4j;
 
 import labapi.AppCredentialProvider;
 import labapi.AzureEnvironment;
-import labapi.KeyVaultSecretsProvider;
-import org.apache.commons.lang3.SystemUtils;
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.PrivateKey;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.Collections;
 
 import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 
 @Test
 public class ClientCredentialsIT {
+    private IClientCertificate certificate;
+
+    @BeforeClass
+    void init() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, NoSuchProviderException, IOException {
+        certificate = CertificateHelper.getClientCertificate();
+    }
 
     @Test
     public void acquireTokenClientCredentials_ClientCertificate() throws Exception{
         String clientId = "55e7e5af-ca53-482d-9aa3-5cb1cc8eecb5";
-        IClientCredential credential = getCertificateFromKeyStore();
-        assertAcquireTokenCommon(clientId, credential);
+        assertAcquireTokenCommon(clientId, certificate);
     }
 
     @Test
@@ -46,11 +47,10 @@ public class ClientCredentialsIT {
     @Test
     public void acquireTokenClientCredentials_ClientAssertion() throws Exception{
         String clientId = "55e7e5af-ca53-482d-9aa3-5cb1cc8eecb5";
-        IClientCredential certificateFromKeyStore = getCertificateFromKeyStore();
 
         ClientAssertion clientAssertion = JwtHelper.buildJwt(
                 clientId,
-                (ClientCertificate) certificateFromKeyStore,
+                (ClientCertificate) certificate,
                 "https://login.microsoftonline.com/common/oauth2/v2.0/token");
 
         IClientCredential credential = ClientCredentialFactory.createFromClientAssertion(
@@ -72,28 +72,5 @@ public class ClientCredentialsIT {
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
-    }
-
-    private KeyStore createKeyStore() throws KeyStoreException, NoSuchProviderException {
-        String os = SystemUtils.OS_NAME;
-        if(os.contains("Mac")){
-            return KeyStore.getInstance("KeychainStore");
-        }
-        else{
-            return KeyStore.getInstance("Windows-MY", "SunMSCAPI");
-        }
-    }
-
-    private IClientCredential getCertificateFromKeyStore() throws
-            NoSuchProviderException, KeyStoreException, IOException, NoSuchAlgorithmException,
-            CertificateException, UnrecoverableKeyException {
-        KeyStore keystore = createKeyStore();
-        keystore.load(null, null);
-
-        PrivateKey key = (PrivateKey)keystore.getKey(KeyVaultSecretsProvider.CERTIFICATE_ALIAS, null);
-        X509Certificate publicCertificate = (X509Certificate)keystore.getCertificate(
-                KeyVaultSecretsProvider.CERTIFICATE_ALIAS);
-
-        return ClientCredentialFactory.createFromCertificate(key, publicCertificate);
     }
 }
