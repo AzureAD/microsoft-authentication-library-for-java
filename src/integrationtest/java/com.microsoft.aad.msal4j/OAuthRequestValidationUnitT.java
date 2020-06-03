@@ -11,7 +11,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-public class OAuthRequestValidationUnitTest extends OAuthRequestValidationTest {
+public class OAuthRequestValidationUnitT extends OAuthRequestValidationTest {
     @Test
     public void oAuthRequest_for_acquireTokenByClientCertificate() throws Exception {
         try {

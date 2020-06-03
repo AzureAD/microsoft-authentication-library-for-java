@@ -86,7 +86,7 @@ public class OAuthRequestValidationTest extends AbstractMsalTests {
                 with(new InvocationHandler() {
                     @Override
                     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                        OAuthRequestValidationUnitTest.query = ((OAuthHttpRequest) proxy).getQuery();
+                        query = ((OAuthHttpRequest) proxy).getQuery();
                         throw new MsalException("", AuthenticationErrorCode.UNKNOWN);
                     }
                 });

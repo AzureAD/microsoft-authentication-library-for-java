@@ -16,6 +16,7 @@ import org.easymock.EasyMock;
 import org.powermock.api.easymock.PowerMock;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -31,10 +32,9 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 
 @PowerMockIgnore({"javax.net.ssl.*"})
-@Test(groups = {"checkin"})
 @PrepareForTest({ConfidentialClientApplication.class,
         ClientCertificate.class, UserDiscoveryRequest.class, JwtHelper.class})
-public class ConfidentialClientApplicationUnitTest extends AbstractMsalTests {
+public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
 
     private ConfidentialClientApplication app = null;
     private IClientCertificate clientCertificate;
@@ -112,6 +112,7 @@ public class ConfidentialClientApplicationUnitTest extends AbstractMsalTests {
         PowerMock.resetAll(app);
     }
 
+    @Test
     public void testAcquireToken_KeyCred() throws Exception {
         app = PowerMock.createPartialMock(ConfidentialClientApplication.class,
                 new String[]{"acquireTokenCommon"},
