@@ -11,6 +11,7 @@ import com.nimbusds.jose.util.Base64URL;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.auth.PrivateKeyJWT;
+import org.apache.commons.lang3.StringUtils;
 import org.easymock.EasyMock;
 import org.powermock.api.easymock.PowerMock;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
@@ -33,7 +34,7 @@ import static org.testng.Assert.assertNotNull;
 @Test(groups = {"checkin"})
 @PrepareForTest({ConfidentialClientApplication.class,
         ClientCertificate.class, UserDiscoveryRequest.class, JwtHelper.class})
-public class ConfidentialClientApplicationTest extends AbstractMsalTests {
+public class ConfidentialClientApplicationUnitTest extends AbstractMsalTests {
 
     private ConfidentialClientApplication app = null;
     private IClientCertificate clientCertificate;
@@ -43,7 +44,7 @@ public class ConfidentialClientApplicationTest extends AbstractMsalTests {
             KeyStoreException, IOException, NoSuchAlgorithmException,
             CertificateException, UnrecoverableKeyException, NoSuchProviderException {
 
-        clientCertificate = getClientCertificate();
+        clientCertificate = CertificateHelper.getClientCertificate();
     }
 
     @Test

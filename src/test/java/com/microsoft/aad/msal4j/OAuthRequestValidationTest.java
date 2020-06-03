@@ -14,25 +14,19 @@ import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import org.apache.commons.lang3.StringUtils;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.FileInputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.net.URLDecoder;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
@@ -51,26 +45,26 @@ import org.powermock.api.easymock.PowerMock;
 @PrepareForTest({com.microsoft.aad.msal4j.OAuthHttpRequest.class, HttpHelper.class})
 public class OAuthRequestValidationTest extends AbstractMsalTests {
 
-    private final static String AUTHORITY = "https://loginXXX.windows.net/path/";
+    final static String AUTHORITY = "https://loginXXX.windows.net/path/";
 
-    private final static String CLIENT_ID = "ClientId";
+    final static String CLIENT_ID = "ClientId";
     private final static String CLIENT_DUMMYSECRET = "ClientDummyPsw";
 
-    private final static String SCOPES = "https://SomeResource.azure.net";
+    final static String SCOPES = "https://SomeResource.azure.net";
     private final static String DEFAULT_SCOPES = "openid profile offline_access";
 
-    private final static String GRANT_TYPE_JWT = "urn:ietf:params:oauth:grant-type:jwt-bearer";
-    private final static String CLIENT_ASSERTION_TYPE_JWT = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
-    private final static String ON_BEHALF_OF_USE_JWT = "on_behalf_of";
+    final static String GRANT_TYPE_JWT = "urn:ietf:params:oauth:grant-type:jwt-bearer";
+    final static String CLIENT_ASSERTION_TYPE_JWT = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
+    final static String ON_BEHALF_OF_USE_JWT = "on_behalf_of";
 
-    private final static String CLIENT_CREDENTIALS_GRANT_TYPE = "client_credentials";
+    final static String CLIENT_CREDENTIALS_GRANT_TYPE = "client_credentials";
 
-    private final static String CLIENT_INFO_VALUE = "1";
+    final static String CLIENT_INFO_VALUE = "1";
 
-    private final static String jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva" +
+    final static String JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva" +
             "G4gRG9lIiwiYWRtaW4iOnRydWV9.TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ";
 
-    private static String query;
+    static String query;
 
     @SuppressWarnings("unchecked")
     @BeforeMethod
@@ -92,7 +86,7 @@ public class OAuthRequestValidationTest extends AbstractMsalTests {
                 with(new InvocationHandler() {
                     @Override
                     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                        OAuthRequestValidationTest.query = ((OAuthHttpRequest) proxy).getQuery();
+                        OAuthRequestValidationUnitTest.query = ((OAuthHttpRequest) proxy).getQuery();
                         throw new MsalException("", AuthenticationErrorCode.UNKNOWN);
                     }
                 });
@@ -157,7 +151,7 @@ public class OAuthRequestValidationTest extends AbstractMsalTests {
         try {
             // Using UserAssertion as Authorization Grants
             OnBehalfOfParameters parameters =
-                    OnBehalfOfParameters.builder(Collections.singleton(SCOPES), new UserAssertion(jwt))
+                    OnBehalfOfParameters.builder(Collections.singleton(SCOPES), new UserAssertion(JWT))
                             .build();
 
             app.acquireToken(parameters).get();
@@ -171,7 +165,7 @@ public class OAuthRequestValidationTest extends AbstractMsalTests {
 
         // validate Authorization Grants query params
         Assert.assertEquals(GRANT_TYPE_JWT, queryParams.get("grant_type"));
-        Assert.assertEquals(jwt, queryParams.get("assertion"));
+        Assert.assertEquals(JWT, queryParams.get("assertion"));
 
         // validate Client Authentication query params
         Assert.assertEquals(CLIENT_ID, queryParams.get("client_id"));
@@ -181,86 +175,6 @@ public class OAuthRequestValidationTest extends AbstractMsalTests {
         Assert.assertEquals(SCOPES, queryParams.get("scope"));
 
         Assert.assertEquals("on_behalf_of", queryParams.get("requested_token_use"));
-
-        Assert.assertEquals(CLIENT_INFO_VALUE, queryParams.get("client_info"));
-    }
-
-    @Test
-    public void oAuthRequest_for_acquireTokenByClientCertificate() throws Exception {
-
-        try {
-            IClientCertificate clientCertificate = getClientCertificate();
-
-            ConfidentialClientApplication app = ConfidentialClientApplication.builder(CLIENT_ID, clientCertificate)
-                    .authority(AUTHORITY)
-                    .validateAuthority(false).build();
-
-            // Using UserAssertion as Authorization Grants
-            OnBehalfOfParameters parameters =
-                    OnBehalfOfParameters.builder(Collections.singleton(SCOPES), new UserAssertion(jwt))
-                            .build();
-
-            app.acquireToken(parameters).get();
-        } catch (ExecutionException ex) {
-            Assert.assertTrue(ex.getCause() instanceof MsalException);
-        }
-
-        Map<String, String> queryParams = splitQuery(query);
-        Assert.assertEquals(7, queryParams.size());
-
-        // validate Authorization Grants query params
-        Assert.assertEquals(GRANT_TYPE_JWT, queryParams.get("grant_type"));
-        Assert.assertEquals(jwt, queryParams.get("assertion"));
-
-        // validate Client Authentication query params
-        Assert.assertFalse(StringUtils.isEmpty(queryParams.get("client_assertion")));
-
-        // to do validate scopes
-        Assert.assertEquals(SCOPES, queryParams.get("scope"));
-
-        Assert.assertEquals(CLIENT_ASSERTION_TYPE_JWT, queryParams.get("client_assertion_type"));
-        Assert.assertEquals(ON_BEHALF_OF_USE_JWT, queryParams.get("requested_token_use"));
-
-        Assert.assertEquals(CLIENT_INFO_VALUE, queryParams.get("client_info"));
-    }
-
-    @Test
-    public void oAuthRequest_for_acquireTokenByClientAssertion() throws Exception {
-
-        try {
-            IClientCertificate clientCertificate = getClientCertificate();
-
-            ConfidentialClientApplication app =
-                    ConfidentialClientApplication.builder(
-                            CLIENT_ID,
-                            clientCertificate)
-                            .authority(AUTHORITY)
-                            .validateAuthority(false)
-                            .build();
-
-            // Using ClientAssertion for Client Authentication and as the authorization grant
-
-            app.acquireToken(ClientCredentialParameters.builder(Collections.singleton(SCOPES))
-                    .build())
-                    .get();
-
-        } catch (ExecutionException ex) {
-            Assert.assertTrue(ex.getCause() instanceof MsalException);
-        }
-
-        Map<String, String> queryParams = splitQuery(query);
-
-        Assert.assertEquals(5, queryParams.size());
-
-        // validate Authorization Grants query params
-        Assert.assertEquals(CLIENT_CREDENTIALS_GRANT_TYPE, queryParams.get("grant_type"));
-
-        // validate Client Authentication query params
-        Assert.assertTrue(StringUtils.isNotEmpty(queryParams.get("client_assertion")));
-        Assert.assertEquals(CLIENT_ASSERTION_TYPE_JWT, queryParams.get("client_assertion_type"));
-
-        // to do validate scopes
-        Assert.assertEquals("openid profile offline_access https://SomeResource.azure.net", queryParams.get("scope"));
 
         Assert.assertEquals(CLIENT_INFO_VALUE, queryParams.get("client_info"));
     }
