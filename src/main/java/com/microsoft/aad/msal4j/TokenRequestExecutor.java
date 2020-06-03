@@ -17,7 +17,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -57,7 +59,11 @@ class TokenRequestExecutor {
                 this.serviceBundle);
         oauthHttpRequest.setContentType(CommonContentTypes.APPLICATION_URLENCODED);
 
-        final Map<String, List<String>> params = msalRequest.msalAuthorizationGrant().toParameters();
+        final Map<String, List<String>> params = new HashMap<>(msalRequest.msalAuthorizationGrant().toParameters());
+        if (msalRequest.application().clientCapabilities() != null) {
+            params.put("claims", Collections.singletonList(msalRequest.application().clientCapabilities()));
+        }
+
         oauthHttpRequest.setQuery(URLUtils.serializeParameters(params));
 
         if (msalRequest.application().clientAuthentication() != null) {

@@ -3,13 +3,17 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 public class TestConstants {
     public final static String KEYVAULT_DEFAULT_SCOPE = "https://vault.azure.net/.default";
     public final static String MSIDLAB_DEFAULT_SCOPE = "https://msidlab.com/.default";
     public final static String GRAPH_DEFAULT_SCOPE = "https://graph.windows.net/.default";
     public final static String USER_READ_SCOPE = "user.read";
     public final static String B2C_LAB_SCOPE = "https://msidlabb2c.onmicrosoft.com/msaapp/user_impersonation";
-    public final static String B2C_CONFIDENTIAL_CLIENT_APP_SECRET = "MSIDLABB2C-MSAapp-AppSecret";
+    public final static String B2C_CONFIDENTIAL_CLIENT_APP_SECRETID = "MSIDLABB2C-MSAapp-AppSecret";
     public final static String B2C_CONFIDENTIAL_CLIENT_LAB_APP_ID = "MSIDLABB2C-MSAapp-AppID";
 
     public final static String MICROSOFT_AUTHORITY_HOST = "https://login.microsoftonline.com/";
@@ -42,4 +46,8 @@ public class TestConstants {
     public final static String ADFS_AUTHORITY = "https://fs.msidlab8.com/adfs/";
     public final static String ADFS_SCOPE = USER_READ_SCOPE;
     public final static String ADFS_APP_ID = "PublicClientId";
+
+    public final static String CLAIMS = "{\"id_token\":{\"auth_time\":{\"essential\":true}}}";
+    public final static Set<String> CLIENT_CAPABILITIES_EMPTY = new HashSet<String>(Collections.emptySet());
+    public final static Set<String> CLIENT_CAPABILITIES_LLT = new HashSet<String>(Collections.singletonList("llt"));
 }

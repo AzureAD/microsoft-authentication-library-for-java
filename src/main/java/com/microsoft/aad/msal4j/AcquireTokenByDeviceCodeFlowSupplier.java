@@ -22,12 +22,12 @@ class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier 
         Authority requestAuthority = clientApplication.authenticationAuthority;
         requestAuthority = getAuthorityWithPrefNetworkHost(requestAuthority.authority());
 
-        DeviceCode deviceCode = getDeviceCode((AADAuthority) requestAuthority);
+        DeviceCode deviceCode = getDeviceCode(requestAuthority);
 
         return acquireTokenWithDeviceCode(deviceCode, requestAuthority);
     }
 
-    private DeviceCode getDeviceCode(AADAuthority requestAuthority) throws Exception{
+    private DeviceCode getDeviceCode(Authority requestAuthority) throws Exception{
 
         DeviceCode deviceCode = deviceCodeFlowRequest.acquireDeviceCode(
                 requestAuthority.deviceCodeEndpoint(),

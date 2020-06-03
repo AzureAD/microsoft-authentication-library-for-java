@@ -10,15 +10,13 @@ public final class TestConfiguration {
     public final static String AAD_TENANT_ENDPOINT = "https://" + AAD_HOST_NAME
             + "/" + AAD_TENANT_NAME + "/";
     public final static String AAD_CLIENT_ID = "9083ccb8-8a46-43e7-8439-1d696df984ae";
-    public final static String AAD_CLIENT_SECRET = "client_secret";
+    public final static String AAD_CLIENT_DUMMYSECRET = "client_dummysecret";
     public final static String AAD_RESOURCE_ID = "b7a671d8-a408-42ff-86e0-aaf447fd17c4";
-    public final static String AAD_CERTIFICATE_PATH = "/test-certificate.pfx";
     public final static String AAD_MEX_RESPONSE_FILE = "/mex-response.xml";
     public final static String AAD_MEX_RESPONSE_FILE_INTEGRATED = "/mex-response-integrated.xml";
     public final static String AAD_MEX_2005_RESPONSE_FILE = "/mex-2005-response.xml";
     public final static String AAD_TOKEN_ERROR_FILE = "/token-error.xml";
     public final static String AAD_TOKEN_SUCCESS_FILE = "/token.xml";
-    public final static String AAD_CERTIFICATE_PASSWORD = "password";
     public final static String AAD_DEFAULT_REDIRECT_URI = "https://non_existing_uri.windows.com/";
     public final static String AAD_COMMON_AUTHORITY = "https://login.microsoftonline.com/common/";
 

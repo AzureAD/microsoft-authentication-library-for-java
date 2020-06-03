@@ -35,7 +35,7 @@ public class DeviceCodeIT {
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void DeviceCodeFlowTest(String environment) throws Exception {
+    public void DeviceCodeFlowADTest(String environment) throws Exception {
         cfg = new Config(environment);
 
         User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
@@ -59,22 +59,56 @@ public class DeviceCodeIT {
         Assert.assertTrue(!Strings.isNullOrEmpty(result.accessToken()));
     }
 
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void DeviceCodeFlowADFSv2019Test(String environment) throws Exception {
+
+        User user = labUserProvider.getOnPremAdfsUser(FederationProvider.ADFS_2019);
+
+        PublicClientApplication pca = PublicClientApplication.builder(
+                TestConstants.ADFS_APP_ID).
+                authority(TestConstants.ADFS_AUTHORITY).validateAuthority(false).
+                build();
+
+        Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
+            runAutomatedDeviceCodeFlow(deviceCode, user);
+        };
+
+        IAuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
+                .builder(Collections.singleton(TestConstants.ADFS_SCOPE),
+                        deviceCodeConsumer)
+                .build())
+                .get();
+
+        Assert.assertNotNull(result);
+        Assert.assertFalse(Strings.isNullOrEmpty(result.accessToken()));
+    }
+
     private void runAutomatedDeviceCodeFlow(DeviceCode deviceCode, User user){
         boolean isRunningLocally = true;//!Strings.isNullOrEmpty(
                 //System.getenv(TestConstants.LOCAL_FLAG_ENV_VAR));
+
+        boolean isADFS2019 = user.getFederationProvider().equals("adfsv2019");
 
         LOG.info("Device code running locally: " + isRunningLocally);
         try{
             String deviceCodeFormId;
             String continueButtonId;
             if(isRunningLocally){
-                deviceCodeFormId = "otc";
-                continueButtonId = "idSIButton9";
+                if (isADFS2019) {
+                    deviceCodeFormId = "userCodeInput";
+                    continueButtonId = "confirmationButton";
+                } else {
+                    deviceCodeFormId = "otc";
+                    continueButtonId = "idSIButton9";
+                }
             } else {
                 deviceCodeFormId = "code";
                 continueButtonId = "continueBtn";
             }
             LOG.info("Loggin in ... Entering device code");
+            if (isADFS2019) {
+                seleniumDriver.manage().deleteAllCookies();
+            }
             seleniumDriver.navigate().to(deviceCode.verificationUri());
             seleniumDriver.findElement(new By.ById(deviceCodeFormId)).sendKeys(deviceCode.userCode());
 
@@ -84,7 +118,11 @@ public class DeviceCodeIT {
                    new By.ById(continueButtonId));
             continueBtn.click();
 
-            SeleniumExtensions.performADLogin(seleniumDriver, user);
+            if (isADFS2019) {
+                SeleniumExtensions.performADFS2019Login(seleniumDriver, user);
+            } else {
+                SeleniumExtensions.performADLogin(seleniumDriver, user);
+            }
         } catch(Exception e){
             if(!isRunningLocally){
                 SeleniumExtensions.takeScreenShot(seleniumDriver);
