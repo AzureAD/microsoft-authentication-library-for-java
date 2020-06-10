@@ -42,6 +42,18 @@ class TokenResponse extends OIDCTokenResponse {
         return parseJsonObject(jsonObject);
     }
 
+    static Long getLongValue(JSONObject jsonObject, String key) throws ParseException {
+        Object value = jsonObject.get(key);
+
+        if(value instanceof Long){
+            return JSONObjectUtils.getLong(jsonObject, key);
+        }
+        else
+        {
+            return Long.parseLong(JSONObjectUtils.getString(jsonObject, key));
+        }
+    }
+
     static TokenResponse parseJsonObject(final JSONObject jsonObject)
             throws ParseException {
 
@@ -68,12 +80,12 @@ class TokenResponse extends OIDCTokenResponse {
 
         long expiresIn = 0;
         if (jsonObject.containsKey("expires_in")) {
-            expiresIn = Long.parseLong(jsonObject.getAsString("expires_in"));
+            expiresIn = getLongValue(jsonObject, "expires_in");
         }
 
         long ext_expires_in = 0;
         if (jsonObject.containsKey("ext_expires_in")) {
-            ext_expires_in = Long.parseLong(jsonObject.getAsString("ext_expires_in"));
+            ext_expires_in = getLongValue(jsonObject, "ext_expires_in");
         }
 
         String foci = null;
