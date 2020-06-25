@@ -58,7 +58,7 @@ class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier 
             try {
                 return acquireTokenByAuthorisationGrantSupplier.execute();
             } catch (MsalServiceException ex) {
-                if (ex.errorCode().equals(AUTHORIZATION_PENDING)) {
+                if (ex.errorCode() != null && ex.errorCode().equals(AUTHORIZATION_PENDING)) {
                     TimeUnit.SECONDS.sleep(deviceCode.interval());
                 } else {
                     throw ex;
