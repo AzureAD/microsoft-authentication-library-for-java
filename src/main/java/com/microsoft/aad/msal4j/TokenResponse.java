@@ -96,7 +96,7 @@ class TokenResponse extends OIDCTokenResponse {
             return new TokenResponse(accessToken, refreshToken, idTokenValue, scopeValue, clientInfo,
                     expiresIn, ext_expires_in, foci);
         } catch (ParseException e) {
-            throw new MsalClientException("Invalid or null token. If using B2C, information on a potential B2C issue and workaround can be found here: https://aka.ms/msal4j-b2c-known-issues",
+            throw new MsalClientException("Invalid or missing token, could not parse. If using B2C, information on a potential B2C issue and workaround can be found here: https://aka.ms/msal4j-b2c-known-issues",
                     AuthenticationErrorCode.INVALID_JSON);
         } catch (Exception e) {
             throw new MsalClientException(e);
