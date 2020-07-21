@@ -1,0 +1,37 @@
+{
+  "Account": {
+    "uid1.utid1-login.windows.net-contoso": {
+      "username": "MultiAccount",
+      "local_account_id": "uid1",
+      "realm": "contoso",
+      "environment": "login.windows.net",
+      "home_account_id": "uid1.utid1",
+      "authority_type": "MSSTS"
+    },
+    "uid1.utid2-login.windows.net-contoso": {
+      "username": "TenantProfile",
+      "local_account_id": "tenantprofile1",
+      "realm": "contoso",
+      "environment": "login.windows.net",
+      "home_account_id": "uid1.utid1",
+      "authority_type": "MSSTS"
+    },
+    "uid2.utid2-login.windows.net-contoso": {
+      "username": "TenantProfileNoHome",
+      "local_account_id": "tenantprofile2",
+      "realm": "contoso",
+      "environment": "login.windows.net",
+      "home_account_id": "uid2.utid2",
+      "authority_type": "MSSTS"
+    },
+    "uid3.utid3-login.windows.net-contoso": {
+      "username": "Account",
+      "local_account_id": "uid3",
+      "realm": "contoso",
+      "environment": "login.windows.net",
+      "home_account_id": "uid3.utid3",
+      "authority_type": "MSSTS"
+    }
+  },
+  "AppMetadata": {}
+}
