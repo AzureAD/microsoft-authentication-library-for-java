@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.nimbusds.jwt.JWTClaimsSet;
 
 import java.text.ParseException;
+import java.util.HashMap;
+import java.util.Map;
 
 class IdToken {
 
@@ -58,6 +60,29 @@ class IdToken {
 
     @JsonProperty("unique_name")
     protected String uniqueName;
+
+    /**
+     * Used to attach all claims in an ID token to an account object
+     *
+     * @return map of key/value pairs of claims in ID token
+     */
+    protected Map<String, Object> tokenClaims() {
+        Map<String, Object> idTokenClaims = new HashMap<>();
+        idTokenClaims.put(ISSUER, this.issuer);
+        idTokenClaims.put(SUBJECT, this.subject);
+        idTokenClaims.put(AUDIENCE, this.audience);
+        idTokenClaims.put(EXPIRATION_TIME, this.expirationTime);
+        idTokenClaims.put(ISSUED_AT, this.issuedAt);
+        idTokenClaims.put(NOT_BEFORE, this.notBefore);
+        idTokenClaims.put(NAME, this.name);
+        idTokenClaims.put(PREFERRED_USERNAME, this.preferredUsername);
+        idTokenClaims.put(OBJECT_IDENTIFIER, this.objectIdentifier);
+        idTokenClaims.put(TENANT_IDENTIFIER, this.tenantIdentifier);
+        idTokenClaims.put(UPN, this.upn);
+        idTokenClaims.put(UNIQUE_NAME, this.uniqueName);
+
+        return idTokenClaims;
+    }
 
     static IdToken createFromJWTClaims(final JWTClaimsSet claims) throws ParseException {
         IdToken idToken = new IdToken();

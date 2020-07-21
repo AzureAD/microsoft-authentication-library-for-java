@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -26,4 +27,9 @@ public interface IAccount {
      * @return account username
      */
     String username();
+
+    /**
+     * @return claims in ID token
+     */
+    Map<String, ?> idTokenClaims();
 }

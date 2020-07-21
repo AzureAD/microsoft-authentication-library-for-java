@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Accessors(fluent = true)
 @Getter
@@ -49,6 +50,8 @@ class AccountCacheEntity implements Serializable {
     @JsonProperty("authority_type")
     protected String authorityType;
 
+    protected Map<String, ?> idTokenClaims;
+
     String getKey() {
 
         List<String> keyParts = new ArrayList<>();
@@ -77,6 +80,7 @@ class AccountCacheEntity implements Serializable {
             account.localAccountId(localAccountId);
             account.username(idToken.preferredUsername);
             account.name(idToken.name);
+            account.idTokenClaims(idToken.tokenClaims());
         }
 
         return account;
@@ -101,6 +105,10 @@ class AccountCacheEntity implements Serializable {
     }
 
     IAccount toAccount(){
-        return new Account(homeAccountId, environment, username);
+        if (homeAccountId.contains(localAccountId)) {
+            return new Account(homeAccountId, environment, username, idTokenClaims);
+        } else {
+            return new TenantProfile(homeAccountId, environment, username, idTokenClaims, localAccountId);
+        }
     }
 }
