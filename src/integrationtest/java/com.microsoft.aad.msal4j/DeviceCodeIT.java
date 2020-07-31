@@ -46,7 +46,7 @@ public class DeviceCodeIT {
         build();
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
-            runAutomatedDeviceCodeFlow(deviceCode, user);
+            runAutomatedDeviceCodeFlow(deviceCode, user, environment);
         };
 
         IAuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
@@ -70,7 +70,7 @@ public class DeviceCodeIT {
                 build();
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
-            runAutomatedDeviceCodeFlow(deviceCode, user);
+            runAutomatedDeviceCodeFlow(deviceCode, user, environment);
         };
 
         IAuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
@@ -83,7 +83,7 @@ public class DeviceCodeIT {
         Assert.assertFalse(Strings.isNullOrEmpty(result.accessToken()));
     }
 
-    private void runAutomatedDeviceCodeFlow(DeviceCode deviceCode, User user){
+    private void runAutomatedDeviceCodeFlow(DeviceCode deviceCode, User user, String environment){
         boolean isRunningLocally = true;//!Strings.isNullOrEmpty(
                 //System.getenv(TestConstants.LOCAL_FLAG_ENV_VAR));
 
@@ -123,6 +123,15 @@ public class DeviceCodeIT {
             } else {
                 SeleniumExtensions.performADLogin(seleniumDriver, user);
             }
+
+            if (environment.equals("azurecloud") && !isADFS2019) {
+                //Login flow for azurecloud environment has an extra "Stay signed in?" page after authentication
+                continueBtn = SeleniumExtensions.waitForElementToBeVisibleAndEnable(
+                        seleniumDriver,
+                        new By.ById(continueButtonId));
+                continueBtn.click();
+            }
+
         } catch(Exception e){
             if(!isRunningLocally){
                 SeleniumExtensions.takeScreenShot(seleniumDriver);
