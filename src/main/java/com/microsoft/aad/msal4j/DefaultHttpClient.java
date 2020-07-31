@@ -15,6 +15,8 @@ class DefaultHttpClient implements IHttpClient {
 
     private final Proxy proxy;
     private final SSLSocketFactory sslSocketFactory;
+    public int defaultConnectTimeout = 3000;
+    public int defaultReadTimeout = 5000;
 
     DefaultHttpClient(Proxy proxy, SSLSocketFactory sslSocketFactory){
         this.proxy = proxy;
@@ -35,6 +37,8 @@ class DefaultHttpClient implements IHttpClient {
     private HttpResponse executeHttpGet(HttpRequest httpRequest) throws Exception {
 
         final HttpsURLConnection conn = openConnection(httpRequest.url());
+        conn.setConnectTimeout(defaultConnectTimeout);
+        conn.setReadTimeout(defaultReadTimeout);
         configureAdditionalHeaders(conn, httpRequest);
 
         return readResponseFromConnection(conn);
@@ -46,6 +50,8 @@ class DefaultHttpClient implements IHttpClient {
         configureAdditionalHeaders(conn, httpRequest);
         conn.setRequestMethod("POST");
         conn.setDoOutput(true);
+        conn.setConnectTimeout(defaultConnectTimeout);
+        conn.setReadTimeout(defaultReadTimeout);
 
         DataOutputStream wr = null;
         try {
