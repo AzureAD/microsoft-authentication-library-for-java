@@ -65,7 +65,9 @@ public class AuthorizationRequestUrlParameters {
         Set<String> scopesParam = new TreeSet<>(builder.scopes);
         String[] commonScopes = AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM.split(" ");
         scopesParam.addAll(Arrays.asList(commonScopes));
-        scopesParam.addAll(builder.extraScopesToConsent);
+        if(builder.extraScopesToConsent != null) {
+            scopesParam.addAll(builder.extraScopesToConsent);
+        }
 
         this.scopes = scopesParam;
         requestParameters.put("scope", Collections.singletonList(String.join(" ", scopesParam)));
