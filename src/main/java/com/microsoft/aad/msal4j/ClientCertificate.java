@@ -14,15 +14,19 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import java.util.Base64;
+import java.util.stream.Collectors;
 
 final class ClientCertificate implements IClientCertificate {
 
@@ -32,9 +36,9 @@ final class ClientCertificate implements IClientCertificate {
     @Getter
     private final PrivateKey key;
 
-    private final X509Certificate publicCertificate;
+    private final List<X509Certificate> publicCertificates;
 
-    private ClientCertificate(final PrivateKey key, final X509Certificate publicCertificate) {
+    private ClientCertificate(final PrivateKey key, final List<X509Certificate> publicCertificates) {
         if (key == null) {
             throw new NullPointerException("PrivateKey is null or empty");
         }
@@ -67,17 +71,25 @@ final class ClientCertificate implements IClientCertificate {
                             " sun.security.mscapi.RSAPrivateKey");
         }
 
-        this.publicCertificate = publicCertificate;
+        this.publicCertificates = publicCertificates;
     }
 
     public String publicCertificateHash()
             throws CertificateEncodingException, NoSuchAlgorithmException {
+
         return Base64.getEncoder().encodeToString(ClientCertificate
-                .getHash(this.publicCertificate.getEncoded()));
+                .getHash(this.publicCertificates.get(0).getEncoded()));
     }
 
-    public String publicCertificate() throws CertificateEncodingException {
-        return Base64.getEncoder().encodeToString(this.publicCertificate.getEncoded());
+    public List<String> publicCertificates() throws CertificateEncodingException {
+        return this.publicCertificates.stream().map(cert -> {
+            try {
+                return Base64.getEncoder().encodeToString(cert.getEncoded());
+            } catch (CertificateEncodingException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }).collect(Collectors.toList());
     }
 
     static ClientCertificate create(final InputStream pkcs12Certificate, final String password)
@@ -86,16 +98,25 @@ final class ClientCertificate implements IClientCertificate {
         final KeyStore keystore = KeyStore.getInstance("PKCS12", "SunJSSE");
         keystore.load(pkcs12Certificate, password.toCharArray());
         final Enumeration<String> aliases = keystore.aliases();
-        final String alias = aliases.nextElement();
-        final PrivateKey key = (PrivateKey) keystore.getKey(alias,
-                password.toCharArray());
-        final X509Certificate publicCertificate = (X509Certificate) keystore
-                .getCertificate(alias);
-        return create(key, publicCertificate);
+        final ArrayList<X509Certificate> publicCertificates = new ArrayList<X509Certificate>();
+        PrivateKey key = null;
+        while (aliases.hasMoreElements()) {
+            String alias = aliases.nextElement();
+            if (keystore.isKeyEntry(alias)) {
+                key = (PrivateKey) keystore.getKey(alias, password.toCharArray());
+                Certificate[] chain = keystore.getCertificateChain(alias);
+                for (Certificate c: chain) {
+                    publicCertificates.add((X509Certificate)c);
+                }
+            }
+        }
+        return new ClientCertificate(key, publicCertificates);
     }
 
     static ClientCertificate create(final PrivateKey key, final X509Certificate publicCertificate) {
-        return new ClientCertificate(key, publicCertificate);
+        List<X509Certificate> certs = new ArrayList<X509Certificate>();
+        certs.add(publicCertificate);
+        return new ClientCertificate(key, certs);
     }
 
     private static byte[] getHash(final byte[] inputBytes) throws NoSuchAlgorithmException {

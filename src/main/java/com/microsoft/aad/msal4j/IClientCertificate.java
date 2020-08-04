@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.cert.CertificateEncodingException;
+import java.util.List;
 
 /**
  * Credential type containing X509 public certificate and RSA private key.
@@ -36,5 +37,5 @@ public interface IClientCertificate extends IClientCredential{
      * @return base64 encoded string
      * @throws CertificateEncodingException if an encoding error occurs
      */
-    String publicCertificate() throws CertificateEncodingException;
+    List<String> publicCertificates() throws CertificateEncodingException;
 }
