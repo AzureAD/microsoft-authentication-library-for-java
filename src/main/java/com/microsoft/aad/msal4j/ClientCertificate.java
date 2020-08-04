@@ -104,6 +104,7 @@ final class ClientCertificate implements IClientCertificate {
             String alias = aliases.nextElement();
             if (keystore.isKeyEntry(alias)) {
                 key = (PrivateKey) keystore.getKey(alias, password.toCharArray());
+                //dig down the certificate chain and put the public keys in the keystore
                 Certificate[] chain = keystore.getCertificateChain(alias);
                 for (Certificate c: chain) {
                     publicCertificates.add((X509Certificate)c);
