@@ -65,6 +65,7 @@ public class AuthorizationRequestUrlParameters {
         Set<String> scopesParam = new TreeSet<>(builder.scopes);
         String[] commonScopes = AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM.split(" ");
         scopesParam.addAll(Arrays.asList(commonScopes));
+        scopesParam.addAll(builder.extraScopesToConsent);
 
         this.scopes = scopesParam;
         requestParameters.put("scope", Collections.singletonList(String.join(" ", scopesParam)));
@@ -151,6 +152,7 @@ public class AuthorizationRequestUrlParameters {
 
         private String redirectUri;
         private Set<String> scopes;
+        private Set<String> extraScopesToConsent;
         private Set<String> claims;
         private String claimsChallenge;
         private String codeChallenge;
@@ -185,6 +187,15 @@ public class AuthorizationRequestUrlParameters {
          */
         public Builder scopes(Set<String> val){
             this.scopes = val;
+            return self();
+        }
+
+        /**
+         * Scopes that you can request the end user to consent upfront,
+         * in addition to scopes which the application is requesting access.
+         */
+        public Builder extraScopesToConsent(Set<String> val){
+            this.extraScopesToConsent = val;
             return self();
         }
 

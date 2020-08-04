@@ -9,11 +9,7 @@ import org.testng.annotations.Test;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.*;
 
 public class AuthorizationRequestUrlParametersTest {
 
@@ -89,6 +85,7 @@ public class AuthorizationRequestUrlParametersTest {
         AuthorizationRequestUrlParameters parameters =
                 AuthorizationRequestUrlParameters
                         .builder(redirectUri, scope)
+                        .extraScopesToConsent(new HashSet<>(Arrays.asList("extraScopeToConsent1", "extraScopeToConsent2")))
                         .responseMode(ResponseMode.QUERY)
                         .codeChallenge("challenge")
                         .codeChallengeMethod("method")
@@ -114,7 +111,8 @@ public class AuthorizationRequestUrlParametersTest {
                     URLDecoder.decode(pair.substring(idx+1), "UTF-8"));
         }
 
-        Assert.assertEquals(queryParameters.get("scope"), "offline_access openid profile scope");
+        Assert.assertEquals(queryParameters.get("scope"),
+                "extraScopeToConsent1 extraScopeToConsent2 offline_access openid profile scope");
         Assert.assertEquals(queryParameters.get("response_type"), "code");
         Assert.assertEquals(queryParameters.get("redirect_uri"), "http://localhost:8080");
         Assert.assertEquals(queryParameters.get("client_id"), "client_id");
