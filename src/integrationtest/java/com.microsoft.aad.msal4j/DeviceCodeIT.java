@@ -124,7 +124,7 @@ public class DeviceCodeIT {
                 SeleniumExtensions.performADLogin(seleniumDriver, user);
             }
 
-            if (environment.equals("azurecloud") && !isADFS2019) {
+            if (environment.equals(AzureEnvironment.AZURE) && !isADFS2019) {
                 //Login flow for azurecloud environment has an extra "Stay signed in?" page after authentication
                 continueBtn = SeleniumExtensions.waitForElementToBeVisibleAndEnable(
                         seleniumDriver,
