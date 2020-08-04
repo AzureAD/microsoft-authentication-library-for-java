@@ -192,7 +192,7 @@ public class AuthorizationRequestUrlParameters {
 
         /**
          * Scopes that you can request the end user to consent upfront,
-         * in addition to scopes which the application is requesting access.
+         * in addition to scopes which the application is requesting access to.
          */
         public Builder extraScopesToConsent(Set<String> val){
             this.extraScopesToConsent = val;
