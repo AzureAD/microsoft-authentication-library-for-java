@@ -57,9 +57,6 @@ class TokenResponse extends OIDCTokenResponse {
     static TokenResponse parseJsonObject(final JSONObject jsonObject)
             throws ParseException {
 
-        final AccessToken accessToken = AccessToken.parse(jsonObject);
-        final RefreshToken refreshToken = RefreshToken.parse(jsonObject);
-
         // In same cases such as client credentials there isn't an id token. Instead of a null value
         // use an empty string in order to avoid an IllegalArgumentException from OIDCTokens.
         String idTokenValue = "";
@@ -93,7 +90,16 @@ class TokenResponse extends OIDCTokenResponse {
             foci = JSONObjectUtils.getString(jsonObject, "foci");
         }
 
-        return new TokenResponse(accessToken, refreshToken,idTokenValue, scopeValue, clientInfo,
-                expiresIn, ext_expires_in, foci);
+        try {
+            final AccessToken accessToken = AccessToken.parse(jsonObject);
+            final RefreshToken refreshToken = RefreshToken.parse(jsonObject);
+            return new TokenResponse(accessToken, refreshToken, idTokenValue, scopeValue, clientInfo,
+                    expiresIn, ext_expires_in, foci);
+        } catch (ParseException e) {
+            throw new MsalClientException("Invalid or missing token, could not parse. If using B2C, information on a potential B2C issue and workaround can be found here: https://aka.ms/msal4j-b2c-known-issues",
+                    AuthenticationErrorCode.INVALID_JSON);
+        } catch (Exception e) {
+            throw new MsalClientException(e);
+        }
     }
 }

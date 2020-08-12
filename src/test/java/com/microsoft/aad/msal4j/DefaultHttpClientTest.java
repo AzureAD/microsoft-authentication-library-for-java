@@ -44,6 +44,9 @@ public class DefaultHttpClientTest extends PowerMockTestCase {
 
         EasyMock.expect(mockCon.getHeaderFields()).andReturn(expectedHeaders).times(1);
 
+        mockCon.setReadTimeout(0);
+        mockCon.setConnectTimeout(0);
+
         DefaultHttpClient httpClient =
                 PowerMock.createPartialMock(DefaultHttpClient.class, "openConnection");
 
