@@ -105,10 +105,6 @@ class AccountCacheEntity implements Serializable {
     }
 
     IAccount toAccount(){
-        if (homeAccountId.contains(localAccountId)) {
-            return new Account(homeAccountId, environment, username, idTokenClaims);
-        } else {
-            return new TenantProfile(homeAccountId, environment, username, idTokenClaims, localAccountId);
-        }
+        return new Account(homeAccountId, environment, username, localAccountId, idTokenClaims, null);
     }
 }

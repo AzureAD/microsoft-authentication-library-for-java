@@ -25,5 +25,21 @@ class Account implements IAccount {
 
     String username;
 
+    String localAccountId;
+
     Map<String, ?> idTokenClaims;
+
+    Map<String, IAccount> tenantProfiles;
+
+    public String getTenantId() {
+        return localAccountId;
+    }
+
+    public Map<String, ?> getClaims() {
+        return idTokenClaims;
+    }
+
+    public Map<String, IAccount> getTenantProfiles() {
+        return tenantProfiles;
+    }
 }

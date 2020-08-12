@@ -1,32 +1,40 @@
 {
   "Account": {
     "uid1.utid1-login.windows.net-contoso": {
-      "username": "MultiAccount",
-      "local_account_id": "uid1",
+      "username": "MultiTenantAccount",
+      "local_account_id": "utid1",
       "realm": "contoso",
       "environment": "login.windows.net",
       "home_account_id": "uid1.utid1",
       "authority_type": "MSSTS"
     },
     "uid1.utid2-login.windows.net-contoso": {
-      "username": "TenantProfile",
-      "local_account_id": "tenantprofile1",
+      "username": "TenantProfile1",
+      "local_account_id": "utid2",
       "realm": "contoso",
       "environment": "login.windows.net",
       "home_account_id": "uid1.utid1",
       "authority_type": "MSSTS"
     },
-    "uid2.utid2-login.windows.net-contoso": {
+    "uid1.utid3-login.windows.net-contoso": {
+      "username": "TenantProfile2",
+      "local_account_id": "utid3",
+      "realm": "contoso",
+      "environment": "login.windows.net",
+      "home_account_id": "uid1.utid1",
+      "authority_type": "MSSTS"
+    },
+    "uid2.utid4-login.windows.net-contoso": {
       "username": "TenantProfileNoHome",
-      "local_account_id": "tenantprofile2",
+      "local_account_id": "utid4",
       "realm": "contoso",
       "environment": "login.windows.net",
       "home_account_id": "uid2.utid2",
       "authority_type": "MSSTS"
     },
-    "uid3.utid3-login.windows.net-contoso": {
-      "username": "Account",
-      "local_account_id": "uid3",
+    "uid3.utid5-login.windows.net-contoso": {
+      "username": "SingleTenantAccount",
+      "local_account_id": "uid5",
       "realm": "contoso",
       "environment": "login.windows.net",
       "home_account_id": "uid3.utid3",

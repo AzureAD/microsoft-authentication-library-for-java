@@ -13,41 +13,6 @@ import java.util.Map;
 public class AccountTest {
 
     @Test
-    public void testMultiTenantAccount_ClassTypes() throws IOException, URISyntaxException {
-
-        ITokenCacheAccessAspect accountCache = new CachePersistenceIT.TokenPersistence(
-                TestHelper.readResource(this.getClass(),
-                        "/cache_data/multi-tenant-account-cache.json"));
-
-        PublicClientApplication app = PublicClientApplication.builder("uid1")
-                .setTokenCacheAccessAspect(accountCache).build();
-
-        Assert.assertEquals(app.getAccounts().join().size(), 3);
-        Iterator<IAccount> acctIterator = app.getAccounts().join().iterator();
-
-        IAccount curAccount;
-        IAccount account = null, multiAccount = null, tenantProfileAccount = null;
-        while (acctIterator.hasNext()) {
-            curAccount = acctIterator.next();
-            switch (curAccount.username()) {
-                case "Account":
-                    account = curAccount;
-                    break;
-                case "MultiAccount":
-                    multiAccount = curAccount;
-                    break;
-                case "TenantProfileNoHome":
-                    tenantProfileAccount = curAccount;
-                    break;
-            }
-        }
-
-        Assert.assertTrue(account instanceof Account);
-        Assert.assertTrue(multiAccount instanceof MultiTenantAccount);
-        Assert.assertTrue(tenantProfileAccount instanceof TenantProfile);
-    }
-
-    @Test
     public void testMultiTenantAccount_AccessTenantProfile() throws IOException, URISyntaxException {
 
         ITokenCacheAccessAspect accountCache = new CachePersistenceIT.TokenPersistence(
@@ -64,12 +29,21 @@ public class AccountTest {
         while (acctIterator.hasNext()) {
             curAccount = acctIterator.next();
 
-            if (curAccount.username().equals("MultiAccount")) {
-                Assert.assertTrue(curAccount instanceof MultiTenantAccount);
-                Map<String, ITenantProfile> tenantProfiles = ((MultiTenantAccount) curAccount).getTenantProfiles();
+            if (curAccount.username().equals("MultiTenantAccount")) {
+                Assert.assertEquals(curAccount.homeAccountId(), "uid1.utid1");
+                Map<String, IAccount> tenantProfiles = curAccount.getTenantProfiles();
                 Assert.assertNotNull(tenantProfiles);
-                Assert.assertNotNull(tenantProfiles.get("tenantprofile1"));
-                Assert.assertEquals(tenantProfiles.get("tenantprofile1").username(), "TenantProfile");
+                Assert.assertEquals(tenantProfiles.size(), 2);
+                Assert.assertNotNull(tenantProfiles.get("utid2"));
+                Assert.assertEquals(tenantProfiles.get("utid2").username(), "TenantProfile1");
+                Assert.assertEquals(tenantProfiles.get("utid2").username(), "TenantProfile1");
+                Assert.assertNotNull(tenantProfiles.get("utid3"));
+                Assert.assertEquals(tenantProfiles.get("utid3").username(), "TenantProfile2");
+            }
+            else if (curAccount.username().equals("TenantProfileNoHome") ||
+                    curAccount.username().equals("SingleTenantAccount") ) {
+                Map<String, IAccount> tenantProfiles = curAccount.getTenantProfiles();
+                Assert.assertNull(tenantProfiles);
             }
         }
     }

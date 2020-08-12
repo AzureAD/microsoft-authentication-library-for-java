@@ -315,22 +315,21 @@ public class TokenCache implements ITokenCache {
 
                 Iterator<IAccount> homeAcctsIterator = homeAccounts.iterator();
                 Iterator<IAccount> tenantAcctsIterator;
-                Map<String, ITenantProfile> tenantProfiles;
-                IAccount homeAcc, tenantAcc;
+                Map<String, IAccount> tenantProfiles;
+                Account homeAcc, tenantAcc;
 
                 while (homeAcctsIterator.hasNext()) {
-                    homeAcc = homeAcctsIterator.next();
+                    homeAcc = (Account) homeAcctsIterator.next();
                     tenantAcctsIterator = tenantAccounts.iterator();
                     tenantProfiles = new HashMap<>();
 
                     while (tenantAcctsIterator.hasNext()) {
-                        tenantAcc = tenantAcctsIterator.next();
+                        tenantAcc = (Account) tenantAcctsIterator.next();
 
                         //If the tenant account's home ID matches a home ID (UID) in the list of home accounts, it is a
                         //tenant profile of that home account
                         if (tenantAcc.homeAccountId().contains(homeAcc.homeAccountId().substring(0, homeAcc.homeAccountId().indexOf(".")))) {
-                            TenantProfile profile = (TenantProfile) tenantAcc;
-                            tenantProfiles.put(profile.tenantId(), profile);
+                            tenantProfiles.put(tenantAcc.getTenantId(), tenantAcc);
                             tenantAcctsIterator.remove();
                         }
                     }
@@ -340,10 +339,8 @@ public class TokenCache implements ITokenCache {
                     } else {
                         //If the home account had some tenant profiles, transform the home Account object into a
                         //MultiTenantAccount object and attach its tenant profile list
-                        MultiTenantAccount multAcct = new MultiTenantAccount(
-                                homeAcc.homeAccountId(), homeAcc.environment(), homeAcc.username(), idTokens);
-                        multAcct.setTenantProfiles(tenantProfiles);
-                        rootAccounts.add(multAcct);
+                        homeAcc.tenantProfiles(tenantProfiles);
+                        rootAccounts.add(homeAcc);
                     }
                 }
                 //Add any tenant accounts which did not have a corresponding home account to the list of root accounts
