@@ -10,13 +10,7 @@ import lombok.experimental.Accessors;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Parameters for {@link AbstractClientApplicationBase#getAuthorizationRequestUrl(AuthorizationRequestUrlParameters)}
@@ -62,9 +56,12 @@ public class AuthorizationRequestUrlParameters {
         requestParameters.put("redirect_uri", Collections.singletonList(this.redirectUri));
         this.scopes = builder.scopes;
 
-        Set<String> scopesParam = new TreeSet<>(builder.scopes);
         String[] commonScopes = AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM.split(" ");
-        scopesParam.addAll(Arrays.asList(commonScopes));
+
+        Set<String> scopesParam = new LinkedHashSet<>(Arrays.asList(commonScopes));
+
+        scopesParam.addAll(builder.scopes);
+
         if(builder.extraScopesToConsent != null) {
             scopesParam.addAll(builder.extraScopesToConsent);
         }
