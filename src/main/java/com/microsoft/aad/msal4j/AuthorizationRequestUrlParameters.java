@@ -10,13 +10,7 @@ import lombok.experimental.Accessors;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Parameters for {@link AbstractClientApplicationBase#getAuthorizationRequestUrl(AuthorizationRequestUrlParameters)}
@@ -62,9 +56,15 @@ public class AuthorizationRequestUrlParameters {
         requestParameters.put("redirect_uri", Collections.singletonList(this.redirectUri));
         this.scopes = builder.scopes;
 
-        Set<String> scopesParam = new TreeSet<>(builder.scopes);
         String[] commonScopes = AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM.split(" ");
-        scopesParam.addAll(Arrays.asList(commonScopes));
+
+        Set<String> scopesParam = new LinkedHashSet<>(Arrays.asList(commonScopes));
+
+        scopesParam.addAll(builder.scopes);
+
+        if(builder.extraScopesToConsent != null) {
+            scopesParam.addAll(builder.extraScopesToConsent);
+        }
 
         this.scopes = scopesParam;
         requestParameters.put("scope", Collections.singletonList(String.join(" ", scopesParam)));
@@ -151,6 +151,7 @@ public class AuthorizationRequestUrlParameters {
 
         private String redirectUri;
         private Set<String> scopes;
+        private Set<String> extraScopesToConsent;
         private Set<String> claims;
         private String claimsChallenge;
         private String codeChallenge;
@@ -185,6 +186,15 @@ public class AuthorizationRequestUrlParameters {
          */
         public Builder scopes(Set<String> val){
             this.scopes = val;
+            return self();
+        }
+
+        /**
+         * Scopes that you can request the end user to consent upfront,
+         * in addition to scopes which the application is requesting access to.
+         */
+        public Builder extraScopesToConsent(Set<String> val){
+            this.extraScopesToConsent = val;
             return self();
         }
 

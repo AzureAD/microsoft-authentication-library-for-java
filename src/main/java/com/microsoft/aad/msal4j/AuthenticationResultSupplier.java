@@ -71,11 +71,11 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
                 String error = StringHelper.EMPTY_STRING;
                 if (ex instanceof MsalException) {
                     MsalException exception = ((MsalException) ex);
-                    if(exception.errorCode() != null){
+                    if (exception.errorCode() != null){
                         apiEvent.setApiErrorCode(exception.errorCode());
                     }
                 } else {
-                    if(ex.getCause() != null){
+                    if (ex.getCause() != null){
                         error = ex.getCause().toString();
                     }
                 }
@@ -136,7 +136,7 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
 
          if (ex instanceof MsalClientException) {
              MsalClientException exception = (MsalClientException) ex;
-             if (exception.errorCode().equalsIgnoreCase(AuthenticationErrorCode.CACHE_MISS)) {
+             if (exception.errorCode() != null && exception.errorCode().equalsIgnoreCase(AuthenticationErrorCode.CACHE_MISS)) {
                  clientApplication.log.debug(logMessage, ex);
                  return;
              }

@@ -149,6 +149,18 @@ public class UsernamePasswordIT {
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
         Assert.assertNotNull(result.idToken());
+
+        IAccount account = pca.getAccounts().join().iterator().next();
+        SilentParameters.builder(Collections.singleton(TestConstants.B2C_READ_SCOPE), account);
+
+        result = pca.acquireTokenSilently(
+                SilentParameters.builder(Collections.singleton(TestConstants.B2C_READ_SCOPE), account)
+                .build())
+                .get();
+
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.accessToken());
+        Assert.assertNotNull(result.idToken());
     }
 
     @Test
@@ -168,6 +180,18 @@ public class UsernamePasswordIT {
                         user.getUpn(),
                         user.getPassword().toCharArray())
                 .build())
+                .get();
+
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.accessToken());
+        Assert.assertNotNull(result.idToken());
+
+        IAccount account = pca.getAccounts().join().iterator().next();
+        SilentParameters.builder(Collections.singleton(TestConstants.B2C_READ_SCOPE), account);
+
+        result = pca.acquireTokenSilently(
+                SilentParameters.builder(Collections.singleton(TestConstants.B2C_READ_SCOPE), account)
+                        .build())
                 .get();
 
         Assert.assertNotNull(result);
