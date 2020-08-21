@@ -6,8 +6,10 @@ package com.microsoft.aad.msal4j;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nimbusds.jwt.JWTParser;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -302,55 +304,88 @@ public class TokenCache implements ITokenCache {
                 lock.readLock().lock();
                 Set<IAccount> rootAccounts = new HashSet<>();
 
-                //Filter accounts map into two sets: a set of home accounts (local UID = home UID),
-                // and a set of tenant profiles (local UID != home UID)
-                Set<IAccount> homeAccounts = accounts.values().stream().
+                //Filter accounts map into two sets: a set of home accounts (local OID = home OID),
+                // and a set of tenant profiles (local OID != home OID)
+                Set<AccountCacheEntity> homeAccounts = accounts.values().stream().
                         filter(acc -> environmentAliases.contains(acc.environment())).
                         filter(acc -> acc.homeAccountId().contains(acc.localAccountId())).
-                        collect(Collectors.mapping(AccountCacheEntity::toAccount, Collectors.toSet()));
-                Set<IAccount> tenantAccounts = accounts.values().stream().
+                        collect(Collectors.toSet());
+                Set<AccountCacheEntity> tenantAccounts = accounts.values().stream().
                         filter(acc -> environmentAliases.contains(acc.environment())).
                         filter(acc -> !acc.homeAccountId().contains(acc.localAccountId())).
-                        collect(Collectors.mapping(AccountCacheEntity::toAccount, Collectors.toSet()));
+                        collect(Collectors.toSet());
 
-                Iterator<IAccount> homeAcctsIterator = homeAccounts.iterator();
-                Iterator<IAccount> tenantAcctsIterator;
-                Map<String, IAccount> tenantProfiles;
-                Account homeAcc, tenantAcc;
+                for (AccountCacheEntity homeAccCached : homeAccounts) {
+                    IdTokenCacheEntity homeAcctIdToken = idTokens.get(getIdTokenKey(
+                            homeAccCached.homeAccountId(),
+                            homeAccCached.environment(),
+                            clientId,
+                            homeAccCached.realm()));
 
-                while (homeAcctsIterator.hasNext()) {
-                    homeAcc = (Account) homeAcctsIterator.next();
-                    tenantAcctsIterator = tenantAccounts.iterator();
-                    tenantProfiles = new HashMap<>();
+                    Account homeAcc = (Account) homeAccCached.toAccount();
+                    homeAcc.idTokenClaims = JWTParser.parse(homeAcctIdToken.secret).getJWTClaimsSet().getClaims();
+
+                    Iterator<AccountCacheEntity> tenantAcctsIterator = tenantAccounts.iterator();
+                    Map<String, ITenantProfile> tenantProfiles = new HashMap<>();
 
                     while (tenantAcctsIterator.hasNext()) {
-                        tenantAcc = (Account) tenantAcctsIterator.next();
-
+                        AccountCacheEntity tenantAccCached = tenantAcctsIterator.next();
                         //If the tenant account's home ID matches a home ID (UID) in the list of home accounts, it is a
                         //tenant profile of that home account
-                        if (tenantAcc.homeAccountId().contains(homeAcc.homeAccountId().substring(0, homeAcc.homeAccountId().indexOf(".")))) {
-                            tenantProfiles.put(tenantAcc.getTenantId(), tenantAcc);
+                        if (tenantAccCached.homeAccountId.equals(homeAccCached.homeAccountId())) {
+                            IdTokenCacheEntity token = idTokens.get(getIdTokenKey(
+                                    tenantAccCached.homeAccountId(),
+                                    tenantAccCached.environment(),
+                                    clientId,
+                                    tenantAccCached.realm()));
+
+                            ITenantProfile profile = new TenantProfile(tenantAccCached.localAccountId(),
+                                            tenantAccCached.realm(),
+                                            JWTParser.parse(token.secret()).getJWTClaimsSet().getClaims());
+                            tenantProfiles.put(tenantAccCached.realm(), profile);
                             tenantAcctsIterator.remove();
                         }
                     }
-                    if (tenantProfiles.isEmpty()) {
-                        //If the home account has no tenant profiles, leave it as an Account object
-                        rootAccounts.add(homeAcc);
-                    } else {
-                        //If the home account had some tenant profiles, transform the home Account object into a
-                        //MultiTenantAccount object and attach its tenant profile list
+
+                    if (tenantProfiles.size() > 0) {
                         homeAcc.tenantProfiles(tenantProfiles);
-                        rootAccounts.add(homeAcc);
                     }
+
+                    rootAccounts.add(homeAcc);
                 }
-                //Add any tenant accounts which did not have a corresponding home account to the list of root accounts
-                rootAccounts.addAll(tenantAccounts);
+                //Create Accounts from any tenant profile which did not have a corresponding home account,
+                // and add it to the list of root accounts
+                for (AccountCacheEntity tenantProfileNoHome : tenantAccounts) {
+                    IdTokenCacheEntity token = idTokens.get(getIdTokenKey(
+                            tenantProfileNoHome.homeAccountId(),
+                            tenantProfileNoHome.environment(),
+                            clientId,
+                            tenantProfileNoHome.realm()));
+                    Account account = (Account) tenantProfileNoHome.toAccount();
+                    account.idTokenClaims(JWTParser.parse(token.secret).getJWTClaimsSet().getClaims());
+                    rootAccounts.add(account);
+                }
 
                 return rootAccounts;
+            } catch (ParseException e) {
+                throw new MsalClientException("Cached JWT could not be parsed: " + e.getMessage(), AuthenticationErrorCode.INVALID_JWT);
             } finally {
                 lock.readLock().unlock();
             }
         }
+    }
+
+    /**
+     * Returns a String representing a key of a cached ID token, formatted in the same way as {@link IdTokenCacheEntity#getKey}
+     *
+     * @return String representing a possible key of a cached ID token
+     */
+    private String getIdTokenKey(String homeAccountId, String environment, String clientId, String realm) {
+        return String.join(Constants.CACHE_KEY_SEPARATOR,
+                Arrays.asList(homeAccountId,
+                        environment,
+                        "idtoken", clientId,
+                        realm, "")).toLowerCase();
     }
 
     /**
