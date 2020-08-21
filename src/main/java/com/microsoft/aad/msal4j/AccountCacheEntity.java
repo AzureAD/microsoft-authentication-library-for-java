@@ -50,8 +50,6 @@ class AccountCacheEntity implements Serializable {
     @JsonProperty("authority_type")
     protected String authorityType;
 
-    protected Map<String, ?> idTokenClaims;
-
     String getKey() {
 
         List<String> keyParts = new ArrayList<>();
@@ -80,7 +78,6 @@ class AccountCacheEntity implements Serializable {
             account.localAccountId(localAccountId);
             account.username(idToken.preferredUsername);
             account.name(idToken.name);
-            account.idTokenClaims(idToken.tokenClaims());
         }
 
         return account;
@@ -105,6 +102,6 @@ class AccountCacheEntity implements Serializable {
     }
 
     IAccount toAccount(){
-        return new Account(homeAccountId, environment, username, localAccountId, idTokenClaims, null);
+        return new Account(homeAccountId, environment, username, localAccountId, null, null);
     }
 }

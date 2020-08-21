@@ -63,7 +63,15 @@ final class AuthenticationResult implements Serializable, IAuthenticationResult 
         if (accountCacheEntity == null) {
             return null;
         }
-        return accountCacheEntity.toAccount();
+        IAccount account = accountCacheEntity.toAccount();
+        try {
+            if (idToken != null) {
+                ((Account) account).idTokenClaims(JWTParser.parse(idToken).getJWTClaimsSet().getClaims());
+            }
+        } catch (ParseException e) {
+            throw new MsalClientException("Cached JWT could not be parsed: " + e.getMessage(), AuthenticationErrorCode.INVALID_JWT);
+        }
+        return account;
     }
 
     private String environment;

@@ -4,7 +4,6 @@
 package com.microsoft.aad.msal4j;
 
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Interface representing a single user account. An IAccount is returned in the {@link IAuthenticationResult}
@@ -34,12 +33,7 @@ public interface IAccount {
     Map<String, ?> getClaims();
 
     /**
-     * @return tenant id
-     */
-    String getTenantId();
-
-    /**
      * @return tenant profiles
      */
-    Map<String, IAccount> getTenantProfiles();
+    Map<String, ITenantProfile> getTenantProfiles();
 }

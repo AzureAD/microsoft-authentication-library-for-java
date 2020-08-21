@@ -29,17 +29,13 @@ class Account implements IAccount {
 
     Map<String, ?> idTokenClaims;
 
-    Map<String, IAccount> tenantProfiles;
-
-    public String getTenantId() {
-        return localAccountId;
-    }
+    Map<String, ITenantProfile> tenantProfiles;
 
     public Map<String, ?> getClaims() {
         return idTokenClaims;
     }
 
-    public Map<String, IAccount> getTenantProfiles() {
+    public Map<String, ITenantProfile> getTenantProfiles() {
         return tenantProfiles;
     }
 }
