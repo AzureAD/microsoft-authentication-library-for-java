@@ -27,7 +27,6 @@ class AccountCacheEntity implements Serializable {
     @JsonProperty("environment")
     protected String environment;
 
-    @EqualsAndHashCode.Exclude
     @JsonProperty("realm")
     protected String realm;
 
