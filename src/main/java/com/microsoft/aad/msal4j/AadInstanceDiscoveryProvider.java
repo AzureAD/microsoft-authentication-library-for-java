@@ -74,7 +74,7 @@ class AadInstanceDiscoveryProvider {
     static void cacheInstanceDiscoveryMetadata(String host,
                                                AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse) {
 
-        if (aadInstanceDiscoveryResponse.metadata() != null) {
+        if (aadInstanceDiscoveryResponse != null && aadInstanceDiscoveryResponse.metadata() != null) {
             for (InstanceDiscoveryMetadataEntry entry : aadInstanceDiscoveryResponse.metadata()) {
                 for (String alias: entry.aliases()) {
                     cache.put(alias, entry);
@@ -83,7 +83,9 @@ class AadInstanceDiscoveryProvider {
         }
         cache.putIfAbsent(host, InstanceDiscoveryMetadataEntry.builder().
                 preferredCache(host).
-                preferredNetwork(host).build());
+                preferredNetwork(host).
+                aliases(Collections.singleton(host)).
+                build());
     }
 
     private static String getAuthorizeEndpoint(String host, String tenant) {
@@ -127,11 +129,14 @@ class AadInstanceDiscoveryProvider {
                                                     MsalRequest msalRequest,
                                                     ServiceBundle serviceBundle) {
 
-        AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse =
-                sendInstanceDiscoveryRequest(authorityUrl, msalRequest, serviceBundle);
+        AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse = null;
 
-        if (validateAuthority) {
-            validate(aadInstanceDiscoveryResponse);
+        if(msalRequest.application().authenticationAuthority.authorityType.equals(AuthorityType.AAD)) {
+            aadInstanceDiscoveryResponse = sendInstanceDiscoveryRequest(authorityUrl, msalRequest, serviceBundle);
+
+            if (validateAuthority) {
+                validate(aadInstanceDiscoveryResponse);
+            }
         }
 
         cacheInstanceDiscoveryMetadata(authorityUrl.getAuthority(), aadInstanceDiscoveryResponse);
