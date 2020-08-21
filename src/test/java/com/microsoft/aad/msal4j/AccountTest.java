@@ -19,7 +19,7 @@ public class AccountTest {
                 TestHelper.readResource(this.getClass(),
                         "/cache_data/multi-tenant-account-cache.json"));
 
-        PublicClientApplication app = PublicClientApplication.builder("uid1")
+        PublicClientApplication app = PublicClientApplication.builder("client_id")
                 .setTokenCacheAccessAspect(accountCache).build();
 
         Assert.assertEquals(app.getAccounts().join().size(), 3);
@@ -31,19 +31,18 @@ public class AccountTest {
 
             if (curAccount.username().equals("MultiTenantAccount")) {
                 Assert.assertEquals(curAccount.homeAccountId(), "uid1.utid1");
-                Map<String, IAccount> tenantProfiles = curAccount.getTenantProfiles();
+                Map<String, ITenantProfile> tenantProfiles = curAccount.getTenantProfiles();
                 Assert.assertNotNull(tenantProfiles);
                 Assert.assertEquals(tenantProfiles.size(), 2);
                 Assert.assertNotNull(tenantProfiles.get("utid2"));
-                Assert.assertEquals(tenantProfiles.get("utid2").username(), "TenantProfile1");
-                Assert.assertEquals(tenantProfiles.get("utid2").username(), "TenantProfile1");
+                Assert.assertNotNull(tenantProfiles.get("utid2").getClaims());
                 Assert.assertNotNull(tenantProfiles.get("utid3"));
-                Assert.assertEquals(tenantProfiles.get("utid3").username(), "TenantProfile2");
+                Assert.assertNotNull(tenantProfiles.get("utid3").getClaims());
             }
             else if (curAccount.username().equals("TenantProfileNoHome") ||
                     curAccount.username().equals("SingleTenantAccount") ) {
-                Map<String, IAccount> tenantProfiles = curAccount.getTenantProfiles();
-                Assert.assertNull(tenantProfiles);
+                Assert.assertNull(curAccount.getTenantProfiles());
+                Assert.assertNotNull(curAccount.getClaims());
             }
         }
     }
