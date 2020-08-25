@@ -101,6 +101,6 @@ class AccountCacheEntity implements Serializable {
     }
 
     IAccount toAccount(){
-        return new Account(homeAccountId, environment, username, localAccountId, null);
+        return new Account(homeAccountId, environment, username, null);
     }
 }
