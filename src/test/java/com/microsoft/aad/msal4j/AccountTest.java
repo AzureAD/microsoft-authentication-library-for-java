@@ -29,20 +29,38 @@ public class AccountTest {
         while (acctIterator.hasNext()) {
             curAccount = acctIterator.next();
 
-            if (curAccount.username().equals("MultiTenantAccount")) {
-                Assert.assertEquals(curAccount.homeAccountId(), "uid1.utid1");
-                Map<String, ITenantProfile> tenantProfiles = curAccount.getTenantProfiles();
-                Assert.assertNotNull(tenantProfiles);
-                Assert.assertEquals(tenantProfiles.size(), 2);
-                Assert.assertNotNull(tenantProfiles.get("utid2"));
-                Assert.assertNotNull(tenantProfiles.get("utid2").getClaims());
-                Assert.assertNotNull(tenantProfiles.get("utid3"));
-                Assert.assertNotNull(tenantProfiles.get("utid3").getClaims());
-            }
-            else if (curAccount.username().equals("TenantProfileNoHome") ||
-                    curAccount.username().equals("SingleTenantAccount") ) {
-                Assert.assertNull(curAccount.getTenantProfiles());
-                Assert.assertNotNull(curAccount.getClaims());
+            switch (curAccount.username()) {
+                case "MultiTenantAccount": {
+                    Assert.assertEquals(curAccount.homeAccountId(), "uid1.utid1");
+                    Map<String, ITenantProfile> tenantProfiles = curAccount.getTenantProfiles();
+                    Assert.assertNotNull(tenantProfiles);
+                    Assert.assertEquals(tenantProfiles.size(), 3);
+                    Assert.assertNotNull(tenantProfiles.get("utid1"));
+                    Assert.assertNotNull(tenantProfiles.get("utid1").getClaims());
+                    Assert.assertNotNull(tenantProfiles.get("utid2"));
+                    Assert.assertNotNull(tenantProfiles.get("utid2").getClaims());
+                    Assert.assertNotNull(tenantProfiles.get("utid3"));
+                    Assert.assertNotNull(tenantProfiles.get("utid3").getClaims());
+                    break;
+                }
+                case "SingleTenantAccount": {
+                    Assert.assertEquals(curAccount.homeAccountId(), "uid6.utid5");
+                    Map<String, ITenantProfile> tenantProfiles = curAccount.getTenantProfiles();
+                    Assert.assertNotNull(tenantProfiles);
+                    Assert.assertEquals(tenantProfiles.size(), 1);
+                    Assert.assertNotNull(tenantProfiles.get("utid5"));
+                    Assert.assertNotNull(tenantProfiles.get("utid5").getClaims());
+                    break;
+                }
+                case "TenantProfileNoHome": {
+                    Assert.assertEquals(curAccount.homeAccountId(), "uid5.utid4");
+                    Map<String, ITenantProfile> tenantProfiles = curAccount.getTenantProfiles();
+                    Assert.assertNotNull(tenantProfiles);
+                    Assert.assertEquals(tenantProfiles.size(), 1);
+                    Assert.assertNotNull(tenantProfiles.get("utid4"));
+                    Assert.assertNotNull(tenantProfiles.get("utid4").getClaims());
+                    break;
+                }
             }
         }
     }

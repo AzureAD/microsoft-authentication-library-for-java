@@ -146,7 +146,7 @@ public class TokenCacheIT {
                 .get();
 
         // There should be two tokens in cache, with same accounts except for tenant
-        Assert.assertEquals(pca2.getAccounts().join().size() , 2);
+        Assert.assertEquals(pca2.getAccounts().join().iterator().next().getTenantProfiles().size() , 2);
 
         IAccount account = pca2.getAccounts().get().iterator().next();
 
