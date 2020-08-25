@@ -25,8 +25,6 @@ class Account implements IAccount {
 
     String username;
 
-    private String localAccountId;
-
     Map<String, ITenantProfile> tenantProfiles;
 
     public Map<String, ITenantProfile> getTenantProfiles() {
