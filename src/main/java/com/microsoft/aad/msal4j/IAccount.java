@@ -28,11 +28,6 @@ public interface IAccount {
     String username();
 
     /**
-     * @return claims in id token
-     */
-    Map<String, ?> getClaims();
-
-    /**
      * @return tenant profiles
      */
     Map<String, ITenantProfile> getTenantProfiles();
