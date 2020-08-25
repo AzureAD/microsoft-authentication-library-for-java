@@ -13,17 +13,21 @@ import java.util.Map;
 public interface ITenantProfile {
 
     /**
-     * @return local OID
+     * This value corresponds to the 'oid' key of an ID token
+     *
+     * @return String local OID
      */
     String getId();
 
     /**
-     * @return local tenant ID
+     * This value corresponds to the 'realm' key of an ID token
+     *
+     * @return String local tenant ID
      */
     String getTenantId();
 
     /**
-     * @return claims in id token
+     * @return Map claims in id token
      */
     Map<String, ?> getClaims();
 

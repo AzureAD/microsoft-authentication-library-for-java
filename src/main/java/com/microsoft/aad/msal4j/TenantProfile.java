@@ -17,14 +17,14 @@ import java.util.Map;
 @Setter
 @AllArgsConstructor
 class TenantProfile implements ITenantProfile {
-    String objectID;
+    String id;
 
     String tenantID;
 
     Map<String, ?> idTokenClaims;
 
     public String getId() {
-        return objectID;
+        return id;
     }
 
     public String getTenantId() {
