@@ -17,19 +17,8 @@ import java.util.Map;
 @Setter
 @AllArgsConstructor
 class TenantProfile implements ITenantProfile {
-    String id;
-
-    String tenantID;
 
     Map<String, ?> idTokenClaims;
-
-    public String getId() {
-        return id;
-    }
-
-    public String getTenantId() {
-        return tenantID;
-    }
 
     public Map<String, ?> getClaims() {
         return idTokenClaims;

@@ -13,20 +13,6 @@ import java.util.Map;
 public interface ITenantProfile {
 
     /**
-     * This value corresponds to the 'oid' key of an ID token
-     *
-     * @return String local OID
-     */
-    String getId();
-
-    /**
-     * This value corresponds to the 'realm' key of an ID token
-     *
-     * @return String tenant ID
-     */
-    String getTenantId();
-
-    /**
      * A map of claims taken from an ID token. Keys and values will follow the structure of a JSON Web Token
      *
      * @return Map claims in id token

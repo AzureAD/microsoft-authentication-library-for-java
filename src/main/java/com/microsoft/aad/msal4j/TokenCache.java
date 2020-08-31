@@ -321,9 +321,7 @@ public class TokenCache implements ITokenCache {
                         idTokenClaims = JWTParser.parse(idToken.secret()).getJWTClaimsSet().getClaims();
                     }
 
-                    ITenantProfile profile = new TenantProfile(accCached.localAccountId(),
-                            accCached.realm(),
-                            idTokenClaims);
+                    ITenantProfile profile = new TenantProfile(idTokenClaims);
 
                     if (rootAccounts.get(accCached.homeAccountId()) == null) {
                         IAccount acc = accCached.toAccount();

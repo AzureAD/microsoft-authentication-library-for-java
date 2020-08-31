@@ -28,8 +28,8 @@ public interface IAccount {
     String username();
 
     /**
-     * Map of {@link ITenantProfile} objects related to this account. The keys of the map are tenant ID values, which
-     * are taken from {@link AccountCacheEntity#realm}
+     * Map of {@link ITenantProfile} objects related to this account, the keys of the map are the tenant ID values and
+     * match the 'realm' key of an ID token
      *
      * @return tenant profiles
      */
