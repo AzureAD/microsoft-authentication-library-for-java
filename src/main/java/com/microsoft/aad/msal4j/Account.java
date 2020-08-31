@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import java.util.Map;
 
 /**
  * Representation of a single user account. If modifying this object, ensure it is compliant with
@@ -23,4 +24,10 @@ class Account implements IAccount {
     String environment;
 
     String username;
+
+    Map<String, ITenantProfile> tenantProfiles;
+
+    public Map<String, ITenantProfile> getTenantProfiles() {
+        return tenantProfiles;
+    }
 }

@@ -100,4 +100,9 @@ public class AuthenticationErrorCode {
      * A JSON processing failure, indicating the JSON provided to MSAL is of invalid format.
      */
     public final static String INVALID_JSON = "invalid_json";
+
+    /**
+     * A JWT parsing failure, indicating the JWT provided to MSAL is of invalid format.
+     */
+    public final static String INVALID_JWT = "invalid_jwt";
 }

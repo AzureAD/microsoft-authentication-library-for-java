@@ -6,8 +6,10 @@ package com.microsoft.aad.msal4j;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nimbusds.jwt.JWTParser;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -300,14 +302,61 @@ public class TokenCache implements ITokenCache {
                         build())) {
             try {
                 lock.readLock().lock();
+                Map<String, IAccount> rootAccounts = new HashMap<>();
 
-                return accounts.values().stream().
+                Set<AccountCacheEntity> accountsCached = accounts.values().stream().
                         filter(acc -> environmentAliases.contains(acc.environment())).
-                        collect(Collectors.mapping(AccountCacheEntity::toAccount, Collectors.toSet()));
+                        collect(Collectors.toSet());
+
+                for (AccountCacheEntity accCached : accountsCached) {
+
+                    IdTokenCacheEntity idToken = idTokens.get(getIdTokenKey(
+                            accCached.homeAccountId(),
+                            accCached.environment(),
+                            clientId,
+                            accCached.realm()));
+
+                    Map<String, ?> idTokenClaims = null;
+                    if (idToken != null) {
+                        idTokenClaims = JWTParser.parse(idToken.secret()).getJWTClaimsSet().getClaims();
+                    }
+
+                    ITenantProfile profile = new TenantProfile(idTokenClaims);
+
+                    if (rootAccounts.get(accCached.homeAccountId()) == null) {
+                        IAccount acc = accCached.toAccount();
+                        ((Account) acc).tenantProfiles = new HashMap<>();
+                        ((Account) acc).tenantProfiles().put(accCached.realm(), profile);
+
+                        rootAccounts.put(accCached.homeAccountId(), acc);
+                    } else {
+                        ((Account)rootAccounts.get(accCached.homeAccountId())).tenantProfiles.put(accCached.realm(), profile);
+                        if (accCached.homeAccountId().contains(accCached.localAccountId())) {
+                            ((Account) rootAccounts.get(accCached.homeAccountId())).username(accCached.username());
+                        }
+                    }
+                }
+
+                return new HashSet<>(rootAccounts.values());
+            } catch (ParseException e) {
+                throw new MsalClientException("Cached JWT could not be parsed: " + e.getMessage(), AuthenticationErrorCode.INVALID_JWT);
             } finally {
                 lock.readLock().unlock();
             }
         }
+    }
+
+    /**
+     * Returns a String representing a key of a cached ID token, formatted in the same way as {@link IdTokenCacheEntity#getKey}
+     *
+     * @return String representing a possible key of a cached ID token
+     */
+    private String getIdTokenKey(String homeAccountId, String environment, String clientId, String realm) {
+        return String.join(Constants.CACHE_KEY_SEPARATOR,
+                Arrays.asList(homeAccountId,
+                        environment,
+                        "idtoken", clientId,
+                        realm, "")).toLowerCase();
     }
 
     /**

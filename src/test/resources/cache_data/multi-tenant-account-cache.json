@@ -1,0 +1,86 @@
+{
+  "Account": {
+    "uid1.utid1-login.windows.net-utid1": {
+      "username": "MultiTenantAccount",
+      "local_account_id": "uid1",
+      "realm": "utid1",
+      "environment": "login.windows.net",
+      "home_account_id": "uid1.utid1",
+      "authority_type": "MSSTS"
+    },
+    "uid1.utid1-login.windows.net-utid2": {
+      "username": "TenantProfile1",
+      "local_account_id": "uid2",
+      "realm": "utid2",
+      "environment": "login.windows.net",
+      "home_account_id": "uid1.utid1",
+      "authority_type": "MSSTS"
+    },
+    "uid1.utid1-login.windows.net-utid3": {
+      "username": "TenantProfile2",
+      "local_account_id": "uid3",
+      "realm": "utid3",
+      "environment": "login.windows.net",
+      "home_account_id": "uid1.utid1",
+      "authority_type": "MSSTS"
+    },
+    "uid5.utid4-login.windows.net-utid4": {
+      "username": "TenantProfileNoHome",
+      "local_account_id": "uid4",
+      "realm": "utid4",
+      "environment": "login.windows.net",
+      "home_account_id": "uid5.utid4",
+      "authority_type": "MSSTS"
+    },
+    "uid6.utid5-login.windows.net-utid5": {
+      "username": "SingleTenantAccount",
+      "local_account_id": "uid6",
+      "realm": "utid5",
+      "environment": "login.windows.net",
+      "home_account_id": "uid6.utid5",
+      "authority_type": "MSSTS"
+    }
+  },
+  "IdToken": {
+    "uid1.utid1-login.windows.net-idtoken-client_id-utid1-": {
+      "realm": "utid1",
+      "environment": "login.windows.net",
+      "credential_type": "IdToken",
+      "secret": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imh1Tjk1SXZQZmVocTM0R3pCRFoxR1hHaXJuTSJ9.eyJvaWQiOiAib2JqZWN0MTIzNCIsICJwcmVmZXJyZWRfdXNlcm5hbWUiOiAiSm9obiBEb2UiLCAic3ViIjogInN1YiJ9.signature",
+      "client_id": "client_id",
+      "home_account_id": "uid.utid1"
+    },
+    "uid1.utid1-login.windows.net-idtoken-client_id-utid2-": {
+      "realm": "utid2",
+      "environment": "login.windows.net",
+      "credential_type": "IdToken",
+      "secret": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imh1Tjk1SXZQZmVocTM0R3pCRFoxR1hHaXJuTSJ9.eyJvaWQiOiAib2JqZWN0MTIzNCIsICJwcmVmZXJyZWRfdXNlcm5hbWUiOiAiSm9obiBEb2UiLCAic3ViIjogInN1YiJ9.signature",
+      "client_id": "client_id",
+      "home_account_id": "uid.utid1"
+    },
+    "uid1.utid1-login.windows.net-idtoken-client_id-utid3-": {
+      "realm": "utid3",
+      "environment": "login.windows.net",
+      "credential_type": "IdToken",
+      "secret": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imh1Tjk1SXZQZmVocTM0R3pCRFoxR1hHaXJuTSJ9.eyJvaWQiOiAib2JqZWN0MTIzNCIsICJwcmVmZXJyZWRfdXNlcm5hbWUiOiAiSm9obiBEb2UiLCAic3ViIjogInN1YiJ9.signature",
+      "client_id": "client_id",
+      "home_account_id": "uid.utid1"
+    },
+    "uid5.utid4-login.windows.net-idtoken-client_id-utid4-": {
+      "realm": "utid4",
+      "environment": "login.windows.net",
+      "credential_type": "IdToken",
+      "secret": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imh1Tjk1SXZQZmVocTM0R3pCRFoxR1hHaXJuTSJ9.eyJvaWQiOiAib2JqZWN0MTIzNCIsICJwcmVmZXJyZWRfdXNlcm5hbWUiOiAiSm9obiBEb2UiLCAic3ViIjogInN1YiJ9.signature",
+      "client_id": "client_id",
+      "home_account_id": "uid5.utid4"
+    },
+    "uid6.utid5-login.windows.net-idtoken-client_id-utid5-": {
+      "realm": "utid5",
+      "environment": "login.windows.net",
+      "credential_type": "IdToken",
+      "secret": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Imh1Tjk1SXZQZmVocTM0R3pCRFoxR1hHaXJuTSJ9.eyJvaWQiOiAib2JqZWN0MTIzNCIsICJwcmVmZXJyZWRfdXNlcm5hbWUiOiAiSm9obiBEb2UiLCAic3ViIjogInN1YiJ9.signature",
+      "client_id": "client_id",
+      "home_account_id": "uid6.utid5"
+    }
+  }
+}
