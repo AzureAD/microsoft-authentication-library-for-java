@@ -119,7 +119,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
 
         ServiceBundle serviceBundle = new ServiceBundle(
                 null,
-                new DefaultHttpClient(null, null),
+                new DefaultHttpClient(null, null, null, null),
                 new TelemetryManager(null, false));
 
         return PowerMock.createPartialMock(

@@ -68,6 +68,14 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
 
     @Accessors(fluent = true)
     @Getter
+    private Integer connectTimeoutForDefaultHttpClient;
+
+    @Accessors(fluent = true)
+    @Getter
+    private Integer readTimeoutForDefaultHttpClient;
+
+    @Accessors(fluent = true)
+    @Getter
     protected TokenCache tokenCache;
 
     @Accessors(fluent = true)
@@ -284,6 +292,8 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
         private ITokenCacheAccessAspect tokenCacheAccessAspect;
         private AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse;
         private String clientCapabilities;
+        private Integer connectTimeoutForDefaultHttpClient;
+        private Integer readTimeoutForDefaultHttpClient;
 
         /**
          * Constructor to create instance of Builder of client application
@@ -446,6 +456,34 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
             return self();
         }
 
+        /**
+         * Sets the connect timeout value used in HttpsURLConnection connections made by {@link DefaultHttpClient},
+         * and is not needed if using a custom HTTP client
+         *
+         * @param val timeout value in milliseconds
+         * @return instance of the Builder on which method was called
+         */
+        public T connectTimeoutForDefaultHttpClient(Integer val) {
+            validateNotNull("connectTimeoutForDefaultHttpClient", val);
+
+            connectTimeoutForDefaultHttpClient = val;
+            return self();
+        }
+
+        /**
+         * Sets the read timeout value used in HttpsURLConnection connections made by {@link DefaultHttpClient},
+         * and is not needed if using a custom HTTP client
+         *
+         * @param val timeout value in milliseconds
+         * @return instance of the Builder on which method was called
+         */
+        public T readTimeoutForDefaultHttpClient(Integer val) {
+            validateNotNull("readTimeoutForDefaultHttpClient", val);
+
+            readTimeoutForDefaultHttpClient = val;
+            return self();
+        }
+
         T telemetryConsumer(Consumer<List<HashMap<String, String>>> val) {
             validateNotNull("telemetryConsumer", val);
 
@@ -549,10 +587,12 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
         telemetryConsumer = builder.telemetryConsumer;
         proxy = builder.proxy;
         sslSocketFactory = builder.sslSocketFactory;
+        connectTimeoutForDefaultHttpClient = builder.connectTimeoutForDefaultHttpClient;
+        readTimeoutForDefaultHttpClient = builder.readTimeoutForDefaultHttpClient;
         serviceBundle = new ServiceBundle(
                 builder.executorService,
                 builder.httpClient == null ?
-                        new DefaultHttpClient(builder.proxy, builder.sslSocketFactory) :
+                        new DefaultHttpClient(builder.proxy, builder.sslSocketFactory, builder.connectTimeoutForDefaultHttpClient, builder.readTimeoutForDefaultHttpClient) :
                         builder.httpClient,
                 new TelemetryManager(telemetryConsumer, builder.onlySendFailureTelemetry));
         authenticationAuthority = builder.authenticationAuthority;
