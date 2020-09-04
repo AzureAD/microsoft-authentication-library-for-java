@@ -19,14 +19,10 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import java.util.Base64;
-import java.util.stream.Collectors;
 
 final class ClientCertificate implements IClientCertificate {
 
@@ -36,9 +32,12 @@ final class ClientCertificate implements IClientCertificate {
     @Getter
     private final PrivateKey key;
 
-    private final List<X509Certificate> publicCertificates;
+    private final X509Certificate publicCertificate;
 
-    private ClientCertificate(final PrivateKey key, final List<X509Certificate> publicCertificates) {
+    private final List<X509Certificate> publicCertificateChain;
+
+    ClientCertificate
+            (PrivateKey key, X509Certificate publicCertificate, List<X509Certificate> publicCertificateChain) {
         if (key == null) {
             throw new NullPointerException("PrivateKey is null or empty");
         }
@@ -46,78 +45,85 @@ final class ClientCertificate implements IClientCertificate {
         this.key = key;
 
         if (key instanceof RSAPrivateKey) {
-            if(((RSAPrivateKey) key).getModulus().bitLength() < MIN_KEY_SIZE_IN_BITS) {
+            if (((RSAPrivateKey) key).getModulus().bitLength() < MIN_KEY_SIZE_IN_BITS) {
                 throw new IllegalArgumentException(
                         "certificate key size must be at least " + MIN_KEY_SIZE_IN_BITS);
             }
-        }
-        else if("sun.security.mscapi.RSAPrivateKey".equals(key.getClass().getName()) ||
-                "sun.security.mscapi.CPrivateKey".equals(key.getClass().getName())){
+        } else if ("sun.security.mscapi.RSAPrivateKey".equals(key.getClass().getName()) ||
+                "sun.security.mscapi.CPrivateKey".equals(key.getClass().getName())) {
             try {
                 Method method = key.getClass().getMethod("length");
                 method.setAccessible(true);
-                if ((int)method.invoke(key)< MIN_KEY_SIZE_IN_BITS) {
+                if ((int) method.invoke(key) < MIN_KEY_SIZE_IN_BITS) {
                     throw new IllegalArgumentException(
                             "certificate key size must be at least " + MIN_KEY_SIZE_IN_BITS);
                 }
-            } catch(NoSuchMethodException | IllegalAccessException | InvocationTargetException ex) {
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ex) {
                 throw new RuntimeException("error accessing sun.security.mscapi.RSAPrivateKey length: "
                         + ex.getMessage());
             }
-        }
-        else{
+        } else {
             throw new IllegalArgumentException(
                     "certificate key must be an instance of java.security.interfaces.RSAPrivateKey or" +
                             " sun.security.mscapi.RSAPrivateKey");
         }
 
-        this.publicCertificates = publicCertificates;
+        this.publicCertificate = publicCertificate;
+        this.publicCertificateChain = publicCertificateChain;
     }
 
     public String publicCertificateHash()
             throws CertificateEncodingException, NoSuchAlgorithmException {
 
         return Base64.getEncoder().encodeToString(ClientCertificate
-                .getHash(this.publicCertificates.get(0).getEncoded()));
+                .getHash(this.publicCertificate.getEncoded()));
     }
 
-    public List<String> publicCertificates() throws CertificateEncodingException {
-        return this.publicCertificates.stream().map(cert -> {
-            try {
-                return Base64.getEncoder().encodeToString(cert.getEncoded());
-            } catch (CertificateEncodingException e) {
-                e.printStackTrace();
+    public List<String> getEncodedPublicKeyCertificateOrCertificateChain() throws CertificateEncodingException {
+        List<String> result = new ArrayList<>();
+
+        if (publicCertificateChain != null && publicCertificateChain.size() > 0) {
+            for (X509Certificate cert : publicCertificateChain) {
+                result.add(Base64.getEncoder().encodeToString(cert.getEncoded()));
             }
-            return null;
-        }).collect(Collectors.toList());
+        } else {
+            result.add(Base64.getEncoder().encodeToString(publicCertificate.getEncoded()));
+        }
+        return result;
     }
 
     static ClientCertificate create(final InputStream pkcs12Certificate, final String password)
-            throws KeyStoreException, NoSuchProviderException,
-            NoSuchAlgorithmException, CertificateException, IOException, UnrecoverableKeyException {
+            throws KeyStoreException, NoSuchProviderException, NoSuchAlgorithmException,
+            CertificateException, IOException, UnrecoverableKeyException {
+
         final KeyStore keystore = KeyStore.getInstance("PKCS12", "SunJSSE");
         keystore.load(pkcs12Certificate, password.toCharArray());
+
         final Enumeration<String> aliases = keystore.aliases();
-        final ArrayList<X509Certificate> publicCertificates = new ArrayList<X509Certificate>();
-        PrivateKey key = null;
-        while (aliases.hasMoreElements()) {
-            String alias = aliases.nextElement();
-            if (keystore.isKeyEntry(alias)) {
-                key = (PrivateKey) keystore.getKey(alias, password.toCharArray());
-                //dig down the certificate chain and put the public keys in the keystore
-                Certificate[] chain = keystore.getCertificateChain(alias);
-                for (Certificate c: chain) {
-                    publicCertificates.add((X509Certificate)c);
-                }
+        if (!aliases.hasMoreElements()) {
+            throw new IllegalArgumentException("certificate not loaded from input stream");
+        }
+        String alias = aliases.nextElement();
+        if (aliases.hasMoreElements()) {
+            throw new IllegalArgumentException("more than one certificate alias found in input stream");
+        }
+
+        ArrayList<X509Certificate> publicKeyCertificateChain = null;
+        PrivateKey privateKey = (PrivateKey) keystore.getKey(alias, password.toCharArray());
+        X509Certificate publicKeyCertificate = (X509Certificate) keystore.getCertificate(alias);
+        Certificate[] chain = keystore.getCertificateChain(alias);
+
+        if (chain != null) {
+            publicKeyCertificateChain = new ArrayList<>();
+            for (Certificate c : chain) {
+                publicKeyCertificateChain.add((X509Certificate) c);
             }
         }
-        return new ClientCertificate(key, publicCertificates);
+        return new ClientCertificate(privateKey, publicKeyCertificate, publicKeyCertificateChain);
     }
 
-    static ClientCertificate create(final PrivateKey key, final X509Certificate publicCertificate) {
-        List<X509Certificate> certs = new ArrayList<X509Certificate>();
-        certs.add(publicCertificate);
-        return new ClientCertificate(key, certs);
+    static ClientCertificate create(final PrivateKey key, final X509Certificate publicKeyCertificate) {
+        return new ClientCertificate(key, publicKeyCertificate, null);
     }
 
     private static byte[] getHash(final byte[] inputBytes) throws NoSuchAlgorithmException {

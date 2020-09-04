@@ -46,7 +46,7 @@ final class JwtHelper {
         SignedJWT jwt;
         try {
             List<Base64> certs = new ArrayList<>();
-            for(String publicCertificate: credential.publicCertificates()) {
+            for(String publicCertificate: credential.getEncodedPublicKeyCertificateOrCertificateChain()) {
                 certs.add(new Base64(publicCertificate));
             }
 

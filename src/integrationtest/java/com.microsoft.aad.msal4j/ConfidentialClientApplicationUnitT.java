@@ -11,7 +11,6 @@ import com.nimbusds.jose.util.Base64URL;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.auth.PrivateKeyJWT;
-import org.apache.commons.lang3.StringUtils;
 import org.easymock.EasyMock;
 import org.powermock.api.easymock.PowerMock;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
@@ -25,7 +24,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.security.*;
 import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.concurrent.Future;
 
@@ -187,7 +185,7 @@ public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
         SignedJWT jwt;
         try {
             List<Base64> certs = new ArrayList<>();
-            for (String cert: credential.publicCertificates()) {
+            for (String cert: credential.getEncodedPublicKeyCertificateOrCertificateChain()) {
                 certs.add(new Base64(cert));
             }
             JWSHeader.Builder builder = new JWSHeader.Builder(JWSAlgorithm.RS256);
