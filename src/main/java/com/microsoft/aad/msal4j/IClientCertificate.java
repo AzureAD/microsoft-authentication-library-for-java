@@ -20,7 +20,7 @@ public interface IClientCertificate extends IClientCredential{
      *
      * @return private key.
      */
-    PrivateKey key();
+    PrivateKey privateKey();
 
     /**
      * Base64 encoded hash of the the public certificate.

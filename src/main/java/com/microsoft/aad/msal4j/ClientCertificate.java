@@ -30,31 +30,31 @@ final class ClientCertificate implements IClientCertificate {
 
     @Accessors(fluent = true)
     @Getter
-    private final PrivateKey key;
+    private final PrivateKey privateKey;
 
-    private final X509Certificate publicCertificate;
+    private final X509Certificate publicKeyCertificate;
 
-    private final List<X509Certificate> publicCertificateChain;
+    private final List<X509Certificate> publicKeyCertificateChain;
 
     ClientCertificate
-            (PrivateKey key, X509Certificate publicCertificate, List<X509Certificate> publicCertificateChain) {
-        if (key == null) {
+            (PrivateKey privateKey, X509Certificate publicKeyCertificate, List<X509Certificate> publicKeyCertificateChain) {
+        if (privateKey == null) {
             throw new NullPointerException("PrivateKey is null or empty");
         }
 
-        this.key = key;
+        this.privateKey = privateKey;
 
-        if (key instanceof RSAPrivateKey) {
-            if (((RSAPrivateKey) key).getModulus().bitLength() < MIN_KEY_SIZE_IN_BITS) {
+        if (privateKey instanceof RSAPrivateKey) {
+            if (((RSAPrivateKey) privateKey).getModulus().bitLength() < MIN_KEY_SIZE_IN_BITS) {
                 throw new IllegalArgumentException(
                         "certificate key size must be at least " + MIN_KEY_SIZE_IN_BITS);
             }
-        } else if ("sun.security.mscapi.RSAPrivateKey".equals(key.getClass().getName()) ||
-                "sun.security.mscapi.CPrivateKey".equals(key.getClass().getName())) {
+        } else if ("sun.security.mscapi.RSAPrivateKey".equals(privateKey.getClass().getName()) ||
+                "sun.security.mscapi.CPrivateKey".equals(privateKey.getClass().getName())) {
             try {
-                Method method = key.getClass().getMethod("length");
+                Method method = privateKey.getClass().getMethod("length");
                 method.setAccessible(true);
-                if ((int) method.invoke(key) < MIN_KEY_SIZE_IN_BITS) {
+                if ((int) method.invoke(privateKey) < MIN_KEY_SIZE_IN_BITS) {
                     throw new IllegalArgumentException(
                             "certificate key size must be at least " + MIN_KEY_SIZE_IN_BITS);
                 }
@@ -68,26 +68,26 @@ final class ClientCertificate implements IClientCertificate {
                             " sun.security.mscapi.RSAPrivateKey");
         }
 
-        this.publicCertificate = publicCertificate;
-        this.publicCertificateChain = publicCertificateChain;
+        this.publicKeyCertificate = publicKeyCertificate;
+        this.publicKeyCertificateChain = publicKeyCertificateChain;
     }
 
     public String publicCertificateHash()
             throws CertificateEncodingException, NoSuchAlgorithmException {
 
         return Base64.getEncoder().encodeToString(ClientCertificate
-                .getHash(this.publicCertificate.getEncoded()));
+                .getHash(this.publicKeyCertificate.getEncoded()));
     }
 
     public List<String> getEncodedPublicKeyCertificateOrCertificateChain() throws CertificateEncodingException {
         List<String> result = new ArrayList<>();
 
-        if (publicCertificateChain != null && publicCertificateChain.size() > 0) {
-            for (X509Certificate cert : publicCertificateChain) {
+        if (publicKeyCertificateChain != null && publicKeyCertificateChain.size() > 0) {
+            for (X509Certificate cert : publicKeyCertificateChain) {
                 result.add(Base64.getEncoder().encodeToString(cert.getEncoded()));
             }
         } else {
-            result.add(Base64.getEncoder().encodeToString(publicCertificate.getEncoded()));
+            result.add(Base64.getEncoder().encodeToString(publicKeyCertificate.getEncoded()));
         }
         return result;
     }

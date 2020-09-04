@@ -192,7 +192,7 @@ public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
             builder.x509CertChain(certs);
             builder.x509CertThumbprint(new Base64URL(credential.publicCertificateHash()));
             jwt = new SignedJWT(builder.build(), claimsSet);
-            final RSASSASigner signer = new RSASSASigner(credential.key());
+            final RSASSASigner signer = new RSASSASigner(credential.privateKey());
             jwt.sign(signer);
         } catch (final Exception e) {
             throw new MsalClientException(e);

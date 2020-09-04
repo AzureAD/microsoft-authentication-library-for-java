@@ -55,7 +55,7 @@ final class JwtHelper {
             builder.x509CertThumbprint(new Base64URL(credential.publicCertificateHash()));
 
             jwt = new SignedJWT(builder.build(), claimsSet);
-            final RSASSASigner signer = new RSASSASigner(credential.key());
+            final RSASSASigner signer = new RSASSASigner(credential.privateKey());
 
             jwt.sign(signer);
         }
