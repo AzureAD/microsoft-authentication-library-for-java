@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.List;
 
 /**
  * Factory for creating client credentials used in confidential client flows. For more details, see
@@ -45,11 +46,24 @@ public class ClientCredentialFactory {
     /**
      * Static method to create a {@link ClientCertificate} instance.
      * @param key  RSA private key to sign the assertion.
-     * @param publicCertificate x509 public certificate used for thumbprint
+     * @param publicKeyCertificate x509 public certificate used for thumbprint
      * @return {@link ClientCertificate}
      */
-    public static IClientCertificate createFromCertificate(final PrivateKey key, final X509Certificate publicCertificate) {
-        return ClientCertificate.create(key, publicCertificate);
+    public static IClientCertificate createFromCertificate(final PrivateKey key, final X509Certificate publicKeyCertificate) {
+        return ClientCertificate.create(key, publicKeyCertificate);
+    }
+
+    /**
+     * Static method to create a {@link ClientCertificate} instance.
+     * @param key  RSA private key to sign the assertion.
+     * @param publicKeyCertificateChain ordered with the user's certificate first followed by zero or more certificate authorities
+     * @return {@link ClientCertificate}
+     */
+    public static IClientCertificate createFromCertificateChain(PrivateKey key, List<X509Certificate> publicKeyCertificateChain) {
+        if(key == null || publicKeyCertificateChain == null || publicKeyCertificateChain.size() == 0){
+            throw new IllegalArgumentException("null or empty input parameter");
+        }
+        return new ClientCertificate(key, publicKeyCertificateChain.get(0), publicKeyCertificateChain);
     }
 
     /**
