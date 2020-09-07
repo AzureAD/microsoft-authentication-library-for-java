@@ -83,7 +83,7 @@ public class AcquireTokenSilentIT {
     public void acquireTokenSilent_ForceRefresh(String environment) throws Exception {
         cfg = new Config(environment);
 
-        User user = labUserProvider.getDefaultUser();
+        User user = labUserProvider.getDefaultUser(environment);
 
         PublicClientApplication pca = PublicClientApplication.builder(
                 user.getAppId()).

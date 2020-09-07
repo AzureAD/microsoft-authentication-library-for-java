@@ -1,3 +1,9 @@
+Version 1.7.0
+=============
+- Tenant profiles added to IAccount
+- Support of certificate chain
+- Api to set connect and read timeouts for default http client
+
 Version 1.6.2
 =============
 - Fix for "NullPointerException during accessing B2C authority aliases"
