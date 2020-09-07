@@ -123,7 +123,6 @@ public class DeviceCodeIT {
             } else {
                 SeleniumExtensions.performADLogin(seleniumDriver, user);
             }
-
         } catch(Exception e){
             if(!isRunningLocally){
                 SeleniumExtensions.takeScreenShot(seleniumDriver);
