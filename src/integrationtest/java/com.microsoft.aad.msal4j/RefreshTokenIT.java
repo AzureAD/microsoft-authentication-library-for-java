@@ -21,9 +21,9 @@ public class RefreshTokenIT {
 
     private Config cfg;
 
-    private void setUp() throws Exception {
+    private void setUp(String environment) throws Exception {
         LabUserProvider labUserProvider = LabUserProvider.getInstance();
-        User user = labUserProvider.getDefaultUser();
+        User user = labUserProvider.getDefaultUser(environment);
 
         pca = PublicClientApplication.builder(
                 user.getAppId()).
@@ -44,7 +44,7 @@ public class RefreshTokenIT {
     public void acquireTokenWithRefreshToken(String environment) throws Exception{
         cfg = new Config(environment);
 
-        setUp();
+        setUp(environment);
 
         IAuthenticationResult result = pca.acquireToken(RefreshTokenParameters
                 .builder(
