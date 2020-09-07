@@ -15,14 +15,17 @@ class DefaultHttpClient implements IHttpClient {
 
     private final Proxy proxy;
     private final SSLSocketFactory sslSocketFactory;
-    public int DEFAULTCONNECTIONTIMEOUT = 3000;
-    public int DEFAULTREADTIMEOUT = 5000;
+    public int DEFAULT_CONNECT_TIMEOUT = 10000;
+    public int DEFAULT_READ_TIMEOUT = 15000;
+    
+    private int connectTimeout = DEFAULT_CONNECT_TIMEOUT;
+    private int readTimeout = DEFAULT_READ_TIMEOUT;
 
     DefaultHttpClient(Proxy proxy, SSLSocketFactory sslSocketFactory, Integer connectTimeout, Integer readTimeout){
         this.proxy = proxy;
         this.sslSocketFactory = sslSocketFactory;
-        if (connectTimeout != null) this.CONNECT_TIMEOUT = connectTimeout;
-        if (readTimeout != null) this.READ_TIMEOUT = readTimeout;
+        if (connectTimeout != null) this.connectTimeout = connectTimeout;
+        if (readTimeout != null) this.readTimeout = readTimeout;
     }
 
     public IHttpResponse send(HttpRequest httpRequest) throws Exception{
@@ -80,8 +83,8 @@ class DefaultHttpClient implements IHttpClient {
             connection.setSSLSocketFactory(sslSocketFactory);
         }
 
-        connection.setConnectTimeout(DEFAULTCONNECTIONTIMEOUT);
-        connection.setReadTimeout(DEFAULTREADTIMEOUT);
+        connection.setConnectTimeout(connectTimeout);
+        connection.setReadTimeout(readTimeout);
 
         return connection;
     }
