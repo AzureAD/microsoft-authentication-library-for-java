@@ -18,9 +18,11 @@ class DefaultHttpClient implements IHttpClient {
     public int DEFAULTCONNECTIONTIMEOUT = 3000;
     public int DEFAULTREADTIMEOUT = 5000;
 
-    DefaultHttpClient(Proxy proxy, SSLSocketFactory sslSocketFactory){
+    DefaultHttpClient(Proxy proxy, SSLSocketFactory sslSocketFactory, Integer connectTimeout, Integer readTimeout){
         this.proxy = proxy;
         this.sslSocketFactory = sslSocketFactory;
+        if (connectTimeout != null) this.CONNECT_TIMEOUT = connectTimeout;
+        if (readTimeout != null) this.READ_TIMEOUT = readTimeout;
     }
 
     public IHttpResponse send(HttpRequest httpRequest) throws Exception{

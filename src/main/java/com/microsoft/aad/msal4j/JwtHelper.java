@@ -46,14 +46,16 @@ final class JwtHelper {
         SignedJWT jwt;
         try {
             List<Base64> certs = new ArrayList<>();
-            certs.add(new Base64(credential.publicCertificate()));
+            for(String publicCertificate: credential.getEncodedPublicKeyCertificateOrCertificateChain()) {
+                certs.add(new Base64(publicCertificate));
+            }
 
             JWSHeader.Builder builder = new Builder(JWSAlgorithm.RS256);
             builder.x509CertChain(certs);
             builder.x509CertThumbprint(new Base64URL(credential.publicCertificateHash()));
 
             jwt = new SignedJWT(builder.build(), claimsSet);
-            final RSASSASigner signer = new RSASSASigner(credential.key());
+            final RSASSASigner signer = new RSASSASigner(credential.privateKey());
 
             jwt.sign(signer);
         }

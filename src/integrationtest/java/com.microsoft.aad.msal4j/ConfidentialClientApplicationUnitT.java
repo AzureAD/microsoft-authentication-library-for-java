@@ -11,7 +11,6 @@ import com.nimbusds.jose.util.Base64URL;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.auth.PrivateKeyJWT;
-import org.apache.commons.lang3.StringUtils;
 import org.easymock.EasyMock;
 import org.powermock.api.easymock.PowerMock;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
@@ -186,12 +185,14 @@ public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
         SignedJWT jwt;
         try {
             List<Base64> certs = new ArrayList<>();
-            certs.add(new Base64(credential.publicCertificate()));
+            for (String cert: credential.getEncodedPublicKeyCertificateOrCertificateChain()) {
+                certs.add(new Base64(cert));
+            }
             JWSHeader.Builder builder = new JWSHeader.Builder(JWSAlgorithm.RS256);
             builder.x509CertChain(certs);
             builder.x509CertThumbprint(new Base64URL(credential.publicCertificateHash()));
             jwt = new SignedJWT(builder.build(), claimsSet);
-            final RSASSASigner signer = new RSASSASigner(credential.key());
+            final RSASSASigner signer = new RSASSASigner(credential.privateKey());
             jwt.sign(signer);
         } catch (final Exception e) {
             throw new MsalClientException(e);

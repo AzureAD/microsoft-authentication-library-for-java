@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.nimbusds.jwt.JWTClaimsSet;
 
 import java.text.ParseException;
+import java.util.HashMap;
+import java.util.Map;
 
 class IdToken {
 

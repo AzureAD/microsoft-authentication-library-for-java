@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Accessors(fluent = true)
 @Getter
@@ -26,7 +27,6 @@ class AccountCacheEntity implements Serializable {
     @JsonProperty("environment")
     protected String environment;
 
-    @EqualsAndHashCode.Exclude
     @JsonProperty("realm")
     protected String realm;
 
@@ -101,6 +101,6 @@ class AccountCacheEntity implements Serializable {
     }
 
     IAccount toAccount(){
-        return new Account(homeAccountId, environment, username);
+        return new Account(homeAccountId, environment, username, null);
     }
 }
