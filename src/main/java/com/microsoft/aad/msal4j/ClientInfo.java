@@ -19,18 +19,19 @@ class ClientInfo {
     private String uniqueIdentifier;
 
     @JsonProperty("utid")
-    private String unqiueTenantIdentifier;
+    private String uniqueTenantIdentifier;
 
     public static ClientInfo createFromJson(String clientInfoJsonBase64Encoded){
         if(StringHelper.isBlank(clientInfoJsonBase64Encoded)){
-           return null;
+            return null;
         }
-        byte[] decodedInput =  Base64.getDecoder().decode(clientInfoJsonBase64Encoded.getBytes(StandardCharset.UTF_8));
+
+        byte[] decodedInput = Base64.getUrlDecoder().decode(clientInfoJsonBase64Encoded.getBytes(StandardCharset.UTF_8));
 
         return JsonHelper.convertJsonToObject(new String(decodedInput, StandardCharset.UTF_8), ClientInfo.class);
     }
 
     String toAccountIdentifier(){
-        return uniqueIdentifier + POINT_DELIMITER + unqiueTenantIdentifier;
+        return uniqueIdentifier + POINT_DELIMITER + uniqueTenantIdentifier;
     }
 }
