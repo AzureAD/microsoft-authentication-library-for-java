@@ -156,7 +156,8 @@ public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
                 "buildJwt",
                 EasyMock.isA(String.class),
                 EasyMock.isA(ClientCertificate.class),
-                EasyMock.isA(String.class))
+                EasyMock.isA(String.class),
+                EasyMock.anyBoolean())
                 .andReturn(shortExperationJwt)
                 .times(2); // By this being called twice we ensure the client assertion is rebuilt once it has expired
 
@@ -184,13 +185,16 @@ public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
                 .build();
         SignedJWT jwt;
         try {
+            JWSHeader.Builder builder = new JWSHeader.Builder(JWSAlgorithm.RS256);
+
             List<Base64> certs = new ArrayList<>();
-            for (String cert: credential.getEncodedPublicKeyCertificateOrCertificateChain()) {
+            for (String cert : credential.getEncodedPublicKeyCertificateChain()) {
                 certs.add(new Base64(cert));
             }
-            JWSHeader.Builder builder = new JWSHeader.Builder(JWSAlgorithm.RS256);
             builder.x509CertChain(certs);
+
             builder.x509CertThumbprint(new Base64URL(credential.publicCertificateHash()));
+
             jwt = new SignedJWT(builder.build(), claimsSet);
             final RSASSASigner signer = new RSASSASigner(credential.privateKey());
             jwt.sign(signer);
