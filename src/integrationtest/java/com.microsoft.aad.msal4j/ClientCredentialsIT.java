@@ -51,7 +51,8 @@ public class ClientCredentialsIT {
         ClientAssertion clientAssertion = JwtHelper.buildJwt(
                 clientId,
                 (ClientCertificate) certificate,
-                "https://login.microsoftonline.com/common/oauth2/v2.0/token");
+                "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+                true);
 
         IClientCredential credential = ClientCredentialFactory.createFromClientAssertion(
                 clientAssertion.assertion());

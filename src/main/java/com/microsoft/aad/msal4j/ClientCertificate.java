@@ -32,12 +32,10 @@ final class ClientCertificate implements IClientCertificate {
     @Getter
     private final PrivateKey privateKey;
 
-    private final X509Certificate publicKeyCertificate;
-
     private final List<X509Certificate> publicKeyCertificateChain;
 
     ClientCertificate
-            (PrivateKey privateKey, X509Certificate publicKeyCertificate, List<X509Certificate> publicKeyCertificateChain) {
+            (PrivateKey privateKey, List<X509Certificate> publicKeyCertificateChain) {
         if (privateKey == null) {
             throw new NullPointerException("PrivateKey is null or empty");
         }
@@ -68,7 +66,6 @@ final class ClientCertificate implements IClientCertificate {
                             " sun.security.mscapi.RSAPrivateKey");
         }
 
-        this.publicKeyCertificate = publicKeyCertificate;
         this.publicKeyCertificateChain = publicKeyCertificateChain;
     }
 
@@ -76,18 +73,14 @@ final class ClientCertificate implements IClientCertificate {
             throws CertificateEncodingException, NoSuchAlgorithmException {
 
         return Base64.getEncoder().encodeToString(ClientCertificate
-                .getHash(this.publicKeyCertificate.getEncoded()));
+                    .getHash(publicKeyCertificateChain.get(0).getEncoded()));
     }
 
-    public List<String> getEncodedPublicKeyCertificateOrCertificateChain() throws CertificateEncodingException {
+    public List<String> getEncodedPublicKeyCertificateChain() throws CertificateEncodingException {
         List<String> result = new ArrayList<>();
 
-        if (publicKeyCertificateChain != null && publicKeyCertificateChain.size() > 0) {
-            for (X509Certificate cert : publicKeyCertificateChain) {
-                result.add(Base64.getEncoder().encodeToString(cert.getEncoded()));
-            }
-        } else {
-            result.add(Base64.getEncoder().encodeToString(publicKeyCertificate.getEncoded()));
+        for (X509Certificate cert : publicKeyCertificateChain) {
+            result.add(Base64.getEncoder().encodeToString(cert.getEncoded()));
         }
         return result;
     }
@@ -108,22 +101,26 @@ final class ClientCertificate implements IClientCertificate {
             throw new IllegalArgumentException("more than one certificate alias found in input stream");
         }
 
-        ArrayList<X509Certificate> publicKeyCertificateChain = null;
+        ArrayList<X509Certificate> publicKeyCertificateChain = new ArrayList<>();;
         PrivateKey privateKey = (PrivateKey) keystore.getKey(alias, password.toCharArray());
+
         X509Certificate publicKeyCertificate = (X509Certificate) keystore.getCertificate(alias);
         Certificate[] chain = keystore.getCertificateChain(alias);
 
-        if (chain != null) {
-            publicKeyCertificateChain = new ArrayList<>();
+        if (chain != null && chain.length > 0) {
             for (Certificate c : chain) {
                 publicKeyCertificateChain.add((X509Certificate) c);
             }
         }
-        return new ClientCertificate(privateKey, publicKeyCertificate, publicKeyCertificateChain);
+        else{
+            publicKeyCertificateChain.add(publicKeyCertificate);
+        }
+
+        return new ClientCertificate(privateKey, publicKeyCertificateChain);
     }
 
     static ClientCertificate create(final PrivateKey key, final X509Certificate publicKeyCertificate) {
-        return new ClientCertificate(key, publicKeyCertificate, null);
+        return new ClientCertificate(key, Arrays.asList(publicKeyCertificate));
     }
 
     private static byte[] getHash(final byte[] inputBytes) throws NoSuchAlgorithmException {

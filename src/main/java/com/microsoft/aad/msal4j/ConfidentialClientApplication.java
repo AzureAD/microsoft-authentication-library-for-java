@@ -9,6 +9,8 @@ import com.nimbusds.oauth2.sdk.auth.ClientSecretPost;
 import com.nimbusds.oauth2.sdk.auth.PrivateKeyJWT;
 import com.nimbusds.oauth2.sdk.auth.Secret;
 import com.nimbusds.oauth2.sdk.id.ClientID;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
@@ -32,6 +34,10 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
     private ClientAuthentication clientAuthentication;
     private boolean clientCertAuthentication = false;
     private ClientCertificate clientCertificate;
+
+    @Accessors(fluent = true)
+    @Getter
+    private boolean sendX5c;
 
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(ClientCredentialParameters parameters) {
@@ -62,6 +68,7 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
 
     private ConfidentialClientApplication(Builder builder) {
         super(builder);
+        sendX5c = builder.sendX5c;
 
         log = LoggerFactory.getLogger(ConfidentialClientApplication.class);
 
@@ -103,7 +110,8 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
         ClientAssertion clientAssertion = JwtHelper.buildJwt(
                 clientId(),
                 clientCertificate,
-                this.authenticationAuthority.selfSignedJwtAudience());
+                this.authenticationAuthority.selfSignedJwtAudience(),
+                sendX5c);
         return createClientAuthFromClientAssertion(clientAssertion);
     }
 
@@ -136,9 +144,24 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
 
         private IClientCredential clientCredential;
 
+        private boolean sendX5c = true;
+
         private Builder(String clientId, IClientCredential clientCredential) {
             super(clientId);
             this.clientCredential = clientCredential;
+        }
+
+        /**
+         * Specifies if the x5c claim (public key of the certificate) should be sent to the STS.
+         * Default value is true
+         *
+         * @param val true if the x5c should be sent. Otherwise false
+         * @return instance of the Builder on which method was called
+         */
+        public ConfidentialClientApplication.Builder sendX5c(boolean val) {
+            this.sendX5c = val;
+
+            return self();
         }
 
         @Override

@@ -37,5 +37,5 @@ public interface IClientCertificate extends IClientCredential{
      * @return base64 encoded string
      * @throws CertificateEncodingException if an encoding error occurs
      */
-    List<String> getEncodedPublicKeyCertificateOrCertificateChain() throws CertificateEncodingException;
+    List<String> getEncodedPublicKeyCertificateChain() throws CertificateEncodingException;
 }
