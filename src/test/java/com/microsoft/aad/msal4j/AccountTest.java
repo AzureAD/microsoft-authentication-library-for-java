@@ -12,7 +12,8 @@ import java.util.Map;
 
 public class AccountTest {
 
-    @Test
+    // @Test
+    // hardcoded token secrets should not be used to not trigger CredScan
     public void testMultiTenantAccount_AccessTenantProfile() throws IOException, URISyntaxException {
 
         ITokenCacheAccessAspect accountCache = new CachePersistenceIT.TokenPersistence(

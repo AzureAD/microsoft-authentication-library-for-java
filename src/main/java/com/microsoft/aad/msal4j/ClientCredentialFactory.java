@@ -10,6 +10,8 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 
+import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
+
 /**
  * Factory for creating client credentials used in confidential client flows. For more details, see
  * https://aka.ms/msal4j-client-credentials
@@ -50,6 +52,8 @@ public class ClientCredentialFactory {
      * @return {@link ClientCertificate}
      */
     public static IClientCertificate createFromCertificate(final PrivateKey key, final X509Certificate publicKeyCertificate) {
+        validateNotNull("publicKeyCertificate", publicKeyCertificate);
+
         return ClientCertificate.create(key, publicKeyCertificate);
     }
 
@@ -63,7 +67,7 @@ public class ClientCredentialFactory {
         if(key == null || publicKeyCertificateChain == null || publicKeyCertificateChain.size() == 0){
             throw new IllegalArgumentException("null or empty input parameter");
         }
-        return new ClientCertificate(key, publicKeyCertificateChain.get(0), publicKeyCertificateChain);
+        return new ClientCertificate(key, publicKeyCertificateChain);
     }
 
     /**

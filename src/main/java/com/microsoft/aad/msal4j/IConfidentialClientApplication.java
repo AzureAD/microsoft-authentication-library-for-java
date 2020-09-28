@@ -12,6 +12,11 @@ import java.util.concurrent.CompletableFuture;
  * For details see https://aka.ms/msal4jclientapplications
  */
 public interface IConfidentialClientApplication extends IClientApplicationBase {
+    /**
+     * @return a boolean value which determines whether x5c claim (public key of the certificate)
+     * will be sent to the STS.
+     */
+    boolean sendX5c();
 
     /**
      * Acquires tokens from the authority configured in the application, for the confidential client

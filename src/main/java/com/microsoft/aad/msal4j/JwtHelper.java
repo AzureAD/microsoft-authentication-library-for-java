@@ -21,7 +21,7 @@ import com.nimbusds.jwt.SignedJWT;
 final class JwtHelper {
 
     static ClientAssertion buildJwt(String clientId, final ClientCertificate credential,
-            final String jwtAudience) throws MsalClientException {
+            final String jwtAudience, boolean sendX5c) throws MsalClientException {
         if (StringHelper.isBlank(clientId)) {
             throw new IllegalArgumentException("clientId is null or empty");
         }
@@ -45,13 +45,16 @@ final class JwtHelper {
 
         SignedJWT jwt;
         try {
-            List<Base64> certs = new ArrayList<>();
-            for(String publicCertificate: credential.getEncodedPublicKeyCertificateOrCertificateChain()) {
-                certs.add(new Base64(publicCertificate));
+            JWSHeader.Builder builder = new Builder(JWSAlgorithm.RS256);
+
+            if(sendX5c){
+                List<Base64> certs = new ArrayList<>();
+                for (String cert: credential.getEncodedPublicKeyCertificateChain()) {
+                    certs.add(new Base64(cert));
+                }
+                builder.x509CertChain(certs);
             }
 
-            JWSHeader.Builder builder = new Builder(JWSAlgorithm.RS256);
-            builder.x509CertChain(certs);
             builder.x509CertThumbprint(new Base64URL(credential.publicCertificateHash()));
 
             jwt = new SignedJWT(builder.build(), claimsSet);

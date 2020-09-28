@@ -1,3 +1,9 @@
+Version 1.7.1
+=============
+- sendX5c API added to IConfidentialClientApplication to specify if the x5c claim
+  (public key of the certificate) should be sent to the STS.
+  Default value is true.
+
 Version 1.7.0
 =============
 - Tenant profiles added to IAccount
