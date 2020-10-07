@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -10,7 +11,7 @@ import java.util.Map;
  * property, and is used as parameter in {@link SilentParameters#builder(Set, IAccount)} )}
  *
  */
-public interface IAccount {
+public interface IAccount extends Serializable {
 
     /**
      * @return account id
