@@ -174,4 +174,27 @@ public class AuthorityTest extends AbstractMsalTests {
     public void testValidateAuthorityEmptyPath() throws MalformedURLException {
         Authority.validateAuthority(new URL("https://login.microsoftonline.com"));
     }
+
+    @Test
+    public void testCloundEndpointConstants() throws MalformedURLException {
+        PublicClientApplication pca = PublicClientApplication.builder("client_id")
+                .authority(AzureCloudEndpoint.AzurePublic.endpoint + "common")
+                .build();
+        Assert.assertEquals(pca.authority(), TestConfiguration.AAD_COMMON_AUTHORITY);
+
+        pca = PublicClientApplication.builder("client_id")
+                .authority(AzureCloudEndpoint.AzureChina.endpoint + "common")
+                .build();
+        Assert.assertEquals(pca.authority(), TestConfiguration.AAD_COMMON_AUTHORITY_CN);
+
+        pca = PublicClientApplication.builder("client_id")
+                .authority(AzureCloudEndpoint.AzureGermany.endpoint + "common")
+                .build();
+        Assert.assertEquals(pca.authority(), TestConfiguration.AAD_COMMON_AUTHORITY_DE);
+
+        pca = PublicClientApplication.builder("client_id")
+                .authority(AzureCloudEndpoint.AzureUsGovernment.endpoint + "common")
+                .build();
+        Assert.assertEquals(pca.authority(), TestConfiguration.AAD_COMMON_AUTHORITY_US);
+    }
 }
