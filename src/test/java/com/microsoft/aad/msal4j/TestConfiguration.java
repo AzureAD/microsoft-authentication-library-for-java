@@ -19,9 +19,6 @@ public final class TestConfiguration {
     public final static String AAD_TOKEN_SUCCESS_FILE = "/token.xml";
     public final static String AAD_DEFAULT_REDIRECT_URI = "https://non_existing_uri.windows.com/";
     public final static String AAD_COMMON_AUTHORITY = "https://login.microsoftonline.com/common/";
-    public final static String AAD_COMMON_AUTHORITY_CN = "https://login.chinacloudapi.cn/common/";
-    public final static String AAD_COMMON_AUTHORITY_DE = "https://login.microsoftonline.de/common/";
-    public final static String AAD_COMMON_AUTHORITY_US = "https://login.microsoftonline.us/common/";
 
     public final static String ADFS_HOST_NAME = "fs.ade2eadfs30.com";
     public final static String ADFS_TENANT_ENDPOINT = "https://"
