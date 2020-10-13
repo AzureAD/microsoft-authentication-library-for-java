@@ -24,7 +24,7 @@ public interface IAuthenticationResult {
     IAccount account();
 
     /**
-     * @return claims from id token
+     * @return tenant profile
      */
     ITenantProfile tenantProfile();
 
