@@ -66,6 +66,21 @@ final class AuthenticationResult implements IAuthenticationResult {
         return accountCacheEntity.toAccount();
     }
 
+    @Getter(lazy = true)
+    private final ITenantProfile tenantProfile = getTenantProfile();
+
+    private ITenantProfile getTenantProfile() {
+        if (idToken == null) {
+            return null;
+        }
+
+        try {
+            return new TenantProfile(JWTParser.parse(idToken).getJWTClaimsSet().getClaims());
+        } catch (ParseException e) {
+            throw new MsalClientException("Cached JWT could not be parsed: " + e.getMessage(), AuthenticationErrorCode.INVALID_JWT);
+        }
+    }
+
     private String environment;
 
     @Getter(lazy = true)
