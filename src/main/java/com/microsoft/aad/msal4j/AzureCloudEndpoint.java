@@ -3,6 +3,12 @@
 
 package com.microsoft.aad.msal4j;
 
+/**
+ * All the national clouds authenticate users separately in each environment and have separate authentication endpoints.
+ * AzureCloudEndpoint is an utility enum containing URLs for each of the national clouds endpoints, as well as the public cloud endpoint
+ *
+ * For more details see: https://aka.ms/msal4j-national-cloud
+ */
 public enum AzureCloudEndpoint {
     /**
      * Microsoft Azure public cloud, https://login.microsoftonline.com
