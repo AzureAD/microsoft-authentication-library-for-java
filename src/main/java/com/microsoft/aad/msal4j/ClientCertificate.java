@@ -85,9 +85,13 @@ final class ClientCertificate implements IClientCertificate {
         return result;
     }
 
-    static ClientCertificate create(final InputStream pkcs12Certificate, final String password)
+    static ClientCertificate create(InputStream pkcs12Certificate, String password)
             throws KeyStoreException, NoSuchProviderException, NoSuchAlgorithmException,
             CertificateException, IOException, UnrecoverableKeyException {
+        // treat null password as default one - empty string
+        if(password == null){
+            password = "";
+        }
 
         final KeyStore keystore = KeyStore.getInstance("PKCS12", "SunJSSE");
         keystore.load(pkcs12Certificate, password.toCharArray());
