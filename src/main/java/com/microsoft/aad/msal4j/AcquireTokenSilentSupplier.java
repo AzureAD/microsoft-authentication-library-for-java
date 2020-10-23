@@ -3,6 +3,8 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.util.Date;
+
 class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
 
     private SilentRequest silentRequest;
@@ -39,7 +41,12 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
                 clientApplication.getServiceBundle().getServerSideTelemetry().incrementSilentSuccessfulCount();
             }
 
-            if (silentRequest.parameters().forceRefresh() || StringHelper.isBlank(res.accessToken())) {
+            //Determine if the current token needs to be refreshed according to the refresh_in value
+            long currTimeStampSec = new Date().getTime() / 1000;
+            boolean afterRefreshOn = res.refreshOn() != null && res.refreshOn() > 0 &&
+                    res.refreshOn() < currTimeStampSec && res.expiresOn() >= currTimeStampSec;
+
+            if (silentRequest.parameters().forceRefresh() || afterRefreshOn || StringHelper.isBlank(res.accessToken())) {
                 if (!StringHelper.isBlank(res.refreshToken())) {
                     RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(
                             RefreshTokenParameters.builder(silentRequest.parameters().scopes(), res.refreshToken()).build(),
@@ -50,7 +57,16 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
                     AcquireTokenByAuthorizationGrantSupplier acquireTokenByAuthorisationGrantSupplier =
                             new AcquireTokenByAuthorizationGrantSupplier(clientApplication, refreshTokenRequest, requestAuthority);
 
-                    res = acquireTokenByAuthorisationGrantSupplier.execute();
+                    try {
+                        res = acquireTokenByAuthorisationGrantSupplier.execute();
+                    } catch (MsalServiceException ex) {
+                        //If the token refresh attempt threw a MsalServiceException but the refresh attempt was done
+                        // only because of refreshOn, then simply return the existing cached token
+                        if (afterRefreshOn && !(silentRequest.parameters().forceRefresh() || StringHelper.isBlank(res.accessToken()))) {
+                            return res;
+                        }
+                        else throw ex;
+                    }
                 } else {
                     res = null;
                 }

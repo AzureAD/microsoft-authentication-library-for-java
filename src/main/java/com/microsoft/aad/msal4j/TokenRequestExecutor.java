@@ -121,6 +121,7 @@ class TokenRequestExecutor {
                     environment(requestAuthority.host()).
                     expiresOn(currTimestampSec + response.getExpiresIn()).
                     extExpiresOn(response.getExtExpiresIn() > 0 ? currTimestampSec + response.getExtExpiresIn() : 0).
+                    refreshOn(response.getRefreshIn() > 0 ? currTimestampSec + response.getRefreshIn() : 0).
                     accountCacheEntity(accountCacheEntity).
                     scopes(response.getScope()).
                     build();

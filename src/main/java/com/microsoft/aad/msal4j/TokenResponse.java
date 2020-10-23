@@ -22,14 +22,17 @@ class TokenResponse extends OIDCTokenResponse {
     private long expiresIn;
     private long extExpiresIn;
     private String foci;
+    private long refreshIn;
 
     TokenResponse(final AccessToken accessToken, final RefreshToken refreshToken, final String idToken,
-                  final String scope, String clientInfo, long expiresIn, long extExpiresIn, String foci) {
+                  final String scope, String clientInfo, long expiresIn, long extExpiresIn, String foci,
+                  long refreshIn) {
         super(new OIDCTokens(idToken, accessToken, refreshToken));
         this.scope = scope;
         this.clientInfo = clientInfo;
         this.expiresIn = expiresIn;
         this.extExpiresIn = extExpiresIn;
+        this.refreshIn = refreshIn;
         this.foci = foci;
     }
 
@@ -90,11 +93,16 @@ class TokenResponse extends OIDCTokenResponse {
             foci = JSONObjectUtils.getString(jsonObject, "foci");
         }
 
+        long refreshIn = 0;
+        if (jsonObject.containsKey("refresh_in")) {
+            refreshIn = getLongValue(jsonObject, "refresh_in");
+        }
+
         try {
             final AccessToken accessToken = AccessToken.parse(jsonObject);
             final RefreshToken refreshToken = RefreshToken.parse(jsonObject);
             return new TokenResponse(accessToken, refreshToken, idTokenValue, scopeValue, clientInfo,
-                    expiresIn, ext_expires_in, foci);
+                    expiresIn, ext_expires_in, foci, refreshIn);
         } catch (ParseException e) {
             throw new MsalClientException("Invalid or missing token, could not parse. If using B2C, information on a potential B2C issue and workaround can be found here: https://aka.ms/msal4j-b2c-known-issues",
                     AuthenticationErrorCode.INVALID_JSON);
