@@ -10,6 +10,7 @@ import org.testng.annotations.Test;
 
 import java.net.MalformedURLException;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -218,6 +219,52 @@ public class AcquireTokenSilentIT {
                 .get();
     }
 
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenSilent_WithRefreshOn(String environment) throws Exception{
+        cfg = new Config(environment);
+
+        User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
+
+        PublicClientApplication pca = PublicClientApplication.builder(
+                user.getAppId()).
+                authority(cfg.organizationsAuthority()).
+                build();
+
+        IAuthenticationResult resultOriginal = acquireTokenUsernamePassword(user, pca, cfg.graphDefaultScope());
+
+        assertResultNotNull(resultOriginal);
+
+        IAuthenticationResult resultSilent = acquireTokenSilently(pca, resultOriginal.account(), cfg.graphDefaultScope(), false);
+        Assert.assertNotNull(resultSilent);
+        assertTokensAreEqual(resultOriginal, resultSilent);
+
+        //When this test was made, token responses did not contain the refresh_in field needed for an end-to-end test.
+        //In order to test silent flow behavior as though the service returned refresh_in, we manually change a cached
+        // token's refreshOn value from 0 (default if refresh_in missing) to a minute before/after the current time
+        String key = pca.tokenCache.accessTokens.keySet().iterator().next();
+        AccessTokenCacheEntity token = pca.tokenCache.accessTokens.get(key);
+        long currTimestampSec = new Date().getTime() / 1000;
+
+        Assert.assertEquals(token.refreshOn(), "0");
+
+        token.refreshOn(Long.toString(currTimestampSec + 60));
+        pca.tokenCache.accessTokens.put(key, token);
+
+        IAuthenticationResult resultSilentWithRefreshOn = acquireTokenSilently(pca, resultOriginal.account(), cfg.graphDefaultScope(), false);
+        //Current time is before refreshOn, so token should not have been refreshed
+        Assert.assertNotNull(resultSilentWithRefreshOn);
+        assertTokensAreEqual(resultSilent, resultSilentWithRefreshOn);
+
+        token = pca.tokenCache.accessTokens.get(key);
+        token.refreshOn(Long.toString(currTimestampSec - 60));
+        pca.tokenCache.accessTokens.put(key, token);
+
+        resultSilentWithRefreshOn = acquireTokenSilently(pca, resultOriginal.account(), cfg.graphDefaultScope(), false);
+        //Current time is after refreshOn, so token should be refreshed
+        Assert.assertNotNull(resultSilentWithRefreshOn);
+        assertResultRefreshed(resultSilent, resultSilentWithRefreshOn);
+    }
+
     private IConfidentialClientApplication getConfidentialClientApplications() throws Exception{
         String clientId = cfg.appProvider.getOboAppId();
         String password = cfg.appProvider.getOboAppPassword();
@@ -292,5 +339,10 @@ public class AcquireTokenSilentIT {
     private void assertResultRefreshed(IAuthenticationResult result, IAuthenticationResult resultAfterRefresh) {
         Assert.assertNotEquals(result.accessToken(), resultAfterRefresh.accessToken());
         Assert.assertNotEquals(result.idToken(), resultAfterRefresh.idToken());
+    }
+
+    private void assertTokensAreEqual(IAuthenticationResult result, IAuthenticationResult resultAfterRefresh) {
+        Assert.assertEquals(result.accessToken(), resultAfterRefresh.accessToken());
+        Assert.assertEquals(result.idToken(), resultAfterRefresh.idToken());
     }
 }

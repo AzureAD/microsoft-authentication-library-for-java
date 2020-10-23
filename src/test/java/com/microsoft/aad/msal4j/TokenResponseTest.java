@@ -30,13 +30,14 @@ public class TokenResponseTest extends AbstractMsalTests {
             + "gWpKmnue_2Mgl3jBozTSJJ34r-R6lnWWeN6lqZ2Svw7saI5pmPtC8OZbw";
 
     private final long expiresIn = 12345678910L;
-    private final long  extExpiresIn = 12345678910L;
+    private final long extExpiresIn = 12345678910L;
+    private final long refreshIn = 0;
 
     @Test
     public void testConstructor() throws ParseException {
         final TokenResponse response = new TokenResponse(
                 new BearerAccessToken("access_token"), new RefreshToken(
-                        "refresh_token"), idToken, null, null, expiresIn, extExpiresIn, null, 0);
+                        "refresh_token"), idToken, null, null, expiresIn, extExpiresIn, null, refreshIn);
         Assert.assertNotNull(response);
         OIDCTokens tokens = response.getOIDCTokens();
         Assert.assertNotNull(tokens);
@@ -63,7 +64,7 @@ public class TokenResponseTest extends AbstractMsalTests {
         final TokenResponse response = new TokenResponse(
                 new BearerAccessToken(idToken),
                 new RefreshToken("refresh_token"),
-                "", null, null, expiresIn, extExpiresIn, null, 0);
+                "", null, null, expiresIn, extExpiresIn, null, refreshIn);
 
         Assert.assertNotNull(response);
         OIDCTokens tokens = response.getOIDCTokens();
