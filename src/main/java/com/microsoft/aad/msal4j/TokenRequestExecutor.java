@@ -3,9 +3,9 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.nimbusds.common.contenttype.ContentType;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.SerializeException;
-import com.nimbusds.oauth2.sdk.http.CommonContentTypes;
 import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import com.nimbusds.oauth2.sdk.util.URLUtils;
@@ -57,7 +57,7 @@ class TokenRequestExecutor {
                 msalRequest.headers().getReadonlyHeaderMap(),
                 msalRequest.requestContext(),
                 this.serviceBundle);
-        oauthHttpRequest.setContentType(CommonContentTypes.APPLICATION_URLENCODED);
+        oauthHttpRequest.setEntityContentType(ContentType.APPLICATION_URLENCODED);
 
         final Map<String, List<String>> params = new HashMap<>(msalRequest.msalAuthorizationGrant().toParameters());
         if (msalRequest.application().clientCapabilities() != null) {

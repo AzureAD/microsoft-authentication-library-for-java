@@ -8,12 +8,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.mail.internet.ContentType;
-
+import com.nimbusds.common.contenttype.ContentType;
 import com.nimbusds.oauth2.sdk.SerializeException;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod;
-import com.nimbusds.oauth2.sdk.http.CommonContentTypes;
 import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.id.ClientID;
 import com.nimbusds.oauth2.sdk.util.URLUtils;
@@ -40,15 +38,15 @@ class ClientAuthenticationPost extends ClientAuthentication {
         if (httpRequest.getMethod() != HTTPRequest.Method.POST)
             throw new SerializeException("The HTTP request method must be POST");
 
-        ContentType ct = httpRequest.getContentType();
+        ContentType ct = httpRequest.getEntityContentType();
 
         if (ct == null)
             throw new SerializeException("Missing HTTP Content-Type header");
 
-        if (!ct.match(CommonContentTypes.APPLICATION_URLENCODED))
+        if (!ct.matches(ContentType.APPLICATION_URLENCODED))
             throw new SerializeException(
                     "The HTTP Content-Type header must be "
-                            + CommonContentTypes.APPLICATION_URLENCODED);
+                            + ContentType.APPLICATION_URLENCODED);
 
         Map<String, List<String>> params = httpRequest.getQueryParameters();
 

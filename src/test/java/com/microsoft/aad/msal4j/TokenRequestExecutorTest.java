@@ -3,10 +3,10 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.nimbusds.common.contenttype.ContentType;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.SerializeException;
 import com.nimbusds.oauth2.sdk.TokenErrorResponse;
-import com.nimbusds.oauth2.sdk.http.CommonContentTypes;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
 import org.easymock.EasyMock;
@@ -49,7 +49,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
                 "\"suberror\":\"basic_action\"," +
                 "\"claims\":\"" + claims + "\"}";
         httpResponse.setContent(content);
-        httpResponse.setContentType(CommonContentTypes.APPLICATION_JSON);
+        httpResponse.setEntityContentType(ContentType.APPLICATION_JSON);
 
         EasyMock.expect(request.createOauthHttpRequest()).andReturn(msalOAuthHttpRequest).times(1);
         EasyMock.expect(msalOAuthHttpRequest.send()).andReturn(httpResponse).times(1);
@@ -88,7 +88,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
                 "\"suberror\":\"client_mismatch\"," +
                 "\"claims\":\"" + claims + "\"}";
         httpResponse.setContent(content);
-        httpResponse.setContentType(CommonContentTypes.APPLICATION_JSON);
+        httpResponse.setEntityContentType(ContentType.APPLICATION_JSON);
 
         EasyMock.expect(request.createOauthHttpRequest()).andReturn(msalOAuthHttpRequest).times(1);
         EasyMock.expect(msalOAuthHttpRequest.send()).andReturn(httpResponse).times(1);

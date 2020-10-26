@@ -3,7 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.http.CommonContentTypes;
+import com.nimbusds.common.contenttype.ContentType;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
@@ -211,7 +211,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
                 "\"correlation_id\":\"ff60101b-cb23-4a52-82cb-9966f466327a\"}";
 
         httpResponse.setContent(content);
-        httpResponse.setContentType(CommonContentTypes.APPLICATION_JSON);
+        httpResponse.setEntityContentType(ContentType.APPLICATION_JSON);
 
         EasyMock.expect(request.createOauthHttpRequest()).andReturn(msalOAuthHttpRequest).times(1);
         EasyMock.expect(msalOAuthHttpRequest.send()).andReturn(httpResponse).times(1);
