@@ -231,7 +231,6 @@ public class AcquireTokenSilentIT {
                 build();
 
         IAuthenticationResult resultOriginal = acquireTokenUsernamePassword(user, pca, cfg.graphDefaultScope());
-
         assertResultNotNull(resultOriginal);
 
         IAuthenticationResult resultSilent = acquireTokenSilently(pca, resultOriginal.account(), cfg.graphDefaultScope(), false);
@@ -253,6 +252,7 @@ public class AcquireTokenSilentIT {
         IAuthenticationResult resultSilentWithRefreshOn = acquireTokenSilently(pca, resultOriginal.account(), cfg.graphDefaultScope(), false);
         //Current time is before refreshOn, so token should not have been refreshed
         Assert.assertNotNull(resultSilentWithRefreshOn);
+        Assert.assertEquals(pca.tokenCache.accessTokens.get(key).refreshOn(), Long.toString(currTimestampSec + 60));
         assertTokensAreEqual(resultSilent, resultSilentWithRefreshOn);
 
         token = pca.tokenCache.accessTokens.get(key);
