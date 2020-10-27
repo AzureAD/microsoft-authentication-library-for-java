@@ -258,6 +258,7 @@ public class TokenCache implements ITokenCache {
         long currTimestampSec = System.currentTimeMillis() / 1000;
         at.cachedAt(Long.toString(currTimestampSec));
         at.expiresOn(Long.toString(authenticationResult.expiresOn()));
+        at.refreshOn(authenticationResult.refreshOn() > 0 ? Long.toString(authenticationResult.refreshOn()) : "0");
         if (authenticationResult.extExpiresOn() > 0) {
             at.extExpiresOn(Long.toString(authenticationResult.extExpiresOn()));
         }
@@ -555,7 +556,8 @@ public class TokenCache implements ITokenCache {
                 if (atCacheEntity.isPresent()) {
                     builder.
                             accessToken(atCacheEntity.get().secret).
-                            expiresOn(Long.parseLong(atCacheEntity.get().expiresOn()));
+                            expiresOn(Long.parseLong(atCacheEntity.get().expiresOn())).
+                            refreshOn(Long.parseLong(atCacheEntity.get().refreshOn()));
                 }
                 if (idTokenCacheEntity.isPresent()) {
                     builder.
@@ -600,7 +602,8 @@ public class TokenCache implements ITokenCache {
                 if (atCacheEntity.isPresent()) {
                     builder.
                             accessToken(atCacheEntity.get().secret).
-                            expiresOn(Long.parseLong(atCacheEntity.get().expiresOn()));
+                            expiresOn(Long.parseLong(atCacheEntity.get().expiresOn())).
+                            refreshOn(Long.parseLong(atCacheEntity.get().refreshOn()));
                 }
             } finally {
                 lock.readLock().unlock();

@@ -31,6 +31,8 @@ final class AuthenticationResult implements IAuthenticationResult {
 
     private final String refreshToken;
 
+    private final Long refreshOn;
+
     @Getter(value = AccessLevel.PACKAGE)
     private final String familyId;
 
