@@ -41,7 +41,7 @@
       "realm": "contoso",
       "environment": "login.windows.net",
       "credential_type": "IdToken",
-      "secret": "",
+      "secret": "<idToken_placeholder>",
       "client_id": "my_client_id",
       "home_account_id": "uid.utid"
     }
