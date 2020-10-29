@@ -2,11 +2,14 @@
 // Licensed under the MIT License.
 package com.microsoft.aad.msal4j;
 
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.PlainJWT;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Collections;
 
 public class CachePersistenceIT {
 
@@ -31,6 +34,16 @@ public class CachePersistenceIT {
     @Test
     public void cacheDeserializationSerializationTest() throws IOException, URISyntaxException {
         String dataToInitCache = TestHelper.readResource(this.getClass(), "/cache_data/serialized_cache.json");
+
+        String ID_TOKEN_PLACEHOLDER = "<idToken_placeholder>";
+        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+                .audience(Collections.singletonList("jwtAudience"))
+                .issuer("issuer")
+                .subject("subject")
+                .build();
+        PlainJWT jwt = new PlainJWT(claimsSet);
+
+        dataToInitCache = dataToInitCache.replace(ID_TOKEN_PLACEHOLDER, jwt.serialize());
 
         ITokenCacheAccessAspect persistenceAspect = new TokenPersistence(dataToInitCache);
 
