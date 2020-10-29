@@ -18,7 +18,7 @@ import java.util.Date;
 @Getter
 @EqualsAndHashCode
 @Builder
-final class AuthenticationResult implements Serializable, IAuthenticationResult {
+final class AuthenticationResult implements IAuthenticationResult {
     private static final long serialVersionUID = 1L;
 
     private final String accessToken;
@@ -30,6 +30,8 @@ final class AuthenticationResult implements Serializable, IAuthenticationResult 
     private final long extExpiresOn;
 
     private final String refreshToken;
+
+    private final Long refreshOn;
 
     @Getter(value = AccessLevel.PACKAGE)
     private final String familyId;
@@ -64,6 +66,21 @@ final class AuthenticationResult implements Serializable, IAuthenticationResult 
             return null;
         }
         return accountCacheEntity.toAccount();
+    }
+
+    @Getter(lazy = true)
+    private final ITenantProfile tenantProfile = getTenantProfile();
+
+    private ITenantProfile getTenantProfile() {
+        if (idToken == null) {
+            return null;
+        }
+
+        try {
+            return new TenantProfile(JWTParser.parse(idToken).getJWTClaimsSet().getClaims());
+        } catch (ParseException e) {
+            throw new MsalClientException("Cached JWT could not be parsed: " + e.getMessage(), AuthenticationErrorCode.INVALID_JWT);
+        }
     }
 
     private String environment;

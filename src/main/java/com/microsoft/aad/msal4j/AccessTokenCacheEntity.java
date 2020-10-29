@@ -34,6 +34,9 @@ class AccessTokenCacheEntity extends Credential {
     @JsonProperty("extended_expires_on")
     private String extExpiresOn;
 
+    @JsonProperty("refresh_on")
+    private String refreshOn;
+
     String getKey() {
         List<String> keyParts = new ArrayList<>();
 

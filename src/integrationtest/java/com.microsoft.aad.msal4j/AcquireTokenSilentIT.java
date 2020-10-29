@@ -8,7 +8,9 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.net.MalformedURLException;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -33,15 +35,8 @@ public class AcquireTokenSilentIT {
         IPublicClientApplication pca = getPublicClientApplicationWithTokensInCache();
 
         IAccount account = pca.getAccounts().join().iterator().next();
-        SilentParameters parameters =  SilentParameters.builder(
-                Collections.singleton(cfg.graphDefaultScope()),
-                account).build();
-
-        IAuthenticationResult result =  pca.acquireTokenSilently(parameters).get();
-
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.idToken());
+        IAuthenticationResult result = acquireTokenSilently(pca, account, cfg.graphDefaultScope(), false);
+        assertResultNotNull(result);
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
@@ -58,22 +53,12 @@ public class AcquireTokenSilentIT {
                 authority(cfg.organizationsAuthority()).
                 build();
 
-        IAuthenticationResult result =  pca.acquireToken(UserNamePasswordParameters.
-                builder(Collections.singleton(cfg.graphDefaultScope()),
-                        user.getUpn(),
-                        user.getPassword().toCharArray())
-                .build())
-                .get();
+        IAuthenticationResult result = acquireTokenUsernamePassword(user, pca, cfg.graphDefaultScope());
 
         IAccount account = pca.getAccounts().join().iterator().next();
-        SilentParameters parameters =  SilentParameters.builder(
-                Collections.singleton(cfg.graphDefaultScope()), account).
-                build();
+        IAuthenticationResult acquireSilentResult = acquireTokenSilently(pca, account, cfg.graphDefaultScope(), false);
+        assertResultNotNull(result);
 
-        IAuthenticationResult acquireSilentResult =  pca.acquireTokenSilently(parameters).get();
-
-        Assert.assertNotNull(acquireSilentResult.accessToken());
-        Assert.assertNotNull(result.idToken());
         // Check that access and id tokens are coming from cache
         Assert.assertEquals(result.accessToken(), acquireSilentResult.accessToken());
         Assert.assertEquals(result.idToken(), acquireSilentResult.idToken());
@@ -90,27 +75,15 @@ public class AcquireTokenSilentIT {
                 authority(cfg.organizationsAuthority()).
                 build();
 
-        IAuthenticationResult result =  pca.acquireToken(UserNamePasswordParameters.
-                builder(Collections.singleton(cfg.graphDefaultScope()),
-                        user.getUpn(),
-                        user.getPassword().toCharArray())
-                .build())
-                .get();
+        IAuthenticationResult result = acquireTokenUsernamePassword(user, pca, cfg.graphDefaultScope());
+        assertResultNotNull(result);
 
         IAccount account = pca.getAccounts().join().iterator().next();
-        SilentParameters parameters =  SilentParameters.builder(
-                Collections.singleton(cfg.graphDefaultScope()), account).
-                forceRefresh(true).
-                build();
+        IAuthenticationResult resultAfterRefresh = acquireTokenSilently(pca, account, cfg.graphDefaultScope(), true);
+        assertResultNotNull(resultAfterRefresh);
 
-        IAuthenticationResult resultAfterRefresh =  pca.acquireTokenSilently(parameters).get();
-
-        Assert.assertNotNull(resultAfterRefresh);
-        Assert.assertNotNull(resultAfterRefresh.accessToken());
-        Assert.assertNotNull(resultAfterRefresh.idToken());
         // Check that new refresh and id tokens are being returned
-        Assert.assertNotEquals(result.accessToken(), resultAfterRefresh.accessToken());
-        Assert.assertNotEquals(result.idToken(), resultAfterRefresh.idToken());
+        assertResultRefreshed(result, resultAfterRefresh);
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
@@ -123,30 +96,72 @@ public class AcquireTokenSilentIT {
         User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_4);
 
         // acquire token for different account
-        pca.acquireToken(UserNamePasswordParameters.
-                builder(Collections.singleton(cfg.graphDefaultScope()),
-                        user.getUpn(),
-                        user.getPassword().toCharArray())
-                .build())
-                .get();
+        acquireTokenUsernamePassword(user, pca, cfg.graphDefaultScope());
 
         Set<IAccount> accounts = pca.getAccounts().join();
         IAccount account = accounts.stream().filter(
                 x -> x.username().equalsIgnoreCase(
                         user.getUpn())).findFirst().orElse(null);
 
-        SilentParameters parameters =  SilentParameters.builder(
-                Collections.singleton(cfg.graphDefaultScope()), account).
-                forceRefresh(true).
-                build();
-
-        IAuthenticationResult result =  pca.acquireTokenSilently(parameters).get();
-
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.idToken());
+        IAuthenticationResult result = acquireTokenSilently(pca, account, cfg.graphDefaultScope(), false);
+        assertResultNotNull(result);
         Assert.assertEquals(result.account().username(), user.getUpn());
     }
+
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenSilent_ADFS2019(String environment) throws Exception{
+        cfg = new Config(environment);
+
+        UserQueryParameters query = new UserQueryParameters();
+        query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT, cfg.azureEnvironment);
+        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER,  FederationProvider.ADFS_2019);
+        query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
+
+        User user = labUserProvider.getLabUser(query);
+
+        PublicClientApplication pca = PublicClientApplication.builder(
+                user.getAppId()).
+                authority(cfg.organizationsAuthority()).
+                build();
+
+        IAuthenticationResult result = acquireTokenUsernamePassword(user, pca, cfg.graphDefaultScope());
+        assertResultNotNull(result);
+
+        IAccount account = pca.getAccounts().join().iterator().next();
+        IAuthenticationResult acquireSilentResult = acquireTokenSilently(pca, account, TestConstants.ADFS_SCOPE, false);
+        assertResultNotNull(acquireSilentResult);
+
+        account = pca.getAccounts().join().iterator().next();
+        IAuthenticationResult resultAfterRefresh = acquireTokenSilently(pca, account, TestConstants.ADFS_SCOPE, true);
+        assertResultNotNull(resultAfterRefresh);
+
+        assertResultRefreshed(result, resultAfterRefresh);
+    }
+
+    // Commented out due to unclear B2C behavior causing occasional errors
+    //@Test
+    public void acquireTokenSilent_B2C() throws Exception{
+        UserQueryParameters query = new UserQueryParameters();
+        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.B2C);
+        query.parameters.put(UserQueryParameters.B2C_PROVIDER, B2CProvider.LOCAL);
+        User user = labUserProvider.getLabUser(query);
+
+        PublicClientApplication pca = PublicClientApplication.builder(
+                user.getAppId()).
+                b2cAuthority(TestConstants.B2C_AUTHORITY_ROPC).
+                build();
+
+        IAuthenticationResult result = acquireTokenUsernamePassword(user, pca, TestConstants.B2C_READ_SCOPE);
+        assertResultNotNull(result);
+
+        IAccount account = pca.getAccounts().join().iterator().next();
+        IAuthenticationResult resultAfterRefresh = acquireTokenSilently(pca, account, TestConstants.B2C_READ_SCOPE, true);
+        assertResultNotNull(resultAfterRefresh);
+
+        assertResultRefreshed(result, resultAfterRefresh);
+    }
+
+
 
     @Test
     public void acquireTokenSilent_usingCommonAuthority_returnCachedAt() throws Exception {
@@ -205,6 +220,50 @@ public class AcquireTokenSilentIT {
                 .get();
     }
 
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenSilent_WithRefreshOn(String environment) throws Exception{
+        cfg = new Config(environment);
+
+        User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
+
+        PublicClientApplication pca = PublicClientApplication.builder(
+                user.getAppId()).
+                authority(cfg.organizationsAuthority()).
+                build();
+
+        IAuthenticationResult resultOriginal = acquireTokenUsernamePassword(user, pca, cfg.graphDefaultScope());
+        assertResultNotNull(resultOriginal);
+
+        IAuthenticationResult resultSilent = acquireTokenSilently(pca, resultOriginal.account(), cfg.graphDefaultScope(), false);
+        Assert.assertNotNull(resultSilent);
+        assertTokensAreEqual(resultOriginal, resultSilent);
+
+        //When this test was made, token responses did not contain the refresh_in field needed for an end-to-end test.
+        //In order to test silent flow behavior as though the service returned refresh_in, we manually change a cached
+        // token's refreshOn value from 0 (default if refresh_in missing) to a minute before/after the current time
+        String key = pca.tokenCache.accessTokens.keySet().iterator().next();
+        AccessTokenCacheEntity token = pca.tokenCache.accessTokens.get(key);
+        long currTimestampSec = new Date().getTime() / 1000;
+
+        token.refreshOn(Long.toString(currTimestampSec + 60));
+        pca.tokenCache.accessTokens.put(key, token);
+
+        IAuthenticationResult resultSilentWithRefreshOn = acquireTokenSilently(pca, resultOriginal.account(), cfg.graphDefaultScope(), false);
+        //Current time is before refreshOn, so token should not have been refreshed
+        Assert.assertNotNull(resultSilentWithRefreshOn);
+        Assert.assertEquals(pca.tokenCache.accessTokens.get(key).refreshOn(), Long.toString(currTimestampSec + 60));
+        assertTokensAreEqual(resultSilent, resultSilentWithRefreshOn);
+
+        token = pca.tokenCache.accessTokens.get(key);
+        token.refreshOn(Long.toString(currTimestampSec - 60));
+        pca.tokenCache.accessTokens.put(key, token);
+
+        resultSilentWithRefreshOn = acquireTokenSilently(pca, resultOriginal.account(), cfg.graphDefaultScope(), false);
+        //Current time is after refreshOn, so token should be refreshed
+        Assert.assertNotNull(resultSilentWithRefreshOn);
+        assertResultRefreshed(resultSilent, resultSilentWithRefreshOn);
+    }
+
     private IConfidentialClientApplication getConfidentialClientApplications() throws Exception{
         String clientId = cfg.appProvider.getOboAppId();
         String password = cfg.appProvider.getOboAppPassword();
@@ -226,12 +285,7 @@ public class AcquireTokenSilentIT {
                 authority(authority).
                 build();
 
-        IAuthenticationResult interactiveAuthResult = pca.acquireToken(UserNamePasswordParameters.
-                builder(Collections.singleton(cfg.graphDefaultScope()),
-                        user.getUpn(),
-                        user.getPassword().toCharArray())
-                .build())
-                .get();
+        IAuthenticationResult interactiveAuthResult = acquireTokenUsernamePassword(user, pca, cfg.graphDefaultScope());
 
         Assert.assertNotNull(interactiveAuthResult);
 
@@ -254,12 +308,40 @@ public class AcquireTokenSilentIT {
                 authority(cfg.organizationsAuthority()).
                 build();
 
-        pca.acquireToken(
-                UserNamePasswordParameters.builder(
-                        Collections.singleton(cfg.graphDefaultScope()),
+        acquireTokenUsernamePassword(user, pca, cfg.graphDefaultScope());
+        return pca;
+    }
+
+    private IAuthenticationResult acquireTokenSilently(IPublicClientApplication pca, IAccount account, String scope, Boolean forceRefresh) throws InterruptedException, ExecutionException, MalformedURLException {
+        return pca.acquireTokenSilently(SilentParameters.
+                builder(Collections.singleton(scope), account).
+                forceRefresh(forceRefresh).
+                build())
+                .get();
+    }
+
+    private IAuthenticationResult acquireTokenUsernamePassword(User user, IPublicClientApplication pca, String scope) throws InterruptedException, ExecutionException {
+        return pca.acquireToken(UserNamePasswordParameters.
+                builder(Collections.singleton(scope),
                         user.getUpn(),
                         user.getPassword().toCharArray())
-                        .build()).get();
-        return pca;
+                .build())
+                .get();
+    }
+
+    private void assertResultNotNull(IAuthenticationResult result) {
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.accessToken());
+        Assert.assertNotNull(result.idToken());
+    }
+
+    private void assertResultRefreshed(IAuthenticationResult result, IAuthenticationResult resultAfterRefresh) {
+        Assert.assertNotEquals(result.accessToken(), resultAfterRefresh.accessToken());
+        Assert.assertNotEquals(result.idToken(), resultAfterRefresh.idToken());
+    }
+
+    private void assertTokensAreEqual(IAuthenticationResult result, IAuthenticationResult resultAfterRefresh) {
+        Assert.assertEquals(result.accessToken(), resultAfterRefresh.accessToken());
+        Assert.assertEquals(result.idToken(), resultAfterRefresh.idToken());
     }
 }

@@ -24,6 +24,11 @@ public interface IAuthenticationResult {
     IAccount account();
 
     /**
+     * @return tenant profile
+     */
+    ITenantProfile tenantProfile();
+
+    /**
      * @return environment
      */
     String environment();

@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -10,7 +11,7 @@ import java.util.Map;
  * {@link IAccount#getTenantProfiles()} method of an Account
  *
  */
-public interface ITenantProfile {
+public interface ITenantProfile extends Serializable {
 
     /**
      * A map of claims taken from an ID token. Keys and values will follow the structure of a JSON Web Token

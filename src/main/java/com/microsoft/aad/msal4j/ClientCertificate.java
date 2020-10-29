@@ -27,6 +27,7 @@ import lombok.experimental.Accessors;
 final class ClientCertificate implements IClientCertificate {
 
     private final static int MIN_KEY_SIZE_IN_BITS = 2048;
+    public static final String DEFAULT_PKCS12_PASSWORD = "";
 
     @Accessors(fluent = true)
     @Getter
@@ -85,9 +86,13 @@ final class ClientCertificate implements IClientCertificate {
         return result;
     }
 
-    static ClientCertificate create(final InputStream pkcs12Certificate, final String password)
+    static ClientCertificate create(InputStream pkcs12Certificate, String password)
             throws KeyStoreException, NoSuchProviderException, NoSuchAlgorithmException,
             CertificateException, IOException, UnrecoverableKeyException {
+        // treat null password as default one - empty string
+        if(password == null){
+            password = DEFAULT_PKCS12_PASSWORD;
+        }
 
         final KeyStore keystore = KeyStore.getInstance("PKCS12", "SunJSSE");
         keystore.load(pkcs12Certificate, password.toCharArray());

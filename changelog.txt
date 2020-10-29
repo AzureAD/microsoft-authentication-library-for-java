@@ -1,3 +1,10 @@
+Version 1.8.0
+=============
+- ITenantProfile added to IAuthenticationResult for easier access to ID token claims
+- IAccount is now serializable
+- Support for refresh_in field in token response
+- New utility class, AzureCloudEndpoint, for national cloud endpoint URLs
+
 Version 1.7.1
 =============
 - sendX5c API added to IConfidentialClientApplication to specify if the x5c claim
