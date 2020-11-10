@@ -82,4 +82,8 @@ public final class TestConfiguration {
             "\"trace_id\":\"0788...000\"," +
             "\"correlation_id\":\"3a...95a\"," +
             "\"suberror\":\"basic_action\"}";
+
+    public final static String CLAIMS_REQUEST = "{\"userinfo\":{\"given_name\":{\"essential\":true},\"email\":null},\"id_token\":{\"acr\":{\"values\":[\"urn:mace:incommon:iap:silver\",\"urn:mace:incommon:iap:bronze\"]},\"sub\":{\"essential\":true,\"value\":\"248289761001\"}}}";
+    public final static String CLIENT_CAPABILITIES = "{\"access_token\":{\"xms_cc\":{\"values\":[\"llt\"]}}}";
+    public final static String MERGED_CLAIMS_AND_CAPABILITIES = "{\"access_token\":{\"xms_cc\":{\"values\":[\"abc\"]}},\"userinfo\":{\"given_name\":{\"essential\":true},\"email\":null}}";
 }
