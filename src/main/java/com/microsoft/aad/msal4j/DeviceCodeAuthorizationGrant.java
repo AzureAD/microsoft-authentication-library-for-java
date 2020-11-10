@@ -23,10 +23,11 @@ class DeviceCodeAuthorizationGrant extends AbstractMsalAuthorizationGrant {
      *
      * @param scopes    The resource for which the device code was acquired.
      */
-    DeviceCodeAuthorizationGrant(DeviceCode deviceCode, final String scopes) {
+    DeviceCodeAuthorizationGrant(DeviceCode deviceCode, final String scopes, ClaimsRequest claims) {
         this.deviceCode = deviceCode;
         this.correlationId = deviceCode.correlationId();
         this.scopes = scopes;
+        this.claims = claims;
     }
 
     /**
@@ -41,6 +42,9 @@ class DeviceCodeAuthorizationGrant extends AbstractMsalAuthorizationGrant {
         outParams.put("grant_type", Collections.singletonList(GRANT_TYPE));
         outParams.put("device_code", Collections.singletonList(deviceCode.deviceCode()));
         outParams.put("client_info", Collections.singletonList("1"));
+        if (claims != null) {
+            outParams.put("claims", Collections.singletonList(claims.formatAsJSONString()));
+        }
 
         return outParams;
     }

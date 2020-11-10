@@ -55,7 +55,7 @@ class DeviceCodeFlowRequest extends MsalRequest {
     }
 
     void createAuthenticationGrant(DeviceCode deviceCode) {
-        msalAuthorizationGrant = new DeviceCodeAuthorizationGrant(deviceCode, deviceCode.scopes());
+        msalAuthorizationGrant = new DeviceCodeAuthorizationGrant(deviceCode, deviceCode.scopes(), parameters.withClaims());
     }
 
     private String createQueryParams(String clientId) {

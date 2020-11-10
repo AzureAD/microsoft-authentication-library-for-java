@@ -39,6 +39,11 @@ public class InteractiveRequestParameters implements IApiParameters {
     private URI redirectUri;
 
     /**
+     * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
+     */
+    private ClaimsRequest withClaims;
+
+    /**
      * Scopes that the application is requesting access to and the user will consent to.
      */
     private Set<String> scopes;

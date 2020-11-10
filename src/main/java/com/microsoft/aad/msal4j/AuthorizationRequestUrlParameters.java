@@ -81,6 +81,15 @@ public class AuthorizationRequestUrlParameters {
             requestParameters.put("claims", Collections.singletonList(builder.claimsChallenge));
         }
 
+        if(builder.claimsRequest != null){
+            String claimsRequest = builder.claimsRequest.formatAsJSONString();
+            //If there are other claims (such as part of a claims challenge), merge them with this claims request.
+            if (requestParameters.get("claims") != null) {
+                claimsRequest = JsonHelper.mergeJSONString(claimsRequest, requestParameters.get("claims").get(0));
+            }
+            requestParameters.put("claims", Collections.singletonList(claimsRequest));
+        }
+
         if(builder.codeChallenge != null){
             this.codeChallenge = builder.codeChallenge;
             requestParameters.put("code_challenge", Collections.singletonList(builder.codeChallenge));
@@ -154,6 +163,7 @@ public class AuthorizationRequestUrlParameters {
         private Set<String> extraScopesToConsent;
         private Set<String> claims;
         private String claimsChallenge;
+        private ClaimsRequest claimsRequest;
         private String codeChallenge;
         private String codeChallengeMethod;
         private String state;
@@ -218,6 +228,14 @@ public class AuthorizationRequestUrlParameters {
          */
         public Builder claimsChallenge(String val){
             this.claimsChallenge = val;
+            return self();
+        }
+
+        /**
+         * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
+         */
+        public Builder withClaims(ClaimsRequest val){
+            this.claimsRequest = val;
             return self();
         }
 

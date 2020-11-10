@@ -17,6 +17,6 @@ class ClientCredentialRequest extends MsalRequest{
 
     private static OAuthAuthorizationGrant createMsalGrant(ClientCredentialParameters parameters){
 
-        return new OAuthAuthorizationGrant(new ClientCredentialsGrant(), parameters.scopes());
+        return new OAuthAuthorizationGrant(new ClientCredentialsGrant(), parameters.scopes(), parameters.withClaims());
     }
 }
