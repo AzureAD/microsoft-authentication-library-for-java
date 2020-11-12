@@ -3,7 +3,12 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * Represents an individual requested claims that's part of a complete claims request parameter
@@ -11,15 +16,15 @@ import lombok.AllArgsConstructor;
  * @see <a href="https://openid.net/specs/openid-connect-core-1_0-final.html#ClaimsParameter">https://openid.net/specs/openid-connect-core-1_0-final.html#ClaimsParameter</a>
  */
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class RequestedClaim {
-    String name;
+    @JsonIgnore
+    public String name;
+
     RequestedClaimAdditionalInfo requestedClaimAdditionalInfo;
 
-    String formatAsJSONString () {
-        if (requestedClaimAdditionalInfo != null) {
-            return String.format("\"%s\":{%s}", name, requestedClaimAdditionalInfo.formatAsJSONString());
-        } else {
-            return String.format("\"%s\":null", name);
-        }
+    @JsonAnyGetter
+    public Map<String, Object> any() {
+        return Collections.singletonMap(name, requestedClaimAdditionalInfo);
     }
 }

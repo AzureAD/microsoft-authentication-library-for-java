@@ -3,6 +3,8 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,27 +18,16 @@ import java.util.List;
 @Getter
 @Setter
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class RequestedClaimAdditionalInfo {
+
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    @JsonProperty("essential")
     boolean essential;
+
+    @JsonProperty("value")
     String value;
+
+    @JsonProperty("values")
     List<String> values;
-
-    String formatAsJSONString () {
-        String jsonString = "";
-        if (essential) {
-            jsonString += String.format("\"essential\":%b", essential);
-        }
-
-        if (value != null) {
-            if (jsonString.length() > 0) jsonString += ",";
-            jsonString += String.format("\"value\":\"%s\"", value);
-        }
-
-        if (values != null) {
-            if (jsonString.length() > 0) jsonString += ",";
-            jsonString += String.format("\"values\":[\"%s\"]", String.join("\",\"", values));
-        }
-
-        return jsonString;
-    }
 }

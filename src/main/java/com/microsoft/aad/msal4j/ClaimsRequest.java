@@ -3,11 +3,12 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.Setter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringJoiner;
 
 /**
  * Represents the claims request parameter as an object
@@ -57,32 +58,29 @@ public class ClaimsRequest {
      * @return a String following JSON formatting
      */
     public String formatAsJSONString() {
-        String jsonString = "";
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode rootNode = mapper.createObjectNode();
+
         if (!userInfoRequestedClaims.isEmpty()) {
-            jsonString += String.format("\"userinfo\":%s", convertClaimsListToString(userInfoRequestedClaims));
+            rootNode.set("userinfo", convertClaimsToObjectNode(userInfoRequestedClaims));
         }
-
         if (!idTokenRequestedClaims.isEmpty()) {
-            if (jsonString.length() > 0) jsonString += ",";
-            jsonString += String.format("\"id_token\":%s", convertClaimsListToString(idTokenRequestedClaims));
+            rootNode.set("id_token", convertClaimsToObjectNode(idTokenRequestedClaims));
         }
-
         if (!accessTokenRequestedClaims.isEmpty()) {
-            if (jsonString.length() > 0) jsonString += ",";
-            jsonString += String.format("\"access_token\":%s", convertClaimsListToString(accessTokenRequestedClaims));
+            rootNode.set("access_token", convertClaimsToObjectNode(accessTokenRequestedClaims));
         }
 
-        return String.format("{%s}", jsonString);
+        return mapper.valueToTree(rootNode).toString();
     }
 
-    private String convertClaimsListToString(List<RequestedClaim> claims) {
-        //Converts a given list to a string, following a pattern of {item1,item2,...,itemN}
-        StringJoiner combinedStrings = new StringJoiner(",","{","}");
+    private ObjectNode convertClaimsToObjectNode(List<RequestedClaim> claims) {
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode claimsNode = mapper.createObjectNode();
 
-        for (RequestedClaim claim : claims) {
-            combinedStrings.add(claim.formatAsJSONString());
+        for (RequestedClaim claim: claims) {
+            claimsNode.setAll((ObjectNode) mapper.valueToTree(claim));
         }
-
-        return combinedStrings.toString();
+        return claimsNode;
     }
 }
