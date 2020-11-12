@@ -15,22 +15,14 @@ import java.util.List;
  *
  * @see <a href="https://openid.net/specs/openid-connect-core-1_0-final.html#ClaimsParameter">https://openid.net/specs/openid-connect-core-1_0-final.html#ClaimsParameter</a>
  */
-@Getter
-@Setter
 public class ClaimsRequest {
-    List<RequestedClaim> userInfoRequestedClaims = new ArrayList<>();
-    List<RequestedClaim> idTokenRequestedClaims = new ArrayList<>();
-    List<RequestedClaim> accessTokenRequestedClaims = new ArrayList<>();
 
-    /**
-     * Inserts a claim into the list of claims to be added to the "userinfo" section of an OIDC claims request
-     *
-     * @param claim the name of the claim to be requested
-     * @param requestedClaimAdditionalInfo additional information about the claim being requested
-     */
-    public void requestClaimInUserInfo(String claim, RequestedClaimAdditionalInfo requestedClaimAdditionalInfo) {
-        userInfoRequestedClaims.add(new RequestedClaim(claim, requestedClaimAdditionalInfo));
-    }
+    @Getter
+    @Setter
+    List<RequestedClaim> idTokenRequestedClaims = new ArrayList<>();
+
+    List<RequestedClaim> userInfoRequestedClaims = new ArrayList<>();
+    List<RequestedClaim> accessTokenRequestedClaims = new ArrayList<>();
 
     /**
      * Inserts a claim into the list of claims to be added to the "id_token" section of an OIDC claims request
@@ -43,12 +35,22 @@ public class ClaimsRequest {
     }
 
     /**
+     * Inserts a claim into the list of claims to be added to the "userinfo" section of an OIDC claims request
+     *
+     * @param claim the name of the claim to be requested
+     * @param requestedClaimAdditionalInfo additional information about the claim being requested
+     */
+    protected void requestClaimInUserInfo(String claim, RequestedClaimAdditionalInfo requestedClaimAdditionalInfo) {
+        userInfoRequestedClaims.add(new RequestedClaim(claim, requestedClaimAdditionalInfo));
+    }
+
+    /**
      * Inserts a claim into the list of claims to be added to the "access_token" section of an OIDC claims request
      *
      * @param claim the name of the claim to be requested
      * @param requestedClaimAdditionalInfo additional information about the claim being requested
      */
-    public void requestClaimInAccessToken(String claim, RequestedClaimAdditionalInfo requestedClaimAdditionalInfo) {
+    protected void requestClaimInAccessToken(String claim, RequestedClaimAdditionalInfo requestedClaimAdditionalInfo) {
         accessTokenRequestedClaims.add(new RequestedClaim(claim, requestedClaimAdditionalInfo));
     }
 
@@ -61,11 +63,11 @@ public class ClaimsRequest {
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode rootNode = mapper.createObjectNode();
 
-        if (!userInfoRequestedClaims.isEmpty()) {
-            rootNode.set("userinfo", convertClaimsToObjectNode(userInfoRequestedClaims));
-        }
         if (!idTokenRequestedClaims.isEmpty()) {
             rootNode.set("id_token", convertClaimsToObjectNode(idTokenRequestedClaims));
+        }
+        if (!userInfoRequestedClaims.isEmpty()) {
+            rootNode.set("userinfo", convertClaimsToObjectNode(userInfoRequestedClaims));
         }
         if (!accessTokenRequestedClaims.isEmpty()) {
             rootNode.set("access_token", convertClaimsToObjectNode(accessTokenRequestedClaims));

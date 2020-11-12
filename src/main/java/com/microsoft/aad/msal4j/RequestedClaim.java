@@ -18,13 +18,14 @@ import java.util.Map;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RequestedClaim {
+
     @JsonIgnore
     public String name;
 
     RequestedClaimAdditionalInfo requestedClaimAdditionalInfo;
 
     @JsonAnyGetter
-    public Map<String, Object> any() {
+    protected Map<String, Object> any() {
         return Collections.singletonMap(name, requestedClaimAdditionalInfo);
     }
 }

@@ -14,6 +14,7 @@ public class ClaimsTest {
 
     @Test
     public void testClaimsRequest_Format() {
+
         List<String> values = new ArrayList<>();
         values.add("urn:mace:incommon:iap:silver");
         values.add("urn:mace:incommon:iap:bronze");
