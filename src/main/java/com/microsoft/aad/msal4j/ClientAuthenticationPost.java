@@ -8,8 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.mail.internet.ContentType;
-
 import com.nimbusds.oauth2.sdk.SerializeException;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod;
@@ -39,12 +37,12 @@ class ClientAuthenticationPost extends ClientAuthentication {
         if (httpRequest.getMethod() != HTTPRequest.Method.POST)
             throw new SerializeException("The HTTP request method must be POST");
 
-        ContentType ct = httpRequest.getContentType();
+        String ct = String.valueOf(httpRequest.getEntityContentType());
 
         if (ct == null)
             throw new SerializeException("Missing HTTP Content-Type header");
 
-        if (!ct.match(HTTPContentType.ApplicationURLEncoded.contentType))
+        if (!ct.equals(HTTPContentType.ApplicationURLEncoded.contentType))
             throw new SerializeException(
                     "The HTTP Content-Type header must be "
                     + HTTPContentType.ApplicationURLEncoded.contentType);
