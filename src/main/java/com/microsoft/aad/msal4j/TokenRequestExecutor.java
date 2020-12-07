@@ -5,7 +5,6 @@ package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.SerializeException;
-import com.nimbusds.oauth2.sdk.http.CommonContentTypes;
 import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import com.nimbusds.oauth2.sdk.util.URLUtils;
@@ -45,7 +44,7 @@ class TokenRequestExecutor {
         return createAuthenticationResultFromOauthHttpResponse(oauthHttpResponse);
     }
 
-    OAuthHttpRequest createOauthHttpRequest() throws SerializeException, MalformedURLException {
+    OAuthHttpRequest createOauthHttpRequest() throws SerializeException, MalformedURLException, ParseException {
 
         if (requestAuthority.tokenEndpointUrl() == null) {
             throw new SerializeException("The endpoint URI is not specified");
@@ -57,7 +56,7 @@ class TokenRequestExecutor {
                 msalRequest.headers().getReadonlyHeaderMap(),
                 msalRequest.requestContext(),
                 this.serviceBundle);
-        oauthHttpRequest.setContentType(CommonContentTypes.APPLICATION_URLENCODED);
+        oauthHttpRequest.setContentType(HTTPContentType.ApplicationURLEncoded.contentType);
 
         final Map<String, List<String>> params = new HashMap<>(msalRequest.msalAuthorizationGrant().toParameters());
         if (msalRequest.application().clientCapabilities() != null) {

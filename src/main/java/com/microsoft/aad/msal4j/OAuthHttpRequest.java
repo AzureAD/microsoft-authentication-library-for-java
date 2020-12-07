@@ -4,7 +4,6 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.oauth2.sdk.http.CommonContentTypes;
 import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import lombok.AccessLevel;
@@ -57,7 +56,7 @@ class OAuthHttpRequest extends HTTPRequest {
     private Map<String, String> configureHttpHeaders(){
 
         Map<String, String> httpHeaders = new HashMap<>(extraHeaderParams);
-        httpHeaders.put("Content-Type", CommonContentTypes.APPLICATION_URLENCODED.toString());
+        httpHeaders.put("Content-Type", HTTPContentType.ApplicationURLEncoded.contentType);
 
         if (this.getAuthorization() != null) {
             httpHeaders.put("Authorization", this.getAuthorization());
