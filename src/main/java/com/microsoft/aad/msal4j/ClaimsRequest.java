@@ -35,16 +35,6 @@ public class ClaimsRequest {
     }
 
     /**
-     * Inserts a claim into the list of claims to be added to the "userinfo" section of an OIDC claims request
-     *
-     * @param claim the name of the claim to be requested
-     * @param requestedClaimAdditionalInfo additional information about the claim being requested
-     */
-    protected void requestClaimInUserInfo(String claim, RequestedClaimAdditionalInfo requestedClaimAdditionalInfo) {
-        userInfoRequestedClaims.add(new RequestedClaim(claim, requestedClaimAdditionalInfo));
-    }
-
-    /**
      * Inserts a claim into the list of claims to be added to the "access_token" section of an OIDC claims request
      *
      * @param claim the name of the claim to be requested
