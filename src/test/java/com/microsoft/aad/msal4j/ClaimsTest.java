@@ -5,6 +5,9 @@ package com.microsoft.aad.msal4j;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -20,34 +23,51 @@ public class ClaimsTest {
         values.add("urn:mace:incommon:iap:bronze");
 
         ClaimsRequest cr = new ClaimsRequest();
-        cr.requestClaimInUserInfo("given_name", new RequestedClaimAdditionalInfo(true, null, null));
-        cr.requestClaimInUserInfo("email", null);
+        cr.requestClaimInAccessToken("given_name", new RequestedClaimAdditionalInfo(true, null, null));
+        cr.requestClaimInAccessToken("email", null);
         cr.requestClaimInIdToken("acr", new RequestedClaimAdditionalInfo(false, null, values));
         cr.requestClaimInIdToken("sub", new RequestedClaimAdditionalInfo(true, "248289761001", null));
+        cr.requestClaimInIdToken("auth_time", new RequestedClaimAdditionalInfo(false, null, null));
 
         Assert.assertEquals(cr.formatAsJSONString(), TestConfiguration.CLAIMS_REQUEST);
     }
 
     @Test
-    public void testClaimsRequest_MergeWithClientCapabilities() {
+    public void testClaimsRequest_MergeWithClientCapabilitiesAndClaimsChallenge() throws URISyntaxException {
 
         List<String> values = new ArrayList<>();
-        values.add("abc");
+        values.add("urn:mace:incommon:iap:silver");
+        values.add("urn:mace:incommon:iap:bronze");
+
         ClaimsRequest cr = new ClaimsRequest();
-        cr.requestClaimInUserInfo("given_name", new RequestedClaimAdditionalInfo(true, null, null));
-        cr.requestClaimInUserInfo("email", null);
-        cr.requestClaimInAccessToken("xms_cc", new RequestedClaimAdditionalInfo(false, null, values));
+        cr.requestClaimInAccessToken("given_name", new RequestedClaimAdditionalInfo(true, null, null));
+        cr.requestClaimInAccessToken("email", null);
+        cr.requestClaimInIdToken("acr", new RequestedClaimAdditionalInfo(false, null, values));
+        cr.requestClaimInIdToken("sub", new RequestedClaimAdditionalInfo(true, "248289761001", null));
+        cr.requestClaimInIdToken("auth_time", new RequestedClaimAdditionalInfo(false, null, null));
 
         PublicClientApplication pca = PublicClientApplication.builder(
                 "client_id").
                 clientCapabilities(new HashSet<>(Collections.singletonList("llt"))).
                 build();
 
+        InteractiveRequestParameters parameters = InteractiveRequestParameters.builder(new URI("http://localhost:8080"))
+                .claimsChallenge("{\"id_token\":{\"auth_time\":{\"essential\":true}},\"access_token\":{\"auth_time\":{\"essential\":true},\"xms_cc\":{\"values\":[\"abc\"]}}}")
+                .scopes(Collections.singleton(""))
+                .build();
+
         String clientCapabilities = pca.clientCapabilities();
-        String mergedClaimsAndCapabilities = JsonHelper.mergeJSONString(pca.clientCapabilities(), cr.formatAsJSONString());
+        String claimsChallenge = parameters.claimsChallenge();
+        String claimsRequest = cr.formatAsJSONString();
+        String mergedClaimsAndCapabilities = JsonHelper.mergeJSONString(claimsRequest, clientCapabilities);
+        String mergedClaimsAndChallenge = JsonHelper.mergeJSONString(claimsChallenge, claimsRequest);
+        String mergedAll = JsonHelper.mergeJSONString(claimsChallenge, mergedClaimsAndCapabilities);
 
         Assert.assertEquals(clientCapabilities, TestConfiguration.CLIENT_CAPABILITIES);
+        Assert.assertEquals(claimsChallenge, TestConfiguration.CLAIMS_CHALLENGE);
+        Assert.assertEquals(claimsRequest, TestConfiguration.CLAIMS_REQUEST);
         Assert.assertEquals(mergedClaimsAndCapabilities, TestConfiguration.MERGED_CLAIMS_AND_CAPABILITIES);
-
+        Assert.assertEquals(mergedClaimsAndChallenge, TestConfiguration.MERGED_CLAIMS_AND_CHALLENGE);
+        Assert.assertEquals(mergedAll, TestConfiguration.MERGED_CLAIMS_CAPABILITIES_AND_CHALLENGE);
     }
 }
