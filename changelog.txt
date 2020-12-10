@@ -1,3 +1,8 @@
+Version 1.8.1
+=============
+- New ClaimsRequest class to allow ID token claims to be requested as part of any token request
+- Fix dependency issue with nimbusds.oauth2.sdk
+
 Version 1.8.0
 =============
 - ITenantProfile added to IAuthenticationResult for easier access to ID token claims
