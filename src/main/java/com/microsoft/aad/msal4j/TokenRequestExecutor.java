@@ -63,6 +63,14 @@ class TokenRequestExecutor {
             params.put("claims", Collections.singletonList(msalRequest.application().clientCapabilities()));
         }
 
+        if (msalRequest.msalAuthorizationGrant.getClaims() != null) {
+            String claimsRequest = msalRequest.msalAuthorizationGrant.getClaims().formatAsJSONString();
+            if (params.get("claims") != null) {
+                claimsRequest = JsonHelper.mergeJSONString(params.get("claims").get(0), claimsRequest);
+            }
+            params.put("claims", Collections.singletonList(claimsRequest));
+        }
+
         oauthHttpRequest.setQuery(URLUtils.serializeParameters(params));
 
         if (msalRequest.application().clientAuthentication() != null) {

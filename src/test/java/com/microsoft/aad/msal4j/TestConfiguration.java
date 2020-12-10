@@ -82,4 +82,11 @@ public final class TestConfiguration {
             "\"trace_id\":\"0788...000\"," +
             "\"correlation_id\":\"3a...95a\"," +
             "\"suberror\":\"basic_action\"}";
+
+    public final static String CLAIMS_REQUEST = "{\"id_token\":{\"acr\":{\"values\":[\"urn:mace:incommon:iap:silver\",\"urn:mace:incommon:iap:bronze\"]},\"sub\":{\"essential\":true,\"value\":\"248289761001\"},\"auth_time\":{}},\"access_token\":{\"given_name\":{\"essential\":true},\"email\":null}}";
+    public final static String CLAIMS_CHALLENGE = "{\"id_token\":{\"auth_time\":{\"essential\":true}},\"access_token\":{\"auth_time\":{\"essential\":true},\"xms_cc\":{\"values\":[\"abc\"]}}}";
+    public final static String CLIENT_CAPABILITIES = "{\"access_token\":{\"xms_cc\":{\"values\":[\"llt\"]}}}";
+    public final static String MERGED_CLAIMS_AND_CAPABILITIES = "{\"id_token\":{\"acr\":{\"values\":[\"urn:mace:incommon:iap:silver\",\"urn:mace:incommon:iap:bronze\"]},\"sub\":{\"essential\":true,\"value\":\"248289761001\"},\"auth_time\":{}},\"access_token\":{\"given_name\":{\"essential\":true},\"email\":null,\"xms_cc\":{\"values\":[\"llt\"]}}}";
+    public final static String MERGED_CLAIMS_AND_CHALLENGE = "{\"id_token\":{\"auth_time\":{\"essential\":true},\"acr\":{\"values\":[\"urn:mace:incommon:iap:silver\",\"urn:mace:incommon:iap:bronze\"]},\"sub\":{\"essential\":true,\"value\":\"248289761001\"}},\"access_token\":{\"auth_time\":{\"essential\":true},\"xms_cc\":{\"values\":[\"abc\"]},\"given_name\":{\"essential\":true},\"email\":null}}";
+    public final static String MERGED_CLAIMS_CAPABILITIES_AND_CHALLENGE = "{\"id_token\":{\"auth_time\":{\"essential\":true},\"acr\":{\"values\":[\"urn:mace:incommon:iap:silver\",\"urn:mace:incommon:iap:bronze\"]},\"sub\":{\"essential\":true,\"value\":\"248289761001\"}},\"access_token\":{\"auth_time\":{\"essential\":true},\"xms_cc\":{\"values\":[\"llt\"]},\"given_name\":{\"essential\":true},\"email\":null}}";
 }

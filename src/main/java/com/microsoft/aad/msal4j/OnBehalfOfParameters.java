@@ -25,6 +25,11 @@ public class OnBehalfOfParameters implements IApiParameters {
     @NonNull
     private Set<String> scopes;
 
+    /**
+     * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
+     */
+    private ClaimsRequest claims;
+
     @NonNull
     private IUserAssertion userAssertion;
 

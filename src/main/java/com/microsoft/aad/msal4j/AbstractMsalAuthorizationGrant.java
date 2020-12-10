@@ -34,4 +34,10 @@ abstract class AbstractMsalAuthorizationGrant {
     String getScopes() {
         return scopes;
     }
+
+    ClaimsRequest claims;
+
+    ClaimsRequest getClaims() {
+        return claims;
+    }
 }
