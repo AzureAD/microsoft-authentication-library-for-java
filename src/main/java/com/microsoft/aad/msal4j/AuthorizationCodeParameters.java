@@ -44,7 +44,7 @@ public class AuthorizationCodeParameters implements IApiParameters {
     /**
      * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
      */
-    private ClaimsRequest withClaims;
+    private ClaimsRequest claims;
 
     /**
      * Code verifier used for PKCE. For more details, see https://tools.ietf.org/html/rfc7636

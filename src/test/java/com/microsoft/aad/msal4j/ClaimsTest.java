@@ -53,12 +53,13 @@ public class ClaimsTest {
 
         InteractiveRequestParameters parameters = InteractiveRequestParameters.builder(new URI("http://localhost:8080"))
                 .claimsChallenge("{\"id_token\":{\"auth_time\":{\"essential\":true}},\"access_token\":{\"auth_time\":{\"essential\":true},\"xms_cc\":{\"values\":[\"abc\"]}}}")
+                .claims(cr)
                 .scopes(Collections.singleton(""))
                 .build();
 
         String clientCapabilities = pca.clientCapabilities();
         String claimsChallenge = parameters.claimsChallenge();
-        String claimsRequest = cr.formatAsJSONString();
+        String claimsRequest = parameters.claims().formatAsJSONString();
         String mergedClaimsAndCapabilities = JsonHelper.mergeJSONString(claimsRequest, clientCapabilities);
         String mergedClaimsAndChallenge = JsonHelper.mergeJSONString(claimsChallenge, claimsRequest);
         String mergedAll = JsonHelper.mergeJSONString(claimsChallenge, mergedClaimsAndCapabilities);

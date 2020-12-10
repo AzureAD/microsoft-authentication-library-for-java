@@ -212,19 +212,6 @@ public class AuthorizationRequestUrlParameters {
          * In cases where Azure AD tenant admin has enabled conditional access policies, and the
          * policy has not been met,{@link MsalServiceException} will contain claims that need be
          * consented to.
-         *
-         * Deprecated in favor of {@link #claimsChallenge(String)}
-         */
-        @Deprecated
-        public Builder claims(Set<String> val){
-            this.claims = val;
-            return self();
-        }
-
-        /**
-         * In cases where Azure AD tenant admin has enabled conditional access policies, and the
-         * policy has not been met,{@link MsalServiceException} will contain claims that need be
-         * consented to.
          */
         public Builder claimsChallenge(String val){
             this.claimsChallenge = val;
@@ -234,7 +221,7 @@ public class AuthorizationRequestUrlParameters {
         /**
          * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
          */
-        public Builder withClaims(ClaimsRequest val){
+        public Builder claims(ClaimsRequest val){
             this.claimsRequest = val;
             return self();
         }

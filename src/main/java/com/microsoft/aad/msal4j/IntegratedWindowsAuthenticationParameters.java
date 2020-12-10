@@ -32,7 +32,7 @@ public class IntegratedWindowsAuthenticationParameters implements IApiParameters
     /**
      * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
      */
-    private ClaimsRequest withClaims;
+    private ClaimsRequest claims;
 
     /**
      * Identifier of user account for which to acquire tokens for

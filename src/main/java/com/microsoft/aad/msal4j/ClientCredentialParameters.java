@@ -29,7 +29,7 @@ public class ClientCredentialParameters implements IApiParameters {
     /**
      * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
      */
-    private ClaimsRequest withClaims;
+    private ClaimsRequest claims;
 
     private static ClientCredentialParametersBuilder builder() {
 

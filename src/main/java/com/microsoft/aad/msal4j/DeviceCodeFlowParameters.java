@@ -31,7 +31,7 @@ public class DeviceCodeFlowParameters implements IApiParameters {
     /**
      * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
      */
-    private ClaimsRequest withClaims;
+    private ClaimsRequest claims;
 
     /**
      * Receives the device code returned from the first step of Oauth2.0 device code flow. The

@@ -8,5 +8,5 @@ import java.util.Set;
 interface IApiParameters {
     Set<String> scopes();
 
-    ClaimsRequest withClaims();
+    ClaimsRequest claims();
 }

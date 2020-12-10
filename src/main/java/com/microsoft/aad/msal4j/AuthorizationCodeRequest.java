@@ -30,6 +30,6 @@ class AuthorizationCodeRequest extends MsalRequest {
                     new AuthorizationCode(parameters.authorizationCode()),parameters.redirectUri());
         }
 
-        return new OAuthAuthorizationGrant(authorizationGrant, parameters.scopes(), parameters.withClaims());
+        return new OAuthAuthorizationGrant(authorizationGrant, parameters.scopes(), parameters.claims());
     }
 }
