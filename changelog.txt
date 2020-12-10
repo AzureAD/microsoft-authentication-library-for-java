@@ -1,7 +1,7 @@
 Version 1.8.1
 =============
 - New ClaimsRequest class to allow ID token claims to be requested as part of any token request
-- Fix dependency issue with nimbusds.oauth2.sdk
+- Remove use of nimbusds.oauth2.sdk CommonContentTypes
 
 Version 1.8.0
 =============
