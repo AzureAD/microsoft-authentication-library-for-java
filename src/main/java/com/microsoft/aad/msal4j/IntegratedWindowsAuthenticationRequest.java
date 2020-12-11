@@ -14,6 +14,6 @@ class IntegratedWindowsAuthenticationRequest extends MsalRequest{
     private static AbstractMsalAuthorizationGrant createAuthenticationGrant
             (IntegratedWindowsAuthenticationParameters parameters){
 
-        return new IntegratedWindowsAuthorizationGrant(parameters.scopes(), parameters.username());
+        return new IntegratedWindowsAuthorizationGrant(parameters.scopes(), parameters.username(), parameters.claims());
     }
 }

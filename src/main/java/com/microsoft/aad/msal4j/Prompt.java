@@ -27,8 +27,16 @@ public enum Prompt {
 
     /**
      * An administrator should be prompted to consent on behalf of all users in their organization.
+     *
+     * Deprecated, instead use Prompt.ADMIN_CONSENT
      */
-    ADMING_CONSENT ("admin_consent");
+    @Deprecated
+    ADMING_CONSENT ("admin_consent"),
+
+    /**
+     * An administrator should be prompted to consent on behalf of all users in their organization.
+     */
+    ADMIN_CONSENT ("admin_consent");
 
     private String prompt;
 

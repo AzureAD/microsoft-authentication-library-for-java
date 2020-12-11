@@ -28,6 +28,11 @@ public class SilentParameters implements IApiParameters {
 
     private IAccount account;
 
+    /**
+     * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
+     */
+    private ClaimsRequest claims;
+
     private String authorityUrl;
 
     private boolean forceRefresh;
