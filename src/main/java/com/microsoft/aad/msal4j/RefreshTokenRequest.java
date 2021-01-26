@@ -35,7 +35,7 @@ class RefreshTokenRequest extends MsalRequest {
             RefreshTokenParameters parameters) {
 
         RefreshTokenGrant refreshTokenGrant = new RefreshTokenGrant(new RefreshToken(parameters.refreshToken()));
-        return new OAuthAuthorizationGrant(refreshTokenGrant, parameters.scopes());
+        return new OAuthAuthorizationGrant(refreshTokenGrant, parameters.scopes(), parameters.claims());
     }
 
     String getFullThumbprint() {

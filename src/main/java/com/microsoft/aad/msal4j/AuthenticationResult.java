@@ -72,7 +72,7 @@ final class AuthenticationResult implements IAuthenticationResult {
     private final ITenantProfile tenantProfile = getTenantProfile();
 
     private ITenantProfile getTenantProfile() {
-        if (idToken == null) {
+        if (StringHelper.isBlank(idToken)) {
             return null;
         }
 
