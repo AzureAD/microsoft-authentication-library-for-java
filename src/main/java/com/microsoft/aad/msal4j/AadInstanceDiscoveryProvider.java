@@ -3,11 +3,15 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.nimbusds.oauth2.sdk.http.HTTPResponse;
+
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 class AadInstanceDiscoveryProvider {
@@ -15,7 +19,12 @@ class AadInstanceDiscoveryProvider {
     private final static String DEFAULT_TRUSTED_HOST = "login.microsoftonline.com";
     private final static String AUTHORIZE_ENDPOINT_TEMPLATE = "https://{host}/{tenant}/oauth2/v2.0/authorize";
     private final static String INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE = "https://{host}/common/discovery/instance";
+    private final static String INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE_WITH_REGION = "https://{region}.{host}/common/discovery/instance";
     private final static String INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE = "?api-version=1.1&authorization_endpoint={authorizeEndpoint}";
+    private final static String REGION_NAME = "REGION_NAME";
+    // For information of the current api-version refer: https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service#versioning
+    private final static String DEFAULT_API_VERSION = "2020-06-01";
+    private final static String IMDS_ENDPOINT = "https://169.254.169.254/metadata/instance/compute/location?" + DEFAULT_API_VERSION + "&format=text";
 
     final static TreeSet<String> TRUSTED_HOSTS_SET = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
@@ -102,26 +111,85 @@ class AadInstanceDiscoveryProvider {
                 replace("{host}", discoveryHost);
     }
 
+    private static String getInstanceDiscoveryEndpointWithRegion(String host, String region) {
+
+        String discoveryHost = TRUSTED_HOSTS_SET.contains(host) ? host : DEFAULT_TRUSTED_HOST;
+
+        return INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE_WITH_REGION.
+                replace("{region}", region).
+                replace("{host}", discoveryHost);
+    }
+
     private static AadInstanceDiscoveryResponse sendInstanceDiscoveryRequest(URL authorityUrl,
                                                                              MsalRequest msalRequest,
                                                                              ServiceBundle serviceBundle) {
 
-        String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpoint(authorityUrl.getAuthority()) +
-                INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE.replace("{authorizeEndpoint}",
-                        getAuthorizeEndpoint(authorityUrl.getAuthority(),
-                                Authority.getTenant(authorityUrl, Authority.detectAuthorityType(authorityUrl))));
+        String region = "";
+        IHttpResponse httpResponse = null;
 
+        //If the autoDetectRegion parameter in the request is set, attempt to discover the region
+        if (msalRequest.application().autoDetectRegion()) {
+            region = discoverRegion(msalRequest, serviceBundle);
+        }
+
+        //If the region is known, attempt to make instance discovery request with region endpoint
+        if (!region.isEmpty()) {
+            String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpointWithRegion(authorityUrl.getAuthority(), region) +
+                    INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE.replace("{authorizeEndpoint}",
+                            getAuthorizeEndpoint(authorityUrl.getAuthority(),
+                                    Authority.getTenant(authorityUrl, Authority.detectAuthorityType(authorityUrl))));
+
+            httpResponse = httpRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
+        }
+
+        //If the region is unknown or the instance discovery failed at the region endpoint, try the global endpoint
+        if (region.isEmpty() || httpResponse == null || httpResponse.statusCode() != HTTPResponse.SC_OK) {
+            String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpoint(authorityUrl.getAuthority()) +
+                    INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE.replace("{authorizeEndpoint}",
+                            getAuthorizeEndpoint(authorityUrl.getAuthority(),
+                                    Authority.getTenant(authorityUrl, Authority.detectAuthorityType(authorityUrl))));
+
+            httpResponse = httpRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
+        }
+
+        return JsonHelper.convertJsonToObject(httpResponse.body(), AadInstanceDiscoveryResponse.class);
+    }
+
+    private static IHttpResponse httpRequest(String requestUrl, Map<String, String> headers, MsalRequest msalRequest, ServiceBundle serviceBundle) {
         HttpRequest httpRequest = new HttpRequest(
                 HttpMethod.GET,
-                instanceDiscoveryRequestUrl,
-                msalRequest.headers().getReadonlyHeaderMap());
+                requestUrl,
+                headers);
 
-        IHttpResponse httpResponse= HttpHelper.executeHttpRequest(
+        return HttpHelper.executeHttpRequest(
                 httpRequest,
                 msalRequest.requestContext(),
                 serviceBundle);
+    }
 
-        return JsonHelper.convertJsonToObject(httpResponse.body(), AadInstanceDiscoveryResponse.class);
+    private static String discoverRegion(MsalRequest msalRequest, ServiceBundle serviceBundle) {
+
+        //Check if the REGION_NAME environment variable has a value for the region
+        if (System.getenv(REGION_NAME) != null) {
+            return System.getenv(REGION_NAME);
+        }
+
+        try {
+            //Check the IMDS endpoint to retrieve current region (will only work if application is running in an Azure VM)
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Metadata", "true");
+            IHttpResponse httpResponse = httpRequest(IMDS_ENDPOINT, headers, msalRequest, serviceBundle);
+
+            //If call to IMDS endpoint was successful, return region from response body
+            if (httpResponse.statusCode() == HTTPResponse.SC_OK && !httpResponse.body().isEmpty()) {
+                return httpResponse.body();
+            }
+        } catch (Exception e) {
+            //IMDS call failed, cannot find region
+            return "";
+        }
+
+        return "";
     }
 
     private static void doInstanceDiscoveryAndCache(URL authorityUrl,

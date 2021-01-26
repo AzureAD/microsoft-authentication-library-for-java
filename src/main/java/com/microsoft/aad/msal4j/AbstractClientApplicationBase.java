@@ -96,6 +96,10 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
     @Getter
     private String clientCapabilities;
 
+    @Accessors(fluent = true)
+    @Getter
+    private boolean autoDetectRegion;
+
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(AuthorizationCodeParameters parameters) {
 
@@ -292,6 +296,7 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
         private ITokenCacheAccessAspect tokenCacheAccessAspect;
         private AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse;
         private String clientCapabilities;
+        private boolean autoDetectRegion;
         private Integer connectTimeoutForDefaultHttpClient;
         private Integer readTimeoutForDefaultHttpClient;
 
@@ -573,6 +578,22 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
             return self();
         }
 
+        /**
+         * Indicates that the library should attempt to discover the Azure region the application is running in when
+         *  fetching the instance discovery metadata.
+         *
+         * If the region is found, token requests will be sent to the regional ESTS endpoint rather than the global endpoint.
+         * If region information could not be found, the library will fall back to using the global endpoint, which is also
+         *  the default behavior if this value is not set.
+         *
+         * @param val boolean (default is false)
+         * @return instance of the Builder on which method was called
+         */
+        public T autoDetectRegion(boolean val) {
+            autoDetectRegion = val;
+            return self();
+        }
+
         abstract AbstractClientApplicationBase build();
     }
 
@@ -599,6 +620,7 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
         tokenCache = new TokenCache(builder.tokenCacheAccessAspect);
         aadAadInstanceDiscoveryResponse = builder.aadInstanceDiscoveryResponse;
         clientCapabilities = builder.clientCapabilities;
+        autoDetectRegion = builder.autoDetectRegion;
 
         if(aadAadInstanceDiscoveryResponse != null){
             AadInstanceDiscoveryProvider.cacheInstanceDiscoveryMetadata(
