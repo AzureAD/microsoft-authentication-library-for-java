@@ -124,7 +124,7 @@ class AadInstanceDiscoveryProvider {
                                                                              MsalRequest msalRequest,
                                                                              ServiceBundle serviceBundle) {
 
-        String region = "";
+        String region = StringHelper.EMPTY_STRING;
         IHttpResponse httpResponse = null;
 
         //If the autoDetectRegion parameter in the request is set, attempt to discover the region
@@ -135,9 +135,7 @@ class AadInstanceDiscoveryProvider {
         //If the region is known, attempt to make instance discovery request with region endpoint
         if (!region.isEmpty()) {
             String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpointWithRegion(authorityUrl.getAuthority(), region) +
-                    INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE.replace("{authorizeEndpoint}",
-                            getAuthorizeEndpoint(authorityUrl.getAuthority(),
-                                    Authority.getTenant(authorityUrl, Authority.detectAuthorityType(authorityUrl))));
+                    formInstanceDiscoveryParameters(authorityUrl);
 
             httpResponse = httpRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
         }
@@ -145,14 +143,18 @@ class AadInstanceDiscoveryProvider {
         //If the region is unknown or the instance discovery failed at the region endpoint, try the global endpoint
         if (region.isEmpty() || httpResponse == null || httpResponse.statusCode() != HTTPResponse.SC_OK) {
             String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpoint(authorityUrl.getAuthority()) +
-                    INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE.replace("{authorizeEndpoint}",
-                            getAuthorizeEndpoint(authorityUrl.getAuthority(),
-                                    Authority.getTenant(authorityUrl, Authority.detectAuthorityType(authorityUrl))));
+                    formInstanceDiscoveryParameters(authorityUrl);
 
             httpResponse = httpRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
         }
 
         return JsonHelper.convertJsonToObject(httpResponse.body(), AadInstanceDiscoveryResponse.class);
+    }
+
+    private static String formInstanceDiscoveryParameters(URL authorityUrl) {
+        return INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE.replace("{authorizeEndpoint}",
+                getAuthorizeEndpoint(authorityUrl.getAuthority(),
+                        Authority.getTenant(authorityUrl, Authority.detectAuthorityType(authorityUrl))));
     }
 
     private static IHttpResponse httpRequest(String requestUrl, Map<String, String> headers, MsalRequest msalRequest, ServiceBundle serviceBundle) {
@@ -186,10 +188,10 @@ class AadInstanceDiscoveryProvider {
             }
         } catch (Exception e) {
             //IMDS call failed, cannot find region
-            return "";
+            return StringHelper.EMPTY_STRING;
         }
 
-        return "";
+        return StringHelper.EMPTY_STRING;
     }
 
     private static void doInstanceDiscoveryAndCache(URL authorityUrl,
