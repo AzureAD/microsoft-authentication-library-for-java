@@ -5,6 +5,9 @@ package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,6 +30,8 @@ class AadInstanceDiscoveryProvider {
     private final static String IMDS_ENDPOINT = "https://169.254.169.254/metadata/instance/compute/location?" + DEFAULT_API_VERSION + "&format=text";
 
     final static TreeSet<String> TRUSTED_HOSTS_SET = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+
+    private final static Logger log = LoggerFactory.getLogger(HttpHelper.class);
 
     static ConcurrentHashMap<String, InstanceDiscoveryMetadataEntry> cache = new ConcurrentHashMap<>();
 
@@ -142,6 +147,10 @@ class AadInstanceDiscoveryProvider {
 
         //If the region is unknown or the instance discovery failed at the region endpoint, try the global endpoint
         if (region.isEmpty() || httpResponse == null || httpResponse.statusCode() != HTTPResponse.SC_OK) {
+            if (!region.isEmpty()) {
+                log.warn("Could not retrieve regional instance discovery metadata, falling back to global endpoint");
+            }
+
             String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpoint(authorityUrl.getAuthority()) +
                     formInstanceDiscoveryParameters(authorityUrl);
 
@@ -173,6 +182,8 @@ class AadInstanceDiscoveryProvider {
 
         //Check if the REGION_NAME environment variable has a value for the region
         if (System.getenv(REGION_NAME) != null) {
+            log.info("Region found in environment variable: " + System.getenv(REGION_NAME));
+
             return System.getenv(REGION_NAME);
         }
 
@@ -184,14 +195,18 @@ class AadInstanceDiscoveryProvider {
 
             //If call to IMDS endpoint was successful, return region from response body
             if (httpResponse.statusCode() == HTTPResponse.SC_OK && !httpResponse.body().isEmpty()) {
+                log.info("Region retrieved from IMDS endpoint: " + httpResponse.body());
+
                 return httpResponse.body();
             }
+
+            log.warn(String.format("Call to local IMDS failed with status code: %s, or response was empty", httpResponse.statusCode()));
+
+            return StringHelper.EMPTY_STRING;
         } catch (Exception e) {
             //IMDS call failed, cannot find region
             return StringHelper.EMPTY_STRING;
         }
-
-        return StringHelper.EMPTY_STRING;
     }
 
     private static void doInstanceDiscoveryAndCache(URL authorityUrl,
