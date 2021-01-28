@@ -205,6 +205,7 @@ class AadInstanceDiscoveryProvider {
             return StringHelper.EMPTY_STRING;
         } catch (Exception e) {
             //IMDS call failed, cannot find region
+            log.warn(String.format("Exception during call to local IMDS endpoint: %s", e.getMessage()));
             return StringHelper.EMPTY_STRING;
         }
     }
