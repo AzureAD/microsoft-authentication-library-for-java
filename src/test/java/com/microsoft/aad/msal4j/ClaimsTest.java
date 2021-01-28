@@ -71,4 +71,11 @@ public class ClaimsTest {
         Assert.assertEquals(mergedClaimsAndChallenge, TestConfiguration.MERGED_CLAIMS_AND_CHALLENGE);
         Assert.assertEquals(mergedAll, TestConfiguration.MERGED_CLAIMS_CAPABILITIES_AND_CHALLENGE);
     }
+
+    @Test
+    public void testClaimsRequest_StringToClaimsRequest() {
+        ClaimsRequest cr = ClaimsRequest.formatAsClaimsRequest(TestConfiguration.CLAIMS_CHALLENGE);
+
+        Assert.assertEquals(cr.formatAsJSONString(), TestConfiguration.CLAIMS_CHALLENGE);
+    }
 }
