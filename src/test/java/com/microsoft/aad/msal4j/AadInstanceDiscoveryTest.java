@@ -135,4 +135,55 @@ public class AadInstanceDiscoveryTest extends PowerMockTestCase {
                 .aadInstanceDiscoveryResponse(instanceDiscoveryResponse)
                 .build();
     }
+
+    @Test()
+    public void aadInstanceDiscoveryTest_AutoDetectRegion_NoRegionDetected() throws Exception{
+
+        String instanceDiscoveryResponse = TestHelper.readResource(
+                this.getClass(),
+                "/instance_discovery_data/aad_instance_discovery_response_valid.json");
+
+        PublicClientApplication app = PublicClientApplication.builder("client_id")
+                .aadInstanceDiscoveryResponse(instanceDiscoveryResponse)
+                .autoDetectRegion(true)
+                .build();
+
+        AuthorizationCodeParameters parameters = AuthorizationCodeParameters.builder(
+                "code", new URI("http://my.redirect.com")).build();
+
+        MsalRequest msalRequest = new AuthorizationCodeRequest(
+                parameters,
+                app,
+                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
+
+        URL authority = new URL(app.authority());
+
+        PowerMock.mockStaticPartial(
+                AadInstanceDiscoveryProvider.class,
+                "discoverRegion");
+
+        PowerMock.expectPrivate(
+                AadInstanceDiscoveryProvider.class,
+                "discoverRegion",
+                msalRequest,
+                app.getServiceBundle()).andThrow(new AssertionError()).anyTimes();
+
+        PowerMock.replay(AadInstanceDiscoveryProvider.class);
+
+        InstanceDiscoveryMetadataEntry entry = AadInstanceDiscoveryProvider.getMetadataEntry(
+                authority,
+                false,
+                msalRequest,
+                app.getServiceBundle());
+
+        //Region detection will have been performed in the expected discoverRegion method, but these tests (likely) aren't
+        // being run in an Azure VM and nstance discovery will fall back to the global endpoint (login.microsoftonline.com)
+        Assert.assertEquals(entry.preferredNetwork(), "login.microsoftonline.com");
+        Assert.assertEquals(entry.preferredCache(), "login.windows.net");
+        Assert.assertEquals(entry.aliases().size(), 4);
+        Assert.assertTrue(entry.aliases().contains("login.microsoftonline.com"));
+        Assert.assertTrue(entry.aliases().contains("login.windows.net"));
+        Assert.assertTrue(entry.aliases().contains("login.microsoft.com"));
+        Assert.assertTrue(entry.aliases().contains("sts.windows.net"));
+    }
 }
