@@ -1,3 +1,9 @@
+Version 1.9.0
+=============
+- Add support for Azure region discovery to keep token traffic regional when possible
+- New helper methods in ClaimsRequest class to convert Strings of claims to ClaimsRequest objects
+- Upgrade nimbusds.oauth2-oidc-sdk dependency to better support newer Spring Framework versions
+
 Version 1.8.1
 =============
 - New ClaimsRequest class to allow ID token claims to be requested as part of any token request
