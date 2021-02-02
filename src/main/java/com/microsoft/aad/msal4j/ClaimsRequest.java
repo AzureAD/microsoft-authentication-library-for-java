@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,6 +42,7 @@ public class ClaimsRequest {
     }
 
     /**
+
      * Inserts a claim into the list of claims to be added to the "userinfo" section of an OIDC claims request
      *
      * @param claim the name of the claim to be requested
@@ -85,6 +87,7 @@ public class ClaimsRequest {
     private ObjectNode convertClaimsToObjectNode(List<RequestedClaim> claims) {
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode claimsNode = mapper.createObjectNode();
+
 
         for (RequestedClaim claim : claims) {
             claimsNode.setAll((ObjectNode) mapper.valueToTree(claim));
