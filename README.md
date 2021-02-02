@@ -2,7 +2,7 @@
 
 `master` branch    | `dev` branch    | Reference Docs
 --------------------|-----------------|---------------
-[![Build status](https://identitydivision.visualstudio.com/IDDP/_apis/build/status/CI/Java/MSAL%20Java%20CI%20Build?branchName=master)](https://identitydivision.visualstudio.com/IDDP/_build/latest?definitionId=762) | [![Build status](https://identitydivision.visualstudio.com/IDDP/_apis/build/status/CI/Java/MSAL%20Java%20CI%20Build?branchName=dev)](https://identitydivision.visualstudio.com/IDDP/_build/latest?definitionId=762)| [![Javadocs](http://javadoc.io/badge/com.microsoft.azure/msal4j.svg)](http://javadoc.io/doc/com.microsoft.azure/msal4j)
+[![Build status](https://identitydivision.visualstudio.com/IDDP/_apis/build/status/CI/Java/MSAL%20Java%20CI%20Build?branchName=main)](https://identitydivision.visualstudio.com/IDDP/_build/latest?definitionId=762) | [![Build status](https://identitydivision.visualstudio.com/IDDP/_apis/build/status/CI/Java/MSAL%20Java%20CI%20Build?branchName=dev)](https://identitydivision.visualstudio.com/IDDP/_build/latest?definitionId=762)| [![Javadocs](http://javadoc.io/badge/com.microsoft.azure/msal4j.svg)](http://javadoc.io/doc/com.microsoft.azure/msal4j)
 
 The Microsoft Authentication Library for Java (MSAL4J) enables applications to integrate with the [Microsoft identity platform](https://aka.ms/aaddevv2). It allows you to sign in users or apps with Microsoft identities (Azure AD, Microsoft accounts and Azure AD B2C accounts) and obtain tokens to call Microsoft APIs such as [Microsoft Graph](https://graph.microsoft.io/) or your own APIs registered with the Microsoft identity platform. It is built using industry standard OAuth2 and OpenID Connect protocols.
 
@@ -16,7 +16,7 @@ Quick links:
 The library supports the following Java environments:
 - Java 8 (or higher)
 
-Current version - 1.8.1
+Current version - 1.9.0
 
 You can find the changes for each version in the [change log](https://github.com/AzureAD/microsoft-authentication-library-for-java/blob/master/changelog.txt).
 
@@ -28,13 +28,13 @@ Find [the latest package in the Maven repository](https://mvnrepository.com/arti
 <dependency>
     <groupId>com.microsoft.azure</groupId>
     <artifactId>msal4j</artifactId>
-    <version>1.8.1</version>
+    <version>1.9.0</version>
 </dependency>
 ```
 ### Gradle
 
 ```
-compile group: 'com.microsoft.azure', name: 'msal4j', version: '1.8.1'
+compile group: 'com.microsoft.azure', name: 'msal4j', version: '1.9.0'
 ```
 
 ## Usage
