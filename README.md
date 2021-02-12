@@ -1,6 +1,6 @@
 # Microsoft Authentication Library (MSAL) for Java
 
-`master` branch    | `dev` branch    | Reference Docs
+`main` branch    | `dev` branch    | Reference Docs
 --------------------|-----------------|---------------
 [![Build status](https://identitydivision.visualstudio.com/IDDP/_apis/build/status/CI/Java/MSAL%20Java%20CI%20Build?branchName=main)](https://identitydivision.visualstudio.com/IDDP/_build/latest?definitionId=762) | [![Build status](https://identitydivision.visualstudio.com/IDDP/_apis/build/status/CI/Java/MSAL%20Java%20CI%20Build?branchName=dev)](https://identitydivision.visualstudio.com/IDDP/_build/latest?definitionId=762)| [![Javadocs](http://javadoc.io/badge/com.microsoft.azure/msal4j.svg)](http://javadoc.io/doc/com.microsoft.azure/msal4j)
 
