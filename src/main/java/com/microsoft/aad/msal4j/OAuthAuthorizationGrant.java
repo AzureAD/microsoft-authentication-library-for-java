@@ -25,11 +25,11 @@ class OAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
         params.put(SCOPE_PARAM_NAME, Collections.singletonList(COMMON_SCOPES_PARAM));
     }
 
-    OAuthAuthorizationGrant(final AuthorizationGrant grant, Set<String> scopesSet) {
-        this(grant, scopesSet != null ? String.join(" ", scopesSet) : null);
+    OAuthAuthorizationGrant(final AuthorizationGrant grant, Set<String> scopesSet, ClaimsRequest claims) {
+        this(grant, scopesSet != null ? String.join(" ", scopesSet) : null, claims);
     }
 
-    OAuthAuthorizationGrant(final AuthorizationGrant grant, String scopes) {
+    OAuthAuthorizationGrant(final AuthorizationGrant grant, String scopes, ClaimsRequest claims) {
         this();
         this.grant = grant;
 
@@ -38,6 +38,11 @@ class OAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
             this.scopes = scopes;
             params.put(SCOPE_PARAM_NAME,
                     Collections.singletonList(String.join(" ",params.get(SCOPE_PARAM_NAME)) + SCOPES_DELIMITER + scopes));
+        }
+
+        if (claims != null) {
+            this.claims = claims;
+            params.put("claims", Collections.singletonList(claims.formatAsJSONString()));
         }
     }
 
@@ -56,6 +61,9 @@ class OAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
         outParams.putAll(params);
         outParams.put("client_info", Collections.singletonList("1"));
         outParams.putAll(grant.toParameters());
+        if (claims != null) {
+            outParams.put("claims", Collections.singletonList(claims.formatAsJSONString()));
+        }
 
         return Collections.unmodifiableMap(outParams);
     }

@@ -21,6 +21,6 @@ class UserNamePasswordRequest extends MsalRequest{
                 new ResourceOwnerPasswordCredentialsGrant(parameters.username(),
                         new Secret(new String(parameters.password())));
 
-        return new OAuthAuthorizationGrant(resourceOwnerPasswordCredentialsGrant, parameters.scopes());
+        return new OAuthAuthorizationGrant(resourceOwnerPasswordCredentialsGrant, parameters.scopes(), parameters.claims());
     }
 }

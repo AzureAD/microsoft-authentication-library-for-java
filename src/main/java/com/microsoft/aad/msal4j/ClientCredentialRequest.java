@@ -5,8 +5,6 @@ package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.ClientCredentialsGrant;
 
-import java.util.Set;
-
 class ClientCredentialRequest extends MsalRequest{
 
     ClientCredentialRequest(ClientCredentialParameters parameters,
@@ -17,6 +15,6 @@ class ClientCredentialRequest extends MsalRequest{
 
     private static OAuthAuthorizationGrant createMsalGrant(ClientCredentialParameters parameters){
 
-        return new OAuthAuthorizationGrant(new ClientCredentialsGrant(), parameters.scopes());
+        return new OAuthAuthorizationGrant(new ClientCredentialsGrant(), parameters.scopes(), parameters.claims());
     }
 }

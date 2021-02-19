@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -55,7 +56,11 @@ class JsonHelper {
      */
     public static String formCapabilitiesJson(Set<String> clientCapabilities) {
         if (clientCapabilities != null && !clientCapabilities.isEmpty()) {
-            return "{\"access_token\":{\"xms_cc\":{\"values\":[\"" + String.join("\",\"", clientCapabilities) + "\"]}}}";
+            ClaimsRequest cr = new ClaimsRequest();
+            RequestedClaimAdditionalInfo capabilitiesValues = new RequestedClaimAdditionalInfo(false, null, new ArrayList<>(clientCapabilities));
+            cr.requestClaimInAccessToken("xms_cc", capabilitiesValues);
+
+            return cr.formatAsJSONString();
         }
         else {
             return null;

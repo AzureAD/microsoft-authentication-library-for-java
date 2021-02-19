@@ -149,6 +149,7 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
                 .builder(authorizationResult.code(), interactiveRequest.interactiveRequestParameters().redirectUri())
                 .scopes(interactiveRequest.interactiveRequestParameters().scopes())
                 .codeVerifier(interactiveRequest.verifier())
+                .claims(interactiveRequest.interactiveRequestParameters().claims())
                 .build();
 
         AuthorizationCodeRequest authCodeRequest = new AuthorizationCodeRequest(

@@ -48,7 +48,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
                     (IntegratedWindowsAuthorizationGrant) authGrant;
             msalRequest.msalAuthorizationGrant =
                     new OAuthAuthorizationGrant(getAuthorizationGrantIntegrated(
-                            integratedAuthGrant.getUserName()), integratedAuthGrant.getScopes());
+                            integratedAuthGrant.getUserName()), integratedAuthGrant.getScopes(), integratedAuthGrant.getClaims());
         }
 
         if (requestAuthority == null) {
