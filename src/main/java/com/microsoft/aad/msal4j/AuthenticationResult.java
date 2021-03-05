@@ -77,7 +77,8 @@ final class AuthenticationResult implements IAuthenticationResult {
         }
 
         try {
-            return new TenantProfile(JWTParser.parse(idToken).getJWTClaimsSet().getClaims());
+            return new TenantProfile(JWTParser.parse(idToken).getJWTClaimsSet().getClaims(),
+                    getAccount().environment());
         } catch (ParseException e) {
             throw new MsalClientException("Cached JWT could not be parsed: " + e.getMessage(), AuthenticationErrorCode.INVALID_JWT);
         }
