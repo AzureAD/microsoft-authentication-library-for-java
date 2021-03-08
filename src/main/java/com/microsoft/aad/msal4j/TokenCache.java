@@ -297,7 +297,7 @@ public class TokenCache implements ITokenCache {
         return appMetadataCacheEntity;
     }
 
-    Set<IAccount> getAccounts(String clientId, Set<String> environmentAliases) {
+    Set<IAccount> getAccounts(String clientId) {
         try (CacheAspect cacheAspect = new CacheAspect(
                 TokenCacheAccessContext.builder().
                         clientId(clientId).
@@ -307,11 +307,7 @@ public class TokenCache implements ITokenCache {
                 lock.readLock().lock();
                 Map<String, IAccount> rootAccounts = new HashMap<>();
 
-                Set<AccountCacheEntity> accountsCached = accounts.values().stream().
-                        filter(acc -> environmentAliases.contains(acc.environment())).
-                        collect(Collectors.toSet());
-
-                for (AccountCacheEntity accCached : accountsCached) {
+                for (AccountCacheEntity accCached : accounts.values()) {
 
                     IdTokenCacheEntity idToken = idTokens.get(getIdTokenKey(
                             accCached.homeAccountId(),
@@ -319,24 +315,25 @@ public class TokenCache implements ITokenCache {
                             clientId,
                             accCached.realm()));
 
-                    Map<String, ?> idTokenClaims = null;
+                    ITenantProfile profile = null;
                     if (idToken != null) {
-                        idTokenClaims = JWTParser.parse(idToken.secret()).getJWTClaimsSet().getClaims();
+                        Map<String, ?> idTokenClaims = JWTParser.parse(idToken.secret()).getJWTClaimsSet().getClaims();
+                        profile = new TenantProfile(idTokenClaims, accCached.environment());
                     }
-
-                    ITenantProfile profile = new TenantProfile(idTokenClaims);
 
                     if (rootAccounts.get(accCached.homeAccountId()) == null) {
                         IAccount acc = accCached.toAccount();
                         ((Account) acc).tenantProfiles = new HashMap<>();
-                        ((Account) acc).tenantProfiles().put(accCached.realm(), profile);
 
                         rootAccounts.put(accCached.homeAccountId(), acc);
-                    } else {
-                        ((Account)rootAccounts.get(accCached.homeAccountId())).tenantProfiles.put(accCached.realm(), profile);
-                        if (accCached.homeAccountId().contains(accCached.localAccountId())) {
-                            ((Account) rootAccounts.get(accCached.homeAccountId())).username(accCached.username());
-                        }
+                    }
+
+                    if(profile != null) {
+                        ((Account) rootAccounts.get(accCached.homeAccountId())).tenantProfiles.put(accCached.realm(), profile);
+                    }
+
+                    if (accCached.homeAccountId().contains(accCached.localAccountId())) {
+                        ((Account) rootAccounts.get(accCached.homeAccountId())).username(accCached.username());
                     }
                 }
 
@@ -393,9 +390,8 @@ public class TokenCache implements ITokenCache {
      *
      * @param clientId           client id
      * @param account            account
-     * @param environmentAliases environment aliases
      */
-    void removeAccount(String clientId, IAccount account, Set<String> environmentAliases) {
+    void removeAccount(String clientId, IAccount account) {
         try (CacheAspect cacheAspect = new CacheAspect(
                 TokenCacheAccessContext.builder().
                         clientId(clientId).
@@ -405,20 +401,19 @@ public class TokenCache implements ITokenCache {
             try {
                 lock.writeLock().lock();
 
-                removeAccount(account, environmentAliases);
+                removeAccount(account);
             } finally {
                 lock.writeLock().unlock();
             }
         }
     }
 
-    private void removeAccount(IAccount account, Set<String> environmentAliases) {
+    private void removeAccount(IAccount account) {
 
         Predicate<Map.Entry<String, ? extends Credential>> credentialToRemovePredicate =
                 e -> !StringHelper.isBlank(e.getValue().homeAccountId()) &&
                         !StringHelper.isBlank(e.getValue().environment()) &&
-                        e.getValue().homeAccountId().equals(account.homeAccountId()) &&
-                        environmentAliases.contains(e.getValue().environment());
+                        e.getValue().homeAccountId().equals(account.homeAccountId());
 
         accessTokens.entrySet().removeIf(credentialToRemovePredicate);
 
@@ -429,8 +424,7 @@ public class TokenCache implements ITokenCache {
         accounts.entrySet().removeIf(
                 e -> !StringHelper.isBlank(e.getValue().homeAccountId()) &&
                         !StringHelper.isBlank(e.getValue().environment()) &&
-                        e.getValue().homeAccountId().equals(account.homeAccountId()) &&
-                        environmentAliases.contains(e.getValue().environment));
+                        e.getValue().homeAccountId().equals(account.homeAccountId()));
     }
 
     private boolean isMatchingScopes(AccessTokenCacheEntity accessTokenCacheEntity, Set<String> scopes) {

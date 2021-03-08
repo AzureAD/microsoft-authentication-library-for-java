@@ -1,0 +1,80 @@
+{
+  "Account": {
+    "uid1.utid1-login.windows.net-utid1": {
+      "username": "MultiCloudAccount",
+      "local_account_id": "de_uid",
+      "realm": "de_tid",
+      "environment": "login.microsoftonline.de",
+      "home_account_id": "de_uid.de_tid",
+      "authority_type": "MSSTS"
+    },
+    "uid1.utid1-login.windows.net-utid2": {
+      "username": "MultiCloudAccount",
+      "local_account_id": "uid",
+      "realm": "tid",
+      "environment": "login.microsoftonline.com",
+      "home_account_id": "de_uid.de_tid",
+      "authority_type": "MSSTS"
+    }
+  },
+  "IdToken": {
+    "de_uid.de_tid-login.microsoftonline.de-idtoken-client_id-de_tid-": {
+      "realm": "de_tid",
+      "environment": "login.microsoftonline.de",
+      "credential_type": "IdToken",
+      "secret": "<de_id_token_placeholder>",
+      "client_id": "client_id",
+      "home_account_id": "de_uid.de_tid"
+    },
+    "de_uid.de_tid-login.microsoftonline.com-idtoken-client_id-tid-": {
+      "realm": "tid",
+      "environment": "login.microsoftonline.com",
+      "credential_type": "IdToken",
+      "secret": "<id_token_placeholder>",
+      "client_id": "client_id",
+      "home_account_id": "de_uid.de_tid"
+    }
+  },
+  "RefreshToken": {
+    "de_uid.de_tid-login.microsoftonline.de-refreshtoken-client_id--": {
+      "environment": "login.microsoftonline.de",
+      "credential_type": "RefreshToken",
+      "secret": "",
+      "client_id": "client_id",
+      "home_account_id": "de_uid.de_tid"
+    },
+    "de_uid.de_tid-login.microsoftonline.com-refreshtoken-client_id--": {
+      "environment": "login.microsoftonline.com",
+      "credential_type": "RefreshToken",
+      "secret": "",
+      "client_id": "client_id",
+      "home_account_id": "de_uid.de_tid"
+    }
+  },
+  "AccessToken": {
+    "de_uid.de_tid-login.microsoftonline.de-accesstoken-client_id-de_tid-scope": {
+      "environment": "login.microsoftonline.de",
+      "credential_type": "AccessToken",
+      "secret": "",
+      "realm": "de_tid",
+      "target": "scope",
+      "client_id": "client_id",
+      "cached_at": "1000",
+      "home_account_id": "de_uid.de_tid",
+      "extended_expires_on": "4600",
+      "expires_on": "4600"
+    },
+    "de_uid.de_tid-login.microsoftonline.com-accesstoken-client_id-tid-scope": {
+      "environment": "login.microsoftonline.com",
+      "credential_type": "AccessToken",
+      "secret": "",
+      "realm": "tid",
+      "target": "scope",
+      "client_id": "client_id",
+      "cached_at": "1000",
+      "home_account_id": "de_uid.de_tid",
+      "extended_expires_on": "4600",
+      "expires_on": "4600"
+    }
+  }
+}

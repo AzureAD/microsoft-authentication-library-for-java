@@ -20,4 +20,9 @@ public interface ITenantProfile extends Serializable {
      */
     Map<String, ?> getClaims();
 
+    /**
+     * @return tenant environment
+     */
+    String environment();
+
 }
