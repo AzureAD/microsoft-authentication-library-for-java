@@ -84,7 +84,7 @@ public class ServerTelemetryTests {
 
         ServerSideTelemetry serverSideTelemetry = new ServerSideTelemetry();
 
-        for(int i = 0; i <100; i++){
+        for(int i = 0; i <20; i++){
             String correlationId = UUID.randomUUID().toString();
             serverSideTelemetry.addFailedRequestTelemetry(PUBLIC_API_ID, correlationId, ERROR);
         }
@@ -93,10 +93,9 @@ public class ServerTelemetryTests {
 
        String lastRequest = headers.get(LAST_REQUEST_HEADER_NAME);
 
-       // http headers are encoded in ISO_8859_1
-       byte[] lastRequestBytes = lastRequest.getBytes(StandardCharsets.ISO_8859_1);
+       byte[] lastRequestBytes = lastRequest.getBytes(StandardCharsets.UTF_8);
 
-       Assert.assertTrue(lastRequestBytes.length < 4000);
+       Assert.assertTrue(lastRequestBytes.length <= 500);
     }
 
     @Test
@@ -128,10 +127,28 @@ public class ServerTelemetryTests {
         Assert.assertEquals(previousRequestHeader.get(1), "10");
 
         List<String> thirdSegment = Arrays.asList(previousRequestHeader.get(2).split(","));
-        Assert.assertEquals(thirdSegment.size(), 20);
+        Assert.assertEquals(thirdSegment.size(), 12);
 
         List<String> fourthSegment = Arrays.asList(previousRequestHeader.get(3).split(","));
-        Assert.assertEquals(fourthSegment.size(), 10);
+        Assert.assertEquals(fourthSegment.size(), 6);
+
+        Assert.assertTrue(headers.get(LAST_REQUEST_HEADER_NAME).getBytes(StandardCharsets.UTF_8).length  < 350);
+
+        // Not all requests fit into first header, so they would get dispatched in the next request
+        Map<String, String> secondRequest =  serverSideTelemetry.getServerTelemetryHeaderMap();
+
+        previousRequestHeader = Arrays.asList(secondRequest.get(LAST_REQUEST_HEADER_NAME).split("\\|"));
+
+        Assert.assertEquals(previousRequestHeader.get(1), "0");
+
+        thirdSegment = Arrays.asList(previousRequestHeader.get(2).split(","));
+        Assert.assertEquals(thirdSegment.size(), 8);
+
+        fourthSegment = Arrays.asList(previousRequestHeader.get(3).split(","));
+        Assert.assertEquals(fourthSegment.size(), 4);
+
+        Assert.assertTrue(secondRequest.get(LAST_REQUEST_HEADER_NAME).getBytes(StandardCharsets.UTF_8).length  < 350);
+
     }
 
     class FailedRequestRunnable implements Runnable {
