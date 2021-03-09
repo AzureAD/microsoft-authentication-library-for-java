@@ -122,7 +122,7 @@ class ServerSideTelemetry {
                     middleSegmentBuilder.toString().getBytes(StandardCharsets.UTF_8).length +
                     errorSegmentBuilder.toString().getBytes(StandardCharsets.UTF_8).length;
 
-            if (lastRequestLength < 348) {
+            if (lastRequestLength < 349) {
                 lastRequest = lastRequestBuilder.toString() +
                         middleSegmentBuilder.toString() +
                         errorSegmentBuilder.toString();

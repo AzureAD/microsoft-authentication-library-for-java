@@ -95,7 +95,7 @@ public class ServerTelemetryTests {
 
        byte[] lastRequestBytes = lastRequest.getBytes(StandardCharsets.UTF_8);
 
-       Assert.assertTrue(lastRequestBytes.length <= 500);
+       Assert.assertTrue(lastRequestBytes.length <= 350);
     }
 
     @Test
