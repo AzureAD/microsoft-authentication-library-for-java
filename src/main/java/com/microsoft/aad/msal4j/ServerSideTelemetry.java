@@ -22,6 +22,8 @@ class ServerSideTelemetry {
     private final static String SCHEMA_COMMA_DELIMITER = ",";
     private final static String CURRENT_REQUEST_HEADER_NAME = "x-client-current-telemetry";
     private final static String LAST_REQUEST_HEADER_NAME = "x-client-last-telemetry";
+    private final static int CURRENT_REQUEST_MAX_SIZE = 100;
+    private final static int LAST_REQUEST_MAX_SIZE = 350;
 
     private CurrentRequest currentRequest;
     private AtomicInteger silentSuccessfulCount = new AtomicInteger(0);
@@ -69,7 +71,7 @@ class ServerSideTelemetry {
                 currentRequest.forceRefresh() +
                 SCHEMA_PIPE_DELIMITER;
 
-        if (currentRequestHeader.getBytes(StandardCharsets.UTF_8).length > 100) {
+        if (currentRequestHeader.getBytes(StandardCharsets.UTF_8).length > CURRENT_REQUEST_MAX_SIZE) {
             log.warn("Current request telemetry header greater than 100 bytes");
         }
 
@@ -122,7 +124,8 @@ class ServerSideTelemetry {
                     middleSegmentBuilder.toString().getBytes(StandardCharsets.UTF_8).length +
                     errorSegmentBuilder.toString().getBytes(StandardCharsets.UTF_8).length;
 
-            if (lastRequestLength < 349) {
+            // subtract 1 to save 1 byte for the closing delimiter
+            if (lastRequestLength < LAST_REQUEST_MAX_SIZE - 1) {
                 lastRequest = lastRequestBuilder.toString() +
                         middleSegmentBuilder.toString() +
                         errorSegmentBuilder.toString();
@@ -136,7 +139,6 @@ class ServerSideTelemetry {
                 middleSegmentBuilder.append(SCHEMA_COMMA_DELIMITER);
                 errorSegmentBuilder.append(SCHEMA_COMMA_DELIMITER);
             }
-
         }
 
         return lastRequest + SCHEMA_PIPE_DELIMITER;
