@@ -6,8 +6,6 @@ import com.microsoft.aad.msal4j.ClientCredentialParameters;
 import com.microsoft.aad.msal4j.ConfidentialClientApplication;
 import com.microsoft.aad.msal4j.IAuthenticationResult;
 import com.microsoft.aad.msal4j.IClientCredential;
-import com.microsoft.aad.msal4j.MsalException;
-import com.microsoft.aad.msal4j.SilentParameters;
 
 import java.util.Collections;
 import java.util.Set;
@@ -26,45 +24,24 @@ class ClientCredentialGrant {
 
     private static IAuthenticationResult acquireToken() throws Exception {
 
-        // Load token cache from file and initialize token cache aspect. The token cache will have
-        // dummy data, so the acquireTokenSilently call will fail.
-        TokenCacheAspect tokenCacheAspect = new TokenCacheAspect("sample_cache.json");
-
         // This is the secret that is created in the Azure portal when registering the application
         IClientCredential credential = ClientCredentialFactory.createFromSecret(CLIENT_SECRET);
         ConfidentialClientApplication cca =
                 ConfidentialClientApplication
                         .builder(CLIENT_ID, credential)
                         .authority(AUTHORITY)
-                        .setTokenCacheAccessAspect(tokenCacheAspect)
                         .build();
 
-        IAuthenticationResult result;
-        try {
-            SilentParameters silentParameters =
-                    SilentParameters
-                            .builder(SCOPE)
-                            .build();
+        // Client credential requests will be default try to look for a valid token in the
+        // in-memory token cache. If found, it will return this token. If not token is found, or the
+        // token is not valid, it will fall back to acquiring a token from the AAD service. Although
+        // not recommended you can skip the cache lookup by using .skipCache(true) in
+        // ClientCredentialParameters.
+        ClientCredentialParameters parameters =
+                ClientCredentialParameters
+                        .builder(SCOPE)
+                        .build();
 
-            // try to acquire token silently. This call will fail since the token cache does not
-            // have a token for the application you are requesting an access token for
-            result = cca.acquireTokenSilently(silentParameters).join();
-        } catch (Exception ex) {
-            if (ex.getCause() instanceof MsalException) {
-
-                ClientCredentialParameters parameters =
-                        ClientCredentialParameters
-                                .builder(SCOPE)
-                                .build();
-
-                // Try to acquire a token. If successful, you should see
-                // the token information printed out to console
-                result = cca.acquireToken(parameters).join();
-            } else {
-                // Handle other exceptions accordingly
-                throw ex;
-            }
-        }
-        return result;
+        return cca.acquireToken(parameters).join();
     }
 }
