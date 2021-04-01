@@ -32,11 +32,11 @@ class ClientCredentialGrant {
                         .authority(AUTHORITY)
                         .build();
 
-        // Client credential requests will be default try to look for a valid token in the
-        // in-memory token cache. If found, it will return this token. If not token is found, or the
+        // Client credential requests will by default try to look for a valid token in the
+        // in-memory token cache. If found, it will return this token. If a token is not found, or the
         // token is not valid, it will fall back to acquiring a token from the AAD service. Although
-        // not recommended you can skip the cache lookup by using .skipCache(true) in
-        // ClientCredentialParameters.
+        // not recommended unless there is a reason for doing so, you can skip the cache lookup
+        // by using .skipCache(true) in ClientCredentialParameters.
         ClientCredentialParameters parameters =
                 ClientCredentialParameters
                         .builder(SCOPE)

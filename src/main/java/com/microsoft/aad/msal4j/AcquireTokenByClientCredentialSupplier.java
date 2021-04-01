@@ -44,7 +44,7 @@ public class AcquireTokenByClientCredentialSupplier extends AuthenticationResult
             }
         }
 
-        LOG.info("SkipCache set to to true. Skipping cache lookup and attempting client credentials request");
+        LOG.info("SkipCache set to true. Skipping cache lookup and attempting client credentials request");
         return acquireTokenByClientCredential();
     }
 
