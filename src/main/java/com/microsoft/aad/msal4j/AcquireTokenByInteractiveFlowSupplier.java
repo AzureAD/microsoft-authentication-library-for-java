@@ -157,11 +157,24 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
                 clientApplication,
                 clientApplication.createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
 
+        Authority authority;
+
+        //The result field of an AuthorizationResult object is only set if the response contained the 'cloud_instance_host_name' key,
+        // which indicates that this token request is instance aware and should use that as the environment value
+        //Otherwise, use the authority value from the client application
+        if (authorizationResult.environment() != null) {
+            authority = Authority.createAuthority(new URL(clientApplication.authenticationAuthority.canonicalAuthorityUrl.getProtocol(),
+                    authorizationResult.environment(),
+                    clientApplication.authenticationAuthority.canonicalAuthorityUrl.getFile()));
+        } else {
+            authority = clientApplication.authenticationAuthority;
+        }
+
         AcquireTokenByAuthorizationGrantSupplier acquireTokenByAuthorizationGrantSupplier =
             new AcquireTokenByAuthorizationGrantSupplier(
                     clientApplication,
                     authCodeRequest,
-                    clientApplication.authenticationAuthority);
+                    authority);
 
         return acquireTokenByAuthorizationGrantSupplier.execute();
     }
