@@ -94,7 +94,7 @@ final class ClientCertificate implements IClientCertificate {
             password = DEFAULT_PKCS12_PASSWORD;
         }
 
-        final KeyStore keystore = KeyStore.getInstance("PKCS12", "SunJSSE");
+        final KeyStore keystore = KeyStore.getInstance("PKCS12");
         keystore.load(pkcs12Certificate, password.toCharArray());
 
         final Enumeration<String> aliases = keystore.aliases();
