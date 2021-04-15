@@ -27,6 +27,9 @@ class AppMetadataCacheEntity {
     @JsonProperty("family_id")
     private String familyId;
 
+    @JsonProperty("user_assertion_hash")
+    protected String userAssertionHash;
+
     String getKey(){
         List<String> keyParts = new ArrayList<>();
 

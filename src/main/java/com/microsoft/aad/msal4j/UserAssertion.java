@@ -10,6 +10,7 @@ package com.microsoft.aad.msal4j;
 public class UserAssertion implements IUserAssertion {
 
     private final String assertion;
+    private final String assertionHash;
 
     /**
      * Constructor to create credential with a jwt token encoded as a base64 url
@@ -24,6 +25,7 @@ public class UserAssertion implements IUserAssertion {
         }
 
         this.assertion = assertion;
+        this.assertionHash = StringHelper.createBase64EncodedSha256Hash(this.assertion);
     }
 
     /**
@@ -34,5 +36,12 @@ public class UserAssertion implements IUserAssertion {
     @Override
     public String getAssertion() {
         return assertion;
+    }
+
+    /**
+     * @return Base64 encoded SHA256 hash of the assertion
+     */
+    public String getAssertionHash() {
+        return this.assertionHash;
     }
 }
