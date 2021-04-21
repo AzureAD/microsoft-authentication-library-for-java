@@ -307,11 +307,6 @@ public class TokenCache implements ITokenCache {
         appMetadataCacheEntity.environment(environmentAlias);
         appMetadataCacheEntity.familyId(authenticationResult.familyId());
 
-        if(tokenRequestExecutor.getMsalRequest() instanceof OnBehalfOfRequest){
-            OnBehalfOfRequest onBehalfOfRequest = (OnBehalfOfRequest) tokenRequestExecutor.getMsalRequest();
-            appMetadataCacheEntity.userAssertionHash(onBehalfOfRequest.parameters.userAssertion().getAssertionHash());
-        }
-
         return appMetadataCacheEntity;
     }
 
