@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import labapi.AzureEnvironment;
 import labapi.B2CProvider;
 import labapi.FederationProvider;
 import labapi.User;
@@ -75,6 +76,14 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         assertAcquireTokenB2C(user);
     }
 
+    @Test
+    public void acquireTokenInteractive_ManagedUser_InstanceAware(){
+        cfg = new Config(AzureEnvironment.AZURE);
+
+        User user = labUserProvider.getDefaultUser(AzureEnvironment.AZURE_US_GOVERNMENT);
+        assertAcquireTokenInstanceAware(user);
+    }
+
     private void assertAcquireTokenAAD(User user){
         PublicClientApplication pca;
         try {
@@ -134,6 +143,31 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         Assert.assertNotNull(result.idToken());
     }
 
+    private void assertAcquireTokenInstanceAware(User user) {
+        PublicClientApplication pca;
+        try {
+            pca = PublicClientApplication.builder(
+                    user.getAppId()).
+                    authority(cfg.organizationsAuthority()).
+                    build();
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException(ex.getMessage());
+        }
+
+        IAuthenticationResult result = acquireTokenInteractive_instanceAware(user, pca, cfg.graphDefaultScope());
+
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.accessToken());
+        Assert.assertNotNull(result.idToken());
+        Assert.assertEquals(user.getUpn(), result.account().username());
+
+        //This test is using a client app with the login.microsoftonline.com config to get tokens for a login.microsoftonline.us user,
+        // so when using instance aware the result's environment will be for the user/account and not the client app
+        Assert.assertNotEquals(pca.authenticationAuthority.host, result.environment());
+        Assert.assertEquals(result.account().environment(), result.environment());
+        Assert.assertEquals(result.account().environment(), pca.getAccounts().join().iterator().next().environment());
+    }
+
     private IAuthenticationResult acquireTokenInteractive(
             User user,
             PublicClientApplication pca,
@@ -153,6 +187,36 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
                     .builder(url)
                     .scopes(Collections.singleton(scope))
                     .systemBrowserOptions(browserOptions)
+                    .build();
+
+            result = pca.acquireToken(parameters).get();
+
+        } catch(Exception e){
+            LOG.error("Error acquiring token with authCode: " + e.getMessage());
+            throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
+        }
+        return result;
+    }
+
+    private IAuthenticationResult acquireTokenInteractive_instanceAware(
+            User user,
+            PublicClientApplication pca,
+            String scope){
+
+        IAuthenticationResult result;
+        try {
+            URI url = new URI("http://localhost:8080");
+
+            SystemBrowserOptions browserOptions =
+                    SystemBrowserOptions
+                            .builder()
+                            .openBrowserAction(new SeleniumOpenBrowserAction(user, pca))
+                            .build();
+
+            InteractiveRequestParameters parameters = InteractiveRequestParameters
+                    .builder(url)
+                    .scopes(Collections.singleton(scope))
+                    .systemBrowserOptions(browserOptions).instanceAware(true)
                     .build();
 
             result = pca.acquireToken(parameters).get();

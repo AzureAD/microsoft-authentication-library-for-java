@@ -1,6 +1,11 @@
 package com.microsoft.aad.msal4j;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.reflect.Array;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -10,11 +15,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 class ServerSideTelemetry {
 
+    private final static Logger log = LoggerFactory.getLogger(ServerSideTelemetry.class);
+
     private final static String SCHEMA_VERSION = "2";
     private final static String SCHEMA_PIPE_DELIMITER = "|";
     private final static String SCHEMA_COMMA_DELIMITER = ",";
     private final static String CURRENT_REQUEST_HEADER_NAME = "x-client-current-telemetry";
     private final static String LAST_REQUEST_HEADER_NAME = "x-client-last-telemetry";
+    private final static int CURRENT_REQUEST_MAX_SIZE = 100;
+    private final static int LAST_REQUEST_MAX_SIZE = 350;
 
     private CurrentRequest currentRequest;
     private AtomicInteger silentSuccessfulCount = new AtomicInteger(0);
@@ -22,7 +31,7 @@ class ServerSideTelemetry {
     ConcurrentMap<String, String[]> previousRequests = new ConcurrentHashMap<>();
     ConcurrentMap<String, String[]> previousRequestInProgress = new ConcurrentHashMap<>();
 
-    synchronized Map<String, String> getServerTelemetryHeaderMap(){
+    synchronized Map<String, String> getServerTelemetryHeaderMap() {
         Map<String, String> headerMap = new HashMap<>();
 
         headerMap.put(CURRENT_REQUEST_HEADER_NAME, buildCurrentRequestHeader());
@@ -31,7 +40,7 @@ class ServerSideTelemetry {
         return headerMap;
     }
 
-    void addFailedRequestTelemetry(String publicApiId, String correlationId, String error){
+    void addFailedRequestTelemetry(String publicApiId, String correlationId, String error) {
 
         String[] previousRequest = new String[]{publicApiId, error};
         previousRequests.put(
@@ -39,7 +48,7 @@ class ServerSideTelemetry {
                 previousRequest);
     }
 
-    void incrementSilentSuccessfulCount(){
+    void incrementSilentSuccessfulCount() {
         silentSuccessfulCount.incrementAndGet();
     }
 
@@ -51,17 +60,23 @@ class ServerSideTelemetry {
         this.currentRequest = currentRequest;
     }
 
-    private synchronized String buildCurrentRequestHeader(){
-        if(currentRequest == null){
+    private synchronized String buildCurrentRequestHeader() {
+        if (currentRequest == null) {
             return StringHelper.EMPTY_STRING;
         }
 
-        return SCHEMA_VERSION +
-                SCHEMA_PIPE_DELIMITER +
+        String currentRequestHeader = SCHEMA_VERSION + SCHEMA_PIPE_DELIMITER +
                 currentRequest.publicApi().getApiId() +
                 SCHEMA_COMMA_DELIMITER +
                 currentRequest.forceRefresh() +
                 SCHEMA_PIPE_DELIMITER;
+
+        if (currentRequestHeader.getBytes(StandardCharsets.UTF_8).length > CURRENT_REQUEST_MAX_SIZE) {
+            log.warn("Current request telemetry header greater than 100 bytes");
+        }
+
+        return currentRequestHeader;
+
     }
 
     private synchronized String buildLastRequestHeader() {
@@ -74,6 +89,9 @@ class ServerSideTelemetry {
                 .append(SCHEMA_VERSION)
                 .append(SCHEMA_PIPE_DELIMITER)
                 .append(silentSuccessfulCount.getAndSet(0));
+
+        // According to spec, lastRequest headers should be smaller than 350 bytes
+        int baseLength = lastRequestBuilder.toString().getBytes(StandardCharsets.UTF_8).length;
 
         if (previousRequests.isEmpty()) {
             // Kusto queries always expect all delimiters so return
@@ -90,28 +108,40 @@ class ServerSideTelemetry {
 
         Iterator<String> it = previousRequests.keySet().iterator();
 
-        // Total header size should be less than 8kb. At max, we will use 4kb for telemetry.
-        while (it.hasNext()
-                && (middleSegmentBuilder.length() + errorSegmentBuilder.length()) < 3800) {
+        // In the case that lastRequestLength > 350, we should still send a string with right delimiters
+        String lastRequest = lastRequestBuilder.toString() + SCHEMA_PIPE_DELIMITER + SCHEMA_PIPE_DELIMITER;
+        while (it.hasNext()) {
+
             String correlationId = it.next();
             String[] previousRequest = previousRequests.get(correlationId);
-            String apiId = (String)Array.get(previousRequest, 0);
-            String error = (String)Array.get(previousRequest, 1);
+            String apiId = (String) Array.get(previousRequest, 0);
+            String error = (String) Array.get(previousRequest, 1);
 
             middleSegmentBuilder.append(apiId).append(SCHEMA_COMMA_DELIMITER).append(correlationId);
             errorSegmentBuilder.append(error);
 
-            if(it.hasNext()){
+            int lastRequestLength = baseLength +
+                    middleSegmentBuilder.toString().getBytes(StandardCharsets.UTF_8).length +
+                    errorSegmentBuilder.toString().getBytes(StandardCharsets.UTF_8).length;
+
+            // subtract 1 to save 1 byte for the closing delimiter
+            if (lastRequestLength < LAST_REQUEST_MAX_SIZE - 1) {
+                lastRequest = lastRequestBuilder.toString() +
+                        middleSegmentBuilder.toString() +
+                        errorSegmentBuilder.toString();
+                previousRequestInProgress.put(correlationId, previousRequest);
+                it.remove();
+            } else {
+                break;
+            }
+
+            if (it.hasNext()) {
                 middleSegmentBuilder.append(SCHEMA_COMMA_DELIMITER);
                 errorSegmentBuilder.append(SCHEMA_COMMA_DELIMITER);
             }
-
-            previousRequestInProgress.put(correlationId, previousRequest);
-            it.remove();
         }
 
-        errorSegmentBuilder.append(SCHEMA_PIPE_DELIMITER);
+        return lastRequest + SCHEMA_PIPE_DELIMITER;
 
-        return lastRequestBuilder.append(middleSegmentBuilder).append(errorSegmentBuilder).toString();
     }
 }

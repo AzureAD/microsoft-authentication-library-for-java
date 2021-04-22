@@ -74,6 +74,12 @@ public class InteractiveRequestParameters implements IApiParameters {
 
     private String claimsChallenge;
 
+    /**
+     * If set to true, the authorization result will contain the authority for the user's home cloud, and this authority
+     * will be used for the token request instead of the authority set in the application.
+     */
+    private boolean instanceAware;
+
     private static InteractiveRequestParametersBuilder builder() {
         return new InteractiveRequestParametersBuilder();
     }

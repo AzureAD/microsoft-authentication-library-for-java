@@ -32,6 +32,7 @@ public class AuthorizationRequestUrlParameters {
     private String domainHint;
     private Prompt prompt;
     private String correlationId;
+    private boolean instanceAware;
 
     Map<String, List<String>> requestParameters  = new HashMap<>();
 
@@ -139,6 +140,11 @@ public class AuthorizationRequestUrlParameters {
             this.correlationId = builder.correlationId;
             requestParameters.put("correlation_id", Collections.singletonList(builder.correlationId));
         }
+
+        if(builder.instanceAware){
+            this.instanceAware = builder.instanceAware;
+            requestParameters.put("instance_aware", Collections.singletonList(String.valueOf(instanceAware)));
+        }
     }
 
     URL createAuthorizationURL(Authority authority,
@@ -173,6 +179,7 @@ public class AuthorizationRequestUrlParameters {
         private String domainHint;
         private Prompt prompt;
         private String correlationId;
+        private boolean instanceAware;
 
         public AuthorizationRequestUrlParameters build(){
             return new AuthorizationRequestUrlParameters(this);
@@ -308,6 +315,15 @@ public class AuthorizationRequestUrlParameters {
          */
         public Builder correlationId(String val){
             this.correlationId = val;
+            return self();
+        }
+
+        /**
+         * If set to true, the authorization result will contain the authority for the user's home cloud, and this authority
+         * will be used for the token request instead of the authority set in the application.
+         */
+        public Builder instanceAware(boolean val){
+            this.instanceAware = val;
             return self();
         }
     }
