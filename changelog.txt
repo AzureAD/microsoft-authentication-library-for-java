@@ -1,3 +1,13 @@
+Version 1.10.0
+=============
+- Instance aware support for interactive requests
+- Default cache lookup for on-behalf-of and client credential flows
+- Cross cloud accounts support
+- Using default security provider for client certificate creation
+- Upgrades the commons-io dependency 2.6 -> 2.7
+- Upgrades the oauth2-oidc-sdk dependency 8.23.1 -> 9.4
+- Upgrades the guava dependency 26.0 -> 29.0
+
 Version 1.9.1
 =============
 - Update com.fasterxml.jackson.core.jackson-databind to 2.12.1
