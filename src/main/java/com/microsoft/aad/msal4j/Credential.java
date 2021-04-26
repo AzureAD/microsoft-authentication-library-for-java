@@ -24,4 +24,7 @@ class Credential {
 
     @JsonProperty("secret")
     protected String secret;
+
+    @JsonProperty("user_assertion_hash")
+    protected String userAssertionHash;
 }

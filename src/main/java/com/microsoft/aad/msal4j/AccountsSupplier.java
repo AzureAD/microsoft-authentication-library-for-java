@@ -22,15 +22,8 @@ class AccountsSupplier implements Supplier<Set<IAccount>> {
     @Override
     public Set<IAccount> get() {
         try {
-            InstanceDiscoveryMetadataEntry instanceDiscoveryData =
-                    AadInstanceDiscoveryProvider.getMetadataEntry(
-                            new URL(clientApplication.authority()),
-                            clientApplication.validateAuthority(),
-                            msalRequest,
-                            clientApplication.getServiceBundle());
-
             return clientApplication.tokenCache.getAccounts
-                    (clientApplication.clientId(), instanceDiscoveryData.aliases);
+                    (clientApplication.clientId());
 
         } catch (Exception ex) {
             clientApplication.log.error(

@@ -12,6 +12,7 @@ import java.util.concurrent.CompletableFuture;
  * For details see https://aka.ms/msal4jclientapplications
  */
 public interface IConfidentialClientApplication extends IClientApplicationBase {
+
     /**
      * @return a boolean value which determines whether x5c claim (public key of the certificate)
      * will be sent to the STS.
@@ -20,7 +21,8 @@ public interface IConfidentialClientApplication extends IClientApplicationBase {
 
     /**
      * Acquires tokens from the authority configured in the application, for the confidential client
-     * itself
+     * itself. It will by default attempt to get tokens from the token cache. If no tokens are found,
+     * it falls back to acquiring them via client credentials from the STS
      * @param parameters instance of {@link ClientCredentialParameters}
      * @return {@link CompletableFuture} containing an {@link IAuthenticationResult}
      */
@@ -29,8 +31,18 @@ public interface IConfidentialClientApplication extends IClientApplicationBase {
     /**
      * Acquires an access token for this application (usually a Web API) from the authority configured
      * in the application, in order to access another downstream protected Web API on behalf of a user
-     * using the On-Behalf-Of flow. This confidential client application was itself called with a token
-     * which will be provided in the {@link UserAssertion} to the {@link OnBehalfOfParameters}
+     * using the On-Behalf-Of flow. It will by default attempt to get tokens from the token cache.
+     * This confidential client application was itself called with an acces token which is provided in
+     * the {@link UserAssertion} field of {@link OnBehalfOfParameters}.
+     *
+     * When serializing/deserializing the in-memory token cache to permanent storage, there should be
+     * a token cache per incoming access token, where the hash of the incoming access token can be used
+     * as the token cache key. Access tokens are usually only valid for a 1 hour period of time,
+     * and a new access token in the {@link UserAssertion} means there will be a new token cache and
+     * new token cache key. To avoid your permanent storage from being filled with expired
+     * token caches, an eviction policy should be set. For example, a token cache that
+     * is more than a couple of hours old can be deemed expired and therefore evicted from the
+     * serialized token cache.
      * @param parameters instance of {@link OnBehalfOfParameters}
      * @return {@link CompletableFuture} containing an {@link IAuthenticationResult}
      */

@@ -20,6 +20,8 @@ class TenantProfile implements ITenantProfile {
 
     Map<String, ?> idTokenClaims;
 
+    String environment;
+
     public Map<String, ?> getClaims() {
         return idTokenClaims;
     }

@@ -60,6 +60,45 @@ public class ClientCredentialsIT {
         assertAcquireTokenCommon(clientId, credential);
     }
 
+    @Test
+    public void acquireTokenClientCredentials_DefaultCacheLookup() throws Exception{
+        AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.AZURE);
+        final String clientId = appProvider.getLabVaultAppId();
+        final String password = appProvider.getLabVaultPassword();
+        IClientCredential credential = ClientCredentialFactory.createFromSecret(password);
+
+        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
+                clientId, credential).
+                authority(TestConstants.MICROSOFT_AUTHORITY).
+                build();
+
+        IAuthenticationResult result1 = cca.acquireToken(ClientCredentialParameters
+                .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                .build())
+                .get();
+
+        Assert.assertNotNull(result1);
+        Assert.assertNotNull(result1.accessToken());
+
+        IAuthenticationResult result2 = cca.acquireToken(ClientCredentialParameters
+                .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                .build())
+                .get();
+
+        Assert.assertEquals(result1.accessToken(), result2.accessToken());
+
+        IAuthenticationResult result3 = cca.acquireToken(ClientCredentialParameters
+                .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                .skipCache(true)
+                .build())
+                .get();
+
+        Assert.assertNotNull(result3);
+        Assert.assertNotNull(result3.accessToken());
+        Assert.assertNotEquals(result2.accessToken(), result3.accessToken());
+    }
+
+
     private void assertAcquireTokenCommon(String clientId, IClientCredential credential) throws Exception{
         ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
                 clientId, credential).

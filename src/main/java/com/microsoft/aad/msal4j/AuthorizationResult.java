@@ -21,6 +21,7 @@ class AuthorizationResult {
     private AuthorizationStatus status;
     private String error;
     private String errorDescription;
+    private String environment;
 
     enum AuthorizationStatus {
         Success,
@@ -59,6 +60,9 @@ class AuthorizationResult {
         AuthorizationResult result = new AuthorizationResult();
         result.code = queryParameters.get("code");
         result.status = AuthorizationStatus.Success;
+        if (queryParameters.containsKey("cloud_instance_host_name")) {
+            result.environment = queryParameters.get("cloud_instance_host_name");
+        }
 
         if(queryParameters.containsKey("state")){
             result.state = queryParameters.get("state");

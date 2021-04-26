@@ -27,6 +27,13 @@ public class ClientCredentialParameters implements IApiParameters {
     private Set<String> scopes;
 
     /**
+     * Indicates whether the request should skip looking into the token cache. Be default it is
+     * set to false.
+     */
+    @Builder.Default
+    private Boolean skipCache = false;
+
+    /**
      * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
      */
     private ClaimsRequest claims;

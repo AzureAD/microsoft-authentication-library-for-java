@@ -8,15 +8,15 @@ The Microsoft Authentication Library for Java (MSAL4J) enables applications to i
 
 Quick links:
 
-| [Getting Started](https://docs.microsoft.com/azure/active-directory/develop/quickstart-v2-java-webapp) | [Docs](https://github.com/AzureAD/microsoft-authentication-library-for-java/wiki) | [Samples](https://aka.ms/aaddevsamplesv2) | [Support](README.md#community-help-and-support)
-| --- | --- | --- | --- |
+| [Getting Started](https://docs.microsoft.com/azure/active-directory/develop/quickstart-v2-java-webapp) | [Docs](https://github.com/AzureAD/microsoft-authentication-library-for-java/wiki) | [Samples](https://aka.ms/aaddevsamplesv2) | [Support](README.md#community-help-and-support) | [Feedback](https://forms.office.com/r/6AhHwQp3pe)
+| --- | --- | --- | --- | --- |
 
 ## Install
 
 The library supports the following Java environments:
 - Java 8 (or higher)
 
-Current version - 1.9.1
+Current version - 1.10.0
 
 You can find the changes for each version in the [change log](https://github.com/AzureAD/microsoft-authentication-library-for-java/blob/master/changelog.txt).
 
@@ -28,13 +28,13 @@ Find [the latest package in the Maven repository](https://mvnrepository.com/arti
 <dependency>
     <groupId>com.microsoft.azure</groupId>
     <artifactId>msal4j</artifactId>
-    <version>1.9.1</version>
+    <version>1.10.0</version>
 </dependency>
 ```
 ### Gradle
 
 ```
-compile group: 'com.microsoft.azure', name: 'msal4j', version: '1.9.1'
+compile group: 'com.microsoft.azure', name: 'msal4j', version: '1.10.0'
 ```
 
 ## Usage
@@ -67,6 +67,9 @@ We provide a [full suite of sample applications](https://aka.ms/aaddevsamplesv2)
 We leverage [Stack Overflow](http://stackoverflow.com/) to work with the community on supporting Azure Active Directory and its SDKs, including this one! We highly recommend you ask your questions on Stack Overflow (we're all on there!) Also browser existing issues to see if someone has had your question before.
 
 We recommend you use the "msal" tag so we can see it! Here is the latest Q&A on Stack Overflow for MSAL: [http://stackoverflow.com/questions/tagged/msal](http://stackoverflow.com/questions/tagged/msal)
+
+## Submit Feedback
+We'd like your thoughts on this library. Please complete [this short survey.](https://forms.office.com/r/6AhHwQp3pe)
 
 ## Security Reporting
 

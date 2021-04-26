@@ -30,6 +30,13 @@ public class OnBehalfOfParameters implements IApiParameters {
      */
     private ClaimsRequest claims;
 
+    /**
+     * Indicates whether the request should skip looking into the token cache. Be default it is
+     * set to false.
+     */
+    @Builder.Default
+    private Boolean skipCache = false;
+
     @NonNull
     private IUserAssertion userAssertion;
 
