@@ -8,8 +8,8 @@ The Microsoft Authentication Library for Java (MSAL4J) enables applications to i
 
 Quick links:
 
-| [Getting Started](https://docs.microsoft.com/azure/active-directory/develop/quickstart-v2-java-webapp) | [Docs](https://github.com/AzureAD/microsoft-authentication-library-for-java/wiki) | [Samples](https://aka.ms/aaddevsamplesv2) | [Support](README.md#community-help-and-support)
-| --- | --- | --- | --- |
+| [Getting Started](https://docs.microsoft.com/azure/active-directory/develop/quickstart-v2-java-webapp) | [Docs](https://github.com/AzureAD/microsoft-authentication-library-for-java/wiki) | [Samples](https://aka.ms/aaddevsamplesv2) | [Support](README.md#community-help-and-support) | [Feedback](https://forms.office.com/r/6AhHwQp3pe)
+| --- | --- | --- | --- | --- |
 
 ## Install
 
@@ -67,6 +67,9 @@ We provide a [full suite of sample applications](https://aka.ms/aaddevsamplesv2)
 We leverage [Stack Overflow](http://stackoverflow.com/) to work with the community on supporting Azure Active Directory and its SDKs, including this one! We highly recommend you ask your questions on Stack Overflow (we're all on there!) Also browser existing issues to see if someone has had your question before.
 
 We recommend you use the "msal" tag so we can see it! Here is the latest Q&A on Stack Overflow for MSAL: [http://stackoverflow.com/questions/tagged/msal](http://stackoverflow.com/questions/tagged/msal)
+
+## Submit Feedback
+We'd like your thoughts on this library. Please complete [this short survey.](https://forms.office.com/r/6AhHwQp3pe)
 
 ## Security Reporting
 
