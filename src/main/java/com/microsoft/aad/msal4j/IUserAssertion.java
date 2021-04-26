@@ -14,4 +14,9 @@ public interface IUserAssertion {
      * @return string value
      */
     String getAssertion();
+
+    /**
+     * @return Base64 encoded SHA256 hash of the assertion
+     */
+    String getAssertionHash();
 }

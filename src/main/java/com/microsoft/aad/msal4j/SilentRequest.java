@@ -14,16 +14,18 @@ import java.net.URL;
 class SilentRequest extends MsalRequest {
 
     private SilentParameters parameters;
-
+    private IUserAssertion assertion;
     private Authority requestAuthority;
 
     SilentRequest(SilentParameters parameters,
                   AbstractClientApplicationBase application,
-                  RequestContext requestContext) throws MalformedURLException {
+                  RequestContext requestContext,
+                  IUserAssertion assertion) throws MalformedURLException {
 
         super(application, null, requestContext);
 
         this.parameters = parameters;
+        this.assertion = assertion;
         this.requestAuthority = StringHelper.isBlank(parameters.authorityUrl()) ?
                 application.authenticationAuthority :
                 Authority.createAuthority(new URL(parameters.authorityUrl()));

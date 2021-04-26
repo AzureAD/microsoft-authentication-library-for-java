@@ -148,7 +148,8 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
         SilentRequest silentRequest = new SilentRequest(
                 parameters,
                 this,
-                createRequestContext(PublicApi.ACQUIRE_TOKEN_SILENTLY, parameters));
+                createRequestContext(PublicApi.ACQUIRE_TOKEN_SILENTLY, parameters),
+                null);
 
         return executeRequest(silentRequest);
     }
@@ -250,10 +251,14 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
             supplier = new AcquireTokenByInteractiveFlowSupplier(
                     (PublicClientApplication) this,
                     (InteractiveRequest) msalRequest);
-        } else if(msalRequest instanceof ClientCredentialRequest){
+        } else if(msalRequest instanceof ClientCredentialRequest) {
             supplier = new AcquireTokenByClientCredentialSupplier(
                     (ConfidentialClientApplication) this,
                     (ClientCredentialRequest) msalRequest);
+        } else if(msalRequest instanceof OnBehalfOfRequest){
+            supplier = new AcquireTokenByOnBehalfOfSupplier(
+                    (ConfidentialClientApplication) this,
+                    (OnBehalfOfRequest) msalRequest);
         } else {
             supplier = new AcquireTokenByAuthorizationGrantSupplier(
                     this,
