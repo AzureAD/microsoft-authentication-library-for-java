@@ -18,10 +18,13 @@ import java.util.Map;
 @Getter
 class OnBehalfOfRequest extends MsalRequest {
 
+    OnBehalfOfParameters parameters;
+
     OnBehalfOfRequest(OnBehalfOfParameters parameters,
                       ConfidentialClientApplication application,
                       RequestContext requestContext) {
         super(application, createAuthenticationGrant(parameters), requestContext);
+        this.parameters = parameters;
     }
 
     private static OAuthAuthorizationGrant createAuthenticationGrant(OnBehalfOfParameters parameters) {

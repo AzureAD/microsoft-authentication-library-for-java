@@ -42,6 +42,9 @@ class AccountCacheEntity implements Serializable {
     @JsonProperty("client_info")
     protected String clientInfoStr;
 
+    @JsonProperty("user_assertion_hash")
+    protected String userAssertionHash;
+
     ClientInfo clientInfo() {
         return ClientInfo.createFromJson(clientInfoStr);
     }
