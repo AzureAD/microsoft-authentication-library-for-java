@@ -20,7 +20,8 @@ public interface IConfidentialClientApplication extends IClientApplicationBase {
 
     /**
      * Acquires tokens from the authority configured in the application, for the confidential client
-     * itself
+     * itself. It will by default attempt to get tokens from the token cache. If no tokens are found,
+     * it falls back to acquiring them via client credentials from the STS
      * @param parameters instance of {@link ClientCredentialParameters}
      * @return {@link CompletableFuture} containing an {@link IAuthenticationResult}
      */
