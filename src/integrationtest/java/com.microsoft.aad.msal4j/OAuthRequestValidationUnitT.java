@@ -7,8 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 public class OAuthRequestValidationUnitT extends OAuthRequestValidationTest {
@@ -41,8 +40,16 @@ public class OAuthRequestValidationUnitT extends OAuthRequestValidationTest {
         // validate Client Authentication query params
         Assert.assertFalse(StringUtils.isEmpty(queryParams.get("client_assertion")));
 
-        // to do validate scopes
-        Assert.assertEquals(SCOPES, queryParams.get("scope"));
+        Set<String> scopes = new HashSet<>(
+                Arrays.asList(queryParams.get("scope").split(AbstractMsalAuthorizationGrant.SCOPES_DELIMITER)));
+
+        // validate custom scopes
+        Assert.assertTrue(scopes.contains(SCOPES));
+
+        // validate common scopes
+        Assert.assertTrue(scopes.contains(AbstractMsalAuthorizationGrant.SCOPE_OPEN_ID));
+        Assert.assertTrue(scopes.contains(AbstractMsalAuthorizationGrant.SCOPE_PROFILE));
+        Assert.assertTrue(scopes.contains(AbstractMsalAuthorizationGrant.SCOPE_OFFLINE_ACCESS));
 
         Assert.assertEquals(CLIENT_ASSERTION_TYPE_JWT, queryParams.get("client_assertion_type"));
         Assert.assertEquals(ON_BEHALF_OF_USE_JWT, queryParams.get("requested_token_use"));

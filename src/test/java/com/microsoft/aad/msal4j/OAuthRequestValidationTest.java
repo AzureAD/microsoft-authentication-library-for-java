@@ -29,13 +29,7 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import org.easymock.EasyMock;
@@ -171,8 +165,17 @@ public class OAuthRequestValidationTest extends AbstractMsalTests {
         Assert.assertEquals(CLIENT_ID, queryParams.get("client_id"));
         Assert.assertEquals(CLIENT_DUMMYSECRET, queryParams.get("client_secret"));
 
-        // to do validate scopes
-        Assert.assertEquals(SCOPES, queryParams.get("scope"));
+
+        Set<String> scopes = new HashSet<>(
+                Arrays.asList(queryParams.get("scope").split(AbstractMsalAuthorizationGrant.SCOPES_DELIMITER)));
+
+        // validate custom scopes
+        Assert.assertTrue(scopes.contains(SCOPES));
+
+        // validate common scopes
+        Assert.assertTrue(scopes.contains(AbstractMsalAuthorizationGrant.SCOPE_OPEN_ID));
+        Assert.assertTrue(scopes.contains(AbstractMsalAuthorizationGrant.SCOPE_PROFILE));
+        Assert.assertTrue(scopes.contains(AbstractMsalAuthorizationGrant.SCOPE_OFFLINE_ACCESS));
 
         Assert.assertEquals("on_behalf_of", queryParams.get("requested_token_use"));
 

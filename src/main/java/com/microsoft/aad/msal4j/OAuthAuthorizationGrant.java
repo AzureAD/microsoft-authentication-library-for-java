@@ -14,31 +14,27 @@ import java.util.Set;
 class OAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
 
     private AuthorizationGrant grant;
-    private final Map<String, List<String>> params;
-
-    /**
-     * init standard scopes
-     */
-    private OAuthAuthorizationGrant() {
-        params = new LinkedHashMap<>();
-
-        params.put(SCOPE_PARAM_NAME, Collections.singletonList(COMMON_SCOPES_PARAM));
-    }
+    private final Map<String, List<String>> params = new LinkedHashMap<>();
 
     OAuthAuthorizationGrant(final AuthorizationGrant grant, Set<String> scopesSet, ClaimsRequest claims) {
         this(grant, scopesSet != null ? String.join(" ", scopesSet) : null, claims);
     }
 
-    OAuthAuthorizationGrant(final AuthorizationGrant grant, String scopes, ClaimsRequest claims) {
-        this();
-        this.grant = grant;
-
+    String addCommonScopes(String scopes){
+        String allScopes = COMMON_SCOPES_PARAM;
 
         if (!StringHelper.isBlank(scopes)) {
-            this.scopes = scopes;
-            params.put(SCOPE_PARAM_NAME,
-                    Collections.singletonList(String.join(" ",params.get(SCOPE_PARAM_NAME)) + SCOPES_DELIMITER + scopes));
+            allScopes = allScopes + SCOPES_DELIMITER + scopes;
         }
+        return allScopes;
+    }
+
+    OAuthAuthorizationGrant(final AuthorizationGrant grant, String scopes, ClaimsRequest claims) {
+        this.grant = grant;
+
+        String allScopes = addCommonScopes(scopes);
+        this.scopes = allScopes;
+        params.put(SCOPE_PARAM_NAME, Collections.singletonList(allScopes));
 
         if (claims != null) {
             this.claims = claims;
@@ -46,10 +42,21 @@ class OAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
         }
     }
 
-    OAuthAuthorizationGrant(final AuthorizationGrant grant,
-                                final Map<String, List<String>> params) {
-        this();
+    OAuthAuthorizationGrant(AuthorizationGrant grant, String scopes, Map<String, List<String>> extraParams) {
         this.grant = grant;
+
+        String allScopes = addCommonScopes(scopes);
+        this.scopes = allScopes;
+        this.params.put(SCOPE_PARAM_NAME, Collections.singletonList(allScopes));
+
+        if(extraParams != null){
+            this.params.putAll(extraParams);
+        }
+    }
+
+    OAuthAuthorizationGrant(AuthorizationGrant grant, Map<String, List<String>> params) {
+        this.grant = grant;
+
         if(params != null){
             this.params.putAll(params);
         }
@@ -72,7 +79,7 @@ class OAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
         return this.grant;
     }
 
-    Map<String, List<String>> getCustomParameters() {
+    Map<String, List<String>> getParameters() {
         return params;
     }
 }

@@ -106,7 +106,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
 
             AuthorizationGrant updatedGrant = getSAMLAuthorizationGrant(response);
 
-            authGrant = new OAuthAuthorizationGrant(updatedGrant, authGrant.getCustomParameters());
+            authGrant = new OAuthAuthorizationGrant(updatedGrant, authGrant.getParameters());
         }
         return authGrant;
     }
