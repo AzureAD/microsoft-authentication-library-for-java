@@ -5,7 +5,9 @@ package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.AuthorizationGrant;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,12 +23,13 @@ class OAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
     }
 
     String addCommonScopes(String scopes){
-        String allScopes = COMMON_SCOPES_PARAM;
+        Set<String> allScopes = new HashSet<>(
+                Arrays.asList(COMMON_SCOPES_PARAM.split(SCOPES_DELIMITER)));
 
         if (!StringHelper.isBlank(scopes)) {
-            allScopes = allScopes + SCOPES_DELIMITER + scopes;
+            allScopes.addAll(Arrays.asList(scopes.split(SCOPES_DELIMITER)));
         }
-        return allScopes;
+        return String.join(SCOPES_DELIMITER, allScopes);
     }
 
     OAuthAuthorizationGrant(final AuthorizationGrant grant, String scopes, ClaimsRequest claims) {
