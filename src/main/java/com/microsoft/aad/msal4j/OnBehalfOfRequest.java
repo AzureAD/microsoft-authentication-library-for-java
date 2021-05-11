@@ -14,6 +14,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.microsoft.aad.msal4j.AbstractMsalAuthorizationGrant.SCOPES_DELIMITER;
+
 @Accessors(fluent = true)
 @Getter
 class OnBehalfOfRequest extends MsalRequest {
@@ -37,12 +39,11 @@ class OnBehalfOfRequest extends MsalRequest {
         }
 
         Map<String, List<String>> params = new HashMap<>();
-        params.put("scope", Collections.singletonList(String.join(" ", parameters.scopes())));
         params.put("requested_token_use", Collections.singletonList("on_behalf_of"));
         if (parameters.claims() != null) {
             params.put("claims", Collections.singletonList(parameters.claims().formatAsJSONString()));
         }
 
-        return new OAuthAuthorizationGrant(jWTBearerGrant, params);
+        return new OAuthAuthorizationGrant(jWTBearerGrant, String.join(SCOPES_DELIMITER, parameters.scopes()), params);
     }
 }
