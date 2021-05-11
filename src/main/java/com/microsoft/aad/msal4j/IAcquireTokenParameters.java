@@ -9,7 +9,7 @@ import java.util.Set;
 /**
  * Parameters shared by all acquireToken methods
  */
-interface IApiParameters {
+interface IAcquireTokenParameters {
     Set<String> scopes();
     ClaimsRequest claims();
     Map<String, String> extraHttpHeaders();

@@ -24,7 +24,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty
 @Accessors(fluent = true)
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class RefreshTokenParameters implements IApiParameters {
+public class RefreshTokenParameters implements IAcquireTokenParameters {
 
     /**
      * Scopes the application is requesting access to

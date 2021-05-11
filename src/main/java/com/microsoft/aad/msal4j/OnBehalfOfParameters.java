@@ -21,7 +21,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty
 @Accessors(fluent = true)
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class OnBehalfOfParameters implements IApiParameters {
+public class OnBehalfOfParameters implements IAcquireTokenParameters {
 
     @NonNull
     private Set<String> scopes;

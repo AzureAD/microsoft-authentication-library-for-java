@@ -23,7 +23,7 @@ public class HttpHeaderTest {
                 .applicationVersion("app-version")
                 .build();
 
-        IApiParameters parameters = UserNamePasswordParameters
+        IAcquireTokenParameters parameters = UserNamePasswordParameters
                 .builder(Collections.singleton("scopes"), "username", "password".toCharArray())
                 .build();
 
@@ -50,7 +50,7 @@ public class HttpHeaderTest {
                 .builder("client-id")
                 .build();
 
-        IApiParameters parameters = UserNamePasswordParameters
+        IAcquireTokenParameters parameters = UserNamePasswordParameters
                 .builder(Collections.singleton("scopes"), "username", "password".toCharArray())
                 .build();
 
@@ -77,7 +77,7 @@ public class HttpHeaderTest {
                 .builder("client-id")
                 .build();
 
-        IApiParameters parameters = UserNamePasswordParameters
+        IAcquireTokenParameters parameters = UserNamePasswordParameters
                 .builder(Collections.singleton("scopes"), "username", "password".toCharArray())
                 .build();
 
@@ -103,7 +103,7 @@ public class HttpHeaderTest {
                 .builder("client-id")
                 .build();
 
-        IApiParameters parameters = UserNamePasswordParameters
+        IAcquireTokenParameters parameters = UserNamePasswordParameters
                 .builder(Collections.singleton("scopes"), "username", "password".toCharArray())
                 .build();
 
@@ -138,7 +138,7 @@ public class HttpHeaderTest {
         extraHttpHeaders.put(uniqueHeaderKey, uniqueHeaderValue);
         extraHttpHeaders.put(HttpHeaders.APPLICATION_NAME_HEADER_NAME, uniqueAppName);
 
-        IApiParameters parameters = UserNamePasswordParameters
+        IAcquireTokenParameters parameters = UserNamePasswordParameters
                 .builder(Collections.singleton("scopes"), "username", "password".toCharArray())
                 .extraHttpHeaders(extraHttpHeaders)
                 .build();

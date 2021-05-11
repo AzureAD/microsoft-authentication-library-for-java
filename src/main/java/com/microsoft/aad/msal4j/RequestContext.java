@@ -22,13 +22,13 @@ class RequestContext {
     private String applicationName;
     private String applicationVersion;
     private String authority;
-    private IApiParameters apiParameters;
+    private IAcquireTokenParameters apiParameters;
     private IClientApplicationBase clientApplication;
     private UserIdentifier userIdentifier;
 
     public RequestContext(AbstractClientApplicationBase clientApplication,
                           PublicApi publicApi,
-                          IApiParameters apiParameters) {
+                          IAcquireTokenParameters apiParameters) {
         this.clientApplication = clientApplication;
 
         this.clientId = StringHelper.isBlank(clientApplication.clientId()) ?
@@ -47,7 +47,7 @@ class RequestContext {
 
     public RequestContext(AbstractClientApplicationBase clientApplication,
                           PublicApi publicApi,
-                          IApiParameters apiParameters,
+                          IAcquireTokenParameters apiParameters,
                           UserIdentifier userIdentifier) {
         this(clientApplication, publicApi, apiParameters);
         this.userIdentifier = userIdentifier;

@@ -22,7 +22,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 @Accessors(fluent = true)
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class SilentParameters implements IApiParameters {
+public class SilentParameters implements IAcquireTokenParameters {
 
     /**
      * Scopes application is requesting access to.

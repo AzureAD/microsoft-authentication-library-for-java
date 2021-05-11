@@ -19,7 +19,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty
 @Accessors(fluent = true)
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class ClientCredentialParameters implements IApiParameters {
+public class ClientCredentialParameters implements IAcquireTokenParameters {
 
     /**
      * Scopes for which the application is requesting access to.

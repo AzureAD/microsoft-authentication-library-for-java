@@ -22,7 +22,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty
 @Accessors(fluent = true)
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class IntegratedWindowsAuthenticationParameters implements IApiParameters {
+public class IntegratedWindowsAuthenticationParameters implements IAcquireTokenParameters {
 
     /**
      * Scopes that the application is requesting access to

@@ -21,7 +21,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty
 @Accessors(fluent = true)
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class DeviceCodeFlowParameters implements IApiParameters {
+public class DeviceCodeFlowParameters implements IAcquireTokenParameters {
 
     /**
      * Scopes to which the application is requesting access to.
