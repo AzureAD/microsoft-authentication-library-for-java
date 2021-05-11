@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j;
 import lombok.*;
 import lombok.experimental.Accessors;
 
+import java.util.Map;
 import java.util.Set;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty;
@@ -37,6 +38,11 @@ public class ClientCredentialParameters implements IApiParameters {
      * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
      */
     private ClaimsRequest claims;
+
+    /**
+     * Adds additional headers to the token request
+     */
+    private Map<String, String> extraHttpHeaders;
 
     private static ClientCredentialParametersBuilder builder() {
 

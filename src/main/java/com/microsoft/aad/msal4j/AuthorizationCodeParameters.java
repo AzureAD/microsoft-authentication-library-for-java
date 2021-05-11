@@ -7,6 +7,7 @@ import lombok.*;
 import lombok.experimental.Accessors;
 
 import java.net.URI;
+import java.util.Map;
 import java.util.Set;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotBlank;
@@ -50,6 +51,11 @@ public class AuthorizationCodeParameters implements IApiParameters {
      * Code verifier used for PKCE. For more details, see https://tools.ietf.org/html/rfc7636
      */
     private String codeVerifier;
+
+    /**
+     * Adds additional headers to the token request
+     */
+    private Map<String, String> extraHttpHeaders;
 
     private static AuthorizationCodeParametersBuilder builder() {
 

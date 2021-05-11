@@ -12,6 +12,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.net.URI;
+import java.util.Map;
 import java.util.Set;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
@@ -73,6 +74,11 @@ public class InteractiveRequestParameters implements IApiParameters {
     private SystemBrowserOptions systemBrowserOptions;
 
     private String claimsChallenge;
+
+    /**
+     * Adds additional headers to the token request
+     */
+    private Map<String, String> extraHttpHeaders;
 
     /**
      * If set to true, the authorization result will contain the authority for the user's home cloud, and this authority

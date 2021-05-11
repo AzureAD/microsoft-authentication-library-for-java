@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j;
 import lombok.*;
 import lombok.experimental.Accessors;
 
+import java.util.Map;
 import java.util.Set;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotBlank;
@@ -30,15 +31,21 @@ public class IntegratedWindowsAuthenticationParameters implements IApiParameters
     private Set<String> scopes;
 
     /**
+     * Identifier of user account for which to acquire tokens for
+     */
+    @NonNull
+    private String username;
+
+    /**
      * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
      */
     private ClaimsRequest claims;
 
     /**
-     * Identifier of user account for which to acquire tokens for
+     * Adds additional headers to the token request
      */
-    @NonNull
-    private String username;
+    private Map<String, String> extraHttpHeaders;
+
 
     private static IntegratedWindowsAuthenticationParametersBuilder builder() {
 

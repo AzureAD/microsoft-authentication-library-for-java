@@ -26,20 +26,20 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
     private HttpListener httpListener;
 
     AcquireTokenByInteractiveFlowSupplier(PublicClientApplication clientApplication,
-                                          InteractiveRequest request){
+                                          InteractiveRequest request) {
         super(clientApplication, request);
         this.clientApplication = clientApplication;
         this.interactiveRequest = request;
     }
 
     @Override
-    AuthenticationResult execute() throws Exception{
+    AuthenticationResult execute() throws Exception {
         AuthorizationResult authorizationResult = getAuthorizationResult();
         validateState(authorizationResult);
         return acquireTokenWithAuthorizationCode(authorizationResult);
     }
 
-    private AuthorizationResult getAuthorizationResult(){
+    private AuthorizationResult getAuthorizationResult() {
 
         AuthorizationResult result;
         try {
@@ -61,18 +61,18 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
                 openDefaultSystemBrowser(interactiveRequest.authorizationUrl());
             }
 
-             result = getAuthorizationResultFromHttpListener();
+            result = getAuthorizationResultFromHttpListener();
         } finally {
-            if(httpListener != null){
+            if (httpListener != null) {
                 httpListener.stopListener();
             }
         }
         return result;
     }
 
-    private void validateState(AuthorizationResult authorizationResult){
-        if(StringHelper.isBlank(authorizationResult.state()) ||
-                !authorizationResult.state().equals(interactiveRequest.state())){
+    private void validateState(AuthorizationResult authorizationResult) {
+        if (StringHelper.isBlank(authorizationResult.state()) ||
+                !authorizationResult.state().equals(interactiveRequest.state())) {
 
             throw new MsalClientException("State returned in authorization result is blank or does " +
                     "not match state sent on outgoing request",
@@ -80,7 +80,7 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
         }
     }
 
-    private void startHttpListener(AuthorizationResponseHandler handler){
+    private void startHttpListener(AuthorizationResponseHandler handler) {
         // if port is unspecified, set to 0, which will cause socket to find a free port
         int port = interactiveRequest.interactiveRequestParameters().redirectUri().getPort() == -1 ?
                 0 :
@@ -91,24 +91,24 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
 
         //If no port is passed, http listener finds a free one. We should update redirect URL to
         // point to this port.
-        if(port != httpListener.port()){
+        if (port != httpListener.port()) {
             updateRedirectUrl();
         }
     }
 
-    private void updateRedirectUrl(){
+    private void updateRedirectUrl() {
         try {
             URI updatedRedirectUrl = new URI("http://localhost:" + httpListener.port());
             interactiveRequest.interactiveRequestParameters().redirectUri(updatedRedirectUrl);
             LOG.debug("Redirect URI updated to" + updatedRedirectUrl);
-        } catch (URISyntaxException ex){
+        } catch (URISyntaxException ex) {
             throw new MsalClientException("Error updating redirect URI. Not a valid URI format",
                     AuthenticationErrorCode.INVALID_REDIRECT_URI);
         }
     }
 
-    private void openDefaultSystemBrowser(URL url){
-        try{
+    private void openDefaultSystemBrowser(URL url) {
+        try {
             if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
                 Desktop.getDesktop().browse(url.toURI());
                 LOG.debug("Opened default system browser");
@@ -116,23 +116,23 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
                 throw new MsalClientException("Unable to open default system browser",
                         AuthenticationErrorCode.DESKTOP_BROWSER_NOT_SUPPORTED);
             }
-        } catch(URISyntaxException | IOException ex){
+        } catch (URISyntaxException | IOException ex) {
             throw new MsalClientException(ex);
         }
     }
 
-    private AuthorizationResult getAuthorizationResultFromHttpListener(){
+    private AuthorizationResult getAuthorizationResultFromHttpListener() {
         AuthorizationResult result = null;
         try {
             LOG.debug("Listening for authorization result");
             long expirationTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) + 120;
 
-            while(result == null && !interactiveRequest.futureReference().get().isCancelled() &&
+            while (result == null && !interactiveRequest.futureReference().get().isCancelled() &&
                     TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) < expirationTime) {
 
                 result = authorizationResultQueue.poll(100, TimeUnit.MILLISECONDS);
             }
-        } catch(Exception e){
+        } catch (Exception e) {
             throw new MsalClientException(e);
         }
 
@@ -144,7 +144,7 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
     }
 
     private AuthenticationResult acquireTokenWithAuthorizationCode(AuthorizationResult authorizationResult)
-            throws Exception{
+            throws Exception {
         AuthorizationCodeParameters parameters = AuthorizationCodeParameters
                 .builder(authorizationResult.code(), interactiveRequest.interactiveRequestParameters().redirectUri())
                 .scopes(interactiveRequest.interactiveRequestParameters().scopes())
@@ -152,10 +152,16 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
                 .claims(interactiveRequest.interactiveRequestParameters().claims())
                 .build();
 
+        RequestContext context = new RequestContext(
+                clientApplication,
+                PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE,
+                parameters,
+                interactiveRequest.requestContext().userIdentifier());
+
         AuthorizationCodeRequest authCodeRequest = new AuthorizationCodeRequest(
                 parameters,
                 clientApplication,
-                clientApplication.createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
+                context);
 
         Authority authority;
 
@@ -171,10 +177,10 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
         }
 
         AcquireTokenByAuthorizationGrantSupplier acquireTokenByAuthorizationGrantSupplier =
-            new AcquireTokenByAuthorizationGrantSupplier(
-                    clientApplication,
-                    authCodeRequest,
-                    authority);
+                new AcquireTokenByAuthorizationGrantSupplier(
+                        clientApplication,
+                        authCodeRequest,
+                        authority);
 
         return acquireTokenByAuthorizationGrantSupplier.execute();
     }

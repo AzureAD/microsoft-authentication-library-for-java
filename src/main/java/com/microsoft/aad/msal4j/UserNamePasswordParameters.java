@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j;
 import lombok.*;
 import lombok.experimental.Accessors;
 
+import java.util.Map;
 import java.util.Set;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotBlank;
@@ -30,11 +31,6 @@ public class UserNamePasswordParameters implements IApiParameters {
     private Set<String> scopes;
 
     /**
-     * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
-     */
-    private ClaimsRequest claims;
-
-    /**
      * Username of the account
      */
     @NonNull
@@ -45,6 +41,16 @@ public class UserNamePasswordParameters implements IApiParameters {
      */
     @NonNull
     private char[] password;
+
+    /**
+     * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
+     */
+    private ClaimsRequest claims;
+
+    /**
+     * Adds additional headers to the token request
+     */
+    private Map<String, String> extraHttpHeaders;
 
     public char[] password(){
         return password.clone();

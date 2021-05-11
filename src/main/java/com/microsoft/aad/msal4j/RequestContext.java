@@ -24,6 +24,7 @@ class RequestContext {
     private String authority;
     private IApiParameters apiParameters;
     private IClientApplicationBase clientApplication;
+    private UserIdentifier userIdentifier;
 
     public RequestContext(AbstractClientApplicationBase clientApplication,
                           PublicApi publicApi,
@@ -42,6 +43,14 @@ class RequestContext {
         this.publicApi = publicApi;
         this.authority = clientApplication.authority();
         this.apiParameters = apiParameters;
+    }
+
+    public RequestContext(AbstractClientApplicationBase clientApplication,
+                          PublicApi publicApi,
+                          IApiParameters apiParameters,
+                          UserIdentifier userIdentifier) {
+        this(clientApplication, publicApi, apiParameters);
+        this.userIdentifier = userIdentifier;
     }
 
     private static String generateNewCorrelationId() {

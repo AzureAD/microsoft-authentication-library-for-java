@@ -28,10 +28,15 @@ class AcquireTokenByOnBehalfOfSupplier extends AuthenticationResultSupplier {
                         .claims(this.onBehalfOfRequest.parameters.claims())
                         .build();
 
+                RequestContext context = new RequestContext(
+                        this.clientApplication,
+                        PublicApi.ACQUIRE_TOKEN_SILENTLY,
+                        parameters);
+
                 SilentRequest silentRequest = new SilentRequest(
                         parameters,
                         this.clientApplication,
-                        this.clientApplication.createRequestContext(PublicApi.ACQUIRE_TOKEN_SILENTLY, parameters),
+                        context,
                         onBehalfOfRequest.parameters.userAssertion());
 
                 AcquireTokenSilentSupplier supplier = new AcquireTokenSilentSupplier(
