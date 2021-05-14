@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Array;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -17,7 +16,7 @@ class ServerSideTelemetry {
 
     private final static Logger log = LoggerFactory.getLogger(ServerSideTelemetry.class);
 
-    private final static String SCHEMA_VERSION = "2";
+    private final static String SCHEMA_VERSION = "5";
     private final static String SCHEMA_PIPE_DELIMITER = "|";
     private final static String SCHEMA_COMMA_DELIMITER = ",";
     private final static String CURRENT_REQUEST_HEADER_NAME = "x-client-current-telemetry";
@@ -69,6 +68,12 @@ class ServerSideTelemetry {
                 currentRequest.publicApi().getApiId() +
                 SCHEMA_COMMA_DELIMITER +
                 currentRequest.forceRefresh() +
+                SCHEMA_COMMA_DELIMITER +
+                currentRequest.regionUsed() +
+                SCHEMA_COMMA_DELIMITER +
+                currentRequest.regionSource() +
+                SCHEMA_COMMA_DELIMITER +
+                currentRequest.regionOutcome() +
                 SCHEMA_PIPE_DELIMITER;
 
         if (currentRequestHeader.getBytes(StandardCharsets.UTF_8).length > CURRENT_REQUEST_MAX_SIZE) {

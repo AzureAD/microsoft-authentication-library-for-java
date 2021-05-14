@@ -129,33 +129,58 @@ class AadInstanceDiscoveryProvider {
                                                                              MsalRequest msalRequest,
                                                                              ServiceBundle serviceBundle) {
 
-        String region = StringHelper.EMPTY_STRING;
         IHttpResponse httpResponse = null;
+        String providedRegion = msalRequest.application().azureRegion();
+        String detectedRegion = null;
+        int regionOutcome = 0;
+        String regionToUse = null;
 
-        //If the autoDetectRegion parameter in the request is set, attempt to discover the region
-        if (msalRequest.application().autoDetectRegion()) {
-            region = discoverRegion(msalRequest, serviceBundle);
+        //If a region was provided by a developer or they set the autoDetectRegion parameter,
+        // attempt to discover the region and set telemetry info based on the outcome
+        if (providedRegion != null) {
+            detectedRegion = discoverRegion(msalRequest, serviceBundle);
+            regionToUse = providedRegion;
+
+            if (detectedRegion == null) {
+                regionOutcome = RegionTelemetry.REGION_OUTCOME_DEVELOPER_AUTODETECT_FAILED.telemetryValue;
+            } else if (providedRegion.equals(detectedRegion)) {
+                regionOutcome = RegionTelemetry.REGION_OUTCOME_DEVELOPER_AUTODETECT_MATCH.telemetryValue;
+            } else {
+                regionOutcome = RegionTelemetry.REGION_OUTCOME_DEVELOPER_AUTODETECT_MISMATCH.telemetryValue;
+            }
+        } else if (msalRequest.application().autoDetectRegion()) {
+            detectedRegion = discoverRegion(msalRequest, serviceBundle);
+
+            if (detectedRegion != null) {
+                regionToUse = detectedRegion;
+                regionOutcome = RegionTelemetry.REGION_OUTCOME_AUTODETECT_SUCCESS.telemetryValue;
+            } else {
+                regionOutcome = RegionTelemetry.REGION_OUTCOME_AUTODETECT_FAILED.telemetryValue;
+            }
         }
 
         //If the region is known, attempt to make instance discovery request with region endpoint
-        if (!region.isEmpty()) {
-            String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpointWithRegion(authorityUrl.getAuthority(), region) +
+        if (regionToUse != null) {
+            String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpointWithRegion(authorityUrl.getAuthority(), regionToUse) +
                     formInstanceDiscoveryParameters(authorityUrl);
 
-            httpResponse = httpRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
+            try {
+                httpResponse = httpRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
+            } catch (MsalClientException ex) {
+                log.warn("Could not retrieve regional instance discovery metadata, falling back to global endpoint");
+            }
         }
 
         //If the region is unknown or the instance discovery failed at the region endpoint, try the global endpoint
-        if (region.isEmpty() || httpResponse == null || httpResponse.statusCode() != HTTPResponse.SC_OK) {
-            if (!region.isEmpty()) {
-                log.warn("Could not retrieve regional instance discovery metadata, falling back to global endpoint");
-            }
+        if ((detectedRegion == null && providedRegion == null) || httpResponse == null || httpResponse.statusCode() != HTTPResponse.SC_OK) {
 
             String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpoint(authorityUrl.getAuthority()) +
                     formInstanceDiscoveryParameters(authorityUrl);
 
             httpResponse = httpRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
         }
+
+        serviceBundle.getServerSideTelemetry().getCurrentRequest().regionOutcome(regionOutcome);
 
         return JsonHelper.convertJsonToObject(httpResponse.body(), AadInstanceDiscoveryResponse.class);
     }
@@ -180,9 +205,12 @@ class AadInstanceDiscoveryProvider {
 
     private static String discoverRegion(MsalRequest msalRequest, ServiceBundle serviceBundle) {
 
+        CurrentRequest currentRequest = serviceBundle.getServerSideTelemetry().getCurrentRequest();
+
         //Check if the REGION_NAME environment variable has a value for the region
         if (System.getenv(REGION_NAME) != null) {
             log.info("Region found in environment variable: " + System.getenv(REGION_NAME));
+            currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_ENV_VARIABLE.telemetryValue);
 
             return System.getenv(REGION_NAME);
         }
@@ -196,17 +224,21 @@ class AadInstanceDiscoveryProvider {
             //If call to IMDS endpoint was successful, return region from response body
             if (httpResponse.statusCode() == HTTPResponse.SC_OK && !httpResponse.body().isEmpty()) {
                 log.info("Region retrieved from IMDS endpoint: " + httpResponse.body());
+                currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_IMDS.telemetryValue);
 
                 return httpResponse.body();
             }
 
             log.warn(String.format("Call to local IMDS failed with status code: %s, or response was empty", httpResponse.statusCode()));
+            currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_FAILED_AUTODETECT.telemetryValue);
 
-            return StringHelper.EMPTY_STRING;
+            return null;
         } catch (Exception e) {
             //IMDS call failed, cannot find region
             log.warn(String.format("Exception during call to local IMDS endpoint: %s", e.getMessage()));
-            return StringHelper.EMPTY_STRING;
+            currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_FAILED_AUTODETECT.telemetryValue);
+
+            return null;
         }
     }
 
