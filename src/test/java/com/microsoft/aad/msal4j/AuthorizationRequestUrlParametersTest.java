@@ -126,5 +126,8 @@ public class AuthorizationRequestUrlParametersTest {
         Assert.assertEquals(queryParameters.get("login_hint"), "hint");
         Assert.assertEquals(queryParameters.get("domain_hint"), "domain_hint");
         Assert.assertEquals(queryParameters.get("claims"), "{\"id_token\":{\"auth_time\":{\"essential\":true}},\"access_token\":{\"auth_time\":{\"essential\":true},\"xms_cc\":{\"values\":[\"llt\",\"ssm\"]}}}");
+
+        // CCS routing
+        Assert.assertEquals(queryParameters.get(HttpHeaders.X_ANCHOR_MAILBOX), String.format(HttpHeaders.X_ANCHOR_MAILBOX_UPN_FORMAT, "hint"));
     }
 }
