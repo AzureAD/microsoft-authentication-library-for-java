@@ -39,8 +39,8 @@ final class HttpHeaders {
 
     // Used for CCS routing
     static final String X_ANCHOR_MAILBOX = "X-AnchorMailbox";
-    private static final String X_ANCHOR_MAILBOX_OID_FORMAT = "oid:%s";
-    private static final String X_ANCHOR_MAILBOX_UPN_FORMAT = "upn:%s";
+    static final String X_ANCHOR_MAILBOX_OID_FORMAT = "oid:%s";
+    static final String X_ANCHOR_MAILBOX_UPN_FORMAT = "upn:%s";
     private String anchorMailboxHeaderValue = null;
 
     private String headerValues;

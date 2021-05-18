@@ -38,7 +38,7 @@ public class UserIdentifier {
         if (homeAccountIdParts.length < 2
                 || StringHelper.isBlank(homeAccountIdParts[0])
                 || StringHelper.isBlank(homeAccountIdParts[1])) {
-            userIdentifier.oid = StringHelper.EMPTY_STRING;
+            userIdentifier.oid = null;
             return userIdentifier;
         }
 

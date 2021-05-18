@@ -92,7 +92,7 @@ public class HttpHeaderTest {
 
         Map<String, String> httpHeaderMap = httpHeaders.getReadonlyHeaderMap();
 
-        String expectedValue = String.format("%s:%s", "upn", upn);
+        String expectedValue = String.format(HttpHeaders.X_ANCHOR_MAILBOX_UPN_FORMAT, upn);
         Assert.assertEquals(httpHeaderMap.get(HttpHeaders.X_ANCHOR_MAILBOX), expectedValue);
     }
 
@@ -131,11 +131,14 @@ public class HttpHeaderTest {
                 .applicationVersion("app-version")
                 .build();
 
+        // Adding extra header
         String uniqueHeaderKey = "uniqueHeader";
         String uniqueHeaderValue = "uniqueValue";
-        String uniqueAppName = "my-unique-app-name";
         Map<String, String> extraHttpHeaders = new HashMap<>();
         extraHttpHeaders.put(uniqueHeaderKey, uniqueHeaderValue);
+
+        // Overwriting standard header
+        String uniqueAppName = "my-unique-app-name";
         extraHttpHeaders.put(HttpHeaders.APPLICATION_NAME_HEADER_NAME, uniqueAppName);
 
         IAcquireTokenParameters parameters = UserNamePasswordParameters
@@ -150,13 +153,18 @@ public class HttpHeaderTest {
 
         Map<String, String> httpHeaderMap = httpHeaders.getReadonlyHeaderMap();
 
+        // Standard headers
         Assert.assertEquals(httpHeaderMap.get(HttpHeaders.PRODUCT_HEADER_NAME), HttpHeaders.PRODUCT_HEADER_VALUE);
         Assert.assertEquals(httpHeaderMap.get(HttpHeaders.PRODUCT_VERSION_HEADER_NAME), HttpHeaders.PRODUCT_VERSION_HEADER_VALUE);
         Assert.assertEquals(httpHeaderMap.get(HttpHeaders.OS_HEADER_NAME), HttpHeaders.OS_HEADER_VALUE);
         Assert.assertEquals(httpHeaderMap.get(HttpHeaders.CPU_HEADER_NAME), HttpHeaders.CPU_HEADER_VALUE);
-        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.APPLICATION_NAME_HEADER_NAME), uniqueAppName);
-        Assert.assertEquals(httpHeaderMap.get(uniqueHeaderKey), uniqueHeaderValue);
         Assert.assertEquals(httpHeaderMap.get(HttpHeaders.APPLICATION_VERSION_HEADER_NAME), "app-version");
         Assert.assertEquals(httpHeaderMap.get(HttpHeaders.CORRELATION_ID_HEADER_NAME), "correlation-id");
+
+        // Overwritten standard header
+        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.APPLICATION_NAME_HEADER_NAME), uniqueAppName);
+
+        // Extra header
+        Assert.assertEquals(httpHeaderMap.get(uniqueHeaderKey), uniqueHeaderValue);
     }
 }
