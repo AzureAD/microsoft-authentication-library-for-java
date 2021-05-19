@@ -21,7 +21,7 @@ class AcquireTokenByOnBehalfOfSupplier extends AuthenticationResultSupplier {
     AuthenticationResult execute() throws Exception {
         if (onBehalfOfRequest.parameters.skipCache() != null &&
                 !onBehalfOfRequest.parameters.skipCache()) {
-            LOG.info("SkipCache set to false. Attempting cache lookup");
+            LOG.debug("SkipCache set to false. Attempting cache lookup");
             try {
                 SilentParameters parameters = SilentParameters
                         .builder(this.onBehalfOfRequest.parameters.scopes())
@@ -45,7 +45,7 @@ class AcquireTokenByOnBehalfOfSupplier extends AuthenticationResultSupplier {
             }
         }
 
-        LOG.info("SkipCache set to true. Skipping cache lookup and attempting on-behalf-of request");
+        LOG.debug("SkipCache set to true. Skipping cache lookup and attempting on-behalf-of request");
         return acquireTokenOnBehalfOf();
     }
 
