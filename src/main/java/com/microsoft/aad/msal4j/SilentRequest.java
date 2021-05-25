@@ -30,7 +30,9 @@ class SilentRequest extends MsalRequest {
                 application.authenticationAuthority :
                 Authority.createAuthority(new URL(parameters.authorityUrl()));
 
-        application.getServiceBundle().getServerSideTelemetry().getCurrentRequest().forceRefresh(
-                parameters.forceRefresh());
+        if (parameters.forceRefresh()) {
+            application.getServiceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
+                    CacheTelemetry.REFRESH_FORCE_REFRESH.telemetryValue);
+        }
     }
 }

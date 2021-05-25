@@ -29,7 +29,6 @@ public class ServerTelemetryTests {
     public void serverTelemetryHeaders_correctSchema(){
 
         CurrentRequest currentRequest = new CurrentRequest(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE);
-        currentRequest.forceRefresh(false);
 
         ServerSideTelemetry serverSideTelemetry = new ServerSideTelemetry();
         serverSideTelemetry.setCurrentRequest(currentRequest);
@@ -42,14 +41,14 @@ public class ServerTelemetryTests {
         //Current request tests
         List<String> currentRequestHeader = Arrays.asList(headers.get(CURRENT_REQUEST_HEADER_NAME).split("\\|"));
 
-        // ["5", "831, false"]
+        // ["5", "831,"]
         Assert.assertEquals(currentRequestHeader.size(), 2);
         Assert.assertEquals(currentRequestHeader.get(0), SCHEMA_VERSION);
 
-        // ["831", "false"]
+        // ["831", ""]
         List<String> secondSegment = Arrays.asList(currentRequestHeader.get(1).split(","));
         Assert.assertEquals(secondSegment.get(0), String.valueOf(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE.getApiId()));
-        Assert.assertEquals(secondSegment.get(1), "false");
+        Assert.assertEquals(secondSegment.get(1), "");
 
 
         // Previous request test
