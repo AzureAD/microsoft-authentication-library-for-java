@@ -42,7 +42,7 @@ public class WSTrustResponseTest {
         Assert.assertNotNull(response);
     }
 
-    @Test(expectedExceptions = Exception.class, expectedExceptionsMessageRegExp = "Server returned error in RSTR - ErrorCode: RequestFailed : FaultMessage: MSIS3127: The specified request failed.")
+    @Test(expectedExceptions = MsalServiceException.class, expectedExceptionsMessageRegExp = "Server returned error in RSTR - ErrorCode: RequestFailed. FaultMessage: MSIS3127: The specified request failed.")
     public void testWSTrustResponseParseError() throws Exception {
 
         StringBuilder sb = new StringBuilder();
