@@ -21,7 +21,7 @@ class AcquireTokenByClientCredentialSupplier extends AuthenticationResultSupplie
     AuthenticationResult execute() throws Exception {
         if (clientCredentialRequest.parameters.skipCache() != null &&
                 !clientCredentialRequest.parameters.skipCache()) {
-            LOG.info("SkipCache set to false. Attempting cache lookup");
+            LOG.debug("SkipCache set to false. Attempting cache lookup");
             try {
                 SilentParameters parameters = SilentParameters
                         .builder(this.clientCredentialRequest.parameters.scopes())
@@ -45,7 +45,7 @@ class AcquireTokenByClientCredentialSupplier extends AuthenticationResultSupplie
             }
         }
 
-        LOG.info("SkipCache set to true. Skipping cache lookup and attempting client credentials request");
+        LOG.debug("SkipCache set to true. Skipping cache lookup and attempting client credentials request");
         return acquireTokenByClientCredential();
     }
 
