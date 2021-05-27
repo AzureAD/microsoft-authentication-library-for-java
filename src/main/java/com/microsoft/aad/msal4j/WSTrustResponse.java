@@ -12,6 +12,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
@@ -83,9 +84,10 @@ class WSTrustResponse {
             if (StringHelper.isBlank(responseValue.faultMessage)) {
                 responseValue.faultMessage = "NONE";
             }
-            throw new Exception("Server returned error in RSTR - ErrorCode: "
-                    + responseValue.errorCode + " : FaultMessage: "
-                    + responseValue.faultMessage.trim());
+            throw new MsalServiceException(
+                    String.format("Server returned error in RSTR - ErrorCode: %s. FaultMessage: %s",
+                            responseValue.errorCode, responseValue.faultMessage.trim()),
+                            AuthenticationErrorCode.WSTRUST_SERVICE_ERROR);
         }
         else {
             parseToken(responseValue, xmlDocument, xPath, version);
@@ -125,9 +127,10 @@ class WSTrustResponse {
                     version.responseSecurityTokenPath()).evaluate(
                     tokenTypeNode.getParentNode(), XPathConstants.NODESET);
             if (requestedTokenNodes.getLength() > 1) {
-                throw new Exception(
-                        "Found too many RequestedSecurityToken nodes for token type: "
-                                + responseValue.tokenType);
+                throw new MsalClientException(
+                        String.format("Error parsing WSTrustResponse: Found too many " +
+                                "RequestedSecurityToken nodes for token type %s", responseValue.tokenType),
+                        AuthenticationErrorCode.WSTRUST_INVALID_RESPONSE);
             }
             if (requestedTokenNodes.getLength() == 0) {
                 String msg = "Unable to find RequestsSecurityToken element associated with TokenType element: "
@@ -150,12 +153,13 @@ class WSTrustResponse {
         }
 
         if (StringHelper.isBlank(responseValue.token)) {
-            throw new Exception("Unable to find any tokens in RSTR");
+            throw new MsalClientException("Error parsing WSTrustResponse: Unable to find any tokens in RSTR",
+                    AuthenticationErrorCode.WSTRUST_INVALID_RESPONSE);
         }
     }
 
     private static boolean parseError(WSTrustResponse responseValue,
-            Document xmlDocument, XPath xPath) throws Exception {
+            Document xmlDocument, XPath xPath) throws XPathExpressionException {
         boolean errorFound = false;
 
         NodeList faultNodes = (NodeList) xPath.compile(
@@ -173,8 +177,8 @@ class WSTrustResponse {
                 "//s:Envelope/s:Body/s:Fault/s:Code/s:Subcode/s:Value")
                 .evaluate(xmlDocument, XPathConstants.NODESET);
         if (subcodeNodes.getLength() > 1) {
-            throw new Exception("Found too many fault code values:"
-                    + subcodeNodes.getLength());
+            throw new MsalClientException(String.format("Error parsing WSTrustResponse: Found too many fault code values: %s",
+                    subcodeNodes.getLength()), AuthenticationErrorCode.WSTRUST_INVALID_RESPONSE);
         }
 
         if (subcodeNodes.getLength() == 1) {
@@ -195,7 +199,6 @@ class WSTrustResponse {
                     .newTransformer();
             transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION,
                     "yes");
-            // transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 
             StringWriter sw = new StringWriter();
             StreamResult streamResult = new StreamResult(sw);

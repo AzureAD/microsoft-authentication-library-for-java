@@ -51,6 +51,10 @@ class DeviceCodeFlowRequest extends MsalRequest {
                 this.requestContext(),
                 serviceBundle);
 
+        if(response.statusCode() != HttpHelper.HTTP_STATUS_200){
+            throw MsalServiceExceptionFactory.fromHttpResponse(response);
+        }
+
         return parseJsonToDeviceCodeAndSetParameters(response.body(), headers, clientId);
     }
 

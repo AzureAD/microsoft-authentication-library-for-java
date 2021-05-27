@@ -8,18 +8,19 @@ import java.util.Map;
 
 class UserDiscoveryRequest {
 
-    // private final static Logger log = LoggerFactory.getLogger(UserDiscoveryRequest.class);
-
-    private final static Map<String, String> HEADERS;
+    private static final Map<String, String> HEADERS;
 
     static {
         HEADERS = new HashMap<>();
         HEADERS.put("Accept", "application/json, text/javascript, */*");
     }
 
+    private UserDiscoveryRequest() {
+    }
+
     static UserDiscoveryResponse execute(
             final String uri,
-            final Map<String, String> clientDataHeaders,
+            Map<String, String> clientDataHeaders,
             RequestContext requestContext,
             ServiceBundle serviceBundle) {
 
@@ -29,6 +30,9 @@ class UserDiscoveryRequest {
         HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, uri, headers);
         IHttpResponse response = HttpHelper.executeHttpRequest(httpRequest, requestContext, serviceBundle);
 
+        if (response.statusCode() != HttpHelper.HTTP_STATUS_200) {
+            throw MsalServiceExceptionFactory.fromHttpResponse(response);
+        }
         return JsonHelper.convertJsonToObject(response.body(), UserDiscoveryResponse.class);
     }
 }
