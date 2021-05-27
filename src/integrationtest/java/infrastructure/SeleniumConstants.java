@@ -47,4 +47,7 @@ public class SeleniumConstants {
     final static String B2C_LOCAL_USERNAME_ID = "cred_userid_inputtext";
     final static String B2C_LOCAL_PASSWORD_ID = "cred_password_inputtext";
     final static String B2C_LOCAL_SIGN_IN_BUTTON_ID = "cred_sign_in_button";
+
+    // Stay signed in?
+    final static String STAY_SIGN_IN_NO_BUTTON_ID = "idBtn_Back";
 }

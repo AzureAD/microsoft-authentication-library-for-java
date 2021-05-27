@@ -16,6 +16,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
 
 public class AcquireTokenInteractiveIT extends SeleniumTest {
     private final static Logger LOG = LoggerFactory.getLogger(AuthorizationCodeIT.class);
@@ -166,6 +167,77 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         Assert.assertNotEquals(pca.authenticationAuthority.host, result.environment());
         Assert.assertEquals(result.account().environment(), result.environment());
         Assert.assertEquals(result.account().environment(), pca.getAccounts().join().iterator().next().environment());
+    }
+
+    @Test
+    public void acquireTokensInHomeAndGuestClouds_ArlingtonAccount() throws MalformedURLException, ExecutionException, InterruptedException {
+        String AUTHORITY_ARLINGTON = "https://login.microsoftonline.us/arlmsidlab1.onmicrosoft.us";
+
+        acquireTokensInHomeAndGuestClouds(AzureEnvironment.AZURE_US_GOVERNMENT, AUTHORITY_ARLINGTON);
+    }
+
+    //@Test
+    // uncomment when mooncake account will be available
+    public void acquireTokensInHomeAndGuestClouds_MooncakeAccount() throws MalformedURLException, ExecutionException, InterruptedException {
+        String AUTHORITY_MOONCAKE = "https://login.chinacloudapi.cn/mncmsidlab1.partner.onmschina.cn";
+
+        acquireTokensInHomeAndGuestClouds(AzureEnvironment.AZURE_CHINA, AUTHORITY_MOONCAKE);
+    }
+
+    public void acquireTokensInHomeAndGuestClouds(String homeCloud, String homeCloudAuthority) throws MalformedURLException, ExecutionException, InterruptedException {
+        String AUTHORITY_PUBLIC_TENANT_SPECIFIC = "https://login.microsoftonline.com/msidlab4.onmicrosoft.com";
+        String SCOPE = "user.read";
+
+        User user = labUserProvider.getUserByGuestHomeAzureEnvironments
+                (AzureEnvironment.AZURE, homeCloud);
+
+        // use user`s upn from home cloud
+        user.setUpn(user.getHomeUPN());
+
+        ITokenCacheAccessAspect persistenceAspect = new ITokenCacheAccessAspect() {
+            String data;
+            @Override
+            public void beforeCacheAccess(ITokenCacheAccessContext iTokenCacheAccessContext) {
+                iTokenCacheAccessContext.tokenCache().deserialize(data);
+            }
+            @Override
+            public void afterCacheAccess(ITokenCacheAccessContext iTokenCacheAccessContext) {
+                data = iTokenCacheAccessContext.tokenCache().serialize();
+            }
+        };
+
+        PublicClientApplication publicCloudPca = PublicClientApplication.builder(
+                user.getAppId()).
+                authority(AUTHORITY_PUBLIC_TENANT_SPECIFIC).setTokenCacheAccessAspect(persistenceAspect).
+                build();
+
+        IAuthenticationResult result = acquireTokenInteractive(user, publicCloudPca, SCOPE);
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.accessToken());
+        Assert.assertNotNull(result.idToken());
+        Assert.assertEquals(user.getHomeUPN(), result.account().username());
+
+        cleanUp();
+        startUpBrowser();
+
+        PublicClientApplication homeCloudPca = PublicClientApplication.builder(
+                user.getAppId()).
+                authority(homeCloudAuthority).setTokenCacheAccessAspect(persistenceAspect).
+                build();
+
+        result = acquireTokenInteractive(user, homeCloudPca, SCOPE);
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.accessToken());
+        Assert.assertNotNull(result.idToken());
+        Assert.assertEquals(user.getHomeUPN(), result.account().username());
+
+        Assert.assertEquals(homeCloudPca.getAccounts().join().size(), 1);
+        Assert.assertEquals(publicCloudPca.getAccounts().join().size(), 1);
+
+        publicCloudPca.removeAccount(publicCloudPca.getAccounts().join().iterator().next()).join();
+
+        Assert.assertEquals(homeCloudPca.getAccounts().join().size(), 0);
+        Assert.assertEquals(publicCloudPca.getAccounts().join().size(), 0);
     }
 
     private IAuthenticationResult acquireTokenInteractive(

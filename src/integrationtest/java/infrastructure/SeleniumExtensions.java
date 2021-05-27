@@ -3,7 +3,6 @@
 
 package infrastructure;
 
-import com.microsoft.aad.msal4j.TestConstants;
 import labapi.FederationProvider;
 import labapi.LabConstants;
 import labapi.User;
@@ -12,10 +11,12 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,8 +42,8 @@ public class SeleniumExtensions {
         return driver;
 }
 
-    public static WebElement waitForElementToBeVisibleAndEnable(WebDriver driver, By by){
-        WebDriverWait webDriverWait = new WebDriverWait(driver, 15);
+    public static WebElement waitForElementToBeVisibleAndEnable(WebDriver driver, By by, int timeOutInSeconds) {
+        WebDriverWait webDriverWait = new WebDriverWait(driver, timeOutInSeconds);
         return webDriverWait.until((dr) ->
         {
             try {
@@ -52,9 +53,15 @@ public class SeleniumExtensions {
                 }
                 return null;
             } catch (StaleElementReferenceException e) {
-            return null;
+                return null;
             }
         });
+    }
+
+    public static WebElement waitForElementToBeVisibleAndEnable(WebDriver driver, By by){
+        int DEFAULT_TIMEOUT_IN_SEC = 15;
+
+        return waitForElementToBeVisibleAndEnable(driver, by, DEFAULT_TIMEOUT_IN_SEC);
     }
 
     public static void performADLogin(WebDriver driver, User user){
@@ -81,8 +88,33 @@ public class SeleniumExtensions {
         waitForElementToBeVisibleAndEnable(driver, by).sendKeys(user.getPassword());
 
         LOG.info("Loggin in ... click submit");
-         waitForElementToBeVisibleAndEnable(driver, new By.ById(fields.getPasswordSigInButtonId())).
+        waitForElementToBeVisibleAndEnable(driver, new By.ById(fields.getPasswordSigInButtonId())).
                 click();
+
+        try {
+            checkAuthenticationCompletePage(driver);
+            return;
+        } catch (TimeoutException ex) {
+        }
+
+        try {
+            LOG.info("Stay signed in ? ... click NO");
+            waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.STAY_SIGN_IN_NO_BUTTON_ID), 5).
+                    click();
+        }
+        catch (TimeoutException ex){
+        }
+    }
+
+    private static void checkAuthenticationCompletePage(WebDriver driver) {
+        (new WebDriverWait(driver, 5)).until((ExpectedCondition<Boolean>) d -> {
+            boolean condition = false;
+            WebElement we = d.findElement(new By.ByTagName("body"));
+            if (we != null && we.getText().contains("Authentication complete")) {
+                condition = true;
+            }
+            return condition;
+        });
     }
 
     public static void performADFS2019Login(WebDriver driver, User user){
