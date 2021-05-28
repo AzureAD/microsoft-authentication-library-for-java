@@ -17,7 +17,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 /**
  * Class to be used to acquire tokens for public client applications (Desktop, Mobile).
  * For details see {@link IPublicClientApplication}
- * 
+ * <p>
  * Conditionally thread-safe
  */
 public class PublicClientApplication extends AbstractClientApplicationBase implements IPublicClientApplication {
@@ -29,10 +29,16 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
 
         validateNotNull("parameters", parameters);
 
+        RequestContext context = new RequestContext(
+                this,
+                PublicApi.ACQUIRE_TOKEN_BY_USERNAME_PASSWORD,
+                parameters,
+                UserIdentifier.fromUpn(parameters.username()));
+
         UserNamePasswordRequest userNamePasswordRequest =
                 new UserNamePasswordRequest(parameters,
                         this,
-                        createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_USERNAME_PASSWORD, parameters));
+                        context);
 
         return this.executeRequest(userNamePasswordRequest);
     }
@@ -42,12 +48,17 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
 
         validateNotNull("parameters", parameters);
 
+        RequestContext context = new RequestContext(
+                this,
+                PublicApi.ACQUIRE_TOKEN_BY_INTEGRATED_WINDOWS_AUTH,
+                parameters,
+                UserIdentifier.fromUpn(parameters.username()));
+
         IntegratedWindowsAuthenticationRequest integratedWindowsAuthenticationRequest =
                 new IntegratedWindowsAuthenticationRequest(
                         parameters,
                         this,
-                        createRequestContext(
-                                PublicApi.ACQUIRE_TOKEN_BY_INTEGRATED_WINDOWS_AUTH, parameters));
+                        context);
 
         return this.executeRequest(integratedWindowsAuthenticationRequest);
     }
@@ -63,6 +74,11 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
 
         validateNotNull("parameters", parameters);
 
+        RequestContext context = new RequestContext(
+                this,
+                PublicApi.ACQUIRE_TOKEN_BY_DEVICE_CODE_FLOW,
+                parameters);
+
         AtomicReference<CompletableFuture<IAuthenticationResult>> futureReference =
                 new AtomicReference<>();
 
@@ -70,7 +86,7 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
                 parameters,
                 futureReference,
                 this,
-                createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_DEVICE_CODE_FLOW, parameters));
+                context);
 
         CompletableFuture<IAuthenticationResult> future = executeRequest(deviceCodeRequest);
         futureReference.set(future);
@@ -78,17 +94,23 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
     }
 
     @Override
-    public CompletableFuture<IAuthenticationResult> acquireToken(InteractiveRequestParameters parameters){
+    public CompletableFuture<IAuthenticationResult> acquireToken(InteractiveRequestParameters parameters) {
 
         validateNotNull("parameters", parameters);
 
         AtomicReference<CompletableFuture<IAuthenticationResult>> futureReference = new AtomicReference<>();
 
+        RequestContext context = new RequestContext(
+                this,
+                PublicApi.ACQUIRE_TOKEN_INTERACTIVE,
+                parameters,
+                UserIdentifier.fromUpn(parameters.loginHint()));
+
         InteractiveRequest interactiveRequest = new InteractiveRequest(
                 parameters,
                 futureReference,
                 this,
-                createRequestContext(PublicApi.ACQUIRE_TOKEN_INTERACTIVE, parameters));
+                context);
 
         CompletableFuture<IAuthenticationResult> future = executeRequest(interactiveRequest);
         futureReference.set(future);

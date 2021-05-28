@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j;
 import lombok.*;
 import lombok.experimental.Accessors;
 
+import java.util.Map;
 import java.util.Set;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty;
@@ -20,15 +21,10 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty
 @Accessors(fluent = true)
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class OnBehalfOfParameters implements IApiParameters {
+public class OnBehalfOfParameters implements IAcquireTokenParameters {
 
     @NonNull
     private Set<String> scopes;
-
-    /**
-     * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
-     */
-    private ClaimsRequest claims;
 
     /**
      * Indicates whether the request should skip looking into the token cache. Be default it is
@@ -39,6 +35,16 @@ public class OnBehalfOfParameters implements IApiParameters {
 
     @NonNull
     private IUserAssertion userAssertion;
+
+    /**
+     * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
+     */
+    private ClaimsRequest claims;
+
+    /**
+     * Adds additional headers to the token request
+     */
+    private Map<String, String> extraHttpHeaders;
 
     private static OnBehalfOfParametersBuilder builder() {
 

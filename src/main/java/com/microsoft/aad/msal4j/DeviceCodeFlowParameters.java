@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j;
 import lombok.*;
 import lombok.experimental.Accessors;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -20,18 +21,13 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty
 @Accessors(fluent = true)
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class DeviceCodeFlowParameters implements IApiParameters {
+public class DeviceCodeFlowParameters implements IAcquireTokenParameters {
 
     /**
      * Scopes to which the application is requesting access to.
      */
     @NonNull
     private Set<String> scopes;
-
-    /**
-     * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
-     */
-    private ClaimsRequest claims;
 
     /**
      * Receives the device code returned from the first step of Oauth2.0 device code flow. The
@@ -42,6 +38,16 @@ public class DeviceCodeFlowParameters implements IApiParameters {
      */
     @NonNull
     private Consumer<DeviceCode> deviceCodeConsumer;
+
+    /**
+     * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
+     */
+    private ClaimsRequest claims;
+
+    /**
+     * Adds additional headers to the token request
+     */
+    private Map<String, String> extraHttpHeaders;
 
     private static DeviceCodeFlowParametersBuilder builder() {
 

@@ -28,10 +28,15 @@ class AcquireTokenByClientCredentialSupplier extends AuthenticationResultSupplie
                         .claims(this.clientCredentialRequest.parameters.claims())
                         .build();
 
+                RequestContext context = new RequestContext(
+                        this.clientApplication,
+                        PublicApi.ACQUIRE_TOKEN_SILENTLY,
+                        parameters);
+
                 SilentRequest silentRequest = new SilentRequest(
                         parameters,
                         this.clientApplication,
-                        this.clientApplication.createRequestContext(PublicApi.ACQUIRE_TOKEN_SILENTLY, parameters),
+                        context,
                         null);
 
                 AcquireTokenSilentSupplier supplier = new AcquireTokenSilentSupplier(

@@ -105,10 +105,15 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
 
         validateNotNull("parameters", parameters);
 
+        RequestContext context = new RequestContext(
+                this,
+                PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE,
+                parameters);
+
         AuthorizationCodeRequest authorizationCodeRequest = new AuthorizationCodeRequest(
                 parameters,
                 this,
-                createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
+                context);
 
         return this.executeRequest(authorizationCodeRequest);
     }
@@ -118,25 +123,17 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
 
         validateNotNull("parameters", parameters);
 
+        RequestContext context = new RequestContext(
+                this,
+                PublicApi.ACQUIRE_TOKEN_BY_REFRESH_TOKEN,
+                parameters);
+
         RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(
                 parameters,
                 this,
-                createRequestContext(PublicApi.ACQUIRE_TOKEN_BY_REFRESH_TOKEN, parameters));
+                context);
 
         return executeRequest(refreshTokenRequest);
-    }
-
-    CompletableFuture<IAuthenticationResult> executeRequest(
-            MsalRequest msalRequest) {
-
-        AuthenticationResultSupplier supplier = getAuthenticationResultSupplier(msalRequest);
-
-        ExecutorService executorService = serviceBundle.getExecutorService();
-        CompletableFuture<IAuthenticationResult> future = executorService != null ?
-                CompletableFuture.supplyAsync(supplier, executorService) :
-                CompletableFuture.supplyAsync(supplier);
-
-        return future;
     }
 
     @Override
@@ -145,10 +142,25 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
 
         validateNotNull("parameters", parameters);
 
+        RequestContext context;
+        if (parameters.account() != null) {
+            context = new RequestContext(
+                    this,
+                    PublicApi.ACQUIRE_TOKEN_SILENTLY,
+                    parameters,
+                    UserIdentifier.fromHomeAccountId(parameters.account().homeAccountId()));
+
+        } else {
+            context = new RequestContext(
+                    this,
+                    PublicApi.ACQUIRE_TOKEN_SILENTLY,
+                    parameters);
+        }
+
         SilentRequest silentRequest = new SilentRequest(
                 parameters,
                 this,
-                createRequestContext(PublicApi.ACQUIRE_TOKEN_SILENTLY, parameters),
+                context,
                 null);
 
         return executeRequest(silentRequest);
@@ -156,29 +168,30 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
 
     @Override
     public CompletableFuture<Set<IAccount>> getAccounts() {
+
+        RequestContext context = new RequestContext(this, PublicApi.GET_ACCOUNTS, null);
         MsalRequest msalRequest =
-                new MsalRequest(this, null,
-                        createRequestContext(PublicApi.GET_ACCOUNTS, null)){};
+                new MsalRequest(this, null, context) {
+                };
 
         AccountsSupplier supplier = new AccountsSupplier(this, msalRequest);
 
-        CompletableFuture<Set<IAccount>> future =
-                serviceBundle.getExecutorService() != null ? CompletableFuture.supplyAsync(supplier, serviceBundle.getExecutorService())
-                        : CompletableFuture.supplyAsync(supplier);
-        return future;
+        return serviceBundle.getExecutorService() != null ?
+                CompletableFuture.supplyAsync(supplier, serviceBundle.getExecutorService()) :
+                CompletableFuture.supplyAsync(supplier);
     }
 
     @Override
-    public CompletableFuture removeAccount(IAccount account) {
-        MsalRequest msalRequest = new MsalRequest(this, null,
-                        createRequestContext(PublicApi.REMOVE_ACCOUNTS, null)){};
+    public CompletableFuture<Void> removeAccount(IAccount account) {
+        RequestContext context = new RequestContext(this, PublicApi.REMOVE_ACCOUNTS, null);
+        MsalRequest msalRequest = new MsalRequest(this, null, context) {
+        };
 
         RemoveAccountRunnable runnable = new RemoveAccountRunnable(msalRequest, account);
 
-        CompletableFuture<Void> future =
-                serviceBundle.getExecutorService() != null ? CompletableFuture.runAsync(runnable, serviceBundle.getExecutorService())
-                        : CompletableFuture.runAsync(runnable);
-        return future;
+        return serviceBundle.getExecutorService() != null ?
+                CompletableFuture.runAsync(runnable, serviceBundle.getExecutorService()) :
+                CompletableFuture.runAsync(runnable);
     }
 
     @Override
@@ -204,6 +217,18 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
                 parameters.requestParameters());
     }
 
+    CompletableFuture<IAuthenticationResult> executeRequest(
+            MsalRequest msalRequest) {
+
+        AuthenticationResultSupplier supplier = getAuthenticationResultSupplier(msalRequest);
+
+        ExecutorService executorService = serviceBundle.getExecutorService();
+        return executorService != null ?
+                CompletableFuture.supplyAsync(supplier, executorService) :
+                CompletableFuture.supplyAsync(supplier);
+
+    }
+
     AuthenticationResult acquireTokenCommon(MsalRequest msalRequest, Authority requestAuthority)
             throws Exception {
 
@@ -222,7 +247,7 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
 
         AuthenticationResult result = requestExecutor.executeTokenRequest();
 
-        if(authenticationAuthority.authorityType.equals(AuthorityType.AAD)){
+        if (authenticationAuthority.authorityType.equals(AuthorityType.AAD)) {
             InstanceDiscoveryMetadataEntry instanceDiscoveryMetadata =
                     AadInstanceDiscoveryProvider.getMetadataEntry(
                             requestAuthority.canonicalAuthorityUrl(),
@@ -247,15 +272,15 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
                     (DeviceCodeFlowRequest) msalRequest);
         } else if (msalRequest instanceof SilentRequest) {
             supplier = new AcquireTokenSilentSupplier(this, (SilentRequest) msalRequest);
-        } else if(msalRequest instanceof InteractiveRequest){
+        } else if (msalRequest instanceof InteractiveRequest) {
             supplier = new AcquireTokenByInteractiveFlowSupplier(
                     (PublicClientApplication) this,
                     (InteractiveRequest) msalRequest);
-        } else if(msalRequest instanceof ClientCredentialRequest) {
+        } else if (msalRequest instanceof ClientCredentialRequest) {
             supplier = new AcquireTokenByClientCredentialSupplier(
                     (ConfidentialClientApplication) this,
                     (ClientCredentialRequest) msalRequest);
-        } else if(msalRequest instanceof OnBehalfOfRequest){
+        } else if (msalRequest instanceof OnBehalfOfRequest) {
             supplier = new AcquireTokenByOnBehalfOfSupplier(
                     (ConfidentialClientApplication) this,
                     (OnBehalfOfRequest) msalRequest);
@@ -265,10 +290,6 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
                     msalRequest, null);
         }
         return supplier;
-    }
-
-    RequestContext createRequestContext(PublicApi publicApi, IApiParameters apiParameters) {
-        return new RequestContext(this, publicApi, apiParameters);
     }
 
     ServiceBundle getServiceBundle() {
@@ -351,13 +372,13 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
             return self();
         }
 
-        public T b2cAuthority(String val) throws MalformedURLException{
+        public T b2cAuthority(String val) throws MalformedURLException {
             authority = enforceTrailingSlash(val);
 
             URL authorityURL = new URL(authority);
             Authority.validateAuthority(authorityURL);
 
-            if(Authority.detectAuthorityType(authorityURL) != AuthorityType.B2C){
+            if (Authority.detectAuthorityType(authorityURL) != AuthorityType.B2C) {
                 throw new IllegalArgumentException("Unsupported authority type. Please use B2C authority");
             }
             authenticationAuthority = new B2CAuthority(authorityURL);
@@ -371,7 +392,7 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
          * against a list of known authorities. Authority is only validated when:
          * 1 - It is an Azure Active Directory authority (not B2C or ADFS)
          * 2 - Instance discovery metadata is not set via {@link AbstractClientApplicationBase#aadAadInstanceDiscoveryResponse}
-         *
+         * <p>
          * The default value is true.
          *
          * @param val a boolean value for validateAuthority
@@ -448,7 +469,7 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
          * @param val Implementation of {@link IHttpClient}
          * @return instance of the Builder on which method was called
          */
-        public T httpClient(IHttpClient val){
+        public T httpClient(IHttpClient val) {
             validateNotNull("httpClient", val);
 
             httpClient = val;
@@ -526,7 +547,7 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
 
         /**
          * Sets application version for telemetry purposes
-         * 
+         *
          * @param val application version
          * @return instance of the Builder on which method was called
          */
@@ -553,12 +574,13 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
         /**
          * Sets instance discovery response data which will be used for determining tenant discovery
          * endpoint and authority aliases.
-         *
+         * <p>
          * Note that authority validation is not done even if {@link AbstractClientApplicationBase#validateAuthority}
          * is set to true.
-         *
+         * <p>
          * For more information, see
          * https://aka.ms/msal4j-instance-discovery
+         *
          * @param val JSON formatted value of response from AAD instance discovery endpoint
          * @return instance of the Builder on which method was called
          */
@@ -575,7 +597,7 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
             Authority authority;
             try {
                 authority = new AADAuthority(new URL(DEFAULT_AUTHORITY));
-            } catch(Exception e){
+            } catch (Exception e) {
                 throw new MsalClientException(e);
             }
             return authority;
@@ -589,11 +611,11 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
 
         /**
          * Indicates that the library should attempt to discover the Azure region the application is running in when
-         *  fetching the instance discovery metadata.
-         *
+         * fetching the instance discovery metadata.
+         * <p>
          * If the region is found, token requests will be sent to the regional ESTS endpoint rather than the global endpoint.
          * If region information could not be found, the library will fall back to using the global endpoint, which is also
-         *  the default behavior if this value is not set.
+         * the default behavior if this value is not set.
          *
          * @param val boolean (default is false)
          * @return instance of the Builder on which method was called
@@ -631,7 +653,7 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
         clientCapabilities = builder.clientCapabilities;
         autoDetectRegion = builder.autoDetectRegion;
 
-        if(aadAadInstanceDiscoveryResponse != null){
+        if (aadAadInstanceDiscoveryResponse != null) {
             AadInstanceDiscoveryProvider.cacheInstanceDiscoveryMetadata(
                     authenticationAuthority.host,
                     aadAadInstanceDiscoveryResponse);
