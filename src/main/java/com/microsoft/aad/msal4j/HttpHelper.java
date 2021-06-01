@@ -69,7 +69,7 @@ class HttpHelper {
         sb.append(requestContext.clientId() + POINT_DELIMITER);
         sb.append(requestContext.authority() + POINT_DELIMITER);
 
-        IApiParameters apiParameters = requestContext.apiParameters();
+        IAcquireTokenParameters apiParameters = requestContext.apiParameters();
 
         if (apiParameters instanceof SilentParameters) {
             IAccount account = ((SilentParameters) apiParameters).account();
