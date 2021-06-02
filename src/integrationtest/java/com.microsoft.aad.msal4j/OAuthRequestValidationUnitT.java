@@ -93,7 +93,7 @@ public class OAuthRequestValidationUnitT extends OAuthRequestValidationTest {
         Assert.assertEquals(CLIENT_ASSERTION_TYPE_JWT, queryParams.get("client_assertion_type"));
 
         // to do validate scopes
-        Assert.assertEquals("openid profile offline_access https://SomeResource.azure.net", queryParams.get("scope"));
+        Assert.assertEquals("https://SomeResource.azure.net openid profile offline_access" , queryParams.get("scope"));
 
         Assert.assertEquals(CLIENT_INFO_VALUE, queryParams.get("client_info"));
     }

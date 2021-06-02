@@ -186,7 +186,9 @@ class MexParser {
                             }
                         }
                         else {
-                            throw new Exception("no address nodes on port");
+                            throw new MsalClientException(
+                                    "Error parsing WSTrustResponse: No address nodes on port",
+                                    AuthenticationErrorCode.WSTRUST_INVALID_RESPONSE);
                         }
                     }
                 }
