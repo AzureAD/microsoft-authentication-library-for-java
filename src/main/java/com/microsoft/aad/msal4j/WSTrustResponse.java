@@ -26,10 +26,10 @@ import org.w3c.dom.NodeList;
 
 class WSTrustResponse {
 
-    private final static Logger log = LoggerFactory
+    private static final Logger log = LoggerFactory
             .getLogger(WSTrustResponse.class);
 
-    public final static String SAML1_ASSERTION = "urn:oasis:names:tc:SAML:1.0:assertion";
+    public static final String SAML1_ASSERTION = "urn:oasis:names:tc:SAML:1.0:assertion";
     private String faultMessage;
     private boolean errorFound;
     private String errorCode;
