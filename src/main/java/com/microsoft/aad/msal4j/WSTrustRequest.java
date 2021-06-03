@@ -59,6 +59,10 @@ class WSTrustRequest {
         HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, url);
         IHttpResponse mexResponse = HttpHelper.executeHttpRequest(httpRequest, requestContext, serviceBundle);
 
+        if (mexResponse.statusCode() != HttpHelper.HTTP_STATUS_200 || StringHelper.isBlank(mexResponse.body())) {
+            throw MsalServiceExceptionFactory.fromHttpResponse(mexResponse);
+        }
+
         BindingPolicy policy = MexParser.getWsTrustEndpointFromMexResponse(mexResponse.body(), logPii);
 
         if(policy == null){

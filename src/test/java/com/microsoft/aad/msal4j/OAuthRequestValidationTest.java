@@ -67,6 +67,7 @@ public class OAuthRequestValidationTest extends AbstractMsalTests {
         PowerMock.mockStatic(HttpHelper.class);
         HttpResponse httpResponse = new HttpResponse();
         httpResponse.body(INSTANCE_DISCOVERY_RESPONSE);
+        httpResponse.statusCode(HttpHelper.HTTP_STATUS_200);
         EasyMock.expect(
                 HttpHelper.executeHttpRequest(
                         EasyMock.isA(HttpRequest.class),

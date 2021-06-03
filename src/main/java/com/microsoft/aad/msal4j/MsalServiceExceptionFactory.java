@@ -19,7 +19,9 @@ class MsalServiceExceptionFactory {
         String responseContent = httpResponse.getContent();
         if (responseContent == null || StringHelper.isBlank(responseContent)) {
             return new MsalServiceException(
-                    "Unknown Service Exception",
+                    String.format(
+                            "Unknown Service Exception. Service returned status code %s",
+                            httpResponse.getStatusCode()),
                     AuthenticationErrorCode.UNKNOWN);
         }
 
@@ -41,6 +43,36 @@ class MsalServiceExceptionFactory {
         return new MsalServiceException(
                 errorResponse,
                 httpResponse.getHeaderMap());
+    }
+
+    static MsalServiceException fromHttpResponse(IHttpResponse response) {
+        String responseBody = response.body();
+        if (StringHelper.isBlank(responseBody)) {
+            return new MsalServiceException(
+                    String.format(
+                            "Unknown service exception. Http request returned status code %s with no response body",
+                            response.statusCode()),
+                    AuthenticationErrorCode.UNKNOWN);
+        }
+
+        ErrorResponse errorResponse = JsonHelper.convertJsonToObject(
+                responseBody,
+                ErrorResponse.class);
+
+        if (!StringHelper.isBlank(errorResponse.error()) && !StringHelper.isBlank(errorResponse.errorDescription)) {
+
+            errorResponse.statusCode(response.statusCode());
+            return new MsalServiceException(
+                    errorResponse,
+                    response.headers());
+        }
+
+        return new MsalServiceException(
+                String.format(
+                        "Unknown service exception. Http request returned status code: %s with http body: %s",
+                        response.statusCode(),
+                        responseBody),
+                AuthenticationErrorCode.UNKNOWN);
     }
 
     private static boolean isInteractionRequired(String subError) {

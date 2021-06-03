@@ -25,9 +25,12 @@ class JsonHelper {
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
 
-    static <T> T convertJsonToObject(final String json, final Class<T> clazz) {
+    private JsonHelper(){
+    }
+
+    static <T> T convertJsonToObject(final String json, final Class<T> tClass) {
         try {
-            return mapper.readValue(json, clazz);
+            return mapper.readValue(json, tClass);
         } catch (IOException e) {
             throw new MsalClientException(e);
         }
@@ -82,36 +85,6 @@ class JsonHelper {
         }
 
         mergeJSONNode(mainJson, addJson);
-
-        return mainJson.toString();
-    }
-
-    /**
-     * Merges set of given JSON strings into one Jackson JsonNode object, which is returned as a String
-     */
-    static String mergeJSONString(Set<String> jsonStrings) {
-        JsonNode mainJson;
-        JsonNode addJson;
-
-        Iterator<String> jsons = jsonStrings.iterator();
-        try {
-            if (jsons.hasNext()) {
-                mainJson = mapper.readTree(jsons.next());
-            } else {
-                return "";
-            }
-        } catch (IOException e) {
-            throw new MsalClientException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
-        }
-
-        while (jsons.hasNext()) {
-            try {
-                addJson = mapper.readTree(jsons.next());
-            } catch (IOException e) {
-                throw new MsalClientException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
-            }
-            mergeJSONNode(mainJson, addJson);
-        }
 
         return mainJson.toString();
     }

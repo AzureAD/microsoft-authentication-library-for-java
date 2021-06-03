@@ -157,7 +157,7 @@ class AadInstanceDiscoveryProvider {
                     formInstanceDiscoveryParameters(authorityUrl);
 
             try {
-                httpResponse = httpRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
+                httpResponse = executeRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
             } catch (MsalClientException ex) {
                 log.warn("Could not retrieve regional instance discovery metadata, falling back to global endpoint");
             }
@@ -169,7 +169,11 @@ class AadInstanceDiscoveryProvider {
             String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpoint(authorityUrl.getAuthority()) +
                     formInstanceDiscoveryParameters(authorityUrl);
 
-            httpResponse = httpRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
+            httpResponse = executeRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
+        }
+
+        if (httpResponse.statusCode() != HttpHelper.HTTP_STATUS_200) {
+            throw MsalServiceExceptionFactory.fromHttpResponse(httpResponse);
         }
 
         serviceBundle.getServerSideTelemetry().getCurrentRequest().regionOutcome(regionOutcomeTelemetryValue);
@@ -205,7 +209,7 @@ class AadInstanceDiscoveryProvider {
                         Authority.getTenant(authorityUrl, Authority.detectAuthorityType(authorityUrl))));
     }
 
-    private static IHttpResponse httpRequest(String requestUrl, Map<String, String> headers, MsalRequest msalRequest, ServiceBundle serviceBundle) {
+    private static IHttpResponse executeRequest(String requestUrl, Map<String, String> headers, MsalRequest msalRequest, ServiceBundle serviceBundle) {
         HttpRequest httpRequest = new HttpRequest(
                 HttpMethod.GET,
                 requestUrl,
@@ -233,10 +237,10 @@ class AadInstanceDiscoveryProvider {
             //Check the IMDS endpoint to retrieve current region (will only work if application is running in an Azure VM)
             Map<String, String> headers = new HashMap<>();
             headers.put("Metadata", "true");
-            IHttpResponse httpResponse = httpRequest(IMDS_ENDPOINT, headers, msalRequest, serviceBundle);
+            IHttpResponse httpResponse = executeRequest(IMDS_ENDPOINT, headers, msalRequest, serviceBundle);
 
             //If call to IMDS endpoint was successful, return region from response body
-            if (httpResponse.statusCode() == HTTPResponse.SC_OK && !httpResponse.body().isEmpty()) {
+            if (httpResponse.statusCode() == HttpHelper.HTTP_STATUS_200 && !httpResponse.body().isEmpty()) {
                 log.info("Region retrieved from IMDS endpoint: " + httpResponse.body());
                 currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_IMDS.telemetryValue);
 

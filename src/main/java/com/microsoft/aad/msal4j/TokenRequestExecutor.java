@@ -36,8 +36,7 @@ class TokenRequestExecutor {
         this.msalRequest = msalRequest;
     }
 
-    AuthenticationResult executeTokenRequest() throws ParseException,
-            MsalServiceException, SerializeException, IOException {
+    AuthenticationResult executeTokenRequest() throws ParseException, IOException {
 
         OAuthHttpRequest oAuthHttpRequest = createOauthHttpRequest();
         HTTPResponse oauthHttpResponse = oAuthHttpRequest.send();
@@ -135,7 +134,7 @@ class TokenRequestExecutor {
 
         } else {
             // http codes indicating that STS did not log request
-            if(oauthHttpResponse.getStatusCode() == 429 || oauthHttpResponse.getStatusCode() >= 500){
+            if(oauthHttpResponse.getStatusCode() == HttpHelper.HTTP_STATUS_429 || oauthHttpResponse.getStatusCode() >= HttpHelper.HTTP_STATUS_500){
                 serviceBundle.getServerSideTelemetry().previousRequests.putAll(
                         serviceBundle.getServerSideTelemetry().previousRequestInProgress);
             }
