@@ -32,5 +32,4 @@ enum RegionTelemetry {
     RegionTelemetry(int telemetryValue){
         this.telemetryValue = telemetryValue;
     }
-
 }

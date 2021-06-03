@@ -132,7 +132,7 @@ class AadInstanceDiscoveryProvider {
         IHttpResponse httpResponse = null;
         String providedRegion = msalRequest.application().azureRegion();
         String detectedRegion = null;
-        int regionOutcome = 0;
+        int regionOutcomeTelemetryValue = 0;
         String regionToUse = null;
 
         //If a region was provided by a developer or they set the autoDetectRegion parameter,
@@ -140,23 +140,15 @@ class AadInstanceDiscoveryProvider {
         if (providedRegion != null) {
             detectedRegion = discoverRegion(msalRequest, serviceBundle);
             regionToUse = providedRegion;
-
-            if (detectedRegion == null) {
-                regionOutcome = RegionTelemetry.REGION_OUTCOME_DEVELOPER_AUTODETECT_FAILED.telemetryValue;
-            } else if (providedRegion.equals(detectedRegion)) {
-                regionOutcome = RegionTelemetry.REGION_OUTCOME_DEVELOPER_AUTODETECT_MATCH.telemetryValue;
-            } else {
-                regionOutcome = RegionTelemetry.REGION_OUTCOME_DEVELOPER_AUTODETECT_MISMATCH.telemetryValue;
-            }
+            regionOutcomeTelemetryValue = determineRegionOutcome(detectedRegion, providedRegion, msalRequest.application().autoDetectRegion());
         } else if (msalRequest.application().autoDetectRegion()) {
             detectedRegion = discoverRegion(msalRequest, serviceBundle);
 
             if (detectedRegion != null) {
                 regionToUse = detectedRegion;
-                regionOutcome = RegionTelemetry.REGION_OUTCOME_AUTODETECT_SUCCESS.telemetryValue;
-            } else {
-                regionOutcome = RegionTelemetry.REGION_OUTCOME_AUTODETECT_FAILED.telemetryValue;
             }
+
+            regionOutcomeTelemetryValue = determineRegionOutcome(detectedRegion, providedRegion, msalRequest.application().autoDetectRegion());
         }
 
         //If the region is known, attempt to make instance discovery request with region endpoint
@@ -180,9 +172,31 @@ class AadInstanceDiscoveryProvider {
             httpResponse = httpRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
         }
 
-        serviceBundle.getServerSideTelemetry().getCurrentRequest().regionOutcome(regionOutcome);
+        serviceBundle.getServerSideTelemetry().getCurrentRequest().regionOutcome(regionOutcomeTelemetryValue);
 
         return JsonHelper.convertJsonToObject(httpResponse.body(), AadInstanceDiscoveryResponse.class);
+    }
+
+    private static int determineRegionOutcome(String detectedRegion, String providedRegion, boolean autoDetect) {
+        int regionOutcomeTelemetryValue = 0;
+        if (providedRegion != null) {
+            if (detectedRegion == null) {
+                regionOutcomeTelemetryValue = RegionTelemetry.REGION_OUTCOME_DEVELOPER_AUTODETECT_FAILED.telemetryValue;
+            } else if (providedRegion.equals(detectedRegion)) {
+                regionOutcomeTelemetryValue = RegionTelemetry.REGION_OUTCOME_DEVELOPER_AUTODETECT_MATCH.telemetryValue;
+            } else {
+                regionOutcomeTelemetryValue = RegionTelemetry.REGION_OUTCOME_DEVELOPER_AUTODETECT_MISMATCH.telemetryValue;
+            }
+        }
+        else if (autoDetect) {
+            if (detectedRegion != null) {
+                regionOutcomeTelemetryValue = RegionTelemetry.REGION_OUTCOME_AUTODETECT_SUCCESS.telemetryValue;
+            } else {
+                regionOutcomeTelemetryValue = RegionTelemetry.REGION_OUTCOME_AUTODETECT_FAILED.telemetryValue;
+            }
+        }
+
+        return regionOutcomeTelemetryValue;
     }
 
     private static String formInstanceDiscoveryParameters(URL authorityUrl) {

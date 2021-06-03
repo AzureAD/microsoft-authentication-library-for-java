@@ -53,7 +53,8 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
 
             if (silentRequest.parameters().forceRefresh() || afterRefreshOn || StringHelper.isBlank(res.accessToken())) {
 
-                //Set telemetry info for reason behind the refresh
+                //As of version 3 of the telemetry schema, there is a field for collecting data about why a token was refreshed,
+                // so here we set the telemetry value based on the cause of the refresh
                 if (silentRequest.parameters().forceRefresh()) {
                     clientApplication.getServiceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
                             CacheTelemetry.REFRESH_FORCE_REFRESH.telemetryValue);
