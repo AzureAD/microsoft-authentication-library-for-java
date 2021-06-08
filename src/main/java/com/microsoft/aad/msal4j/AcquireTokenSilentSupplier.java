@@ -52,6 +52,23 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
                     res.refreshOn() < currTimeStampSec && res.expiresOn() >= currTimeStampSec;
 
             if (silentRequest.parameters().forceRefresh() || afterRefreshOn || StringHelper.isBlank(res.accessToken())) {
+
+                //As of version 3 of the telemetry schema, there is a field for collecting data about why a token was refreshed,
+                // so here we set the telemetry value based on the cause of the refresh
+                if (silentRequest.parameters().forceRefresh()) {
+                    clientApplication.getServiceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
+                            CacheTelemetry.REFRESH_FORCE_REFRESH.telemetryValue);
+                } else if (afterRefreshOn) {
+                    clientApplication.getServiceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
+                            CacheTelemetry.REFRESH_REFRESH_IN.telemetryValue);
+                } else if (res.expiresOn() < currTimeStampSec) {
+                    clientApplication.getServiceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
+                            CacheTelemetry.REFRESH_ACCESS_TOKEN_EXPIRED.telemetryValue);
+                } else if (StringHelper.isBlank(res.accessToken())) {
+                    clientApplication.getServiceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
+                            CacheTelemetry.REFRESH_NO_ACCESS_TOKEN.telemetryValue);
+                }
+
                 if (!StringHelper.isBlank(res.refreshToken())) {
                     RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(
                             RefreshTokenParameters.builder(silentRequest.parameters().scopes(), res.refreshToken()).build(),

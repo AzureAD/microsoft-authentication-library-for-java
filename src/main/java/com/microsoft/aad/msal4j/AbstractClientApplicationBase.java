@@ -100,6 +100,10 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
     @Getter
     private boolean autoDetectRegion;
 
+    @Accessors(fluent = true)
+    @Getter
+    private String azureRegion;
+
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(AuthorizationCodeParameters parameters) {
 
@@ -327,6 +331,7 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
         private AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse;
         private String clientCapabilities;
         private boolean autoDetectRegion;
+        private String azureRegion;
         private Integer connectTimeoutForDefaultHttpClient;
         private Integer readTimeoutForDefaultHttpClient;
 
@@ -625,6 +630,21 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
             return self();
         }
 
+        /**
+         * Indicates that the library should attempt to fetch the instance discovery metadata from the specified Azure region.
+         *
+         * If the region is valid, token requests will be sent to the regional ESTS endpoint rather than the global endpoint.
+         * If region information could not be verified, the library will fall back to using the global endpoint, which is also
+         *  the default behavior if this value is not set.
+         *
+         * @param val boolean (default is false)
+         * @return instance of the Builder on which method was called
+         */
+        public T azureRegion(String val) {
+            azureRegion = val;
+            return self();
+        }
+
         abstract AbstractClientApplicationBase build();
     }
 
@@ -652,6 +672,7 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
         aadAadInstanceDiscoveryResponse = builder.aadInstanceDiscoveryResponse;
         clientCapabilities = builder.clientCapabilities;
         autoDetectRegion = builder.autoDetectRegion;
+        azureRegion = builder.azureRegion;
 
         if (aadAadInstanceDiscoveryResponse != null) {
             AadInstanceDiscoveryProvider.cacheInstanceDiscoveryMetadata(

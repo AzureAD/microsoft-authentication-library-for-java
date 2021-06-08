@@ -177,7 +177,7 @@ public class AadInstanceDiscoveryTest extends PowerMockTestCase {
                 app.getServiceBundle());
 
         //Region detection will have been performed in the expected discoverRegion method, but these tests (likely) aren't
-        // being run in an Azure VM and nstance discovery will fall back to the global endpoint (login.microsoftonline.com)
+        // being run in an Azure VM and instance discovery will fall back to the global endpoint (login.microsoftonline.com)
         Assert.assertEquals(entry.preferredNetwork(), "login.microsoftonline.com");
         Assert.assertEquals(entry.preferredCache(), "login.windows.net");
         Assert.assertEquals(entry.aliases().size(), 4);
