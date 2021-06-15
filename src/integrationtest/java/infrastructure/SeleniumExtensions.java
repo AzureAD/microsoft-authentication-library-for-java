@@ -91,18 +91,19 @@ public class SeleniumExtensions {
         waitForElementToBeVisibleAndEnable(driver, new By.ById(fields.getPasswordSigInButtonId())).
                 click();
 
-        try {
-            checkAuthenticationCompletePage(driver);
-            return;
-        } catch (TimeoutException ex) {
-        }
+        if(LabConstants.GUEST_USER_TYPE.equals(user.getUserType())) {
+            try {
+                checkAuthenticationCompletePage(driver);
+                return;
+            } catch (TimeoutException ex) {
+            }
 
-        try {
-            LOG.info("Stay signed in ? ... click NO");
-            waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.STAY_SIGN_IN_NO_BUTTON_ID), 5).
-                    click();
-        }
-        catch (TimeoutException ex){
+            try {
+                LOG.info("Stay signed in ? ... click NO");
+                waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.STAY_SIGN_IN_NO_BUTTON_ID), 5).
+                        click();
+            } catch (TimeoutException ex) {
+            }
         }
     }
 
