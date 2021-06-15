@@ -93,6 +93,7 @@ public class LabUserProvider {
         query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT,  guestEnvironment);
         query.parameters.put(UserQueryParameters.HOME_AZURE_ENVIRONMENT,  homeEnvironment);
         query.parameters.put(UserQueryParameters.GUEST_HOME_DIN,  "hostazuread");
+        query.parameters.put(UserQueryParameters.SIGN_IN_AUDIENCE,  "azureadmyorg");
 
         return getLabUser(query);
     }

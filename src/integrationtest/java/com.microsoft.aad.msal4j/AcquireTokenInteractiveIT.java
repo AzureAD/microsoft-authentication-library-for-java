@@ -171,22 +171,15 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
 
     @Test
     public void acquireTokensInHomeAndGuestClouds_ArlingtonAccount() throws MalformedURLException, ExecutionException, InterruptedException {
-        String AUTHORITY_ARLINGTON = "https://login.microsoftonline.us/arlmsidlab1.onmicrosoft.us";
-
-        acquireTokensInHomeAndGuestClouds(AzureEnvironment.AZURE_US_GOVERNMENT, AUTHORITY_ARLINGTON);
+        acquireTokensInHomeAndGuestClouds(AzureEnvironment.AZURE_US_GOVERNMENT, TestConstants.AUTHORITY_ARLINGTON);
     }
 
-    //@Test
-    // uncomment when mooncake account will be available
+    @Test
     public void acquireTokensInHomeAndGuestClouds_MooncakeAccount() throws MalformedURLException, ExecutionException, InterruptedException {
-        String AUTHORITY_MOONCAKE = "https://login.chinacloudapi.cn/mncmsidlab1.partner.onmschina.cn";
-
-        acquireTokensInHomeAndGuestClouds(AzureEnvironment.AZURE_CHINA, AUTHORITY_MOONCAKE);
+        acquireTokensInHomeAndGuestClouds(AzureEnvironment.AZURE_CHINA, TestConstants.AUTHORITY_MOONCAKE);
     }
 
     public void acquireTokensInHomeAndGuestClouds(String homeCloud, String homeCloudAuthority) throws MalformedURLException, ExecutionException, InterruptedException {
-        String AUTHORITY_PUBLIC_TENANT_SPECIFIC = "https://login.microsoftonline.com/msidlab4.onmicrosoft.com";
-        String SCOPE = "user.read";
 
         User user = labUserProvider.getUserByGuestHomeAzureEnvironments
                 (AzureEnvironment.AZURE, homeCloud);
@@ -208,35 +201,17 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
 
         PublicClientApplication publicCloudPca = PublicClientApplication.builder(
                 user.getAppId()).
-                authority(AUTHORITY_PUBLIC_TENANT_SPECIFIC).setTokenCacheAccessAspect(persistenceAspect).
+                authority(TestConstants.AUTHORITY_PUBLIC_TENANT_SPECIFIC).setTokenCacheAccessAspect(persistenceAspect).
                 build();
 
-        IAuthenticationResult result = acquireTokenInteractive(user, publicCloudPca, SCOPE);
+        IAuthenticationResult result = acquireTokenInteractive(user, publicCloudPca, TestConstants.USER_READ_SCOPE);
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
         Assert.assertNotNull(result.idToken());
         Assert.assertEquals(user.getHomeUPN(), result.account().username());
-
-        cleanUp();
-        startUpBrowser();
-
-        PublicClientApplication homeCloudPca = PublicClientApplication.builder(
-                user.getAppId()).
-                authority(homeCloudAuthority).setTokenCacheAccessAspect(persistenceAspect).
-                build();
-
-        result = acquireTokenInteractive(user, homeCloudPca, SCOPE);
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.idToken());
-        Assert.assertEquals(user.getHomeUPN(), result.account().username());
-
-        Assert.assertEquals(homeCloudPca.getAccounts().join().size(), 1);
-        Assert.assertEquals(publicCloudPca.getAccounts().join().size(), 1);
 
         publicCloudPca.removeAccount(publicCloudPca.getAccounts().join().iterator().next()).join();
 
-        Assert.assertEquals(homeCloudPca.getAccounts().join().size(), 0);
         Assert.assertEquals(publicCloudPca.getAccounts().join().size(), 0);
     }
 
