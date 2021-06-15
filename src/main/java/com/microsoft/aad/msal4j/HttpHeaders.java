@@ -10,45 +10,64 @@ import java.util.function.BiConsumer;
 
 final class HttpHeaders {
 
-    final static String PRODUCT_HEADER_NAME = "x-client-SKU";
-    final static String PRODUCT_HEADER_VALUE = "MSAL.Java";
+    static final String PRODUCT_HEADER_NAME = "x-client-SKU";
+    static final String PRODUCT_HEADER_VALUE = "MSAL.Java";
 
-    final static String PRODUCT_VERSION_HEADER_NAME = "x-client-VER";
-    final static String PRODUCT_VERSION_HEADER_VALUE = getProductVersion();
+    static final String PRODUCT_VERSION_HEADER_NAME = "x-client-VER";
+    static final String PRODUCT_VERSION_HEADER_VALUE = getProductVersion();
 
-    final static String CPU_HEADER_NAME = "x-client-CPU";
-    final static String CPU_HEADER_VALUE = System.getProperty("os.arch");
+    static final String CPU_HEADER_NAME = "x-client-CPU";
+    static final String CPU_HEADER_VALUE = System.getProperty("os.arch");
 
-    final static String OS_HEADER_NAME = "x-client-OS";
-    final static String OS_HEADER_VALUE = System.getProperty("os.name");
+    static final String OS_HEADER_NAME = "x-client-OS";
+    static final String OS_HEADER_VALUE = System.getProperty("os.name");
 
-    final static String APPLICATION_NAME_HEADER_NAME = "x-app-name";
+    static final String APPLICATION_NAME_HEADER_NAME = "x-app-name";
     private final String applicationNameHeaderValue;
 
-    final static String APPLICATION_VERSION_HEADER_NAME = "x-app-ver";
+    static final String APPLICATION_VERSION_HEADER_NAME = "x-app-ver";
     private final String applicationVersionHeaderValue;
 
-    final static String CORRELATION_ID_HEADER_NAME = "client-request-id";
+    static final String CORRELATION_ID_HEADER_NAME = "client-request-id";
     private final String correlationIdHeaderValue;
 
-    private  final static String REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_NAME = "return-client-request-id";
-    private final static String REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_VALUE = "true";
+    private static final String REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_NAME = "return-client-request-id";
+    private static final String REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_VALUE = "true";
 
-    private  final static String X_MS_LIB_CAPABILITY_NAME = "x-ms-lib-capability";
-    private final static String X_MS_LIB_CAPABILITY_VALUE = "retry-after, h429";
+    private static final String X_MS_LIB_CAPABILITY_NAME = "x-ms-lib-capability";
+    private static final String X_MS_LIB_CAPABILITY_VALUE = "retry-after, h429";
 
-    private final String headerValues;
-    private final Map<String, String> headerMap = new HashMap<>();
+    // Used for CCS routing
+    static final String X_ANCHOR_MAILBOX = "X-AnchorMailbox";
+    static final String X_ANCHOR_MAILBOX_OID_FORMAT = "oid:%s";
+    static final String X_ANCHOR_MAILBOX_UPN_FORMAT = "upn:%s";
+    private String anchorMailboxHeaderValue = null;
+
+    private String headerValues;
+    private Map<String, String> headerMap = new HashMap<>();
 
     HttpHeaders(final RequestContext requestContext) {
         correlationIdHeaderValue = requestContext.correlationId();
         applicationNameHeaderValue = requestContext.applicationName();
         applicationVersionHeaderValue = requestContext.applicationVersion();
 
-        this.headerValues = initHeaderMap();
+        if (requestContext.userIdentifier() != null) {
+            String upn = requestContext.userIdentifier().upn();
+            String oid = requestContext.userIdentifier().oid();
+            if (!StringHelper.isBlank(upn)) {
+                anchorMailboxHeaderValue = String.format(X_ANCHOR_MAILBOX_UPN_FORMAT, upn);
+            } else if (!StringHelper.isBlank(oid)) {
+                anchorMailboxHeaderValue = String.format(X_ANCHOR_MAILBOX_OID_FORMAT, oid);
+            }
+        }
+
+        Map<String, String> extraHttpHeaders = requestContext.apiParameters() == null ?
+                null :
+                requestContext.apiParameters().extraHttpHeaders();
+        this.initializeHeaders(extraHttpHeaders);
     }
 
-    private String initHeaderMap() {
+    private void initializeHeaders(Map<String, String> extraHttpHeaders) {
         StringBuilder sb = new StringBuilder();
 
         BiConsumer<String, String> init = (String key, String val) -> {
@@ -63,16 +82,23 @@ final class HttpHeaders {
         init.accept(REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_NAME, REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_VALUE);
         init.accept(CORRELATION_ID_HEADER_NAME, this.correlationIdHeaderValue);
 
-        if(!StringHelper.isBlank(this.applicationNameHeaderValue)){
+        if (!StringHelper.isBlank(this.applicationNameHeaderValue)) {
             init.accept(APPLICATION_NAME_HEADER_NAME, this.applicationNameHeaderValue);
         }
-        if(!StringHelper.isBlank(this.applicationVersionHeaderValue)){
+        if (!StringHelper.isBlank(this.applicationVersionHeaderValue)) {
             init.accept(APPLICATION_VERSION_HEADER_NAME, this.applicationVersionHeaderValue);
         }
+        if (!StringHelper.isBlank(this.anchorMailboxHeaderValue)) {
+            init.accept(X_ANCHOR_MAILBOX, this.anchorMailboxHeaderValue);
+        }
 
-        init.accept(X_MS_LIB_CAPABILITY_NAME, this.X_MS_LIB_CAPABILITY_VALUE);
+        init.accept(X_MS_LIB_CAPABILITY_NAME, X_MS_LIB_CAPABILITY_VALUE);
 
-        return sb.toString();
+        if (extraHttpHeaders != null) {
+            extraHttpHeaders.forEach(init);
+        }
+
+        this.headerValues = sb.toString();
     }
 
     Map<String, String> getReadonlyHeaderMap() {

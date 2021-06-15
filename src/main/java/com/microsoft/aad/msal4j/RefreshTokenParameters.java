@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j;
 import lombok.*;
 import lombok.experimental.Accessors;
 
+import java.util.Map;
 import java.util.Set;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotBlank;
@@ -23,7 +24,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty
 @Accessors(fluent = true)
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class RefreshTokenParameters implements IApiParameters {
+public class RefreshTokenParameters implements IAcquireTokenParameters {
 
     /**
      * Scopes the application is requesting access to
@@ -32,15 +33,20 @@ public class RefreshTokenParameters implements IApiParameters {
     private Set<String> scopes;
 
     /**
+     * Refresh token received from the STS
+     */
+    @NonNull
+    private String refreshToken;
+
+    /**
      * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
      */
     private ClaimsRequest claims;
 
     /**
-     * Refresh token received from the STS
+     * Adds additional headers to the token request
      */
-    @NonNull
-    private String refreshToken;
+    private Map<String, String> extraHttpHeaders;
 
     private static RefreshTokenParametersBuilder builder() {
 

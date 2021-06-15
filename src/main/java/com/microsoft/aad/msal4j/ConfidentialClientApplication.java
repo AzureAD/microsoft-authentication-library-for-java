@@ -41,27 +41,35 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
 
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(ClientCredentialParameters parameters) {
-
         validateNotNull("parameters", parameters);
+
+        RequestContext context = new RequestContext(
+                this,
+                PublicApi.ACQUIRE_TOKEN_FOR_CLIENT,
+                parameters);
 
         ClientCredentialRequest clientCredentialRequest =
                 new ClientCredentialRequest(
                         parameters,
                         this,
-                        createRequestContext(PublicApi.ACQUIRE_TOKEN_FOR_CLIENT, parameters));
+                        context);
 
         return this.executeRequest(clientCredentialRequest);
     }
 
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(OnBehalfOfParameters parameters) {
-
         validateNotNull("parameters", parameters);
+
+        RequestContext context = new RequestContext(
+                this,
+                PublicApi.ACQUIRE_TOKEN_ON_BEHALF_OF,
+                parameters);
 
         OnBehalfOfRequest oboRequest = new OnBehalfOfRequest(
                 parameters,
                 this,
-                createRequestContext(PublicApi.ACQUIRE_TOKEN_ON_BEHALF_OF, parameters));
+                context);
 
         return this.executeRequest(oboRequest);
     }

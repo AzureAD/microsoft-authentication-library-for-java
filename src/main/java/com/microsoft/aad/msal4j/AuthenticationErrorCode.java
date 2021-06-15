@@ -33,6 +33,16 @@ public class AuthenticationErrorCode {
     public final static String WSTRUST_ENDPOINT_NOT_FOUND_IN_METADATA_DOCUMENT = "wstrust_endpoint_not_found";
 
     /**
+     * WS-Trust endpoint response did not contain the required fields
+     */
+    public final static String WSTRUST_INVALID_RESPONSE = "wstrust_invalid_response";
+
+    /**
+     * WS-Trust request resulted in service error
+     */
+    public final static String WSTRUST_SERVICE_ERROR = "wstrust_service_error";
+
+    /**
      * Password is required for managed user. Will typically happen when trying to do integrated windows authentication
      * for managed users. For more information, see https://aka.ms/msal4j-iwa
      */

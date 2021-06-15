@@ -14,7 +14,16 @@ class CurrentRequest {
     private final PublicApi publicApi;
 
     @Setter
-    private boolean forceRefresh = false;
+    private int cacheInfo = -1;
+
+    @Setter
+    private String regionUsed = StringHelper.EMPTY_STRING;
+
+    @Setter
+    private int regionSource = 0;
+
+    @Setter
+    private int regionOutcome = 0;
 
     CurrentRequest(PublicApi publicApi){
         this.publicApi = publicApi;
