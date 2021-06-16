@@ -21,4 +21,6 @@ public class LabConstants {
     public final static String MSA_APP_ID = "9668f2bd-6103-4292-9024-84fa2d1b6fb2";
 
     public final static String ARLINGTON_LAB_NAME = "ARLMSIDLAB1";
+    public final static String GUEST_USER_TYPE = "Guest";
+
 }

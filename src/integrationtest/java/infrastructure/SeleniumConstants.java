@@ -47,4 +47,11 @@ public class SeleniumConstants {
     final static String B2C_LOCAL_USERNAME_ID = "cred_userid_inputtext";
     final static String B2C_LOCAL_PASSWORD_ID = "cred_password_inputtext";
     final static String B2C_LOCAL_SIGN_IN_BUTTON_ID = "cred_sign_in_button";
+
+    // Stay signed in?
+    final static String STAY_SIGN_IN_NO_BUTTON_ID = "idBtn_Back";
+
+    // Are you trying to sign in to ...
+    //Only continue if you downloaded the app from a store or website that you trust.
+    final static String ARE_YOU_TRYING_TO_SIGN_IN_TO = "idSIButton9";
 }
