@@ -21,17 +21,22 @@ class AcquireTokenByOnBehalfOfSupplier extends AuthenticationResultSupplier {
     AuthenticationResult execute() throws Exception {
         if (onBehalfOfRequest.parameters.skipCache() != null &&
                 !onBehalfOfRequest.parameters.skipCache()) {
-            LOG.info("SkipCache set to false. Attempting cache lookup");
+            LOG.debug("SkipCache set to false. Attempting cache lookup");
             try {
                 SilentParameters parameters = SilentParameters
                         .builder(this.onBehalfOfRequest.parameters.scopes())
                         .claims(this.onBehalfOfRequest.parameters.claims())
                         .build();
 
+                RequestContext context = new RequestContext(
+                        this.clientApplication,
+                        PublicApi.ACQUIRE_TOKEN_SILENTLY,
+                        parameters);
+
                 SilentRequest silentRequest = new SilentRequest(
                         parameters,
                         this.clientApplication,
-                        this.clientApplication.createRequestContext(PublicApi.ACQUIRE_TOKEN_SILENTLY, parameters),
+                        context,
                         onBehalfOfRequest.parameters.userAssertion());
 
                 AcquireTokenSilentSupplier supplier = new AcquireTokenSilentSupplier(
@@ -45,7 +50,7 @@ class AcquireTokenByOnBehalfOfSupplier extends AuthenticationResultSupplier {
             }
         }
 
-        LOG.info("SkipCache set to true. Skipping cache lookup and attempting on-behalf-of request");
+        LOG.debug("SkipCache set to true. Skipping cache lookup and attempting on-behalf-of request");
         return acquireTokenOnBehalfOf();
     }
 

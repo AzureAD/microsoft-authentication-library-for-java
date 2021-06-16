@@ -27,7 +27,7 @@ class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier 
         return acquireTokenWithDeviceCode(deviceCode, requestAuthority);
     }
 
-    private DeviceCode getDeviceCode(Authority requestAuthority) throws Exception{
+    private DeviceCode getDeviceCode(Authority requestAuthority) {
 
         DeviceCode deviceCode = deviceCodeFlowRequest.acquireDeviceCode(
                 requestAuthority.deviceCodeEndpoint(),

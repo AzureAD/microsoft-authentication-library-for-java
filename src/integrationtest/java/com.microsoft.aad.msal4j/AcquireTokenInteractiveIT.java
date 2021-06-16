@@ -16,6 +16,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
 
 public class AcquireTokenInteractiveIT extends SeleniumTest {
     private final static Logger LOG = LoggerFactory.getLogger(AuthorizationCodeIT.class);
@@ -166,6 +167,52 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         Assert.assertNotEquals(pca.authenticationAuthority.host, result.environment());
         Assert.assertEquals(result.account().environment(), result.environment());
         Assert.assertEquals(result.account().environment(), pca.getAccounts().join().iterator().next().environment());
+    }
+
+    @Test
+    public void acquireTokensInHomeAndGuestClouds_ArlingtonAccount() throws MalformedURLException, ExecutionException, InterruptedException {
+        acquireTokensInHomeAndGuestClouds(AzureEnvironment.AZURE_US_GOVERNMENT, TestConstants.AUTHORITY_ARLINGTON);
+    }
+
+    @Test
+    public void acquireTokensInHomeAndGuestClouds_MooncakeAccount() throws MalformedURLException, ExecutionException, InterruptedException {
+        acquireTokensInHomeAndGuestClouds(AzureEnvironment.AZURE_CHINA, TestConstants.AUTHORITY_MOONCAKE);
+    }
+
+    public void acquireTokensInHomeAndGuestClouds(String homeCloud, String homeCloudAuthority) throws MalformedURLException, ExecutionException, InterruptedException {
+
+        User user = labUserProvider.getUserByGuestHomeAzureEnvironments
+                (AzureEnvironment.AZURE, homeCloud);
+
+        // use user`s upn from home cloud
+        user.setUpn(user.getHomeUPN());
+
+        ITokenCacheAccessAspect persistenceAspect = new ITokenCacheAccessAspect() {
+            String data;
+            @Override
+            public void beforeCacheAccess(ITokenCacheAccessContext iTokenCacheAccessContext) {
+                iTokenCacheAccessContext.tokenCache().deserialize(data);
+            }
+            @Override
+            public void afterCacheAccess(ITokenCacheAccessContext iTokenCacheAccessContext) {
+                data = iTokenCacheAccessContext.tokenCache().serialize();
+            }
+        };
+
+        PublicClientApplication publicCloudPca = PublicClientApplication.builder(
+                user.getAppId()).
+                authority(TestConstants.AUTHORITY_PUBLIC_TENANT_SPECIFIC).setTokenCacheAccessAspect(persistenceAspect).
+                build();
+
+        IAuthenticationResult result = acquireTokenInteractive(user, publicCloudPca, TestConstants.USER_READ_SCOPE);
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.accessToken());
+        Assert.assertNotNull(result.idToken());
+        Assert.assertEquals(user.getHomeUPN(), result.account().username());
+
+        publicCloudPca.removeAccount(publicCloudPca.getAccounts().join().iterator().next()).join();
+
+        Assert.assertEquals(publicCloudPca.getAccounts().join().size(), 0);
     }
 
     private IAuthenticationResult acquireTokenInteractive(

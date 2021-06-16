@@ -26,6 +26,7 @@ public class User
     private String licenses;
 
     @JsonProperty("upn")
+    @Setter
     private String upn;
 
     @JsonProperty("mfa")

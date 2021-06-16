@@ -59,7 +59,13 @@ public class LabService {
 
             User[] users = convertJsonToObject(result, User[].class);
             User user = users[0];
-            user.setPassword(getSecret(user.getLabName()));
+            if(user.getUserType().equals("Guest")){
+                String secretId = user.getHomeDomain().split("\\.")[0];
+                user.setPassword(getSecret(secretId));
+            }
+            else {
+                user.setPassword(getSecret(user.getLabName()));
+            }
             if (query.parameters.containsKey(UserQueryParameters.FEDERATION_PROVIDER)) {
                 user.setFederationProvider(query.parameters.get(UserQueryParameters.FEDERATION_PROVIDER));
             } else {

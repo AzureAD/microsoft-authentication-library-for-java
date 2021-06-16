@@ -6,40 +6,26 @@ package com.microsoft.aad.msal4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import static com.microsoft.aad.msal4j.Constants.POINT_DELIMITER;
 
 class HttpHelper {
 
-    private final static Logger log = LoggerFactory.getLogger(HttpHelper.class);
+    private static final Logger log = LoggerFactory.getLogger(HttpHelper.class);
     public static final String RETRY_AFTER_HEADER = "Retry-After";
     public static final int RETRY_NUM = 2;
     public static final int RETRY_DELAY_MS = 1000;
 
-    private static String getRequestThumbprint(RequestContext requestContext) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(requestContext.clientId() + POINT_DELIMITER);
-        sb.append(requestContext.authority() + POINT_DELIMITER);
+    public static final int HTTP_STATUS_200 = 200;
+    public static final int HTTP_STATUS_429 = 429;
+    public static final int HTTP_STATUS_500 = 500;
 
-        IApiParameters apiParameters = requestContext.apiParameters();
-
-        if (apiParameters instanceof SilentParameters) {
-            IAccount account = ((SilentParameters) apiParameters).account();
-            if (account != null) {
-                sb.append(account.homeAccountId() + POINT_DELIMITER);
-            }
-        }
-
-        Set<String> sortedScopes = new TreeSet<>(apiParameters.scopes());
-        sb.append(String.join(" ", sortedScopes));
-
-        return StringHelper.createSha256Hash(sb.toString());
-    }
-
-    static private boolean isRetryable(IHttpResponse httpResponse) {
-        return httpResponse.statusCode() >= 500 && httpResponse.statusCode() < 600 &&
-                getRetryAfterHeader(httpResponse) == null;
+    private HttpHelper(){
     }
 
     static IHttpResponse executeHttpRequest(HttpRequest httpRequest,
@@ -48,7 +34,7 @@ class HttpHelper {
         checkForThrottling(requestContext);
 
         HttpEvent httpEvent = new HttpEvent(); // for tracking http telemetry
-        IHttpResponse httpResponse = null;
+        IHttpResponse httpResponse;
 
         try (TelemetryHelper telemetryHelper = serviceBundle.getTelemetryManager().createTelemetryHelper(
                 requestContext.telemetryRequestId(),
@@ -60,7 +46,6 @@ class HttpHelper {
 
             try {
                 IHttpClient httpClient = serviceBundle.getHttpClient();
-
                 httpResponse = executeHttpRequestWithRetries(httpRequest, httpClient);
 
             } catch (Exception e) {
@@ -77,6 +62,31 @@ class HttpHelper {
         processThrottlingInstructions(httpResponse, requestContext);
 
         return httpResponse;
+    }
+
+    private static String getRequestThumbprint(RequestContext requestContext) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(requestContext.clientId() + POINT_DELIMITER);
+        sb.append(requestContext.authority() + POINT_DELIMITER);
+
+        IAcquireTokenParameters apiParameters = requestContext.apiParameters();
+
+        if (apiParameters instanceof SilentParameters) {
+            IAccount account = ((SilentParameters) apiParameters).account();
+            if (account != null) {
+                sb.append(account.homeAccountId() + POINT_DELIMITER);
+            }
+        }
+
+        Set<String> sortedScopes = new TreeSet<>(apiParameters.scopes());
+        sb.append(String.join(" ", sortedScopes));
+
+        return StringHelper.createSha256Hash(sb.toString());
+    }
+
+    private static boolean isRetryable(IHttpResponse httpResponse) {
+        return httpResponse.statusCode() >= HTTP_STATUS_500 &&
+                getRetryAfterHeader(httpResponse) == null;
     }
 
     private static IHttpResponse executeHttpRequestWithRetries(HttpRequest httpRequest, IHttpClient httpClient)
@@ -112,8 +122,8 @@ class HttpHelper {
             Integer retryAfterHeaderVal = getRetryAfterHeader(httpResponse);
             if (retryAfterHeaderVal != null) {
                 expirationTimestamp = System.currentTimeMillis() + retryAfterHeaderVal * 1000;
-            } else if (httpResponse.statusCode() == 429 ||
-                    (httpResponse.statusCode() >= 500 && httpResponse.statusCode() < 600)) {
+            } else if (httpResponse.statusCode() == HTTP_STATUS_429 ||
+                    (httpResponse.statusCode() >= HTTP_STATUS_500)) {
 
                 expirationTimestamp = System.currentTimeMillis() + ThrottlingCache.DEFAULT_THROTTLING_TIME_SEC * 1000;
             }

@@ -86,6 +86,18 @@ public class LabUserProvider {
         return getLabUser(query);
     }
 
+    public User getUserByGuestHomeAzureEnvironments(String guestEnvironment, String homeEnvironment) {
+
+        UserQueryParameters query = new UserQueryParameters();
+        query.parameters.put(UserQueryParameters.USER_TYPE, "guest");
+        query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT,  guestEnvironment);
+        query.parameters.put(UserQueryParameters.HOME_AZURE_ENVIRONMENT,  homeEnvironment);
+        query.parameters.put(UserQueryParameters.GUEST_HOME_DIN,  "hostazuread");
+        query.parameters.put(UserQueryParameters.SIGN_IN_AUDIENCE,  "azureadmyorg");
+
+        return getLabUser(query);
+    }
+
     public User getLabUser(UserQueryParameters userQuery){
         if(userCache.containsKey(userQuery)){
             return userCache.get(userQuery);

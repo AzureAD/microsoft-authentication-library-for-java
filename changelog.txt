@@ -1,3 +1,13 @@
+Version 1.10.1
+=============
+- Improved behavior when using regional authorities
+- Fix scope override issue in OBO flow
+- Update server-side telemetry
+- Adjusted logging levels to reduce noise
+- Improved HTTP error handling and messaging
+- Upgrade oauth2-oidc-sdk dependency 9.4 -> 9.7
+- Upgrade httpclient dependency 4.5.9 -> 4.5.13
+
 Version 1.10.0
 =============
 - Instance aware support for interactive requests

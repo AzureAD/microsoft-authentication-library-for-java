@@ -124,6 +124,10 @@ public class AuthorizationRequestUrlParameters {
         if(builder.loginHint != null){
             this.loginHint = loginHint();
             requestParameters.put("login_hint", Collections.singletonList(builder.loginHint));
+
+            // For CCS routing
+            requestParameters.put(HttpHeaders.X_ANCHOR_MAILBOX, Collections.singletonList(
+                    String.format(HttpHeaders.X_ANCHOR_MAILBOX_UPN_FORMAT, builder.loginHint)));
         }
 
         if(builder.domainHint != null){
