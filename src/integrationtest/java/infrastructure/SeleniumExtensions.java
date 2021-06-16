@@ -91,19 +91,29 @@ public class SeleniumExtensions {
         waitForElementToBeVisibleAndEnable(driver, new By.ById(fields.getPasswordSigInButtonId())).
                 click();
 
-        if(LabConstants.GUEST_USER_TYPE.equals(user.getUserType())) {
-            try {
-                checkAuthenticationCompletePage(driver);
-                return;
-            } catch (TimeoutException ex) {
-            }
+        try {
+            checkAuthenticationCompletePage(driver);
+            return;
+        } catch (TimeoutException ex) {
+        }
 
-            try {
-                LOG.info("Stay signed in ? ... click NO");
-                waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.STAY_SIGN_IN_NO_BUTTON_ID), 5).
-                        click();
-            } catch (TimeoutException ex) {
-            }
+        LOG.info("Checking optional questions");
+
+        try {
+            LOG.info("Are you trying to sign in to ... ? checking");
+            waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.ARE_YOU_TRYING_TO_SIGN_IN_TO), 3).
+                    click();
+            LOG.info("Are you trying to sign in to ... ? click Continue");
+
+        } catch (TimeoutException ex) {
+        }
+
+        try {
+            LOG.info("Stay signed in? checking");
+            waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.STAY_SIGN_IN_NO_BUTTON_ID), 3).
+                    click();
+            LOG.info("Stay signed in?  click NO");
+        } catch (TimeoutException ex) {
         }
     }
 
