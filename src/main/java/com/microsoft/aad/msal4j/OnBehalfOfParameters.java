@@ -33,13 +33,6 @@ public class OnBehalfOfParameters implements IAcquireTokenParameters {
     @Builder.Default
     private Boolean skipCache = false;
 
-    /**
-     * Indicates whether the request should skip looking into the token cache. Be default it is
-     * set to false.
-     */
-    @Builder.Default
-    private Boolean skipCache = false;
-
     @NonNull
     private IUserAssertion userAssertion;
 
