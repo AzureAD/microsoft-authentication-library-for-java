@@ -50,13 +50,13 @@ class AadInstanceDiscoveryProvider {
                                                            MsalRequest msalRequest,
                                                            ServiceBundle serviceBundle) {
 
-        InstanceDiscoveryMetadataEntry result = cache.get(authorityUrl.getAuthority());
+        InstanceDiscoveryMetadataEntry result = cache.get(authorityUrl.getHost());
 
         if (result == null) {
             doInstanceDiscoveryAndCache(authorityUrl, validateAuthority, msalRequest, serviceBundle);
         }
 
-        return cache.get(authorityUrl.getAuthority());
+        return cache.get(authorityUrl.getHost());
     }
 
     static Set<String> getAliases(String host){
@@ -153,7 +153,7 @@ class AadInstanceDiscoveryProvider {
 
         //If the region is known, attempt to make instance discovery request with region endpoint
         if (regionToUse != null) {
-            String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpointWithRegion(authorityUrl.getAuthority(), regionToUse) +
+            String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpointWithRegion(authorityUrl.getHost(), regionToUse) +
                     formInstanceDiscoveryParameters(authorityUrl);
 
             try {
@@ -166,7 +166,7 @@ class AadInstanceDiscoveryProvider {
         //If the region is unknown or the instance discovery failed at the region endpoint, try the global endpoint
         if ((detectedRegion == null && providedRegion == null) || httpResponse == null || httpResponse.statusCode() != HTTPResponse.SC_OK) {
 
-            String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpoint(authorityUrl.getAuthority()) +
+            String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpoint(authorityUrl.getHost()) +
                     formInstanceDiscoveryParameters(authorityUrl);
 
             httpResponse = executeRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
@@ -205,7 +205,7 @@ class AadInstanceDiscoveryProvider {
 
     private static String formInstanceDiscoveryParameters(URL authorityUrl) {
         return INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE.replace("{authorizeEndpoint}",
-                getAuthorizeEndpoint(authorityUrl.getAuthority(),
+                getAuthorizeEndpoint(authorityUrl.getHost(),
                         Authority.getTenant(authorityUrl, Authority.detectAuthorityType(authorityUrl))));
     }
 
@@ -275,7 +275,7 @@ class AadInstanceDiscoveryProvider {
             }
         }
 
-        cacheInstanceDiscoveryMetadata(authorityUrl.getAuthority(), aadInstanceDiscoveryResponse);
+        cacheInstanceDiscoveryMetadata(authorityUrl.getHost(), aadInstanceDiscoveryResponse);
     }
 
     private static void validate(AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse) {
