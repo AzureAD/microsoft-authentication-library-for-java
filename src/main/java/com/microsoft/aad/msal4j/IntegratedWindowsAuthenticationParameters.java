@@ -46,6 +46,10 @@ public class IntegratedWindowsAuthenticationParameters implements IAcquireTokenP
      */
     private Map<String, String> extraHttpHeaders;
 
+    /**
+     * Overrides the tenant value in the authority URL for this request
+     */
+    private String tenant;
 
     private static IntegratedWindowsAuthenticationParametersBuilder builder() {
 

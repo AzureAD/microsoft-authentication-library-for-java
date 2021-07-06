@@ -81,6 +81,11 @@ public class InteractiveRequestParameters implements IAcquireTokenParameters {
     private Map<String, String> extraHttpHeaders;
 
     /**
+     * Overrides the tenant value in the authority URL for this request
+     */
+    private String tenant;
+
+    /**
      * If set to true, the authorization result will contain the authority for the user's home cloud, and this authority
      * will be used for the token request instead of the authority set in the application.
      */
