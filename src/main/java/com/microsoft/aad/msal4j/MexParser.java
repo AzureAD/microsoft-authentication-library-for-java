@@ -24,15 +24,15 @@ class MexParser {
 
     private final static Logger log = LoggerFactory.getLogger(MexParser.class);
 
-    private final static String TRANSPORT_BINDING_XPATH = "wsp:ExactlyOne/wsp:All/sp:TransportBinding";
-    private final static String TRANSPORT_BINDING_2005_XPATH = "wsp:ExactlyOne/wsp:All/sp2005:TransportBinding";
-    private final static String PORT_XPATH = "//wsdl:definitions/wsdl:service/wsdl:port";
-    private final static String ADDRESS_XPATH = "wsa10:EndpointReference/wsa10:Address";
-    private final static String SOAP_ACTION_XPATH = "wsdl:operation/soap12:operation/@soapAction";
-    private final static String RST_SOAP_ACTION = "http://docs.oasis-open.org/ws-sx/ws-trust/200512/RST/Issue";
-    private final static String RST_SOAP_ACTION_2005 = "http://schemas.xmlsoap.org/ws/2005/02/trust/RST/Issue";
-    private final static String SOAP_TRANSPORT_XPATH = "soap12:binding/@transport";
-    private final static String SOAP_HTTP_TRANSPORT_VALUE = "http://schemas.xmlsoap.org/soap/http";
+    private static final String TRANSPORT_BINDING_XPATH = "wsp:ExactlyOne/wsp:All/sp:TransportBinding";
+    private static final String TRANSPORT_BINDING_2005_XPATH = "wsp:ExactlyOne/wsp:All/sp2005:TransportBinding";
+    private static final String PORT_XPATH = "//wsdl:definitions/wsdl:service/wsdl:port";
+    private static final String ADDRESS_XPATH = "wsa10:EndpointReference/wsa10:Address";
+    private static final String SOAP_ACTION_XPATH = "wsdl:operation/soap12:operation/@soapAction";
+    private static final String RST_SOAP_ACTION = "http://docs.oasis-open.org/ws-sx/ws-trust/200512/RST/Issue";
+    private static final String RST_SOAP_ACTION_2005 = "http://schemas.xmlsoap.org/ws/2005/02/trust/RST/Issue";
+    private static final String SOAP_TRANSPORT_XPATH = "soap12:binding/@transport";
+    private static final String SOAP_HTTP_TRANSPORT_VALUE = "http://schemas.xmlsoap.org/soap/http";
 
     private interface PolicySelector {
         Map<String, BindingPolicy> selectPolicies(Document document, XPath xPath, boolean logPii) throws XPathExpressionException;
@@ -115,7 +115,8 @@ class MexParser {
     private static BindingPolicy selectSingleMatchingPolicy(
             Map<String, BindingPolicy> policies) {
 
-        BindingPolicy wstrust13 = null, wstrust2005 = null;
+        BindingPolicy wstrust13 = null;
+        BindingPolicy wstrust2005 = null;
 
         // Select wstrust13 first if wstrust13 available
         Iterator<Entry<String, BindingPolicy>> it = policies.entrySet()
@@ -200,7 +201,7 @@ class MexParser {
             Document xmlDocument, XPath xPath,
             Map<String, BindingPolicy> policies, boolean logPii)
             throws XPathExpressionException {
-        Map<String, BindingPolicy> bindings = new HashMap<String, BindingPolicy>();
+        Map<String, BindingPolicy> bindings = new HashMap<>();
         NodeList nodeList = (NodeList) xPath.compile(
                 "//wsdl:definitions/wsdl:binding/wsp:PolicyReference")
                 .evaluate(xmlDocument, XPathConstants.NODESET);
@@ -275,7 +276,7 @@ class MexParser {
             Document xmlDocument, XPath xPath, String xpathExpression, boolean logPii)
             throws XPathExpressionException {
 
-        Map<String, BindingPolicy> policies = new HashMap<String, BindingPolicy>();
+        Map<String, BindingPolicy> policies = new HashMap<>();
 
         NodeList nodeList = (NodeList) xPath.compile(xpathExpression).evaluate(
                 xmlDocument, XPathConstants.NODESET);
@@ -302,7 +303,7 @@ class MexParser {
             XPath xPath,
             String xpathExpression) throws XPathExpressionException {
 
-        Map<String, BindingPolicy> policies = new HashMap<String, BindingPolicy>();
+        Map<String, BindingPolicy> policies = new HashMap<>();
 
         NodeList nodeList = (NodeList) xPath.compile(xpathExpression).evaluate(xmlDocument, XPathConstants.NODESET);
         for (int i = 0; i < nodeList.getLength(); i++) {

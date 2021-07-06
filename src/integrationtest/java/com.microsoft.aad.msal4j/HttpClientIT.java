@@ -4,7 +4,6 @@
 package com.microsoft.aad.msal4j;
 
 import labapi.LabUserProvider;
-import labapi.AzureEnvironment;
 import labapi.User;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
