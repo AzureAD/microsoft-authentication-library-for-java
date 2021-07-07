@@ -97,6 +97,19 @@ public class UsernamePasswordIT {
         assertAcquireTokenCommonAAD(user);
     }
 
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenWithUsernamePassword_AuthorityWithPort(String environment) throws Exception {
+        cfg = new Config(environment);
+
+        User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
+
+        assertAcquireTokenCommon(
+                user,
+                TestConstants.COMMON_AUTHORITY_WITH_PORT,
+                cfg.graphDefaultScope(),
+                user.getAppId());
+    }
+
     private void assertAcquireTokenCommonADFS(User user) throws Exception {
         assertAcquireTokenCommon(user, TestConstants.ADFS_AUTHORITY, TestConstants.ADFS_SCOPE,
                 TestConstants.ADFS_APP_ID);
