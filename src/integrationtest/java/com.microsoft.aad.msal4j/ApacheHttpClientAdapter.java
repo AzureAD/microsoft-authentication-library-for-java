@@ -22,7 +22,7 @@ import java.util.Map;
 
 class ApacheHttpClientAdapter implements IHttpClient {
 
-    private CloseableHttpClient httpClient;
+    private final CloseableHttpClient httpClient;
 
     ApacheHttpClientAdapter(){
         this.httpClient = HttpClients.createDefault();

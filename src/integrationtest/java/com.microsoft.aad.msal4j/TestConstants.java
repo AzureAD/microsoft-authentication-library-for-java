@@ -48,8 +48,8 @@ public class TestConstants {
     public final static String ADFS_APP_ID = "PublicClientId";
 
     public final static String CLAIMS = "{\"id_token\":{\"auth_time\":{\"essential\":true}}}";
-    public final static Set<String> CLIENT_CAPABILITIES_EMPTY = new HashSet<String>(Collections.emptySet());
-    public final static Set<String> CLIENT_CAPABILITIES_LLT = new HashSet<String>(Collections.singletonList("llt"));
+    public final static Set<String> CLIENT_CAPABILITIES_EMPTY = new HashSet<>(Collections.emptySet());
+    public final static Set<String> CLIENT_CAPABILITIES_LLT = new HashSet<>(Collections.singletonList("llt"));
 
     // cross cloud b2b settings
     public final static String AUTHORITY_ARLINGTON = "https://login.microsoftonline.us/arlmsidlab1.onmicrosoft.us";
