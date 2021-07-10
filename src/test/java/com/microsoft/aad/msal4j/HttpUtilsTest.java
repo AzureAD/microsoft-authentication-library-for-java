@@ -14,15 +14,13 @@ import java.util.Map;
 
 @Test(groups = { "checkin" })
 public class HttpUtilsTest {
-
     private final String COOKIE_HEADER_NAME = "Set-Cookie";
     private final String COOKIE_HEADER_VALUE_1 = "298zf09hf012fh2";
     private final String COOKIE_HEADER_VALUE_2 = "u32t4o3tb3gg43";
 
     @Test
-    public void testHttpUtils_singleValueHeader(){
-
-        Map<String, List<String>> singleValuedHeader = new HashMap<String, List<String>>(){{
+    public void testHttpUtils_singleValueHeader() {
+        Map<String, List<String>> singleValuedHeader = new HashMap<String, List<String>>() {{
             put(COOKIE_HEADER_NAME, Collections.singletonList(COOKIE_HEADER_VALUE_1));
         }};
 
@@ -31,9 +29,8 @@ public class HttpUtilsTest {
     }
 
     @Test
-    public void testHttpUtils_multiValueHeader(){
-
-        Map<String, List<String>> multiValuedHeader = new HashMap<String, List<String>>(){{
+    public void testHttpUtils_multiValueHeader() {
+        Map<String, List<String>> multiValuedHeader = new HashMap<String, List<String>>() {{
             put(COOKIE_HEADER_NAME, Arrays.asList(COOKIE_HEADER_VALUE_1, COOKIE_HEADER_VALUE_2));
         }};
 
@@ -43,9 +40,8 @@ public class HttpUtilsTest {
     }
 
     @Test
-    public void testHttpUtils_HeaderValueNull(){
-
-        Map<String, List<String>> nullValuedHeader = new HashMap<String, List<String>>(){{
+    public void testHttpUtils_HeaderValueNull() {
+        Map<String, List<String>> nullValuedHeader = new HashMap<String, List<String>>() {{
             put(COOKIE_HEADER_NAME, null);
         }};
 

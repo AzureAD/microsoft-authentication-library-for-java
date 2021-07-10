@@ -46,11 +46,11 @@ public class AuthorizationRequestUrlParametersTest {
         String query = authorizationUrl.getQuery();
 
         String[] queryPairs = query.split("&");
-        for(String pair: queryPairs){
+        for (String pair : queryPairs) {
             int idx = pair.indexOf("=");
             queryParameters.put(
                     URLDecoder.decode(pair.substring(0, idx), "UTF-8"),
-                    URLDecoder.decode(pair.substring(idx+1), "UTF-8"));
+                    URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
         }
 
         Assert.assertEquals(queryParameters.get("scope"), "openid profile offline_access scope");
@@ -61,7 +61,7 @@ public class AuthorizationRequestUrlParametersTest {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testBuilder_invalidRequiredParameters(){
+    public void testBuilder_invalidRequiredParameters() {
         String redirectUri = "";
         Set<String> scope = Collections.singleton("scope");
 
@@ -72,7 +72,7 @@ public class AuthorizationRequestUrlParametersTest {
     }
 
     @Test
-    public void testBuilder_optionalParameters() throws UnsupportedEncodingException{
+    public void testBuilder_optionalParameters() throws UnsupportedEncodingException {
         Set<String> clientCapabilities = new HashSet<>();
         clientCapabilities.add("llt");
         clientCapabilities.add("ssm");
@@ -104,11 +104,11 @@ public class AuthorizationRequestUrlParametersTest {
         String query = authorizationUrl.getQuery();
 
         String[] queryPairs = query.split("&");
-        for(String pair: queryPairs){
+        for (String pair : queryPairs) {
             int idx = pair.indexOf("=");
             queryParameters.put(
                     URLDecoder.decode(pair.substring(0, idx), "UTF-8"),
-                    URLDecoder.decode(pair.substring(idx+1), "UTF-8"));
+                    URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
         }
 
         Assert.assertEquals(queryParameters.get("scope"),

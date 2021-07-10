@@ -37,7 +37,7 @@ public class TokenResponseTest extends AbstractMsalTests {
     public void testConstructor() throws ParseException {
         final TokenResponse response = new TokenResponse(
                 new BearerAccessToken("access_token"), new RefreshToken(
-                        "refresh_token"), idToken, null, null, expiresIn, extExpiresIn, null, refreshIn);
+                "refresh_token"), idToken, null, null, expiresIn, extExpiresIn, null, refreshIn);
         Assert.assertNotNull(response);
         OIDCTokens tokens = response.getOIDCTokens();
         Assert.assertNotNull(tokens);

@@ -139,7 +139,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
                 .scopes(Collections.singleton("default-scope"))
                 .build();
 
-        final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
+        final AuthorizationCodeRequest acr = new AuthorizationCodeRequest(
                 parameters,
                 app,
                 new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
@@ -162,7 +162,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
                 .scopes(Collections.singleton("default-scope"))
                 .build();
 
-        AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
+        AuthorizationCodeRequest acr = new AuthorizationCodeRequest(
                 parameters,
                 app,
                 new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
@@ -191,7 +191,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
                 .scopes(Collections.singleton("default-scope"))
                 .build();
 
-        final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
+        final AuthorizationCodeRequest acr = new AuthorizationCodeRequest(
                 parameters,
                 app,
                 new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
@@ -216,7 +216,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
                 .scopes(Collections.singleton("default-scope"))
                 .build();
 
-        final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
+        final AuthorizationCodeRequest acr = new AuthorizationCodeRequest(
                 parameters,
                 app,
                 new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
@@ -227,7 +227,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
                 new TelemetryManager(null, false));
 
         final TokenRequestExecutor request = PowerMock.createPartialMock(
-                TokenRequestExecutor.class, new String[] { "createOauthHttpRequest" },
+                TokenRequestExecutor.class, new String[]{"createOauthHttpRequest"},
                 new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)), acr, serviceBundle);
 
         final OAuthHttpRequest msalOAuthHttpRequest = PowerMock
@@ -274,7 +274,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
                 .scopes(Collections.singleton("default-scope"))
                 .build();
 
-        final AuthorizationCodeRequest acr =  new AuthorizationCodeRequest(
+        final AuthorizationCodeRequest acr = new AuthorizationCodeRequest(
                 parameters,
                 app,
                 new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
@@ -285,7 +285,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
                 new TelemetryManager(null, false));
 
         final TokenRequestExecutor request = PowerMock.createPartialMock(
-                TokenRequestExecutor.class, new String[] { "createOauthHttpRequest" },
+                TokenRequestExecutor.class, new String[]{"createOauthHttpRequest"},
                 new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)), acr, serviceBundle);
         final OAuthHttpRequest msalOAuthHttpRequest = PowerMock
                 .createMock(OAuthHttpRequest.class);
@@ -316,8 +316,7 @@ public class TokenRequestExecutorTest extends AbstractMsalTests {
         try {
             request.executeTokenRequest();
             PowerMock.verifyAll();
-        }
-        finally {
+        } finally {
             PowerMock.reset(request, msalOAuthHttpRequest, httpResponse,
                     TokenErrorResponse.class, errorResponse);
         }

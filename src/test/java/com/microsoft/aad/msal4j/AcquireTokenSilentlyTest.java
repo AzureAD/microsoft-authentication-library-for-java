@@ -24,8 +24,7 @@ public class AcquireTokenSilentlyTest extends PowerMockTestCase {
 
         try {
             application.acquireTokenSilently(parameters).join();
-        }
-        catch (CompletionException ex){
+        } catch (CompletionException ex) {
             throw ex.getCause();
         }
     }
@@ -42,8 +41,7 @@ public class AcquireTokenSilentlyTest extends PowerMockTestCase {
 
         try {
             application.acquireTokenSilently(parameters).join();
-        }
-        catch (CompletionException ex){
+        } catch (CompletionException ex) {
             throw ex.getCause();
         }
     }

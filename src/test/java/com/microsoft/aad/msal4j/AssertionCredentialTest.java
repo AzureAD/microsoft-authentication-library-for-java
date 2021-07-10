@@ -10,11 +10,11 @@ public class AssertionCredentialTest {
 
     @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "assertion")
     public void testAssertionNull() {
-	new ClientAssertion(null);
+        new ClientAssertion(null);
     }
 
     @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "assertion")
     public void testAssertionEmpty() {
-	new ClientAssertion("");
+        new ClientAssertion("");
     }
 }
