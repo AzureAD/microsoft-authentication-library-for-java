@@ -97,16 +97,14 @@ public class UsernamePasswordIT {
         assertAcquireTokenCommonAAD(user);
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenWithUsernamePassword_AuthorityWithPort(String environment) throws Exception {
-        cfg = new Config(environment);
-
-        User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
+    @Test
+    public void acquireTokenWithUsernamePassword_AuthorityWithPort() throws Exception {
+        User user = labUserProvider.getDefaultUser();
 
         assertAcquireTokenCommon(
                 user,
                 TestConstants.COMMON_AUTHORITY_WITH_PORT,
-                cfg.graphDefaultScope(),
+                TestConstants.GRAPH_DEFAULT_SCOPE,
                 user.getAppId());
     }
 
