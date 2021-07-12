@@ -30,18 +30,18 @@ public class RefreshTokenIT {
                 authority(cfg.organizationsAuthority()).
                 build();
 
-        AuthenticationResult result = (AuthenticationResult)pca.acquireToken(UserNamePasswordParameters
-                        .builder(Collections.singleton(cfg.graphDefaultScope()),
-                                user.getUpn(),
-                                user.getPassword().toCharArray())
-                        .build())
+        AuthenticationResult result = (AuthenticationResult) pca.acquireToken(UserNamePasswordParameters
+                .builder(Collections.singleton(cfg.graphDefaultScope()),
+                        user.getUpn(),
+                        user.getPassword().toCharArray())
+                .build())
                 .get();
 
         refreshToken = result.refreshToken();
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenWithRefreshToken(String environment) throws Exception{
+    public void acquireTokenWithRefreshToken(String environment) throws Exception {
         cfg = new Config(environment);
 
         setUp(environment);
@@ -59,7 +59,7 @@ public class RefreshTokenIT {
     }
 
     @Test(expectedExceptions = ExecutionException.class)
-    public void acquireTokenWithRefreshToken_WrongScopes() throws Exception{
+    public void acquireTokenWithRefreshToken_WrongScopes() throws Exception {
         IAuthenticationResult result = pca.acquireToken(RefreshTokenParameters
                 .builder(
                         Collections.singleton(TestConstants.KEYVAULT_DEFAULT_SCOPE),

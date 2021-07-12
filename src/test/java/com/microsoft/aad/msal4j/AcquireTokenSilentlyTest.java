@@ -9,7 +9,7 @@ import org.testng.annotations.Test;
 import java.util.Collections;
 import java.util.concurrent.CompletionException;
 
-@Test(groups = { "checkin" })
+@Test(groups = {"checkin"})
 public class AcquireTokenSilentlyTest extends PowerMockTestCase {
 
     @Test(expectedExceptions = MsalClientException.class,
@@ -24,8 +24,7 @@ public class AcquireTokenSilentlyTest extends PowerMockTestCase {
 
         try {
             application.acquireTokenSilently(parameters).join();
-        }
-        catch (CompletionException ex){
+        } catch (CompletionException ex) {
             throw ex.getCause();
         }
     }
@@ -42,8 +41,7 @@ public class AcquireTokenSilentlyTest extends PowerMockTestCase {
 
         try {
             application.acquireTokenSilently(parameters).join();
-        }
-        catch (CompletionException ex){
+        } catch (CompletionException ex) {
             throw ex.getCause();
         }
     }

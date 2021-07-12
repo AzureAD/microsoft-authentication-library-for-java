@@ -27,7 +27,7 @@ class AppMetadataCacheEntity {
     @JsonProperty("family_id")
     private String familyId;
 
-    String getKey(){
+    String getKey() {
         List<String> keyParts = new ArrayList<>();
 
         keyParts.add(APP_METADATA_CACHE_ENTITY_ID);

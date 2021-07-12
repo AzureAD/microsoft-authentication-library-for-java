@@ -22,7 +22,7 @@ public class AcquireTokenSilentIT {
     private Config cfg;
 
     @BeforeClass
-    public void setUp(){
+    public void setUp() {
         labUserProvider = LabUserProvider.getInstance();
     }
 
@@ -109,13 +109,13 @@ public class AcquireTokenSilentIT {
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenSilent_ADFS2019(String environment) throws Exception{
+    public void acquireTokenSilent_ADFS2019(String environment) throws Exception {
         cfg = new Config(environment);
 
         UserQueryParameters query = new UserQueryParameters();
         query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT, cfg.azureEnvironment);
-        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER,  FederationProvider.ADFS_2019);
-        query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
+        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, FederationProvider.ADFS_2019);
+        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.FEDERATED);
 
         User user = labUserProvider.getLabUser(query);
 
@@ -140,7 +140,7 @@ public class AcquireTokenSilentIT {
 
     // Commented out due to unclear B2C behavior causing occasional errors
     //@Test
-    public void acquireTokenSilent_B2C() throws Exception{
+    public void acquireTokenSilent_B2C() throws Exception {
         UserQueryParameters query = new UserQueryParameters();
         query.parameters.put(UserQueryParameters.USER_TYPE, UserType.B2C);
         query.parameters.put(UserQueryParameters.B2C_PROVIDER, B2CProvider.LOCAL);
@@ -162,7 +162,6 @@ public class AcquireTokenSilentIT {
     }
 
 
-
     @Test
     public void acquireTokenSilent_usingCommonAuthority_returnCachedAt() throws Exception {
         acquireTokenSilent_returnCachedTokens(cfg.organizationsAuthority());
@@ -174,7 +173,7 @@ public class AcquireTokenSilentIT {
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenSilent_ConfidentialClient_acquireTokenSilent(String environment) throws Exception{
+    public void acquireTokenSilent_ConfidentialClient_acquireTokenSilent(String environment) throws Exception {
         cfg = new Config(environment);
 
         IConfidentialClientApplication cca = getConfidentialClientApplications();
@@ -221,7 +220,7 @@ public class AcquireTokenSilentIT {
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenSilent_WithRefreshOn(String environment) throws Exception{
+    public void acquireTokenSilent_WithRefreshOn(String environment) throws Exception {
         cfg = new Config(environment);
 
         User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
@@ -264,7 +263,7 @@ public class AcquireTokenSilentIT {
         assertResultRefreshed(resultSilent, resultSilentWithRefreshOn);
     }
 
-    private IConfidentialClientApplication getConfidentialClientApplications() throws Exception{
+    private IConfidentialClientApplication getConfidentialClientApplications() throws Exception {
         String clientId = cfg.appProvider.getOboAppId();
         String password = cfg.appProvider.getOboAppPassword();
 
@@ -273,8 +272,8 @@ public class AcquireTokenSilentIT {
         return ConfidentialClientApplication.builder(
                 clientId, credential).
                 //authority(MICROSOFT_AUTHORITY)
-                authority(cfg.tenantSpecificAuthority()).
-                build();
+                        authority(cfg.tenantSpecificAuthority()).
+                        build();
     }
 
     private void acquireTokenSilent_returnCachedTokens(String authority) throws Exception {

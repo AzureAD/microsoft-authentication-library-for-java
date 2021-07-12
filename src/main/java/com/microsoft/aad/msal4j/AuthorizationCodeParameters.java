@@ -64,8 +64,9 @@ public class AuthorizationCodeParameters implements IAcquireTokenParameters {
 
     /**
      * Builder for {@link AuthorizationCodeParameters}
+     *
      * @param authorizationCode code received from the service authorization endpoint
-     * @param redirectUri URI where authorization code was received
+     * @param redirectUri       URI where authorization code was received
      * @return builder object that can be used to construct {@link AuthorizationCodeParameters}
      */
     public static AuthorizationCodeParametersBuilder builder(String authorizationCode, URI redirectUri) {

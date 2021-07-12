@@ -5,7 +5,7 @@ package com.microsoft.aad.msal4j;
 
 /**
  * Interface representing context in which the token cache is accessed
- *
+ * <p>
  * For more details, see https://aka.ms/msal4j-token-cache
  */
 public interface ITokenCacheAccessContext {

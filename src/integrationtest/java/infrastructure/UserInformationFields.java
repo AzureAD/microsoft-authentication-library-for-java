@@ -14,19 +14,19 @@ class UserInformationFields {
     private String passwordInputId;
     private String passwordSigInButtonId;
 
-    UserInformationFields(User labUser){
+    UserInformationFields(User labUser) {
         this.user = labUser;
     }
 
     String getPasswordInputId() {
-        if(Strings.isNullOrEmpty(passwordInputId)){
+        if (Strings.isNullOrEmpty(passwordInputId)) {
             determineFieldIds();
         }
         return passwordInputId;
     }
 
     String getPasswordSigInButtonId() {
-        if(Strings.isNullOrEmpty(passwordSigInButtonId)){
+        if (Strings.isNullOrEmpty(passwordSigInButtonId)) {
             determineFieldIds();
         }
         return passwordSigInButtonId;
@@ -44,19 +44,18 @@ class UserInformationFields {
         return SeleniumConstants.ADFS2019_UPN_INPUT_ID;
     }
 
-    private void determineFieldIds(){
-        switch (user.getFederationProvider()){
+    private void determineFieldIds() {
+        switch (user.getFederationProvider()) {
             case FederationProvider.ADFS_3:
-            case FederationProvider.ADFS_2019 :
+            case FederationProvider.ADFS_2019:
                 passwordInputId = SeleniumConstants.ADFS2019_PASSWORD_ID;
                 passwordSigInButtonId = SeleniumConstants.ADFS2019_SUBMIT_ID;
                 break;
             case FederationProvider.ADFS_2:
-                if(LabConstants.ARLINGTON_LAB_NAME.equals(user.getLabName())){
+                if (LabConstants.ARLINGTON_LAB_NAME.equals(user.getLabName())) {
                     passwordInputId = SeleniumConstants.ADFSV2_ARLINGTON_WEB_PASSWORD_INPUT_ID;
                     passwordSigInButtonId = SeleniumConstants.ADFSV2_ARLINGTON_WEB_SUBMIT_BUTTON_ID;
-                }
-                else {
+                } else {
                     passwordInputId = SeleniumConstants.ADFSV2_WEB_PASSWORD_INPUT_ID;
                     passwordSigInButtonId = SeleniumConstants.ADFSV2_WEB_SUBMIT_BUTTON_ID;
                 }

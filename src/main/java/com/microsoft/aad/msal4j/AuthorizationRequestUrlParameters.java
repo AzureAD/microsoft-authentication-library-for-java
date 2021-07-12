@@ -34,7 +34,7 @@ public class AuthorizationRequestUrlParameters {
     private String correlationId;
     private boolean instanceAware;
 
-    Map<String, List<String>> requestParameters  = new HashMap<>();
+    Map<String, List<String>> requestParameters = new HashMap<>();
 
     public static Builder builder(String redirectUri,
                                   Set<String> scopes) {
@@ -51,7 +51,7 @@ public class AuthorizationRequestUrlParameters {
         return new Builder();
     }
 
-    private AuthorizationRequestUrlParameters(Builder builder){
+    private AuthorizationRequestUrlParameters(Builder builder) {
         //required parameters
         this.redirectUri = builder.redirectUri;
         requestParameters.put("redirect_uri", Collections.singletonList(this.redirectUri));
@@ -63,26 +63,26 @@ public class AuthorizationRequestUrlParameters {
 
         scopesParam.addAll(builder.scopes);
 
-        if(builder.extraScopesToConsent != null) {
+        if (builder.extraScopesToConsent != null) {
             scopesParam.addAll(builder.extraScopesToConsent);
         }
 
         this.scopes = scopesParam;
         requestParameters.put("scope", Collections.singletonList(String.join(" ", scopesParam)));
-        requestParameters.put("response_type",Collections.singletonList("code"));
+        requestParameters.put("response_type", Collections.singletonList("code"));
 
         // Optional parameters
-        if(builder.claims != null) {
+        if (builder.claims != null) {
             String claimsParam = String.join(" ", builder.claims);
             requestParameters.put("claims", Collections.singletonList(claimsParam));
         }
 
-        if(builder.claimsChallenge != null && builder.claimsChallenge.trim().length() > 0){
+        if (builder.claimsChallenge != null && builder.claimsChallenge.trim().length() > 0) {
             JsonHelper.validateJsonFormat(builder.claimsChallenge);
             requestParameters.put("claims", Collections.singletonList(builder.claimsChallenge));
         }
 
-        if(builder.claimsRequest != null){
+        if (builder.claimsRequest != null) {
             String claimsRequest = builder.claimsRequest.formatAsJSONString();
             //If there are other claims (such as part of a claims challenge), merge them with this claims request.
             if (requestParameters.get("claims") != null) {
@@ -91,27 +91,27 @@ public class AuthorizationRequestUrlParameters {
             requestParameters.put("claims", Collections.singletonList(claimsRequest));
         }
 
-        if(builder.codeChallenge != null){
+        if (builder.codeChallenge != null) {
             this.codeChallenge = builder.codeChallenge;
             requestParameters.put("code_challenge", Collections.singletonList(builder.codeChallenge));
         }
 
-        if(builder.codeChallengeMethod != null){
+        if (builder.codeChallengeMethod != null) {
             this.codeChallengeMethod = builder.codeChallengeMethod;
             requestParameters.put("code_challenge_method", Collections.singletonList(builder.codeChallengeMethod));
         }
 
-        if(builder.state != null){
+        if (builder.state != null) {
             this.state = builder.state;
             requestParameters.put("state", Collections.singletonList(builder.state));
         }
 
-        if(builder.nonce != null){
+        if (builder.nonce != null) {
             this.nonce = builder.nonce;
             requestParameters.put("nonce", Collections.singletonList(builder.nonce));
         }
 
-        if(builder.responseMode != null){
+        if (builder.responseMode != null) {
             this.responseMode = builder.responseMode;
             requestParameters.put("response_mode", Collections.singletonList(
                     builder.responseMode.toString()));
@@ -121,7 +121,7 @@ public class AuthorizationRequestUrlParameters {
                     ResponseMode.FORM_POST.toString()));
         }
 
-        if(builder.loginHint != null){
+        if (builder.loginHint != null) {
             this.loginHint = loginHint();
             requestParameters.put("login_hint", Collections.singletonList(builder.loginHint));
 
@@ -130,29 +130,29 @@ public class AuthorizationRequestUrlParameters {
                     String.format(HttpHeaders.X_ANCHOR_MAILBOX_UPN_FORMAT, builder.loginHint)));
         }
 
-        if(builder.domainHint != null){
+        if (builder.domainHint != null) {
             this.domainHint = domainHint();
             requestParameters.put("domain_hint", Collections.singletonList(builder.domainHint));
         }
 
-        if(builder.prompt != null){
+        if (builder.prompt != null) {
             this.prompt = builder.prompt;
             requestParameters.put("prompt", Collections.singletonList(builder.prompt.toString()));
         }
 
-        if(builder.correlationId != null){
+        if (builder.correlationId != null) {
             this.correlationId = builder.correlationId;
             requestParameters.put("correlation_id", Collections.singletonList(builder.correlationId));
         }
 
-        if(builder.instanceAware){
+        if (builder.instanceAware) {
             this.instanceAware = builder.instanceAware;
             requestParameters.put("instance_aware", Collections.singletonList(String.valueOf(instanceAware)));
         }
     }
 
     URL createAuthorizationURL(Authority authority,
-                               Map<String, List<String>> requestParameters){
+                               Map<String, List<String>> requestParameters) {
         URL authorizationRequestUrl;
         try {
             String authorizationCodeEndpoint = authority.authorizationEndpoint();
@@ -160,7 +160,7 @@ public class AuthorizationRequestUrlParameters {
                     URLUtils.serializeParameters(requestParameters);
 
             authorizationRequestUrl = new URL(uriString);
-        } catch(MalformedURLException ex){
+        } catch (MalformedURLException ex) {
             throw new MsalClientException(ex);
         }
         return authorizationRequestUrl;
@@ -185,7 +185,7 @@ public class AuthorizationRequestUrlParameters {
         private String correlationId;
         private boolean instanceAware;
 
-        public AuthorizationRequestUrlParameters build(){
+        public AuthorizationRequestUrlParameters build() {
             return new AuthorizationRequestUrlParameters(this);
         }
 
@@ -197,7 +197,7 @@ public class AuthorizationRequestUrlParameters {
          * The redirect URI where authentication responses can be received by your application. It
          * must exactly match one of the redirect URIs registered in the Azure portal.
          */
-        public Builder redirectUri(String val){
+        public Builder redirectUri(String val) {
             this.redirectUri = val;
             return self();
         }
@@ -205,7 +205,7 @@ public class AuthorizationRequestUrlParameters {
         /**
          * Scopes which the application is requesting access to and the user will consent to.
          */
-        public Builder scopes(Set<String> val){
+        public Builder scopes(Set<String> val) {
             this.scopes = val;
             return self();
         }
@@ -214,7 +214,7 @@ public class AuthorizationRequestUrlParameters {
          * Scopes that you can request the end user to consent upfront,
          * in addition to scopes which the application is requesting access to.
          */
-        public Builder extraScopesToConsent(Set<String> val){
+        public Builder extraScopesToConsent(Set<String> val) {
             this.extraScopesToConsent = val;
             return self();
         }
@@ -224,7 +224,7 @@ public class AuthorizationRequestUrlParameters {
          * policy has not been met,{@link MsalServiceException} will contain claims that need be
          * consented to.
          */
-        public Builder claimsChallenge(String val){
+        public Builder claimsChallenge(String val) {
             this.claimsChallenge = val;
             return self();
         }
@@ -232,7 +232,7 @@ public class AuthorizationRequestUrlParameters {
         /**
          * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
          */
-        public Builder claims(ClaimsRequest val){
+        public Builder claims(ClaimsRequest val) {
             this.claimsRequest = val;
             return self();
         }
@@ -242,7 +242,7 @@ public class AuthorizationRequestUrlParameters {
          * Required if codeChallenge is included. For more information, see the PKCE RCF:
          * https://tools.ietf.org/html/rfc7636
          */
-        public Builder codeChallenge(String val){
+        public Builder codeChallenge(String val) {
             this.codeChallenge = val;
             return self();
         }
@@ -252,7 +252,7 @@ public class AuthorizationRequestUrlParameters {
          * of plain or S256. If excluded, code challenge is assumed to be plaintext. For more
          * information, see the PKCE RCF: https://tools.ietf.org/html/rfc7636
          */
-        public Builder codeChallengeMethod(String val){
+        public Builder codeChallengeMethod(String val) {
             this.codeChallengeMethod = val;
             return self();
         }
@@ -262,17 +262,17 @@ public class AuthorizationRequestUrlParameters {
          * generated unique value is typically used for preventing cross site request forgery attacks.
          * The state is also used to encode information about the user's state in the app before the
          * authentication request occurred.
-         * */
-        public Builder state(String val){
+         */
+        public Builder state(String val) {
             this.state = val;
             return self();
         }
 
         /**
-         *  A value included in the request that is also returned in the token response. A randomly
-         *  generated unique value is typically used for preventing cross site request forgery attacks.
+         * A value included in the request that is also returned in the token response. A randomly
+         * generated unique value is typically used for preventing cross site request forgery attacks.
          */
-        public Builder nonce(String val){
+        public Builder nonce(String val) {
             this.nonce = val;
             return self();
         }
@@ -280,7 +280,7 @@ public class AuthorizationRequestUrlParameters {
         /**
          * Specifies the method that should be used to send the authentication result to your app.
          */
-        public Builder responseMode(ResponseMode val){
+        public Builder responseMode(ResponseMode val) {
             this.responseMode = val;
             return self();
         }
@@ -291,7 +291,7 @@ public class AuthorizationRequestUrlParameters {
          * re-authentication, having already extracted the username from a previous sign-in using the
          * preferred_username claim.
          */
-        public Builder loginHint(String val){
+        public Builder loginHint(String val) {
             this.loginHint = val;
             return self();
         }
@@ -300,7 +300,7 @@ public class AuthorizationRequestUrlParameters {
          * Provides a hint about the tenant or domain that the user should use to sign in. The value
          * of the domain hint is a registered domain for the tenant.
          **/
-        public Builder domainHint(String val){
+        public Builder domainHint(String val) {
             this.domainHint = val;
             return self();
         }
@@ -309,7 +309,7 @@ public class AuthorizationRequestUrlParameters {
          * Indicates the type of user interaction that is required. Possible values are
          * {@link Prompt}
          */
-        public Builder prompt(Prompt val){
+        public Builder prompt(Prompt val) {
             this.prompt = val;
             return self();
         }
@@ -317,7 +317,7 @@ public class AuthorizationRequestUrlParameters {
         /**
          * Identifier used to correlate requests for telemetry purposes. Usually a GUID.
          */
-        public Builder correlationId(String val){
+        public Builder correlationId(String val) {
             this.correlationId = val;
             return self();
         }
@@ -326,7 +326,7 @@ public class AuthorizationRequestUrlParameters {
          * If set to true, the authorization result will contain the authority for the user's home cloud, and this authority
          * will be used for the token request instead of the authority set in the application.
          */
-        public Builder instanceAware(boolean val){
+        public Builder instanceAware(boolean val) {
             this.instanceAware = val;
             return self();
         }

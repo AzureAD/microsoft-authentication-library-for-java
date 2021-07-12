@@ -29,7 +29,7 @@ public class DeviceCodeIT {
     private Config cfg;
 
     @BeforeClass
-    public void setUp(){
+    public void setUp() {
         labUserProvider = LabUserProvider.getInstance();
         seleniumDriver = SeleniumExtensions.createDefaultWebDriver();
     }
@@ -43,7 +43,7 @@ public class DeviceCodeIT {
         PublicClientApplication pca = PublicClientApplication.builder(
                 user.getAppId()).
                 authority(cfg.tenantSpecificAuthority()).
-        build();
+                build();
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
             runAutomatedDeviceCodeFlow(deviceCode, user, environment);
@@ -83,17 +83,17 @@ public class DeviceCodeIT {
         Assert.assertFalse(Strings.isNullOrEmpty(result.accessToken()));
     }
 
-    private void runAutomatedDeviceCodeFlow(DeviceCode deviceCode, User user, String environment){
+    private void runAutomatedDeviceCodeFlow(DeviceCode deviceCode, User user, String environment) {
         boolean isRunningLocally = true;//!Strings.isNullOrEmpty(
-                //System.getenv(TestConstants.LOCAL_FLAG_ENV_VAR));
+        //System.getenv(TestConstants.LOCAL_FLAG_ENV_VAR));
 
         boolean isADFS2019 = user.getFederationProvider().equals("adfsv2019");
 
         LOG.info("Device code running locally: " + isRunningLocally);
-        try{
+        try {
             String deviceCodeFormId;
             String continueButtonId;
-            if(isRunningLocally){
+            if (isRunningLocally) {
                 if (isADFS2019) {
                     deviceCodeFormId = "userCodeInput";
                     continueButtonId = "confirmationButton";
@@ -114,8 +114,8 @@ public class DeviceCodeIT {
 
             LOG.info("Loggin in ... click continue");
             WebElement continueBtn = SeleniumExtensions.waitForElementToBeVisibleAndEnable(
-                   seleniumDriver,
-                   new By.ById(continueButtonId));
+                    seleniumDriver,
+                    new By.ById(continueButtonId));
             continueBtn.click();
 
             if (isADFS2019) {
@@ -123,8 +123,8 @@ public class DeviceCodeIT {
             } else {
                 SeleniumExtensions.performADLogin(seleniumDriver, user);
             }
-        } catch(Exception e){
-            if(!isRunningLocally){
+        } catch (Exception e) {
+            if (!isRunningLocally) {
                 SeleniumExtensions.takeScreenShot(seleniumDriver);
             }
             LOG.error("Browser automation failed: " + e.getMessage());
@@ -133,8 +133,8 @@ public class DeviceCodeIT {
     }
 
     @AfterClass
-    public void cleanUp(){
-        if( seleniumDriver != null){
+    public void cleanUp() {
+        if (seleniumDriver != null) {
             seleniumDriver.close();
         }
     }

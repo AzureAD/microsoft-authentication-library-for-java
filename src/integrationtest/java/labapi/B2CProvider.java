@@ -4,7 +4,7 @@
 package labapi;
 
 public class B2CProvider {
-    public static final String NONE =  "none";
+    public static final String NONE = "none";
     public static final String AMAZON = "amazon";
     public static final String FACEBOOK = "facebook";
     public static final String GOOGLE = "google";

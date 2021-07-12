@@ -16,7 +16,6 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
  * Object containing parameters for silent requests. Can be used as parameter to
  * {@link PublicClientApplication#acquireTokenSilently(SilentParameters)} or to
  * {@link ConfidentialClientApplication#acquireTokenSilently(SilentParameters)}
- *
  */
 @Builder
 @Accessors(fluent = true)
@@ -62,7 +61,8 @@ public class SilentParameters implements IAcquireTokenParameters {
 
     /**
      * Builder for SilentParameters
-     * @param scopes scopes application is requesting access to
+     *
+     * @param scopes  scopes application is requesting access to
      * @param account {@link IAccount} for which to acquire a token for
      * @return builder object that can be used to construct SilentParameters
      */
@@ -79,12 +79,11 @@ public class SilentParameters implements IAcquireTokenParameters {
     /**
      * Builder for SilentParameters
      *
+     * @param scopes scopes application is requesting access to
+     * @return builder object that can be used to construct SilentParameters
      * @deprecated This method was used for using cached tokens in client credentials or On-behalf-of
      * flow. Those flows will now by default attempt to use cached the cached tokens, so there is
      * no need to call acquireTokenSilently. This overload will be removed in the next major version.
-     *
-     * @param scopes scopes application is requesting access to
-     * @return builder object that can be used to construct SilentParameters
      */
     @Deprecated
     public static SilentParametersBuilder builder(Set<String> scopes) {

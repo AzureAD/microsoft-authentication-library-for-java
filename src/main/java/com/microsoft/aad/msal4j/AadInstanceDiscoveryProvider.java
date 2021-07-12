@@ -59,11 +59,10 @@ class AadInstanceDiscoveryProvider {
         return cache.get(authorityUrl.getAuthority());
     }
 
-    static Set<String> getAliases(String host){
-        if(cache.containsKey(host)){
+    static Set<String> getAliases(String host) {
+        if (cache.containsKey(host)) {
             return cache.get(host).aliases();
-        }
-        else{
+        } else {
             return Collections.singleton(host);
         }
     }
@@ -76,7 +75,7 @@ class AadInstanceDiscoveryProvider {
                     instanceDiscoveryJson,
                     AadInstanceDiscoveryResponse.class);
 
-        } catch(Exception ex){
+        } catch (Exception ex) {
             throw new MsalClientException("Error parsing instance discovery response. Data must be " +
                     "in valid JSON format. For more information, see https://aka.ms/msal4j-instance-discovery",
                     AuthenticationErrorCode.INVALID_INSTANCE_DISCOVERY_METADATA);
@@ -90,7 +89,7 @@ class AadInstanceDiscoveryProvider {
 
         if (aadInstanceDiscoveryResponse != null && aadInstanceDiscoveryResponse.metadata() != null) {
             for (InstanceDiscoveryMetadataEntry entry : aadInstanceDiscoveryResponse.metadata()) {
-                for (String alias: entry.aliases()) {
+                for (String alias : entry.aliases()) {
                     cache.put(alias, entry);
                 }
             }
@@ -191,8 +190,7 @@ class AadInstanceDiscoveryProvider {
             } else {
                 regionOutcomeTelemetryValue = RegionTelemetry.REGION_OUTCOME_DEVELOPER_AUTODETECT_MISMATCH.telemetryValue;
             }
-        }
-        else if (autoDetect) {
+        } else if (autoDetect) {
             if (detectedRegion != null) {
                 regionOutcomeTelemetryValue = RegionTelemetry.REGION_OUTCOME_AUTODETECT_SUCCESS.telemetryValue;
             } else {
@@ -267,7 +265,7 @@ class AadInstanceDiscoveryProvider {
 
         AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse = null;
 
-        if(msalRequest.application().authenticationAuthority.authorityType.equals(AuthorityType.AAD)) {
+        if (msalRequest.application().authenticationAuthority.authorityType.equals(AuthorityType.AAD)) {
             aadInstanceDiscoveryResponse = sendInstanceDiscoveryRequest(authorityUrl, msalRequest, serviceBundle);
 
             if (validateAuthority) {

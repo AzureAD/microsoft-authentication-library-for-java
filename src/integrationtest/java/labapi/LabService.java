@@ -42,7 +42,7 @@ public class LabService {
     }
 
     static String getLabAccessToken() throws MalformedURLException, ExecutionException, InterruptedException {
-        if(labApp == null){
+        if (labApp == null) {
             initLabApp();
         }
         return labApp.acquireToken(ClientCredentialParameters
@@ -51,7 +51,7 @@ public class LabService {
                 get().accessToken();
     }
 
-    User getUser(UserQueryParameters query){
+    User getUser(UserQueryParameters query) {
         try {
             Map<String, String> queryMap = query.parameters;
             String result = HttpClientHelper.sendRequestToLab(
@@ -59,11 +59,10 @@ public class LabService {
 
             User[] users = convertJsonToObject(result, User[].class);
             User user = users[0];
-            if(user.getUserType().equals("Guest")){
+            if (user.getUserType().equals("Guest")) {
                 String secretId = user.getHomeDomain().split("\\.")[0];
                 user.setPassword(getSecret(secretId));
-            }
-            else {
+            } else {
                 user.setPassword(getSecret(user.getLabName()));
             }
             if (query.parameters.containsKey(UserQueryParameters.FEDERATION_PROVIDER)) {
@@ -77,7 +76,7 @@ public class LabService {
         }
     }
 
-    public static App getApp(String appId){
+    public static App getApp(String appId) {
         try {
             String result = HttpClientHelper.sendRequestToLab(
                     LabConstants.LAB_APP_ENDPOINT, appId, getLabAccessToken());
@@ -100,7 +99,7 @@ public class LabService {
         }
     }
 
-    public static String getSecret(String labName){
+    public static String getSecret(String labName) {
         String result;
         try {
             Map<String, String> queryMap = new HashMap<>();

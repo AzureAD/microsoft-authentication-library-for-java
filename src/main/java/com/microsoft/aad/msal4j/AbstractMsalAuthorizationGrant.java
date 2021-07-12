@@ -12,7 +12,7 @@ import java.util.Map;
 abstract class AbstractMsalAuthorizationGrant {
 
     /**
-     *  Converts the grant into a HTTP parameters map.
+     * Converts the grant into a HTTP parameters map.
      *
      * @return A map contains the HTTP parameters
      */

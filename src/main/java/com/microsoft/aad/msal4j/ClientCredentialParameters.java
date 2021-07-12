@@ -51,6 +51,7 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
 
     /**
      * Builder for {@link ClientCredentialParameters}
+     *
      * @param scopes scopes application is requesting access to
      * @return builder that can be used to construct ClientCredentialParameters
      */

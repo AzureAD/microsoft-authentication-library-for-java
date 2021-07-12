@@ -12,6 +12,7 @@ import javax.xml.namespace.NamespaceContext;
 class NamespaceContextImpl implements NamespaceContext {
 
     private final static Map<String, String> PREF_MAP = new HashMap<String, String>();
+
     static {
         PREF_MAP.put("wsdl", "http://schemas.xmlsoap.org/wsdl/");
         PREF_MAP.put("sp",

@@ -8,8 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Getter
-public class User
-{
+public class User {
     @JsonProperty("appId")
     private String appId;
 

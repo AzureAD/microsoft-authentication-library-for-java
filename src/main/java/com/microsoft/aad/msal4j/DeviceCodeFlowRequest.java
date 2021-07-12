@@ -51,7 +51,7 @@ class DeviceCodeFlowRequest extends MsalRequest {
                 this.requestContext(),
                 serviceBundle);
 
-        if(response.statusCode() != HttpHelper.HTTP_STATUS_200){
+        if (response.statusCode() != HttpHelper.HTTP_STATUS_200) {
             throw MsalServiceExceptionFactory.fromHttpResponse(response);
         }
 
@@ -90,7 +90,7 @@ class DeviceCodeFlowRequest extends MsalRequest {
         result = JsonHelper.convertJsonToObject(json, DeviceCode.class);
 
         String correlationIdHeader = headers.get(HttpHeaders.CORRELATION_ID_HEADER_NAME);
-        if(correlationIdHeader != null){
+        if (correlationIdHeader != null) {
             result.correlationId(correlationIdHeader);
         }
 

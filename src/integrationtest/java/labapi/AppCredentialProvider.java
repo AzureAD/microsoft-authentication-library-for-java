@@ -15,13 +15,13 @@ public class AppCredentialProvider {
     private String oboAppIdURI;
     private String oboPassword;
 
-    public AppCredentialProvider(String azureEnvironment){
+    public AppCredentialProvider(String azureEnvironment) {
         keyVaultSecretsProvider = new KeyVaultSecretsProvider();
 
         labVaultClientId = keyVaultSecretsProvider.getSecret(LabConstants.APP_ID_KEY_VAULT_SECRET);
         labVaultPassword = keyVaultSecretsProvider.getSecret(LabConstants.APP_PASSWORD_KEY_VAULT_SECRET);
 
-        switch (azureEnvironment){
+        switch (azureEnvironment) {
             case AzureEnvironment.AZURE:
                 clientId = "c0485386-1e9a-4663-bc96-7ab30656de7f";
 
@@ -43,27 +43,27 @@ public class AppCredentialProvider {
         }
     }
 
-    public String getAppId(){
+    public String getAppId() {
         return clientId;
     }
 
-    public String getOboAppId(){
+    public String getOboAppId() {
         return oboClientId;
     }
 
-    public String getOboAppIdURI(){
+    public String getOboAppIdURI() {
         return oboAppIdURI;
     }
 
-    public String getOboAppPassword(){
+    public String getOboAppPassword() {
         return oboPassword;
     }
 
-    public String getLabVaultAppId(){
+    public String getLabVaultAppId() {
         return labVaultClientId;
     }
 
-    public String getLabVaultPassword(){
+    public String getLabVaultPassword() {
         return labVaultPassword;
     }
 }

@@ -11,7 +11,7 @@ class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier 
 
     private DeviceCodeFlowRequest deviceCodeFlowRequest;
 
-        AcquireTokenByDeviceCodeFlowSupplier(PublicClientApplication clientApplication,
+    AcquireTokenByDeviceCodeFlowSupplier(PublicClientApplication clientApplication,
                                          DeviceCodeFlowRequest deviceCodeFlowRequest) {
         super(clientApplication, deviceCodeFlowRequest);
         this.deviceCodeFlowRequest = deviceCodeFlowRequest;
@@ -68,7 +68,7 @@ class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier 
         throw new MsalClientException("Expired Device code", AuthenticationErrorCode.CODE_EXPIRED);
     }
 
-    private Long getCurrentSystemTimeInSeconds(){
+    private Long getCurrentSystemTimeInSeconds() {
         return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     }
 }

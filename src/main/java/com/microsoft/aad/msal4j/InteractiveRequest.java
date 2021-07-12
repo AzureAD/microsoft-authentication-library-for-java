@@ -17,7 +17,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Accessors(fluent = true)
-class InteractiveRequest extends MsalRequest{
+class InteractiveRequest extends MsalRequest {
 
     @Getter(AccessLevel.PACKAGE)
     private AtomicReference<CompletableFuture<IAuthenticationResult>> futureReference;
@@ -37,7 +37,7 @@ class InteractiveRequest extends MsalRequest{
     InteractiveRequest(InteractiveRequestParameters parameters,
                        AtomicReference<CompletableFuture<IAuthenticationResult>> futureReference,
                        PublicClientApplication publicClientApplication,
-                       RequestContext requestContext){
+                       RequestContext requestContext) {
 
         super(publicClientApplication, null, requestContext);
 
@@ -47,8 +47,8 @@ class InteractiveRequest extends MsalRequest{
         validateRedirectUrl(parameters.redirectUri());
     }
 
-    URL authorizationUrl(){
-        if(this.authorizationUrl == null) {
+    URL authorizationUrl() {
+        if (this.authorizationUrl == null) {
             authorizationUrl = createAuthorizationUrl();
         }
         return authorizationUrl;
@@ -71,12 +71,12 @@ class InteractiveRequest extends MsalRequest{
                                 " the create the InteractiveRequestParameters object", redirectUri.toString()),
                         AuthenticationErrorCode.LOOPBACK_REDIRECT_URI);
             }
-        } catch (Exception exception){
+        } catch (Exception exception) {
             throw new MsalClientException(exception);
         }
     }
 
-    private URL createAuthorizationUrl(){
+    private URL createAuthorizationUrl() {
 
         AuthorizationRequestUrlParameters.Builder authorizationRequestUrlBuilder =
                 AuthorizationRequestUrlParameters

@@ -14,7 +14,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty
 /**
  * Object containing parameters for On-Behalf-Of flow. Can be used as parameter to
  * {@link ConfidentialClientApplication#acquireToken(OnBehalfOfParameters)}
- *
+ * <p>
  * For more details, see https://aka.ms/msal4j-on-behalf-of
  */
 @Builder
@@ -53,7 +53,8 @@ public class OnBehalfOfParameters implements IAcquireTokenParameters {
 
     /**
      * Builder for {@link OnBehalfOfParameters}
-     * @param scopes scopes application is requesting access to
+     *
+     * @param scopes        scopes application is requesting access to
      * @param userAssertion {@link UserAssertion} created from access token received
      * @return builder that can be used to construct OnBehalfOfParameters
      */

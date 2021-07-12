@@ -5,7 +5,7 @@ package com.microsoft.aad.msal4j;
 
 import java.net.URL;
 
-class ADFSAuthority extends Authority{
+class ADFSAuthority extends Authority {
 
     final static String AUTHORIZATION_ENDPOINT = "oauth2/authorize";
     final static String TOKEN_ENDPOINT = "oauth2/token";

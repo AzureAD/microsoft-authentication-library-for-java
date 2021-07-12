@@ -13,7 +13,7 @@ import java.util.Map;
  * This exception class is to inform developers that UI interaction is required for authentication
  * to succeed.
  */
-public class MsalInteractionRequiredException extends MsalServiceException{
+public class MsalInteractionRequiredException extends MsalServiceException {
 
     /**
      * Reason for the MsalInteractionRequiredException, enabling you to do more actions or inform the
@@ -25,12 +25,13 @@ public class MsalInteractionRequiredException extends MsalServiceException{
 
     /**
      * Initializes a new instance of the exception class
+     *
      * @param errorResponse response object contain information about error returned by server
-     * @param headerMap http headers from the server response
+     * @param headerMap     http headers from the server response
      */
     public MsalInteractionRequiredException(
             ErrorResponse errorResponse,
-            Map<String,List<String>> headerMap) {
+            Map<String, List<String>> headerMap) {
         super(errorResponse, headerMap);
 
         reason = InteractionRequiredExceptionReason.fromSubErrorString(errorResponse.subError);

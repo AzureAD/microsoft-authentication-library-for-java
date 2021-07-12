@@ -55,13 +55,13 @@ public final class DeviceCode {
 
     @Getter(AccessLevel.PROTECTED)
     @Setter(AccessLevel.PROTECTED)
-    private transient  String correlationId = null;
+    private transient String correlationId = null;
 
     @Getter(AccessLevel.PROTECTED)
     @Setter(AccessLevel.PROTECTED)
-    private transient  String clientId = null;
+    private transient String clientId = null;
 
     @Getter(AccessLevel.PROTECTED)
     @Setter(AccessLevel.PROTECTED)
-    private transient  String scopes = null;
+    private transient String scopes = null;
 }

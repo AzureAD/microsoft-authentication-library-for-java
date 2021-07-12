@@ -10,10 +10,10 @@ import java.util.List;
 
 /**
  * Credential type containing X509 public certificate and RSA private key.
- *
- *  For more details, see https://aka.ms/msal4j-client-credentials
+ * <p>
+ * For more details, see https://aka.ms/msal4j-client-credentials
  */
-public interface IClientCertificate extends IClientCredential{
+public interface IClientCertificate extends IClientCredential {
 
     /**
      * Returns private key of the credential.
@@ -27,7 +27,7 @@ public interface IClientCertificate extends IClientCredential{
      *
      * @return base64 encoded string
      * @throws CertificateEncodingException if an encoding error occurs
-     * @throws NoSuchAlgorithmException if requested algorithm is not available in the environment
+     * @throws NoSuchAlgorithmException     if requested algorithm is not available in the environment
      */
     String publicCertificateHash() throws CertificateEncodingException, NoSuchAlgorithmException;
 

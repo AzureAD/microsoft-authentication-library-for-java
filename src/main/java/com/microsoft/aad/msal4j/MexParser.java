@@ -11,6 +11,7 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -74,7 +75,7 @@ class MexParser {
         builderFactory.setNamespaceAware(true);
         DocumentBuilder builder = builderFactory.newDocumentBuilder();
         Document xmlDocument = builder.parse(new ByteArrayInputStream(
-                mexResponse.getBytes(Charset.forName("UTF-8"))));
+                mexResponse.getBytes(StandardCharsets.UTF_8)));
 
         XPath xPath = XPathFactory.newInstance().newXPath();
         NamespaceContextImpl nameSpace = new NamespaceContextImpl();
@@ -86,8 +87,7 @@ class MexParser {
             log.debug("No matching policies");
 
             return null;
-        }
-        else {
+        } else {
             Map<String, BindingPolicy> bindings = getMatchingBindings(
                     xmlDocument, xPath, policies, logPii);
 
@@ -95,8 +95,7 @@ class MexParser {
                 log.debug("No matching bindings");
 
                 return null;
-            }
-            else {
+            } else {
                 getPortsForPolicyBindings(xmlDocument, xPath, bindings, policies, logPii);
                 return selectSingleMatchingPolicy(policies);
             }
@@ -125,8 +124,7 @@ class MexParser {
             if (pair.getValue().getUrl() != null) {
                 if (pair.getValue().getVersion() == WSTrustVersion.WSTRUST13) {
                     wstrust13 = pair.getValue();
-                }
-                else if (pair.getValue().getVersion() == WSTrustVersion.WSTRUST2005) {
+                } else if (pair.getValue().getVersion() == WSTrustVersion.WSTRUST2005) {
                     wstrust2005 = pair.getValue();
                 }
             }
@@ -142,16 +140,15 @@ class MexParser {
     }
 
     private static void getPortsForPolicyBindings(Document xmlDocument,
-            XPath xPath, Map<String, BindingPolicy> bindings,
-            Map<String, BindingPolicy> policies, boolean logPii) throws Exception {
+                                                  XPath xPath, Map<String, BindingPolicy> bindings,
+                                                  Map<String, BindingPolicy> policies, boolean logPii) throws Exception {
 
         NodeList portNodes = (NodeList) xPath.compile(PORT_XPATH).evaluate(
                 xmlDocument, XPathConstants.NODESET);
 
         if (portNodes.getLength() == 0) {
             log.warn("No ports found");
-        }
-        else {
+        } else {
             for (int i = 0; i < portNodes.getLength(); i++) {
                 Node portNode = portNodes.item(i);
                 String bindingId = portNode.getAttributes()
@@ -173,19 +170,16 @@ class MexParser {
                                     .getTextContent();
                             if (address != null
                                     && address.toLowerCase().startsWith(
-                                            "https://")) {
+                                    "https://")) {
                                 bindingPolicy.setUrl(address.trim());
-                            }
-                            else {
-                                if(logPii){
+                            } else {
+                                if (logPii) {
                                     log.warn("Skipping insecure endpoint" + ": " + address);
-                                }
-                                else{
+                                } else {
                                     log.warn("Skipping insecure endpoint");
                                 }
                             }
-                        }
-                        else {
+                        } else {
                             throw new MsalClientException(
                                     "Error parsing WSTrustResponse: No address nodes on port",
                                     AuthenticationErrorCode.WSTRUST_INVALID_RESPONSE);
@@ -227,7 +221,7 @@ class MexParser {
     }
 
     private static WSTrustVersion checkSoapActionAndTransport(XPath xPath,
-            Node bindingNode, boolean logPii) throws XPathExpressionException {
+                                                              Node bindingNode, boolean logPii) throws XPathExpressionException {
         NodeList soapTransportAttributes = null;
         String soapAction = null;
         String bindingName = bindingNode.getAttributes().getNamedItem("name")
@@ -243,23 +237,20 @@ class MexParser {
             if (soapTransportAttributes != null
                     && soapTransportAttributes.getLength() > 0
                     && soapTransportAttributes.item(0).getNodeValue()
-                            .equalsIgnoreCase(SOAP_HTTP_TRANSPORT_VALUE)) {
+                    .equalsIgnoreCase(SOAP_HTTP_TRANSPORT_VALUE)) {
 
                 if (soapAction.equalsIgnoreCase(RST_SOAP_ACTION)) {
-                    if(logPii){
+                    if (logPii) {
                         log.debug("Found binding matching Action and Transport: " + bindingName);
-                    }
-                    else{
+                    } else {
                         log.debug("Found binding matching Action and Transport");
                     }
 
                     return WSTrustVersion.WSTRUST13;
-                }
-                else if (soapAction.equalsIgnoreCase(RST_SOAP_ACTION_2005)) {
-                    if(logPii){
+                } else if (soapAction.equalsIgnoreCase(RST_SOAP_ACTION_2005)) {
+                    if (logPii) {
                         log.debug("Binding node did not match soap Action or Transport: " + bindingName);
-                    }
-                    else{
+                    } else {
                         log.debug("Binding node did not match soap Action or Transport");
                     }
 
@@ -299,8 +290,8 @@ class MexParser {
     }
 
     private static Map<String, BindingPolicy> selectIntegratedPoliciesWithExpression(Document xmlDocument,
-            XPath xPath,
-            String xpathExpression) throws XPathExpressionException {
+                                                                                     XPath xPath,
+                                                                                     String xpathExpression) throws XPathExpressionException {
 
         Map<String, BindingPolicy> policies = new HashMap<String, BindingPolicy>();
 
@@ -329,23 +320,20 @@ class MexParser {
         if (transportBindingNodes.getLength() > 0 && id != null) {
             policyId = id.getNodeValue();
 
-            if(logPii){
+            if (logPii) {
                 log.debug("found matching policy id: " + policyId);
-            }
-            else{
+            } else {
                 log.debug("found matching policy");
             }
-        }
-        else {
+        } else {
             String nodeValue = "none";
             if (id != null) {
                 nodeValue = id.getNodeValue();
             }
 
-            if(logPii){
+            if (logPii) {
                 log.debug("potential policy did not match required transport binding: " + nodeValue);
-            }
-            else{
+            } else {
                 log.debug("potential policy did not match required transport binding");
             }
         }
@@ -353,7 +341,7 @@ class MexParser {
     }
 
     private static String checkPolicyIntegrated(XPath xPath,
-            Node node) throws XPathExpressionException {
+                                                Node node) throws XPathExpressionException {
         Node id = node.getAttributes().getNamedItem("wsu:Id");
         String policyId = id.getNodeValue();
         return policyId;

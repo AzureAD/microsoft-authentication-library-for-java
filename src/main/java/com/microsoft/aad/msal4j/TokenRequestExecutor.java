@@ -79,7 +79,7 @@ class TokenRequestExecutor {
     }
 
     private AuthenticationResult createAuthenticationResultFromOauthHttpResponse(
-            HTTPResponse oauthHttpResponse) throws ParseException{
+            HTTPResponse oauthHttpResponse) throws ParseException {
         AuthenticationResult result;
 
         if (oauthHttpResponse.getStatusCode() == HTTPResponse.SC_OK) {
@@ -99,7 +99,7 @@ class TokenRequestExecutor {
 
                 AuthorityType type = msalRequest.application().authenticationAuthority.authorityType;
                 if (!StringHelper.isBlank(response.getClientInfo())) {
-                    if(type == AuthorityType.B2C){
+                    if (type == AuthorityType.B2C) {
                         B2CAuthority authority = (B2CAuthority) msalRequest.application().authenticationAuthority;
                         accountCacheEntity = AccountCacheEntity.create(
                                 response.getClientInfo(),
@@ -112,8 +112,7 @@ class TokenRequestExecutor {
                                 requestAuthority,
                                 idToken);
                     }
-                }
-                else if(type == AuthorityType.ADFS){
+                } else if (type == AuthorityType.ADFS) {
                     accountCacheEntity = AccountCacheEntity.createADFSAccount(requestAuthority, idToken);
                 }
             }
@@ -134,7 +133,7 @@ class TokenRequestExecutor {
 
         } else {
             // http codes indicating that STS did not log request
-            if(oauthHttpResponse.getStatusCode() == HttpHelper.HTTP_STATUS_429 || oauthHttpResponse.getStatusCode() >= HttpHelper.HTTP_STATUS_500){
+            if (oauthHttpResponse.getStatusCode() == HttpHelper.HTTP_STATUS_429 || oauthHttpResponse.getStatusCode() >= HttpHelper.HTTP_STATUS_500) {
                 serviceBundle.getServerSideTelemetry().previousRequests.putAll(
                         serviceBundle.getServerSideTelemetry().previousRequestInProgress);
             }

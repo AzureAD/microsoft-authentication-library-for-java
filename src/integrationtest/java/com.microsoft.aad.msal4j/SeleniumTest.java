@@ -24,22 +24,22 @@ abstract class SeleniumTest {
     }
 
     @AfterMethod
-    public void cleanUp(){
+    public void cleanUp() {
         seleniumDriver.quit();
-        if(httpListener != null) {
+        if (httpListener != null) {
             httpListener.stopListener();
         }
     }
 
     @BeforeMethod
-    public void startUpBrowser(){
+    public void startUpBrowser() {
         seleniumDriver = SeleniumExtensions.createDefaultWebDriver();
     }
 
     void runSeleniumAutomatedLogin(User user, AbstractClientApplicationBase app) {
         AuthorityType authorityType = app.authenticationAuthority.authorityType;
-        if(authorityType == AuthorityType.B2C){
-            switch(user.getB2cProvider().toLowerCase()){
+        if (authorityType == AuthorityType.B2C) {
+            switch (user.getB2cProvider().toLowerCase()) {
                 case B2CProvider.LOCAL:
                     SeleniumExtensions.performLocalLogin(seleniumDriver, user);
                     break;
@@ -52,8 +52,7 @@ abstract class SeleniumTest {
             }
         } else if (authorityType == AuthorityType.AAD) {
             SeleniumExtensions.performADLogin(seleniumDriver, user);
-        }
-        else if (authorityType == AuthorityType.ADFS) {
+        } else if (authorityType == AuthorityType.ADFS) {
             SeleniumExtensions.performADFS2019Login(seleniumDriver, user);
         }
     }

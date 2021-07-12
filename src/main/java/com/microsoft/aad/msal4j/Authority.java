@@ -35,7 +35,7 @@ abstract class Authority {
 
     String authorizationEndpoint;
     String tokenEndpoint;
-    
+
     String deviceCodeEndpoint;
 
     URL tokenEndpointUrl() throws MalformedURLException {

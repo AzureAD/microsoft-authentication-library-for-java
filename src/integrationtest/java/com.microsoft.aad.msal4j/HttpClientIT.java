@@ -33,7 +33,7 @@ public class HttpClientIT {
     }
 
     private void assertAcquireTokenCommon(User user, IHttpClient httpClient)
-            throws Exception{
+            throws Exception {
         PublicClientApplication pca = PublicClientApplication.builder(
                 user.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).

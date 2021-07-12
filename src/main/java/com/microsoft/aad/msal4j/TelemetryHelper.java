@@ -3,7 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-class TelemetryHelper implements AutoCloseable{
+class TelemetryHelper implements AutoCloseable {
     private Event eventToEnd;
     private String requestId;
     private String clientId;
@@ -22,15 +22,15 @@ class TelemetryHelper implements AutoCloseable{
         this.eventToEnd = event;
         this.shouldFlush = shouldFlush;
 
-        if(telemetry != null){
+        if (telemetry != null) {
             telemetry.startEvent(requestId, event);
         }
     }
 
-    public void close(){
-        if(telemetry != null) {
+    public void close() {
+        if (telemetry != null) {
             telemetry.stopEvent(requestId, eventToEnd);
-            if(shouldFlush){
+            if (shouldFlush) {
                 telemetry.flush(requestId, clientId);
             }
         }

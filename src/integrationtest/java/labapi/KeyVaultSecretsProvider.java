@@ -25,14 +25,14 @@ public class KeyVaultSecretsProvider {
 
     private static String MAC_KEYSTORE = "KeychainStore";
 
-    KeyVaultSecretsProvider(){
+    KeyVaultSecretsProvider() {
         keyVaultClient = getAuthenticatedKeyVaultClient();
     }
 
     static Map<String, String> cache = new ConcurrentHashMap<>();
 
-    String getSecret(String secretUrl){
-        if(cache.containsKey(secretUrl)){
+    String getSecret(String secretUrl) {
+        if (cache.containsKey(secretUrl)) {
             return cache.get(secretUrl);
         }
         String secret = keyVaultClient.getSecret(secretUrl).value();
@@ -44,16 +44,16 @@ public class KeyVaultSecretsProvider {
     private KeyVaultClient getAuthenticatedKeyVaultClient() {
         return new KeyVaultClient(
                 new KeyVaultCredentials() {
-            @Override
-            public String doAuthenticate(String authorization, String resource, String scope) {
-                return requestAccessTokenForAutomation();
-            }
-        });
+                    @Override
+                    public String doAuthenticate(String authorization, String resource, String scope) {
+                        return requestAccessTokenForAutomation();
+                    }
+                });
     }
 
     private String requestAccessTokenForAutomation() {
         IAuthenticationResult result;
-        try{
+        try {
             ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
                     CLIENT_ID, getClientCredentialFromKeyStore()).
                     authority(TestConstants.MICROSOFT_AUTHORITY).
@@ -64,10 +64,10 @@ public class KeyVaultSecretsProvider {
                     .build()).
                     get();
 
-        } catch(Exception e){
+        } catch (Exception e) {
             throw new RuntimeException("Error acquiring token from Azure AD: " + e.getMessage());
         }
-        if(result != null){
+        if (result != null) {
             return result.accessToken();
         } else {
             throw new NullPointerException("Authentication result is null");
@@ -81,10 +81,9 @@ public class KeyVaultSecretsProvider {
             String os = System.getProperty("os.name");
 
             KeyStore keystore;
-            if(os.toLowerCase().contains("windows")){
+            if (os.toLowerCase().contains("windows")) {
                 keystore = KeyStore.getInstance(WIN_KEYSTORE, KEYSTORE_PROVIDER);
-            }
-            else{
+            } else {
                 keystore = KeyStore.getInstance(MAC_KEYSTORE);
             }
 
@@ -94,9 +93,9 @@ public class KeyVaultSecretsProvider {
             publicCertificate = (X509Certificate) keystore.getCertificate(
                     CERTIFICATE_ALIAS);
 
-        } catch (Exception e){
+        } catch (Exception e) {
             throw new RuntimeException("Error getting certificate from keystore: " + e.getMessage());
         }
         return ClientCredentialFactory.createFromCertificate(key, publicCertificate);
-   }
+    }
 }
