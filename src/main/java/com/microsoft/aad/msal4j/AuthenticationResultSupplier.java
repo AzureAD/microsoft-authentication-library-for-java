@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.net.MalformedURLException;
 import java.util.Base64;
 
 import java.io.UnsupportedEncodingException;
@@ -24,7 +25,7 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
         this.msalRequest = msalRequest;
     }
 
-    Authority getAuthorityWithPrefNetworkHost(String authority) throws Exception {
+    Authority getAuthorityWithPrefNetworkHost(String authority) throws MalformedURLException {
 
         URL authorityUrl = new URL(authority);
 
@@ -35,8 +36,11 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
                         msalRequest,
                         clientApplication.getServiceBundle());
 
-        URL updatedAuthorityUrl =
-                new URL(authorityUrl.getProtocol(), discoveryMetadataEntry.preferredNetwork, authorityUrl.getFile());
+        URL updatedAuthorityUrl = new URL(
+                authorityUrl.getProtocol(),
+                discoveryMetadataEntry.preferredNetwork,
+                authorityUrl.getPort(),
+                authorityUrl.getFile());
 
         return Authority.createAuthority(updatedAuthorityUrl);
     }

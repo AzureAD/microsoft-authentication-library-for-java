@@ -21,10 +21,11 @@ class AadInstanceDiscoveryProvider {
 
     private final static String DEFAULT_TRUSTED_HOST = "login.microsoftonline.com";
     private final static String AUTHORIZE_ENDPOINT_TEMPLATE = "https://{host}/{tenant}/oauth2/v2.0/authorize";
-    private final static String INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE = "https://{host}/common/discovery/instance";
-    private final static String INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE_WITH_REGION = "https://{region}.{host}/common/discovery/instance";
+    private final static String INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE = "https://{host}:{port}/common/discovery/instance";
+    private final static String INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE_WITH_REGION = "https://{region}.{host}:{port}/common/discovery/instance";
     private final static String INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE = "?api-version=1.1&authorization_endpoint={authorizeEndpoint}";
     private final static String REGION_NAME = "REGION_NAME";
+    private final static int PORT_NOT_SET = -1;
     // For information of the current api-version refer: https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service#versioning
     private final static String DEFAULT_API_VERSION = "2020-06-01";
     private final static String IMDS_ENDPOINT = "https://169.254.169.254/metadata/instance/compute/location?" + DEFAULT_API_VERSION + "&format=text";
@@ -50,20 +51,19 @@ class AadInstanceDiscoveryProvider {
                                                            MsalRequest msalRequest,
                                                            ServiceBundle serviceBundle) {
 
-        InstanceDiscoveryMetadataEntry result = cache.get(authorityUrl.getAuthority());
+        InstanceDiscoveryMetadataEntry result = cache.get(authorityUrl.getHost());
 
         if (result == null) {
             doInstanceDiscoveryAndCache(authorityUrl, validateAuthority, msalRequest, serviceBundle);
         }
 
-        return cache.get(authorityUrl.getAuthority());
+        return cache.get(authorityUrl.getHost());
     }
 
-    static Set<String> getAliases(String host){
-        if(cache.containsKey(host)){
+    static Set<String> getAliases(String host) {
+        if (cache.containsKey(host)) {
             return cache.get(host).aliases();
-        }
-        else{
+        } else {
             return Collections.singleton(host);
         }
     }
@@ -76,7 +76,7 @@ class AadInstanceDiscoveryProvider {
                     instanceDiscoveryJson,
                     AadInstanceDiscoveryResponse.class);
 
-        } catch(Exception ex){
+        } catch (Exception ex) {
             throw new MsalClientException("Error parsing instance discovery response. Data must be " +
                     "in valid JSON format. For more information, see https://aka.ms/msal4j-instance-discovery",
                     AuthenticationErrorCode.INVALID_INSTANCE_DISCOVERY_METADATA);
@@ -90,7 +90,7 @@ class AadInstanceDiscoveryProvider {
 
         if (aadInstanceDiscoveryResponse != null && aadInstanceDiscoveryResponse.metadata() != null) {
             for (InstanceDiscoveryMetadataEntry entry : aadInstanceDiscoveryResponse.metadata()) {
-                for (String alias: entry.aliases()) {
+                for (String alias : entry.aliases()) {
                     cache.put(alias, entry);
                 }
             }
@@ -108,22 +108,37 @@ class AadInstanceDiscoveryProvider {
                 replace("{tenant}", tenant);
     }
 
-    private static String getInstanceDiscoveryEndpoint(String host) {
+    private static String getInstanceDiscoveryEndpoint(URL authorityUrl) {
 
-        String discoveryHost = TRUSTED_HOSTS_SET.contains(host) ? host : DEFAULT_TRUSTED_HOST;
+        String discoveryHost = TRUSTED_HOSTS_SET.contains(authorityUrl.getHost()) ?
+                authorityUrl.getHost() :
+                DEFAULT_TRUSTED_HOST;
+
+        int port = authorityUrl.getPort() == PORT_NOT_SET ?
+                authorityUrl.getDefaultPort() :
+                authorityUrl.getPort();
 
         return INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE.
-                replace("{host}", discoveryHost);
+                replace("{host}", discoveryHost).
+                replace("{port}", String.valueOf(port));
     }
 
-    private static String getInstanceDiscoveryEndpointWithRegion(String host, String region) {
+    private static String getInstanceDiscoveryEndpointWithRegion(URL authorityUrl, String region) {
 
-        String discoveryHost = TRUSTED_HOSTS_SET.contains(host) ? host : DEFAULT_TRUSTED_HOST;
+        String discoveryHost = TRUSTED_HOSTS_SET.contains(authorityUrl.getHost()) ?
+                authorityUrl.getHost() :
+                DEFAULT_TRUSTED_HOST;
+
+        int port = authorityUrl.getPort() == PORT_NOT_SET ?
+                authorityUrl.getDefaultPort() :
+                authorityUrl.getPort();
 
         return INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE_WITH_REGION.
                 replace("{region}", region).
-                replace("{host}", discoveryHost);
+                replace("{host}", discoveryHost).
+                replace("{port}", String.valueOf(port));
     }
+
 
     private static AadInstanceDiscoveryResponse sendInstanceDiscoveryRequest(URL authorityUrl,
                                                                              MsalRequest msalRequest,
@@ -153,7 +168,7 @@ class AadInstanceDiscoveryProvider {
 
         //If the region is known, attempt to make instance discovery request with region endpoint
         if (regionToUse != null) {
-            String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpointWithRegion(authorityUrl.getAuthority(), regionToUse) +
+            String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpointWithRegion(authorityUrl, regionToUse) +
                     formInstanceDiscoveryParameters(authorityUrl);
 
             try {
@@ -166,7 +181,7 @@ class AadInstanceDiscoveryProvider {
         //If the region is unknown or the instance discovery failed at the region endpoint, try the global endpoint
         if ((detectedRegion == null && providedRegion == null) || httpResponse == null || httpResponse.statusCode() != HTTPResponse.SC_OK) {
 
-            String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpoint(authorityUrl.getAuthority()) +
+            String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpoint(authorityUrl) +
                     formInstanceDiscoveryParameters(authorityUrl);
 
             httpResponse = executeRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
@@ -191,8 +206,7 @@ class AadInstanceDiscoveryProvider {
             } else {
                 regionOutcomeTelemetryValue = RegionTelemetry.REGION_OUTCOME_DEVELOPER_AUTODETECT_MISMATCH.telemetryValue;
             }
-        }
-        else if (autoDetect) {
+        } else if (autoDetect) {
             if (detectedRegion != null) {
                 regionOutcomeTelemetryValue = RegionTelemetry.REGION_OUTCOME_AUTODETECT_SUCCESS.telemetryValue;
             } else {
@@ -205,7 +219,7 @@ class AadInstanceDiscoveryProvider {
 
     private static String formInstanceDiscoveryParameters(URL authorityUrl) {
         return INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE.replace("{authorizeEndpoint}",
-                getAuthorizeEndpoint(authorityUrl.getAuthority(),
+                getAuthorizeEndpoint(authorityUrl.getHost(),
                         Authority.getTenant(authorityUrl, Authority.detectAuthorityType(authorityUrl))));
     }
 
@@ -267,7 +281,7 @@ class AadInstanceDiscoveryProvider {
 
         AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse = null;
 
-        if(msalRequest.application().authenticationAuthority.authorityType.equals(AuthorityType.AAD)) {
+        if (msalRequest.application().authenticationAuthority.authorityType.equals(AuthorityType.AAD)) {
             aadInstanceDiscoveryResponse = sendInstanceDiscoveryRequest(authorityUrl, msalRequest, serviceBundle);
 
             if (validateAuthority) {
@@ -275,7 +289,7 @@ class AadInstanceDiscoveryProvider {
             }
         }
 
-        cacheInstanceDiscoveryMetadata(authorityUrl.getAuthority(), aadInstanceDiscoveryResponse);
+        cacheInstanceDiscoveryMetadata(authorityUrl.getHost(), aadInstanceDiscoveryResponse);
     }
 
     private static void validate(AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse) {
