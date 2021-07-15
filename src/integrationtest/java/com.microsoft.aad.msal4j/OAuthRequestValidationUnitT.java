@@ -31,11 +31,11 @@ public class OAuthRequestValidationUnitT extends OAuthRequestValidationTest {
         }
 
         Map<String, String> queryParams = splitQuery(query);
-        Assert.assertEquals(7, queryParams.size());
+        Assert.assertEquals(queryParams.size(), 7);
 
         // validate Authorization Grants query params
-        Assert.assertEquals(GRANT_TYPE_JWT, queryParams.get("grant_type"));
-        Assert.assertEquals(JWT, queryParams.get("assertion"));
+        Assert.assertEquals(queryParams.get("grant_type"), GRANT_TYPE_JWT);
+        Assert.assertEquals(queryParams.get("assertion"), JWT);
 
         // validate Client Authentication query params
         Assert.assertFalse(StringUtils.isEmpty(queryParams.get("client_assertion")));
@@ -51,10 +51,10 @@ public class OAuthRequestValidationUnitT extends OAuthRequestValidationTest {
         Assert.assertTrue(scopes.contains(AbstractMsalAuthorizationGrant.SCOPE_PROFILE));
         Assert.assertTrue(scopes.contains(AbstractMsalAuthorizationGrant.SCOPE_OFFLINE_ACCESS));
 
-        Assert.assertEquals(CLIENT_ASSERTION_TYPE_JWT, queryParams.get("client_assertion_type"));
-        Assert.assertEquals(ON_BEHALF_OF_USE_JWT, queryParams.get("requested_token_use"));
+        Assert.assertEquals(queryParams.get("client_assertion_type"), CLIENT_ASSERTION_TYPE_JWT);
+        Assert.assertEquals(queryParams.get("requested_token_use"), ON_BEHALF_OF_USE_JWT);
 
-        Assert.assertEquals(CLIENT_INFO_VALUE, queryParams.get("client_info"));
+        Assert.assertEquals(queryParams.get("client_info"), CLIENT_INFO_VALUE);
     }
 
     @Test
@@ -83,18 +83,18 @@ public class OAuthRequestValidationUnitT extends OAuthRequestValidationTest {
 
         Map<String, String> queryParams = splitQuery(query);
 
-        Assert.assertEquals(5, queryParams.size());
+        Assert.assertEquals(queryParams.size(), 5);
 
         // validate Authorization Grants query params
-        Assert.assertEquals(CLIENT_CREDENTIALS_GRANT_TYPE, queryParams.get("grant_type"));
+        Assert.assertEquals(queryParams.get("grant_type"), CLIENT_CREDENTIALS_GRANT_TYPE);
 
         // validate Client Authentication query params
         Assert.assertTrue(StringUtils.isNotEmpty(queryParams.get("client_assertion")));
-        Assert.assertEquals(CLIENT_ASSERTION_TYPE_JWT, queryParams.get("client_assertion_type"));
+        Assert.assertEquals(queryParams.get("client_assertion_type"), CLIENT_ASSERTION_TYPE_JWT);
 
         // to do validate scopes
-        Assert.assertEquals("https://SomeResource.azure.net openid profile offline_access", queryParams.get("scope"));
+        Assert.assertEquals(queryParams.get("scope"), "https://SomeResource.azure.net openid profile offline_access");
 
-        Assert.assertEquals(CLIENT_INFO_VALUE, queryParams.get("client_info"));
+        Assert.assertEquals(queryParams.get("client_info"), CLIENT_INFO_VALUE);
     }
 }

@@ -16,14 +16,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class KeyVaultSecretsProvider {
 
-    private KeyVaultClient keyVaultClient;
-    private static String CLIENT_ID = "55e7e5af-ca53-482d-9aa3-5cb1cc8eecb5";
+    private final KeyVaultClient keyVaultClient;
+    private static final String CLIENT_ID = "55e7e5af-ca53-482d-9aa3-5cb1cc8eecb5";
     public static String CERTIFICATE_ALIAS = "MsalJavaAutomationRunner";
 
-    private static String WIN_KEYSTORE = "Windows-MY";
-    private static String KEYSTORE_PROVIDER = "SunMSCAPI";
+    private static final String WIN_KEYSTORE = "Windows-MY";
+    private static final String KEYSTORE_PROVIDER = "SunMSCAPI";
 
-    private static String MAC_KEYSTORE = "KeychainStore";
+    private static final String MAC_KEYSTORE = "KeychainStore";
 
     KeyVaultSecretsProvider() {
         keyVaultClient = getAuthenticatedKeyVaultClient();

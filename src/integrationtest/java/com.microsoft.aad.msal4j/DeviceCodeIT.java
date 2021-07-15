@@ -26,8 +26,6 @@ public class DeviceCodeIT {
     private LabUserProvider labUserProvider;
     private WebDriver seleniumDriver;
 
-    private Config cfg;
-
     @BeforeClass
     public void setUp() {
         labUserProvider = LabUserProvider.getInstance();
@@ -36,7 +34,7 @@ public class DeviceCodeIT {
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
     public void DeviceCodeFlowADTest(String environment) throws Exception {
-        cfg = new Config(environment);
+        Config cfg = new Config(environment);
 
         User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
 
@@ -56,7 +54,7 @@ public class DeviceCodeIT {
                 .get();
 
         Assert.assertNotNull(result);
-        Assert.assertTrue(!Strings.isNullOrEmpty(result.accessToken()));
+        Assert.assertFalse(Strings.isNullOrEmpty(result.accessToken()));
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)

@@ -97,6 +97,17 @@ public class UsernamePasswordIT {
         assertAcquireTokenCommonAAD(user);
     }
 
+    @Test
+    public void acquireTokenWithUsernamePassword_AuthorityWithPort() throws Exception {
+        User user = labUserProvider.getDefaultUser();
+
+        assertAcquireTokenCommon(
+                user,
+                TestConstants.COMMON_AUTHORITY_WITH_PORT,
+                TestConstants.GRAPH_DEFAULT_SCOPE,
+                user.getAppId());
+    }
+
     private void assertAcquireTokenCommonADFS(User user) throws Exception {
         assertAcquireTokenCommon(user, TestConstants.ADFS_AUTHORITY, TestConstants.ADFS_SCOPE,
                 TestConstants.ADFS_APP_ID);
