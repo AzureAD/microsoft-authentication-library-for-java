@@ -17,7 +17,7 @@ import java.util.function.Consumer;
 @Test(groups = { "checkin" })
 public class TelemetryTests {
 
-    private List<HashMap<String,String>> eventsReceived = new ArrayList<>();
+    private List<HashMap<String, String>> eventsReceived = new ArrayList<>();
     private String tenantId = "tenantId123";
     private String clientId = "a1b3c3d4";
 
@@ -28,19 +28,19 @@ public class TelemetryTests {
                     eventsReceived.addAll(telemetryEvents);
                     System.out.println("Received " + telemetryEvents.size() + " events");
                     telemetryEvents.forEach(event -> {
-                            System.out.print("Event Name: " + event.get("event_name"));
-                            event.entrySet().forEach(entry -> System.out.println("   " + entry));
+                        System.out.print("Event Name: " + event.get("event_name"));
+                        event.entrySet().forEach(entry -> System.out.println("   " + entry));
                     });
                 };
     }
 
     @AfterMethod
-    private void cleanUp(){
+    private void cleanUp() {
         eventsReceived.clear();
     }
 
     @Test
-    public void telemetryConsumerRegistration_ConsumerNotNullTest(){
+    public void telemetryConsumerRegistration_ConsumerNotNullTest() {
         PublicClientApplication app = PublicClientApplication.builder("a1b2c3")
                 .telemetryConsumer(new MyTelemetryConsumer().telemetryConsumer)
                 .build();
@@ -49,7 +49,7 @@ public class TelemetryTests {
     }
 
     @Test
-    public void telemetryManagerFlush_EventCountTest(){
+    public void telemetryManagerFlush_EventCountTest() {
         Consumer<List<HashMap<String, String>>> telemetryConsumer =
                 new MyTelemetryConsumer().telemetryConsumer;
         TelemetryManager telemetryManager = new TelemetryManager(telemetryConsumer, false);
@@ -65,14 +65,14 @@ public class TelemetryTests {
         httpEvent1.setHttpResponseStatus(200);
         telemetryManager.stopEvent(reqId, httpEvent1);
 
-        telemetryManager.flush(reqId,clientId );
+        telemetryManager.flush(reqId, clientId);
 
         // 1 Default event, 1 API event, 1 Http event
         Assert.assertEquals(eventsReceived.size(), 3);
     }
 
     @Test
-    public void onSendFailureTrue_SkipEventsIfSuccessfulTest(){
+    public void onSendFailureTrue_SkipEventsIfSuccessfulTest() {
         Consumer<List<HashMap<String, String>>> telemetryConsumer =
                 new MyTelemetryConsumer().telemetryConsumer;
         // Only send on failure
@@ -90,7 +90,7 @@ public class TelemetryTests {
         httpEvent1.setHttpResponseStatus(200);
         telemetryManager.stopEvent(reqId, httpEvent1);
 
-        telemetryManager.flush(reqId,clientId );
+        telemetryManager.flush(reqId, clientId);
 
         // API event was successful, so count should be 0
         Assert.assertEquals(eventsReceived.size(), 0);
@@ -107,18 +107,18 @@ public class TelemetryTests {
         httpEvent2.setHttpResponseStatus(200);
         telemetryManager.stopEvent(reqId2, httpEvent2);
 
-        telemetryManager.flush(reqId2,clientId );
+        telemetryManager.flush(reqId2, clientId);
 
         // API event failed, so count should be 3 (1 default, 1 Api, 1 http)
         Assert.assertEquals(eventsReceived.size(), 3);
     }
 
     @Test
-    public void telemetryInternalApi_ScrubTenantFromUriTest() throws Exception{
-        Assert.assertEquals(Event.scrubTenant(new URI("https://login.microsoftonline.com/common/oauth2/v2.0/token")) ,
+    public void telemetryInternalApi_ScrubTenantFromUriTest() throws Exception {
+        Assert.assertEquals(Event.scrubTenant(new URI("https://login.microsoftonline.com/common/oauth2/v2.0/token")),
                 "https://login.microsoftonline.com/<tenant>/oauth2/v2.0/token");
 
-        Assert.assertEquals( Event.scrubTenant(new URI("https://login.microsoftonline.com/common")),
+        Assert.assertEquals(Event.scrubTenant(new URI("https://login.microsoftonline.com/common")),
                 "https://login.microsoftonline.com/<tenant>");
 
         Assert.assertEquals(Event.scrubTenant(new URI("https://login.microsoftonline.com/tfp/msidlabb2c.onmicrosoft.com/B2C_1_ROPC_Auth")),
@@ -130,7 +130,7 @@ public class TelemetryTests {
     }
 
     @Test
-    public void telemetryContainsDefaultEventTest(){
+    public void telemetryContainsDefaultEventTest() {
         Consumer<List<HashMap<String, String>>> telemetryConsumer =
                 new MyTelemetryConsumer().telemetryConsumer;
         // Only send on failure
@@ -147,13 +147,13 @@ public class TelemetryTests {
         httpEvent1.setHttpResponseStatus(200);
         telemetryManager.stopEvent(reqId, httpEvent1);
 
-        telemetryManager.flush(reqId,clientId );
+        telemetryManager.flush(reqId, clientId);
 
         Assert.assertEquals(eventsReceived.get(0).get("event_name"), "msal.default_event");
     }
 
     @Test
-    public void telemetryFlushEventWithoutStopping_OrphanedEventIncludedTest(){
+    public void telemetryFlushEventWithoutStopping_OrphanedEventIncludedTest() {
         Consumer<List<HashMap<String, String>>> telemetryConsumer =
                 new MyTelemetryConsumer().telemetryConsumer;
         TelemetryManager telemetryManager = new TelemetryManager(telemetryConsumer, false);
@@ -169,14 +169,14 @@ public class TelemetryTests {
 
         // didn't stop http event, should still be sent
         telemetryManager.stopEvent(reqId, apiEvent1);
-        telemetryManager.flush(reqId,clientId );
+        telemetryManager.flush(reqId, clientId);
 
         Assert.assertEquals(eventsReceived.size(), 3);
         Assert.assertTrue(eventsReceived.stream().anyMatch(event -> event.get("event_name").equals("msal.http_event")));
     }
 
     @Test
-    public void telemetryStopEventWithoutStarting_NoExceptionThrownTest(){
+    public void telemetryStopEventWithoutStarting_NoExceptionThrownTest() {
         Consumer<List<HashMap<String, String>>> telemetryConsumer =
                 new MyTelemetryConsumer().telemetryConsumer;
         TelemetryManager telemetryManager = new TelemetryManager(telemetryConsumer, false);
@@ -201,7 +201,7 @@ public class TelemetryTests {
     }
 
     @Test
-    public void piiLoggingEnabled_ApiEventHashTest(){
+    public void piiLoggingEnabled_ApiEventHashTest() {
         Consumer<List<HashMap<String, String>>> telemetryConsumer =
                 new MyTelemetryConsumer().telemetryConsumer;
         TelemetryManager telemetryManager = new TelemetryManager(telemetryConsumer, false);
@@ -220,7 +220,7 @@ public class TelemetryTests {
     }
 
     @Test
-    public void piiLoggingEnabledFalse_TenantIdUserIdSetToNullTest(){
+    public void piiLoggingEnabledFalse_TenantIdUserIdSetToNullTest() {
         Consumer<List<HashMap<String, String>>> telemetryConsumer =
                 new MyTelemetryConsumer().telemetryConsumer;
         TelemetryManager telemetryManager = new TelemetryManager(telemetryConsumer, false);
@@ -238,7 +238,7 @@ public class TelemetryTests {
     }
 
     @Test
-    public void authorityNotInTrustedHostList_AuthorityIsNullTest() throws URISyntaxException{
+    public void authorityNotInTrustedHostList_AuthorityIsNullTest() throws URISyntaxException {
         Consumer<List<HashMap<String, String>>> telemetryConsumer =
                 new MyTelemetryConsumer().telemetryConsumer;
         TelemetryManager telemetryManager = new TelemetryManager(telemetryConsumer, false);
@@ -263,8 +263,8 @@ public class TelemetryTests {
     }
 
     @Test
-    public void xmsCliTelemetryTest_CorrectFormatTest(){
-        String responseHeader = "1,0,0,," ;
+    public void xmsCliTelemetryTest_CorrectFormatTest() {
+        String responseHeader = "1,0,0,,";
         XmsClientTelemetryInfo info = XmsClientTelemetryInfo.parseXmsTelemetryInfo(responseHeader);
 
         Assert.assertEquals(info.getServerErrorCode(), "0");
@@ -274,8 +274,8 @@ public class TelemetryTests {
     }
 
     @Test
-    public void xmsCliTelemetryTest_IncorrectFormatTest(){
-        String responseHeader =  "1,2,3,4,5,6";
+    public void xmsCliTelemetryTest_IncorrectFormatTest() {
+        String responseHeader = "1,2,3,4,5,6";
         XmsClientTelemetryInfo info = XmsClientTelemetryInfo.parseXmsTelemetryInfo(responseHeader);
 
         Assert.assertNull(info.getServerErrorCode());
@@ -285,39 +285,37 @@ public class TelemetryTests {
     }
 
     @Test
-    public void xmsCliTelemetryTest_IncorrectHeaderTest(){
+    public void xmsCliTelemetryTest_IncorrectHeaderTest() {
         String responseHeader = "3,0,0,,";
         XmsClientTelemetryInfo info = XmsClientTelemetryInfo.parseXmsTelemetryInfo(responseHeader);
 
         Assert.assertNull(info);
     }
 
-    private ApiEvent createApiEvent(Boolean logPii){
+    private ApiEvent createApiEvent(Boolean logPii) {
         ApiEvent apiEvent1;
         try {
             apiEvent1 = new ApiEvent(logPii);
             apiEvent1.setAuthority(new URI("https://login.microsoft.com"));
             apiEvent1.setTenantId(tenantId);
 
-        } catch(URISyntaxException e){
+        } catch (URISyntaxException e) {
             throw new RuntimeException(e.getMessage());
         }
         return apiEvent1;
     }
 
-    private HttpEvent createHttpEvent(){
+    private HttpEvent createHttpEvent() {
         HttpEvent httpEvent1;
         try {
             httpEvent1 = new HttpEvent();
             httpEvent1.setHttpPath(new URI("https://contoso.com"));
             httpEvent1.setHttpMethod("GET");
             httpEvent1.setQueryParameters("?a=1&b=2");
-        } catch(URISyntaxException e){
+        } catch (URISyntaxException e) {
             throw new RuntimeException(e.getMessage());
         }
         return httpEvent1;
     }
-
-
 }
 

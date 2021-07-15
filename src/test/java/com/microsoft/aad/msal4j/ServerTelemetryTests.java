@@ -26,7 +26,7 @@ public class ServerTelemetryTests {
     private final static String ERROR = "invalid_grant";
 
     @Test
-    public void serverTelemetryHeaders_correctSchema(){
+    public void serverTelemetryHeaders_correctSchema() {
 
         CurrentRequest currentRequest = new CurrentRequest(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE);
 
@@ -67,10 +67,10 @@ public class ServerTelemetryTests {
     }
 
     @Test
-    public void serverTelemetryHeaders_previewsRequestNull(){
+    public void serverTelemetryHeaders_previewsRequestNull() {
 
         ServerSideTelemetry serverSideTelemetry = new ServerSideTelemetry();
-        for(int i = 0; i < 3; i++){
+        for (int i = 0; i < 3; i++) {
             serverSideTelemetry.incrementSilentSuccessfulCount();
         }
 
@@ -80,47 +80,47 @@ public class ServerTelemetryTests {
     }
 
     @Test
-    public void serverTelemetryHeader_testMaximumHeaderSize(){
+    public void serverTelemetryHeader_testMaximumHeaderSize() {
 
         ServerSideTelemetry serverSideTelemetry = new ServerSideTelemetry();
 
-        for(int i = 0; i <20; i++){
+        for (int i = 0; i < 20; i++) {
             String correlationId = UUID.randomUUID().toString();
             serverSideTelemetry.addFailedRequestTelemetry(PUBLIC_API_ID, correlationId, ERROR);
         }
 
-       Map<String, String> headers = serverSideTelemetry.getServerTelemetryHeaderMap();
+        Map<String, String> headers = serverSideTelemetry.getServerTelemetryHeaderMap();
 
-       String lastRequest = headers.get(LAST_REQUEST_HEADER_NAME);
+        String lastRequest = headers.get(LAST_REQUEST_HEADER_NAME);
 
-       byte[] lastRequestBytes = lastRequest.getBytes(StandardCharsets.UTF_8);
+        byte[] lastRequestBytes = lastRequest.getBytes(StandardCharsets.UTF_8);
 
-       Assert.assertTrue(lastRequestBytes.length <= 350);
+        Assert.assertTrue(lastRequestBytes.length <= 350);
     }
 
     @Test
-    public void serverTelemetryHeaders_multipleThreadsWrite(){
+    public void serverTelemetryHeaders_multipleThreadsWrite() {
 
         ServerSideTelemetry serverSideTelemetry = new ServerSideTelemetry();
         ExecutorService executor = Executors.newFixedThreadPool(10);
 
-        try{
-            for (int i=0; i < 10; i++){
+        try {
+            for (int i = 0; i < 10; i++) {
                 executor.execute(new FailedRequestRunnable(serverSideTelemetry));
                 executor.execute(new SilentSuccessfulRequestRunnable(serverSideTelemetry));
             }
-        } catch (Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
         executor.shutdown();
 
-        try{
-            Thread.sleep( 1000);
-        } catch(InterruptedException ex){
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException ex) {
             ex.printStackTrace();
         }
 
-        Map<String, String> headers =  serverSideTelemetry.getServerTelemetryHeaderMap();
+        Map<String, String> headers = serverSideTelemetry.getServerTelemetryHeaderMap();
 
         List<String> previousRequestHeader = Arrays.asList(headers.get(LAST_REQUEST_HEADER_NAME).split("\\|"));
 
@@ -132,10 +132,10 @@ public class ServerTelemetryTests {
         List<String> fourthSegment = Arrays.asList(previousRequestHeader.get(3).split(","));
         Assert.assertEquals(fourthSegment.size(), 6);
 
-        Assert.assertTrue(headers.get(LAST_REQUEST_HEADER_NAME).getBytes(StandardCharsets.UTF_8).length  < 350);
+        Assert.assertTrue(headers.get(LAST_REQUEST_HEADER_NAME).getBytes(StandardCharsets.UTF_8).length < 350);
 
         // Not all requests fit into first header, so they would get dispatched in the next request
-        Map<String, String> secondRequest =  serverSideTelemetry.getServerTelemetryHeaderMap();
+        Map<String, String> secondRequest = serverSideTelemetry.getServerTelemetryHeaderMap();
 
         previousRequestHeader = Arrays.asList(secondRequest.get(LAST_REQUEST_HEADER_NAME).split("\\|"));
 
@@ -147,12 +147,12 @@ public class ServerTelemetryTests {
         fourthSegment = Arrays.asList(previousRequestHeader.get(3).split(","));
         Assert.assertEquals(fourthSegment.size(), 4);
 
-        Assert.assertTrue(secondRequest.get(LAST_REQUEST_HEADER_NAME).getBytes(StandardCharsets.UTF_8).length  < 350);
+        Assert.assertTrue(secondRequest.get(LAST_REQUEST_HEADER_NAME).getBytes(StandardCharsets.UTF_8).length < 350);
 
     }
 
     @Test
-    public void serverTelemetryHeaders_testRegionTelemetry() throws Exception{
+    public void serverTelemetryHeaders_testRegionTelemetry() throws Exception {
 
         CurrentRequest currentRequest = new CurrentRequest(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE);
         ServerSideTelemetry serverSideTelemetry = new ServerSideTelemetry();
@@ -203,18 +203,18 @@ public class ServerTelemetryTests {
 
         ServerSideTelemetry telemetry;
 
-        FailedRequestRunnable(ServerSideTelemetry telemetry){
+        FailedRequestRunnable(ServerSideTelemetry telemetry) {
             this.telemetry = telemetry;
         }
 
         @Override
-        public void run(){
+        public void run() {
 
             Random rand = new Random();
             int n = rand.nextInt(250);
             try {
                 Thread.sleep(n);
-            } catch (InterruptedException ex){
+            } catch (InterruptedException ex) {
                 ex.printStackTrace();
             }
             String correlationId = UUID.randomUUID().toString();
@@ -226,12 +226,12 @@ public class ServerTelemetryTests {
 
         ServerSideTelemetry telemetry;
 
-        SilentSuccessfulRequestRunnable(ServerSideTelemetry telemetry){
+        SilentSuccessfulRequestRunnable(ServerSideTelemetry telemetry) {
             this.telemetry = telemetry;
         }
 
         @Override
-        public void run(){
+        public void run() {
             telemetry.incrementSilentSuccessfulCount();
         }
     }

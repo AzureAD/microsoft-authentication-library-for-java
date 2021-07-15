@@ -58,7 +58,6 @@ public class DefaultHttpClientTest extends PowerMockTestCase {
         HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, TEST_URL);
         IHttpResponse response = httpClient.send(httpRequest);
 
-
         Assert.assertEquals(response.body(), errorResponse);
         Assert.assertEquals(response.headers(), expectedHeaders);
     }

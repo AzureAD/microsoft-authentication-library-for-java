@@ -33,7 +33,7 @@ public class WSTrustRequestTest {
 
         Assert.assertTrue(msg.contains("<a:EndpointReference><a:Address>" + WSTrustRequest.DEFAULT_APPLIES_TO + "</a:Address></a:EndpointReference>"));
     }
-    
+
     @Test
     public void buildMessage_integrated() throws Exception {
         String msg = WSTrustRequest.buildMessage("address", null,
@@ -43,7 +43,8 @@ public class WSTrustRequestTest {
         Assert.assertTrue(!msg.contains("<o:Security s:mustUnderstand"));
     }
 
-    @Test void escapeXMLElementDataTest(){
+    @Test
+    void escapeXMLElementDataTest() {
         String DATA_TO_ESCAPE = "o_!as & a34~'fe<> \" a1";
         String XML_ESCAPED_DATA = "o_!as &amp; a34~&apos;fe&lt;&gt; &quot; a1";
 

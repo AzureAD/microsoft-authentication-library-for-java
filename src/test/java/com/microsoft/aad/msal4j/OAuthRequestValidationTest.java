@@ -62,7 +62,7 @@ public class OAuthRequestValidationTest extends AbstractMsalTests {
 
     @SuppressWarnings("unchecked")
     @BeforeMethod
-    public void init() throws Exception{
+    public void init() throws Exception {
 
         PowerMock.mockStatic(HttpHelper.class);
         HttpResponse httpResponse = new HttpResponse();

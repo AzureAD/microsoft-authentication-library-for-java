@@ -71,11 +71,11 @@ public class AccountTest {
     }
 
 
-    String getEmptyBase64EncodedJson(){
+    String getEmptyBase64EncodedJson() {
         return new String(Base64.getEncoder().encode("{}".getBytes()));
     }
 
-    String getJWTHeaderBase64EncodedJson(){
+    String getJWTHeaderBase64EncodedJson() {
         return new String(Base64.getEncoder().encode("{\"alg\": \"HS256\", \"typ\": \"JWT\"}".getBytes()));
     }
 
@@ -126,7 +126,7 @@ public class AccountTest {
                 data = iTokenCacheAccessContext.tokenCache().serialize();
             }
 
-            ITokenCacheAccessAspect init(String data){
+            ITokenCacheAccessAspect init(String data) {
                 this.data = data;
                 return this;
             }

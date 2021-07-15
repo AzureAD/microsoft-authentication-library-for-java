@@ -102,7 +102,7 @@ public class CacheFormatTests extends AbstractMsalTests {
 
                 if (Math.abs(timestamp - expectations.get(o.toString())) > 1) {
                     jsonCompareResult.fail("timestamp for " + s + " differ more than 1 sec : " + timestamp + " : "
-                            + expectations.get(o.toString()) );
+                            + expectations.get(o.toString()));
                     return;
                 }
                 return;
@@ -150,7 +150,7 @@ public class CacheFormatTests extends AbstractMsalTests {
                 new TelemetryManager(null, false));
 
         TokenRequestExecutor request = PowerMock.createPartialMock(
-                TokenRequestExecutor.class, new String[] { "createOauthHttpRequest" },
+                TokenRequestExecutor.class, new String[]{"createOauthHttpRequest"},
                 new AADAuthority(new URL(AUTHORIZE_REQUEST_URL)), msalRequest, serviceBundle);
 
         OAuthHttpRequest msalOAuthHttpRequest = PowerMock.createMock(OAuthHttpRequest.class);
@@ -187,7 +187,7 @@ public class CacheFormatTests extends AbstractMsalTests {
     private void validateAccessTokenCacheEntity(String folder, String tokenResponse, TokenCache tokenCache)
             throws IOException, URISyntaxException, ParseException, JSONException {
 
-        Assert.assertEquals(tokenCache.accessTokens.size(),1 );
+        Assert.assertEquals(tokenCache.accessTokens.size(), 1);
 
         String keyActual = tokenCache.accessTokens.keySet().stream().findFirst().get();
         String keyExpected = readResource(folder + AT_CACHE_ENTITY_KEY);
@@ -208,7 +208,7 @@ public class CacheFormatTests extends AbstractMsalTests {
     private void validateRefreshTokenCacheEntity(String folder, TokenCache tokenCache)
             throws IOException, URISyntaxException, JSONException {
 
-        Assert.assertEquals(tokenCache.refreshTokens.size(),1 );
+        Assert.assertEquals(tokenCache.refreshTokens.size(), 1);
 
         String actualKey = tokenCache.refreshTokens.keySet().stream().findFirst().get();
         String keyExpected = readResource(folder + RT_CACHE_ENTITY_KEY);
@@ -244,7 +244,7 @@ public class CacheFormatTests extends AbstractMsalTests {
     private void validateIdTokenCacheEntity(String folder, TokenCache tokenCache)
             throws IOException, URISyntaxException, JSONException {
 
-        Assert.assertEquals(tokenCache.idTokens.size(),1 );
+        Assert.assertEquals(tokenCache.idTokens.size(), 1);
 
         String actualKey = tokenCache.idTokens.keySet().stream().findFirst().get();
         String keyExpected = readResource(folder + ID_TOKEN_CACHE_ENTITY_KEY);
@@ -259,7 +259,7 @@ public class CacheFormatTests extends AbstractMsalTests {
     private void validateAccountCacheEntity(String folder, TokenCache tokenCache)
             throws IOException, URISyntaxException, JSONException {
 
-        Assert.assertEquals(tokenCache.accounts.size(),1 );
+        Assert.assertEquals(tokenCache.accounts.size(), 1);
 
         String actualKey = tokenCache.accounts.keySet().stream().findFirst().get();
         String keyExpected = readResource(folder + ACCOUNT_CACHE_ENTITY_KEY);
@@ -274,11 +274,11 @@ public class CacheFormatTests extends AbstractMsalTests {
     private void validateAppMetadataCacheEntity(String folder, TokenCache tokenCache)
             throws IOException, URISyntaxException, JSONException {
 
-        if(!doesResourceExist(folder + APP_METADATA_CACHE_ENTITY)){
+        if (!doesResourceExist(folder + APP_METADATA_CACHE_ENTITY)) {
             return;
         }
 
-        Assert.assertEquals(tokenCache.appMetadata.size(),1 );
+        Assert.assertEquals(tokenCache.appMetadata.size(), 1);
 
         String actualKey = tokenCache.appMetadata.keySet().stream().findFirst().get();
         String keyExpected = readResource(folder + APP_METADATA_ENTITY_KEY);
@@ -290,11 +290,11 @@ public class CacheFormatTests extends AbstractMsalTests {
         JSONAssert.assertEquals(valueExpected, actualValue, JSONCompareMode.STRICT);
     }
 
-    String getEmptyBase64EncodedJson(){
+    String getEmptyBase64EncodedJson() {
         return new String(Base64.getEncoder().encode("{}".getBytes()));
     }
 
-    String getJWTHeaderBase64EncodedJson(){
+    String getJWTHeaderBase64EncodedJson() {
         return new String(Base64.getEncoder().encode("{\"alg\": \"HS256\", \"typ\": \"JWT\"}".getBytes()));
     }
 

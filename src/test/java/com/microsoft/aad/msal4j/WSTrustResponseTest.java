@@ -15,15 +15,15 @@ import org.testng.annotations.Test;
 public class WSTrustResponseTest {
 
     @BeforeTest
-    public void setup(){
-        System.setProperty("javax.xml.parsers.DocumentBuilderFactory","com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
+    public void setup() {
+        System.setProperty("javax.xml.parsers.DocumentBuilderFactory", "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
     }
-    
+
     @AfterTest
-    public void cleanup(){
+    public void cleanup() {
         System.clearProperty("javax.xml.parsers.DocumentBuilderFactory");
     }
-    
+
     @Test
     public void testWSTrustResponseParseSuccess() throws Exception {
         StringBuilder sb = new StringBuilder();
