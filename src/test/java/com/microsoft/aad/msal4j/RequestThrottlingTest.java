@@ -21,7 +21,7 @@ public class RequestThrottlingTest extends AbstractMsalTests {
     public final Integer THROTTLE_IN_SEC = 1;
 
     @BeforeMethod
-    void init(){
+    void init() {
         ThrottlingCache.DEFAULT_THROTTLING_TIME_SEC = THROTTLE_IN_SEC;
     }
 
@@ -102,11 +102,10 @@ public class RequestThrottlingTest extends AbstractMsalTests {
         headers.put("Content-Type", Arrays.asList("application/json"));
         httpResponse.addHeaders(headers);
 
-        if(responseType == TokenEndpointResponseType.STATUS_CODE_500){
+        if (responseType == TokenEndpointResponseType.STATUS_CODE_500) {
             // expected to called two times due to retry logic
             EasyMock.expect(httpClientMock.send(anyObject())).andReturn(httpResponse).times(2);
-        }
-        else{
+        } else {
             EasyMock.expect(httpClientMock.send(anyObject())).andReturn(httpResponse).times(1);
         }
 
@@ -187,12 +186,12 @@ public class RequestThrottlingTest extends AbstractMsalTests {
     }
 
     @Test
-    public void STSResponseContains_StatusCode500() throws Exception  {
+    public void STSResponseContains_StatusCode500() throws Exception {
         throttlingTest(TokenEndpointResponseType.STATUS_CODE_500);
     }
 
     @Test
-    public void STSResponseContains_StatusCode500_RetryAfterHeader() throws Exception  {
+    public void STSResponseContains_StatusCode500_RetryAfterHeader() throws Exception {
         // using big value for DEFAULT_THROTTLING_TIME_SEC to make sure that RetryAfterHeader value used instead
         ThrottlingCache.DEFAULT_THROTTLING_TIME_SEC = 1000;
         throttlingTest(TokenEndpointResponseType.STATUS_CODE_500_RETRY_AFTER_HEADER);

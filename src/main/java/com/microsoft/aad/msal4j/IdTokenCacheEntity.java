@@ -22,7 +22,7 @@ class IdTokenCacheEntity extends Credential {
     @JsonProperty("realm")
     protected String realm;
 
-    String getKey(){
+    String getKey() {
         List<String> keyParts = new ArrayList<>();
 
         keyParts.add(homeAccountId);

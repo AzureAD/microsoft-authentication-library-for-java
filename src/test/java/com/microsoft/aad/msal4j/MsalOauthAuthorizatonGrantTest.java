@@ -31,7 +31,7 @@ public class MsalOauthAuthorizatonGrantTest {
         final OAuthAuthorizationGrant grant = new OAuthAuthorizationGrant(
                 new AuthorizationCodeGrant(new AuthorizationCode("grant"),
                         new URI("http://microsoft.com")),
-                (Map<String, List<String>>) null);
+                null);
         Assert.assertNotNull(grant);
         Assert.assertNotNull(grant.toParameters());
     }

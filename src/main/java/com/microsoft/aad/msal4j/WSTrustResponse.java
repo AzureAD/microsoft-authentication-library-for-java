@@ -16,7 +16,7 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,7 +72,7 @@ class WSTrustResponse {
         builderFactory.setNamespaceAware(true);
         DocumentBuilder builder = builderFactory.newDocumentBuilder();
         Document xmlDocument = builder.parse(new ByteArrayInputStream(response
-                .getBytes(Charset.forName("UTF-8"))));
+                .getBytes(StandardCharsets.UTF_8)));
         XPath xPath = XPathFactory.newInstance().newXPath();
         NamespaceContextImpl namespace = new NamespaceContextImpl();
         xPath.setNamespaceContext(namespace);
@@ -87,9 +87,8 @@ class WSTrustResponse {
             throw new MsalServiceException(
                     String.format("Server returned error in RSTR - ErrorCode: %s. FaultMessage: %s",
                             responseValue.errorCode, responseValue.faultMessage.trim()),
-                            AuthenticationErrorCode.WSTRUST_SERVICE_ERROR);
-        }
-        else {
+                    AuthenticationErrorCode.WSTRUST_SERVICE_ERROR);
+        } else {
             parseToken(responseValue, xmlDocument, xPath, version);
         }
 
@@ -97,7 +96,7 @@ class WSTrustResponse {
     }
 
     private static void parseToken(WSTrustResponse responseValue,
-            Document xmlDocument, XPath xPath, WSTrustVersion version)
+                                   Document xmlDocument, XPath xPath, WSTrustVersion version)
             throws Exception {
 
         NodeList tokenTypeNodes = (NodeList) xPath.compile(
@@ -159,7 +158,7 @@ class WSTrustResponse {
     }
 
     private static boolean parseError(WSTrustResponse responseValue,
-            Document xmlDocument, XPath xPath) throws XPathExpressionException {
+                                      Document xmlDocument, XPath xPath) throws XPathExpressionException {
         boolean errorFound = false;
 
         NodeList faultNodes = (NodeList) xPath.compile(
@@ -213,8 +212,7 @@ class WSTrustResponse {
                 resultBuilder.append(sw.toString());
             }
 
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
 

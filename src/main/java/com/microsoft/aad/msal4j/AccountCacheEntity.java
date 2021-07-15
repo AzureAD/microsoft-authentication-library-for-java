@@ -99,11 +99,11 @@ class AccountCacheEntity implements Serializable {
         return account;
     }
 
-    static AccountCacheEntity create(String clientInfoStr, Authority requestAuthority, IdToken idToken){
+    static AccountCacheEntity create(String clientInfoStr, Authority requestAuthority, IdToken idToken) {
         return create(clientInfoStr, requestAuthority, idToken, null);
     }
 
-    IAccount toAccount(){
+    IAccount toAccount() {
         return new Account(homeAccountId, environment, username, null);
     }
 }

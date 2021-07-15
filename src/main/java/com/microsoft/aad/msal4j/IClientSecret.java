@@ -5,10 +5,10 @@ package com.microsoft.aad.msal4j;
 
 /**
  * Representation of client credential containing a secret in string format
- *
+ * <p>
  * For more details, see https://aka.ms/msal4j-client-credentials
  */
-public interface IClientSecret extends IClientCredential{
+public interface IClientSecret extends IClientCredential {
 
     /**
      * @return secret secret of application requesting a token

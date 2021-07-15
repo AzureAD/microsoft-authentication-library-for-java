@@ -14,7 +14,7 @@ class DefaultEvent extends Event {
     private final static String CACHE_EVENT_COUNT_KEY = TelemetryConstants.EVENT_NAME_PREFIX + "cache_event_count";
     private Map<String, Integer> eventCount;
 
-    public DefaultEvent(String clientId, Map<String, Integer> eventCount){
+    public DefaultEvent(String clientId, Map<String, Integer> eventCount) {
         super(TelemetryConstants.DEFAULT_EVENT_NAME_KEY);
         setClientId(clientId);
         setSdkPlatform();
@@ -25,27 +25,27 @@ class DefaultEvent extends Event {
         setCacheEventCount();
     }
 
-    private void setClientId(String clientId){
+    private void setClientId(String clientId) {
         this.put(CLIENT_ID_KEY, clientId);
     }
 
-    private void setSdkPlatform(){
+    private void setSdkPlatform() {
         this.put(SDK_PLATFORM_KEY, System.getProperty("os.name"));
     }
 
-    private void setSdkVersion(){
+    private void setSdkVersion() {
         this.put(SDK_VERSION_KEY, this.getClass().getPackage().getImplementationVersion());
     }
 
-    private void setHttpEventCount(){
+    private void setHttpEventCount() {
         this.put(HTTP_EVENT_COUNT_KEY, getEventCount(TelemetryConstants.HTTP_EVENT_NAME_KEY));
     }
 
-    private void setCacheEventCount(){
+    private void setCacheEventCount() {
         this.put(CACHE_EVENT_COUNT_KEY, getEventCount(TelemetryConstants.CACHE_EVENT_NAME_KEY));
     }
 
-    private String getEventCount(String eventName){
+    private String getEventCount(String eventName) {
         return eventCount.getOrDefault(eventName, 0).toString();
     }
 

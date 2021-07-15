@@ -24,9 +24,9 @@ class AuthorizationResponseHandler implements HttpHandler {
 
     private final static Logger LOG = LoggerFactory.getLogger(AuthorizationResponseHandler.class);
 
-    private final static String DEFAULT_SUCCESS_MESSAGE = "<html><head><title>Authentication Complete</title></head>"+
-            "  <body> Authentication complete. You can close the browser and return to the application."+
-            "  </body></html>" ;
+    private final static String DEFAULT_SUCCESS_MESSAGE = "<html><head><title>Authentication Complete</title></head>" +
+            "  <body> Authentication complete. You can close the browser and return to the application." +
+            "  </body></html>";
 
     private final static String DEFAULT_FAILURE_MESSAGE = "<html><head><title>Authentication Failed</title></head> " +
             "<body> Authentication failed. You can return to the application. Feel free to close this browser tab. " +
@@ -36,15 +36,15 @@ class AuthorizationResponseHandler implements HttpHandler {
     private SystemBrowserOptions systemBrowserOptions;
 
     AuthorizationResponseHandler(BlockingQueue<AuthorizationResult> authorizationResultQueue,
-                                 SystemBrowserOptions systemBrowserOptions){
+                                 SystemBrowserOptions systemBrowserOptions) {
         this.authorizationResultQueue = authorizationResultQueue;
         this.systemBrowserOptions = systemBrowserOptions;
     }
 
     @Override
     public void handle(HttpExchange httpExchange) throws IOException {
-        try{
-            if(!httpExchange.getRequestURI().getPath().equalsIgnoreCase("/")){
+        try {
+            if (!httpExchange.getRequestURI().getPath().equalsIgnoreCase("/")) {
                 httpExchange.sendResponseHeaders(200, 0);
                 return;
             }
@@ -54,8 +54,8 @@ class AuthorizationResponseHandler implements HttpHandler {
             AuthorizationResult result = AuthorizationResult.fromResponseBody(responseBody);
             sendResponse(httpExchange, result);
             authorizationResultQueue.put(result);
-            
-        } catch (InterruptedException ex){
+
+        } catch (InterruptedException ex) {
             LOG.error("Error reading response from socket: " + ex.getMessage());
             throw new MsalClientException(ex);
         } finally {
@@ -64,9 +64,9 @@ class AuthorizationResponseHandler implements HttpHandler {
     }
 
     private void sendResponse(HttpExchange httpExchange, AuthorizationResult result)
-            throws IOException{
+            throws IOException {
 
-        switch (result.status()){
+        switch (result.status()) {
             case Success:
                 sendSuccessResponse(httpExchange, getSuccessfulResponseMessage());
                 break;
@@ -86,35 +86,35 @@ class AuthorizationResponseHandler implements HttpHandler {
     }
 
     private void sendErrorResponse(HttpExchange httpExchange, String response) throws IOException {
-        if(systemBrowserOptions == null || systemBrowserOptions.browserRedirectError() == null){
+        if (systemBrowserOptions == null || systemBrowserOptions.browserRedirectError() == null) {
             send200Response(httpExchange, response);
         } else {
             send302Response(httpExchange, systemBrowserOptions().browserRedirectError().toString());
         }
     }
 
-    private void send302Response(HttpExchange httpExchange, String redirectUri) throws IOException{
+    private void send302Response(HttpExchange httpExchange, String redirectUri) throws IOException {
         Headers responseHeaders = httpExchange.getResponseHeaders();
         responseHeaders.set("Location", redirectUri);
         httpExchange.sendResponseHeaders(302, 0);
     }
 
-    private void send200Response(HttpExchange httpExchange, String response) throws IOException{
+    private void send200Response(HttpExchange httpExchange, String response) throws IOException {
         httpExchange.sendResponseHeaders(200, response.length());
         OutputStream os = httpExchange.getResponseBody();
         os.write(response.getBytes());
         os.close();
     }
 
-    private String getSuccessfulResponseMessage(){
-        if(systemBrowserOptions == null || systemBrowserOptions.htmlMessageSuccess() == null) {
+    private String getSuccessfulResponseMessage() {
+        if (systemBrowserOptions == null || systemBrowserOptions.htmlMessageSuccess() == null) {
             return DEFAULT_SUCCESS_MESSAGE;
         }
         return systemBrowserOptions().htmlMessageSuccess();
     }
 
-    private String getErrorResponseMessage(){
-        if(systemBrowserOptions == null || systemBrowserOptions.htmlMessageError() == null) {
+    private String getErrorResponseMessage() {
+        if (systemBrowserOptions == null || systemBrowserOptions.htmlMessageError() == null) {
             return DEFAULT_FAILURE_MESSAGE;
         }
         return systemBrowserOptions().htmlMessageSuccess();

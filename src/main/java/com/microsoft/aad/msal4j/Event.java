@@ -12,7 +12,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
-abstract class Event extends HashMap<String, String>{
+abstract class Event extends HashMap<String, String> {
 
     final static String EVENT_NAME_KEY = "event_name";
     final static String START_TIME_KEY = "start_time";
@@ -22,11 +22,11 @@ abstract class Event extends HashMap<String, String>{
 
     private long startTimeStamp;
 
-    Event(String eventName){
+    Event(String eventName) {
         this(eventName, new HashMap<>());
     }
 
-    Event(String eventName, Map<String, String> predefined){
+    Event(String eventName, Map<String, String> predefined) {
         super(predefined);
 
         this.put(EVENT_NAME_KEY, eventName);
@@ -35,28 +35,28 @@ abstract class Event extends HashMap<String, String>{
         this.put(ELAPSED_TIME_KEY, "-1");
     }
 
-    void stop(){
-        long duration =  Instant.now().toEpochMilli() - startTimeStamp;
+    void stop() {
+        long duration = Instant.now().toEpochMilli() - startTimeStamp;
         this.put(ELAPSED_TIME_KEY, Long.toString(duration));
     }
 
-    static String scrubTenant(URI uri){
-        if(!uri.isAbsolute()){
+    static String scrubTenant(URI uri) {
+        if (!uri.isAbsolute()) {
             throw new IllegalArgumentException("Requires an absolute URI");
         }
-        if(!AadInstanceDiscoveryProvider.TRUSTED_HOSTS_SET.contains(uri.getHost())){
+        if (!AadInstanceDiscoveryProvider.TRUSTED_HOSTS_SET.contains(uri.getHost())) {
             return null;
         }
 
         String[] segment = uri.getPath().split("/");
 
-        if(segment.length >= 2){
-            if(segment[1].equals("tfp") && segment.length >= 3){
+        if (segment.length >= 2) {
+            if (segment[1].equals("tfp") && segment.length >= 3) {
                 segment[2] = TENANT_PLACEHOLDER;
             } else {
                 segment[1] = TENANT_PLACEHOLDER;
             }
-            if(segment.length >= 4 && segment[2].equals("userrealm")){
+            if (segment.length >= 4 && segment[2].equals("userrealm")) {
                 segment[3] = USERNAME_PLACEHOLDER;
             }
         }

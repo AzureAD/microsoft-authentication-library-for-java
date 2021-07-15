@@ -25,7 +25,7 @@ class JsonHelper {
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
 
-    private JsonHelper(){
+    private JsonHelper() {
     }
 
     static <T> T convertJsonToObject(final String json, final Class<T> tClass) {
@@ -64,8 +64,7 @@ class JsonHelper {
             cr.requestClaimInAccessToken("xms_cc", capabilitiesValues);
 
             return cr.formatAsJSONString();
-        }
-        else {
+        } else {
             return null;
         }
     }

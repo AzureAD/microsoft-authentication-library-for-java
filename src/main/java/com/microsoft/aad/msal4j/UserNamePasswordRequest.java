@@ -6,7 +6,7 @@ package com.microsoft.aad.msal4j;
 import com.nimbusds.oauth2.sdk.ResourceOwnerPasswordCredentialsGrant;
 import com.nimbusds.oauth2.sdk.auth.Secret;
 
-class UserNamePasswordRequest extends MsalRequest{
+class UserNamePasswordRequest extends MsalRequest {
 
     UserNamePasswordRequest(UserNamePasswordParameters parameters,
                             PublicClientApplication application,

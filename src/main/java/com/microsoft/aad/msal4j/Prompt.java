@@ -11,41 +11,41 @@ public enum Prompt {
     /**
      * The user should be prompted to reauthenticate.
      */
-    LOGIN ("login"),
+    LOGIN("login"),
 
     /**
-     *The user is prompted to select an account, interrupting single sign on. The user may select
+     * The user is prompted to select an account, interrupting single sign on. The user may select
      * an existing signed-in account, enter their credentials for a remembered account,
      * or choose to use a different account altogether.
      */
-    SELECT_ACCOUNT ("select_account"),
+    SELECT_ACCOUNT("select_account"),
 
     /**
      * User consent has been granted, but needs to be updated. The user should be prompted to consent.
      */
-    CONSENT ("consent"),
+    CONSENT("consent"),
 
     /**
      * An administrator should be prompted to consent on behalf of all users in their organization.
-     *
+     * <p>
      * Deprecated, instead use Prompt.ADMIN_CONSENT
      */
     @Deprecated
-    ADMING_CONSENT ("admin_consent"),
+    ADMING_CONSENT("admin_consent"),
 
     /**
      * An administrator should be prompted to consent on behalf of all users in their organization.
      */
-    ADMIN_CONSENT ("admin_consent");
+    ADMIN_CONSENT("admin_consent");
 
     private String prompt;
 
-    Prompt(String prompt){
+    Prompt(String prompt) {
         this.prompt = prompt;
     }
 
     @Override
-    public String toString(){
+    public String toString() {
         return prompt;
     }
 }

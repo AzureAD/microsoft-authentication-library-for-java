@@ -18,6 +18,7 @@ public class MsalThrottlingException extends MsalServiceException {
 
     /**
      * Constructor for MsalThrottlingException class
+     *
      * @param retryInMs
      */
     public MsalThrottlingException(long retryInMs) {

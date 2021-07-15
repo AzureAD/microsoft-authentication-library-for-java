@@ -13,11 +13,11 @@ import okhttp3.ResponseBody;
 
 import java.io.IOException;
 
-class OkHttpClientAdapter implements IHttpClient{
+class OkHttpClientAdapter implements IHttpClient {
 
     private final OkHttpClient client;
 
-    OkHttpClientAdapter(){
+    OkHttpClientAdapter() {
         this.client = new OkHttpClient();
     }
 
@@ -26,22 +26,22 @@ class OkHttpClientAdapter implements IHttpClient{
 
         Request request = buildOkRequestFromMsalRequest(httpRequest);
 
-        Response okHttpResponse= client.newCall(request).execute();
+        Response okHttpResponse = client.newCall(request).execute();
         return buildMsalResponseFromOkResponse(okHttpResponse);
     }
 
-    private Request buildOkRequestFromMsalRequest(HttpRequest httpRequest){
+    private Request buildOkRequestFromMsalRequest(HttpRequest httpRequest) {
 
-        if(httpRequest.httpMethod() == HttpMethod.GET){
+        if (httpRequest.httpMethod() == HttpMethod.GET) {
             return buildGetRequest(httpRequest);
-        } else if(httpRequest.httpMethod() == HttpMethod.POST){
+        } else if (httpRequest.httpMethod() == HttpMethod.POST) {
             return buildPostRequest(httpRequest);
         } else {
             throw new IllegalArgumentException("HttpRequest method should be either GET or POST");
         }
     }
 
-    private Request buildGetRequest(HttpRequest httpRequest){
+    private Request buildGetRequest(HttpRequest httpRequest) {
         Headers headers = Headers.of(httpRequest.headers());
 
         return new Request.Builder()
@@ -50,7 +50,7 @@ class OkHttpClientAdapter implements IHttpClient{
                 .build();
     }
 
-    private Request buildPostRequest(HttpRequest httpRequest){
+    private Request buildPostRequest(HttpRequest httpRequest) {
         Headers headers = Headers.of(httpRequest.headers());
         String contentType = httpRequest.headerValue("Content-Type");
         MediaType type = MediaType.parse(contentType);
@@ -64,18 +64,18 @@ class OkHttpClientAdapter implements IHttpClient{
                 .build();
     }
 
-    private IHttpResponse buildMsalResponseFromOkResponse(Response okHttpResponse) throws IOException{
+    private IHttpResponse buildMsalResponseFromOkResponse(Response okHttpResponse) throws IOException {
 
         IHttpResponse httpResponse = new HttpResponse();
         ((HttpResponse) httpResponse).statusCode(okHttpResponse.code());
 
         ResponseBody body = okHttpResponse.body();
-        if(body != null){
+        if (body != null) {
             ((HttpResponse) httpResponse).body(body.string());
         }
 
         Headers headers = okHttpResponse.headers();
-        if(headers != null){
+        if (headers != null) {
             ((HttpResponse) httpResponse).addHeaders(headers.toMultimap());
         }
         return httpResponse;

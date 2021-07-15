@@ -53,7 +53,7 @@ class OAuthHttpRequest extends HTTPRequest {
         return createOauthHttpResponseFromHttpResponse(httpResponse);
     }
 
-    private Map<String, String> configureHttpHeaders(){
+    private Map<String, String> configureHttpHeaders() {
 
         Map<String, String> httpHeaders = new HashMap<>(extraHeaderParams);
         httpHeaders.put("Content-Type", HTTPContentType.ApplicationURLEncoded.contentType);
@@ -85,7 +85,7 @@ class OAuthHttpRequest extends HTTPRequest {
 
         try {
             String contentType = HttpUtils.headerValue(httpResponse.headers(), "Content-Type");
-            if(!StringHelper.isBlank(contentType)){
+            if (!StringHelper.isBlank(contentType)) {
                 response.setContentType(contentType);
             }
         } catch (final ParseException e) {
@@ -94,14 +94,14 @@ class OAuthHttpRequest extends HTTPRequest {
         }
 
         Map<String, List<String>> headers = httpResponse.headers();
-        for(Map.Entry<String, List<String>> header: headers.entrySet()){
+        for (Map.Entry<String, List<String>> header : headers.entrySet()) {
 
-            if(StringHelper.isBlank(header.getKey())){
+            if (StringHelper.isBlank(header.getKey())) {
                 continue;
             }
 
             String headerValue = response.getHeaderValue(header.getKey());
-            if(headerValue == null || StringHelper.isBlank(headerValue)){
+            if (headerValue == null || StringHelper.isBlank(headerValue)) {
                 response.setHeader(header.getKey(), header.getValue().toArray(new String[0]));
             }
         }

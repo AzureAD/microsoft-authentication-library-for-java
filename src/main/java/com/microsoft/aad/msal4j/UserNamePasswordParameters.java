@@ -15,7 +15,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty
 /**
  * Object containing parameters for Username/Password flow. Can be used as parameter to
  * {@link PublicClientApplication#acquireToken(UserNamePasswordParameters)}
- *
+ * <p>
  * For more details, see https://aka.ms/msal4j-username-password
  */
 @Builder
@@ -57,7 +57,7 @@ public class UserNamePasswordParameters implements IAcquireTokenParameters {
      */
     private String tenant;
 
-    public char[] password(){
+    public char[] password() {
         return password.clone();
     }
 
@@ -68,13 +68,14 @@ public class UserNamePasswordParameters implements IAcquireTokenParameters {
 
     /**
      * Builder for UserNameParameters
-     * @param scopes scopes application is requesting access to
+     *
+     * @param scopes   scopes application is requesting access to
      * @param username username of the account
      * @param password char array containing credentials for the username
      * @return builder object that can be used to construct UserNameParameters
      */
     public static UserNamePasswordParametersBuilder builder
-            (Set<String> scopes, String username, char[] password) {
+    (Set<String> scopes, String username, char[] password) {
 
         validateNotEmpty("scopes", scopes);
         validateNotBlank("username", username);
@@ -86,7 +87,7 @@ public class UserNamePasswordParameters implements IAcquireTokenParameters {
                 .password(password);
     }
 
-    public static class UserNamePasswordParametersBuilder{
+    public static class UserNamePasswordParametersBuilder {
         public UserNamePasswordParametersBuilder password(char[] password) {
             this.password = password.clone();
             return this;

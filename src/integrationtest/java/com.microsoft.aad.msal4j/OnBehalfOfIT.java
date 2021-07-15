@@ -92,8 +92,8 @@ public class OnBehalfOfIT {
         IAuthenticationResult result5 =
                 cca.acquireToken(
                         OnBehalfOfParameters.builder(
-                        Collections.singleton(cfg.graphDefaultScope()),
-                        new UserAssertion(accessToken))
+                                Collections.singleton(cfg.graphDefaultScope()),
+                                new UserAssertion(accessToken))
                                 .skipCache(true)
                                 .build()).
                         get();
@@ -127,7 +127,7 @@ public class OnBehalfOfIT {
         User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
 
         String clientId = cfg.appProvider.getAppId();
-        String apiReadScope = cfg.appProvider.getOboAppIdURI()  + "/user_impersonation";
+        String apiReadScope = cfg.appProvider.getOboAppIdURI() + "/user_impersonation";
         PublicClientApplication pca = PublicClientApplication.builder(
                 clientId).
                 authority(cfg.tenantSpecificAuthority()).

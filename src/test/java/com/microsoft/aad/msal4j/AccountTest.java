@@ -5,8 +5,10 @@ package com.microsoft.aad.msal4j;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Iterator;
 import java.util.Map;
@@ -71,11 +73,11 @@ public class AccountTest {
     }
 
 
-    String getEmptyBase64EncodedJson(){
+    String getEmptyBase64EncodedJson() {
         return new String(Base64.getEncoder().encode("{}".getBytes()));
     }
 
-    String getJWTHeaderBase64EncodedJson(){
+    String getJWTHeaderBase64EncodedJson() {
         return new String(Base64.getEncoder().encode("{\"alg\": \"HS256\", \"typ\": \"JWT\"}".getBytes()));
     }
 
@@ -85,7 +87,7 @@ public class AccountTest {
                 "  \"tid\": \"" + tenant + "\"\n" +
                 "}";
 
-        String encodedIdToken = new String(Base64.getEncoder().encode(claims.getBytes()), "UTF-8");
+        String encodedIdToken = new String(Base64.getEncoder().encode(claims.getBytes()), StandardCharsets.UTF_8);
 
         encodedIdToken = getJWTHeaderBase64EncodedJson() + POINT_DELIMITER +
                 encodedIdToken + POINT_DELIMITER +
@@ -126,7 +128,7 @@ public class AccountTest {
                 data = iTokenCacheAccessContext.tokenCache().serialize();
             }
 
-            ITokenCacheAccessAspect init(String data){
+            ITokenCacheAccessAspect init(String data) {
                 this.data = data;
                 return this;
             }

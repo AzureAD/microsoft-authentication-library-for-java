@@ -30,14 +30,14 @@ class HttpListener {
             this.port = server.getAddress().getPort();
             server.start();
             LOG.debug("Http listener started. Listening on port: " + port);
-        } catch (Exception e){
+        } catch (Exception e) {
             throw new MsalClientException(e.getMessage(),
                     AuthenticationErrorCode.UNABLE_TO_START_HTTP_LISTENER);
         }
     }
 
-    void stopListener(){
-        if(server != null){
+    void stopListener() {
+        if (server != null) {
             server.stop(0);
             LOG.debug("Http listener stopped");
 

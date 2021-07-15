@@ -25,7 +25,7 @@ class HttpHelper {
     public static final int HTTP_STATUS_429 = 429;
     public static final int HTTP_STATUS_500 = 500;
 
-    private HttpHelper(){
+    private HttpHelper() {
     }
 
     static IHttpResponse executeHttpRequest(HttpRequest httpRequest,
@@ -146,8 +146,7 @@ class HttpHelper {
                     if (headerValue > 0 && headerValue <= ThrottlingCache.MAX_THROTTLING_TIME_SEC) {
                         return headerValue;
                     }
-                }
-                catch (NumberFormatException ex){
+                } catch (NumberFormatException ex) {
                     log.warn("Failed to parse value of Retry-After header - NumberFormatException");
                 }
             }

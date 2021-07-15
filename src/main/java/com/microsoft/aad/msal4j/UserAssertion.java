@@ -16,8 +16,7 @@ public class UserAssertion implements IUserAssertion {
      * Constructor to create credential with a jwt token encoded as a base64 url
      * encoded string.
      *
-     * @param assertion
-     *            The jwt used as credential.
+     * @param assertion The jwt used as credential.
      */
     public UserAssertion(final String assertion) {
         if (StringHelper.isBlank(assertion)) {

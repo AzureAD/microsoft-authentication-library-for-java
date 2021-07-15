@@ -12,14 +12,14 @@ class AuthorizationCodeRequest extends MsalRequest {
 
     AuthorizationCodeRequest(AuthorizationCodeParameters parameters,
                              AbstractClientApplicationBase application,
-                             RequestContext requestContext){
+                             RequestContext requestContext) {
         super(application, createMsalGrant(parameters), requestContext);
     }
 
-    private static AbstractMsalAuthorizationGrant createMsalGrant(AuthorizationCodeParameters parameters){
+    private static AbstractMsalAuthorizationGrant createMsalGrant(AuthorizationCodeParameters parameters) {
 
         AuthorizationGrant authorizationGrant;
-        if(parameters.codeVerifier() != null){
+        if (parameters.codeVerifier() != null) {
             authorizationGrant = new AuthorizationCodeGrant(
                     new AuthorizationCode(parameters.authorizationCode()),
                     parameters.redirectUri(),
@@ -27,7 +27,7 @@ class AuthorizationCodeRequest extends MsalRequest {
 
         } else {
             authorizationGrant = new AuthorizationCodeGrant(
-                    new AuthorizationCode(parameters.authorizationCode()),parameters.redirectUri());
+                    new AuthorizationCode(parameters.authorizationCode()), parameters.redirectUri());
         }
 
         return new OAuthAuthorizationGrant(authorizationGrant, parameters.scopes(), parameters.claims());

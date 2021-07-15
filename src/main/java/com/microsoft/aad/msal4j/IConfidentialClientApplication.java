@@ -23,6 +23,7 @@ public interface IConfidentialClientApplication extends IClientApplicationBase {
      * Acquires tokens from the authority configured in the application, for the confidential client
      * itself. It will by default attempt to get tokens from the token cache. If no tokens are found,
      * it falls back to acquiring them via client credentials from the STS
+     *
      * @param parameters instance of {@link ClientCredentialParameters}
      * @return {@link CompletableFuture} containing an {@link IAuthenticationResult}
      */
@@ -34,7 +35,7 @@ public interface IConfidentialClientApplication extends IClientApplicationBase {
      * using the On-Behalf-Of flow. It will by default attempt to get tokens from the token cache.
      * This confidential client application was itself called with an acces token which is provided in
      * the {@link UserAssertion} field of {@link OnBehalfOfParameters}.
-     *
+     * <p>
      * When serializing/deserializing the in-memory token cache to permanent storage, there should be
      * a token cache per incoming access token, where the hash of the incoming access token can be used
      * as the token cache key. Access tokens are usually only valid for a 1 hour period of time,
@@ -43,6 +44,7 @@ public interface IConfidentialClientApplication extends IClientApplicationBase {
      * token caches, an eviction policy should be set. For example, a token cache that
      * is more than a couple of hours old can be deemed expired and therefore evicted from the
      * serialized token cache.
+     *
      * @param parameters instance of {@link OnBehalfOfParameters}
      * @return {@link CompletableFuture} containing an {@link IAuthenticationResult}
      */

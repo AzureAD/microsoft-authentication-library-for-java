@@ -21,8 +21,8 @@ class ClientInfo {
     @JsonProperty("utid")
     private String uniqueTenantIdentifier;
 
-    public static ClientInfo createFromJson(String clientInfoJsonBase64Encoded){
-        if(StringHelper.isBlank(clientInfoJsonBase64Encoded)){
+    public static ClientInfo createFromJson(String clientInfoJsonBase64Encoded) {
+        if (StringHelper.isBlank(clientInfoJsonBase64Encoded)) {
             return null;
         }
 
@@ -31,7 +31,7 @@ class ClientInfo {
         return JsonHelper.convertJsonToObject(new String(decodedInput, StandardCharset.UTF_8), ClientInfo.class);
     }
 
-    String toAccountIdentifier(){
+    String toAccountIdentifier() {
         return uniqueIdentifier + POINT_DELIMITER + uniqueTenantIdentifier;
     }
 }

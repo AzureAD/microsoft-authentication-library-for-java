@@ -29,9 +29,9 @@ class AuthorizationResult {
         UnknownError
     }
 
-    static AuthorizationResult fromResponseBody(String responseBody){
+    static AuthorizationResult fromResponseBody(String responseBody) {
 
-        if(StringHelper.isBlank(responseBody)){
+        if (StringHelper.isBlank(responseBody)) {
             return new AuthorizationResult(
                     AuthorizationStatus.UnknownError,
                     AuthenticationErrorCode.INVALID_AUTHORIZATION_RESULT,
@@ -39,9 +39,9 @@ class AuthorizationResult {
                             "is null or empty");
         }
 
-        Map<String, String > queryParameters = parseParameters(responseBody);
+        Map<String, String> queryParameters = parseParameters(responseBody);
 
-        if(queryParameters.containsKey("error")){
+        if (queryParameters.containsKey("error")) {
             return new AuthorizationResult(
                     AuthorizationStatus.ProtocolError,
                     queryParameters.get("error"),
@@ -50,7 +50,7 @@ class AuthorizationResult {
                             null);
         }
 
-        if(!queryParameters.containsKey("code")){
+        if (!queryParameters.containsKey("code")) {
             return new AuthorizationResult(
                     AuthorizationStatus.UnknownError,
                     AuthenticationErrorCode.INVALID_AUTHORIZATION_RESULT,
@@ -64,17 +64,17 @@ class AuthorizationResult {
             result.environment = queryParameters.get("cloud_instance_host_name");
         }
 
-        if(queryParameters.containsKey("state")){
+        if (queryParameters.containsKey("state")) {
             result.state = queryParameters.get("state");
         }
 
         return result;
     }
 
-    private AuthorizationResult(){
+    private AuthorizationResult() {
     }
 
-    private AuthorizationResult(AuthorizationStatus status, String error, String errorDescription){
+    private AuthorizationResult(AuthorizationStatus status, String error, String errorDescription) {
         this.status = status;
         this.error = error;
         this.errorDescription = errorDescription;
@@ -90,7 +90,7 @@ class AuthorizationResult {
                 String value = URLDecoder.decode(pair.substring(idx + 1), "UTF-8");
                 query_pairs.put(key, value);
             }
-        } catch(Exception ex){
+        } catch (Exception ex) {
             throw new MsalClientException(
                     AuthenticationErrorCode.INVALID_AUTHORIZATION_RESULT,
                     String.format("Error parsing authorization result:  %s", ex.getMessage()));

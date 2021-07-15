@@ -34,7 +34,7 @@ public class ClaimsRequest {
     /**
      * Inserts a claim into the list of claims to be added to the "id_token" section of an OIDC claims request
      *
-     * @param claim the name of the claim to be requested
+     * @param claim                        the name of the claim to be requested
      * @param requestedClaimAdditionalInfo additional information about the claim being requested
      */
     public void requestClaimInIdToken(String claim, RequestedClaimAdditionalInfo requestedClaimAdditionalInfo) {
@@ -42,10 +42,9 @@ public class ClaimsRequest {
     }
 
     /**
-
      * Inserts a claim into the list of claims to be added to the "userinfo" section of an OIDC claims request
      *
-     * @param claim the name of the claim to be requested
+     * @param claim                        the name of the claim to be requested
      * @param requestedClaimAdditionalInfo additional information about the claim being requested
      */
     protected void requestClaimInUserInfo(String claim, RequestedClaimAdditionalInfo requestedClaimAdditionalInfo) {
@@ -55,7 +54,7 @@ public class ClaimsRequest {
     /**
      * Inserts a claim into the list of claims to be added to the "access_token" section of an OIDC claims request
      *
-     * @param claim the name of the claim to be requested
+     * @param claim                        the name of the claim to be requested
      * @param requestedClaimAdditionalInfo additional information about the claim being requested
      */
     protected void requestClaimInAccessToken(String claim, RequestedClaimAdditionalInfo requestedClaimAdditionalInfo) {
@@ -106,7 +105,8 @@ public class ClaimsRequest {
             ClaimsRequest cr = new ClaimsRequest();
 
             ObjectMapper mapper = new ObjectMapper();
-            ObjectReader reader = mapper.readerFor(new TypeReference<List<String>>() {});
+            ObjectReader reader = mapper.readerFor(new TypeReference<List<String>>() {
+            });
 
             JsonNode jsonClaims = mapper.readTree(claims);
 

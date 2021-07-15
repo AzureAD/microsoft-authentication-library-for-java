@@ -11,19 +11,19 @@ import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-@Test(groups = { "checkin" })
+@Test(groups = {"checkin"})
 public class MexParserTest {
 
     @BeforeTest
-    public void setup(){
+    public void setup() {
         System.setProperty("javax.xml.parsers.DocumentBuilderFactory", "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
     }
-    
+
     @AfterTest
-    public void cleanup(){
+    public void cleanup() {
         System.clearProperty("javax.xml.parsers.DocumentBuilderFactory");
     }
-    
+
     @Test
     public void testMexParsing() throws Exception {
 
@@ -44,14 +44,14 @@ public class MexParserTest {
         Assert.assertEquals(endpoint.getUrl(),
                 "https://msft.sts.microsoft.com/adfs/services/trust/13/usernamemixed");
     }
-    
+
     @Test
     public void testMexParsingWs2005() throws Exception {
 
         StringBuilder sb = new StringBuilder();
         try (BufferedReader br = new BufferedReader(new FileReader(
                 this.getClass().getResource(
-                TestConfiguration.AAD_MEX_2005_RESPONSE_FILE).getFile()))) {
+                        TestConfiguration.AAD_MEX_2005_RESPONSE_FILE).getFile()))) {
             String line = br.readLine();
 
             while (line != null) {
@@ -62,7 +62,7 @@ public class MexParserTest {
         }
         BindingPolicy endpoint = MexParser.getWsTrustEndpointFromMexResponse(sb
                 .toString(), false);
-        Assert.assertEquals(endpoint.getUrl(),"https://msft.sts.microsoft.com/adfs/services/trust/2005/usernamemixed");
+        Assert.assertEquals(endpoint.getUrl(), "https://msft.sts.microsoft.com/adfs/services/trust/2005/usernamemixed");
     }
 
     @Test

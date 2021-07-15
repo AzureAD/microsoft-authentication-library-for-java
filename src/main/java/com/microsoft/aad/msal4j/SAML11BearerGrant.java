@@ -27,7 +27,7 @@ class SAML11BearerGrant extends SAML2BearerGrant {
     public Map<String, List<String>> toParameters() {
 
         Map<String, List<String>> params = super.toParameters();
-        params.put("grant_type",Collections.singletonList(grantType.getValue()));
+        params.put("grant_type", Collections.singletonList(grantType.getValue()));
         return params;
     }
 }

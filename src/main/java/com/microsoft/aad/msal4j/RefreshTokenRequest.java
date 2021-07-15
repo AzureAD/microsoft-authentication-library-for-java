@@ -47,7 +47,7 @@ class RefreshTokenRequest extends MsalRequest {
                 ? parentSilentRequest.requestAuthority().authority() : application().authority();
         sb.append(authority + POINT_DELIMITER);
 
-        if(parentSilentRequest != null && parentSilentRequest.parameters().account() != null){
+        if (parentSilentRequest != null && parentSilentRequest.parameters().account() != null) {
             sb.append(parentSilentRequest.parameters().account().homeAccountId() + POINT_DELIMITER);
         }
 

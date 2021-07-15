@@ -22,6 +22,7 @@ public class MsalException extends RuntimeException {
 
     /**
      * Initializes a new instance of the exception class
+     *
      * @param throwable the inner exception that is the cause of the current exception
      */
     public MsalException(final Throwable throwable) {
@@ -30,6 +31,7 @@ public class MsalException extends RuntimeException {
 
     /**
      * Initializes a new instance of the exception class
+     *
      * @param message the error message that explains the reason for the exception
      */
     public MsalException(final String message, String errorCode) {

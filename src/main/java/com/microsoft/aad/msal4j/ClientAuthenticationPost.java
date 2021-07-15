@@ -18,7 +18,7 @@ import com.nimbusds.oauth2.sdk.util.URLUtils;
 class ClientAuthenticationPost extends ClientAuthentication {
 
     protected ClientAuthenticationPost(ClientAuthenticationMethod method,
-            ClientID clientID) {
+                                       ClientID clientID) {
         super(method, clientID);
     }
 
@@ -45,7 +45,7 @@ class ClientAuthenticationPost extends ClientAuthentication {
         if (!ct.equals(HTTPContentType.ApplicationURLEncoded.contentType))
             throw new SerializeException(
                     "The HTTP Content-Type header must be "
-                    + HTTPContentType.ApplicationURLEncoded.contentType);
+                            + HTTPContentType.ApplicationURLEncoded.contentType);
 
         Map<String, List<String>> params = httpRequest.getQueryParameters();
 

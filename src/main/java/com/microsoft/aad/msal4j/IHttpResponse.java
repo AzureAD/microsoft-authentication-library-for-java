@@ -17,7 +17,6 @@ public interface IHttpResponse {
     int statusCode();
 
     /**
-     *
      * @return HTTP response headers
      */
     Map<String, List<String>> headers();

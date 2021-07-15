@@ -3,6 +3,8 @@
 
 package com.microsoft.aad.msal4j;
 
+
+import java.nio.charset.StandardCharsets;
 import java.net.MalformedURLException;
 import java.util.Base64;
 
@@ -59,33 +61,33 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
 
         ApiEvent apiEvent = initializeApiEvent(msalRequest);
 
-        try(TelemetryHelper telemetryHelper =
-                    clientApplication.getServiceBundle().getTelemetryManager().createTelemetryHelper(
-                            msalRequest.requestContext().telemetryRequestId(),
-                            msalRequest.application().clientId(),
-                            apiEvent,
-                            true)) {
+        try (TelemetryHelper telemetryHelper =
+                     clientApplication.getServiceBundle().getTelemetryManager().createTelemetryHelper(
+                             msalRequest.requestContext().telemetryRequestId(),
+                             msalRequest.application().clientId(),
+                             apiEvent,
+                             true)) {
             try {
                 result = execute();
                 apiEvent.setWasSuccessful(true);
 
-                if(result != null){
+                if (result != null) {
                     logResult(result, msalRequest.headers());
 
                     if (result.account() != null) {
                         apiEvent.setTenantId(result.accountCacheEntity().realm());
                     }
                 }
-            } catch(Exception ex) {
+            } catch (Exception ex) {
 
                 String error = StringHelper.EMPTY_STRING;
                 if (ex instanceof MsalException) {
                     MsalException exception = ((MsalException) ex);
-                    if (exception.errorCode() != null){
+                    if (exception.errorCode() != null) {
                         apiEvent.setApiErrorCode(exception.errorCode());
                     }
                 } else {
-                    if (ex.getCause() != null){
+                    if (ex.getCause() != null) {
                         error = ex.getCause().toString();
                     }
                 }
@@ -110,26 +112,23 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
             if (!StringHelper.isBlank(result.refreshToken())) {
                 String refreshTokenHash = this.computeSha256Hash(result
                         .refreshToken());
-                if(clientApplication.logPii()){
+                if (clientApplication.logPii()) {
                     clientApplication.log.debug(LogHelper.createMessage(String.format(
                             "Access Token with hash '%s' and Refresh Token with hash '%s' returned",
                             accessTokenHash, refreshTokenHash),
                             headers.getHeaderCorrelationIdValue()));
-                }
-                else{
+                } else {
                     clientApplication.log.debug(
                             LogHelper.createMessage(
                                     "Access Token and Refresh Token were returned",
                                     headers.getHeaderCorrelationIdValue()));
                 }
-            }
-            else {
-                if(clientApplication.logPii()){
+            } else {
+                if (clientApplication.logPii()) {
                     clientApplication.log.debug(LogHelper.createMessage(String.format(
                             "Access Token with hash '%s' returned", accessTokenHash),
                             headers.getHeaderCorrelationIdValue()));
-                }
-                else{
+                } else {
                     clientApplication.log.debug(LogHelper.createMessage(
                             "Access Token was returned",
                             headers.getHeaderCorrelationIdValue()));
@@ -138,24 +137,24 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
         }
     }
 
-     private void logException(Exception ex) {
+    private void logException(Exception ex) {
 
-         String logMessage = LogHelper.createMessage(
-                 "Execution of " + this.getClass() + " failed.",
-                 msalRequest.headers().getHeaderCorrelationIdValue());
+        String logMessage = LogHelper.createMessage(
+                "Execution of " + this.getClass() + " failed.",
+                msalRequest.headers().getHeaderCorrelationIdValue());
 
-         if (ex instanceof MsalClientException) {
-             MsalClientException exception = (MsalClientException) ex;
-             if (exception.errorCode() != null && exception.errorCode().equalsIgnoreCase(AuthenticationErrorCode.CACHE_MISS)) {
-                 clientApplication.log.debug(logMessage, ex);
-                 return;
-             }
-         }
+        if (ex instanceof MsalClientException) {
+            MsalClientException exception = (MsalClientException) ex;
+            if (exception.errorCode() != null && exception.errorCode().equalsIgnoreCase(AuthenticationErrorCode.CACHE_MISS)) {
+                clientApplication.log.debug(logMessage, ex);
+                return;
+            }
+        }
 
-         clientApplication.log.error(logMessage, ex);
-     }
+        clientApplication.log.error(logMessage, ex);
+    }
 
-    private ApiEvent initializeApiEvent(MsalRequest msalRequest){
+    private ApiEvent initializeApiEvent(MsalRequest msalRequest) {
         ApiEvent apiEvent = new ApiEvent(clientApplication.logPii());
         msalRequest.requestContext().telemetryRequestId(
                 clientApplication.getServiceBundle().getTelemetryManager().generateRequestId());
@@ -164,7 +163,7 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
         apiEvent.setRequestId(msalRequest.requestContext().telemetryRequestId());
         apiEvent.setWasSuccessful(false);
 
-        if(clientApplication instanceof ConfidentialClientApplication){
+        if (clientApplication instanceof ConfidentialClientApplication) {
             apiEvent.setIsConfidentialClient(true);
         } else {
             apiEvent.setIsConfidentialClient(false);
@@ -176,7 +175,7 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
                 apiEvent.setAuthority(new URI(authenticationAuthority.authority()));
                 apiEvent.setAuthorityType(authenticationAuthority.authorityType().toString());
             }
-        } catch (URISyntaxException ex){
+        } catch (URISyntaxException ex) {
             clientApplication.log.warn(LogHelper.createMessage(
                     "Setting URL telemetry fields failed: " +
                             LogHelper.getPiiScrubbedDetails(ex),
@@ -187,13 +186,12 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
     }
 
     private String computeSha256Hash(String input) {
-        try{
+        try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            digest.update(input.getBytes("UTF-8"));
+            digest.update(input.getBytes(StandardCharsets.UTF_8));
             byte[] hash = digest.digest();
             return Base64.getUrlEncoder().encodeToString(hash);
-        }
-        catch (NoSuchAlgorithmException | UnsupportedEncodingException ex){
+        } catch (NoSuchAlgorithmException ex) {
             clientApplication.log.warn(LogHelper.createMessage(
                     "Failed to compute SHA-256 hash due to exception - ",
                     LogHelper.getPiiScrubbedDetails(ex)));

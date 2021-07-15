@@ -14,11 +14,10 @@ final class ClientSecret implements IClientSecret {
     @Getter
     private final String clientSecret;
 
-     /**
+    /**
      * Constructor to create credential with client id and secret
      *
-     * @param clientSecret
-     *            Secret of the client requesting the token.
+     * @param clientSecret Secret of the client requesting the token.
      */
     ClientSecret(final String clientSecret) {
         if (StringHelper.isBlank(clientSecret)) {

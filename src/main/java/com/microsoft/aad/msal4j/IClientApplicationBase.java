@@ -70,10 +70,11 @@ interface IClientApplicationBase {
      * Computes the URL of the authorization request letting the user sign-in and consent to the
      * application. The URL target the /authorize endpoint of the authority configured in the
      * application object.
-     *
+     * <p>
      * Once the user successfully authenticates, the response should contain an authorization code,
      * which can then be passed in to{@link AbstractClientApplicationBase#acquireToken(AuthorizationCodeParameters)}
      * to be exchanged for a token
+     *
      * @param parameters {@link AuthorizationRequestUrlParameters}
      * @return url of the authorization endpoint where the user can sign-in and consent to the application.
      */
@@ -119,7 +120,6 @@ interface IClientApplicationBase {
      * Removes IAccount from the cache
      *
      * @param account instance of Account to be removed from cache
-     *
      * @return {@link CompletableFuture} object representing account removal task.
      */
     CompletableFuture removeAccount(IAccount account);

@@ -18,14 +18,14 @@ public class LabUserProvider {
     private final LabService labService;
     private Map<UserQueryParameters, User> userCache;
 
-    private LabUserProvider(){
+    private LabUserProvider() {
         keyVaultSecretsProvider = new KeyVaultSecretsProvider();
         labService = new LabService();
         userCache = new HashMap<>();
     }
 
-    public static synchronized LabUserProvider getInstance(){
-        if(instance == null){
+    public static synchronized LabUserProvider getInstance() {
+        if (instance == null) {
             instance = new LabUserProvider();
         }
         return instance;
@@ -43,24 +43,24 @@ public class LabUserProvider {
         return getLabUser(query);
     }
 
-    public User getFederatedAdfsUser(String federationProvider){
+    public User getFederatedAdfsUser(String federationProvider) {
         return getFederatedAdfsUser(AzureEnvironment.AZURE, federationProvider);
     }
 
-    public User getFederatedAdfsUser(String azureEnvironment, String federationProvider){
+    public User getFederatedAdfsUser(String azureEnvironment, String federationProvider) {
 
         UserQueryParameters query = new UserQueryParameters();
         query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT, azureEnvironment);
-        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER,  federationProvider);
-        query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
+        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, federationProvider);
+        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.FEDERATED);
 
         return getLabUser(query);
     }
 
-    public User getOnPremAdfsUser(String federationProvider){
+    public User getOnPremAdfsUser(String federationProvider) {
         UserQueryParameters query = new UserQueryParameters();
         query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, federationProvider);
-        query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.ON_PREM);
+        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.ON_PREM);
 
         return getLabUser(query);
     }
@@ -71,7 +71,7 @@ public class LabUserProvider {
 
     public User getB2cUser(String azureEnvironment, String b2cProvider) {
         UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT,  azureEnvironment);
+        query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT, azureEnvironment);
         query.parameters.put(UserQueryParameters.USER_TYPE, UserType.B2C);
         query.parameters.put(UserQueryParameters.B2C_PROVIDER, b2cProvider);
 
@@ -81,7 +81,7 @@ public class LabUserProvider {
     public User getUserByAzureEnvironment(String azureEnvironment) {
 
         UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT,  azureEnvironment);
+        query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT, azureEnvironment);
 
         return getLabUser(query);
     }
@@ -90,16 +90,16 @@ public class LabUserProvider {
 
         UserQueryParameters query = new UserQueryParameters();
         query.parameters.put(UserQueryParameters.USER_TYPE, "guest");
-        query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT,  guestEnvironment);
-        query.parameters.put(UserQueryParameters.HOME_AZURE_ENVIRONMENT,  homeEnvironment);
-        query.parameters.put(UserQueryParameters.GUEST_HOME_DIN,  "hostazuread");
-        query.parameters.put(UserQueryParameters.SIGN_IN_AUDIENCE,  "azureadmyorg");
+        query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT, guestEnvironment);
+        query.parameters.put(UserQueryParameters.HOME_AZURE_ENVIRONMENT, homeEnvironment);
+        query.parameters.put(UserQueryParameters.GUEST_HOME_DIN, "hostazuread");
+        query.parameters.put(UserQueryParameters.SIGN_IN_AUDIENCE, "azureadmyorg");
 
         return getLabUser(query);
     }
 
-    public User getLabUser(UserQueryParameters userQuery){
-        if(userCache.containsKey(userQuery)){
+    public User getLabUser(UserQueryParameters userQuery) {
+        if (userCache.containsKey(userQuery)) {
             return userCache.get(userQuery);
         }
         User response = labService.getUser(userQuery);

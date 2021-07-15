@@ -9,7 +9,7 @@ class EventKey {
     private String requestId;
     private String eventName;
 
-    EventKey(String requestId, Event event){
+    EventKey(String requestId, Event event) {
         this.requestId = requestId;
         this.eventName = event.get(Event.EVENT_NAME_KEY);
     }
@@ -24,9 +24,9 @@ class EventKey {
 
     @Override
     public boolean equals(Object obj) {
-        if(obj == null) return false;
-        if(!(obj instanceof EventKey)) return false;
-        if(obj == this) return true;
+        if (obj == null) return false;
+        if (!(obj instanceof EventKey)) return false;
+        if (obj == this) return true;
 
         EventKey eventKey = (EventKey) obj;
         return Objects.equals(requestId, eventKey.getRequestId()) &&
@@ -34,8 +34,7 @@ class EventKey {
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         return Objects.hash(requestId, eventName);
     }
 

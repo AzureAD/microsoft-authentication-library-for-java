@@ -29,13 +29,13 @@ public class ClientCredentialsIT {
     }
 
     @Test
-    public void acquireTokenClientCredentials_ClientCertificate() throws Exception{
+    public void acquireTokenClientCredentials_ClientCertificate() throws Exception {
         String clientId = "55e7e5af-ca53-482d-9aa3-5cb1cc8eecb5";
         assertAcquireTokenCommon(clientId, certificate);
     }
 
     @Test
-    public void acquireTokenClientCredentials_ClientSecret() throws Exception{
+    public void acquireTokenClientCredentials_ClientSecret() throws Exception {
         AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.AZURE);
         final String clientId = appProvider.getLabVaultAppId();
         final String password = appProvider.getLabVaultPassword();
@@ -45,7 +45,7 @@ public class ClientCredentialsIT {
     }
 
     @Test
-    public void acquireTokenClientCredentials_ClientAssertion() throws Exception{
+    public void acquireTokenClientCredentials_ClientAssertion() throws Exception {
         String clientId = "55e7e5af-ca53-482d-9aa3-5cb1cc8eecb5";
 
         ClientAssertion clientAssertion = JwtHelper.buildJwt(
@@ -61,7 +61,7 @@ public class ClientCredentialsIT {
     }
 
     @Test
-    public void acquireTokenClientCredentials_DefaultCacheLookup() throws Exception{
+    public void acquireTokenClientCredentials_DefaultCacheLookup() throws Exception {
         AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.AZURE);
         final String clientId = appProvider.getLabVaultAppId();
         final String password = appProvider.getLabVaultPassword();
@@ -99,7 +99,7 @@ public class ClientCredentialsIT {
     }
 
 
-    private void assertAcquireTokenCommon(String clientId, IClientCredential credential) throws Exception{
+    private void assertAcquireTokenCommon(String clientId, IClientCredential credential) throws Exception {
         ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
                 clientId, credential).
                 authority(TestConstants.MICROSOFT_AUTHORITY).

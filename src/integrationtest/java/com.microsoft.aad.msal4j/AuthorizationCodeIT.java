@@ -25,7 +25,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
     private Config cfg;
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenWithAuthorizationCode_ManagedUser(String environment){
+    public void acquireTokenWithAuthorizationCode_ManagedUser(String environment) {
         cfg = new Config(environment);
 
         User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
@@ -34,7 +34,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
 
     //TODO: Re-enable test once list of claims/capabilities and their expected behavior is known
     //@Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenWithAuthorizationCode_ManagedUserWithClaimsAndCapabilities(String environment){
+    public void acquireTokenWithAuthorizationCode_ManagedUserWithClaimsAndCapabilities(String environment) {
         cfg = new Config(environment);
 
         User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
@@ -48,13 +48,13 @@ public class AuthorizationCodeIT extends SeleniumTest {
     }
 
     @Test
-    public void acquireTokenWithAuthorizationCode_ADFSv2019_OnPrem(){
+    public void acquireTokenWithAuthorizationCode_ADFSv2019_OnPrem() {
         User user = labUserProvider.getOnPremAdfsUser(FederationProvider.ADFS_2019);
         assertAcquireTokenADFS2019(user);
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenWithAuthorizationCode_ADFSv2019_Federated(String environment){
+    public void acquireTokenWithAuthorizationCode_ADFSv2019_Federated(String environment) {
         cfg = new Config(environment);
 
         User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_2019);
@@ -62,7 +62,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenWithAuthorizationCode_ADFSv4_Federated(String environment){
+    public void acquireTokenWithAuthorizationCode_ADFSv4_Federated(String environment) {
         cfg = new Config(environment);
 
         User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_4);
@@ -71,7 +71,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenWithAuthorizationCode_ADFSv3_Federated(String environment){
+    public void acquireTokenWithAuthorizationCode_ADFSv3_Federated(String environment) {
         cfg = new Config(environment);
 
         User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_3);
@@ -79,7 +79,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenWithAuthorizationCode_ADFSv2_Federated(String environment){
+    public void acquireTokenWithAuthorizationCode_ADFSv2_Federated(String environment) {
         cfg = new Config(environment);
 
         User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_2);
@@ -87,7 +87,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenWithAuthorizationCode_B2C_Local(String environment){
+    public void acquireTokenWithAuthorizationCode_B2C_Local(String environment) {
         cfg = new Config(environment);
 
         User user = labUserProvider.getB2cUser(environment, B2CProvider.LOCAL);
@@ -97,7 +97,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
     // failing on azure devOps
     //@Test
     // TODO Redirect URI localhost in not registered
-    public void acquireTokenWithAuthorizationCode_B2C_Google(){
+    public void acquireTokenWithAuthorizationCode_B2C_Google() {
 /*        LabResponse labResponse = labUserProvider.getB2cUser(
                 B2CIdentityProvider.GOOGLE,
                 false);
@@ -112,7 +112,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
     // TODO uncomment when lab fixes facebook test account
     //@Test
     // TODO Redirect URI localhost in not registered
-    public void acquireTokenWithAuthorizationCode_B2C_Facebook(){
+    public void acquireTokenWithAuthorizationCode_B2C_Facebook() {
 /*        LabResponse labResponse = labUserProvider.getB2cUser(
                 B2CIdentityProvider.FACEBOOK,
                 false);
@@ -125,14 +125,14 @@ public class AuthorizationCodeIT extends SeleniumTest {
         assertAcquireTokenB2C(user);
     }
 
-    private void assertAcquireTokenADFS2019(User user){
+    private void assertAcquireTokenADFS2019(User user) {
         PublicClientApplication pca;
         try {
-             pca = PublicClientApplication.builder(
+            pca = PublicClientApplication.builder(
                     TestConstants.ADFS_APP_ID).
                     authority(TestConstants.ADFS_AUTHORITY).
                     build();
-        } catch(MalformedURLException ex){
+        } catch (MalformedURLException ex) {
             throw new RuntimeException(ex.getMessage());
         }
 
@@ -148,7 +148,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
         Assert.assertEquals(user.getUpn(), result.account().username());
     }
 
-    private void assertAcquireTokenAAD(User user, Map<String, Set<String>> parameters){
+    private void assertAcquireTokenAAD(User user, Map<String, Set<String>> parameters) {
 
         PublicClientApplication pca;
         Set<String> clientCapabilities = null;
@@ -156,12 +156,12 @@ public class AuthorizationCodeIT extends SeleniumTest {
             clientCapabilities = parameters.getOrDefault("clientCapabilities", null);
         }
         try {
-                pca = PublicClientApplication.builder(
-                        user.getAppId()).
-                        authority(cfg.organizationsAuthority()).
-                        clientCapabilities(clientCapabilities).
-                        build();
-        } catch(MalformedURLException ex){
+            pca = PublicClientApplication.builder(
+                    user.getAppId()).
+                    authority(cfg.organizationsAuthority()).
+                    clientCapabilities(clientCapabilities).
+                    build();
+        } catch (MalformedURLException ex) {
             throw new RuntimeException(ex.getMessage());
         }
 
@@ -177,7 +177,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
         Assert.assertEquals(user.getUpn(), result.account().username());
     }
 
-    private void assertAcquireTokenB2C(User user){
+    private void assertAcquireTokenB2C(User user) {
 
         String appId = LabService.getSecret(TestConstants.B2C_CONFIDENTIAL_CLIENT_LAB_APP_ID);
         String appSecret = LabService.getSecret(TestConstants.B2C_CONFIDENTIAL_CLIENT_APP_SECRETID);
@@ -189,7 +189,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
                     .builder(appId, credential)
                     .b2cAuthority(TestConstants.B2C_AUTHORITY_SIGN_IN)
                     .build();
-        } catch(Exception ex){
+        } catch (Exception ex) {
             throw new RuntimeException(ex.getMessage());
         }
 
@@ -204,7 +204,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
     private IAuthenticationResult acquireTokenAuthorizationCodeFlow(
             PublicClientApplication pca,
             String authCode,
-            Set<String> scopes){
+            Set<String> scopes) {
 
         IAuthenticationResult result;
         try {
@@ -215,7 +215,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
                     .build())
                     .get();
 
-        } catch(Exception e){
+        } catch (Exception e) {
             LOG.error("Error acquiring token with authCode: " + e.getMessage());
             throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
         }
@@ -223,15 +223,15 @@ public class AuthorizationCodeIT extends SeleniumTest {
     }
 
     private IAuthenticationResult acquireTokenInteractiveB2C(ConfidentialClientApplication cca,
-                                                            String authCode) {
+                                                             String authCode) {
         IAuthenticationResult result;
-        try{
+        try {
             result = cca.acquireToken(AuthorizationCodeParameters
                     .builder(authCode, new URI(TestConstants.LOCALHOST + httpListener.port()))
                     .scopes(Collections.singleton(TestConstants.B2C_LAB_SCOPE))
                     .build())
                     .get();
-        } catch (Exception e){
+        } catch (Exception e) {
             LOG.error("Error acquiring token with authCode: " + e.getMessage());
             throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
         }
@@ -241,7 +241,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
     private String acquireAuthorizationCodeAutomated(
             User user,
             AbstractClientApplicationBase app,
-            Map<String, Set<String>> parameters){
+            Map<String, Set<String>> parameters) {
 
         BlockingQueue<AuthorizationResult> authorizationCodeQueue = new LinkedBlockingQueue<>();
 
@@ -260,15 +260,15 @@ public class AuthorizationCodeIT extends SeleniumTest {
 
             long expirationTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) + 120;
 
-            while(result == null &&
+            while (result == null &&
                     TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) < expirationTime) {
 
                 result = authorizationCodeQueue.poll(100, TimeUnit.MILLISECONDS);
             }
-        } catch(Exception e){
+        } catch (Exception e) {
             throw new MsalClientException(e);
         } finally {
-            if(httpListener != null){
+            if (httpListener != null) {
                 httpListener.stopListener();
             }
         }
@@ -288,16 +288,14 @@ public class AuthorizationCodeIT extends SeleniumTest {
             claims = String.valueOf(parameters.getOrDefault("claims", Collections.singleton("")).toArray()[0]);
         }
 
-        AuthorityType authorityType= app.authenticationAuthority.authorityType;
-        if(authorityType == AuthorityType.AAD){
+        AuthorityType authorityType = app.authenticationAuthority.authorityType;
+        if (authorityType == AuthorityType.AAD) {
             scope = TestConstants.GRAPH_DEFAULT_SCOPE;
         } else if (authorityType == AuthorityType.B2C) {
             scope = TestConstants.B2C_LAB_SCOPE;
-        }
-        else if (authorityType == AuthorityType.ADFS){
+        } else if (authorityType == AuthorityType.ADFS) {
             scope = TestConstants.ADFS_SCOPE;
-        }
-        else{
+        } else {
             throw new RuntimeException("Authority type not recognized");
         }
 

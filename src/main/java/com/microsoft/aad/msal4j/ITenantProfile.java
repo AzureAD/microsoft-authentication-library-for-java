@@ -9,7 +9,6 @@ import java.util.Map;
 /**
  * Interface representing a single tenant profile. ITenantProfiles are made available through the
  * {@link IAccount#getTenantProfiles()} method of an Account
- *
  */
 public interface ITenantProfile extends Serializable {
 

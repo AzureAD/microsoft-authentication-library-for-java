@@ -24,7 +24,7 @@ abstract class MsalRequest {
 
     MsalRequest(AbstractClientApplicationBase clientApplicationBase,
                 AbstractMsalAuthorizationGrant abstractMsalAuthorizationGrant,
-                RequestContext requestContext){
+                RequestContext requestContext) {
 
         this.application = clientApplicationBase;
         this.msalAuthorizationGrant = abstractMsalAuthorizationGrant;

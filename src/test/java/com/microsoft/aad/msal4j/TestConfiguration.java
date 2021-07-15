@@ -28,10 +28,10 @@ public final class TestConfiguration {
 
     public final static String B2C_HOST_NAME = "msidlabb2c.b2clogin.com";
     public final static String B2C_SIGN_IN_POLICY = "B2C_1_SignInPolicy";
-    public final static String B2C_AUTHORITY = "https://" +  B2C_HOST_NAME +
+    public final static String B2C_AUTHORITY = "https://" + B2C_HOST_NAME +
             "/tfp/msidlabb2c.onmicrosoft.com/" + B2C_SIGN_IN_POLICY;
 
-    public final static String B2C_AUTHORITY_ENDPOINT = "https://" +  B2C_HOST_NAME +
+    public final static String B2C_AUTHORITY_ENDPOINT = "https://" + B2C_HOST_NAME +
             "/msidlabb2c.onmicrosoft.com";
     public final static String B2C_AUTHORITY_CUSTOM_PORT = "https://login.microsoftonline.in:444/tfp/tenant/policy";
     public final static String B2C_AUTHORITY_CUSTOM_PORT_TAIL_SLASH = "https://login.microsoftonline.in:444/tfp/tenant/policy/";

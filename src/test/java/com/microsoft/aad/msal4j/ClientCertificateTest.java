@@ -14,8 +14,8 @@ import org.easymock.EasyMock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.testng.annotations.Test;
 
-@Test(groups = { "checkin" })
-@PrepareForTest({ RSAPrivateKey.class })
+@Test(groups = {"checkin"})
+@PrepareForTest({RSAPrivateKey.class})
 public class ClientCertificateTest extends AbstractMsalTests {
 
     @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "PrivateKey is null or empty")

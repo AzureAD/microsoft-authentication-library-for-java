@@ -27,8 +27,8 @@ import java.util.function.Consumer;
 import static com.microsoft.aad.msal4j.TestConfiguration.*;
 
 
-@Test(groups = { "checkin" })
-@PrepareForTest({HttpHelper.class, PublicClientApplication.class })
+@Test(groups = {"checkin"})
+@PrepareForTest({HttpHelper.class, PublicClientApplication.class})
 public class DeviceCodeFlowTest extends PowerMockTestCase {
     private PublicClientApplication app = null;
 
@@ -37,11 +37,9 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         return new org.powermock.modules.testng.PowerMockObjectFactory();
     }
 
-    public static Map<String, String> getQueryMap(String query)
-    {
+    public static Map<String, String> getQueryMap(String query) {
         Map<String, String> map = new HashMap<>();
-        for (String param : query.split("&"))
-        {
+        for (String param : query.split("&")) {
             map.put(param.split("=")[0], param.split("=")[1]);
         }
         return map;
@@ -60,7 +58,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
     @Test
     public void deviceCodeFlowTest() throws Exception {
         app = PowerMock.createPartialMock(PublicClientApplication.class,
-                new String[] { "acquireTokenCommon" },
+                new String[]{"acquireTokenCommon"},
                 PublicClientApplication.builder(TestConfiguration.AAD_CLIENT_ID)
                         .authority(TestConfiguration.AAD_TENANT_ENDPOINT));
 
@@ -104,7 +102,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         AtomicReference<String> deviceCodeCorrelationId = new AtomicReference<>();
 
-        Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) ->{
+        Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
 
             // validate returned Device Code object
             Assert.assertNotNull(deviceCode);
@@ -159,7 +157,8 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         app.acquireToken
                 (DeviceCodeFlowParameters
-                        .builder(Collections.singleton(AAD_RESOURCE_ID), (DeviceCode deviceCode) -> {})
+                        .builder(Collections.singleton(AAD_RESOURCE_ID), (DeviceCode deviceCode) -> {
+                        })
                         .build());
     }
 
@@ -167,12 +166,13 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
     public void executeAcquireDeviceCode_AuthenticaionPendingErrorReturned_AuthenticationExceptionThrown()
             throws Exception {
 
-        TelemetryManager telemetryManager =  new TelemetryManager(null, false);
+        TelemetryManager telemetryManager = new TelemetryManager(null, false);
 
         AtomicReference<CompletableFuture<IAuthenticationResult>> futureReference =
                 new AtomicReference<>();
 
-        Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> { };
+        Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
+        };
 
         app = PublicClientApplication.builder("client_id")
                 .authority(AAD_TENANT_ENDPOINT)
@@ -184,7 +184,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
                 DeviceCodeFlowParameters.builder(Collections.singleton("default-scope"), deviceCodeConsumer)
                         .build();
 
-        final DeviceCodeFlowRequest dcr =  new DeviceCodeFlowRequest(
+        final DeviceCodeFlowRequest dcr = new DeviceCodeFlowRequest(
                 parameters,
                 futureReference,
                 app,

@@ -13,15 +13,15 @@ import java.util.Collections;
 
 public class CachePersistenceIT {
 
-    static class TokenPersistence implements ITokenCacheAccessAspect{
+    static class TokenPersistence implements ITokenCacheAccessAspect {
         String data;
 
-        TokenPersistence(String data){
+        TokenPersistence(String data) {
             this.data = data;
         }
 
         @Override
-        public void beforeCacheAccess(ITokenCacheAccessContext iTokenCacheAccessContext){
+        public void beforeCacheAccess(ITokenCacheAccessContext iTokenCacheAccessContext) {
             iTokenCacheAccessContext.tokenCache().deserialize(data);
         }
 
@@ -50,7 +50,7 @@ public class CachePersistenceIT {
         PublicClientApplication app = PublicClientApplication.builder("my_client_id")
                 .setTokenCacheAccessAspect(persistenceAspect).build();
 
-        Assert.assertEquals(app.getAccounts().join().size() , 1);
+        Assert.assertEquals(app.getAccounts().join().size(), 1);
         Assert.assertEquals(app.tokenCache.accounts.size(), 1);
         Assert.assertEquals(app.tokenCache.accessTokens.size(), 2);
         Assert.assertEquals(app.tokenCache.refreshTokens.size(), 1);
@@ -61,7 +61,7 @@ public class CachePersistenceIT {
         app = PublicClientApplication.builder("my_client_id")
                 .setTokenCacheAccessAspect(persistenceAspect).build();
 
-        Assert.assertEquals(app.getAccounts().join().size() , 1);
+        Assert.assertEquals(app.getAccounts().join().size(), 1);
         Assert.assertEquals(app.tokenCache.accounts.size(), 1);
         Assert.assertEquals(app.tokenCache.accessTokens.size(), 2);
         Assert.assertEquals(app.tokenCache.refreshTokens.size(), 1);
@@ -70,7 +70,7 @@ public class CachePersistenceIT {
 
         app.removeAccount(app.getAccounts().join().iterator().next()).join();
 
-        Assert.assertEquals(app.getAccounts().join().size() , 0);
+        Assert.assertEquals(app.getAccounts().join().size(), 0);
         Assert.assertEquals(app.tokenCache.accounts.size(), 0);
         Assert.assertEquals(app.tokenCache.accessTokens.size(), 1);
         Assert.assertEquals(app.tokenCache.refreshTokens.size(), 0);
@@ -80,7 +80,7 @@ public class CachePersistenceIT {
         app = PublicClientApplication.builder("my_client_id")
                 .setTokenCacheAccessAspect(persistenceAspect).build();
 
-        Assert.assertEquals(app.getAccounts().join().size() , 0);
+        Assert.assertEquals(app.getAccounts().join().size(), 0);
         Assert.assertEquals(app.tokenCache.accounts.size(), 0);
         Assert.assertEquals(app.tokenCache.accessTokens.size(), 1);
         Assert.assertEquals(app.tokenCache.refreshTokens.size(), 0);

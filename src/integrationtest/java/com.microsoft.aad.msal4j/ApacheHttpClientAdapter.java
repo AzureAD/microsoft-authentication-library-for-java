@@ -24,7 +24,7 @@ class ApacheHttpClientAdapter implements IHttpClient {
 
     private final CloseableHttpClient httpClient;
 
-    ApacheHttpClientAdapter(){
+    ApacheHttpClientAdapter() {
         this.httpClient = HttpClients.createDefault();
     }
 
@@ -38,31 +38,31 @@ class ApacheHttpClientAdapter implements IHttpClient {
     }
 
 
-    private HttpRequestBase buildApacheRequestFromMsalRequest(HttpRequest httpRequest){
+    private HttpRequestBase buildApacheRequestFromMsalRequest(HttpRequest httpRequest) {
 
-        if(httpRequest.httpMethod() == HttpMethod.GET){
+        if (httpRequest.httpMethod() == HttpMethod.GET) {
             return builGetRequest(httpRequest);
-        } else if(httpRequest.httpMethod() == HttpMethod.POST){
+        } else if (httpRequest.httpMethod() == HttpMethod.POST) {
             return buildPostRequest(httpRequest);
         } else {
             throw new IllegalArgumentException("HttpRequest method should be either GET or POST");
         }
     }
 
-    private HttpGet builGetRequest(HttpRequest httpRequest){
+    private HttpGet builGetRequest(HttpRequest httpRequest) {
         HttpGet httpGet = new HttpGet(httpRequest.url().toString());
 
-        for(Map.Entry<String, String> entry: httpRequest.headers().entrySet()){
+        for (Map.Entry<String, String> entry : httpRequest.headers().entrySet()) {
             httpGet.setHeader(entry.getKey(), entry.getValue());
         }
 
         return httpGet;
     }
 
-    private HttpPost buildPostRequest(HttpRequest httpRequest){
+    private HttpPost buildPostRequest(HttpRequest httpRequest) {
 
         HttpPost httpPost = new HttpPost(httpRequest.url().toString());
-        for(Map.Entry<String, String> entry: httpRequest.headers().entrySet()){
+        for (Map.Entry<String, String> entry : httpRequest.headers().entrySet()) {
             httpPost.setHeader(entry.getKey(), entry.getValue());
         }
 
@@ -81,7 +81,7 @@ class ApacheHttpClientAdapter implements IHttpClient {
         ((HttpResponse) httpResponse).statusCode(apacheResponse.getStatusLine().getStatusCode());
 
         Map<String, List<String>> headers = new HashMap<>();
-        for(Header header: apacheResponse.getAllHeaders()){
+        for (Header header : apacheResponse.getAllHeaders()) {
             headers.put(header.getName(), Collections.singletonList(header.getValue()));
         }
         ((HttpResponse) httpResponse).addHeaders(headers);

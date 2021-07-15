@@ -9,8 +9,8 @@ import org.testng.annotations.DataProvider;
 public class EnvironmentsProvider {
     @DataProvider(name = "environments")
     public static Object[][] createData() {
-        return new Object[][] {
-                { AzureEnvironment.AZURE },
-                { AzureEnvironment.AZURE_US_GOVERNMENT }};
+        return new Object[][]{
+                {AzureEnvironment.AZURE},
+                {AzureEnvironment.AZURE_US_GOVERNMENT}};
     }
 }

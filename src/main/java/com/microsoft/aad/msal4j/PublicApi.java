@@ -19,11 +19,11 @@ enum PublicApi {
 
     private final int apiId;
 
-    PublicApi(int apiId){
+    PublicApi(int apiId) {
         this.apiId = apiId;
     }
 
-    int getApiId(){
+    int getApiId() {
         return apiId;
     }
 }

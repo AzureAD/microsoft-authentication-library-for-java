@@ -15,7 +15,7 @@ import java.util.Map;
 /**
  * HTTP response
  */
-@Accessors(fluent=true)
+@Accessors(fluent = true)
 @Getter
 public class HttpResponse implements IHttpResponse {
 
@@ -28,7 +28,7 @@ public class HttpResponse implements IHttpResponse {
     /**
      * HTTP response headers
      */
-    private Map<String, List<String>> headers =  new HashMap<>();
+    private Map<String, List<String>> headers = new HashMap<>();
 
     /**
      * HTTP response body
@@ -40,8 +40,8 @@ public class HttpResponse implements IHttpResponse {
      * @param responseHeaders Map of HTTP headers returned from HTTP client
      */
     public void addHeaders(Map<String, List<String>> responseHeaders) {
-        for(Map.Entry<String, List<String>> entry: responseHeaders.entrySet()){
-            if(entry.getKey() == null){
+        for (Map.Entry<String, List<String>> entry : responseHeaders.entrySet()) {
+            if (entry.getKey() == null) {
                 continue;
             }
 
@@ -54,7 +54,7 @@ public class HttpResponse implements IHttpResponse {
         }
     }
 
-    private void addHeader(final String name, final String ... values){
+    private void addHeader(final String name, final String... values) {
         if (values != null && values.length > 0) {
             headers.put(name, Arrays.asList(values));
         } else {

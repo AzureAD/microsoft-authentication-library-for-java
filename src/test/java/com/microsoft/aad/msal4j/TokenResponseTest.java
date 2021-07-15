@@ -4,6 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import java.text.ParseException;
+
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
@@ -13,7 +14,7 @@ import com.nimbusds.openid.connect.sdk.token.OIDCTokens;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-@Test(groups = { "checkin" })
+@Test(groups = {"checkin"})
 public class TokenResponseTest extends AbstractMsalTests {
 
     private final String idToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6Ik5HVEZ2ZEstZnl0aEV1THdqcHdBSk9NOW4tQSJ9."
@@ -37,7 +38,7 @@ public class TokenResponseTest extends AbstractMsalTests {
     public void testConstructor() throws ParseException {
         final TokenResponse response = new TokenResponse(
                 new BearerAccessToken("access_token"), new RefreshToken(
-                        "refresh_token"), idToken, null, null, expiresIn, extExpiresIn, null, refreshIn);
+                "refresh_token"), idToken, null, null, expiresIn, extExpiresIn, null, refreshIn);
         Assert.assertNotNull(response);
         OIDCTokens tokens = response.getOIDCTokens();
         Assert.assertNotNull(tokens);

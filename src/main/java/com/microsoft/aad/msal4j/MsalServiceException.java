@@ -51,16 +51,18 @@ public class MsalServiceException extends MsalException {
 
     /**
      * Initializes a new instance of the exception class with a specified error message
+     *
      * @param message the error message that explains the reason for the exception
      */
-    public MsalServiceException(final String message, final String error){
+    public MsalServiceException(final String message, final String error) {
         super(message, error);
     }
 
     /**
      * Initializes a new instance of the exception class
+     *
      * @param errorResponse response object contain information about error returned by server
-     * @param httpHeaders http headers from the server response
+     * @param httpHeaders   http headers from the server response
      */
     public MsalServiceException(
             final ErrorResponse errorResponse,
@@ -78,9 +80,10 @@ public class MsalServiceException extends MsalException {
 
     /**
      * Initializes a new instance of the exception class
+     *
      * @param discoveryResponse response object from instance discovery network call
      */
-    public MsalServiceException(final AadInstanceDiscoveryResponse discoveryResponse){
+    public MsalServiceException(final AadInstanceDiscoveryResponse discoveryResponse) {
         super(discoveryResponse.errorDescription(), discoveryResponse.error());
 
         this.correlationId = discoveryResponse.correlationId();

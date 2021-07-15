@@ -35,10 +35,10 @@ class HttpClientHelper {
         conn.setConnectTimeout(20000);
 
         StringBuilder content;
-        try(BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()))){
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
             String inputLine;
             content = new StringBuilder();
-            while((inputLine = in.readLine()) != null){
+            while ((inputLine = in.readLine()) != null) {
                 content.append(inputLine);
             }
         }
@@ -58,11 +58,11 @@ class HttpClientHelper {
         return new URL(urlString);
     }
 
-    private static String encodeUTF8(String s){
+    private static String encodeUTF8(String s) {
         try {
             return URLEncoder.encode(s, "UTF-8");
-        } catch(UnsupportedEncodingException e) {
-            throw new IllegalArgumentException("Error: cannot encode query parameter " + s );
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalArgumentException("Error: cannot encode query parameter " + s);
         }
     }
 }

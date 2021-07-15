@@ -18,7 +18,7 @@ enum RegionTelemetry {
     /**
      * These values represent the result of the attempt to find region info
      * Three values cover cases where developer provided a region and either it matches the autodetected region (1),
-     *   autodetection failed (2), or the autodetected region does not match the developer provided region (3)
+     * autodetection failed (2), or the autodetected region does not match the developer provided region (3)
      * Two values cover cases where developer just requested autodetection, and we either detected the region (4) or failed (5)
      */
     REGION_OUTCOME_DEVELOPER_AUTODETECT_MATCH(1),
@@ -29,7 +29,7 @@ enum RegionTelemetry {
 
     final int telemetryValue;
 
-    RegionTelemetry(int telemetryValue){
+    RegionTelemetry(int telemetryValue) {
         this.telemetryValue = telemetryValue;
     }
 }

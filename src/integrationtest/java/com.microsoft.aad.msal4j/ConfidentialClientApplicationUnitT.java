@@ -144,7 +144,7 @@ public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
 
     @Test
     public void testClientCertificateRebuildsWhenExpired() throws Exception {
-        PowerMock.mockStaticPartial(JwtHelper.class, new String[]{"buildJwt"});
+        PowerMock.mockStaticPartial(JwtHelper.class, "buildJwt");
         long jwtExperiationPeriodMilli = 2000;
         ClientAssertion shortExperationJwt = buildShortJwt(TestConfiguration.AAD_CLIENT_ID,
                 clientCertificate,

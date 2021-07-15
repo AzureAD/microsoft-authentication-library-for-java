@@ -13,7 +13,7 @@ class ServiceBundle {
     private ServerSideTelemetry serverSideTelemetry;
 
     ServiceBundle(ExecutorService executorService, IHttpClient httpClient,
-                  TelemetryManager telemetryManager){
+                  TelemetryManager telemetryManager) {
         this.executorService = executorService;
         this.telemetryManager = telemetryManager;
         this.httpClient = httpClient;
@@ -25,15 +25,15 @@ class ServiceBundle {
         return executorService;
     }
 
-    TelemetryManager getTelemetryManager(){
+    TelemetryManager getTelemetryManager() {
         return telemetryManager;
     }
 
-    IHttpClient getHttpClient(){
+    IHttpClient getHttpClient() {
         return httpClient;
     }
 
-    ServerSideTelemetry getServerSideTelemetry(){
+    ServerSideTelemetry getServerSideTelemetry() {
         return serverSideTelemetry;
     }
 }

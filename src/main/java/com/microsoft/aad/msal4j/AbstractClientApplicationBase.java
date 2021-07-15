@@ -632,10 +632,10 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
 
         /**
          * Indicates that the library should attempt to fetch the instance discovery metadata from the specified Azure region.
-         *
+         * <p>
          * If the region is valid, token requests will be sent to the regional ESTS endpoint rather than the global endpoint.
          * If region information could not be verified, the library will fall back to using the global endpoint, which is also
-         *  the default behavior if this value is not set.
+         * the default behavior if this value is not set.
          *
          * @param val String region name
          * @return instance of the Builder on which method was called

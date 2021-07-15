@@ -9,9 +9,9 @@ import lombok.experimental.Accessors;
 
 import java.net.URL;
 
-@Accessors(fluent=true)
+@Accessors(fluent = true)
 @Getter(AccessLevel.PACKAGE)
-class B2CAuthority extends Authority{
+class B2CAuthority extends Authority {
 
     private final static String AUTHORIZATION_ENDPOINT = "/oauth2/v2.0/authorize";
     private final static String TOKEN_ENDPOINT = "/oauth2/v2.0/token";
@@ -20,13 +20,13 @@ class B2CAuthority extends Authority{
     private final static String B2C_TOKEN_ENDPOINT_FORMAT = "https://%s/%s" + TOKEN_ENDPOINT + "?p=%s";
     private String policy;
 
-    B2CAuthority(final URL authorityUrl){
+    B2CAuthority(final URL authorityUrl) {
         super(authorityUrl, AuthorityType.B2C);
         setAuthorityProperties();
     }
 
-    private void validatePathSegments(String[] segments){
-        if(segments.length < 3){
+    private void validatePathSegments(String[] segments) {
+        if (segments.length < 3) {
             throw new IllegalArgumentException(
                     "B2C 'authority' Uri should have at least 3 segments in the path " +
                             "(i.e. https://<host>/tfp/<tenant>/<policy>/...)");
