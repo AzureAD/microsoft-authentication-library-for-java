@@ -83,7 +83,7 @@ public class AcquireTokenSilentIT {
         assertResultNotNull(resultAfterRefresh);
 
         // Check that new refresh and id tokens are being returned
-        assertResultRefreshed(result, resultAfterRefresh);
+        assertTokensAreNotEqual(result, resultAfterRefresh);
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
@@ -135,7 +135,7 @@ public class AcquireTokenSilentIT {
         IAuthenticationResult resultAfterRefresh = acquireTokenSilently(pca, account, TestConstants.ADFS_SCOPE, true);
         assertResultNotNull(resultAfterRefresh);
 
-        assertResultRefreshed(result, resultAfterRefresh);
+        assertTokensAreNotEqual(result, resultAfterRefresh);
     }
 
     // Commented out due to unclear B2C behavior causing occasional errors
@@ -158,7 +158,7 @@ public class AcquireTokenSilentIT {
         IAuthenticationResult resultAfterRefresh = acquireTokenSilently(pca, account, TestConstants.B2C_READ_SCOPE, true);
         assertResultNotNull(resultAfterRefresh);
 
-        assertResultRefreshed(result, resultAfterRefresh);
+        assertTokensAreNotEqual(result, resultAfterRefresh);
     }
 
 
@@ -261,7 +261,38 @@ public class AcquireTokenSilentIT {
         resultSilentWithRefreshOn = acquireTokenSilently(pca, resultOriginal.account(), cfg.graphDefaultScope(), false);
         //Current time is after refreshOn, so token should be refreshed
         Assert.assertNotNull(resultSilentWithRefreshOn);
-        assertResultRefreshed(resultSilent, resultSilentWithRefreshOn);
+        assertTokensAreNotEqual(resultSilent, resultSilentWithRefreshOn);
+    }
+
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenSilent_TenantAsParameter(String environment) throws Exception {
+        cfg = new Config(environment);
+
+        User user = labUserProvider.getDefaultUser(environment);
+
+        PublicClientApplication pca = PublicClientApplication.builder(
+                user.getAppId()).
+                authority(cfg.organizationsAuthority()).
+                build();
+
+        IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters.
+                builder(Collections.singleton(cfg.graphDefaultScope()),
+                        user.getUpn(),
+                        user.getPassword().toCharArray())
+                .build()).get();
+        assertResultNotNull(result);
+
+        IAccount account = pca.getAccounts().join().iterator().next();
+        IAuthenticationResult silentResult = acquireTokenSilently(pca, account, cfg.graphDefaultScope(), false);
+        assertResultNotNull(silentResult);
+        assertTokensAreEqual(result, silentResult);
+
+        IAuthenticationResult resultWithTenantParam = pca.acquireTokenSilently(SilentParameters.
+                builder(Collections.singleton(cfg.graphDefaultScope()), account).
+                    tenant(cfg.tenant()).
+                build()).get();
+        assertResultNotNull(resultWithTenantParam);
+        assertTokensAreNotEqual(result, resultWithTenantParam);
     }
 
     private IConfidentialClientApplication getConfidentialClientApplications() throws Exception{
@@ -335,13 +366,13 @@ public class AcquireTokenSilentIT {
         Assert.assertNotNull(result.idToken());
     }
 
-    private void assertResultRefreshed(IAuthenticationResult result, IAuthenticationResult resultAfterRefresh) {
-        Assert.assertNotEquals(result.accessToken(), resultAfterRefresh.accessToken());
-        Assert.assertNotEquals(result.idToken(), resultAfterRefresh.idToken());
+    private void assertTokensAreNotEqual(IAuthenticationResult result, IAuthenticationResult secondResult) {
+        Assert.assertNotEquals(result.accessToken(), secondResult.accessToken());
+        Assert.assertNotEquals(result.idToken(), secondResult.idToken());
     }
 
-    private void assertTokensAreEqual(IAuthenticationResult result, IAuthenticationResult resultAfterRefresh) {
-        Assert.assertEquals(result.accessToken(), resultAfterRefresh.accessToken());
-        Assert.assertEquals(result.idToken(), resultAfterRefresh.idToken());
+    private void assertTokensAreEqual(IAuthenticationResult result, IAuthenticationResult secondResult) {
+        Assert.assertEquals(result.accessToken(), secondResult.accessToken());
+        Assert.assertEquals(result.idToken(), secondResult.idToken());
     }
 }

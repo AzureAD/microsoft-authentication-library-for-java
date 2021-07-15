@@ -55,6 +55,11 @@ public class SilentParameters implements IAcquireTokenParameters {
      */
     private Map<String, String> extraHttpHeaders;
 
+    /**
+     * Overrides the tenant value in the authority URL for this request
+     */
+    private String tenant;
+
     private static SilentParametersBuilder builder() {
 
         return new SilentParametersBuilder();
