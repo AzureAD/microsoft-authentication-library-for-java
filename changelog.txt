@@ -1,3 +1,8 @@
+Version 1.11.0
+=============
+- Adds ability to override authority in AcquireToken calls
+- Fixes issue where authority port was being dropped from URLs
+
 Version 1.10.1
 =============
 - Improved behavior when using regional authorities
