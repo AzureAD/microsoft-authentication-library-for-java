@@ -15,6 +15,7 @@ public class Config {
     private String tenantSpecificAuthority;
     private String graphDefaultScope;
     AppCredentialProvider appProvider;
+    private String tenant;
 
     String azureEnvironment;
 
@@ -27,12 +28,14 @@ public class Config {
                 tenantSpecificAuthority = TestConstants.TENANT_SPECIFIC_AUTHORITY;
                 graphDefaultScope = TestConstants.GRAPH_DEFAULT_SCOPE;
                 appProvider = new AppCredentialProvider(azureEnvironment);
+                tenant = TestConstants.MICROSOFT_AUTHORITY_TENANT;
                 break;
             case AzureEnvironment.AZURE_US_GOVERNMENT :
                 organizationsAuthority = TestConstants.ARLINGTON_ORGANIZATIONS_AUTHORITY;
                 tenantSpecificAuthority = TestConstants.ARLINGTON_TENANT_SPECIFIC_AUTHORITY;
                 graphDefaultScope = TestConstants.ARLINGTON_GRAPH_DEFAULT_SCOPE;
                 appProvider = new AppCredentialProvider(azureEnvironment);
+                tenant = TestConstants.ARLINGTON_AUTHORITY_TENANT;
                 break;
             default:
                 throw new UnsupportedOperationException("Azure Environment - " + azureEnvironment + " unsupported");

@@ -15,7 +15,7 @@ import java.io.IOException;
 
 class OkHttpClientAdapter implements IHttpClient{
 
-    private OkHttpClient client;
+    private final OkHttpClient client;
 
     OkHttpClientAdapter(){
         this.client = new OkHttpClient();

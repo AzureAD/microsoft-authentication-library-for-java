@@ -52,6 +52,11 @@ public class UserNamePasswordParameters implements IAcquireTokenParameters {
      */
     private Map<String, String> extraHttpHeaders;
 
+    /**
+     * Overrides the tenant value in the authority URL for this request
+     */
+    private String tenant;
+
     public char[] password(){
         return password.clone();
     }

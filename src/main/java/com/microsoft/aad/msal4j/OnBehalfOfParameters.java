@@ -46,6 +46,11 @@ public class OnBehalfOfParameters implements IAcquireTokenParameters {
      */
     private Map<String, String> extraHttpHeaders;
 
+    /**
+     * Overrides the tenant value in the authority URL for this request
+     */
+    private String tenant;
+
     private static OnBehalfOfParametersBuilder builder() {
 
         return new OnBehalfOfParametersBuilder();

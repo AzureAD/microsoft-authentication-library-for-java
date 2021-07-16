@@ -637,7 +637,7 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
          * If region information could not be verified, the library will fall back to using the global endpoint, which is also
          *  the default behavior if this value is not set.
          *
-         * @param val boolean (default is false)
+         * @param val String region name
          * @return instance of the Builder on which method was called
          */
         public T azureRegion(String val) {

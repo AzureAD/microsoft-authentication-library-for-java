@@ -13,4 +13,5 @@ interface IAcquireTokenParameters {
     Set<String> scopes();
     ClaimsRequest claims();
     Map<String, String> extraHttpHeaders();
+    String tenant();
 }
