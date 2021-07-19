@@ -24,7 +24,6 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
         }
 
         AuthenticationResult res;
-
         if (silentRequest.parameters().account() == null) {
             res = clientApplication.tokenCache.getCachedAuthenticationResult(
                     requestAuthority,

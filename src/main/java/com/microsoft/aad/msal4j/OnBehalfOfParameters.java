@@ -9,7 +9,7 @@ import lombok.experimental.Accessors;
 import java.util.Map;
 import java.util.Set;
 
-import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty;
+import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 
 /**
  * Object containing parameters for On-Behalf-Of flow. Can be used as parameter to
@@ -59,7 +59,7 @@ public class OnBehalfOfParameters implements IAcquireTokenParameters {
      */
     public static OnBehalfOfParametersBuilder builder(Set<String> scopes, UserAssertion userAssertion) {
 
-        validateNotEmpty("scopes", scopes);
+        validateNotNull("scopes", scopes);
 
         return builder()
                 .scopes(scopes)

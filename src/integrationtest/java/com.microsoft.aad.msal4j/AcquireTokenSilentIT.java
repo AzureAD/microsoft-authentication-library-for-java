@@ -11,6 +11,7 @@ import org.testng.annotations.Test;
 import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -262,6 +263,55 @@ public class AcquireTokenSilentIT {
         //Current time is after refreshOn, so token should be refreshed
         Assert.assertNotNull(resultSilentWithRefreshOn);
         assertResultRefreshed(resultSilent, resultSilentWithRefreshOn);
+    }
+
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenSilent_emptyStringScope(String environment) throws Exception {
+        cfg = new Config(environment);
+        User user = labUserProvider.getDefaultUser(environment);
+
+        PublicClientApplication pca = PublicClientApplication.builder(
+                user.getAppId()).
+                authority(cfg.organizationsAuthority()).
+                build();
+
+        String emptyScope = StringHelper.EMPTY_STRING;
+        IAuthenticationResult result = acquireTokenUsernamePassword(user, pca, emptyScope);
+        assertResultNotNull(result);
+
+        IAccount account = pca.getAccounts().join().iterator().next();
+        IAuthenticationResult silentResult = acquireTokenSilently(pca, account, emptyScope, false);
+        assertResultNotNull(silentResult);
+        Assert.assertEquals(result.accessToken(), silentResult.accessToken());
+    }
+
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenSilent_emptyScopeSet(String environment) throws Exception {
+        cfg = new Config(environment);
+        User user = labUserProvider.getDefaultUser(environment);
+
+        Set<String> scopes = new HashSet<>();
+        PublicClientApplication pca = PublicClientApplication.builder(
+                user.getAppId()).
+                authority(cfg.organizationsAuthority()).
+                build();
+
+        IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters.
+                builder(scopes,
+                        user.getUpn(),
+                        user.getPassword().toCharArray())
+                .build())
+                .get();
+        assertResultNotNull(result);
+
+        IAccount account = pca.getAccounts().join().iterator().next();
+        IAuthenticationResult silentResult = pca.acquireTokenSilently(SilentParameters.
+                builder(scopes, account)
+                .build())
+                .get();
+
+        assertResultNotNull(silentResult);
+        Assert.assertEquals(result.accessToken(), silentResult.accessToken());
     }
 
     private IConfidentialClientApplication getConfidentialClientApplications() throws Exception{

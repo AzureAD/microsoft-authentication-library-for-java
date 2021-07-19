@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty;
+import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 
 /**
  * Object containing parameters for device code flow. Can be used as parameter to
@@ -63,7 +63,7 @@ public class DeviceCodeFlowParameters implements IAcquireTokenParameters {
     public static DeviceCodeFlowParametersBuilder builder
             (Set<String> scopes, Consumer<DeviceCode> deviceCodeConsumer) {
 
-        validateNotEmpty("scopes", scopes);
+        validateNotNull("scopes", scopes);
 
         return builder()
                 .scopes(scopes)
