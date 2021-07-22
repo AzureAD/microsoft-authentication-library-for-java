@@ -6,10 +6,10 @@ package com.microsoft.aad.msal4j;
 import lombok.*;
 import lombok.experimental.Accessors;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty;
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 
 /**
@@ -74,10 +74,10 @@ public class SilentParameters implements IAcquireTokenParameters {
     public static SilentParametersBuilder builder(Set<String> scopes, IAccount account) {
 
         validateNotNull("account", account);
-        validateNotEmpty("scopes", scopes);
+        validateNotNull("scopes", scopes);
 
         return builder()
-                .scopes(scopes)
+                .scopes(removeEmptyScope(scopes))
                 .account(account);
     }
 
@@ -93,8 +93,21 @@ public class SilentParameters implements IAcquireTokenParameters {
      */
     @Deprecated
     public static SilentParametersBuilder builder(Set<String> scopes) {
-        validateNotEmpty("scopes", scopes);
+        validateNotNull("scopes", scopes);
 
-        return builder().scopes(scopes);
+        return builder().scopes(removeEmptyScope(scopes));
+    }
+
+    private static Set<String> removeEmptyScope(Set<String> scopes){
+        // empty string is not a valid scope, but we currently accept it and can't remove support
+        // for it yet as its a breaking change. This will be removed eventually (throwing
+        // exception if empty scope is passed in).
+        Set<String> updatedScopes = new HashSet<>();
+        for(String scope: scopes){
+            if(!scope.equalsIgnoreCase(StringHelper.EMPTY_STRING)){
+                updatedScopes.add(scope.trim());
+            }
+        }
+        return updatedScopes;
     }
 }

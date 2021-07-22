@@ -40,7 +40,7 @@ public class AuthorizationRequestUrlParameters {
                                   Set<String> scopes) {
 
         ParameterValidationUtils.validateNotBlank("redirect_uri", redirectUri);
-        ParameterValidationUtils.validateNotEmpty("scopes", scopes);
+        ParameterValidationUtils.validateNotNull("scopes", scopes);
 
         return builder()
                 .redirectUri(redirectUri)

@@ -9,7 +9,7 @@ import lombok.experimental.Accessors;
 import java.util.Map;
 import java.util.Set;
 
-import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty;
+import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 
 /**
  * Object containing parameters for client credential flow. Can be used as parameter to
@@ -61,7 +61,7 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
      */
     public static ClientCredentialParametersBuilder builder(Set<String> scopes) {
 
-        validateNotEmpty("scopes", scopes);
+        validateNotNull("scopes", scopes);
 
         return builder().scopes(scopes);
     }

@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotBlank;
-import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty;
+import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 
 /**
  * Object containing parameters for Integrated Windows Authentication. Can be used as parameter to
@@ -65,7 +65,7 @@ public class IntegratedWindowsAuthenticationParameters implements IAcquireTokenP
      */
     public static IntegratedWindowsAuthenticationParametersBuilder builder(Set<String> scopes, String username) {
 
-        validateNotEmpty("scopes", scopes);
+        validateNotNull("scopes", scopes);
         validateNotBlank("username", username);
 
         return builder()

@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotBlank;
-import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty;
+import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 
 /**
  * Object containing parameters for refresh token request. Can be used as parameter to
