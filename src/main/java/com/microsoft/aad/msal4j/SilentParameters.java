@@ -100,7 +100,7 @@ public class SilentParameters implements IAcquireTokenParameters {
         Set<String> updatedScopes = new HashSet<>();
         for(String scope: scopes){
             if(!scope.equalsIgnoreCase(StringHelper.EMPTY_STRING)){
-                updatedScopes.add(scope);
+                updatedScopes.add(scope.trim());
             }
         }
         return updatedScopes;
