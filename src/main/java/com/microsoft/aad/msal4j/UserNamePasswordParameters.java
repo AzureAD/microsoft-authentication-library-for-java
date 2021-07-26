@@ -11,6 +11,7 @@ import java.util.Set;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotBlank;
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty;
+import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 
 /**
  * Object containing parameters for Username/Password flow. Can be used as parameter to
@@ -77,7 +78,7 @@ public class UserNamePasswordParameters implements IAcquireTokenParameters {
     public static UserNamePasswordParametersBuilder builder
     (Set<String> scopes, String username, char[] password) {
 
-        validateNotEmpty("scopes", scopes);
+        validateNotNull("scopes", scopes);
         validateNotBlank("username", username);
         validateNotEmpty("password", password);
 
