@@ -21,7 +21,7 @@ import com.nimbusds.jwt.SignedJWT;
 final class JwtHelper {
 
     static ClientAssertion buildJwt(String clientId, final ClientCertificate credential,
-            final String jwtAudience, boolean sendX5c) throws MsalClientException {
+                                    final String jwtAudience, boolean sendX5c) throws MsalClientException {
         if (StringHelper.isBlank(clientId)) {
             throw new IllegalArgumentException("clientId is null or empty");
         }
@@ -38,8 +38,8 @@ final class JwtHelper {
                 .jwtID(UUID.randomUUID().toString())
                 .notBeforeTime(new Date(time))
                 .expirationTime(new Date(time
-                                + Constants.AAD_JWT_TOKEN_LIFETIME_SECONDS
-                                * 1000))
+                        + Constants.AAD_JWT_TOKEN_LIFETIME_SECONDS
+                        * 1000))
                 .subject(clientId)
                 .build();
 
@@ -47,9 +47,9 @@ final class JwtHelper {
         try {
             JWSHeader.Builder builder = new Builder(JWSAlgorithm.RS256);
 
-            if(sendX5c){
+            if (sendX5c) {
                 List<Base64> certs = new ArrayList<>();
-                for (String cert: credential.getEncodedPublicKeyCertificateChain()) {
+                for (String cert : credential.getEncodedPublicKeyCertificateChain()) {
                     certs.add(new Base64(cert));
                 }
                 builder.x509CertChain(certs);
@@ -61,8 +61,7 @@ final class JwtHelper {
             final RSASSASigner signer = new RSASSASigner(credential.privateKey());
 
             jwt.sign(signer);
-        }
-        catch (final Exception e) {
+        } catch (final Exception e) {
             throw new MsalClientException(e);
         }
 

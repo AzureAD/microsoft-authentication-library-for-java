@@ -38,26 +38,26 @@ public class HttpRequest {
      */
     private String body;
 
-    HttpRequest(HttpMethod httpMethod, String url){
+    HttpRequest(HttpMethod httpMethod, String url) {
         this.httpMethod = httpMethod;
         this.url = createUrlFromString(url);
     }
 
-    HttpRequest(HttpMethod httpMethod, String url, Map<String, String> headers){
+    HttpRequest(HttpMethod httpMethod, String url, Map<String, String> headers) {
         this.httpMethod = httpMethod;
         this.url = createUrlFromString(url);
         this.headers = headers;
     }
 
-    HttpRequest(HttpMethod httpMethod, String url, String body){
+    HttpRequest(HttpMethod httpMethod, String url, String body) {
         this.httpMethod = httpMethod;
         this.url = createUrlFromString(url);
         this.body = body;
     }
 
     HttpRequest(HttpMethod httpMethod,
-                       String url, Map<String, String> headers,
-                       String body){
+                String url, Map<String, String> headers,
+                String body) {
         this.httpMethod = httpMethod;
         this.url = createUrlFromString(url);
         this.headers = headers;
@@ -68,20 +68,20 @@ public class HttpRequest {
      * @param headerName Name of HTTP header name
      * @return Value of HTTP header
      */
-    public String headerValue(String headerName){
+    public String headerValue(String headerName) {
 
-        if(headerName == null || headers == null){
+        if (headerName == null || headers == null) {
             return null;
         }
 
         return headers.get(headerName);
     }
 
-    private URL createUrlFromString(String stringUrl){
+    private URL createUrlFromString(String stringUrl) {
         URL url;
-        try{
+        try {
             url = new URL(stringUrl);
-        } catch(MalformedURLException e){
+        } catch (MalformedURLException e) {
             throw new MsalClientException(e);
         }
 

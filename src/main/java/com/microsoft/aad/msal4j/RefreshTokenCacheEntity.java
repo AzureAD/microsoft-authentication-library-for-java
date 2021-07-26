@@ -22,21 +22,20 @@ class RefreshTokenCacheEntity extends Credential {
     @JsonProperty("family_id")
     private String family_id;
 
-    boolean isFamilyRT(){
+    boolean isFamilyRT() {
         return !StringHelper.isBlank(family_id);
     }
 
-    String getKey(){
+    String getKey() {
         List<String> keyParts = new ArrayList<>();
 
         keyParts.add(homeAccountId);
         keyParts.add(environment);
         keyParts.add(credentialType);
 
-        if(isFamilyRT()){
+        if (isFamilyRT()) {
             keyParts.add(family_id);
-        }
-        else{
+        } else {
             keyParts.add(clientId);
         }
 

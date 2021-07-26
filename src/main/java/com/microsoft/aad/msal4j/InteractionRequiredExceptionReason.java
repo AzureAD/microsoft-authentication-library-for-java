@@ -47,18 +47,18 @@ public enum InteractionRequiredExceptionReason {
 
     private String error;
 
-    InteractionRequiredExceptionReason(String error){
+    InteractionRequiredExceptionReason(String error) {
         this.error = error;
     }
 
-    static InteractionRequiredExceptionReason fromSubErrorString(String subError){
-        if(StringHelper.isBlank(subError)){
+    static InteractionRequiredExceptionReason fromSubErrorString(String subError) {
+        if (StringHelper.isBlank(subError)) {
             return NONE;
         }
 
-        for(InteractionRequiredExceptionReason reason:
-                InteractionRequiredExceptionReason.values()){
-            if(reason.error.equalsIgnoreCase(subError)){
+        for (InteractionRequiredExceptionReason reason :
+                InteractionRequiredExceptionReason.values()) {
+            if (reason.error.equalsIgnoreCase(subError)) {
                 return reason;
             }
         }

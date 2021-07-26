@@ -33,7 +33,7 @@ public class AzureEnvironmentIT {
         assertAcquireTokenCommon(AzureEnvironment.AZURE_US_GOVERNMENT);
     }
 
-    private void assertAcquireTokenCommon(String azureEnvironment) throws Exception{
+    private void assertAcquireTokenCommon(String azureEnvironment) throws Exception {
         User user = labUserProvider.getUserByAzureEnvironment(azureEnvironment);
 
         App app = LabService.getApp(user.getAppId());
@@ -44,10 +44,10 @@ public class AzureEnvironmentIT {
                 build();
 
         IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters
-                        .builder(Collections.singleton(TestConstants.USER_READ_SCOPE),
-                                user.getUpn(),
-                                user.getPassword().toCharArray())
-                        .build())
+                .builder(Collections.singleton(TestConstants.USER_READ_SCOPE),
+                        user.getUpn(),
+                        user.getPassword().toCharArray())
+                .build())
                 .get();
 
         Assert.assertNotNull(result);

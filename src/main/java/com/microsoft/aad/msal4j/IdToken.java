@@ -32,7 +32,7 @@ class IdToken {
     protected String subject;
 
     @JsonProperty("aud")
-    protected String audience ;
+    protected String audience;
 
     @JsonProperty("exp")
     protected Long expirationTime;

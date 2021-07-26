@@ -22,8 +22,8 @@ import java.util.Map;
 
 import static org.testng.Assert.assertNotNull;
 
-@Test(groups = { "checkin" })
-@PrepareForTest({ OAuthHttpRequest.class })
+@Test(groups = {"checkin"})
+@PrepareForTest({OAuthHttpRequest.class})
 public class OauthHttpRequestTest extends AbstractMsalTests {
 
     @Test

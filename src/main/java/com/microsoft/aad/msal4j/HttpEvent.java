@@ -9,7 +9,7 @@ import java.util.Locale;
 
 import static com.microsoft.aad.msal4j.TelemetryConstants.EVENT_NAME_PREFIX;
 
-class HttpEvent extends Event{
+class HttpEvent extends Event {
     private final static String HTTP_PATH_KEY = EVENT_NAME_PREFIX + "http_path";
     private final static String USER_AGENT_KEY = EVENT_NAME_PREFIX + "user_agent";
     private final static String QUERY_PARAMETERS_KEY = EVENT_NAME_PREFIX + "query_parameters";
@@ -20,76 +20,76 @@ class HttpEvent extends Event{
     private final static String REQUEST_ID_HEADER_KEY = EVENT_NAME_PREFIX + "request_id_header";
     private final static String TOKEN_AGEN_KEY = EVENT_NAME_PREFIX + "token_age";
     private final static String SPE_INFO_KEY = EVENT_NAME_PREFIX + "spe_info";
-    private final static String SERVER_ERROR_CODE_KEY = EVENT_NAME_PREFIX  + "server_error_code";
+    private final static String SERVER_ERROR_CODE_KEY = EVENT_NAME_PREFIX + "server_error_code";
     private final static String SERVER_SUB_ERROR_CODE_KEY = EVENT_NAME_PREFIX + "server_sub_error_code";
 
-    HttpEvent(){
+    HttpEvent() {
         super(TelemetryConstants.HTTP_EVENT_NAME_KEY);
     }
 
-    void setHttpPath(URI httpPath){
+    void setHttpPath(URI httpPath) {
         this.put(HTTP_PATH_KEY, scrubTenant(httpPath));
     }
 
-    void setUserAgent(String userAgent){
+    void setUserAgent(String userAgent) {
         this.put(USER_AGENT_KEY, userAgent.toLowerCase(Locale.ROOT));
     }
 
-    void setQueryParameters(String queryParameters){
+    void setQueryParameters(String queryParameters) {
         this.put(QUERY_PARAMETERS_KEY, String.join("&", parseQueryParametersAndReturnKeys(queryParameters)));
     }
 
-    void setApiVersion(String apiVersion){
+    void setApiVersion(String apiVersion) {
         this.put(API_VERSION_KEY, apiVersion.toLowerCase());
     }
 
-    void setHttpResponseStatus(Integer httpResponseStatus){
+    void setHttpResponseStatus(Integer httpResponseStatus) {
         this.put(RESPONSE_CODE_KEY, httpResponseStatus.toString().toLowerCase());
     }
 
-    void setHttpMethod(String httpMethod){
+    void setHttpMethod(String httpMethod) {
         this.put(HTTP_METHOD_KEY, httpMethod);
     }
 
-    void setOauthErrorCode(String oauthErrorCode){
+    void setOauthErrorCode(String oauthErrorCode) {
         this.put(OAUTH_ERROR_CODE_KEY, oauthErrorCode.toLowerCase());
     }
 
-    void setRequestIdHeader(String requestIdHeader){
+    void setRequestIdHeader(String requestIdHeader) {
         this.put(REQUEST_ID_HEADER_KEY, requestIdHeader.toLowerCase());
     }
 
-    private void setTokenAge(String tokenAge){
+    private void setTokenAge(String tokenAge) {
         this.put(TOKEN_AGEN_KEY, tokenAge.toLowerCase());
     }
 
-    private void setSpeInfo(String speInfo){
+    private void setSpeInfo(String speInfo) {
         this.put(SPE_INFO_KEY, speInfo.toLowerCase());
     }
 
-    private void setServerErrorCode(String serverErrorCode){
+    private void setServerErrorCode(String serverErrorCode) {
         this.put(SERVER_ERROR_CODE_KEY, serverErrorCode.toLowerCase());
     }
 
-    private void setSubServerErrorCode(String subServerErrorCode){
+    private void setSubServerErrorCode(String subServerErrorCode) {
         this.put(SERVER_SUB_ERROR_CODE_KEY, subServerErrorCode.toLowerCase());
     }
 
-    void setXmsClientTelemetryInfo(XmsClientTelemetryInfo xmsClientTelemetryInfo){
+    void setXmsClientTelemetryInfo(XmsClientTelemetryInfo xmsClientTelemetryInfo) {
         this.setTokenAge(xmsClientTelemetryInfo.getTokenAge());
         this.setSpeInfo(xmsClientTelemetryInfo.getSpeInfo());
         this.setServerErrorCode(xmsClientTelemetryInfo.getServerErrorCode());
         this.setSubServerErrorCode(xmsClientTelemetryInfo.getServerSubErrorCode());
     }
 
-    private ArrayList<String> parseQueryParametersAndReturnKeys(String queryParams){
+    private ArrayList<String> parseQueryParametersAndReturnKeys(String queryParams) {
         ArrayList<String> queryKeys = new ArrayList<>();
         String[] queryStrings = queryParams.split("&");
-        for(String queryString: queryStrings){
-            String[] queryPairs =  queryString.split("=");
-            if(queryPairs.length == 2 &&
+        for (String queryString : queryStrings) {
+            String[] queryPairs = queryString.split("=");
+            if (queryPairs.length == 2 &&
                     !StringHelper.isBlank(queryPairs[0]) &&
-                    !StringHelper.isBlank(queryPairs[1])){
+                    !StringHelper.isBlank(queryPairs[1])) {
                 queryKeys.add(queryPairs[0].toLowerCase(Locale.ROOT));
             }
         }

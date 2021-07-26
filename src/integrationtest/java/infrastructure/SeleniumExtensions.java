@@ -28,9 +28,10 @@ public class SeleniumExtensions {
 
     private final static Logger LOG = LoggerFactory.getLogger(SeleniumExtensions.class);
 
-    private SeleniumExtensions(){}
+    private SeleniumExtensions() {
+    }
 
-    public static WebDriver createDefaultWebDriver(){
+    public static WebDriver createDefaultWebDriver() {
         ChromeOptions options = new ChromeOptions();
         //no visual rendering, remove when debugging
         options.addArguments("--headless");
@@ -40,7 +41,7 @@ public class SeleniumExtensions {
         driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 
         return driver;
-}
+    }
 
     public static WebElement waitForElementToBeVisibleAndEnable(WebDriver driver, By by, int timeOutInSeconds) {
         WebDriverWait webDriverWait = new WebDriverWait(driver, timeOutInSeconds);
@@ -48,7 +49,7 @@ public class SeleniumExtensions {
         {
             try {
                 WebElement elementToBeDisplayed = driver.findElement(by);
-                if(elementToBeDisplayed.isDisplayed() && elementToBeDisplayed.isEnabled()){
+                if (elementToBeDisplayed.isDisplayed() && elementToBeDisplayed.isEnabled()) {
                     return elementToBeDisplayed;
                 }
                 return null;
@@ -58,13 +59,13 @@ public class SeleniumExtensions {
         });
     }
 
-    public static WebElement waitForElementToBeVisibleAndEnable(WebDriver driver, By by){
+    public static WebElement waitForElementToBeVisibleAndEnable(WebDriver driver, By by) {
         int DEFAULT_TIMEOUT_IN_SEC = 15;
 
         return waitForElementToBeVisibleAndEnable(driver, by, DEFAULT_TIMEOUT_IN_SEC);
     }
 
-    public static void performADLogin(WebDriver driver, User user){
+    public static void performADLogin(WebDriver driver, User user) {
         LOG.info("PerformADLogin");
 
         UserInformationFields fields = new UserInformationFields(user);
@@ -76,7 +77,7 @@ public class SeleniumExtensions {
         driver.findElement(new By.ById(fields.getAadSignInButtonId())).click();
 
         if (user.getFederationProvider() == FederationProvider.ADFS_2 &&
-                !user.getLabName().equals(LabConstants.ARLINGTON_LAB_NAME)){
+                !user.getLabName().equals(LabConstants.ARLINGTON_LAB_NAME)) {
 
             LOG.info("Loggin in ... ADFS-V2 - Entering the username in ADFSv2 form");
             driver.findElement(new By.ById(SeleniumConstants.ADFSV2_WEB_USERNAME_INPUT_ID)).
@@ -128,7 +129,7 @@ public class SeleniumExtensions {
         });
     }
 
-    public static void performADFS2019Login(WebDriver driver, User user){
+    public static void performADFS2019Login(WebDriver driver, User user) {
         LOG.info("PerformADFS2019Login");
 
         UserInformationFields fields = new UserInformationFields(user);
@@ -145,7 +146,7 @@ public class SeleniumExtensions {
                 click();
     }
 
-    public static void performLocalLogin(WebDriver driver, User user){
+    public static void performLocalLogin(WebDriver driver, User user) {
         LOG.info("PerformLocalLogin");
 
         driver.findElement(new By.ById(SeleniumConstants.B2C_LOCAL_ACCOUNT_ID)).click();
@@ -161,7 +162,7 @@ public class SeleniumExtensions {
                 click();
     }
 
-    public static void performGoogleLogin(WebDriver driver, User user){
+    public static void performGoogleLogin(WebDriver driver, User user) {
         LOG.info("PerformGoogleLogin");
 
         driver.findElement(new By.ById(SeleniumConstants.GOOGLE_ACCOUNT_ID)).click();
@@ -181,7 +182,7 @@ public class SeleniumExtensions {
         waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.GOOGLE_NEXT_BUTTON_ID)).click();
     }
 
-    public static void performFacebookLogin(WebDriver driver, User user){
+    public static void performFacebookLogin(WebDriver driver, User user) {
         LOG.info("PerformFacebookLogin");
 
         driver.findElement(new By.ById(SeleniumConstants.FACEBOOK_ACCOUNT_ID)).click();
@@ -197,14 +198,14 @@ public class SeleniumExtensions {
                 click();
     }
 
-    public static void takeScreenShot(WebDriver driver){
+    public static void takeScreenShot(WebDriver driver) {
         String file = System.getenv("BUILD_STAGINGDIRECTORY");
         File destination = new File(file + "" + "/SeleniumError.png");
-        File scrFile = ((TakesScreenshot)driver).getScreenshotAs(OutputType.FILE);
+        File scrFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
         try {
             FileUtils.copyFile(scrFile, destination);
             LOG.info("Screenshot can be found at: " + destination.getPath());
-        } catch(Exception exception){
+        } catch (Exception exception) {
             LOG.error("Error taking screenshot: " + exception.getMessage());
         }
     }

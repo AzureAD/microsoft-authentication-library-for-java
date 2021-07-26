@@ -31,13 +31,13 @@ public class UsernamePasswordIT {
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenWithUsernamePassword_ADFSv2019_Federated(String environment) throws Exception{
+    public void acquireTokenWithUsernamePassword_ADFSv2019_Federated(String environment) throws Exception {
         cfg = new Config(environment);
 
         UserQueryParameters query = new UserQueryParameters();
         query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT, cfg.azureEnvironment);
-        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER,  FederationProvider.ADFS_2019);
-        query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
+        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, FederationProvider.ADFS_2019);
+        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.FEDERATED);
 
         User user = labUserProvider.getLabUser(query);
 
@@ -45,10 +45,10 @@ public class UsernamePasswordIT {
     }
 
     @Test
-    public void acquireTokenWithUsernamePassword_ADFSv2019_OnPrem() throws Exception{
+    public void acquireTokenWithUsernamePassword_ADFSv2019_OnPrem() throws Exception {
         UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER,  FederationProvider.ADFS_2019);
-        query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.ON_PREM);
+        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, FederationProvider.ADFS_2019);
+        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.ON_PREM);
 
         User user = labUserProvider.getLabUser(query);
 
@@ -56,13 +56,13 @@ public class UsernamePasswordIT {
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenWithUsernamePassword_ADFSv4(String environment) throws Exception{
+    public void acquireTokenWithUsernamePassword_ADFSv4(String environment) throws Exception {
         cfg = new Config(environment);
 
         UserQueryParameters query = new UserQueryParameters();
         query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT, cfg.azureEnvironment);
-        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER,  FederationProvider.ADFS_4);
-        query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
+        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, FederationProvider.ADFS_4);
+        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.FEDERATED);
 
         User user = labUserProvider.getLabUser(query);
 
@@ -70,13 +70,13 @@ public class UsernamePasswordIT {
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenWithUsernamePassword_ADFSv3(String environment) throws Exception{
+    public void acquireTokenWithUsernamePassword_ADFSv3(String environment) throws Exception {
         cfg = new Config(environment);
 
         UserQueryParameters query = new UserQueryParameters();
         query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT, cfg.azureEnvironment);
-        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER,  FederationProvider.ADFS_3);
-        query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
+        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, FederationProvider.ADFS_3);
+        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.FEDERATED);
 
         User user = labUserProvider.getLabUser(query);
 
@@ -84,13 +84,13 @@ public class UsernamePasswordIT {
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenWithUsernamePassword_ADFSv2(String environment) throws Exception{
+    public void acquireTokenWithUsernamePassword_ADFSv2(String environment) throws Exception {
         cfg = new Config(environment);
 
         UserQueryParameters query = new UserQueryParameters();
         query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT, cfg.azureEnvironment);
-        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER,  FederationProvider.ADFS_2);
-        query.parameters.put(UserQueryParameters.USER_TYPE,  UserType.FEDERATED);
+        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, FederationProvider.ADFS_2);
+        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.FEDERATED);
 
         User user = labUserProvider.getLabUser(query);
 
@@ -119,7 +119,7 @@ public class UsernamePasswordIT {
     }
 
     private void assertAcquireTokenCommon(User user, String authority, String scope, String appId)
-            throws Exception{
+            throws Exception {
         PublicClientApplication pca = PublicClientApplication.builder(
                 appId).
                 authority(authority).
@@ -139,7 +139,7 @@ public class UsernamePasswordIT {
     }
 
     @Test
-    public void acquireTokenWithUsernamePassword_B2C_CustomAuthority() throws Exception{
+    public void acquireTokenWithUsernamePassword_B2C_CustomAuthority() throws Exception {
         UserQueryParameters query = new UserQueryParameters();
         query.parameters.put(UserQueryParameters.USER_TYPE, UserType.B2C);
         query.parameters.put(UserQueryParameters.B2C_PROVIDER, B2CProvider.LOCAL);
@@ -166,7 +166,7 @@ public class UsernamePasswordIT {
 
         result = pca.acquireTokenSilently(
                 SilentParameters.builder(Collections.singleton(TestConstants.B2C_READ_SCOPE), account)
-                .build())
+                        .build())
                 .get();
 
         Assert.assertNotNull(result);
@@ -175,7 +175,7 @@ public class UsernamePasswordIT {
     }
 
     @Test
-    public void acquireTokenWithUsernamePassword_B2C_LoginMicrosoftOnline() throws Exception{
+    public void acquireTokenWithUsernamePassword_B2C_LoginMicrosoftOnline() throws Exception {
         UserQueryParameters query = new UserQueryParameters();
         query.parameters.put(UserQueryParameters.USER_TYPE, UserType.B2C);
         query.parameters.put(UserQueryParameters.B2C_PROVIDER, B2CProvider.LOCAL);

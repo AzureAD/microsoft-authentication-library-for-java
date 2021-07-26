@@ -74,7 +74,7 @@ final class ClientCertificate implements IClientCertificate {
             throws CertificateEncodingException, NoSuchAlgorithmException {
 
         return Base64.getEncoder().encodeToString(ClientCertificate
-                    .getHash(publicKeyCertificateChain.get(0).getEncoded()));
+                .getHash(publicKeyCertificateChain.get(0).getEncoded()));
     }
 
     public List<String> getEncodedPublicKeyCertificateChain() throws CertificateEncodingException {
@@ -90,7 +90,7 @@ final class ClientCertificate implements IClientCertificate {
             throws KeyStoreException, NoSuchProviderException, NoSuchAlgorithmException,
             CertificateException, IOException, UnrecoverableKeyException {
         // treat null password as default one - empty string
-        if(password == null){
+        if (password == null) {
             password = DEFAULT_PKCS12_PASSWORD;
         }
 
@@ -106,7 +106,7 @@ final class ClientCertificate implements IClientCertificate {
             throw new IllegalArgumentException("more than one certificate alias found in input stream");
         }
 
-        ArrayList<X509Certificate> publicKeyCertificateChain = new ArrayList<>();;
+        ArrayList<X509Certificate> publicKeyCertificateChain = new ArrayList<>();
         PrivateKey privateKey = (PrivateKey) keystore.getKey(alias, password.toCharArray());
 
         X509Certificate publicKeyCertificate = (X509Certificate) keystore.getCertificate(alias);
@@ -116,8 +116,7 @@ final class ClientCertificate implements IClientCertificate {
             for (Certificate c : chain) {
                 publicKeyCertificateChain.add((X509Certificate) c);
             }
-        }
-        else{
+        } else {
             publicKeyCertificateChain.add(publicKeyCertificate);
         }
 

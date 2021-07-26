@@ -8,7 +8,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 final class SafeDocumentBuilderFactory {
 
-    public static DocumentBuilderFactory createInstance() throws ParserConfigurationException{
+    public static DocumentBuilderFactory createInstance() throws ParserConfigurationException {
 
         final DocumentBuilderFactory builderFactory = DocumentBuilderFactory
                 .newInstance();
@@ -27,9 +27,9 @@ final class SafeDocumentBuilderFactory {
 
         builderFactory.setXIncludeAware(false);
         builderFactory.setExpandEntityReferences(false);
-   
+
         builderFactory.setNamespaceAware(true);
         return builderFactory;
     }
-    
+
 }

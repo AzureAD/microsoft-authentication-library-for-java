@@ -17,18 +17,18 @@ class DefaultHttpClient implements IHttpClient {
     private final SSLSocketFactory sslSocketFactory;
     public int DEFAULT_CONNECT_TIMEOUT = 10000;
     public int DEFAULT_READ_TIMEOUT = 15000;
-    
+
     private int connectTimeout = DEFAULT_CONNECT_TIMEOUT;
     private int readTimeout = DEFAULT_READ_TIMEOUT;
 
-    DefaultHttpClient(Proxy proxy, SSLSocketFactory sslSocketFactory, Integer connectTimeout, Integer readTimeout){
+    DefaultHttpClient(Proxy proxy, SSLSocketFactory sslSocketFactory, Integer connectTimeout, Integer readTimeout) {
         this.proxy = proxy;
         this.sslSocketFactory = sslSocketFactory;
         if (connectTimeout != null) this.connectTimeout = connectTimeout;
         if (readTimeout != null) this.readTimeout = readTimeout;
     }
 
-    public IHttpResponse send(HttpRequest httpRequest) throws Exception{
+    public IHttpResponse send(HttpRequest httpRequest) throws Exception {
 
         HttpResponse response = null;
         if (httpRequest.httpMethod() == HttpMethod.GET) {
@@ -61,8 +61,7 @@ class DefaultHttpClient implements IHttpClient {
             wr.flush();
 
             return readResponseFromConnection(conn);
-        }
-        finally {
+        } finally {
             if (wr != null) {
                 wr.close();
             }
@@ -74,8 +73,7 @@ class DefaultHttpClient implements IHttpClient {
         HttpsURLConnection connection;
         if (proxy != null) {
             connection = (HttpsURLConnection) finalURL.openConnection(proxy);
-        }
-        else {
+        } else {
             connection = (HttpsURLConnection) finalURL.openConnection();
         }
 
@@ -119,9 +117,8 @@ class DefaultHttpClient implements IHttpClient {
             httpResponse.addHeaders(conn.getHeaderFields());
             httpResponse.body(inputStreamToString(is));
             return httpResponse;
-        }
-        finally {
-            if(is != null){
+        } finally {
+            if (is != null) {
                 is.close();
             }
         }

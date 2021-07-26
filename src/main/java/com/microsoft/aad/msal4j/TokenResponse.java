@@ -48,11 +48,9 @@ class TokenResponse extends OIDCTokenResponse {
     static Long getLongValue(JSONObject jsonObject, String key) throws ParseException {
         Object value = jsonObject.get(key);
 
-        if(value instanceof Long){
+        if (value instanceof Long) {
             return JSONObjectUtils.getLong(jsonObject, key);
-        }
-        else
-        {
+        } else {
             return Long.parseLong(JSONObjectUtils.getString(jsonObject, key));
         }
     }

@@ -20,17 +20,19 @@ public class ClientCredentialFactory {
 
     /**
      * Static method to create a {@link ClientSecret} instance from a client secret
+     *
      * @param secret secret of application requesting a token
      * @return {@link ClientSecret}
      */
-    public static IClientSecret createFromSecret(String secret){
+    public static IClientSecret createFromSecret(String secret) {
         return new ClientSecret(secret);
     }
 
     /**
      * Static method to create a {@link ClientCertificate} instance from a certificate
+     *
      * @param pkcs12Certificate InputStream containing PCKS12 formatted certificate
-     * @param password certificate password
+     * @param password          certificate password
      * @return {@link ClientCertificate}
      * @throws CertificateException
      * @throws UnrecoverableKeyException
@@ -47,7 +49,8 @@ public class ClientCredentialFactory {
 
     /**
      * Static method to create a {@link ClientCertificate} instance.
-     * @param key  RSA private key to sign the assertion.
+     *
+     * @param key                  RSA private key to sign the assertion.
      * @param publicKeyCertificate x509 public certificate used for thumbprint
      * @return {@link ClientCertificate}
      */
@@ -59,12 +62,13 @@ public class ClientCredentialFactory {
 
     /**
      * Static method to create a {@link ClientCertificate} instance.
-     * @param key  RSA private key to sign the assertion.
+     *
+     * @param key                       RSA private key to sign the assertion.
      * @param publicKeyCertificateChain ordered with the user's certificate first followed by zero or more certificate authorities
      * @return {@link ClientCertificate}
      */
     public static IClientCertificate createFromCertificateChain(PrivateKey key, List<X509Certificate> publicKeyCertificateChain) {
-        if(key == null || publicKeyCertificateChain == null || publicKeyCertificateChain.size() == 0){
+        if (key == null || publicKeyCertificateChain == null || publicKeyCertificateChain.size() == 0) {
             throw new IllegalArgumentException("null or empty input parameter");
         }
         return new ClientCertificate(key, publicKeyCertificateChain);
@@ -72,10 +76,11 @@ public class ClientCredentialFactory {
 
     /**
      * Static method to create a {@link ClientAssertion} instance.
+     *
      * @param clientAssertion Jwt token encoded as a base64 URL encoded string
      * @return {@link ClientAssertion}
      */
-    public static IClientAssertion createFromClientAssertion(String clientAssertion){
+    public static IClientAssertion createFromClientAssertion(String clientAssertion) {
         return new ClientAssertion(clientAssertion);
     }
 }

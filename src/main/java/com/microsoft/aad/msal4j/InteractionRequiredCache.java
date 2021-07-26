@@ -45,11 +45,8 @@ class InteractionRequiredCache {
         long expirationTimestamp = cachedEntity.expirationTimestamp;
         long currentTimestamp = System.currentTimeMillis();
 
-        if (currentTimestamp < expirationTimestamp &&
-                currentTimestamp >= expirationTimestamp - DEFAULT_CACHING_TIME_SEC * 1000) {
-            return true;
-        }
-        return false;
+        return currentTimestamp < expirationTimestamp &&
+                currentTimestamp >= expirationTimestamp - DEFAULT_CACHING_TIME_SEC * 1000;
     }
 
     private static class CachedEntity {
@@ -63,13 +60,13 @@ class InteractionRequiredCache {
         }
     }
 
-    private static void removeInvalidCacheEntities(){
-        if(requestsToCache.size() > CACHE_SIZE_LIMIT_TO_TRIGGER_EXPIRED_ENTITIES_REMOVAL){
+    private static void removeInvalidCacheEntities() {
+        if (requestsToCache.size() > CACHE_SIZE_LIMIT_TO_TRIGGER_EXPIRED_ENTITIES_REMOVAL) {
             requestsToCache.values().removeIf(value -> !isCacheEntityValid(value));
         }
     }
 
-    static void clear(){
+    static void clear() {
         requestsToCache.clear();
     }
 }

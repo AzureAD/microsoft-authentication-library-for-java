@@ -33,7 +33,7 @@ public class DeviceCodeFlowParameters implements IAcquireTokenParameters {
      * Receives the device code returned from the first step of Oauth2.0 device code flow. The
      * {@link DeviceCode#verificationUri} and the {@link DeviceCode#userCode} should be shown
      * to the end user.
-     *
+     * <p>
      * For more details, see https://aka.ms/msal4j-device-code
      */
     @NonNull
@@ -61,12 +61,13 @@ public class DeviceCodeFlowParameters implements IAcquireTokenParameters {
 
     /**
      * Builder for {@link DeviceCodeFlowParameters}
-     * @param scopes scopes application is requesting access to
+     *
+     * @param scopes             scopes application is requesting access to
      * @param deviceCodeConsumer {@link Consumer} of {@link DeviceCode}
      * @return builder that can be used to construct DeviceCodeFlowParameters
      */
     public static DeviceCodeFlowParametersBuilder builder
-            (Set<String> scopes, Consumer<DeviceCode> deviceCodeConsumer) {
+    (Set<String> scopes, Consumer<DeviceCode> deviceCodeConsumer) {
 
         validateNotNull("scopes", scopes);
 

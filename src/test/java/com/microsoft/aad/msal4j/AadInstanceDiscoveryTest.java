@@ -17,7 +17,7 @@ import java.net.URL;
 public class AadInstanceDiscoveryTest extends PowerMockTestCase {
 
     @BeforeMethod
-    public void setup(){
+    public void setup() {
         AadInstanceDiscoveryProvider.cache.clear();
     }
 
@@ -75,7 +75,7 @@ public class AadInstanceDiscoveryTest extends PowerMockTestCase {
     }
 
     @Test
-    public void aadInstanceDiscoveryTest_responseSetByDeveloper_validResponse() throws Exception{
+    public void aadInstanceDiscoveryTest_responseSetByDeveloper_validResponse() throws Exception {
 
         String instanceDiscoveryResponse = TestHelper.readResource(
                 this.getClass(),
@@ -125,7 +125,7 @@ public class AadInstanceDiscoveryTest extends PowerMockTestCase {
     }
 
     @Test(expectedExceptions = MsalClientException.class)
-    public void aadInstanceDiscoveryTest_responseSetByDeveloper_invalidJson() throws Exception{
+    public void aadInstanceDiscoveryTest_responseSetByDeveloper_invalidJson() throws Exception {
 
         String instanceDiscoveryResponse = TestHelper.readResource(
                 this.getClass(),
@@ -137,7 +137,7 @@ public class AadInstanceDiscoveryTest extends PowerMockTestCase {
     }
 
     @Test()
-    public void aadInstanceDiscoveryTest_AutoDetectRegion_NoRegionDetected() throws Exception{
+    public void aadInstanceDiscoveryTest_AutoDetectRegion_NoRegionDetected() throws Exception {
 
         String instanceDiscoveryResponse = TestHelper.readResource(
                 this.getClass(),
