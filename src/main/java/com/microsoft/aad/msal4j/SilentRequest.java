@@ -28,11 +28,20 @@ class SilentRequest extends MsalRequest {
         this.assertion = assertion;
         this.requestAuthority = StringHelper.isBlank(parameters.authorityUrl()) ?
                 application.authenticationAuthority :
-                Authority.createAuthority(new URL(parameters.authorityUrl()));
+                Authority.createAuthority(new URL(enforceTrailingSlash(parameters.authorityUrl())));
 
         if (parameters.forceRefresh()) {
             application.getServiceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
                     CacheTelemetry.REFRESH_FORCE_REFRESH.telemetryValue);
         }
+    }
+
+    protected static String enforceTrailingSlash(String authority) {
+        authority = authority.toLowerCase();
+
+        if (!authority.endsWith("/")) {
+            authority += "/";
+        }
+        return authority;
     }
 }
