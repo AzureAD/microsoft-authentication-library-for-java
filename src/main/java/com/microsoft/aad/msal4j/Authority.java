@@ -151,4 +151,13 @@ abstract class Authority {
     String deviceCodeEndpoint() {
         return deviceCodeEndpoint;
     }
+
+    protected static String enforceTrailingSlash(String authority) {
+        authority = authority.toLowerCase();
+
+        if (!authority.endsWith("/")) {
+            authority += "/";
+        }
+        return authority;
+    }
 }
