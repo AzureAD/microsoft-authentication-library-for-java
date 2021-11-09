@@ -152,6 +152,15 @@
 
     <build>
         <sourceDirectory>${project.build.directory}/delombok</sourceDirectory>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-shade-plugin</artifactId>
+              <version>3.2.4</version>
+            </plugin>
+          </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.projectlombok</groupId>
@@ -279,6 +288,23 @@
                             <goal>bnd-process</goal>
                         </goals>
                     </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <executions>
+                  <execution>
+                    <phase>package</phase>
+                    <goals>
+                      <goal>shade</goal>
+                    </goals>
+                    <configuration>
+                      <shadedArtifactAttached>true</shadedArtifactAttached>
+                      <shadedClassifierName>with-dependencies</shadedClassifierName> <!-- Any name that makes sense -->
+                    </configuration>
+                  </execution>
                 </executions>
             </plugin>
         </plugins>
