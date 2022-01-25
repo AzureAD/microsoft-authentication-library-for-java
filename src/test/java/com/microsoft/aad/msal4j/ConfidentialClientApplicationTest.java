@@ -10,6 +10,10 @@ import com.nimbusds.jwt.SignedJWT;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+import java.security.*;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.*;
 
 public class ConfidentialClientApplicationTest {
@@ -20,7 +24,7 @@ public class ConfidentialClientApplicationTest {
     @Test
     public void testClientAssertion_noException() throws Exception{
 
-        IClientCertificate certificate = TestClass.getClientCertificate();
+        IClientCertificate certificate = getClientCertificate();
 
         final ClientCertificate credential = (ClientCertificate) certificate;
 
@@ -59,7 +63,7 @@ public class ConfidentialClientApplicationTest {
     @Test(expectedExceptions = MsalClientException.class)
     public void testClientAssertion_throwsException() throws Exception{
 
-        IClientCertificate certificate = TestClass.getClientCertificate();
+        IClientCertificate certificate = getClientCertificate();
         final ClientCertificate credential = (ClientCertificate) certificate;
 
         final JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
@@ -88,5 +92,20 @@ public class ConfidentialClientApplicationTest {
 
         ConfidentialClientApplication.builder(clientId, iClientCredential).authority(authority).build();
 
+    }
+
+    static IClientCertificate getClientCertificate() throws
+            KeyStoreException, IOException, NoSuchAlgorithmException,
+            CertificateException, UnrecoverableKeyException, NoSuchProviderException {
+
+        KeyStore keystore = KeyStore.getInstance("Windows-MY", "SunMSCAPI");
+
+        keystore.load(null, null);
+
+        PrivateKey key = (PrivateKey) keystore.getKey("MsalJavaAutomationRunner", null);
+        X509Certificate publicCertificate = (X509Certificate) keystore.getCertificate(
+                "MsalJavaAutomationRunner");
+
+        return ClientCredentialFactory.createFromCertificate(key, publicCertificate);
     }
 }
