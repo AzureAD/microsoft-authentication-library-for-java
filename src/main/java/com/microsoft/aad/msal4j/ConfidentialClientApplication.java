@@ -3,12 +3,13 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.nimbusds.jose.JOSEObject;
+import com.nimbusds.jose.util.Base64URL;
+import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
-import com.nimbusds.oauth2.sdk.auth.ClientSecretPost;
-import com.nimbusds.oauth2.sdk.auth.PrivateKeyJWT;
-import com.nimbusds.oauth2.sdk.auth.Secret;
+import com.nimbusds.oauth2.sdk.auth.*;
 import com.nimbusds.oauth2.sdk.id.ClientID;
+import com.nimbusds.oauth2.sdk.util.MultivaluedMapUtils;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 public class ConfidentialClientApplication extends AbstractClientApplicationBase implements IConfidentialClientApplication {
 
     private ClientAuthentication clientAuthentication;
+    private CustomJWTAuthentication customJWTAuthentication;
     private boolean clientCertAuthentication = false;
     private ClientCertificate clientCertificate;
 
@@ -125,12 +127,31 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
 
     private ClientAuthentication createClientAuthFromClientAssertion(
             final ClientAssertion clientAssertion) {
+        final Map<String, List<String>> map = new HashMap<>();
         try {
-            final Map<String, List<String>> map = new HashMap<>();
+
             map.put("client_assertion_type", Collections.singletonList(ClientAssertion.assertionType));
             map.put("client_assertion", Collections.singletonList(clientAssertion.assertion()));
             return PrivateKeyJWT.parse(map);
         } catch (final ParseException e) {
+            if (e.getMessage().contains("Issuer and subject in client JWT assertion must designate the same client identifier")) {
+                String clientAssertion1 = MultivaluedMapUtils.getFirstValue(map, "client_assertion");
+                Base64URL[] parts;
+                try {
+                    parts = JOSEObject.split(clientAssertion1);
+
+                SignedJWT signedJWT = new SignedJWT(parts[0], parts[1], parts[2]);
+                String subjectValue = signedJWT.getJWTClaimsSet().getSubject();
+                return new CustomJWTAuthentication(
+                        ClientAuthenticationMethod.PRIVATE_KEY_JWT,
+                        new ClientID(subjectValue)
+                );
+
+                } catch (java.text.ParseException ex) {
+                    log.error("Ideally the system should not reach here. Parse Exception while trying to build CustomJWTAuthentication.");
+                    throw new MsalClientException(e);
+                }
+            }
             throw new MsalClientException(e);
         }
     }
