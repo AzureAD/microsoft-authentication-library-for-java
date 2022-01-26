@@ -30,7 +30,7 @@ public class ClientCredentialsIT {
 
     @Test
     public void acquireTokenClientCredentials_ClientCertificate() throws Exception {
-        String clientId = "55e7e5af-ca53-482d-9aa3-5cb1cc8eecb5";
+        String clientId = "2afb0add-2f32-4946-ac90-81a02aa4550e";
         assertAcquireTokenCommon(clientId, certificate);
     }
 
@@ -46,7 +46,7 @@ public class ClientCredentialsIT {
 
     @Test
     public void acquireTokenClientCredentials_ClientAssertion() throws Exception {
-        String clientId = "55e7e5af-ca53-482d-9aa3-5cb1cc8eecb5";
+        String clientId = "2afb0add-2f32-4946-ac90-81a02aa4550e";
 
         ClientAssertion clientAssertion = JwtHelper.buildJwt(
                 clientId,

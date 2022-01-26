@@ -21,7 +21,7 @@ public class KeyVaultSecretsProvider {
 
     private final SecretClient secretClient;
 
-    private static final String CLIENT_ID = "55e7e5af-ca53-482d-9aa3-5cb1cc8eecb5";
+    private static final String CLIENT_ID = "2afb0add-2f32-4946-ac90-81a02aa4550e";
     public static String CERTIFICATE_ALIAS = "MsalJavaAutomationRunner";
 
     private static final String WIN_KEYSTORE = "Windows-MY";
