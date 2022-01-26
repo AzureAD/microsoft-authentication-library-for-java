@@ -134,6 +134,8 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
             map.put("client_assertion", Collections.singletonList(clientAssertion.assertion()));
             return PrivateKeyJWT.parse(map);
         } catch (final ParseException e) {
+            //This library is not supposed to validate Issuer and subject values.
+            //The next lines of code ensures that exception is not thrown.
             if (e.getMessage().contains("Issuer and subject in client JWT assertion must designate the same client identifier")) {
                 String clientAssertion1 = MultivaluedMapUtils.getFirstValue(map, "client_assertion");
                 Base64URL[] parts;
