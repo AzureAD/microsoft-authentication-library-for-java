@@ -1,3 +1,8 @@
+Version 1.11.1
+=============
+- Updated Azure Key Vault dependencies to fix error in transitive dependency
+- Fixed issue where client assertion validation fails due to mismatched subject and issuer
+
 Version 1.11.0
 =============
 - Adds ability to override authority in AcquireToken calls
