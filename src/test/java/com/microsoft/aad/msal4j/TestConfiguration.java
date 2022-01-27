@@ -28,10 +28,10 @@ public final class TestConfiguration {
 
     public final static String B2C_HOST_NAME = "msidlabb2c.b2clogin.com";
     public final static String B2C_SIGN_IN_POLICY = "B2C_1_SignInPolicy";
-    public final static String B2C_AUTHORITY = "https://" +  B2C_HOST_NAME +
+    public final static String B2C_AUTHORITY = "https://" + B2C_HOST_NAME +
             "/tfp/msidlabb2c.onmicrosoft.com/" + B2C_SIGN_IN_POLICY;
 
-    public final static String B2C_AUTHORITY_ENDPOINT = "https://" +  B2C_HOST_NAME +
+    public final static String B2C_AUTHORITY_ENDPOINT = "https://" + B2C_HOST_NAME +
             "/msidlabb2c.onmicrosoft.com";
     public final static String B2C_AUTHORITY_CUSTOM_PORT = "https://login.microsoftonline.in:444/tfp/tenant/policy";
     public final static String B2C_AUTHORITY_CUSTOM_PORT_TAIL_SLASH = "https://login.microsoftonline.in:444/tfp/tenant/policy/";
@@ -55,11 +55,7 @@ public final class TestConfiguration {
             + "Uj0_XsCpQ4TdkPepuhzaGc-zYsfMU1POuIOB87pzW7e_VDpCdxcN1fuk-7CECPQb8nrO0L8Du8y-TZDdTSe-i_A0Alv48Zll-6tDY9cxfAR0Uy"
             + "YKl_Kf45kuHAphCWwPsjUxv4rGHhgXZPRlKFq7bkXP2Es4ixCQzb3bVLLrtQaZjkQ1yn37ngJro8NR63EbHHjHTA9lRmf8KIQ\",\"token_type\""
             + ":\"Bearer\",\"expires_in\":3600,\"expires_on\":\"1393848404\",\"resource\":\"b7a671d8-a408-42ff-86e0-aaf447fd1"
-            + "7c4\",\"refresh_token\":\"AwABAAAAvPM1KaPlrEqdFSBzjqfTGPW9BlsxWYtD0DS9hJNOPHPnq8QYbv6_FKJ3MxSHbPAIekKwJ04TnZI1NnRj"
-            + "CMhphmsy5ZFjWtLy3WN2E67b3aW2MTQ9lN06B-HdRdU0Rxi9EalB8kAlgb92Ob0zuhB90zWm3RbxshOW0vkHS3lNAV6_LQ8fZKeLTB1AuuRgLXsy-9"
-            + "2h0yYuEQw_Uvs80IbGx59j1z3hJrCMEMrqh-Hf42OnckN-uR113zMircfEOMm0qzhrQdtLleTHELS79B18647OiG6e8k8saVIvJmjpIuy79_aN-Bk5"
-            + "PRkkab-QAwn_R68via4nK0zpKHBCl0xoEvK59mqerNDEKJNY168_FHDYPiZyECaZCdlWdEqd3dLohFlnKv9zc0CnuvB_QSQHHNScqWkX53s_Us9I45"
-            + "QlRDaUPB89QXzQQaT2wZ8i3wTOb7mnEUMzrNrpsor6E4ckiviMx6WoepZmqQEZV-Yd-UUgAA\",\"scope\":\"user_impersonation\",\""
+            + "7c4\",\"refresh_token\":\"refresh_token\",\"scope\":\"user_impersonation\",\""
             + "id_token\":\"eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.ew0KICAiYXVkIjogImI2YzY5YTM3LWRmOTYtNGRiMC05MDg4LTJhYjk2ZTFkO" +
             "DIxNSIsDQogICJpc3MiOiAiaHR0cHM6Ly9sb2dpbi5taWNyb3NvZnRvbmxpbmUuY29tL2Y2NDVhZDkyLWUzOGQtNGQxYS1iNTEwLWQxYjA5YTc0YThjYS" +
             "92Mi4wIiwNCiAgImlhdCI6IDE1Mzg1Mzg0MjIsDQogICJuYmYiOiAxNTM4NTM4NDIyLA0KICAiZXhwIjogMTUzODU0MjMyMiwNCiAgIm5hbWUiOiAiQ2x" +

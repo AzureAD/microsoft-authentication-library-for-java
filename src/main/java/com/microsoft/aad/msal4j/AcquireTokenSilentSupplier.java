@@ -24,7 +24,6 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
         }
 
         AuthenticationResult res;
-
         if (silentRequest.parameters().account() == null) {
             res = clientApplication.tokenCache.getCachedAuthenticationResult(
                     requestAuthority,
@@ -86,8 +85,7 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
                         // only because of refreshOn, then simply return the existing cached token
                         if (afterRefreshOn && !(silentRequest.parameters().forceRefresh() || StringHelper.isBlank(res.accessToken()))) {
                             return res;
-                        }
-                        else throw ex;
+                        } else throw ex;
                     }
                 } else {
                     res = null;

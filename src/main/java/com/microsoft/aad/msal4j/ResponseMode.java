@@ -29,12 +29,12 @@ public enum ResponseMode {
 
     private String responseMode;
 
-    ResponseMode(String responseMode){
+    ResponseMode(String responseMode) {
         this.responseMode = responseMode;
     }
 
     @Override
-    public String toString(){
+    public String toString() {
         return this.responseMode;
     }
 }

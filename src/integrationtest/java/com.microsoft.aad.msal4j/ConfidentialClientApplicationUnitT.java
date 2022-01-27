@@ -144,7 +144,7 @@ public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
 
     @Test
     public void testClientCertificateRebuildsWhenExpired() throws Exception {
-        PowerMock.mockStaticPartial(JwtHelper.class, new String[]{"buildJwt"});
+        PowerMock.mockStaticPartial(JwtHelper.class, "buildJwt");
         long jwtExperiationPeriodMilli = 2000;
         ClientAssertion shortExperationJwt = buildShortJwt(TestConfiguration.AAD_CLIENT_ID,
                 clientCertificate,
@@ -203,4 +203,81 @@ public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
         }
         return new ClientAssertion(jwt.serialize());
     }
+
+    @Test
+    public void testClientAssertion_noException() throws Exception{
+
+        IClientCertificate certificate = CertificateHelper.getClientCertificate();
+
+        final ClientCertificate credential = (ClientCertificate) certificate;
+
+        final JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+                .issuer("issuer")
+                .subject("subject")
+                .build();
+
+        SignedJWT jwt;
+        JWSHeader.Builder builder = new JWSHeader.Builder(JWSAlgorithm.RS256);
+
+        List<Base64> certs = new ArrayList<>();
+        for (String cert : credential.getEncodedPublicKeyCertificateChain()) {
+            certs.add(new Base64(cert));
+        }
+        builder.x509CertChain(certs);
+
+        jwt = new SignedJWT(builder.build(), claimsSet);
+        final RSASSASigner signer = new RSASSASigner(credential.privateKey());
+
+        jwt.sign(signer);
+
+        ClientAssertion clientAssertion = new ClientAssertion(jwt.serialize());
+
+        IClientCredential iClientCredential = ClientCredentialFactory.createFromClientAssertion(
+                clientAssertion.assertion());
+
+        ConfidentialClientApplication app = ConfidentialClientApplication
+                .builder(TestConfiguration.AAD_CLIENT_ID, iClientCredential)
+                .authority(TestConfiguration.AAD_TENANT_ENDPOINT)
+                .build();
+
+        Assert.assertEquals(app.clientId(),TestConfiguration.AAD_CLIENT_ID);
+        Assert.assertTrue(app.sendX5c());
+
+    }
+
+    @Test(expectedExceptions = MsalClientException.class)
+    public void testClientAssertion_throwsException() throws Exception{
+
+        IClientCertificate certificate = CertificateHelper.getClientCertificate();
+        final ClientCertificate credential = (ClientCertificate) certificate;
+
+        final JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+                .issuer(null)
+                .subject("subject")
+                .build();
+
+        SignedJWT jwt;
+        JWSHeader.Builder builder = new JWSHeader.Builder(JWSAlgorithm.RS256);
+
+        List<Base64> certs = new ArrayList<>();
+        for (String cert : credential.getEncodedPublicKeyCertificateChain()) {
+            certs.add(new Base64(cert));
+        }
+        builder.x509CertChain(certs);
+
+        jwt = new SignedJWT(builder.build(), claimsSet);
+        final RSASSASigner signer = new RSASSASigner(credential.privateKey());
+
+        jwt.sign(signer);
+
+        ClientAssertion clientAssertion = new ClientAssertion(jwt.serialize());
+
+        IClientCredential iClientCredential = ClientCredentialFactory.createFromClientAssertion(
+                clientAssertion.assertion());
+
+        ConfidentialClientApplication.builder(TestConfiguration.AAD_CLIENT_ID, iClientCredential).authority(TestConfiguration.AAD_TENANT_ENDPOINT).build();
+
+    }
+
+
 }

@@ -43,7 +43,7 @@ class WSTrustRequest {
                 policy.getVersion(), cloudAudienceUrn).toString();
 
         HttpRequest httpRequest = new HttpRequest(HttpMethod.POST, policy.getUrl(), headers, body);
-        IHttpResponse response = HttpHelper.executeHttpRequest(httpRequest, requestContext , serviceBundle);
+        IHttpResponse response = HttpHelper.executeHttpRequest(httpRequest, requestContext, serviceBundle);
 
         return WSTrustResponse.parse(response.body(), policy.getVersion());
     }
@@ -65,7 +65,7 @@ class WSTrustRequest {
 
         BindingPolicy policy = MexParser.getWsTrustEndpointFromMexResponse(mexResponse.body(), logPii);
 
-        if(policy == null){
+        if (policy == null) {
             throw new MsalServiceException(
                     "WsTrust endpoint not found in metadata document",
                     AuthenticationErrorCode.WSTRUST_ENDPOINT_NOT_FOUND_IN_METADATA_DOCUMENT);
@@ -81,11 +81,11 @@ class WSTrustRequest {
                                    boolean logPii) throws Exception {
 
         HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, mexURL);
-        IHttpResponse mexResponse = HttpHelper.executeHttpRequest(httpRequest, requestContext,serviceBundle);
+        IHttpResponse mexResponse = HttpHelper.executeHttpRequest(httpRequest, requestContext, serviceBundle);
 
         BindingPolicy policy = MexParser.getPolicyFromMexResponseForIntegrated(mexResponse.body(), logPii);
 
-        if(policy == null){
+        if (policy == null) {
             throw new MsalServiceException("WsTrust endpoint not found in metadata document",
                     AuthenticationErrorCode.WSTRUST_ENDPOINT_NOT_FOUND_IN_METADATA_DOCUMENT);
         }
@@ -188,10 +188,10 @@ class WSTrustRequest {
         return messageBuilder;
     }
 
-    static String escapeXMLElementData(String data){
+    static String escapeXMLElementData(String data) {
         StringBuilder sb = new StringBuilder();
-        for(char ch : data.toCharArray()){
-            switch (ch){
+        for (char ch : data.toCharArray()) {
+            switch (ch) {
                 case '<':
                     sb.append("&lt;");
                     break;

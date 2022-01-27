@@ -41,11 +41,8 @@ class ThrottlingCache {
     }
 
     private static boolean isCacheEntryValid(long currentTimestamp, long expirationTimestamp) {
-        if (currentTimestamp < expirationTimestamp &&
-                currentTimestamp >= expirationTimestamp - MAX_THROTTLING_TIME_SEC * 1000) {
-            return true;
-        }
-        return false;
+        return currentTimestamp < expirationTimestamp &&
+                currentTimestamp >= expirationTimestamp - MAX_THROTTLING_TIME_SEC * 1000;
     }
 
     private static void removeInvalidCacheEntities() {

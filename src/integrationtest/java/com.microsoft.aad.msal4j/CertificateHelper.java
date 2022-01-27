@@ -14,10 +14,9 @@ import java.security.cert.X509Certificate;
 public class CertificateHelper {
     static KeyStore createKeyStore() throws KeyStoreException, NoSuchProviderException {
         String os = SystemUtils.OS_NAME;
-        if(os.contains("Mac")){
+        if (os.contains("Mac")) {
             return KeyStore.getInstance("KeychainStore");
-        }
-        else{
+        } else {
             return KeyStore.getInstance("Windows-MY", "SunMSCAPI");
         }
     }

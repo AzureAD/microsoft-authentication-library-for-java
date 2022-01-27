@@ -24,7 +24,7 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
     private Config cfg;
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenInteractive_ManagedUser(String environment){
+    public void acquireTokenInteractive_ManagedUser(String environment) {
         cfg = new Config(environment);
 
         User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
@@ -32,13 +32,13 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
     }
 
     @Test()
-    public void acquireTokenInteractive_ADFSv2019_OnPrem(){
+    public void acquireTokenInteractive_ADFSv2019_OnPrem() {
         User user = labUserProvider.getOnPremAdfsUser(FederationProvider.ADFS_2019);
         assertAcquireTokenADFS2019(user);
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenInteractive_ADFSv2019_Federated(String environment){
+    public void acquireTokenInteractive_ADFSv2019_Federated(String environment) {
         cfg = new Config(environment);
 
         User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_2019);
@@ -46,7 +46,7 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenInteractive_ADFSv4_Federated(String environment){
+    public void acquireTokenInteractive_ADFSv4_Federated(String environment) {
         cfg = new Config(environment);
 
         User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_4);
@@ -54,7 +54,7 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenInteractive_ADFSv3_Federated(String environment){
+    public void acquireTokenInteractive_ADFSv3_Federated(String environment) {
         cfg = new Config(environment);
 
         User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_3);
@@ -62,7 +62,7 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenInteractive_ADFSv2_Federated(String environment){
+    public void acquireTokenInteractive_ADFSv2_Federated(String environment) {
         cfg = new Config(environment);
 
         User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_2);
@@ -70,7 +70,7 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenWithAuthorizationCode_B2C_Local(String environment){
+    public void acquireTokenWithAuthorizationCode_B2C_Local(String environment) {
         cfg = new Config(environment);
 
         User user = labUserProvider.getB2cUser(cfg.azureEnvironment, B2CProvider.LOCAL);
@@ -78,21 +78,21 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
     }
 
     @Test
-    public void acquireTokenInteractive_ManagedUser_InstanceAware(){
+    public void acquireTokenInteractive_ManagedUser_InstanceAware() {
         cfg = new Config(AzureEnvironment.AZURE);
 
         User user = labUserProvider.getDefaultUser(AzureEnvironment.AZURE_US_GOVERNMENT);
         assertAcquireTokenInstanceAware(user);
     }
 
-    private void assertAcquireTokenAAD(User user){
+    private void assertAcquireTokenAAD(User user) {
         PublicClientApplication pca;
         try {
             pca = PublicClientApplication.builder(
                     user.getAppId()).
                     authority(cfg.organizationsAuthority()).
                     build();
-        } catch(MalformedURLException ex){
+        } catch (MalformedURLException ex) {
             throw new RuntimeException(ex.getMessage());
         }
 
@@ -107,14 +107,14 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         Assert.assertEquals(user.getUpn(), result.account().username());
     }
 
-    private void assertAcquireTokenADFS2019(User user){
+    private void assertAcquireTokenADFS2019(User user) {
         PublicClientApplication pca;
         try {
             pca = PublicClientApplication.builder(
                     TestConstants.ADFS_APP_ID).
                     authority(TestConstants.ADFS_AUTHORITY).
                     build();
-        } catch(MalformedURLException ex){
+        } catch (MalformedURLException ex) {
             throw new RuntimeException(ex.getMessage());
         }
 
@@ -126,7 +126,7 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         Assert.assertEquals(user.getUpn(), result.account().username());
     }
 
-    private void assertAcquireTokenB2C(User user){
+    private void assertAcquireTokenB2C(User user) {
 
         PublicClientApplication pca;
         try {
@@ -134,7 +134,7 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
                     user.getAppId()).
                     b2cAuthority(TestConstants.B2C_AUTHORITY_SIGN_IN).
                     build();
-        } catch(MalformedURLException ex){
+        } catch (MalformedURLException ex) {
             throw new RuntimeException(ex.getMessage());
         }
 
@@ -189,10 +189,12 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
 
         ITokenCacheAccessAspect persistenceAspect = new ITokenCacheAccessAspect() {
             String data;
+
             @Override
             public void beforeCacheAccess(ITokenCacheAccessContext iTokenCacheAccessContext) {
                 iTokenCacheAccessContext.tokenCache().deserialize(data);
             }
+
             @Override
             public void afterCacheAccess(ITokenCacheAccessContext iTokenCacheAccessContext) {
                 data = iTokenCacheAccessContext.tokenCache().serialize();
@@ -218,7 +220,7 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
     private IAuthenticationResult acquireTokenInteractive(
             User user,
             PublicClientApplication pca,
-            String scope){
+            String scope) {
 
         IAuthenticationResult result;
         try {
@@ -238,7 +240,7 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
 
             result = pca.acquireToken(parameters).get();
 
-        } catch(Exception e){
+        } catch (Exception e) {
             LOG.error("Error acquiring token with authCode: " + e.getMessage());
             throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
         }
@@ -248,7 +250,7 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
     private IAuthenticationResult acquireTokenInteractive_instanceAware(
             User user,
             PublicClientApplication pca,
-            String scope){
+            String scope) {
 
         IAuthenticationResult result;
         try {
@@ -268,7 +270,7 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
 
             result = pca.acquireToken(parameters).get();
 
-        } catch(Exception e){
+        } catch (Exception e) {
             LOG.error("Error acquiring token with authCode: " + e.getMessage());
             throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
         }
@@ -280,12 +282,12 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         private User user;
         private PublicClientApplication pca;
 
-        SeleniumOpenBrowserAction(User user, PublicClientApplication pca){
+        SeleniumOpenBrowserAction(User user, PublicClientApplication pca) {
             this.user = user;
             this.pca = pca;
         }
 
-        public void openBrowser(URL url){
+        public void openBrowser(URL url) {
             seleniumDriver.navigate().to(url);
             runSeleniumAutomatedLogin(user, pca);
         }

@@ -19,9 +19,9 @@ class DeviceCodeAuthorizationGrant extends AbstractMsalAuthorizationGrant {
     private String correlationId;
 
     /**
-     *  Create a new device code grant object from a device code and a resource.
+     * Create a new device code grant object from a device code and a resource.
      *
-     * @param scopes    The resource for which the device code was acquired.
+     * @param scopes The resource for which the device code was acquired.
      */
     DeviceCodeAuthorizationGrant(DeviceCode deviceCode, final String scopes, ClaimsRequest claims) {
         this.deviceCode = deviceCode;

@@ -20,7 +20,7 @@ enum CacheTelemetry {
 
     final int telemetryValue;
 
-    CacheTelemetry(int telemetryValue){
+    CacheTelemetry(int telemetryValue) {
         this.telemetryValue = telemetryValue;
     }
 }

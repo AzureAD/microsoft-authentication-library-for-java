@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.microsoft.azure</groupId>
 	<artifactId>msal4j</artifactId>
-	<version>1.11.0</version>
+	<version>1.11.1</version>
 	<packaging>jar</packaging>
 	<name>msal4j</name>
 	<description>
@@ -99,10 +99,15 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.microsoft.azure</groupId>
-            <artifactId>azure-keyvault</artifactId>
-            <version>1.2.1</version>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-identity</artifactId>
+            <version>1.4.2</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-security-keyvault-secrets</artifactId>
+            <version>4.3.5</version>
         </dependency>
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>

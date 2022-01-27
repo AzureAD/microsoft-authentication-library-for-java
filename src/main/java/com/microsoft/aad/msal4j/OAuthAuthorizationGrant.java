@@ -22,7 +22,7 @@ class OAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
         this(grant, scopesSet != null ? String.join(" ", scopesSet) : null, claims);
     }
 
-    String addCommonScopes(String scopes){
+    String addCommonScopes(String scopes) {
         Set<String> allScopes = new HashSet<>(
                 Arrays.asList(COMMON_SCOPES_PARAM.split(SCOPES_DELIMITER)));
 
@@ -52,7 +52,7 @@ class OAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
         this.scopes = allScopes;
         this.params.put(SCOPE_PARAM_NAME, Collections.singletonList(allScopes));
 
-        if(extraParams != null){
+        if (extraParams != null) {
             this.params.putAll(extraParams);
         }
     }
@@ -60,7 +60,7 @@ class OAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
     OAuthAuthorizationGrant(AuthorizationGrant grant, Map<String, List<String>> params) {
         this.grant = grant;
 
-        if(params != null){
+        if (params != null) {
             this.params.putAll(params);
         }
     }
@@ -77,7 +77,7 @@ class OAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
 
         return Collections.unmodifiableMap(outParams);
     }
-    
+
     AuthorizationGrant getAuthorizationGrant() {
         return this.grant;
     }

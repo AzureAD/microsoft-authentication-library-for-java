@@ -9,7 +9,6 @@ import java.util.Map;
 /**
  * Interface representing a single user account. An IAccount is returned in the {@link IAuthenticationResult}
  * property, and is used as parameter in {@link SilentParameters#builder(Set, IAccount)} )}
- *
  */
 public interface IAccount extends Serializable {
 

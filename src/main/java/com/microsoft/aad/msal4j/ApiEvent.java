@@ -8,7 +8,7 @@ import java.util.Locale;
 
 import static com.microsoft.aad.msal4j.TelemetryConstants.EVENT_NAME_PREFIX;
 
-class ApiEvent extends Event{
+class ApiEvent extends Event {
     private static final String API_ID_KEY = EVENT_NAME_PREFIX + "api_id";
     private static final String AUTHORITY_KEY = EVENT_NAME_PREFIX + "authority";
     private static final String AUTHORITY_TYPE_KEY = EVENT_NAME_PREFIX + "authority_type";
@@ -22,60 +22,60 @@ class ApiEvent extends Event{
 
     private Boolean logPii;
 
-    public ApiEvent(Boolean logPii){
+    public ApiEvent(Boolean logPii) {
         super(TelemetryConstants.API_EVENT_NAME_KEY);
         this.logPii = logPii;
     }
 
-    public void setApiId(int apiId){
+    public void setApiId(int apiId) {
         this.put(API_ID_KEY, Integer.toString(apiId).toLowerCase(Locale.ROOT));
     }
 
-    public void setAuthority(URI authority){
+    public void setAuthority(URI authority) {
         this.put(AUTHORITY_KEY, scrubTenant(authority));
     }
 
-    public void setAuthorityType(String authorityType){
+    public void setAuthorityType(String authorityType) {
         this.put(AUTHORITY_TYPE_KEY, authorityType.toLowerCase(Locale.ROOT));
     }
 
-    public void setTenantId(String tenantId){
-        if(!StringHelper.isBlank(tenantId) && logPii){
+    public void setTenantId(String tenantId) {
+        if (!StringHelper.isBlank(tenantId) && logPii) {
             this.put(TENANT_ID_KEY, StringHelper.createBase64EncodedSha256Hash(tenantId));
         } else {
             this.put(TENANT_ID_KEY, null);
         }
     }
 
-    public void setAccountId(String accountId){
-        if(!StringHelper.isBlank(accountId) && logPii){
+    public void setAccountId(String accountId) {
+        if (!StringHelper.isBlank(accountId) && logPii) {
             this.put(USER_ID_KEY, StringHelper.createBase64EncodedSha256Hash(accountId));
         } else {
             this.put(USER_ID_KEY, null);
         }
     }
 
-    public void setWasSuccessful(boolean wasSuccessful){
+    public void setWasSuccessful(boolean wasSuccessful) {
         this.put(WAS_SUCCESSFUL_KEY, String.valueOf(wasSuccessful).toLowerCase(Locale.ROOT));
     }
 
-    public boolean getWasSuccessful(){
+    public boolean getWasSuccessful() {
         return Boolean.valueOf(this.get(WAS_SUCCESSFUL_KEY));
     }
 
-    public void setCorrelationId(String correlationId){
+    public void setCorrelationId(String correlationId) {
         this.put(CORRELATION_ID_KEY, correlationId);
     }
 
-    public void setRequestId(String requestId){
+    public void setRequestId(String requestId) {
         this.put(REQUEST_ID_KEY, requestId);
     }
 
-    public void setIsConfidentialClient(boolean isConfidentialClient){
+    public void setIsConfidentialClient(boolean isConfidentialClient) {
         this.put(IS_CONFIDENTIAL_CLIENT_KEY, String.valueOf(isConfidentialClient).toLowerCase(Locale.ROOT));
     }
 
-    public void setApiErrorCode(String apiErrorCode){
+    public void setApiErrorCode(String apiErrorCode) {
         this.put(API_ERROR_CODE_KEY, apiErrorCode);
     }
 }

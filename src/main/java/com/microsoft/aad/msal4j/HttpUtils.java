@@ -8,15 +8,15 @@ import java.util.Map;
 
 class HttpUtils {
 
-    static String headerValue(Map<String, List<String>> headers, String headerName){
+    static String headerValue(Map<String, List<String>> headers, String headerName) {
 
-        if(headerName == null || headers == null){
+        if (headerName == null || headers == null) {
             return null;
         }
 
         List<String> headerValue = headers.get(headerName);
 
-        if(headerValue == null || headerValue.isEmpty()){
+        if (headerValue == null || headerValue.isEmpty()) {
             return null;
         }
 

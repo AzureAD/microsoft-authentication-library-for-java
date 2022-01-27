@@ -135,21 +135,21 @@ public class AuthorityTest extends AbstractMsalTests {
 
     @Test
     public void testDoStaticInstanceDiscovery_ValidateTrue_TrustedAuthority()
-            throws MalformedURLException, Exception {
+            throws Exception {
         final AADAuthority aa = new AADAuthority(new URL(TestConfiguration.AAD_TENANT_ENDPOINT));
         //PS Assert.assertTrue(aa.doStaticInstanceDiscovery(true));
     }
 
     @Test
     public void testDoStaticInstanceDiscovery_ValidateTrue_UntrustedAuthority()
-            throws MalformedURLException, Exception {
+            throws Exception {
         final AADAuthority aa = new AADAuthority(new URL(TestConfiguration.AAD_UNKNOWN_TENANT_ENDPOINT));
         //PS Assert.assertFalse(aa.doStaticInstanceDiscovery(true));
     }
 
     @Test
     public void testDoStaticInstanceDiscovery_ValidateFalse_TrustedAuthority()
-            throws MalformedURLException, Exception {
+            throws Exception {
         final AADAuthority aa = new AADAuthority(new URL(TestConfiguration.AAD_UNKNOWN_TENANT_ENDPOINT));
         //PS Assert.assertTrue(aa.doStaticInstanceDiscovery(false));
     }

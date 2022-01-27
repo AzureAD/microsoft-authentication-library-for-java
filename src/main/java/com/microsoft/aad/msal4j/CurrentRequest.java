@@ -25,7 +25,7 @@ class CurrentRequest {
     @Setter
     private int regionOutcome = 0;
 
-    CurrentRequest(PublicApi publicApi){
+    CurrentRequest(PublicApi publicApi) {
         this.publicApi = publicApi;
     }
 }
