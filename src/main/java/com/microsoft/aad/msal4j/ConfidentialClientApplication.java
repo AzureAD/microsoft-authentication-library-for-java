@@ -33,7 +33,6 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 public class ConfidentialClientApplication extends AbstractClientApplicationBase implements IConfidentialClientApplication {
 
     private ClientAuthentication clientAuthentication;
-    private CustomJWTAuthentication customJWTAuthentication;
     private boolean clientCertAuthentication = false;
     private ClientCertificate clientCertificate;
 
@@ -137,22 +136,11 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
             //This library is not supposed to validate Issuer and subject values.
             //The next lines of code ensures that exception is not thrown.
             if (e.getMessage().contains("Issuer and subject in client JWT assertion must designate the same client identifier")) {
-                String clientAssertion1 = MultivaluedMapUtils.getFirstValue(map, "client_assertion");
-                Base64URL[] parts;
-                try {
-                    parts = JOSEObject.split(clientAssertion1);
-
-                SignedJWT signedJWT = new SignedJWT(parts[0], parts[1], parts[2]);
-                String subjectValue = signedJWT.getJWTClaimsSet().getSubject();
                 return new CustomJWTAuthentication(
                         ClientAuthenticationMethod.PRIVATE_KEY_JWT,
-                        new ClientID(subjectValue)
+                        clientAssertion,
+                        new ClientID(clientId())
                 );
-
-                } catch (java.text.ParseException ex) {
-                    log.error("Ideally the system should not reach here. Parse Exception while trying to build CustomJWTAuthentication.");
-                    throw new MsalClientException(e);
-                }
             }
             throw new MsalClientException(e);
         }
