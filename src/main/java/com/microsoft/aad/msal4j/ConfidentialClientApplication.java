@@ -33,6 +33,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 public class ConfidentialClientApplication extends AbstractClientApplicationBase implements IConfidentialClientApplication {
 
     private ClientAuthentication clientAuthentication;
+    private CustomJWTAuthentication customJWTAuthentication;
     private boolean clientCertAuthentication = false;
     private ClientCertificate clientCertificate;
 
