@@ -3,8 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
@@ -26,9 +24,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.sql.Time;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.*;
 
 import static com.microsoft.aad.msal4j.Constants.POINT_DELIMITER;
@@ -67,7 +62,7 @@ public class CacheFormatTests extends AbstractMsalTests {
 
         String serializedCache = tokenCache.serialize();
 
-        JSONAssert.assertEquals(previouslyStoredCache, serializedCache, JSONCompareMode.STRICT);
+        JSONAssert.assertEquals(previouslyStoredCache, serializedCache, true);
     }
 
     String readResource(String resource) throws IOException, URISyntaxException {
@@ -194,7 +189,8 @@ public class CacheFormatTests extends AbstractMsalTests {
         String keyExpected = readResource(folder + AT_CACHE_ENTITY_KEY);
         Assert.assertEquals(keyActual, keyExpected);
 
-        String valueActual = JsonHelper.mapper.writeValueAsString(tokenCache.accessTokens.get(keyActual));
+//        String valueActual = JsonHelper.mapper.writeValueAsString(tokenCache.accessTokens.get(keyActual));
+        String valueActual = tokenCache.accessTokens.get(keyActual).convertToJSONObject().toString();
         String valueExpected = readResource(folder + AT_CACHE_ENTITY);
 
         JSONObject tokenResponseJsonObj = JSONObjectUtils.parse(tokenResponse);
@@ -215,7 +211,7 @@ public class CacheFormatTests extends AbstractMsalTests {
         String keyExpected = readResource(folder + RT_CACHE_ENTITY_KEY);
         Assert.assertEquals(actualKey, keyExpected);
 
-        String actualValue = JsonHelper.mapper.writeValueAsString(tokenCache.refreshTokens.get(actualKey));
+        String actualValue = tokenCache.refreshTokens.get(actualKey).convertToJSONObject().toString();
         String valueExpected = readResource(folder + RT_CACHE_ENTITY);
         JSONAssert.assertEquals(valueExpected, actualValue, JSONCompareMode.STRICT);
     }
@@ -251,7 +247,7 @@ public class CacheFormatTests extends AbstractMsalTests {
         String keyExpected = readResource(folder + ID_TOKEN_CACHE_ENTITY_KEY);
         Assert.assertEquals(actualKey, keyExpected);
 
-        String actualValue = JsonHelper.mapper.writeValueAsString(tokenCache.idTokens.get(actualKey));
+        String actualValue = tokenCache.idTokens.get(actualKey).convertToJSONObject().toString();
         String valueExpected = readResource(folder + ID_TOKEN_CACHE_ENTITY);
         JSONAssert.assertEquals(valueExpected, actualValue,
                 new IdTokenComparator(JSONCompareMode.STRICT, folder));
@@ -266,7 +262,7 @@ public class CacheFormatTests extends AbstractMsalTests {
         String keyExpected = readResource(folder + ACCOUNT_CACHE_ENTITY_KEY);
         Assert.assertEquals(actualKey, keyExpected);
 
-        String actualValue = JsonHelper.mapper.writeValueAsString(tokenCache.accounts.get(actualKey));
+        String actualValue = tokenCache.accounts.get(actualKey).convertToJSONObject().toString();
         String valueExpected = readResource(folder + ACCOUNT_CACHE_ENTITY);
 
         JSONAssert.assertEquals(valueExpected, actualValue, JSONCompareMode.STRICT);
@@ -285,7 +281,7 @@ public class CacheFormatTests extends AbstractMsalTests {
         String keyExpected = readResource(folder + APP_METADATA_ENTITY_KEY);
         Assert.assertEquals(actualKey, keyExpected);
 
-        String actualValue = JsonHelper.mapper.writeValueAsString(tokenCache.appMetadata.get(actualKey));
+        String actualValue = tokenCache.appMetadata.get(actualKey).convertToJSONObject().toString();
         String valueExpected = readResource(folder + APP_METADATA_CACHE_ENTITY);
 
         JSONAssert.assertEquals(valueExpected, actualValue, JSONCompareMode.STRICT);

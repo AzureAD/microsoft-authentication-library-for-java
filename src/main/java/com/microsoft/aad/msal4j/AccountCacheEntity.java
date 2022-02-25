@@ -4,13 +4,15 @@
 package com.microsoft.aad.msal4j;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import lombok.*;
 import lombok.experimental.Accessors;
+import org.json.JSONObject;
 
+import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Accessors(fluent = true)
 @Getter
@@ -105,5 +107,78 @@ class AccountCacheEntity implements Serializable {
 
     IAccount toAccount() {
         return new Account(homeAccountId, environment, username, null);
+    }
+
+    public static AccountCacheEntity convertJsonToObject(String json, JsonParser jsonParser) throws IOException {
+
+        AccountCacheEntity accountCacheEntity = new AccountCacheEntity();
+
+        if (json != null) {
+            while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
+                String fieldname = jsonParser.getCurrentName();
+                if ("home_account_id".equals(fieldname)) {
+                    jsonParser.nextToken();
+                    accountCacheEntity.homeAccountId = jsonParser.getText();
+                }
+
+                else if ("environment".equals(fieldname)) {
+                    jsonParser.nextToken();
+                    accountCacheEntity.environment = jsonParser.getText();
+                }
+
+                else if ("realm".equals(fieldname)) {
+                    jsonParser.nextToken();
+                    accountCacheEntity.realm = jsonParser.getText();
+                }
+
+                else if ("local_account_id".equals(fieldname)) {
+                    jsonParser.nextToken();
+                    accountCacheEntity.localAccountId = jsonParser.getText();
+                }
+
+                else if ("username".equals(fieldname)) {
+                    jsonParser.nextToken();
+                    accountCacheEntity.username = jsonParser.getText();
+                }
+
+                else if ("name".equals(fieldname)) {
+                    jsonParser.nextToken();
+                    accountCacheEntity.name = jsonParser.getText();
+                }
+
+                else if ("client_info".equals(fieldname)) {
+                    jsonParser.nextToken();
+                    accountCacheEntity.clientInfoStr = jsonParser.getText();
+                }
+
+                else if ("user_assertion_hash".equals(fieldname)) {
+                    jsonParser.nextToken();
+                    accountCacheEntity.userAssertionHash = jsonParser.getText();
+                }
+
+                else if ("authority_type".equals(fieldname)) {
+                    jsonParser.nextToken();
+                    accountCacheEntity.authorityType = jsonParser.getText();
+                }
+            }
+        }
+        return accountCacheEntity;
+    }
+
+    public JSONObject convertToJSONObject(){
+        JSONObject jsonObject = new JSONObject();
+        List<String> fieldSet =
+                Arrays.asList("home_account_id", "environment", "realm", "local_account_id", "username",
+                        "name", "client_info", "user_assertion_hash", "authority_type");
+        jsonObject.put(fieldSet.get(0), this.homeAccountId);
+        jsonObject.put(fieldSet.get(1), this.environment);
+        jsonObject.put(fieldSet.get(2), this.realm);
+        jsonObject.put(fieldSet.get(3), this.localAccountId);
+        jsonObject.put(fieldSet.get(4), this.username);
+        jsonObject.put(fieldSet.get(5), this.name);
+        jsonObject.put(fieldSet.get(6), this.clientInfoStr);
+        jsonObject.put(fieldSet.get(7), this.userAssertionHash);
+        jsonObject.put(fieldSet.get(8), this.authorityType);
+        return jsonObject;
     }
 }

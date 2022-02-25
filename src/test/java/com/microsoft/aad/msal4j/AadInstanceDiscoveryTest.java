@@ -42,9 +42,9 @@ public class AadInstanceDiscoveryTest extends PowerMockTestCase {
                 this.getClass(),
                 "/instance_discovery_data/aad_instance_discovery_response_valid.json");
 
-        AadInstanceDiscoveryResponse expectedResponse = JsonHelper.convertJsonToObject(
-                instanceDiscoveryData,
-                AadInstanceDiscoveryResponse.class);
+        AadInstanceDiscoveryResponse expectedResponse = AadInstanceDiscoveryResponse.convertJsonToObject(
+                instanceDiscoveryData
+        );
 
         PowerMock.mockStaticPartial(AadInstanceDiscoveryProvider.class, "sendInstanceDiscoveryRequest");
 

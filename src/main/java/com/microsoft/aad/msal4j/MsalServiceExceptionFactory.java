@@ -5,6 +5,7 @@ package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -25,9 +26,12 @@ class MsalServiceExceptionFactory {
                     AuthenticationErrorCode.UNKNOWN);
         }
 
-        ErrorResponse errorResponse = JsonHelper.convertJsonToObject(
-                responseContent,
-                ErrorResponse.class);
+        ErrorResponse errorResponse = null;
+        try {
+            errorResponse = ErrorResponse.convertJsonToObject(responseContent);
+        } catch (IOException e) {
+            throw new MsalClientException(e);
+        }
 
         errorResponse.statusCode(httpResponse.getStatusCode());
         errorResponse.statusMessage(httpResponse.getStatusMessage());
@@ -55,9 +59,13 @@ class MsalServiceExceptionFactory {
                     AuthenticationErrorCode.UNKNOWN);
         }
 
-        ErrorResponse errorResponse = JsonHelper.convertJsonToObject(
-                responseBody,
-                ErrorResponse.class);
+        ErrorResponse errorResponse = null;
+        try {
+            errorResponse = ErrorResponse.convertJsonToObject(
+                    responseBody);
+        } catch (IOException e) {
+            throw new MsalClientException(e);
+        }
 
         if (!StringHelper.isBlank(errorResponse.error()) && !StringHelper.isBlank(errorResponse.errorDescription)) {
 
