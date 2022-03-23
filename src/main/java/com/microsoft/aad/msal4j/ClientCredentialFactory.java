@@ -9,6 +9,11 @@ import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 
@@ -29,7 +34,7 @@ public class ClientCredentialFactory {
     }
 
     /**
-     * Static method to create a {@link ClientCertificate} instance from a certificate
+     * Static method to create a {@link ClientCertificate} instance from a password-protected certificate.
      *
      * @param pkcs12Certificate InputStream containing PCKS12 formatted certificate
      * @param password          certificate password
@@ -48,7 +53,7 @@ public class ClientCredentialFactory {
     }
 
     /**
-     * Static method to create a {@link ClientCertificate} instance.
+     * Static method to create a {@link ClientCertificate} instance from a private key/public certificate pair.
      *
      * @param key                  RSA private key to sign the assertion.
      * @param publicKeyCertificate x509 public certificate used for thumbprint
@@ -61,7 +66,7 @@ public class ClientCredentialFactory {
     }
 
     /**
-     * Static method to create a {@link ClientCertificate} instance.
+     * Static method to create a {@link ClientCertificate} instance from a certificate chain.
      *
      * @param key                       RSA private key to sign the assertion.
      * @param publicKeyCertificateChain ordered with the user's certificate first followed by zero or more certificate authorities
@@ -75,12 +80,26 @@ public class ClientCredentialFactory {
     }
 
     /**
-     * Static method to create a {@link ClientAssertion} instance.
+     * Static method to create a {@link ClientAssertion} instance from a JWT token encoded as a base64 URL encoded string.
      *
-     * @param clientAssertion Jwt token encoded as a base64 URL encoded string
+     * @param clientAssertion JWT token encoded as a base64 URL encoded string
      * @return {@link ClientAssertion}
      */
     public static IClientAssertion createFromClientAssertion(String clientAssertion) {
         return new ClientAssertion(clientAssertion);
+    }
+
+    /**
+     * Static method to create a {@link ClientAssertion} instance from a provided Callable<String>.
+     *
+     * @param callable Callable<String> that produces a JWT token encoded as a base64 URL encoded string
+     * @return {@link ClientAssertion}
+     */
+    public static IClientAssertion createFromCallback(Callable<String> callable) throws ExecutionException, InterruptedException {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+
+        Future<String> future = executor.submit(callable);
+
+        return new ClientAssertion(future.get());
     }
 }
