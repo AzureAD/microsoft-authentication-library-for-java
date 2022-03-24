@@ -49,6 +49,11 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
      */
     private String tenant;
 
+    /**
+     * Overrides the client credentials for this request
+     */
+    private IClientCredential clientCredential;
+
     private static ClientCredentialParametersBuilder builder() {
 
         return new ClientCredentialParametersBuilder();
