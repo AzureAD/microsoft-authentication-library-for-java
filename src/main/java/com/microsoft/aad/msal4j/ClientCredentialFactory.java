@@ -90,9 +90,9 @@ public class ClientCredentialFactory {
     }
 
     /**
-     * Static method to create a {@link ClientAssertion} instance from a provided Callable<String>.
+     * Static method to create a {@link ClientAssertion} instance from a provided Callable.
      *
-     * @param callable Callable<String> that produces a JWT token encoded as a base64 URL encoded string
+     * @param callable Callable that produces a JWT token encoded as a base64 URL encoded string
      * @return {@link ClientAssertion}
      */
     public static IClientAssertion createFromCallback(Callable<String> callable) throws ExecutionException, InterruptedException {
