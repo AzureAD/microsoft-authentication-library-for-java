@@ -73,7 +73,15 @@ class TokenRequestExecutor {
         oauthHttpRequest.setQuery(URLUtils.serializeParameters(params));
 
         if (msalRequest.application().clientAuthentication() != null) {
-            msalRequest.application().clientAuthentication().applyTo(oauthHttpRequest);
+            // If the client application has a client assertion to apply to the request, check if a new client assertion
+            //  was supplied as a request parameter. If so, use the request's assertion instead of the application's
+            if (msalRequest instanceof ClientCredentialRequest && ((ClientCredentialRequest) msalRequest).parameters.clientCredential() != null) {
+                ((ConfidentialClientApplication) msalRequest.application())
+                        .createClientAuthFromClientAssertion((ClientAssertion) ((ClientCredentialRequest) msalRequest).parameters.clientCredential())
+                        .applyTo(oauthHttpRequest);
+            } else {
+                msalRequest.application().clientAuthentication().applyTo(oauthHttpRequest);
+            }
         }
         return oauthHttpRequest;
     }

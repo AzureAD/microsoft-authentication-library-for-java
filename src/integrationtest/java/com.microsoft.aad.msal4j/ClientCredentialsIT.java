@@ -16,6 +16,7 @@ import java.security.NoSuchProviderException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.Collections;
+import java.util.concurrent.Callable;
 
 import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 
@@ -48,16 +49,35 @@ public class ClientCredentialsIT {
     public void acquireTokenClientCredentials_ClientAssertion() throws Exception {
         String clientId = "2afb0add-2f32-4946-ac90-81a02aa4550e";
 
-        ClientAssertion clientAssertion = JwtHelper.buildJwt(
-                clientId,
-                (ClientCertificate) certificate,
-                "https://login.microsoftonline.com/common/oauth2/v2.0/token",
-                true);
+        ClientAssertion clientAssertion = getClientAssertion(clientId);
 
-        IClientCredential credential = ClientCredentialFactory.createFromClientAssertion(
-                clientAssertion.assertion());
+        IClientCredential credential = ClientCredentialFactory.createFromClientAssertion(clientAssertion.assertion());
 
         assertAcquireTokenCommon(clientId, credential);
+    }
+
+    @Test
+    public void acquireTokenClientCredentials_Callback() throws Exception {
+        String clientId = "2afb0add-2f32-4946-ac90-81a02aa4550e";
+
+        // Creates a valid client assertion using a callback, and uses it to build the client app and make a request
+        Callable<String> callable = () -> {
+            ClientAssertion clientAssertion = getClientAssertion(clientId);
+
+            return clientAssertion.assertion();
+        };
+
+        IClientCredential credential = ClientCredentialFactory.createFromCallback(callable);
+
+        assertAcquireTokenCommon(clientId, credential);
+
+        // Creates an invalid client assertion to build the application, but overrides it with a valid client assertion
+        //  in the request parameters in order to make a successful token request
+        ClientAssertion invalidClientAssertion = getClientAssertion("abc");
+
+        IClientCredential invalidCredentials = ClientCredentialFactory.createFromClientAssertion(invalidClientAssertion.assertion());
+
+        assertAcquireTokenCommon_withParameters(clientId, invalidCredentials, credential);
     }
 
     @Test
@@ -98,6 +118,13 @@ public class ClientCredentialsIT {
         Assert.assertNotEquals(result2.accessToken(), result3.accessToken());
     }
 
+    private ClientAssertion getClientAssertion(String clientId) {
+        return JwtHelper.buildJwt(
+                clientId,
+                (ClientCertificate) certificate,
+                "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+                true);
+    }
 
     private void assertAcquireTokenCommon(String clientId, IClientCredential credential) throws Exception {
         ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
@@ -107,6 +134,22 @@ public class ClientCredentialsIT {
 
         IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
                 .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                .build())
+                .get();
+
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.accessToken());
+    }
+
+    private void assertAcquireTokenCommon_withParameters(String clientId, IClientCredential credential, IClientCredential credentialParam) throws Exception {
+
+        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
+                clientId, credential).
+                authority(TestConstants.MICROSOFT_AUTHORITY).
+                build();
+
+        IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
+                .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE)).clientCredential(credentialParam)
                 .build())
                 .get();
 
