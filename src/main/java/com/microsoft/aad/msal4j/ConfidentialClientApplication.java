@@ -125,7 +125,7 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
         return createClientAuthFromClientAssertion(clientAssertion);
     }
 
-    private ClientAuthentication createClientAuthFromClientAssertion(
+    protected ClientAuthentication createClientAuthFromClientAssertion(
             final ClientAssertion clientAssertion) {
         final Map<String, List<String>> map = new HashMap<>();
         try {

@@ -1,3 +1,8 @@
+Version 1.11.3
+=============
+- Allow client assertions as callbacks and as per-request parameters
+- Adjust scope for azure-security-keyvault-secrets dependency
+
 Version 1.11.2
 =============
 - Updated oauth2-oidc-sdk version to address security vulnerability
