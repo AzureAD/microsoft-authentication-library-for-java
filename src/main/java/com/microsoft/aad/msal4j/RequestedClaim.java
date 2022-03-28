@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 import java.util.Collections;
 import java.util.Map;
@@ -18,6 +19,7 @@ import java.util.Map;
  */
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Getter
 public class RequestedClaim {
 
     @JsonIgnore

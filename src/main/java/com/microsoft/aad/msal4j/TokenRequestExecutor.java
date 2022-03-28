@@ -103,7 +103,12 @@ class TokenRequestExecutor {
 
             if (tokens.getIDToken() != null) {
                 String idTokenJson = tokens.getIDToken().getParsedParts()[1].decodeToString();
-                IdToken idToken = JsonHelper.convertJsonToObject(idTokenJson, IdToken.class);
+                IdToken idToken;
+                try {
+                    idToken = IdToken.convertJsonToObject(idTokenJson);
+                } catch (IOException e) {
+                    throw new MsalClientException(e);
+                }
 
                 AuthorityType type = msalRequest.application().authenticationAuthority.authorityType;
                 if (!StringHelper.isBlank(response.getClientInfo())) {

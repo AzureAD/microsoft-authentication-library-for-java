@@ -8,6 +8,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -87,16 +88,21 @@ class DeviceCodeFlowRequest extends MsalRequest {
             String clientId) {
 
         DeviceCode result;
-        result = JsonHelper.convertJsonToObject(json, DeviceCode.class);
+        try {
+            result = DeviceCode.convertJsonToObject(json);
 
-        String correlationIdHeader = headers.get(HttpHeaders.CORRELATION_ID_HEADER_NAME);
-        if (correlationIdHeader != null) {
-            result.correlationId(correlationIdHeader);
+            String correlationIdHeader = headers.get(HttpHeaders.CORRELATION_ID_HEADER_NAME);
+            if (correlationIdHeader != null) {
+                result.correlationId(correlationIdHeader);
+            }
+
+            result.clientId(clientId);
+            result.scopes(scopesStr);
+
+            return result;
+        } catch (IOException e) {
+            throw new MsalClientException(e);
         }
 
-        result.clientId(clientId);
-        result.scopes(scopesStr);
-
-        return result;
     }
 }

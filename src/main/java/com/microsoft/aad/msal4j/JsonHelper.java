@@ -3,37 +3,15 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.JsonNode;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 class JsonHelper {
-    static ObjectMapper mapper;
-
-    static {
-        mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, true);
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-    }
 
     private JsonHelper() {
-    }
-
-    static <T> T convertJsonToObject(final String json, final Class<T> tClass) {
-        try {
-            return mapper.readValue(json, tClass);
-        } catch (IOException e) {
-            throw new MsalClientException(e);
-        }
     }
 
     /**
@@ -41,9 +19,13 @@ class JsonHelper {
      */
     static void validateJsonFormat(String jsonString) {
         try {
-            mapper.readTree(jsonString);
-        } catch (IOException e) {
-            throw new MsalClientException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
+            new JSONObject(jsonString);
+        } catch (Exception ex) {
+            try{
+                new JSONArray(jsonString);
+            }catch(Exception e){
+                throw new MsalClientException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
+            }
         }
     }
 
@@ -70,46 +52,69 @@ class JsonHelper {
     }
 
     /**
-     * Merges given JSON strings into one Jackson JSONNode object, which is returned as a String
+     * Merges given JSONObject strings
      */
     static String mergeJSONString(String mainJsonString, String addJsonString) {
-        JsonNode mainJson;
-        JsonNode addJson;
 
-        try {
-            mainJson = mapper.readTree(mainJsonString);
-            addJson = mapper.readTree(addJsonString);
-        } catch (IOException e) {
-            throw new MsalClientException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
+        JSONObject mainjsonObject = new JSONObject(mainJsonString);
+        JSONObject addJsonObject = new JSONObject(addJsonString);
+        if(addJsonObject.isEmpty() || mainjsonObject.isEmpty()) return addJsonString;
+            try {
+
+                mergeRemovals(mainjsonObject, addJsonObject);
+                mergeUpdates(mainjsonObject, addJsonObject);
+            } catch (JSONException e) {
+
+                // RunttimeException: Constructs a new runtime exception with the specified detail message.
+                // The cause is not initialized, and may subsequently be initialized by a call to initCause.
+                throw new RuntimeException("JSON Exception" + e);
+            }
+
+            return mainjsonObject.toString();
         }
 
-        mergeJSONNode(mainJson, addJson);
+    private static void mergeRemovals(JSONObject old, JSONObject update) {
+        Set<String> keySet = old.keySet();
+        for (String key : keySet) {
+            JSONObject oldEntries = old.has(key) ? (JSONObject) old.get(key) : null;
+            JSONObject newEntries = update.has(key) ? (JSONObject) update.get(key) : null;
+            if (oldEntries != null) {
+                Iterator<String> iterator = oldEntries.keys();
 
-        return mainJson.toString();
-    }
-
-    /**
-     * Merges given Jackson JsonNode object into another JsonNode
-     */
-    static void mergeJSONNode(JsonNode mainNode, JsonNode addNode) {
-        if (addNode == null) {
-            return;
-        }
-
-        Iterator<String> fieldNames = addNode.fieldNames();
-        while (fieldNames.hasNext()) {
-
-            String fieldName = fieldNames.next();
-            JsonNode jsonNode = mainNode.get(fieldName);
-
-            if (jsonNode != null && jsonNode.isObject()) {
-                mergeJSONNode(jsonNode, addNode.get(fieldName));
-            } else {
-                if (mainNode instanceof ObjectNode) {
-                    JsonNode value = addNode.get(fieldName);
-                    ((ObjectNode) mainNode).put(fieldName, value);
+                while (iterator.hasNext()) {
+                    String innerKey = iterator.next();
+                    if (newEntries != null && !newEntries.has(innerKey)) {
+                        iterator.remove();
+                    }
                 }
             }
         }
     }
+
+    private static void mergeUpdates(JSONObject old, JSONObject update) {
+        Iterator<String> fieldNames = update.keys();
+        while (fieldNames.hasNext()) {
+            String uKey = fieldNames.next();
+            Object uValue = update.get(uKey);
+
+            // add new property
+            if (!old.has(uKey)) {
+                if (uValue!=null &&
+                        !(uValue instanceof JSONObject && ((JSONObject) uValue).isEmpty())) {
+                    old.put(uKey, uValue);
+                }
+            }
+
+            // merge old and new property
+            else {
+                Object oValue = old.get(uKey);
+                if (uValue instanceof JSONObject) {
+                    mergeUpdates((JSONObject) oValue, (JSONObject) uValue);
+                } else {
+                    old.put(uKey, uValue);
+                }
+            }
+        }
+    }
+
 }
