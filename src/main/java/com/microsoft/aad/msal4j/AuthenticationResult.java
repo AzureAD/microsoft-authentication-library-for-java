@@ -10,7 +10,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.util.Date;
@@ -49,11 +48,9 @@ final class AuthenticationResult implements IAuthenticationResult {
         try {
             String idTokenJson = JWTParser.parse(idToken).getParsedParts()[1].decodeToString();
 
-            return IdToken.convertJsonToObject(idTokenJson);
+            return JsonHelper.convertJsonToObject(idTokenJson, IdToken.class);
         } catch (ParseException e) {
             e.printStackTrace();
-        }  catch (IOException e) {
-            throw new MsalClientException(e);
         }
         return null;
     }

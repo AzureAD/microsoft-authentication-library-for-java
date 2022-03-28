@@ -4,11 +4,9 @@
 package com.microsoft.aad.msal4j;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nimbusds.jwt.JWTParser;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -71,12 +69,7 @@ public class TokenCache implements ITokenCache {
         }
         serializedCachedSnapshot = data;
 
-        TokenCache deserializedCache = new TokenCache();
-        try {
-             deserializedCache.convertJsonToObject(data);
-        } catch (IOException e) {
-            throw new MsalClientException(e);
-        }
+        TokenCache deserializedCache = JsonHelper.convertJsonToObject(data, TokenCache.class);
 
         lock.writeLock().lock();
         try {
@@ -90,116 +83,72 @@ public class TokenCache implements ITokenCache {
         }
     }
 
-    private void convertJsonToObject(String json) throws IOException {
-        if(json!=null){
-            JsonFactory jsonFactory = new JsonFactory();
-            JsonParser jsonParser = jsonFactory.createParser(json);
+    private static void mergeJsonObjects(JsonNode old, JsonNode update) {
+        mergeRemovals(old, update);
+        mergeUpdates(old, update);
+    }
 
-            String key;
-            jsonParser.nextToken();
-            while (jsonParser.currentToken() != JsonToken.END_OBJECT) {
-                String fieldname = jsonParser.getCurrentName();
-                if(fieldname!=null){
-                    jsonParser.nextToken();
-                    jsonParser.nextToken();
-                    if ("AccessToken".equals(fieldname)) {
-                        while(jsonParser.getCurrentToken() != JsonToken.END_OBJECT){
-                            key = jsonParser.getCurrentName();
-                            jsonParser.nextToken();
-                            AccessTokenCacheEntity accessTokenCacheEntity = AccessTokenCacheEntity.convertJsonToObject(json, jsonParser);
-                            accessTokens.put(key, accessTokenCacheEntity);
-                            jsonParser.nextToken();
-                        }
+    private static void mergeUpdates(JsonNode old, JsonNode update) {
+        Iterator<String> fieldNames = update.fieldNames();
+        while (fieldNames.hasNext()) {
+            String uKey = fieldNames.next();
+            JsonNode uValue = update.get(uKey);
 
-                    } else if ("RefreshToken".equals(fieldname)) {
-                        while(jsonParser.getCurrentToken() != JsonToken.END_OBJECT){
-                            key = jsonParser.getCurrentName();
-                            jsonParser.nextToken();
-                            RefreshTokenCacheEntity refreshTokenCacheEntity = RefreshTokenCacheEntity.convertJsonToObject(json, jsonParser);
-                            refreshTokens.put(key, refreshTokenCacheEntity);
-                            jsonParser.nextToken();
-                        }
-                    } else if ("IdToken".equals(fieldname)) {
-                        while(jsonParser.getCurrentToken() != JsonToken.END_OBJECT){
-                            key = jsonParser.getCurrentName();
-                            jsonParser.nextToken();
-                            IdTokenCacheEntity idTokenCacheEntity = IdTokenCacheEntity.convertJsonToObject(json, jsonParser);
-                            idTokens.put(key, idTokenCacheEntity);
-                            jsonParser.nextToken();
-                        }
-                    } else if ("Account".equals(fieldname)) {
-                        while(jsonParser.getCurrentToken() != JsonToken.END_OBJECT){
-                            key = jsonParser.getCurrentName();
-                            jsonParser.nextToken();
-                            AccountCacheEntity accountCacheEntity = AccountCacheEntity.convertJsonToObject(json, jsonParser);
-                            accounts.put(key, accountCacheEntity);
-                            jsonParser.nextToken();
-                        }
-
-                    } else if ("AppMetadata".equals(fieldname)) {
-                        while(jsonParser.getCurrentToken() != JsonToken.END_OBJECT){
-                            key = jsonParser.getCurrentName();
-                            jsonParser.nextToken();
-                            AppMetadataCacheEntity appMetadataCacheEntity = AppMetadataCacheEntity.
-                                    convertJsonToObject(json, jsonParser);
-                            appMetadata.put(key, appMetadataCacheEntity);
-                            jsonParser.nextToken();
-                        }
-                    } else {
-                        while(jsonParser.getCurrentToken() != JsonToken.END_OBJECT){
-                            jsonParser.nextToken();
-                        }
-                    }
+            // add new property
+            if (!old.has(uKey)) {
+                if (!uValue.isNull() &&
+                        !(uValue.isObject() && uValue.size() == 0)) {
+                    ((ObjectNode) old).set(uKey, uValue);
                 }
-                jsonParser.nextToken();
             }
-
+            // merge old and new property
+            else {
+                JsonNode oValue = old.get(uKey);
+                if (uValue.isObject()) {
+                    mergeUpdates(oValue, uValue);
+                } else {
+                    ((ObjectNode) old).set(uKey, uValue);
+                }
+            }
         }
     }
 
-    private String convertToJsonString(){
-        JSONObject jsonObject = new JSONObject();
-        JSONObject jsonObject1 = new JSONObject();
-        for(String key: accounts.keySet()){
-                jsonObject1.put(key, accounts.get(key).convertToJSONObject());
+    private static void mergeRemovals(JsonNode old, JsonNode update) {
+        Set<String> msalEntities =
+                new HashSet<>(Arrays.asList("Account", "AccessToken", "RefreshToken", "IdToken", "AppMetadata"));
 
+        for (String msalEntity : msalEntities) {
+            JsonNode oldEntries = old.get(msalEntity);
+            JsonNode newEntries = update.get(msalEntity);
+            if (oldEntries != null) {
+                Iterator<Map.Entry<String, JsonNode>> iterator = oldEntries.fields();
+
+                while (iterator.hasNext()) {
+                    Map.Entry<String, JsonNode> oEntry = iterator.next();
+
+                    String key = oEntry.getKey();
+                    if (newEntries == null || !newEntries.has(key)) {
+                        iterator.remove();
+                    }
+                }
+            }
         }
-        jsonObject.put("Account", jsonObject1);
-        jsonObject1 = new JSONObject();
-        for(String key: accessTokens.keySet()){
-                jsonObject1.put(key, accessTokens.get(key).convertToJSONObject());
-        }
-        jsonObject.put("AccessToken", jsonObject1);
-        jsonObject1 = new JSONObject();
-        for(String key: refreshTokens.keySet()){
-                jsonObject1.put(key, refreshTokens.get(key).convertToJSONObject());
-        }
-        jsonObject.put("RefreshToken", jsonObject1);
-        jsonObject1 = new JSONObject();
-        for(String key: idTokens.keySet()){
-                jsonObject1.put(key, idTokens.get(key).convertToJSONObject());
-        }
-        jsonObject.put("IdToken", jsonObject1);
-        jsonObject1 = new JSONObject();
-        for(String key: appMetadata.keySet()){
-                jsonObject1.put(key, appMetadata.get(key).convertToJSONObject());
-        }
-        jsonObject.put("AppMetadata", jsonObject1);
-        return jsonObject.toString();
     }
 
     @Override
-    public String serialize(){
+    public String serialize() {
         lock.readLock().lock();
         try {
-            if (!StringHelper.isBlank(serializedCachedSnapshot)){
-                serializedCachedSnapshot = JsonHelper.mergeJSONString(serializedCachedSnapshot, convertToJsonString());
-                return serializedCachedSnapshot;
+            if (!StringHelper.isBlank(serializedCachedSnapshot)) {
+                JsonNode cache = JsonHelper.mapper.readTree(serializedCachedSnapshot);
+                JsonNode update = JsonHelper.mapper.valueToTree(this);
+
+                mergeJsonObjects(cache, update);
+
+                return JsonHelper.mapper.writeValueAsString(cache);
             }
-            return convertToJsonString();
-
-
-        } catch (Exception e) {
+            return JsonHelper.mapper.writeValueAsString(this);
+        } catch (IOException e) {
             throw new MsalClientException(e);
         } finally {
             lock.readLock().unlock();
@@ -434,6 +383,18 @@ public class TokenCache implements ITokenCache {
             }
         }
         return null;
+    }
+
+    /**
+     * @return set of client ids which belong to the family
+     */
+    private Set<String> getFamilyClientIds(String familyId, Set<String> environmentAliases) {
+
+        return appMetadata.values().stream().filter
+                (appMetadata -> environmentAliases.contains(appMetadata.environment()) &&
+                        familyId.equals(appMetadata.familyId())
+
+                ).map(AppMetadataCacheEntity::clientId).collect(Collectors.toSet());
     }
 
     /**

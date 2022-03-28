@@ -4,13 +4,11 @@
 package com.microsoft.aad.msal4j;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
 import com.nimbusds.jwt.JWTClaimsSet;
 
-import java.io.IOException;
 import java.text.ParseException;
+import java.util.HashMap;
+import java.util.Map;
 
 class IdToken {
 
@@ -83,95 +81,5 @@ class IdToken {
         idToken.uniqueName = claims.getStringClaim(UNIQUE_NAME);
 
         return idToken;
-    }
-
-    public static IdToken convertJsonToObject(String json) throws IOException{
-
-        IdToken idToken = new IdToken();
-        if (json != null) {
-
-            JsonFactory jsonFactory = new JsonFactory();
-            try (JsonParser jsonParser = jsonFactory.createParser(json)) {
-
-                if (jsonParser.nextToken().equals(JsonToken.START_ARRAY)) {
-                    jsonParser.nextToken();
-                }
-
-                while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
-                    String fieldname = jsonParser.getCurrentName();
-                    if ("iss".equals(fieldname)) {
-                        jsonParser.nextToken();
-                        idToken.issuer = jsonParser.getText();
-                    }
-
-                    if ("sub".equals(fieldname)) {
-                        jsonParser.nextToken();
-                        idToken.subject = jsonParser.getText();
-
-                    }
-
-                    if ("aud".equals(fieldname)) {
-                        jsonParser.nextToken();
-                        idToken.audience = jsonParser.getText();
-
-                    }
-
-                    if ("exp".equals(fieldname)) {
-                        jsonParser.nextToken();
-                        idToken.expirationTime = jsonParser.getLongValue();
-
-                    }
-
-                    if ("iat".equals(fieldname)) {
-                        jsonParser.nextToken();
-                        idToken.issuedAt = jsonParser.getLongValue();
-
-                    }
-
-                    if ("nbf".equals(fieldname)) {
-                        jsonParser.nextToken();
-                        idToken.notBefore = jsonParser.getLongValue();
-
-                    }
-
-                    if ("name".equals(fieldname)) {
-                        jsonParser.nextToken();
-                        idToken.name = jsonParser.getText();
-
-                    }
-
-                    if ("preferred_username".equals(fieldname)) {
-                        jsonParser.nextToken();
-                        idToken.preferredUsername = jsonParser.getText();
-
-                    }
-
-                    if ("oid".equals(fieldname)) {
-                        jsonParser.nextToken();
-                        idToken.objectIdentifier = jsonParser.getText();
-
-                    }
-
-                    if ("tid".equals(fieldname)) {
-                        jsonParser.nextToken();
-                        idToken.tenantIdentifier = jsonParser.getText();
-
-                    }
-
-                    if ("upn".equals(fieldname)) {
-                        jsonParser.nextToken();
-                        idToken.upn = jsonParser.getText();
-                    }
-
-                    if ("unique_name".equals(fieldname)) {
-                        jsonParser.nextToken();
-                        idToken.uniqueName = jsonParser.getText();
-                    }
-                }
-            }
-
-        }
-         return idToken;
-
     }
 }

@@ -8,7 +8,6 @@ import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
@@ -33,7 +32,7 @@ class AadInstanceDiscoveryProvider {
 
     final static TreeSet<String> TRUSTED_HOSTS_SET = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
-    private final static Logger log = LoggerFactory.getLogger(AadInstanceDiscoveryProvider.class);
+    private final static Logger log = LoggerFactory.getLogger(HttpHelper.class);
 
     static ConcurrentHashMap<String, InstanceDiscoveryMetadataEntry> cache = new ConcurrentHashMap<>();
 
@@ -73,9 +72,9 @@ class AadInstanceDiscoveryProvider {
 
         AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse;
         try {
-            aadInstanceDiscoveryResponse = AadInstanceDiscoveryResponse.convertJsonToObject(
-                    instanceDiscoveryJson
-            );
+            aadInstanceDiscoveryResponse = JsonHelper.convertJsonToObject(
+                    instanceDiscoveryJson,
+                    AadInstanceDiscoveryResponse.class);
 
         } catch (Exception ex) {
             throw new MsalClientException("Error parsing instance discovery response. Data must be " +
@@ -194,11 +193,7 @@ class AadInstanceDiscoveryProvider {
 
         serviceBundle.getServerSideTelemetry().getCurrentRequest().regionOutcome(regionOutcomeTelemetryValue);
 
-        try {
-            return AadInstanceDiscoveryResponse.convertJsonToObject(httpResponse.body());
-        } catch (IOException e) {
-            throw new MsalClientException(e);
-        }
+        return JsonHelper.convertJsonToObject(httpResponse.body(), AadInstanceDiscoveryResponse.class);
     }
 
     private static int determineRegionOutcome(String detectedRegion, String providedRegion, boolean autoDetect) {

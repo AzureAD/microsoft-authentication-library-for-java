@@ -4,11 +4,16 @@
 package com.microsoft.aad.msal4j;
 
 
-import com.fasterxml.jackson.core.*;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.io.*;
+import java.util.Iterator;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,74 +67,31 @@ public class ClaimsRequest {
      * @return a String following JSON formatting
      */
     public String formatAsJSONString() {
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode rootNode = mapper.createObjectNode();
 
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        JsonFactory jsonFactory = new JsonFactory();
-        try {
-            try (JsonGenerator jsonGenerator = jsonFactory
-                    .createGenerator(stream, JsonEncoding.UTF8)) {
-
-                jsonGenerator.writeStartObject();
-
-                if (!idTokenRequestedClaims.isEmpty()) {
-                    jsonGenerator.writeObjectFieldStart("id_token");
-                    updateStream(jsonGenerator, idTokenRequestedClaims);
-                    jsonGenerator.writeEndObject();
-                }
-
-                if (!userInfoRequestedClaims.isEmpty()) {
-                    jsonGenerator.writeObjectFieldStart("userinfo");
-                    updateStream(jsonGenerator, userInfoRequestedClaims);
-                    jsonGenerator.writeEndObject();
-                }
-
-                if (!accessTokenRequestedClaims.isEmpty()) {
-                    jsonGenerator.writeObjectFieldStart("access_token");
-                    updateStream(jsonGenerator, accessTokenRequestedClaims);
-                    jsonGenerator.writeEndObject();
-                }
-
-
-                jsonGenerator.writeEndObject();
-                jsonGenerator.close();
-            }
-            return new String(stream.toByteArray(), "UTF-8");
-
-        } catch (IOException e) {
-            e.printStackTrace();
-
-            return null;
-        } finally {
-
+        if (!idTokenRequestedClaims.isEmpty()) {
+            rootNode.set("id_token", convertClaimsToObjectNode(idTokenRequestedClaims));
         }
+        if (!userInfoRequestedClaims.isEmpty()) {
+            rootNode.set("userinfo", convertClaimsToObjectNode(userInfoRequestedClaims));
+        }
+        if (!accessTokenRequestedClaims.isEmpty()) {
+            rootNode.set("access_token", convertClaimsToObjectNode(accessTokenRequestedClaims));
+        }
+
+        return mapper.valueToTree(rootNode).toString();
     }
 
-    private void updateStream(JsonGenerator jsonGenerator, List<RequestedClaim> claims) throws IOException {
+    private ObjectNode convertClaimsToObjectNode(List<RequestedClaim> claims) {
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode claimsNode = mapper.createObjectNode();
 
-        for(RequestedClaim claim: claims){
-            if(claim.getRequestedClaimAdditionalInfo()!=null){
-                jsonGenerator.writeObjectFieldStart(claim.getName());
-                if (claim.getRequestedClaimAdditionalInfo().isEssential())
-                    jsonGenerator.writeBooleanField("essential", claim.getRequestedClaimAdditionalInfo().isEssential());
-                if (claim.getRequestedClaimAdditionalInfo().getValue() != null)
-                    jsonGenerator.writeStringField("value", claim.getRequestedClaimAdditionalInfo().getValue());
-                if (claim.getRequestedClaimAdditionalInfo().getValues() != null) {
-                    StringBuilder concatenatedValue = new StringBuilder();
-                    List<String> list = new ArrayList<>();
-                    for (String value : claim.getRequestedClaimAdditionalInfo().getValues()) {
-                        list.add(value);
-                    }
-                    String[] stringArray = new String[list.size()];
-                    list.toArray(stringArray);
-                    jsonGenerator.writeFieldName("values");
-                    jsonGenerator.writeArray(stringArray, 0, stringArray.length);
-                }
-                jsonGenerator.writeEndObject();
-            }else {
-                jsonGenerator.writeNullField(claim.getName());
-            }
 
+        for (RequestedClaim claim : claims) {
+            claimsNode.setAll((ObjectNode) mapper.valueToTree(claim));
         }
+        return claimsNode;
     }
 
     /**
@@ -138,69 +100,51 @@ public class ClaimsRequest {
      * @param claims a String following JSON formatting
      * @return a ClaimsRequest instance
      */
-
     public static ClaimsRequest formatAsClaimsRequest(String claims) {
         try {
-            ClaimsRequest claimsRequest = new ClaimsRequest();
+            ClaimsRequest cr = new ClaimsRequest();
 
-            JsonFactory jsonFactory = new JsonFactory();
-            try (JsonParser jsonParser = jsonFactory.createParser(claims)) {
+            ObjectMapper mapper = new ObjectMapper();
+            ObjectReader reader = mapper.readerFor(new TypeReference<List<String>>() {
+            });
 
-                if (jsonParser.nextToken().equals(JsonToken.START_OBJECT)) {
-                    jsonParser.nextToken();
-                }
-                JsonToken nextToken = jsonParser.nextToken();
-                while (nextToken != JsonToken.END_OBJECT && nextToken != null) {
-                    String fieldName = jsonParser.getCurrentName();
-                    if (("id_token").equalsIgnoreCase(fieldName)) {
-                        claimsRequest.idTokenRequestedClaims = getTokenList(jsonParser);
-                        jsonParser.nextToken();
-                    } else if (("access_token").equalsIgnoreCase(fieldName)) {
-                        claimsRequest.accessTokenRequestedClaims = getTokenList(jsonParser);
-                        jsonParser.nextToken();
-                    } else if (("userinfo").equalsIgnoreCase(fieldName)) {
-                        claimsRequest.userInfoRequestedClaims = getTokenList(jsonParser);
-                        jsonParser.nextToken();
-                    }
-                    nextToken = jsonParser.nextToken();
-                }
-            }
-            return claimsRequest;
+            JsonNode jsonClaims = mapper.readTree(claims);
+
+            addClaimsFromJsonNode(jsonClaims.get("id_token"), "id_token", cr, reader);
+            addClaimsFromJsonNode(jsonClaims.get("userinfo"), "userinfo", cr, reader);
+            addClaimsFromJsonNode(jsonClaims.get("access_token"), "access_token", cr, reader);
+
+            return cr;
         } catch (IOException e) {
             throw new MsalClientException("Could not convert string to ClaimsRequest: " + e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
         }
     }
 
-    private static List<RequestedClaim> getTokenList(JsonParser jsonParser) throws IOException {
-        List<RequestedClaim> list = new ArrayList<>();
-        while(jsonParser.nextToken()!=JsonToken.END_OBJECT) {
-            String name = jsonParser.getValueAsString();
-            jsonParser.nextToken();
-            String fieldName;
-            RequestedClaimAdditionalInfo requestedClaimAdditionalInfo = new RequestedClaimAdditionalInfo();
-            while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
-                fieldName = jsonParser.getCurrentName();
-                if ("essential".equals(fieldName)) {
-                    jsonParser.nextToken();
-                    requestedClaimAdditionalInfo.setEssential(jsonParser.getBooleanValue());
-                }
-                if ("value".equals(fieldName)) {
-                    jsonParser.nextToken();
-                    requestedClaimAdditionalInfo.setValue(jsonParser.getText());
-                }
-                if ("values".equals(fieldName)) {
-                    jsonParser.nextToken();
-                    jsonParser.nextToken();
+    private static void addClaimsFromJsonNode(JsonNode claims, String group, ClaimsRequest cr, ObjectReader reader) throws IOException {
+        Iterator<String> claimsIterator;
 
-                    List<String> listOfValues = new ArrayList<>();
-                    listOfValues.add(jsonParser.getText());
-                    jsonParser.nextToken();
-                    requestedClaimAdditionalInfo.setValues(listOfValues);
+        if (claims != null) {
+            claimsIterator = claims.fieldNames();
+            while (claimsIterator.hasNext()) {
+                String claim = claimsIterator.next();
+                Boolean essential = null;
+                String value = null;
+                List<String> values = null;
+                RequestedClaimAdditionalInfo claimInfo = null;
+
+                if (claims.get(claim).has("essential")) essential = claims.get(claim).get("essential").asBoolean();
+                if (claims.get(claim).has("value")) value = claims.get(claim).get("value").textValue();
+                if (claims.get(claim).has("values")) values = reader.readValue(claims.get(claim).get("values"));
+
+                //'null' is a valid value for RequestedClaimAdditionalInfo, so only initialize it if one of the parameters is not null
+                if (essential != null || value != null || values != null) {
+                    claimInfo = new RequestedClaimAdditionalInfo(essential == null ? false : essential, value, values);
                 }
+
+                if (group.equals("id_token")) cr.requestClaimInIdToken(claim, claimInfo);
+                if (group.equals("userinfo")) cr.requestClaimInUserInfo(claim, claimInfo);
+                if (group.equals("access_token")) cr.requestClaimInAccessToken(claim, claimInfo);
             }
-            RequestedClaim requestedClaim = new RequestedClaim(name, requestedClaimAdditionalInfo);
-            list.add(requestedClaim);
         }
-        return list;
     }
 }

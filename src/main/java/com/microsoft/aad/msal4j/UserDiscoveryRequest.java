@@ -3,7 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,15 +33,6 @@ class UserDiscoveryRequest {
         if (response.statusCode() != HttpHelper.HTTP_STATUS_200) {
             throw MsalServiceExceptionFactory.fromHttpResponse(response);
         }
-
-        try {
-            return UserDiscoveryResponse.convertJsonToObject(response.body());
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-
+        return JsonHelper.convertJsonToObject(response.body(), UserDiscoveryResponse.class);
     }
-
-
 }
