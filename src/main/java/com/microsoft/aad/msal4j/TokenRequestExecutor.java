@@ -16,11 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Getter(AccessLevel.PACKAGE)
 class TokenRequestExecutor {
@@ -80,6 +76,10 @@ class TokenRequestExecutor {
                         .createClientAuthFromClientAssertion((ClientAssertion) ((ClientCredentialRequest) msalRequest).parameters.clientCredential())
                         .applyTo(oauthHttpRequest);
             } else {
+                Map<String, List<String>> queryParameters = oauthHttpRequest.getQueryParameters();
+                String clientID = msalRequest.application().clientId();
+                queryParameters.put("client_id", Arrays.asList(clientID));
+                oauthHttpRequest.setQuery(URLUtils.serializeParameters(queryParameters));
                 msalRequest.application().clientAuthentication().applyTo(oauthHttpRequest);
             }
         }
