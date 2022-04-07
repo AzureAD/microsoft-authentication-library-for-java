@@ -16,11 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Getter(AccessLevel.PACKAGE)
 class TokenRequestExecutor {
@@ -73,6 +69,12 @@ class TokenRequestExecutor {
         oauthHttpRequest.setQuery(URLUtils.serializeParameters(params));
 
         if (msalRequest.application().clientAuthentication() != null) {
+
+            Map<String, List<String>> queryParameters = oauthHttpRequest.getQueryParameters();
+            String clientID = msalRequest.application().clientId();
+            queryParameters.put("client_id", Arrays.asList(clientID));
+            oauthHttpRequest.setQuery(URLUtils.serializeParameters(queryParameters));
+
             // If the client application has a client assertion to apply to the request, check if a new client assertion
             //  was supplied as a request parameter. If so, use the request's assertion instead of the application's
             if (msalRequest instanceof ClientCredentialRequest && ((ClientCredentialRequest) msalRequest).parameters.clientCredential() != null) {
