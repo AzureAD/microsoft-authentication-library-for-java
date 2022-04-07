@@ -80,6 +80,7 @@ class TokenRequestExecutor {
                 String clientID = msalRequest.application().clientId();
                 queryParameters.put("client_id", Arrays.asList(clientID));
                 oauthHttpRequest.setQuery(URLUtils.serializeParameters(queryParameters));
+
                 msalRequest.application().clientAuthentication().applyTo(oauthHttpRequest);
             }
         }
