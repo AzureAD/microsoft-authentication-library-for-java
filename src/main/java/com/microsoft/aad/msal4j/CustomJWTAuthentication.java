@@ -12,11 +12,7 @@ import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.id.ClientID;
 import com.nimbusds.oauth2.sdk.util.URLUtils;
 
-import java.net.URLEncoder;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class CustomJWTAuthentication extends ClientAuthentication {
     private ClientAssertion clientAssertion;
@@ -24,6 +20,12 @@ public class CustomJWTAuthentication extends ClientAuthentication {
     protected CustomJWTAuthentication(ClientAuthenticationMethod method, ClientAssertion clientAssertion, ClientID clientID) {
         super(method, clientID);
         this.clientAssertion = clientAssertion;
+    }
+
+    @Override
+    public Set<String> getFormParameterNames() {
+        return Collections.unmodifiableSet(new HashSet(Arrays.asList("client_assertion", "client_assertion_type", "client_id")));
+
     }
 
     @Override
