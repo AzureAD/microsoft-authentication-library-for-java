@@ -3,10 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.nimbusds.oauth2.sdk.SerializeException;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
@@ -20,6 +17,11 @@ class ClientAuthenticationPost extends ClientAuthentication {
     protected ClientAuthenticationPost(ClientAuthenticationMethod method,
                                        ClientID clientID) {
         super(method, clientID);
+    }
+
+    @Override
+    public Set<String> getFormParameterNames() {
+        return Collections.unmodifiableSet(new HashSet(Arrays.asList("client_assertion", "client_assertion_type", "client_id")));
     }
 
     Map<String, List<String>> toParameters() {
