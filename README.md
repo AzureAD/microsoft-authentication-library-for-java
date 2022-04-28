@@ -8,7 +8,7 @@ The Microsoft Authentication Library for Java (MSAL4J) enables applications to i
 
 Quick links:
 
-| [Getting Started](https://docs.microsoft.com/azure/active-directory/develop/quickstart-v2-java-webapp) | [Docs](https://github.com/AzureAD/microsoft-authentication-library-for-java/wiki) | [Samples](https://aka.ms/aaddevsamplesv2) | [Support](README.md#community-help-and-support) | [Feedback](https://forms.office.com/r/6AhHwQp3pe)
+| [Getting Started](https://docs.microsoft.com/en-us/azure/active-directory/develop/web-app-quickstart?pivots=devlang-java) | [Home](https://github.com/AzureAD/microsoft-authentication-library-for-java/wiki) | [Samples](https://github.com/Azure-Samples/ms-identity-msal-java-samples) | [Support](README.md#community-help-and-support) | [Feedback](https://forms.office.com/r/6AhHwQp3pe)
 | --- | --- | --- | --- | --- |
 
 ## Install
@@ -16,7 +16,7 @@ Quick links:
 The library supports the following Java environments:
 - Java 8 (or higher)
 
-Current version - 1.11.0
+Current version - 1.11.3
 
 You can find the changes for each version in the [change log](https://github.com/AzureAD/microsoft-authentication-library-for-java/blob/master/changelog.txt).
 
@@ -28,14 +28,12 @@ Find [the latest package in the Maven repository](https://mvnrepository.com/arti
 <dependency>
     <groupId>com.microsoft.azure</groupId>
     <artifactId>msal4j</artifactId>
-    <version>1.11.0</version>
+    <version>1.11.3</version>
 </dependency>
 ```
 ### Gradle
 
-```
-compile group: 'com.microsoft.azure', name: 'msal4j', version: '1.11.0'
-```
+compile group: 'com.microsoft.azure', name: 'msal4j', version: '1.11.3'
 
 ## Usage
 

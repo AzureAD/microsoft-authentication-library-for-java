@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.RSASSASigner;
@@ -10,7 +11,9 @@ import com.nimbusds.jose.util.Base64;
 import com.nimbusds.jose.util.Base64URL;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.oauth2.sdk.auth.JWTAuthentication;
 import com.nimbusds.oauth2.sdk.auth.PrivateKeyJWT;
+import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.powermock.api.easymock.PowerMock;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
@@ -22,13 +25,14 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.concurrent.Future;
 
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
+import static org.easymock.EasyMock.*;
+import static org.testng.Assert.*;
 
 @PowerMockIgnore({"javax.net.ssl.*"})
 @PrepareForTest({ConfidentialClientApplication.class,
@@ -203,4 +207,121 @@ public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
         }
         return new ClientAssertion(jwt.serialize());
     }
+
+    @Test
+    public void testClientAssertion_noException() throws Exception{
+        SignedJWT jwt = createClientAssertion("issuer");
+
+        ClientAssertion clientAssertion = new ClientAssertion(jwt.serialize());
+
+        IClientCredential iClientCredential = ClientCredentialFactory.createFromClientAssertion(
+                clientAssertion.assertion());
+
+        ConfidentialClientApplication app = ConfidentialClientApplication
+                .builder(TestConfiguration.AAD_CLIENT_ID, iClientCredential)
+                .authority(TestConfiguration.AAD_TENANT_ENDPOINT)
+                .build();
+
+        Assert.assertEquals(app.clientId(),TestConfiguration.AAD_CLIENT_ID);
+        Assert.assertTrue(app.sendX5c());
+
+    }
+
+    @Test
+    public void testClientAssertion_acquireToken() throws Exception{
+        SignedJWT jwt = createClientAssertion("issuer");
+
+        ClientAssertion clientAssertion = new ClientAssertion(jwt.serialize());
+        ConfidentialClientApplication app = ConfidentialClientApplication
+                .builder(TestConfiguration.AAD_CLIENT_ID, ClientCredentialFactory.createFromClientAssertion(clientAssertion.assertion()))
+                .authority(TestConfiguration.AAD_TENANT_ENDPOINT)
+                .build();
+
+        String scope = "requestedScope";
+        ClientCredentialRequest clientCredentialRequest = getClientCredentialRequest(app, scope);
+
+        IHttpClient httpClientMock = EasyMock.mock(IHttpClient.class);
+        Capture<HttpRequest> captureSingleArgument = newCapture();
+        expect(httpClientMock.send(capture(captureSingleArgument))).andReturn(new HttpResponse());
+        EasyMock.replay(httpClientMock);
+
+        TokenRequestExecutor tokenRequestExecutor = new TokenRequestExecutor(app.authenticationAuthority, clientCredentialRequest, mockedServiceBundle(httpClientMock));
+        try {
+            tokenRequestExecutor.executeTokenRequest();
+        } catch(Exception e) {
+            //Ignored, we only want to check the request that was send.
+        }
+        HttpRequest value = captureSingleArgument.getValue();
+        String body = value.body();
+        Assert.assertTrue(body.contains("grant_type=client_credentials"));
+        Assert.assertTrue(body.contains("client_assertion=" + clientAssertion.assertion()));
+        Assert.assertTrue(body.contains("client_assertion_type=" + URLEncoder.encode(JWTAuthentication.CLIENT_ASSERTION_TYPE, "utf-8")));
+        Assert.assertTrue(body.contains("scope=" + URLEncoder.encode("openid profile offline_access " + scope, "utf-8")));
+        Assert.assertTrue(body.contains("client_id=" + TestConfiguration.AAD_CLIENT_ID));
+    }
+
+    private ServiceBundle mockedServiceBundle(IHttpClient httpClientMock) {
+        ServiceBundle serviceBundle = new ServiceBundle(
+                null,
+                httpClientMock,
+                new TelemetryManager(null, false));
+        return serviceBundle;
+    }
+
+    private ClientCredentialRequest getClientCredentialRequest(ConfidentialClientApplication app, String scope) {
+        Set<String> scopes = new HashSet<>();
+        scopes.add(scope);
+        ClientCredentialParameters clientCredentials = ClientCredentialParameters.builder(scopes).tenant(IdToken.TENANT_IDENTIFIER).build();
+        RequestContext requestContext = new RequestContext(
+                app,
+                PublicApi.ACQUIRE_TOKEN_FOR_CLIENT,
+                clientCredentials);
+
+        ClientCredentialRequest clientCredentialRequest =
+                new ClientCredentialRequest(
+                        clientCredentials,
+                        app,
+                        requestContext);
+        return clientCredentialRequest;
+    }
+
+    @Test(expectedExceptions = MsalClientException.class)
+    public void testClientAssertion_throwsException() throws Exception{
+        SignedJWT jwt = createClientAssertion(null);
+
+        ClientAssertion clientAssertion = new ClientAssertion(jwt.serialize());
+
+        IClientCredential iClientCredential = ClientCredentialFactory.createFromClientAssertion(
+                clientAssertion.assertion());
+
+        ConfidentialClientApplication.builder(TestConfiguration.AAD_CLIENT_ID, iClientCredential).authority(TestConfiguration.AAD_TENANT_ENDPOINT).build();
+
+    }
+
+    private SignedJWT createClientAssertion(String issuer) throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException, UnrecoverableKeyException, NoSuchProviderException, JOSEException {
+        IClientCertificate certificate = CertificateHelper.getClientCertificate();
+
+        final ClientCertificate credential = (ClientCertificate) certificate;
+
+        final JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+                .issuer(issuer)
+                .subject("subject")
+                .build();
+
+        SignedJWT jwt;
+        JWSHeader.Builder builder = new JWSHeader.Builder(JWSAlgorithm.RS256);
+
+        List<Base64> certs = new ArrayList<>();
+        for (String cert : credential.getEncodedPublicKeyCertificateChain()) {
+            certs.add(new Base64(cert));
+        }
+        builder.x509CertChain(certs);
+
+        jwt = new SignedJWT(builder.build(), claimsSet);
+        final RSASSASigner signer = new RSASSASigner(credential.privateKey());
+
+        jwt.sign(signer);
+        return jwt;
+    }
+
 }
