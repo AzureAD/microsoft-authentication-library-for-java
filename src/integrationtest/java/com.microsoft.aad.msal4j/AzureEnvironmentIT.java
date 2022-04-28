@@ -19,11 +19,6 @@ public class AzureEnvironmentIT {
     }
 
     @Test
-    public void acquireTokenWithUsernamePassword_AzureGermany() throws Exception {
-        assertAcquireTokenCommon(AzureEnvironment.AZURE_GERMANY);
-    }
-
-    @Test
     public void acquireTokenWithUsernamePassword_AzureChina() throws Exception {
         assertAcquireTokenCommon(AzureEnvironment.AZURE_CHINA);
     }

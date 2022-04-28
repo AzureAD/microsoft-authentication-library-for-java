@@ -16,6 +16,8 @@ public class CertificateHelper {
         String os = SystemUtils.OS_NAME;
         if (os.contains("Mac")) {
             return KeyStore.getInstance("KeychainStore");
+        } else if (os.contains("Linux")) {
+            return KeyStore.getInstance(KeyStore.getDefaultType());
         } else {
             return KeyStore.getInstance("Windows-MY", "SunMSCAPI");
         }
