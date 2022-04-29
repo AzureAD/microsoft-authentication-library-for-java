@@ -300,15 +300,6 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
         return serviceBundle;
     }
 
-    protected static String enforceTrailingSlash(String authority) {
-        authority = authority.toLowerCase();
-
-        if (!authority.endsWith("/")) {
-            authority += "/";
-        }
-        return authority;
-    }
-
     abstract static class Builder<T extends Builder<T>> {
         // Required parameters
         private String clientId;
@@ -358,7 +349,7 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
          * @throws MalformedURLException if val is malformed URL
          */
         public T authority(String val) throws MalformedURLException {
-            authority = enforceTrailingSlash(val);
+            authority = Authority.enforceTrailingSlash(val);
 
             URL authorityURL = new URL(authority);
             Authority.validateAuthority(authorityURL);
@@ -378,7 +369,7 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
         }
 
         public T b2cAuthority(String val) throws MalformedURLException {
-            authority = enforceTrailingSlash(val);
+            authority = Authority.enforceTrailingSlash(val);
 
             URL authorityURL = new URL(authority);
             Authority.validateAuthority(authorityURL);

@@ -584,7 +584,6 @@ public class TokenCache implements ITokenCache {
             String clientId) {
 
         AuthenticationResult.AuthenticationResultBuilder builder = AuthenticationResult.builder();
-        builder.environment(authority.host());
 
         Set<String> environmentAliases = AadInstanceDiscoveryProvider.getAliases(account.environment());
 
@@ -622,11 +621,14 @@ public class TokenCache implements ITokenCache {
 
                 if (atCacheEntity.isPresent()) {
                     builder.
+                            environment(atCacheEntity.get().environment).
                             accessToken(atCacheEntity.get().secret).
                             expiresOn(Long.parseLong(atCacheEntity.get().expiresOn()));
                     if (atCacheEntity.get().refreshOn() != null) {
                         builder.refreshOn(Long.parseLong(atCacheEntity.get().refreshOn()));
                     }
+                } else {
+                    builder.environment(authority.host());
                 }
                 idTokenCacheEntity.ifPresent(tokenCacheEntity -> builder.idToken(tokenCacheEntity.secret));
                 rtCacheEntity.ifPresent(refreshTokenCacheEntity ->

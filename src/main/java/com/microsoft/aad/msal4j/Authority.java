@@ -117,7 +117,7 @@ abstract class Authority {
 
         if (segments.length == 0) {
             throw new IllegalArgumentException(
-                    IllegalArgumentExceptionMessages.AUTHORITY_URI_EMPTY_PATH_SEGMENT);
+                    IllegalArgumentExceptionMessages.AUTHORITY_URI_MISSING_PATH_SEGMENT);
         }
 
         for (String segment : segments) {
@@ -150,5 +150,14 @@ abstract class Authority {
 
     String deviceCodeEndpoint() {
         return deviceCodeEndpoint;
+    }
+
+    protected static String enforceTrailingSlash(String authority) {
+        authority = authority.toLowerCase();
+
+        if (!authority.endsWith("/")) {
+            authority += "/";
+        }
+        return authority;
     }
 }

@@ -28,7 +28,7 @@ class SilentRequest extends MsalRequest {
         this.assertion = assertion;
         this.requestAuthority = StringHelper.isBlank(parameters.authorityUrl()) ?
                 application.authenticationAuthority :
-                Authority.createAuthority(new URL(parameters.authorityUrl()));
+                Authority.createAuthority(new URL(Authority.enforceTrailingSlash(parameters.authorityUrl())));
 
         if (parameters.forceRefresh()) {
             application.getServiceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(

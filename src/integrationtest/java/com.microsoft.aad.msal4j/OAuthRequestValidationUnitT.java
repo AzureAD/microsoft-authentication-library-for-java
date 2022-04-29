@@ -31,7 +31,7 @@ public class OAuthRequestValidationUnitT extends OAuthRequestValidationTest {
         }
 
         Map<String, String> queryParams = splitQuery(query);
-        Assert.assertEquals(queryParams.size(), 7);
+        Assert.assertEquals(queryParams.size(), 8);
 
         // validate Authorization Grants query params
         Assert.assertEquals(queryParams.get("grant_type"), GRANT_TYPE_JWT);
@@ -55,6 +55,8 @@ public class OAuthRequestValidationUnitT extends OAuthRequestValidationTest {
         Assert.assertEquals(queryParams.get("requested_token_use"), ON_BEHALF_OF_USE_JWT);
 
         Assert.assertEquals(queryParams.get("client_info"), CLIENT_INFO_VALUE);
+        Assert.assertEquals(queryParams.get("client_id"), CLIENT_ID);
+
     }
 
     @Test
@@ -83,7 +85,7 @@ public class OAuthRequestValidationUnitT extends OAuthRequestValidationTest {
 
         Map<String, String> queryParams = splitQuery(query);
 
-        Assert.assertEquals(queryParams.size(), 5);
+        Assert.assertEquals(queryParams.size(), 6);
 
         // validate Authorization Grants query params
         Assert.assertEquals(queryParams.get("grant_type"), CLIENT_CREDENTIALS_GRANT_TYPE);
@@ -96,5 +98,6 @@ public class OAuthRequestValidationUnitT extends OAuthRequestValidationTest {
         Assert.assertEquals(queryParams.get("scope"), "https://SomeResource.azure.net openid profile offline_access");
 
         Assert.assertEquals(queryParams.get("client_info"), CLIENT_INFO_VALUE);
+        Assert.assertEquals(queryParams.get("client_id"), CLIENT_ID);
     }
 }

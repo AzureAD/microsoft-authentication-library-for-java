@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.net.URL;
 import java.util.Date;
 
 class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
@@ -69,6 +70,14 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
                 }
 
                 if (!StringHelper.isBlank(res.refreshToken())) {
+                    //There are certain scenarios where the cached authority may differ from the client app's authority,
+                    // such as when a request is instance aware. Unless overridden by SilentParameters.authorityUrl, the
+                    // cached authority should be used in the token refresh request
+                    if (silentRequest.parameters().authorityUrl() == null && !res.account().environment().equals(requestAuthority.host)) {
+                        requestAuthority = Authority.createAuthority(new URL(requestAuthority.authority().replace(requestAuthority.host(),
+                                res.account().environment())));
+                    }
+
                     RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(
                             RefreshTokenParameters.builder(silentRequest.parameters().scopes(), res.refreshToken()).build(),
                             silentRequest.application(),
