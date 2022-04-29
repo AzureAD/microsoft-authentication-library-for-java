@@ -10,7 +10,9 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
-class IdToken {
+import java.io.Serializable;
+
+class IdToken implements Serializable {
 
     static final String ISSUER = "iss";
     static final String SUBJECT = "sub";

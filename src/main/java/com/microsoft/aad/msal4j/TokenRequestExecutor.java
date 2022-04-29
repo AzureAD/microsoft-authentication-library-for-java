@@ -67,7 +67,7 @@ class TokenRequestExecutor {
         }
 
         oauthHttpRequest.setQuery(URLUtils.serializeParameters(params));
-
+      
         if (msalRequest.application().clientAuthentication() != null) {
 
             Map<String, List<String>> queryParameters = oauthHttpRequest.getQueryParameters();
