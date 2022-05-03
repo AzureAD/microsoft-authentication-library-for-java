@@ -158,7 +158,6 @@ public class AuthorityTest extends AbstractMsalTests {
     @DataProvider(name = "authoritiesWithEmptyPath")
     public static Object[][] createData() {
         return new Object[][]{{"https://login.microsoftonline.com/"},
-                {"https://login.microsoftonline.com//"},
                 {"https://login.microsoftonline.com//tenant"},
                 {"https://login.microsoftonline.com////tenant//path1"}};
     }
