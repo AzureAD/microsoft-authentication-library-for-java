@@ -78,6 +78,13 @@ public class LabUserProvider {
         return getLabUser(query);
     }
 
+    public User getMSAUser() {
+        UserQueryParameters query = new UserQueryParameters();
+        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.MSA);
+
+        return getLabUser(query);
+    }
+
     public User getUserByAzureEnvironment(String azureEnvironment) {
 
         UserQueryParameters query = new UserQueryParameters();

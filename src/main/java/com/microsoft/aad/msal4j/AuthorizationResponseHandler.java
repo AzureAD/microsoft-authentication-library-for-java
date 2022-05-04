@@ -102,7 +102,7 @@ class AuthorizationResponseHandler implements HttpHandler {
     private void send200Response(HttpExchange httpExchange, String response) throws IOException {
         httpExchange.sendResponseHeaders(200, response.length());
         OutputStream os = httpExchange.getResponseBody();
-        os.write(response.getBytes());
+        os.write(response.getBytes("UTF-8"));
         os.close();
     }
 
@@ -117,6 +117,6 @@ class AuthorizationResponseHandler implements HttpHandler {
         if (systemBrowserOptions == null || systemBrowserOptions.htmlMessageError() == null) {
             return DEFAULT_FAILURE_MESSAGE;
         }
-        return systemBrowserOptions().htmlMessageSuccess();
+        return systemBrowserOptions().htmlMessageError();
     }
 }

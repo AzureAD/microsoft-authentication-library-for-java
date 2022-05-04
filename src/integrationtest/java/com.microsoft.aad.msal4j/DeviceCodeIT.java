@@ -44,7 +44,7 @@ public class DeviceCodeIT {
                 build();
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
-            runAutomatedDeviceCodeFlow(deviceCode, user, environment);
+            runAutomatedDeviceCodeFlow(deviceCode, user);
         };
 
         IAuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
@@ -57,8 +57,8 @@ public class DeviceCodeIT {
         Assert.assertFalse(Strings.isNullOrEmpty(result.accessToken()));
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void DeviceCodeFlowADFSv2019Test(String environment) throws Exception {
+    @Test()
+    public void DeviceCodeFlowADFSv2019Test() throws Exception {
 
         User user = labUserProvider.getOnPremAdfsUser(FederationProvider.ADFS_2019);
 
@@ -68,7 +68,7 @@ public class DeviceCodeIT {
                 build();
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
-            runAutomatedDeviceCodeFlow(deviceCode, user, environment);
+            runAutomatedDeviceCodeFlow(deviceCode, user);
         };
 
         IAuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
@@ -81,7 +81,39 @@ public class DeviceCodeIT {
         Assert.assertFalse(Strings.isNullOrEmpty(result.accessToken()));
     }
 
-    private void runAutomatedDeviceCodeFlow(DeviceCode deviceCode, User user, String environment) {
+    @Test()
+    public void DeviceCodeFlowMSATest() throws Exception {
+
+        User user = labUserProvider.getMSAUser();
+
+        PublicClientApplication pca = PublicClientApplication.builder(
+                user.getAppId()).
+                authority(TestConstants.CONSUMERS_AUTHORITY).
+                build();
+
+        Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
+            runAutomatedDeviceCodeFlow(deviceCode, user);
+        };
+
+        IAuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
+                .builder(Collections.singleton(""),
+                        deviceCodeConsumer)
+                .build())
+                .get();
+
+        Assert.assertNotNull(result);
+        Assert.assertFalse(Strings.isNullOrEmpty(result.accessToken()));
+
+        result = pca.acquireTokenSilently(SilentParameters.
+                builder(Collections.singleton(""), result.account()).
+                build())
+                .get();
+
+        Assert.assertNotNull(result);
+        Assert.assertFalse(Strings.isNullOrEmpty(result.accessToken()));
+    }
+
+    private void runAutomatedDeviceCodeFlow(DeviceCode deviceCode, User user) {
         boolean isRunningLocally = true;//!Strings.isNullOrEmpty(
         //System.getenv(TestConstants.LOCAL_FLAG_ENV_VAR));
 
