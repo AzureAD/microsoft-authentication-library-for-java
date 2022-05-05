@@ -28,7 +28,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
  * Abstract class containing common methods and properties to both {@link PublicClientApplication}
  * and {@link ConfidentialClientApplication}.
  */
-abstract class AbstractClientApplicationBase implements IClientApplicationBase {
+public abstract class AbstractClientApplicationBase implements IClientApplicationBase {
 
     protected Logger log;
     protected Authority authenticationAuthority;
@@ -300,7 +300,7 @@ abstract class AbstractClientApplicationBase implements IClientApplicationBase {
         return serviceBundle;
     }
 
-    abstract static class Builder<T extends Builder<T>> {
+    public abstract static class Builder<T extends Builder<T>> {
         // Required parameters
         private String clientId;
 

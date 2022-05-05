@@ -4,7 +4,7 @@
 --------------------|-----------------|---------------
 [![Build status](https://identitydivision.visualstudio.com/IDDP/_apis/build/status/CI/Java/MSAL%20Java%20CI%20Build?branchName=main)](https://identitydivision.visualstudio.com/IDDP/_build/latest?definitionId=762) | [![Build status](https://identitydivision.visualstudio.com/IDDP/_apis/build/status/CI/Java/MSAL%20Java%20CI%20Build?branchName=dev)](https://identitydivision.visualstudio.com/IDDP/_build/latest?definitionId=762)| [![Javadocs](http://javadoc.io/badge/com.microsoft.azure/msal4j.svg)](http://javadoc.io/doc/com.microsoft.azure/msal4j)
 
-The Microsoft Authentication Library for Java (MSAL4J) enables applications to integrate with the [Microsoft identity platform](https://aka.ms/aaddevv2). It allows you to sign in users or apps with Microsoft identities (Azure AD, Microsoft accounts and Azure AD B2C accounts) and obtain tokens to call Microsoft APIs such as [Microsoft Graph](https://graph.microsoft.io/) or your own APIs registered with the Microsoft identity platform. It is built using industry standard OAuth2 and OpenID Connect protocols.
+The Microsoft Authentication Library for Java (MSAL4J) enables applications to integrate with the [Microsoft identity platform](https://docs.microsoft.com/en-us/azure/active-directory/develop/). It allows you to sign in users or apps with Microsoft identities (Azure AD, Microsoft accounts and Azure AD B2C accounts) and obtain tokens to call Microsoft APIs such as [Microsoft Graph](https://graph.microsoft.io/) or your own APIs registered with the Microsoft identity platform. It is built using industry standard OAuth2 and OpenID Connect protocols.
 
 Quick links:
 
@@ -58,7 +58,7 @@ This project has adopted the Microsoft Open Source Code of Conduct. For more inf
 
 ## Samples and Documentation
 
-We provide a [full suite of sample applications](https://aka.ms/aaddevsamplesv2) and [documentation](https://aka.ms/aaddevv2) to help you get started with learning the Microsoft identity platform.
+We provide a [full suite of sample applications](https://aka.ms/aaddevsamplesv2) and [documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/) to help you get started with learning the Microsoft identity platform.
 
 ## Community Help and Support
 

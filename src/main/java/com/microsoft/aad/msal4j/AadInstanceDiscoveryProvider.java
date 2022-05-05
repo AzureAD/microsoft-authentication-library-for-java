@@ -22,7 +22,8 @@ class AadInstanceDiscoveryProvider {
     private final static String DEFAULT_TRUSTED_HOST = "login.microsoftonline.com";
     private final static String AUTHORIZE_ENDPOINT_TEMPLATE = "https://{host}/{tenant}/oauth2/v2.0/authorize";
     private final static String INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE = "https://{host}:{port}/common/discovery/instance";
-    private final static String INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE_WITH_REGION = "https://{region}.{host}:{port}/common/discovery/instance";
+    private final static String INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE_WITH_REGION = "https://{region}.r.{host}:{port}/common/discovery/instance";
+    private final static String INSTANCE_DISCOVERY_SOVEREIGN_ENDPOINT_TEMPLATE_WITH_REGION = "https://{region}.{host}:{port}/common/discovery/instance";
     private final static String INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE = "?api-version=1.1&authorization_endpoint={authorizeEndpoint}";
     private final static String REGION_NAME = "REGION_NAME";
     private final static int PORT_NOT_SET = -1;
@@ -31,19 +32,24 @@ class AadInstanceDiscoveryProvider {
     private final static String IMDS_ENDPOINT = "https://169.254.169.254/metadata/instance/compute/location?" + DEFAULT_API_VERSION + "&format=text";
 
     final static TreeSet<String> TRUSTED_HOSTS_SET = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    final static TreeSet<String> TRUSTED_SOVEREIGN_HOSTS_SET = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
     private final static Logger log = LoggerFactory.getLogger(HttpHelper.class);
 
     static ConcurrentHashMap<String, InstanceDiscoveryMetadataEntry> cache = new ConcurrentHashMap<>();
 
     static {
-        TRUSTED_HOSTS_SET.addAll(Arrays.asList(
-                "login.windows.net",
+        TRUSTED_SOVEREIGN_HOSTS_SET.addAll(Arrays.asList(
                 "login.chinacloudapi.cn",
                 "login-us.microsoftonline.com",
                 "login.microsoftonline.de",
-                "login.microsoftonline.com",
                 "login.microsoftonline.us"));
+
+        TRUSTED_HOSTS_SET.addAll(Arrays.asList(
+                "login.windows.net",
+                "login.microsoftonline.com"));
+
+        TRUSTED_HOSTS_SET.addAll(TRUSTED_SOVEREIGN_HOSTS_SET);
     }
 
     static InstanceDiscoveryMetadataEntry getMetadataEntry(URL authorityUrl,
@@ -133,10 +139,17 @@ class AadInstanceDiscoveryProvider {
                 authorityUrl.getDefaultPort() :
                 authorityUrl.getPort();
 
-        return INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE_WITH_REGION.
-                replace("{region}", region).
-                replace("{host}", discoveryHost).
-                replace("{port}", String.valueOf(port));
+        if (TRUSTED_SOVEREIGN_HOSTS_SET.contains(authorityUrl.getHost())) {
+            return INSTANCE_DISCOVERY_SOVEREIGN_ENDPOINT_TEMPLATE_WITH_REGION.
+                    replace("{region}", region).
+                    replace("{host}", discoveryHost).
+                    replace("{port}", String.valueOf(port));
+        } else {
+            return INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE_WITH_REGION.
+                    replace("{region}", region).
+                    replace("{host}", discoveryHost).
+                    replace("{port}", String.valueOf(port));
+        }
     }
 
 
