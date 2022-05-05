@@ -4,11 +4,11 @@
 --------------------|-----------------|---------------
 [![Build status](https://identitydivision.visualstudio.com/IDDP/_apis/build/status/CI/Java/MSAL%20Java%20CI%20Build?branchName=main)](https://identitydivision.visualstudio.com/IDDP/_build/latest?definitionId=762) | [![Build status](https://identitydivision.visualstudio.com/IDDP/_apis/build/status/CI/Java/MSAL%20Java%20CI%20Build?branchName=dev)](https://identitydivision.visualstudio.com/IDDP/_build/latest?definitionId=762)| [![Javadocs](http://javadoc.io/badge/com.microsoft.azure/msal4j.svg)](http://javadoc.io/doc/com.microsoft.azure/msal4j)
 
-The Microsoft Authentication Library for Java (MSAL4J) enables applications to integrate with the [Microsoft identity platform](https://aka.ms/aaddevv2). It allows you to sign in users or apps with Microsoft identities (Azure AD, Microsoft accounts and Azure AD B2C accounts) and obtain tokens to call Microsoft APIs such as [Microsoft Graph](https://graph.microsoft.io/) or your own APIs registered with the Microsoft identity platform. It is built using industry standard OAuth2 and OpenID Connect protocols.
+The Microsoft Authentication Library for Java (MSAL4J) enables applications to integrate with the [Microsoft identity platform](https://docs.microsoft.com/en-us/azure/active-directory/develop/). It allows you to sign in users or apps with Microsoft identities (Azure AD, Microsoft accounts and Azure AD B2C accounts) and obtain tokens to call Microsoft APIs such as [Microsoft Graph](https://graph.microsoft.io/) or your own APIs registered with the Microsoft identity platform. It is built using industry standard OAuth2 and OpenID Connect protocols.
 
 Quick links:
 
-| [Getting Started](https://docs.microsoft.com/azure/active-directory/develop/quickstart-v2-java-webapp) | [Docs](https://github.com/AzureAD/microsoft-authentication-library-for-java/wiki) | [Samples](https://aka.ms/aaddevsamplesv2) | [Support](README.md#community-help-and-support) | [Feedback](https://forms.office.com/r/6AhHwQp3pe)
+| [Getting Started](https://docs.microsoft.com/en-us/azure/active-directory/develop/web-app-quickstart?pivots=devlang-java) | [Home](https://github.com/AzureAD/microsoft-authentication-library-for-java/wiki) | [Samples](https://github.com/Azure-Samples/ms-identity-msal-java-samples) | [Support](README.md#community-help-and-support) | [Feedback](https://forms.office.com/r/6AhHwQp3pe)
 | --- | --- | --- | --- | --- |
 
 ## Install
@@ -16,7 +16,7 @@ Quick links:
 The library supports the following Java environments:
 - Java 8 (or higher)
 
-Current version - 1.11.3
+Current version - 1.12.0
 
 You can find the changes for each version in the [change log](https://github.com/AzureAD/microsoft-authentication-library-for-java/blob/master/changelog.txt).
 
@@ -28,12 +28,12 @@ Find [the latest package in the Maven repository](https://mvnrepository.com/arti
 <dependency>
     <groupId>com.microsoft.azure</groupId>
     <artifactId>msal4j</artifactId>
-    <version>1.11.3</version>
+    <version>1.12.0</version>
 </dependency>
 ```
 ### Gradle
 
-compile group: 'com.microsoft.azure', name: 'msal4j', version: '1.11.3'
+compile group: 'com.microsoft.azure', name: 'msal4j', version: '1.12.0'
 
 ## Usage
 
@@ -58,7 +58,7 @@ This project has adopted the Microsoft Open Source Code of Conduct. For more inf
 
 ## Samples and Documentation
 
-We provide a [full suite of sample applications](https://aka.ms/aaddevsamplesv2) and [documentation](https://aka.ms/aaddevv2) to help you get started with learning the Microsoft identity platform.
+We provide a [full suite of sample applications](https://aka.ms/aaddevsamplesv2) and [documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/) to help you get started with learning the Microsoft identity platform.
 
 ## Community Help and Support
 

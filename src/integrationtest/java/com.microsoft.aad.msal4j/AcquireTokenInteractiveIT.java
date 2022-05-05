@@ -167,19 +167,35 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         Assert.assertNotEquals(pca.authenticationAuthority.host, result.environment());
         Assert.assertEquals(result.account().environment(), result.environment());
         Assert.assertEquals(result.account().environment(), pca.getAccounts().join().iterator().next().environment());
+
+        IAuthenticationResult cachedResult;
+        try {
+            cachedResult = acquireTokenSilently(pca, result.account(), cfg.graphDefaultScope());
+        } catch (Exception ex) {
+            throw new RuntimeException(ex.getMessage());
+        }
+
+        //Ensure that the cached environment matches the original auth result environment (.us) instead of the client app's (.com)
+        Assert.assertEquals(result.account().environment(), cachedResult.environment());
     }
 
     @Test
     public void acquireTokensInHomeAndGuestClouds_ArlingtonAccount() throws MalformedURLException, ExecutionException, InterruptedException {
-        acquireTokensInHomeAndGuestClouds(AzureEnvironment.AZURE_US_GOVERNMENT, TestConstants.AUTHORITY_ARLINGTON);
+        acquireTokensInHomeAndGuestClouds(AzureEnvironment.AZURE_US_GOVERNMENT);
     }
 
     @Test
     public void acquireTokensInHomeAndGuestClouds_MooncakeAccount() throws MalformedURLException, ExecutionException, InterruptedException {
-        acquireTokensInHomeAndGuestClouds(AzureEnvironment.AZURE_CHINA, TestConstants.AUTHORITY_MOONCAKE);
+        acquireTokensInHomeAndGuestClouds(AzureEnvironment.AZURE_CHINA);
     }
 
-    public void acquireTokensInHomeAndGuestClouds(String homeCloud, String homeCloudAuthority) throws MalformedURLException, ExecutionException, InterruptedException {
+    private IAuthenticationResult acquireTokenSilently(IPublicClientApplication pca, IAccount account, String scope) throws InterruptedException, ExecutionException, MalformedURLException {
+        return pca.acquireTokenSilently(SilentParameters.builder(Collections.singleton(scope), account)
+                .build())
+                .get();
+    }
+
+    public void acquireTokensInHomeAndGuestClouds(String homeCloud) throws MalformedURLException {
 
         User user = labUserProvider.getUserByGuestHomeAzureEnvironments
                 (AzureEnvironment.AZURE, homeCloud);

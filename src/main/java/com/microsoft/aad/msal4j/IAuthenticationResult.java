@@ -3,10 +3,12 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.io.Serializable;
+
 /**
  * Interface representing the results of token acquisition operation.
  */
-public interface IAuthenticationResult {
+public interface IAuthenticationResult extends Serializable {
 
     /**
      * @return access token

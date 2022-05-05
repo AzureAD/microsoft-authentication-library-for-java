@@ -36,7 +36,12 @@ public enum Prompt {
     /**
      * An administrator should be prompted to consent on behalf of all users in their organization.
      */
-    ADMIN_CONSENT("admin_consent");
+    ADMIN_CONSENT("admin_consent"),
+
+    /**
+     * User will not be shown an interactive prompt
+     */
+    NONE("none");
 
     private String prompt;
 
