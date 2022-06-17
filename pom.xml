@@ -36,7 +36,7 @@
         <dependency>
             <groupId>com.nimbusds</groupId>
             <artifactId>oauth2-oidc-sdk</artifactId>
-            <version>9.32</version>
+            <version>9.35</version>
         </dependency>
         <dependency>
             <groupId>net.minidev</groupId>
