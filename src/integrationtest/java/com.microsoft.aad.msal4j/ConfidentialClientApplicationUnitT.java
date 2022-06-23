@@ -30,7 +30,9 @@ import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.concurrent.Future;
+import java.util.function.Function;
 
+import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 import static org.easymock.EasyMock.*;
 import static org.testng.Assert.*;
 
@@ -277,12 +279,10 @@ public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
                 PublicApi.ACQUIRE_TOKEN_FOR_CLIENT,
                 clientCredentials);
 
-        ClientCredentialRequest clientCredentialRequest =
-                new ClientCredentialRequest(
+        return new ClientCredentialRequest(
                         clientCredentials,
                         app,
                         requestContext);
-        return clientCredentialRequest;
     }
 
     @Test(expectedExceptions = MsalClientException.class)
@@ -296,6 +296,82 @@ public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
 
         ConfidentialClientApplication.builder(TestConfiguration.AAD_CLIENT_ID, iClientCredential).authority(TestConfiguration.AAD_TENANT_ENDPOINT).build();
 
+    }
+
+    @Test
+    public void validateAppTokenProviderAsync() throws Exception{
+
+        SignedJWT jwt = createClientAssertion("issuer");
+
+        ClientAssertion clientAssertion = new ClientAssertion(jwt.serialize());
+
+        IClientCredential iClientCredential = ClientCredentialFactory.createFromClientAssertion(
+                clientAssertion.assertion());
+
+        //builds client with AppTokenProvider
+        ConfidentialClientApplication cca = ConfidentialClientApplication.
+                builder(TestConfiguration.AAD_CLIENT_ID, iClientCredential)
+                .appTokenProvider((parameters) -> {
+                    Assert.assertNotNull(parameters.scopes);
+                    Assert.assertNotNull(parameters.correlationId);
+                    Assert.assertNotNull(parameters.tenantId);
+                    return getAppTokenProviderResult("/default");
+                })
+                .build();
+
+        IAuthenticationResult result1 = cca.acquireToken(ClientCredentialParameters
+                        .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                        .tenant("tenant1")
+                        .build())
+                .get();
+
+        Assert.assertNotNull(result1.accessToken());
+
+        Assert.assertEquals(cca.tokenCache.accessTokens.size(), 1);
+
+        //Acquire token from cache
+
+        IAuthenticationResult result2 = cca.acquireToken(ClientCredentialParameters
+                        .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                        .build())
+                .get();
+
+        Assert.assertEquals(result1.accessToken(), result2.accessToken());
+
+        Assert.assertEquals(cca.tokenCache.accessTokens.size(), 1);
+
+        cca = ConfidentialClientApplication.
+                builder(TestConfiguration.AAD_CLIENT_ID, iClientCredential)
+                .appTokenProvider((parameters) -> {
+                    Assert.assertNotNull(parameters.scopes);
+                    Assert.assertNotNull(parameters.correlationId);
+                    Assert.assertNotNull(parameters.tenantId);
+                    return getAppTokenProviderResult("/newScope");
+                })
+                .build();
+
+        IAuthenticationResult result3 = cca.acquireToken(ClientCredentialParameters
+                        .builder(Collections.singleton("/newScope"))
+                                .tenant("tenant1")
+//                        .claims(new ClaimsRequest().formatAsClaimsRequest(TestConstants.CLAIMS))
+                        .build())
+                .get();
+
+        Assert.assertNotEquals(result2.accessToken(), result3.accessToken());
+        Assert.assertEquals(cca.tokenCache.accessTokens.size(), 1);
+
+    }
+
+    private TokenProviderResult getAppTokenProviderResult(String differentScopesForAt)
+    {
+        long currTimestampSec = new Date().getTime() / 1000;
+        TokenProviderResult token = new TokenProviderResult();
+        token.setAccessToken(TestConstants.DEFAULT_ACCESS_TOKEN + differentScopesForAt); //Used to indicate that there is a new access token for a different set of scopes
+        token.setTenantId("tenantId");
+        token.setExpiresInSeconds(currTimestampSec + 1000000);
+        token.setRefreshInSeconds(currTimestampSec + 800000);
+
+        return token;
     }
 
     private SignedJWT createClientAssertion(String issuer) throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException, UnrecoverableKeyException, NoSuchProviderException, JOSEException {
