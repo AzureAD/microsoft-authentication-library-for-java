@@ -5,12 +5,13 @@ package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.ClientCredentialsGrant;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 class ClientCredentialRequest extends MsalRequest {
 
     ClientCredentialParameters parameters;
-    Function<AppTokenProviderParameters, TokenProviderResult> appTokenProvider;
+    Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> appTokenProvider;
 
     ClientCredentialRequest(ClientCredentialParameters parameters,
                             ConfidentialClientApplication application,
@@ -23,7 +24,7 @@ class ClientCredentialRequest extends MsalRequest {
     ClientCredentialRequest(ClientCredentialParameters parameters,
                             ConfidentialClientApplication application,
                             RequestContext requestContext,
-                            Function<AppTokenProviderParameters, TokenProviderResult> appTokenProvider) {
+                            Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> appTokenProvider) {
         super(application, createMsalGrant(parameters), requestContext);
         this.parameters = parameters;
         this.appTokenProvider = appTokenProvider;

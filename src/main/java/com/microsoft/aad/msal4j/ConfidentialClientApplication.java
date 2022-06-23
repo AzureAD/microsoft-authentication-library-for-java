@@ -34,7 +34,7 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
     private boolean clientCertAuthentication = false;
     private ClientCertificate clientCertificate;
 
-    public Function<AppTokenProviderParameters, TokenProviderResult> appTokenProvider;
+    public Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> appTokenProvider;
 
     @Accessors(fluent = true)
     @Getter
@@ -167,7 +167,7 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
 
         private boolean sendX5c = true;
 
-        private Function<AppTokenProviderParameters, TokenProviderResult> appTokenProvider;
+        private Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> appTokenProvider;
 
         private Builder(String clientId, IClientCredential clientCredential) {
             super(clientId);
@@ -196,7 +196,7 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
         /// </summary>
         /// <param name="appTokenProvider">Authentication callback which returns an access token.</param>
         /// <returns>The builder to chain the .With methods</returns>
-        public ConfidentialClientApplication.Builder appTokenProvider(Function<AppTokenProviderParameters, TokenProviderResult> appTokenProvider){
+        public ConfidentialClientApplication.Builder appTokenProvider(Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> appTokenProvider){
             if(appTokenProvider!=null){
                 this.appTokenProvider = appTokenProvider;
                 return self();

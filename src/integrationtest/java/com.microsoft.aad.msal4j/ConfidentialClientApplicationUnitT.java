@@ -29,6 +29,7 @@ import java.net.URLEncoder;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.Function;
 
@@ -362,7 +363,7 @@ public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
 
     }
 
-    private TokenProviderResult getAppTokenProviderResult(String differentScopesForAt)
+    private CompletableFuture<TokenProviderResult> getAppTokenProviderResult(String differentScopesForAt)
     {
         long currTimestampSec = new Date().getTime() / 1000;
         TokenProviderResult token = new TokenProviderResult();
@@ -371,7 +372,7 @@ public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
         token.setExpiresInSeconds(currTimestampSec + 1000000);
         token.setRefreshInSeconds(currTimestampSec + 800000);
 
-        return token;
+        return CompletableFuture.completedFuture(token);
     }
 
     private SignedJWT createClientAssertion(String issuer) throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException, UnrecoverableKeyException, NoSuchProviderException, JOSEException {

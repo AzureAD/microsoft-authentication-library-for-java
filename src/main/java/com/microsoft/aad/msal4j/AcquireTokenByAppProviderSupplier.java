@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 class AcquireTokenByAppProviderSupplier extends AuthenticationResultSupplier {
@@ -53,12 +54,11 @@ class AcquireTokenByAppProviderSupplier extends AuthenticationResultSupplier {
         return authenticationResult;
     }
 
-    public AuthenticationResult fetchTokenUsingAppTokenProvider(AppTokenProviderParameters appTokenProviderParameters) {
+    public AuthenticationResult fetchTokenUsingAppTokenProvider(AppTokenProviderParameters appTokenProviderParameters) throws ExecutionException, InterruptedException {
 
-//        CompletableFuture<TokenProviderResult> completableFuture =
-//                CompletableFuture.supplyAsync(() -> this.clientCredentialRequest.appTokenProvider.apply(appTokenProviderParameters));
+        CompletableFuture<TokenProviderResult> completableFuture = this.clientCredentialRequest.appTokenProvider.apply(appTokenProviderParameters);
 
-        TokenProviderResult tokenProviderResult = this.clientCredentialRequest.appTokenProvider.apply(appTokenProviderParameters);
+        TokenProviderResult tokenProviderResult = completableFuture.get();
 
         validateTokenProviderResult(tokenProviderResult);
 
