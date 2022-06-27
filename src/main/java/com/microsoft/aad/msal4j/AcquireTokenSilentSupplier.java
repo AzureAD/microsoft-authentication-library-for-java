@@ -3,9 +3,12 @@
 
 package com.microsoft.aad.msal4j;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.net.URL;
 import java.util.Date;
 
+@Slf4j
 class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
 
     private SilentRequest silentRequest;
@@ -104,6 +107,8 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
         if (res == null || StringHelper.isBlank(res.accessToken())) {
             throw new MsalClientException(AuthenticationErrorMessage.NO_TOKEN_IN_CACHE, AuthenticationErrorCode.CACHE_MISS);
         }
+
+        log.info("Returning token from cache");
 
         return res;
     }
