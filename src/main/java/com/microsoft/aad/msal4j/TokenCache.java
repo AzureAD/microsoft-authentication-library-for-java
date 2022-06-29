@@ -207,8 +207,10 @@ public class TokenCache implements ITokenCache {
                     idTokens.put(idTokenEntity.getKey(), idTokenEntity);
 
                     AccountCacheEntity accountCacheEntity = authenticationResult.accountCacheEntity();
-                    accountCacheEntity.environment(environment);
-                    accounts.put(accountCacheEntity.getKey(), accountCacheEntity);
+                    if(accountCacheEntity!=null) {
+                        accountCacheEntity.environment(environment);
+                        accounts.put(accountCacheEntity.getKey(), accountCacheEntity);
+                    }
                 }
             } finally {
                 lock.writeLock().unlock();
@@ -534,6 +536,18 @@ public class TokenCache implements ITokenCache {
     }
 
     private Optional<RefreshTokenCacheEntity> getRefreshTokenCacheEntity(
+            String clientId,
+            Set<String> environmentAliases,
+            String userAssertionHash) {
+        return refreshTokens.values().stream().filter(
+                refreshToken ->
+                        userAssertionHashMatches(refreshToken, userAssertionHash) &&
+                                environmentAliases.contains(refreshToken.environment) &&
+                                refreshToken.clientId.equals(clientId)
+        ).findAny();
+    }
+
+    private Optional<RefreshTokenCacheEntity> getRefreshTokenCacheEntity(
             IAccount account,
             String clientId,
             Set<String> environmentAliases) {
@@ -683,6 +697,11 @@ public class TokenCache implements ITokenCache {
                         getIdTokenCacheEntity(authority, clientId, environmentAliases, userAssertionHash);
 
                 idTokenCacheEntity.ifPresent(tokenCacheEntity -> builder.idToken(tokenCacheEntity.secret));
+
+                Optional<RefreshTokenCacheEntity> rtCacheEntity = getRefreshTokenCacheEntity(clientId, environmentAliases, userAssertionHash);
+
+                rtCacheEntity.ifPresent(refreshTokenCacheEntity ->
+                        builder.refreshToken(refreshTokenCacheEntity.secret));
             } finally {
                 lock.readLock().unlock();
             }

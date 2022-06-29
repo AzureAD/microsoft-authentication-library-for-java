@@ -3,13 +3,9 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.jose.JOSEObject;
-import com.nimbusds.jose.util.Base64URL;
-import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.auth.*;
 import com.nimbusds.oauth2.sdk.id.ClientID;
-import com.nimbusds.oauth2.sdk.util.MultivaluedMapUtils;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.slf4j.LoggerFactory;
@@ -20,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 
@@ -33,9 +30,11 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 public class ConfidentialClientApplication extends AbstractClientApplicationBase implements IConfidentialClientApplication {
 
     private ClientAuthentication clientAuthentication;
-    private CustomJWTAuthentication customJWTAuthentication;
+
     private boolean clientCertAuthentication = false;
     private ClientCertificate clientCertificate;
+
+    public Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> appTokenProvider;
 
     @Accessors(fluent = true)
     @Getter
@@ -54,7 +53,8 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
                 new ClientCredentialRequest(
                         parameters,
                         this,
-                        context);
+                        context,
+                        appTokenProvider);
 
         return this.executeRequest(clientCredentialRequest);
     }
@@ -79,6 +79,7 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
     private ConfidentialClientApplication(Builder builder) {
         super(builder);
         sendX5c = builder.sendX5c;
+        appTokenProvider = builder.appTokenProvider;
 
         log = LoggerFactory.getLogger(ConfidentialClientApplication.class);
 
@@ -166,6 +167,8 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
 
         private boolean sendX5c = true;
 
+        private Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> appTokenProvider;
+
         private Builder(String clientId, IClientCredential clientCredential) {
             super(clientId);
             this.clientCredential = clientCredential;
@@ -182,6 +185,24 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
             this.sendX5c = val;
 
             return self();
+        }
+
+        /// <summary>
+        /// Allows setting a callback which returns an access token, based on the passed-in parameters.
+        /// MSAL will pass in its authentication parameters to the callback and it is expected that the callback
+        /// will construct a <see cref="TokenProviderResult"/> and return it to MSAL.
+        /// MSAL will cache the token response the same way it does for other authentication results.
+        /// Note: This is only for client credential flows.
+        /// </summary>
+        /// <param name="appTokenProvider">Authentication callback which returns an access token.</param>
+        /// <returns>The builder to chain the .With methods</returns>
+        public ConfidentialClientApplication.Builder appTokenProvider(Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> appTokenProvider){
+            if(appTokenProvider!=null){
+                this.appTokenProvider = appTokenProvider;
+                return self();
+            }
+
+            throw new NullPointerException("appTokenProvider is null") ;
         }
 
         @Override
