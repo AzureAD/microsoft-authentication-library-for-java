@@ -1,3 +1,9 @@
+Version 1.13.0
+=============
+- Provide token caching functionality for managed identity tokens
+- Updates for obo-for-service-principal scenarios
+- version updates for nimbusds-oauth2 library
+
 Version 1.12.0
 =============
 - Updates several dependencies to avoid security vulnerabilities
