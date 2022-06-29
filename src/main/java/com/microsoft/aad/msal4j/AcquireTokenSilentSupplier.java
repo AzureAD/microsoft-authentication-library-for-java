@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
+
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URL;
