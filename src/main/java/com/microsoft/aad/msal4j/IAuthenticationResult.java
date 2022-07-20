@@ -44,4 +44,12 @@ public interface IAuthenticationResult extends Serializable {
      * @return access token expiration date
      */
     java.util.Date expiresOnDate();
+    
+    /**
+     * @return refresh token
+     */
+    default String refreshToken()
+    {
+    	throw new UnsupportedOperationException();
+    }
 }
