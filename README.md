@@ -24,7 +24,7 @@ You can get the msal4j package through Maven or Gradle.
 
 ### Maven
 Find [the latest package in the Maven repository](https://mvnrepository.com/artifact/com.microsoft.azure/msal4j).
-```
+```xml
 <dependency>
     <groupId>com.microsoft.azure</groupId>
     <artifactId>msal4j</artifactId>
@@ -33,7 +33,9 @@ Find [the latest package in the Maven repository](https://mvnrepository.com/arti
 ```
 ### Gradle
 
+```gradle
 compile group: 'com.microsoft.azure', name: 'msal4j', version: '1.13.0'
+```
 
 ## Usage
 
