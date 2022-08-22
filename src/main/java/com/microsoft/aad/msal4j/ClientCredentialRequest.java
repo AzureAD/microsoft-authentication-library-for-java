@@ -11,6 +11,9 @@ import java.util.function.Function;
 class ClientCredentialRequest extends MsalRequest {
 
     ClientCredentialParameters parameters;
+    /** AppTokenProvider creates a Credential from a function that provides access tokens. The function
+       must be concurrency safe. This is intended only to allow the Azure SDK to cache MSI tokens. It isn't
+     useful to applications in general because the token provider must implement all authentication logic. */
     Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> appTokenProvider;
 
     ClientCredentialRequest(ClientCredentialParameters parameters,

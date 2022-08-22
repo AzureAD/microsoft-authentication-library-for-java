@@ -34,6 +34,9 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
     private boolean clientCertAuthentication = false;
     private ClientCertificate clientCertificate;
 
+    /** AppTokenProvider creates a Credential from a function that provides access tokens. The function
+     must be concurrency safe. This is intended only to allow the Azure SDK to cache MSI tokens. It isn't
+     useful to applications in general because the token provider must implement all authentication logic. */
     public Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> appTokenProvider;
 
     @Accessors(fluent = true)
