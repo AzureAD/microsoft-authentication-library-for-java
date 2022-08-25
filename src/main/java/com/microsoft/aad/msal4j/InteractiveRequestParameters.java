@@ -91,6 +91,11 @@ public class InteractiveRequestParameters implements IAcquireTokenParameters {
      */
     private boolean instanceAware;
 
+    //TODO: javadocs
+    //TODO: not needed? Would only be used to override publlicapp.allowBroker on a certain request
+    private boolean useBroker;
+
+
     private static InteractiveRequestParametersBuilder builder() {
         return new InteractiveRequestParametersBuilder();
     }

@@ -6,6 +6,8 @@ package com.microsoft.aad.msal4j;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod;
 import com.nimbusds.oauth2.sdk.id.ClientID;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
@@ -23,6 +25,12 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 public class PublicClientApplication extends AbstractClientApplicationBase implements IPublicClientApplication {
 
     private final ClientAuthenticationPost clientAuthentication;
+    @Accessors(fluent = true)
+    @Getter
+    private Boolean allowBroker; //TODO: javadocs explaining what this enables
+
+    //TODO: decide whether to allow devs to add a custom path, or just use some default
+    private String msalruntimePath;
 
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(UserNamePasswordParameters parameters) {
@@ -123,6 +131,7 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
         log = LoggerFactory.getLogger(PublicClientApplication.class);
         this.clientAuthentication = new ClientAuthenticationPost(ClientAuthenticationMethod.NONE,
                 new ClientID(clientId()));
+        allowBroker = builder.allowBroker;
     }
 
     @Override
@@ -142,6 +151,8 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
 
     public static class Builder extends AbstractClientApplicationBase.Builder<Builder> {
 
+        private boolean allowBroker = false;
+
         private Builder(String clientId) {
             super(clientId);
         }
@@ -150,6 +161,13 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
         public PublicClientApplication build() {
 
             return new PublicClientApplication(this);
+        }
+
+        //TODO: javadocs
+        public Builder allowBroker(Boolean val) {
+            this.allowBroker = val;
+
+            return self();
         }
 
         @Override

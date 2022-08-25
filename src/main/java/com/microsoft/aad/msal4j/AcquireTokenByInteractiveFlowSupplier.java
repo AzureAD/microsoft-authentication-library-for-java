@@ -34,9 +34,35 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
 
     @Override
     AuthenticationResult execute() throws Exception {
-        AuthorizationResult authorizationResult = getAuthorizationResult();
-        validateState(authorizationResult);
-        return acquireTokenWithAuthorizationCode(authorizationResult);
+        if (clientApplication.allowBroker()) {
+            try {
+                Account account;
+                IBroker broker = new MSALRuntimeBroker();//TODO: need to figure out how to conditionally check if an IBroker implementation exists
+                try {
+                    account = broker.signInSilently(clientApplication, interactiveRequest.interactiveRequestParameters());
+                } catch (Exception e) { //TODO: determine MSALRuntime ResponseStatus that say interactive is needed
+                    account = broker.signInInteractively(clientApplication, interactiveRequest.interactiveRequestParameters());
+                }
+                if (account != null) {
+                    try {
+                        return broker.acquireTokenSilently(clientApplication, interactiveRequest.interactiveRequestParameters(), account);
+                    } catch (Exception e) { //TODO: determine MSALRuntime ResponseStatus that say interactive is needed
+                        return broker.acquireTokenInteractively(clientApplication, interactiveRequest.interactiveRequestParameters(), account);
+                    }
+                } else {
+                    throw new MsalClientException(null, null); //TODO: handle when to fallback (broker can't be used) and when to throw an exception (broker used incorrectly/can try again)
+                }
+            } catch (Exception e) {
+                //TODO: If broker falls, can we just fallback to non-broker flow? Any other logic needed?
+                AuthorizationResult authorizationResult = getAuthorizationResult();
+                validateState(authorizationResult);
+                return acquireTokenWithAuthorizationCode(authorizationResult);
+            }
+        } else {
+            AuthorizationResult authorizationResult = getAuthorizationResult();
+            validateState(authorizationResult);
+            return acquireTokenWithAuthorizationCode(authorizationResult);
+       }
     }
 
     private AuthorizationResult getAuthorizationResult() {
