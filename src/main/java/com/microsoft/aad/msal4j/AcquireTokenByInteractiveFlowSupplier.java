@@ -36,20 +36,12 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
     AuthenticationResult execute() throws Exception {
         if (clientApplication.allowBroker()) {
             try {
-                Account account;
-                IBroker broker = new MSALRuntimeBroker();//TODO: need to figure out how to conditionally check if an IBroker implementation exists
+
                 try {
-                    account = broker.signInSilently(clientApplication, interactiveRequest.interactiveRequestParameters());
-                } catch (Exception e) { //TODO: determine MSALRuntime ResponseStatus that say interactive is needed
-                    account = broker.signInInteractively(clientApplication, interactiveRequest.interactiveRequestParameters());
-                }
-                if (account != null) {
-                    try {
-                        return broker.acquireTokenSilently(clientApplication, interactiveRequest.interactiveRequestParameters(), account);
-                    } catch (Exception e) { //TODO: determine MSALRuntime ResponseStatus that say interactive is needed
-                        return broker.acquireTokenInteractively(clientApplication, interactiveRequest.interactiveRequestParameters(), account);
-                    }
-                } else {
+                    // return IBroker.acquireToken(interactiveRequest); //TODO: best way to reference an interface with no implementation?
+                    WAMBroker broker = new WAMBroker();
+                    return  broker.acquireToken(interactiveRequest);
+                } catch (Exception e) {
                     throw new MsalClientException(null, null); //TODO: handle when to fallback (broker can't be used) and when to throw an exception (broker used incorrectly/can try again)
                 }
             } catch (Exception e) {

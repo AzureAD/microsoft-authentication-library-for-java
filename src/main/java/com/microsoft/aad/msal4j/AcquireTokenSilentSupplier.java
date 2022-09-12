@@ -30,17 +30,26 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
 
         AuthenticationResult res;
         if (silentRequest.parameters().account() == null) {
+            //TODO: unrelated to broker, I just realized: why the heck do we skip telemetry and refresh checks when not given an account?
             res = clientApplication.tokenCache.getCachedAuthenticationResult(
                     requestAuthority,
                     silentRequest.parameters().scopes(),
                     clientApplication.clientId(),
                     silentRequest.assertion());
         } else {
-            res = clientApplication.tokenCache.getCachedAuthenticationResult(
-                    silentRequest.parameters().account(),
-                    requestAuthority,
-                    silentRequest.parameters().scopes(),
-                    clientApplication.clientId());
+            //TODO: new exception handling for brokers returning null, as it may not always be a cache miss? Maybe put this if/else in a try/catch, and look for broker exceptions?
+            if (silentRequest.application() instanceof PublicClientApplication && ((PublicClientApplication) silentRequest.application()).allowBroker()) {
+                //If broker enabled, allow it to handle whatever is needed for a silent call
+               // res = IBroker.acquireToken(silentRequest); //TODO: best way to reference an interface with no implementation?
+                WAMBroker broker = new WAMBroker();
+                res = broker.acquireToken(silentRequest);
+            } else {
+                res = clientApplication.tokenCache.getCachedAuthenticationResult(
+                        silentRequest.parameters().account(),
+                        requestAuthority,
+                        silentRequest.parameters().scopes(),
+                        clientApplication.clientId());
+            }
 
             if (res == null) {
                 throw new MsalClientException(AuthenticationErrorMessage.NO_TOKEN_IN_CACHE, AuthenticationErrorCode.CACHE_MISS);

@@ -5,12 +5,16 @@ package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.RefreshTokenGrant;
 import com.nimbusds.oauth2.sdk.token.RefreshToken;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 
 import java.util.Set;
 import java.util.TreeSet;
 
 import static com.microsoft.aad.msal4j.Constants.POINT_DELIMITER;
 
+@Accessors(fluent = true)
+@Getter
 class RefreshTokenRequest extends MsalRequest {
 
     private SilentRequest parentSilentRequest;

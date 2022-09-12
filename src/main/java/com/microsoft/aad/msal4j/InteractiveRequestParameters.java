@@ -95,6 +95,9 @@ public class InteractiveRequestParameters implements IAcquireTokenParameters {
     //TODO: not needed? Would only be used to override publlicapp.allowBroker on a certain request
     private boolean useBroker;
 
+    //TODO: javadocs (used to pass in the window handle for the parent window to use in an MSALRuntime interactive request)
+    private long windowHandle;
+
 
     private static InteractiveRequestParametersBuilder builder() {
         return new InteractiveRequestParametersBuilder();
