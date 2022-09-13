@@ -125,12 +125,15 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
         AuthorizationResult result = null;
         try {
             LOG.debug("Listening for authorization result");
-            long expirationTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) + 120;
+            int requestPollingTimeout = interactiveRequest.interactiveRequestParameters().httpPollingTimeout();
 
-            while (result == null && !interactiveRequest.futureReference().get().isCancelled() &&
-                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) < expirationTime) {
+            long userSpecifiedPollingTimeout = requestPollingTimeout >= 0
+                    ? TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) + requestPollingTimeout
+                    : requestPollingTimeout;
+            int pollingIntervalMilli = 100;
 
-                result = authorizationResultQueue.poll(100, TimeUnit.MILLISECONDS);
+            while (continuePolling(result, userSpecifiedPollingTimeout)) {
+                result = authorizationResultQueue.poll(pollingIntervalMilli, TimeUnit.MILLISECONDS);
             }
         } catch (Exception e) {
             throw new MsalClientException(e);
@@ -141,6 +144,22 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
                     AuthenticationErrorCode.INVALID_AUTHORIZATION_RESULT);
         }
         return result;
+    }
+
+    private boolean continuePolling(AuthorizationResult result, long userSpecifiedPollingTimeout) {
+        if (result != null) {
+            LOG.debug("Authorization Result received, stop polling");
+            return false;
+        }
+        if (interactiveRequest.futureReference().get().isCancelled()) {
+            LOG.debug("Interactive request cancelled, stop polling");
+            return false;
+        }
+        if (userSpecifiedPollingTimeout < 0) {
+            LOG.debug("No polling timeout specified, continue polling");
+            return true;
+        }
+        return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) < userSpecifiedPollingTimeout;
     }
 
     private AuthenticationResult acquireTokenWithAuthorizationCode(AuthorizationResult authorizationResult)

@@ -86,6 +86,12 @@ public class InteractiveRequestParameters implements IAcquireTokenParameters {
     private String tenant;
 
     /**
+     * Overrides the default polling timeout value for this request, which is infinite
+     */
+    @Builder.Default
+    private int httpPollingTimeout = -1;
+
+    /**
      * If set to true, the authorization result will contain the authority for the user's home cloud, and this authority
      * will be used for the token request instead of the authority set in the application.
      */
