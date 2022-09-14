@@ -141,7 +141,7 @@ class AadInstanceDiscoveryProvider {
             } else {
                 //Avoid unnecessary warnings when looking for cached tokens by checking if request was a silent call
                 if (msalRequest.getClass() != SilentRequest.class) {
-                    log.warn("Regional endpoints are only available for client credential flow. Request will fall back to using the global endpoint.");
+                    log.warn("Regional endpoints are only available for client credential flow, request will fall back to using the global endpoint. See here for more information about supported scenarios: https://aka.ms/msal4j-azure-regions");
                 }
                 return false;
             }

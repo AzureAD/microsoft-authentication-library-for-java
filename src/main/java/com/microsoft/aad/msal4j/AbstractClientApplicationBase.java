@@ -613,6 +613,8 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
          * Although you can enable both autodetection here and a specific region with {@link AbstractClientApplicationBase#azureRegion} at the same time,
          * the region set with {@link AbstractClientApplicationBase#azureRegion} will take priority if there is a mismatch.
          *
+         * See here for more information about supported scenarios: https://aka.ms/msal4j-azure-regions
+         *
          * @param val boolean (default is false)
          * @return instance of the Builder on which method was called
          */
@@ -630,6 +632,8 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
          *
          * Although you can set a specific region here and enable autodetection with {@link AbstractClientApplicationBase#autoDetectRegion} at the same time
          * the specific region set here will take priority over the autodetected region if there is a mismatch.
+         *
+         * See here for more information about supported scenarios: https://aka.ms/msal4j-azure-regions
          *
          * @param val String region name
          * @return instance of the Builder on which method was called
