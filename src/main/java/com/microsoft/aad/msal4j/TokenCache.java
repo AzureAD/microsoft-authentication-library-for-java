@@ -648,8 +648,6 @@ public class TokenCache implements ITokenCache {
                 rtCacheEntity.ifPresent(refreshTokenCacheEntity ->
                         builder.refreshToken(refreshTokenCacheEntity.secret));
                 accountCacheEntity.ifPresent(builder::accountCacheEntity);
-
-                builder.tokenSource("cache");
             } finally {
                 lock.readLock().unlock();
             }
@@ -704,8 +702,6 @@ public class TokenCache implements ITokenCache {
 
                 rtCacheEntity.ifPresent(refreshTokenCacheEntity ->
                         builder.refreshToken(refreshTokenCacheEntity.secret));
-
-                builder.tokenSource("cache");
             } finally {
                 lock.readLock().unlock();
             }

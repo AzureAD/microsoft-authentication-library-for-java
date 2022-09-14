@@ -183,8 +183,7 @@ public class ClientCredentialsIT {
 
         Assert.assertNotNull(resultNoRegion);
         Assert.assertNotNull(resultNoRegion.accessToken());
-        Assert.assertEquals(resultNoRegion.tokenSource(), TestConstants.MICROSOFT_AUTHORITY + "/");
-        String noRegionTokenSource = resultNoRegion.tokenSource();
+        Assert.assertEquals(resultNoRegion.environment(), TestConstants.MICROSOFT_AUTHORITY_BASIC_HOST);
 
         //Ensure regional tokens are properly cached and retrievable
         IAuthenticationResult resultRegion = ccaRegion.acquireToken(ClientCredentialParameters
@@ -194,7 +193,7 @@ public class ClientCredentialsIT {
 
         Assert.assertNotNull(resultRegion);
         Assert.assertNotNull(resultRegion.accessToken());
-        Assert.assertEquals(resultRegion.tokenSource(), TestConstants.REGIONAL_MICROSOFT_AUTHORITY_WESTUS);
+        Assert.assertEquals(resultRegion.environment(), TestConstants.REGIONAL_MICROSOFT_AUTHORITY_BASIC_HOST_WESTUS);
 
         IAuthenticationResult resultRegionCached = ccaRegion.acquireToken(ClientCredentialParameters
                 .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))

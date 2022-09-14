@@ -34,6 +34,7 @@ class TokenRequestExecutor {
 
     AuthenticationResult executeTokenRequest() throws ParseException, IOException {
 
+        log.debug("Sending token request to: " + requestAuthority.canonicalAuthorityUrl());
         OAuthHttpRequest oAuthHttpRequest = createOauthHttpRequest();
         HTTPResponse oauthHttpResponse = oAuthHttpRequest.send();
         return createAuthenticationResultFromOauthHttpResponse(oauthHttpResponse);
@@ -139,7 +140,6 @@ class TokenRequestExecutor {
                     refreshOn(response.getRefreshIn() > 0 ? currTimestampSec + response.getRefreshIn() : 0).
                     accountCacheEntity(accountCacheEntity).
                     scopes(response.getScope()).
-                    tokenSource(requestAuthority.authority).
                     build();
 
         } else {

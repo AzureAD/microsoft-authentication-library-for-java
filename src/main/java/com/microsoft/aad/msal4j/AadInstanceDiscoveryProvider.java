@@ -57,7 +57,7 @@ class AadInstanceDiscoveryProvider {
                                                            ServiceBundle serviceBundle) {
         String host = authorityUrl.getHost();
 
-        if (useRegionalEndpoint(msalRequest)) {
+        if (shouldUseRegionalEndpoint(msalRequest)) {
             //Server side telemetry requires the result from region discovery when any part of the region API is used
             String detectedRegion = discoverRegion(msalRequest, serviceBundle);
 
@@ -129,13 +129,13 @@ class AadInstanceDiscoveryProvider {
     }
 
 
-    private static boolean useRegionalEndpoint(MsalRequest msalRequest){
+    private static boolean shouldUseRegionalEndpoint(MsalRequest msalRequest){
         if (msalRequest.application().azureRegion() != null || msalRequest.application().autoDetectRegion()){
             //This class type check is a quick and dirty fix to accommodate changes to the internal workings of the region API
             //
             //ESTS-R only supports a small, but growing, number of scenarios, and the original design failed silently whenever
-            // regions could not be used. To avoid a breaking change this check will allow supported flows to use regions,
-            //  and unsupported flows will continue to fall back to global, but with an added working
+            //  regions could not be used. To avoid a breaking change this check will allow supported flows to use regions,
+            //  and unsupported flows will continue to fall back to global, but with an added warning and a link to more info
             if (msalRequest.getClass() == ClientCredentialRequest.class) {
                 return true;
             } else {
@@ -301,6 +301,8 @@ class AadInstanceDiscoveryProvider {
             return null;
         } catch (Exception e) {
             //IMDS call failed, cannot find region
+            //The IMDS endpoint is only available from within an Azure environment, so the most common cause of this
+            //  exception will likely be java.net.SocketException: Network is unreachable: connect
             log.warn(String.format("Exception during call to local IMDS endpoint: %s", e.getMessage()));
             currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_FAILED_AUTODETECT.telemetryValue);
 

@@ -90,6 +90,4 @@ final class AuthenticationResult implements IAuthenticationResult {
     private final Date expiresOnDate = new Date(expiresOn * 1000);
 
     private final String scopes;
-
-    private final String tokenSource;
 }
