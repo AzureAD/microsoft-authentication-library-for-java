@@ -102,7 +102,7 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
 
     @Accessors(fluent = true)
     @Getter
-    private String azureRegion;
+    protected String azureRegion;
 
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(AuthorizationCodeParameters parameters) {
@@ -607,11 +607,11 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
 
         /**
          * Indicates that the library should attempt to discover the Azure region the application is running in when
-         * fetching the instance discovery metadata.
-         * <p>
-         * If the region is found, token requests will be sent to the regional ESTS endpoint rather than the global endpoint.
-         * If region information could not be found, the library will fall back to using the global endpoint, which is also
-         * the default behavior if this value is not set.
+         * fetching the instance discovery metadata. Regions can only be detected when running in an Azure environment,
+         * such as an Azure VM or other service, or if the environment has environment variable named REGION_NAME configured.
+         *
+         * Although you can enable both autodetection here and a specific region with {@link AbstractClientApplicationBase#azureRegion} at the same time,
+         * the region set with {@link AbstractClientApplicationBase#azureRegion} will take priority if there is a mismatch.
          *
          * @param val boolean (default is false)
          * @return instance of the Builder on which method was called
@@ -622,11 +622,14 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
         }
 
         /**
-         * Indicates that the library should attempt to fetch the instance discovery metadata from the specified Azure region.
-         * <p>
-         * If the region is valid, token requests will be sent to the regional ESTS endpoint rather than the global endpoint.
-         * If region information could not be verified, the library will fall back to using the global endpoint, which is also
-         * the default behavior if this value is not set.
+         * Set the region that the library will use to format authorities in token requests. If given a valid Azure region,
+         * the library will attempt to make token requests at a regional ESTS-R endpoint rather than the global ESTS endpoint.
+         *
+         * Regions must be valid Azure regions and their short names should be used, such as 'westus' for the West US Azure region,
+         * 'centralus' for the Central US Azure region, etc.
+         *
+         * Although you can set a specific region here and enable autodetection with {@link AbstractClientApplicationBase#autoDetectRegion} at the same time
+         * the specific region set here will take priority over the autodetected region if there is a mismatch.
          *
          * @param val String region name
          * @return instance of the Builder on which method was called

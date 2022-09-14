@@ -3,14 +3,13 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.http.HTTPResponse;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.Map;
@@ -22,9 +21,9 @@ class AadInstanceDiscoveryProvider {
     private final static String DEFAULT_TRUSTED_HOST = "login.microsoftonline.com";
     private final static String AUTHORIZE_ENDPOINT_TEMPLATE = "https://{host}/{tenant}/oauth2/v2.0/authorize";
     private final static String INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE = "https://{host}:{port}/common/discovery/instance";
-    private final static String INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE_WITH_REGION = "https://{region}.r.{host}:{port}/common/discovery/instance";
-    private final static String INSTANCE_DISCOVERY_SOVEREIGN_ENDPOINT_TEMPLATE_WITH_REGION = "https://{region}.{host}:{port}/common/discovery/instance";
     private final static String INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE = "?api-version=1.1&authorization_endpoint={authorizeEndpoint}";
+    private final static String HOST_TEMPLATE_WITH_REGION = "{region}.r.{host}";
+    private final static String SOVEREIGN_HOST_TEMPLATE_WITH_REGION = "{region}.{host}";
     private final static String REGION_NAME = "REGION_NAME";
     private final static int PORT_NOT_SET = -1;
     // For information of the current api-version refer: https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service#versioning
@@ -56,14 +55,35 @@ class AadInstanceDiscoveryProvider {
                                                            boolean validateAuthority,
                                                            MsalRequest msalRequest,
                                                            ServiceBundle serviceBundle) {
+        String host = authorityUrl.getHost();
 
-        InstanceDiscoveryMetadataEntry result = cache.get(authorityUrl.getHost());
+        if (useRegionalEndpoint(msalRequest)) {
+            //Server side telemetry requires the result from region discovery when any part of the region API is used
+            String detectedRegion = discoverRegion(msalRequest, serviceBundle);
+
+            if (msalRequest.application().azureRegion() != null) {
+                host = getRegionalizedHost(authorityUrl.getHost(), msalRequest.application().azureRegion());
+            }
+
+            //If region autodetection is enabled and a specific region not already set,
+            // set the application's region to the discovered region so that future requests can skip the IMDS endpoint call
+            if (msalRequest.application().azureRegion() == null && msalRequest.application().autoDetectRegion()) {
+                if (detectedRegion != null) {
+                    msalRequest.application().azureRegion = detectedRegion;
+                }
+            }
+            cacheRegionInstanceMetadata(authorityUrl.getHost(), msalRequest.application().azureRegion());
+            serviceBundle.getServerSideTelemetry().getCurrentRequest().regionOutcome(
+                    determineRegionOutcome(detectedRegion, msalRequest.application().azureRegion(), msalRequest.application().autoDetectRegion()));
+        }
+
+        InstanceDiscoveryMetadataEntry result = cache.get(host);
 
         if (result == null) {
             doInstanceDiscoveryAndCache(authorityUrl, validateAuthority, msalRequest, serviceBundle);
         }
 
-        return cache.get(authorityUrl.getHost());
+        return cache.get(host);
     }
 
     static Set<String> getAliases(String host) {
@@ -108,6 +128,68 @@ class AadInstanceDiscoveryProvider {
                 build());
     }
 
+
+    private static boolean useRegionalEndpoint(MsalRequest msalRequest){
+        if (msalRequest.application().azureRegion() != null || msalRequest.application().autoDetectRegion()){
+            //This class type check is a quick and dirty fix to accommodate changes to the internal workings of the region API
+            //
+            //ESTS-R only supports a small, but growing, number of scenarios, and the original design failed silently whenever
+            // regions could not be used. To avoid a breaking change this check will allow supported flows to use regions,
+            //  and unsupported flows will continue to fall back to global, but with an added working
+            if (msalRequest.getClass() == ClientCredentialRequest.class) {
+                return true;
+            } else {
+                //Avoid unnecessary warnings when looking for cached tokens by checking if request was a silent call
+                if (msalRequest.getClass() != SilentRequest.class) {
+                    log.warn("Regional endpoints are only available for client credential flow. Request will fall back to using the global endpoint.");
+                }
+                return false;
+            }
+        }
+        return false;
+    }
+
+    static void cacheRegionInstanceMetadata(String host, String region) {
+
+        Set<String> aliases = new HashSet<>();
+        aliases.add(host);
+        String regionalHost = getRegionalizedHost(host, region);
+
+        cache.putIfAbsent(regionalHost, InstanceDiscoveryMetadataEntry.builder().
+                preferredCache(host).
+                preferredNetwork(regionalHost).
+                aliases(aliases).
+                build());
+    }
+
+    private static String getRegionalizedHost(String host, String region) {
+        String regionalizedHost;
+
+        if (region == null){
+            return host;
+        }
+
+        //Cached calls may already have the regionalized authority, so if region info is already in the host just return as-is
+        if (host.contains(region)) {
+            return host;
+        }
+
+        //Basic Microsoft authority hosts (login.microsoftonline.com, login.windows.net, etc.) follow one regional URL template,
+        //  whereas sovereign cloud endpoints and any non-Microsoft authorities are assumed to follow another template
+        if (TRUSTED_HOSTS_SET.contains(host) && !TRUSTED_SOVEREIGN_HOSTS_SET.contains(host)){
+            regionalizedHost = HOST_TEMPLATE_WITH_REGION.
+                    replace("{region}", region).
+                    replace("{host}", host);
+
+        } else {
+            regionalizedHost = SOVEREIGN_HOST_TEMPLATE_WITH_REGION.
+                    replace("{region}", region).
+                    replace("{host}", host);
+        }
+
+        return regionalizedHost;
+    }
+
     private static String getAuthorizeEndpoint(String host, String tenant) {
         return AUTHORIZE_ENDPOINT_TEMPLATE.
                 replace("{host}", host).
@@ -129,101 +211,40 @@ class AadInstanceDiscoveryProvider {
                 replace("{port}", String.valueOf(port));
     }
 
-    private static String getInstanceDiscoveryEndpointWithRegion(URL authorityUrl, String region) {
-
-        String discoveryHost = TRUSTED_HOSTS_SET.contains(authorityUrl.getHost()) ?
-                authorityUrl.getHost() :
-                DEFAULT_TRUSTED_HOST;
-
-        int port = authorityUrl.getPort() == PORT_NOT_SET ?
-                authorityUrl.getDefaultPort() :
-                authorityUrl.getPort();
-
-        if (TRUSTED_SOVEREIGN_HOSTS_SET.contains(authorityUrl.getHost())) {
-            return INSTANCE_DISCOVERY_SOVEREIGN_ENDPOINT_TEMPLATE_WITH_REGION.
-                    replace("{region}", region).
-                    replace("{host}", discoveryHost).
-                    replace("{port}", String.valueOf(port));
-        } else {
-            return INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE_WITH_REGION.
-                    replace("{region}", region).
-                    replace("{host}", discoveryHost).
-                    replace("{port}", String.valueOf(port));
-        }
-    }
-
-
     private static AadInstanceDiscoveryResponse sendInstanceDiscoveryRequest(URL authorityUrl,
                                                                              MsalRequest msalRequest,
                                                                              ServiceBundle serviceBundle) {
 
         IHttpResponse httpResponse = null;
-        String providedRegion = msalRequest.application().azureRegion();
-        String detectedRegion = null;
-        int regionOutcomeTelemetryValue = 0;
-        String regionToUse = null;
 
-        //If a region was provided by a developer or they set the autoDetectRegion parameter,
-        // attempt to discover the region and set telemetry info based on the outcome
-        if (providedRegion != null) {
-            detectedRegion = discoverRegion(msalRequest, serviceBundle);
-            regionToUse = providedRegion;
-            regionOutcomeTelemetryValue = determineRegionOutcome(detectedRegion, providedRegion, msalRequest.application().autoDetectRegion());
-        } else if (msalRequest.application().autoDetectRegion()) {
-            detectedRegion = discoverRegion(msalRequest, serviceBundle);
+        String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpoint(authorityUrl) +
+                formInstanceDiscoveryParameters(authorityUrl);
 
-            if (detectedRegion != null) {
-                regionToUse = detectedRegion;
-            }
-
-            regionOutcomeTelemetryValue = determineRegionOutcome(detectedRegion, providedRegion, msalRequest.application().autoDetectRegion());
-        }
-
-        //If the region is known, attempt to make instance discovery request with region endpoint
-        if (regionToUse != null) {
-            String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpointWithRegion(authorityUrl, regionToUse) +
-                    formInstanceDiscoveryParameters(authorityUrl);
-
-            try {
-                httpResponse = executeRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
-            } catch (MsalClientException ex) {
-                log.warn("Could not retrieve regional instance discovery metadata, falling back to global endpoint");
-            }
-        }
-
-        //If the region is unknown or the instance discovery failed at the region endpoint, try the global endpoint
-        if ((detectedRegion == null && providedRegion == null) || httpResponse == null || httpResponse.statusCode() != HTTPResponse.SC_OK) {
-
-            String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpoint(authorityUrl) +
-                    formInstanceDiscoveryParameters(authorityUrl);
-
-            httpResponse = executeRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
-        }
+        httpResponse = executeRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
 
         if (httpResponse.statusCode() != HttpHelper.HTTP_STATUS_200) {
             throw MsalServiceExceptionFactory.fromHttpResponse(httpResponse);
         }
 
-        serviceBundle.getServerSideTelemetry().getCurrentRequest().regionOutcome(regionOutcomeTelemetryValue);
 
         return JsonHelper.convertJsonToObject(httpResponse.body(), AadInstanceDiscoveryResponse.class);
     }
 
     private static int determineRegionOutcome(String detectedRegion, String providedRegion, boolean autoDetect) {
-        int regionOutcomeTelemetryValue = 0;
-        if (providedRegion != null) {
-            if (detectedRegion == null) {
+        int regionOutcomeTelemetryValue = 0;//By default, assume region API was not used
+        if (providedRegion != null) {//Developer provided a region
+            if (detectedRegion == null) {//Region autodetection failed
                 regionOutcomeTelemetryValue = RegionTelemetry.REGION_OUTCOME_DEVELOPER_AUTODETECT_FAILED.telemetryValue;
-            } else if (providedRegion.equals(detectedRegion)) {
+            } else if (providedRegion.equals(detectedRegion)) {//Provided and detected regions match
                 regionOutcomeTelemetryValue = RegionTelemetry.REGION_OUTCOME_DEVELOPER_AUTODETECT_MATCH.telemetryValue;
-            } else {
+            } else {//Mismatch between provided and detected regions
                 regionOutcomeTelemetryValue = RegionTelemetry.REGION_OUTCOME_DEVELOPER_AUTODETECT_MISMATCH.telemetryValue;
             }
-        } else if (autoDetect) {
-            if (detectedRegion != null) {
-                regionOutcomeTelemetryValue = RegionTelemetry.REGION_OUTCOME_AUTODETECT_SUCCESS.telemetryValue;
-            } else {
+        } else if (autoDetect) {//Developer enabled region autodetection
+            if (detectedRegion == null) {//Region autodetection failed
                 regionOutcomeTelemetryValue = RegionTelemetry.REGION_OUTCOME_AUTODETECT_FAILED.telemetryValue;
+            } else {//Region autodetection succeeded
+                regionOutcomeTelemetryValue = RegionTelemetry.REGION_OUTCOME_AUTODETECT_SUCCESS.telemetryValue;
             }
         }
 

@@ -139,6 +139,7 @@ class TokenRequestExecutor {
                     refreshOn(response.getRefreshIn() > 0 ? currTimestampSec + response.getRefreshIn() : 0).
                     accountCacheEntity(accountCacheEntity).
                     scopes(response.getScope()).
+                    tokenSource(requestAuthority.authority).
                     build();
 
         } else {
