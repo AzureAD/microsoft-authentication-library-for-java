@@ -86,9 +86,10 @@ public class InteractiveRequestParameters implements IAcquireTokenParameters {
     private String tenant;
 
     /**
-     * Overrides the polling timeout value for this request, which by default is 120 seconds
+     * The amount of time in seconds that the library will wait for an authentication result. 120 seconds is the default timeout,
+     * unless overridden here with some other positive integer
      *
-     * If this timeout is set to 0 or less, polling will end immediately
+     * If this timeout is set to 0 or less it will be ignored, and the library will use a 1 second timeout instead
      */
     @Builder.Default
     private int httpPollingTimeoutInSeconds = 120;
