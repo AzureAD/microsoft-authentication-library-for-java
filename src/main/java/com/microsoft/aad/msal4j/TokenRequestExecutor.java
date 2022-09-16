@@ -34,6 +34,7 @@ class TokenRequestExecutor {
 
     AuthenticationResult executeTokenRequest() throws ParseException, IOException {
 
+        log.debug("Sending token request to: " + requestAuthority.canonicalAuthorityUrl());
         OAuthHttpRequest oAuthHttpRequest = createOauthHttpRequest();
         HTTPResponse oauthHttpResponse = oAuthHttpRequest.send();
         return createAuthenticationResultFromOauthHttpResponse(oauthHttpResponse);

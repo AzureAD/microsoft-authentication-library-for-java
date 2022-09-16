@@ -118,6 +118,13 @@ public class ClientCredentialsIT {
         Assert.assertNotEquals(result2.accessToken(), result3.accessToken());
     }
 
+    @Test
+    public void acquireTokenClientCredentials_Regional() throws Exception {
+        String clientId = "2afb0add-2f32-4946-ac90-81a02aa4550e";
+
+        assertAcquireTokenCommon_withRegion(clientId, certificate);
+    }
+
     private ClientAssertion getClientAssertion(String clientId) {
         return JwtHelper.buildJwt(
                 clientId,
@@ -155,5 +162,58 @@ public class ClientCredentialsIT {
 
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
+    }
+
+    private void assertAcquireTokenCommon_withRegion(String clientId, IClientCredential credential) throws Exception {
+        ConfidentialClientApplication ccaNoRegion = ConfidentialClientApplication.builder(
+                clientId, credential).
+                authority(TestConstants.MICROSOFT_AUTHORITY).
+                build();
+
+        ConfidentialClientApplication ccaRegion = ConfidentialClientApplication.builder(
+                clientId, credential).
+                authority(TestConstants.MICROSOFT_AUTHORITY).azureRegion("westus").
+                build();
+
+        //Ensure behavior when region not specified
+        IAuthenticationResult resultNoRegion = ccaNoRegion.acquireToken(ClientCredentialParameters
+                .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                .build())
+                .get();
+
+        Assert.assertNotNull(resultNoRegion);
+        Assert.assertNotNull(resultNoRegion.accessToken());
+        Assert.assertEquals(resultNoRegion.environment(), TestConstants.MICROSOFT_AUTHORITY_BASIC_HOST);
+
+        //Ensure regional tokens are properly cached and retrievable
+        IAuthenticationResult resultRegion = ccaRegion.acquireToken(ClientCredentialParameters
+                .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                .build())
+                .get();
+
+        Assert.assertNotNull(resultRegion);
+        Assert.assertNotNull(resultRegion.accessToken());
+        Assert.assertEquals(resultRegion.environment(), TestConstants.REGIONAL_MICROSOFT_AUTHORITY_BASIC_HOST_WESTUS);
+
+        IAuthenticationResult resultRegionCached = ccaRegion.acquireToken(ClientCredentialParameters
+                .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                .build())
+                .get();
+
+        Assert.assertNotNull(resultRegionCached);
+        Assert.assertNotNull(resultRegionCached.accessToken());
+        Assert.assertEquals(resultRegionCached.accessToken(), resultRegion.accessToken());
+
+        //Tokens retrieved from regional endpoints should be interchangeable with non-regional, and vice-versa
+        //For example, if an application doesn't configure a region but gets regional tokens added to its cache, they should be retrievable
+        ccaNoRegion.tokenCache = ccaRegion.tokenCache;
+        resultNoRegion = ccaNoRegion.acquireToken(ClientCredentialParameters
+                .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                .build())
+                .get();
+
+        Assert.assertNotNull(resultNoRegion);
+        Assert.assertNotNull(resultNoRegion.accessToken());
+        Assert.assertEquals(resultNoRegion.accessToken(), resultRegion.accessToken());
     }
 }
