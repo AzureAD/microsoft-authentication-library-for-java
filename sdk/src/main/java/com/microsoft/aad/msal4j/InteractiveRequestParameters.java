@@ -86,6 +86,15 @@ public class InteractiveRequestParameters implements IAcquireTokenParameters {
     private String tenant;
 
     /**
+     * The amount of time in seconds that the library will wait for an authentication result. 120 seconds is the default timeout,
+     * unless overridden here with some other positive integer
+     *
+     * If this timeout is set to 0 or less it will be ignored, and the library will use a 1 second timeout instead
+     */
+    @Builder.Default
+    private int httpPollingTimeoutInSeconds = 120;
+
+    /**
      * If set to true, the authorization result will contain the authority for the user's home cloud, and this authority
      * will be used for the token request instead of the authority set in the application.
      */
