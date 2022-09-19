@@ -6,7 +6,7 @@
 	<version>1.0.0</version>
     <modules>
         <module>sdk</module>
-		<module>brokers</module>
+		<module>msal4jbrokers</module>
 	</modules>
     <packaging>pom</packaging>
 <!--	<name>msal4j</name>-->
