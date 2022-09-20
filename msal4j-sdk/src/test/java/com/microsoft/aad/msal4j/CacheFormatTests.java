@@ -3,8 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
@@ -26,9 +24,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.sql.Time;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.*;
 
 import static com.microsoft.aad.msal4j.Constants.POINT_DELIMITER;
