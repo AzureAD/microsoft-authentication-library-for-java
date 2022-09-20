@@ -2,14 +2,14 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.microsoft.azure</groupId>
-	<artifactId>com.microsoft.aad.msal4j</artifactId>
-	<version>1.13.1</version>
+	<artifactId>microsoft-authentication-library-for-java</artifactId>
+	<version>1.0.0</version>
     <modules>
         <module>msal4j-brokers</module>
         <module>msal4j-sdk</module>
     </modules>
     <packaging>pom</packaging>
-	<name>com.microsoft.aad.msal4j</name>
+<!--	<name>com.microsoft.aad.msal4j</name>-->
 	<description>
     Microsoft Authentication Library for Java gives you the ability to obtain tokens from Azure AD v2 (work and school
 		accounts, MSA) and Azure AD B2C, gaining access to Microsoft Cloud API and any other API secured by Microsoft
