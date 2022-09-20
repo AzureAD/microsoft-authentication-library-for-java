@@ -2,16 +2,36 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>microsoft-authentication-library-for-java</artifactId>
-        <groupId>com.microsoft.azure</groupId>
-        <version>1.0.0</version>
-    </parent>
     <modelVersion>4.0.0</modelVersion>
     <packaging>jar</packaging>
     <version>1.13.1</version>
+    <groupId>com.microsoft.azure</groupId>
     <artifactId>msal4j</artifactId>
+    <description>
+        Microsoft Authentication Library for Java gives you the ability to obtain tokens from Azure AD v2 (work and school
+        accounts, MSA) and Azure AD B2C, gaining access to Microsoft Cloud API and any other API secured by Microsoft
+        identities
+    </description>
+    <url>https://github.com/AzureAD/microsoft-authentication-library-for-java</url>
+    <developers>
+        <developer>
+            <id>msopentech</id>
+            <name>Microsoft Open Technologies, Inc.</name>
+        </developer>
+    </developers>
+    <licenses>
+        <license>
+            <name>MIT License</name>
+        </license>
+    </licenses>
+    <inceptionYear>2013</inceptionYear>
+    <scm>
+        <url>https://github.com/AzureAD/microsoft-authentication-library-for-java</url>
+    </scm>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>com.nimbusds</groupId>
