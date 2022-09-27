@@ -27,7 +27,7 @@ Find [the latest package in the Maven repository](https://mvnrepository.com/arti
 ```xml
 <dependency>
     <groupId>com.microsoft.azure</groupId>
-    <artifactId>com.microsoft.aad.msal4j</artifactId>
+    <artifactId>msal4j</artifactId>
     <version>1.13.1</version>
 </dependency>
 ```
