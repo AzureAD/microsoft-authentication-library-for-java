@@ -23,7 +23,7 @@ You can find the changes for each version in the [change log](https://github.com
 You can get the com.microsoft.aad.msal4j package through Maven or Gradle.
 
 ### Maven
-Find [the latest package in the Maven repository](https://mvnrepository.com/artifact/com.microsoft.azure/com.microsoft.aad.msal4j).
+Find [the latest package in the Maven repository](https://mvnrepository.com/artifact/com.microsoft.azure/msal4j/1.13.1).
 ```xml
 <dependency>
     <groupId>com.microsoft.azure</groupId>
