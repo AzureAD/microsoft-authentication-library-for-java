@@ -18,7 +18,7 @@ public interface IBroker {
      * checks if a IBroker implementation exists
      */
 
-    default boolean isAvailable{
+    default boolean isAvailable(){
         return false;
     }
     /**
