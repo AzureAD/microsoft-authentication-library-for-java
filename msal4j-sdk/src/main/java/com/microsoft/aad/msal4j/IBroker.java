@@ -15,15 +15,10 @@ import java.util.concurrent.CompletableFuture;
 public interface IBroker {
 
     /**
-     * Called when the 'useBroker' flag is first set, and will perform any initialization needed to make the broker available for future calls
-     *
-     * Will also detect dependency or accessibility errors with the Broker package, allowing an exception to provide the error to the app developer
-     * before any actual calls to a broker are made
+     * checks if a IBroker implementation exists
      */
-    default void initializeBroker(){
-        throw new MsalClientException("Broker implementation missing", AuthenticationErrorCode.MISSING_BROKER);
-    }
 
+    boolean isAvailable;
     /**
      * Acquire a token silently, i.e. without direct user interaction
      *

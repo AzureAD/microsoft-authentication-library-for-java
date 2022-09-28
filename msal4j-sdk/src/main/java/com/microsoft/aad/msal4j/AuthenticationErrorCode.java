@@ -118,9 +118,6 @@ public class AuthenticationErrorCode {
     /**
      * Indicates that a Broker implementation is missing from the device, such as when an app developer
      * does not include one of our broker packages as a dependency in their project, or otherwise cannot
-     * be accessed by MSAL Java
-     *
-     * TODO: link to repository wiki page describing this more and how to fix
-     */
+     * be accessed by MSAL Java*/
     public final static String MISSING_BROKER = "missing_broker";
 }
