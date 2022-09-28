@@ -18,7 +18,9 @@ public interface IBroker {
      * checks if a IBroker implementation exists
      */
 
-    boolean isAvailable;
+    default boolean isAvailable{
+        return false;
+    }
     /**
      * Acquire a token silently, i.e. without direct user interaction
      *
