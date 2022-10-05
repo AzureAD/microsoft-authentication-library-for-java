@@ -12,6 +12,9 @@ class AcquireTokenByAppProviderSupplier extends AuthenticationResultSupplier {
 
     private ClientCredentialRequest clientCredentialRequest;
 
+    private static final Logger log = LoggerFactory
+            .getLogger(AcquireTokenByAppProviderSupplier.class);
+
     AcquireTokenByAppProviderSupplier(AbstractClientApplicationBase clientApplication,
                                       ClientCredentialRequest clientCredentialRequest,
                                       AppTokenProviderParameters appTokenProviderParameters) {
@@ -56,19 +59,24 @@ class AcquireTokenByAppProviderSupplier extends AuthenticationResultSupplier {
 
     public AuthenticationResult fetchTokenUsingAppTokenProvider(AppTokenProviderParameters appTokenProviderParameters) throws ExecutionException, InterruptedException {
 
-        CompletableFuture<TokenProviderResult> completableFuture = this.clientCredentialRequest.appTokenProvider.apply(appTokenProviderParameters);
+        try{
 
-        TokenProviderResult tokenProviderResult = completableFuture.get();
+            CompletableFuture<TokenProviderResult> completableFuture = this.clientCredentialRequest.appTokenProvider.apply(appTokenProviderParameters);
 
-        validateTokenProviderResult(tokenProviderResult);
+            TokenProviderResult tokenProviderResult = completableFuture.get();
 
-        return AuthenticationResult.builder()
-                .accessToken(tokenProviderResult.getAccessToken())
-                .refreshToken(null)
-                .idToken(null)
-                .expiresOn(tokenProviderResult.getExpiresInSeconds())
-                .refreshOn(tokenProviderResult.getRefreshInSeconds())
-                .build();
+            validateTokenProviderResult(tokenProviderResult);
 
+            return AuthenticationResult.builder()
+                    .accessToken(tokenProviderResult.getAccessToken())
+                    .refreshToken(null)
+                    .idToken(null)
+                    .expiresOn(tokenProviderResult.getExpiresInSeconds())
+                    .refreshOn(tokenProviderResult.getRefreshInSeconds())
+                    .build();
+        } catch (Exception ex){
+            log.debug(ex.getMessage());
+            return null;
+        }
     }
 }
