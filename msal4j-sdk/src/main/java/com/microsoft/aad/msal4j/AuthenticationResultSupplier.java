@@ -8,7 +8,6 @@ import java.nio.charset.StandardCharsets;
 import java.net.MalformedURLException;
 import java.util.Base64;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -149,6 +148,9 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
                 clientApplication.log.debug(logMessage, ex);
                 return;
             }
+        } else if(ex instanceof MsalAzureSDKException){
+            clientApplication.log.debug(ex.getMessage(), ex);
+            return;
         }
 
         clientApplication.log.error(logMessage, ex);
@@ -163,11 +165,7 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
         apiEvent.setRequestId(msalRequest.requestContext().telemetryRequestId());
         apiEvent.setWasSuccessful(false);
 
-        if (clientApplication instanceof ConfidentialClientApplication) {
-            apiEvent.setIsConfidentialClient(true);
-        } else {
-            apiEvent.setIsConfidentialClient(false);
-        }
+        apiEvent.setIsConfidentialClient(clientApplication instanceof ConfidentialClientApplication);
 
         try {
             Authority authenticationAuthority = clientApplication.authenticationAuthority;

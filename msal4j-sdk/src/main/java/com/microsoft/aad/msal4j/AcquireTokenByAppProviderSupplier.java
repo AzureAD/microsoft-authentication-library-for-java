@@ -3,9 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -14,9 +11,6 @@ class AcquireTokenByAppProviderSupplier extends AuthenticationResultSupplier {
     private AppTokenProviderParameters appTokenProviderParameters;
 
     private ClientCredentialRequest clientCredentialRequest;
-
-    private static final Logger log = LoggerFactory
-            .getLogger(AcquireTokenByAppProviderSupplier.class);
 
     AcquireTokenByAppProviderSupplier(AbstractClientApplicationBase clientApplication,
                                       ClientCredentialRequest clientCredentialRequest,
@@ -62,24 +56,25 @@ class AcquireTokenByAppProviderSupplier extends AuthenticationResultSupplier {
 
     public AuthenticationResult fetchTokenUsingAppTokenProvider(AppTokenProviderParameters appTokenProviderParameters) throws ExecutionException, InterruptedException {
 
+        TokenProviderResult tokenProviderResult;
+
         try{
 
             CompletableFuture<TokenProviderResult> completableFuture = this.clientCredentialRequest.appTokenProvider.apply(appTokenProviderParameters);
+            tokenProviderResult = completableFuture.get();
 
-            TokenProviderResult tokenProviderResult = completableFuture.get();
-
-            validateTokenProviderResult(tokenProviderResult);
-
-            return AuthenticationResult.builder()
-                    .accessToken(tokenProviderResult.getAccessToken())
-                    .refreshToken(null)
-                    .idToken(null)
-                    .expiresOn(tokenProviderResult.getExpiresInSeconds())
-                    .refreshOn(tokenProviderResult.getRefreshInSeconds())
-                    .build();
         } catch (Exception ex){
-            log.debug(ex.getMessage());
-            return null;
+            throw new MsalAzureSDKException(ex);
         }
+
+        validateTokenProviderResult(tokenProviderResult);
+
+        return AuthenticationResult.builder()
+                .accessToken(tokenProviderResult.getAccessToken())
+                .refreshToken(null)
+                .idToken(null)
+                .expiresOn(tokenProviderResult.getExpiresInSeconds())
+                .refreshOn(tokenProviderResult.getRefreshInSeconds())
+                .build();
     }
 }
