@@ -6,6 +6,9 @@ package com.microsoft.aad.msal4j;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+/** Disclaimer - This  class is meant to be used by the Azure SDK team only.
+ *  Any other teams are discouraged from using this class to prevent any side effects.
+ */
 class AcquireTokenByAppProviderSupplier extends AuthenticationResultSupplier {
 
     private AppTokenProviderParameters appTokenProviderParameters;
