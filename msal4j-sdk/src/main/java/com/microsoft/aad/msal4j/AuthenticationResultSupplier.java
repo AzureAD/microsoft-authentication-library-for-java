@@ -4,15 +4,14 @@
 package com.microsoft.aad.msal4j;
 
 
-import java.nio.charset.StandardCharsets;
 import java.net.MalformedURLException;
-import java.util.Base64;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.concurrent.CompletionException;
 import java.util.function.Supplier;
 
@@ -113,8 +112,8 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
                         .refreshToken());
                 if (clientApplication.logPii()) {
                     clientApplication.log.debug(LogHelper.createMessage(String.format(
-                            "Access Token with hash '%s' and Refresh Token with hash '%s' returned",
-                            accessTokenHash, refreshTokenHash),
+                                    "Access Token with hash '%s' and Refresh Token with hash '%s' returned",
+                                    accessTokenHash, refreshTokenHash),
                             headers.getHeaderCorrelationIdValue()));
                 } else {
                     clientApplication.log.debug(
@@ -125,7 +124,7 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
             } else {
                 if (clientApplication.logPii()) {
                     clientApplication.log.debug(LogHelper.createMessage(String.format(
-                            "Access Token with hash '%s' returned", accessTokenHash),
+                                    "Access Token with hash '%s' returned", accessTokenHash),
                             headers.getHeaderCorrelationIdValue()));
                 } else {
                     clientApplication.log.debug(LogHelper.createMessage(
@@ -148,7 +147,7 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
                 clientApplication.log.debug(logMessage, ex);
                 return;
             }
-        } else if(ex instanceof MsalAzureSDKException){
+        } else if (ex instanceof MsalAzureSDKException) {
             clientApplication.log.debug(ex.getMessage(), ex);
             return;
         }
