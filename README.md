@@ -34,7 +34,7 @@ Find [the latest package in the Maven repository](https://mvnrepository.com/arti
 ### Gradle
 
 ```gradle
-compile group: 'com.microsoft.azure', name: 'com.microsoft.aad.msal4j', version: '1.13.2'
+implementation group: 'com.microsoft.azure', name: 'com.microsoft.aad.msal4j', version: '1.13.2'
 ```
 
 ## Usage
