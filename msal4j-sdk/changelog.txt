@@ -1,3 +1,11 @@
+Version 1.13.2
+=============
+- Add IBroker interface
+- Update AppTokenProvider callback logging to be consistent with Azure SDK logging
+- Restructure library and add broker module
+- Update version of vulnerable libraries
+- Update README for broken links
+
 Version 1.13.1
 =============
 - Bug fixes and improvements for region API
