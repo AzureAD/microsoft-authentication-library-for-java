@@ -5,8 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
     <packaging>jar</packaging>
     <groupId>com.microsoft.azure</groupId>
-    <artifactId>msal4jbrokers</artifactId>
-    <version>1.13.1</version>
+    <artifactId>msal4j-brokers</artifactId>
+    <version>0.0.1</version>
     <dependencies>
             <!-- https://mvnrepository.com/artifact/com.microsoft.azure/msal4j -->
             <dependency>
