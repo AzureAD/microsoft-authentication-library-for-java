@@ -7,16 +7,27 @@
     <artifactId>msal4j-brokers</artifactId>
     <version>0.0.1</version>
     <packaging>jar</packaging>
+    <name>msal4j-brokers</name>
     <description>
         Microsoft Authentication Library for Java - Brokers helps you integrate with the broker
         on windows machine to secure Access tokens and refresh tokens.
     </description>
+    <url>https://github.com/AzureAD/microsoft-authentication-library-for-java</url>
+    <developers>
+        <developer>
+            <id>msopentech</id>
+            <name>Microsoft Open Technologies, Inc.</name>
+        </developer>
+    </developers>
     <licenses>
         <license>
             <name>MIT License</name>
         </license>
     </licenses>
     <inceptionYear>2022</inceptionYear>
+    <scm>
+        <url>https://github.com/AzureAD/microsoft-authentication-library-for-java</url>
+    </scm>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
