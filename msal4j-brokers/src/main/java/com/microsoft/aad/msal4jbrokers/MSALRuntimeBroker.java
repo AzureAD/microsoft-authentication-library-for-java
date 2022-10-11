@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.concurrent.CompletableFuture;
 
 @Slf4j
-class MSALRuntimeBroker implements IBroker {
+public class MSALRuntimeBroker implements IBroker {
 
     @Override
     public IAuthenticationResult acquireToken(PublicClientApplication application, SilentParameters requestParameters) {
