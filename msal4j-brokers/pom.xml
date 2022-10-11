@@ -32,12 +32,18 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <dependencies>
-            <!-- https://mvnrepository.com/artifact/com.microsoft.azure/msal4j -->
-            <dependency>
-                <groupId>com.microsoft.azure</groupId>
-                <artifactId>msal4j</artifactId>
-                <version>1.13.1</version>
-            </dependency>
+        <!-- https://mvnrepository.com/artifact/com.microsoft.azure/msal4j -->
+        <dependency>
+            <groupId>com.microsoft.azure</groupId>
+            <artifactId>msal4j</artifactId>
+            <version>1.13.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.6</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <!-- force https -->
