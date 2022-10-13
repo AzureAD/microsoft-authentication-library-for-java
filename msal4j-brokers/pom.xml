@@ -13,12 +13,6 @@
         on windows machine to secure Access tokens and refresh tokens.
     </description>
     <url>https://github.com/AzureAD/microsoft-authentication-library-for-java</url>
-    <developers>
-        <developer>
-            <id>msopentech</id>
-            <name>Microsoft Open Technologies, Inc.</name>
-        </developer>
-    </developers>
     <licenses>
         <license>
             <name>MIT License</name>
