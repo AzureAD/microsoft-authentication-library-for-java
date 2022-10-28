@@ -1,3 +1,7 @@
+Version 1.13.3
+=============
+- Update jackson-databind version to be in compatible with Azure-SDKs
+
 Version 1.13.2
 =============
 - Add IBroker interface
