@@ -104,6 +104,10 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
     @Getter
     protected String azureRegion;
 
+    @Accessors(fluent = true)
+    @Getter
+    private boolean instanceDiscovery;
+
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(AuthorizationCodeParameters parameters) {
 
@@ -325,6 +329,7 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
         private String azureRegion;
         private Integer connectTimeoutForDefaultHttpClient;
         private Integer readTimeoutForDefaultHttpClient;
+        private boolean instanceDiscovery = true;
 
         /**
          * Constructor to create instance of Builder of client application
@@ -643,6 +648,30 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
             return self();
         }
 
+        /** Historically, MSAL would connect to a central endpoint located at
+            ``https://login.microsoftonline.com`` to acquire some metadata, especially when using an unfamiliar authority.
+        This behavior is known as Instance Discovery.
+        This parameter defaults to true, which enables the Instance Discovery.
+        If you know some authorities which you allow MSAL to operate with as-is,
+        without involving any Instance Discovery, the recommended pattern is::
+        knownAuthorities = frozenset([  # Treat your known authorities as const
+                "https://contoso.com/adfs", "https://login.azs/foo"])
+                ...
+        authority = "https://contoso.com/adfs"  # Assuming your app will use this
+        app1 = PublicClientApplication(
+                    "client_id",
+                    authority=authority,
+                    # Conditionally disable Instance Discovery for known authorities
+                            instance_discovery=authority not in known_authorities,
+                    )
+        If you do not know some authorities beforehand,
+        yet still want MSAL to accept any authority that you will provide,
+        you can use a ``False`` to unconditionally disable Instance Discovery. */
+        public T instanceDiscovery(boolean val) {
+            instanceDiscovery = val;
+            return self();
+        }
+
         abstract AbstractClientApplicationBase build();
     }
 
@@ -671,6 +700,7 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
         clientCapabilities = builder.clientCapabilities;
         autoDetectRegion = builder.autoDetectRegion;
         azureRegion = builder.azureRegion;
+        instanceDiscovery = builder.instanceDiscovery;
 
         if (aadAadInstanceDiscoveryResponse != null) {
             AadInstanceDiscoveryProvider.cacheInstanceDiscoveryMetadata(

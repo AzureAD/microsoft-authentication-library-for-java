@@ -11,6 +11,7 @@ import java.util.*;
 
 @Accessors(fluent = true)
 @Getter(AccessLevel.PACKAGE)
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
