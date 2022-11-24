@@ -82,7 +82,7 @@ class AadInstanceDiscoveryProvider {
             if(msalRequest.application().instanceDiscovery()){
                 doInstanceDiscoveryAndCache(authorityUrl, validateAuthority, msalRequest, serviceBundle);
             } else {
-                // instanceDiscovery flag is set to False. Do no perform instanceDiscovery.
+                // instanceDiscovery flag is set to False. Do not perform instanceDiscovery.
                 cache.putIfAbsent(host, InstanceDiscoveryMetadataEntry.builder().
                         preferredCache(host).
                         preferredNetwork(host).

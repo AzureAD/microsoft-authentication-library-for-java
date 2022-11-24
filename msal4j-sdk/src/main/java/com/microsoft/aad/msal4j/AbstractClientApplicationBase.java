@@ -652,18 +652,6 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
             ``https://login.microsoftonline.com`` to acquire some metadata, especially when using an unfamiliar authority.
         This behavior is known as Instance Discovery.
         This parameter defaults to true, which enables the Instance Discovery.
-        If you know some authorities which you allow MSAL to operate with as-is,
-        without involving any Instance Discovery, the recommended pattern is::
-        knownAuthorities = frozenset([  # Treat your known authorities as const
-                "https://contoso.com/adfs", "https://login.azs/foo"])
-                ...
-        authority = "https://contoso.com/adfs"  # Assuming your app will use this
-        app1 = PublicClientApplication(
-                    "client_id",
-                    authority=authority,
-                    # Conditionally disable Instance Discovery for known authorities
-                            instance_discovery=authority not in known_authorities,
-                    )
         If you do not know some authorities beforehand,
         yet still want MSAL to accept any authority that you will provide,
         you can use a ``False`` to unconditionally disable Instance Discovery. */
