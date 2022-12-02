@@ -13,7 +13,7 @@ import org.testng.annotations.Test;
 import java.net.URI;
 import java.net.URL;
 
-@PrepareForTest({AadInstanceDiscoveryProvider.class})
+@PrepareForTest(AadInstanceDiscoveryProvider.class)
 public class AadInstanceDiscoveryTest extends PowerMockTestCase {
 
     @BeforeMethod
