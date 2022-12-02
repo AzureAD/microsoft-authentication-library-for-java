@@ -67,7 +67,7 @@ class AadInstanceDiscoveryProvider {
 
             //If region autodetection is enabled and a specific region not already set,
             // set the application's region to the discovered region so that future requests can skip the IMDS endpoint call
-            if (msalRequest.application().azureRegion() == null && msalRequest.application().autoDetectRegion()
+            if (null == msalRequest.application().azureRegion() && msalRequest.application().autoDetectRegion()
                         && null != detectedRegion) {
                     msalRequest.application().azureRegion = detectedRegion;
             }
@@ -83,11 +83,11 @@ class AadInstanceDiscoveryProvider {
                 doInstanceDiscoveryAndCache(authorityUrl, validateAuthority, msalRequest, serviceBundle);
             } else {
                 // instanceDiscovery flag is set to False. Do not perform instanceDiscovery.
-                cache.putIfAbsent(host, InstanceDiscoveryMetadataEntry.builder().
+                return InstanceDiscoveryMetadataEntry.builder().
                         preferredCache(host).
                         preferredNetwork(host).
                         aliases(Collections.singleton(host)).
-                        build());
+                        build();
             }
         }
 

@@ -4,18 +4,18 @@
 package com.microsoft.aad.msal4j;
 
 import org.powermock.api.easymock.PowerMock;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.net.URI;
 import java.net.URL;
-import java.util.Collections;
 
-@PrepareForTest(AadInstanceDiscoveryProvider.class)
+@PowerMockIgnore({"javax.net.ssl.*"})
+@PrepareForTest({AadInstanceDiscoveryProvider.class})
 public class AadInstanceDiscoveryTest extends PowerMockTestCase {
 
     @BeforeMethod
@@ -189,136 +189,4 @@ public class AadInstanceDiscoveryTest extends PowerMockTestCase {
         Assert.assertTrue(entry.aliases().contains("sts.windows.net"));
     }
 
-    @DataProvider(name = "aadClouds")
-    private static Object[][] getAadClouds(){
-        return new Object[][] {{"https://login.microsoftonline.com/common"} , // #Known to Microsoft
-                {"https://private.cloud/foo"}//Private Cloud
-                };
-    }
-
-    @DataProvider(name = "b2cAdfsClouds")
-    private static Object[][] getNonAadClouds(){
-        return new Object[][] {{"https://contoso.com/adfs"}//ADFS
-//                {"https://login.b2clogin.com/contoso/b2c_policy"},//B2C
-                };
-    }
-
-    /**
-     * when instance_discovery flag is set to true (by default), an instance_discovery is performed for authorityType = AAD and
-     *     hence, an exception is thrown while making a call to getMetaDataEntry() if instanceDiscoveryResponse is not mocked.
-    */
-    @Test(  dataProvider = "aadClouds",
-            expectedExceptions = StringIndexOutOfBoundsException.class)
-    public void aad_instance_discovery_true(String authority) throws Exception {
-
-        PublicClientApplication app = PublicClientApplication.builder("client_id")
-                .authority(authority)
-                .build();
-
-        AuthorizationCodeParameters parameters = AuthorizationCodeParameters.builder(
-                "code", new URI("http://my.redirect.com"))
-                .scopes(Collections.singleton("scope")).build();
-
-        MsalRequest msalRequest = new AuthorizationCodeRequest(
-                parameters,
-                app,
-                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
-
-        URL authorityURL = new URL(authority);
-
-       AadInstanceDiscoveryProvider.getMetadataEntry(
-                authorityURL,
-                false,
-                msalRequest,
-                app.getServiceBundle());
-
-    }
-
-    /**
-     * when instance_discovery flag is set to true (by default), an instance_discovery is NOT performed for b2c.
-     */
-    @Test(  dataProvider = "b2cAdfsClouds")
-    public void b2c_adfs_instance_discovery_true(String authority) throws Exception {
-
-        PublicClientApplication app = PublicClientApplication.builder("client_id")
-                .authority(authority)
-                .build();
-
-        AuthorizationCodeParameters parameters = AuthorizationCodeParameters.builder(
-                        "code", new URI("http://my.redirect.com"))
-                .scopes(Collections.singleton("scope")).build();
-
-        MsalRequest msalRequest = new AuthorizationCodeRequest(
-                parameters,
-                app,
-                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
-
-        URL authorityURL = new URL(authority);
-
-        AadInstanceDiscoveryProvider.getMetadataEntry(
-                authorityURL,
-                false,
-                msalRequest,
-                app.getServiceBundle());
-    }
-
-    @Test (dataProvider = "aadClouds")
-    /**
-     * when instance_discovery flag is set to false, instance_discovery is not performed and hence,
-     * no exception is thrown while making a call to getMetaDataEntry() even when instanceDiscoveryResponse is not mocked.
-     */
-    public void aad_instance_discovery_false(String authority) throws Exception{
-
-        PublicClientApplication app = PublicClientApplication.builder("client_id")
-                .authority(authority)
-                .instanceDiscovery(false)
-                .build();
-
-        AuthorizationCodeParameters parameters = AuthorizationCodeParameters.builder(
-                        "code", new URI("http://my.redirect.com"))
-                .scopes(Collections.singleton("scope")).build();
-
-        MsalRequest msalRequest = new AuthorizationCodeRequest(
-                parameters,
-                app,
-                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
-
-        URL authorityURL = new URL(authority);
-
-        AadInstanceDiscoveryProvider.getMetadataEntry(
-                authorityURL,
-                false,
-                msalRequest,
-                app.getServiceBundle());
-    }
-
-    @Test (dataProvider = "b2cAdfsClouds")
-    /**
-     * when instance_discovery flag is set to true, instance_discovery is not performed and hence,
-     * no exception is thrown while making a call to getMetaDataEntry() even when instanceDiscoveryResponse is not mocked.
-     */
-    public void b2c_adfs_instance_discovery_false(String authority) throws Exception{
-
-        PublicClientApplication app = PublicClientApplication.builder("client_id")
-                .authority(authority)
-                .instanceDiscovery(false)
-                .build();
-
-        AuthorizationCodeParameters parameters = AuthorizationCodeParameters.builder(
-                        "code", new URI("http://my.redirect.com"))
-                .scopes(Collections.singleton("scope")).build();
-
-        MsalRequest msalRequest = new AuthorizationCodeRequest(
-                parameters,
-                app,
-                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
-
-        URL authorityURL = new URL(authority);
-
-        AadInstanceDiscoveryProvider.getMetadataEntry(
-                authorityURL,
-                false,
-                msalRequest,
-                app.getServiceBundle());
-    }
 }
