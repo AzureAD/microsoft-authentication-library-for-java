@@ -4,7 +4,6 @@
 package com.microsoft.aad.msal4j;
 
 import org.powermock.api.easymock.PowerMock;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockTestCase;
 import org.testng.Assert;
@@ -14,7 +13,6 @@ import org.testng.annotations.Test;
 import java.net.URI;
 import java.net.URL;
 
-@PowerMockIgnore({"javax.net.ssl.*"})
 @PrepareForTest({AadInstanceDiscoveryProvider.class})
 public class AadInstanceDiscoveryTest extends PowerMockTestCase {
 
@@ -188,5 +186,4 @@ public class AadInstanceDiscoveryTest extends PowerMockTestCase {
         Assert.assertTrue(entry.aliases().contains("login.microsoft.com"));
         Assert.assertTrue(entry.aliases().contains("sts.windows.net"));
     }
-
 }

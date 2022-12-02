@@ -32,13 +32,6 @@ public class InstanceDiscoveryTest {
         };
     }
 
-    @DataProvider(name = "b2cAdfsClouds")
-    private static Object[][] getNonAadClouds(){
-        return new Object[][] {{"https://contoso.com/adfs"},//ADFS
-//                {"https://login.b2clogin.com/contoso/b2c_policy"}//B2C
-        };
-    }
-
     /**
      * when instance_discovery flag is set to true (by default), an instance_discovery is performed for authorityType = AAD
      */
@@ -47,8 +40,7 @@ public class InstanceDiscoveryTest {
         app = PowerMock.createPartialMock(PublicClientApplication.class,
                 new String[]{"acquireTokenCommon"},
                 PublicClientApplication.builder(TestConfiguration.AAD_CLIENT_ID)
-                        .authority(authority)
-                        .instanceDiscovery(true));
+                        .authority(authority));
 
         Capture<MsalRequest> capturedMsalRequest = Capture.newInstance();
 
@@ -86,56 +78,6 @@ public class InstanceDiscoveryTest {
 
         completableFuture.get();
         Assert.assertEquals(capturedHttpRequest.getValues().size(),1);
-
-    }
-
-    /**
-     * when instance_discovery flag is set to true (by default), an instance_discovery is NOT performed for b2c.
-     */
-    @Test(  dataProvider = "b2cAdfsClouds")
-    public void b2cAdfsInstanceDiscoveryTrue(String authority) throws Exception{
-        app = PowerMock.createPartialMock(PublicClientApplication.class,
-                new String[]{"acquireTokenCommon"},
-                PublicClientApplication.builder(TestConstants.ADFS_APP_ID)
-                        .authority(authority)
-                        .instanceDiscovery(true));
-
-        Capture<MsalRequest> capturedMsalRequest = Capture.newInstance();
-
-        PowerMock.expectPrivate(app, "acquireTokenCommon",
-                EasyMock.capture(capturedMsalRequest), EasyMock.isA(AADAuthority.class)).andReturn(
-                AuthenticationResult.builder().
-                        accessToken("accessToken").
-                        expiresOn(new Date().getTime() + 100).
-                        refreshToken("refreshToken").
-                        idToken("idToken").environment("environment").build());
-
-        PowerMock.mockStatic(HttpHelper.class);
-
-        HttpResponse instanceDiscoveryResponse = new HttpResponse();
-        instanceDiscoveryResponse.statusCode(200);
-        instanceDiscoveryResponse.body(TestConfiguration.INSTANCE_DISCOVERY_RESPONSE);
-
-        Capture<HttpRequest> capturedHttpRequest = Capture.newInstance();
-
-        EasyMock.expect(
-                        HttpHelper.executeHttpRequest(
-                                EasyMock.capture(capturedHttpRequest),
-                                EasyMock.isA(RequestContext.class),
-                                EasyMock.isA(ServiceBundle.class)))
-                .andReturn(instanceDiscoveryResponse);
-
-        PowerMock.replay(HttpHelper.class, HttpResponse.class);
-
-        CompletableFuture<IAuthenticationResult> completableFuture = app.acquireToken(
-                AuthorizationCodeParameters.builder
-                                ("auth_code",
-                                        new URI(TestConfiguration.AAD_DEFAULT_REDIRECT_URI))
-                        .scopes(Collections.singleton("default-scope"))
-                        .build());
-
-        completableFuture.get();
-        Assert.assertEquals(capturedHttpRequest.getValues().size(),0);
 
     }
 
@@ -188,4 +130,106 @@ public class InstanceDiscoveryTest {
         completableFuture.get();
         Assert.assertEquals(capturedHttpRequest.getValues().size(),0);
     }
+
+    /**
+     * when instance_discovery flag is set to true (by default), an instance_discovery is NOT performed for adfs.
+     */
+    @Test
+    public void adfsInstanceDiscoveryTrue() throws Exception{
+        app = PowerMock.createPartialMock(PublicClientApplication.class,
+                new String[]{"acquireTokenCommon"},
+                PublicClientApplication.builder(TestConstants.ADFS_APP_ID)
+                        .authority("https://contoso.com/adfs")
+                        .instanceDiscovery(true));
+
+        Capture<MsalRequest> capturedMsalRequest = Capture.newInstance();
+
+        PowerMock.expectPrivate(app, "acquireTokenCommon",
+                EasyMock.capture(capturedMsalRequest), EasyMock.isA(AADAuthority.class)).andReturn(
+                AuthenticationResult.builder().
+                        accessToken("accessToken").
+                        expiresOn(new Date().getTime() + 100).
+                        refreshToken("refreshToken").
+                        idToken("idToken").environment("environment").build());
+
+        PowerMock.mockStatic(HttpHelper.class);
+
+        HttpResponse instanceDiscoveryResponse = new HttpResponse();
+        instanceDiscoveryResponse.statusCode(200);
+        instanceDiscoveryResponse.body(TestConfiguration.INSTANCE_DISCOVERY_RESPONSE);
+
+        Capture<HttpRequest> capturedHttpRequest = Capture.newInstance();
+
+        EasyMock.expect(
+                        HttpHelper.executeHttpRequest(
+                                EasyMock.capture(capturedHttpRequest),
+                                EasyMock.isA(RequestContext.class),
+                                EasyMock.isA(ServiceBundle.class)))
+                .andReturn(instanceDiscoveryResponse);
+
+        PowerMock.replay(HttpHelper.class, HttpResponse.class);
+
+        CompletableFuture<IAuthenticationResult> completableFuture = app.acquireToken(
+                AuthorizationCodeParameters.builder
+                                ("auth_code",
+                                        new URI(TestConfiguration.AAD_DEFAULT_REDIRECT_URI))
+                        .scopes(Collections.singleton("default-scope"))
+                        .build());
+
+        completableFuture.get();
+        Assert.assertEquals(capturedHttpRequest.getValues().size(),0);
+
+    }
+
+    /**
+     * when instance_discovery flag is set to true (by default), an instance_discovery is NOT performed for b2c.
+     */
+    @Test
+    public void b2cInstanceDiscoveryTrue() throws Exception{
+        app = PowerMock.createPartialMock(PublicClientApplication.class,
+                new String[]{"acquireTokenCommon"},
+                PublicClientApplication.builder(TestConstants.ADFS_APP_ID)
+                        .b2cAuthority(TestConstants.B2C_MICROSOFTLOGIN_ROPC)
+                        .instanceDiscovery(true));
+
+        Capture<MsalRequest> capturedMsalRequest = Capture.newInstance();
+
+        PowerMock.expectPrivate(app, "acquireTokenCommon",
+                EasyMock.capture(capturedMsalRequest), EasyMock.isA(AADAuthority.class)).andReturn(
+                AuthenticationResult.builder().
+                        accessToken("accessToken").
+                        expiresOn(new Date().getTime() + 100).
+                        refreshToken("refreshToken").
+                        idToken("idToken").environment("environment").build());
+
+        PowerMock.mockStatic(HttpHelper.class);
+
+        HttpResponse instanceDiscoveryResponse = new HttpResponse();
+        instanceDiscoveryResponse.statusCode(200);
+        instanceDiscoveryResponse.body(TestConfiguration.INSTANCE_DISCOVERY_RESPONSE);
+
+        Capture<HttpRequest> capturedHttpRequest = Capture.newInstance();
+
+        EasyMock.expect(
+                        HttpHelper.executeHttpRequest(
+                                EasyMock.capture(capturedHttpRequest),
+                                EasyMock.isA(RequestContext.class),
+                                EasyMock.isA(ServiceBundle.class)))
+                .andReturn(instanceDiscoveryResponse);
+
+        PowerMock.replay(HttpHelper.class, HttpResponse.class);
+
+        CompletableFuture<IAuthenticationResult> completableFuture = app.acquireToken(
+                AuthorizationCodeParameters.builder
+                                ("auth_code",
+                                        new URI(TestConfiguration.AAD_DEFAULT_REDIRECT_URI))
+                        .scopes(Collections.singleton("default-scope"))
+                        .build());
+
+        completableFuture.get();
+        Assert.assertEquals(capturedHttpRequest.getValues().size(),0);
+
+    }
+
+
 }
