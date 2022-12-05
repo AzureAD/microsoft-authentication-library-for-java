@@ -22,7 +22,7 @@ class AadInstanceDiscoveryProvider {
     private final static String AUTHORIZE_ENDPOINT_TEMPLATE = "https://{host}/{tenant}/oauth2/v2.0/authorize";
     private final static String INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE = "https://{host}:{port}/common/discovery/instance";
     private final static String INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE = "?api-version=1.1&authorization_endpoint={authorizeEndpoint}";
-    private final static String HOST_TEMPLATE_WITH_REGION = "{region}.r.{host}";
+    private final static String HOST_TEMPLATE_WITH_REGION = "{region}.{host}";
     private final static String SOVEREIGN_HOST_TEMPLATE_WITH_REGION = "{region}.{host}";
     private final static String REGION_NAME = "REGION_NAME";
     private final static int PORT_NOT_SET = -1;

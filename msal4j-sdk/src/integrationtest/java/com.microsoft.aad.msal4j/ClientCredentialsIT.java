@@ -172,7 +172,7 @@ public class ClientCredentialsIT {
 
         ConfidentialClientApplication ccaRegion = ConfidentialClientApplication.builder(
                 clientId, credential).
-                authority(TestConstants.MICROSOFT_AUTHORITY).azureRegion("westus").
+                authority("https://login.microsoft.com/microsoft.onmicrosoft.com").azureRegion("westus").
                 build();
 
         //Ensure behavior when region not specified
