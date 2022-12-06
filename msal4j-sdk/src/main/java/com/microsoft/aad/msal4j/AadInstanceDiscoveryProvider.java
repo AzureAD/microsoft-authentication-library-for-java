@@ -18,14 +18,15 @@ import java.util.concurrent.ConcurrentHashMap;
 
 class AadInstanceDiscoveryProvider {
 
-    private static final String DEFAULT_TRUSTED_HOST = "login.microsoftonline.com";
-    private static final String AUTHORIZE_ENDPOINT_TEMPLATE = "https://{host}/{tenant}/oauth2/v2.0/authorize";
-    private static final String INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE = "https://{host}:{port}/common/discovery/instance";
-    private static final String INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE = "?api-version=1.1&authorization_endpoint={authorizeEndpoint}";
-    private static final String HOST_TEMPLATE_WITH_REGION = "{region}.r.{host}";
-    private static final String SOVEREIGN_HOST_TEMPLATE_WITH_REGION = "{region}.{host}";
-    private static final String REGION_NAME = "REGION_NAME";
-    private static final int PORT_NOT_SET = -1;
+    private final static String DEFAULT_TRUSTED_HOST = "login.microsoftonline.com";
+    private final static String AUTHORIZE_ENDPOINT_TEMPLATE = "https://{host}/{tenant}/oauth2/v2.0/authorize";
+    private final static String INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE = "https://{host}:{port}/common/discovery/instance";
+    private final static String INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE = "?api-version=1.1&authorization_endpoint={authorizeEndpoint}";
+    private final static String HOST_TEMPLATE_WITH_REGION = "{region}.{host}";
+    private final static String SOVEREIGN_HOST_TEMPLATE_WITH_REGION = "{region}.{host}";
+    private final static String REGION_NAME = "REGION_NAME";
+    private final static int PORT_NOT_SET = -1;
+
     // For information of the current api-version refer: https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service#versioning
     private static final String DEFAULT_API_VERSION = "2020-06-01";
     private static final String IMDS_ENDPOINT = "https://169.254.169.254/metadata/instance/compute/location?" + DEFAULT_API_VERSION + "&format=text";
