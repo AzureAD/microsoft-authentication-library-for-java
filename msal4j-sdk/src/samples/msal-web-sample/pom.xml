@@ -22,8 +22,8 @@
 	<dependencies>
 		<dependency>
 			<groupId>com.microsoft.azure</groupId>
-			<artifactId>com.microsoft.aad.msal4j</artifactId>
-			<version>1.13.2</version>
+			<artifactId>msal4j</artifactId>
+			<version>1.13.3</version>
 		</dependency>
 		<dependency>
 			<groupId>com.nimbusds</groupId>
