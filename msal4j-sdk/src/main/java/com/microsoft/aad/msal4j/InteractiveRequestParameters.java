@@ -100,6 +100,11 @@ public class InteractiveRequestParameters implements IAcquireTokenParameters {
      */
     private boolean instanceAware;
 
+    /**
+     * The parent window handle used to open UI elements in non-browser scenarios
+     */
+    private long windowHandle;
+
     private static InteractiveRequestParametersBuilder builder() {
         return new InteractiveRequestParametersBuilder();
     }

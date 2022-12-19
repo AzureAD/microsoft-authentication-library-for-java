@@ -6,8 +6,8 @@ package com.microsoft.aad.msal4j;
 import com.nimbusds.jwt.JWTParser;
 
 import java.net.URL;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Used to define the basic set of methods that all Brokers must implement
@@ -29,35 +29,26 @@ public interface IBroker {
      *
      * This may be accomplished by returning tokens from a token cache, using cached refresh tokens to get new tokens,
      * or via any authentication flow where a user is not prompted to enter credentials
-     *
-     * @param requestParameters MsalRequest object which contains everything needed for the broker implementation to make a request
-     * @return IBroker implementations will return an AuthenticationResult object
      */
-    default IAuthenticationResult acquireToken(PublicClientApplication application, SilentParameters requestParameters) throws Exception {
+    default void acquireToken(PublicClientApplication application, SilentParameters requestParameters, CompletableFuture<IAuthenticationResult> future) throws MsalClientException, ExecutionException, InterruptedException {
         throw new MsalClientException("Broker implementation missing", AuthenticationErrorCode.MISSING_BROKER);
     }
 
     /**
      * Acquire a token interactively, by prompting users to enter their credentials in some way
-     *
-     * @param requestParameters MsalRequest object which contains everything needed for the broker implementation to make a request
-     * @return IBroker implementations will return an AuthenticationResult object
      */
-    default IAuthenticationResult acquireToken(PublicClientApplication application, InteractiveRequestParameters requestParameters) throws Exception {
+    default void acquireToken(PublicClientApplication application, InteractiveRequestParameters parameters, CompletableFuture<IAuthenticationResult> future) throws ExecutionException, InterruptedException {
         throw new MsalClientException("Broker implementation missing", AuthenticationErrorCode.MISSING_BROKER);
     }
 
     /**
      * Acquire a token silently, i.e. without direct user interaction, using username/password authentication
-     *
-     * @param requestParameters MsalRequest object which contains everything needed for the broker implementation to make a request
-     * @return IBroker implementations will return an AuthenticationResult object
      */
-    default IAuthenticationResult acquireToken(PublicClientApplication application, UserNamePasswordParameters requestParameters) throws Exception {
+    default void acquireToken(PublicClientApplication application, UserNamePasswordParameters parameters, CompletableFuture<IAuthenticationResult> future) throws ExecutionException, InterruptedException {
         throw new MsalClientException("Broker implementation missing", AuthenticationErrorCode.MISSING_BROKER);
     }
 
-    default void removeAccount(PublicClientApplication application, IAccount account) throws Exception {
+    default void removeAccount(PublicClientApplication application, IAccount account) throws MsalClientException {
         throw new MsalClientException("Broker implementation missing", AuthenticationErrorCode.MISSING_BROKER);
     }
 
