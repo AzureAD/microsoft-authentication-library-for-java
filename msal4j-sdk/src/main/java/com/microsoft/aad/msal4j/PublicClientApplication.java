@@ -8,6 +8,7 @@ import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod;
 import com.nimbusds.oauth2.sdk.id.ClientID;
 import org.slf4j.LoggerFactory;
 
+import java.net.MalformedURLException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -23,6 +24,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 public class PublicClientApplication extends AbstractClientApplicationBase implements IPublicClientApplication {
 
     private final ClientAuthenticationPost clientAuthentication;
+    private IBroker broker;
 
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(UserNamePasswordParameters parameters) {
@@ -35,12 +37,20 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
                 parameters,
                 UserIdentifier.fromUpn(parameters.username()));
 
-        UserNamePasswordRequest userNamePasswordRequest =
-                new UserNamePasswordRequest(parameters,
-                        this,
-                        context);
+        CompletableFuture<IAuthenticationResult> future = new CompletableFuture<>();
 
-        return this.executeRequest(userNamePasswordRequest);
+        if (this.broker != null) {
+            broker.acquireToken(this, parameters, future);
+        } else {
+            UserNamePasswordRequest userNamePasswordRequest =
+                    new UserNamePasswordRequest(parameters,
+                            this,
+                            context);
+
+            future = this.executeRequest(userNamePasswordRequest);
+        }
+
+        return future;
     }
 
     @Override
@@ -112,9 +122,39 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
                 this,
                 context);
 
-        CompletableFuture<IAuthenticationResult> future = executeRequest(interactiveRequest);
-        futureReference.set(future);
+        CompletableFuture<IAuthenticationResult> future = new CompletableFuture<>();
+
+        if (this.broker != null) {
+            broker.acquireToken(this, parameters, future);
+            futureReference.set(future);
+        } else {
+            future = executeRequest(interactiveRequest);
+            futureReference.set(future);
+        }
+
         return future;
+    }
+
+    @Override
+    public CompletableFuture<IAuthenticationResult> acquireTokenSilently(SilentParameters parameters) throws MalformedURLException {
+        CompletableFuture<IAuthenticationResult> future = new CompletableFuture<>();
+
+        if (this.broker != null) {
+            broker.acquireToken(this, parameters, future);
+        } else {
+            future = super.acquireTokenSilently(parameters);
+        }
+
+        return future;
+    }
+
+    @Override
+    public CompletableFuture<Void> removeAccount(IAccount account) {
+        if (this.broker != null) {
+            broker.removeAccount(this, account);
+        }
+
+        return super.removeAccount(account);
     }
 
     private PublicClientApplication(Builder builder) {
@@ -123,6 +163,7 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
         log = LoggerFactory.getLogger(PublicClientApplication.class);
         this.clientAuthentication = new ClientAuthenticationPost(ClientAuthenticationMethod.NONE,
                 new ClientID(clientId()));
+        this.broker = builder.broker;
     }
 
     @Override
@@ -144,6 +185,19 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
 
         private Builder(String clientId) {
             super(clientId);
+        }
+
+        private IBroker broker = null;
+
+        /**
+         * Implementation of IBroker that will be used to retrieve tokens
+         * <p>
+         * Setting this will cause MSAL Java to use a broker (such as WAM/MSALRuntime) in flows that support that broker
+         */
+        public PublicClientApplication.Builder broker(IBroker val) {
+            this.broker = val;
+
+            return self();
         }
 
         @Override

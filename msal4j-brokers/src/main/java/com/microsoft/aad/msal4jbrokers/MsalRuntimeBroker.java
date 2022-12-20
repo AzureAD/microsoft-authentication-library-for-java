@@ -9,6 +9,9 @@ import com.microsoft.aad.msal4j.InteractiveRequestParameters;
 import com.microsoft.aad.msal4j.PublicClientApplication;
 import com.microsoft.aad.msal4j.SilentParameters;
 import com.microsoft.aad.msal4j.UserNamePasswordParameters;
+import com.microsoft.aad.msal4j.MsalException;
+import com.microsoft.aad.msal4j.AuthenticationErrorCode;
+import com.microsoft.aad.msal4j.IAccount;
 import com.microsoft.azure.javamsalruntime.Account;
 import com.microsoft.azure.javamsalruntime.AuthParameters;
 import com.microsoft.azure.javamsalruntime.AuthResult;
@@ -36,13 +39,19 @@ public class MsalRuntimeBroker implements IBroker {
     }
 
     @Override
-    public void acquireToken(PublicClientApplication application, SilentParameters parameters, CompletableFuture<IAuthenticationResult> future) throws ExecutionException, InterruptedException {
+    public void acquireToken(PublicClientApplication application, SilentParameters parameters, CompletableFuture<IAuthenticationResult> future) {
         Account accountResult = null;
 
         //If request has an account ID, MSALRuntime data cached for that account
         //  try to get account info from MSALRuntime
         if (parameters.account() != null) {
-            accountResult = ((ReadAccountResult) interop.readAccountById(parameters.account().homeAccountId(), application.correlationId()).get()).getAccount();
+            try {
+                accountResult = ((ReadAccountResult) interop.readAccountById(parameters.account().homeAccountId(), application.correlationId()).get()).getAccount();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
         }
 
         try (AuthParameters authParameters =
@@ -67,11 +76,16 @@ public class MsalRuntimeBroker implements IBroker {
                             ((AuthResult) authResult).getAccount().getAccountId(),
                             ((AuthResult) authResult).getAccount().getClientInfo(),
                             ((AuthResult) authResult).getAccessTokenExpirationTime())));
+        } catch (MsalInteropException interopException) {
+            throw new MsalException(interopException.getErrorMessage(), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
+        } catch (InterruptedException | ExecutionException ex) {
+            //TODO: these exceptions can occur when waiting on a result from MSALRuntime. Not possible to continue? Retrow exception or create MSAL exception?
         }
     }
 
     @Override
-    public void acquireToken(PublicClientApplication application, InteractiveRequestParameters parameters, CompletableFuture<IAuthenticationResult> future) throws ExecutionException, InterruptedException {
+    public void acquireToken(PublicClientApplication application, InteractiveRequestParameters parameters, CompletableFuture<IAuthenticationResult> future) {
+
         try (AuthParameters authParameters =
                      new AuthParameters
                              .AuthParametersBuilder(application.clientId(),
@@ -90,6 +104,10 @@ public class MsalRuntimeBroker implements IBroker {
                             ((AuthResult) authResult).getAccount().getAccountId(),
                             ((AuthResult) authResult).getAccount().getClientInfo(),
                             ((AuthResult) authResult).getAccessTokenExpirationTime())));
+        } catch (MsalInteropException interopException) {
+            throw new MsalException(interopException.getErrorMessage(), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
+        } catch (InterruptedException | ExecutionException ex) {
+            //TODO: these exceptions can occur when waiting on a result from MSALRuntime. Not possible to continue? Retrow exception or create MSAL exception?
         }
     }
 
@@ -98,7 +116,7 @@ public class MsalRuntimeBroker implements IBroker {
      */
     @Deprecated
     @Override
-    public void acquireToken(PublicClientApplication application, UserNamePasswordParameters parameters, CompletableFuture<IAuthenticationResult> future) throws ExecutionException, InterruptedException {
+    public void acquireToken(PublicClientApplication application, UserNamePasswordParameters parameters, CompletableFuture<IAuthenticationResult> future) {
 
         try (AuthParameters authParameters =
                      new AuthParameters
@@ -122,6 +140,26 @@ public class MsalRuntimeBroker implements IBroker {
                             ((AuthResult) authResult).getAccount().getAccountId(),
                             ((AuthResult) authResult).getAccount().getClientInfo(),
                             ((AuthResult) authResult).getAccessTokenExpirationTime())));
+        } catch (MsalInteropException interopException) {
+            throw new MsalException(interopException.getErrorMessage(), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
+        } catch (InterruptedException | ExecutionException ex) {
+            //TODO: these exceptions can occur when waiting on a result from MSALRuntime. Not possible to continue? Retrow exception or create MSAL exception?
+        }
+    }
+
+    @Override
+    public void removeAccount(PublicClientApplication application, IAccount msalJavaAccount) {
+        try  {
+
+            Account msalRuntimeAccount = ((ReadAccountResult) interop.readAccountById(msalJavaAccount.homeAccountId(), application.correlationId()).get()).getAccount();
+
+            if (msalRuntimeAccount != null) {
+                interop.signOutSilently(application.clientId(), application.correlationId(), msalRuntimeAccount);
+            }
+        } catch (MsalInteropException interopException) {
+            throw new MsalException(interopException.getErrorMessage(), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
+        } catch (InterruptedException | ExecutionException ex) {
+            //TODO: these exceptions can occur when waiting on a result from MSALRuntime. Not possible to continue? Retrow exception or create MSAL exception?
         }
     }
 

@@ -30,21 +30,21 @@ public interface IBroker {
      * This may be accomplished by returning tokens from a token cache, using cached refresh tokens to get new tokens,
      * or via any authentication flow where a user is not prompted to enter credentials
      */
-    default void acquireToken(PublicClientApplication application, SilentParameters requestParameters, CompletableFuture<IAuthenticationResult> future) throws MsalClientException, ExecutionException, InterruptedException {
+    default void acquireToken(PublicClientApplication application, SilentParameters requestParameters, CompletableFuture<IAuthenticationResult> future) {
         throw new MsalClientException("Broker implementation missing", AuthenticationErrorCode.MISSING_BROKER);
     }
 
     /**
      * Acquire a token interactively, by prompting users to enter their credentials in some way
      */
-    default void acquireToken(PublicClientApplication application, InteractiveRequestParameters parameters, CompletableFuture<IAuthenticationResult> future) throws ExecutionException, InterruptedException {
+    default void acquireToken(PublicClientApplication application, InteractiveRequestParameters parameters, CompletableFuture<IAuthenticationResult> future) {
         throw new MsalClientException("Broker implementation missing", AuthenticationErrorCode.MISSING_BROKER);
     }
 
     /**
      * Acquire a token silently, i.e. without direct user interaction, using username/password authentication
      */
-    default void acquireToken(PublicClientApplication application, UserNamePasswordParameters parameters, CompletableFuture<IAuthenticationResult> future) throws ExecutionException, InterruptedException {
+    default void acquireToken(PublicClientApplication application, UserNamePasswordParameters parameters, CompletableFuture<IAuthenticationResult> future) {
         throw new MsalClientException("Broker implementation missing", AuthenticationErrorCode.MISSING_BROKER);
     }
 
