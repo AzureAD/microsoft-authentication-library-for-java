@@ -33,7 +33,6 @@ public class IntegratedWindowsAuthenticationParameters implements IAcquireTokenP
     /**
      * Identifier of user account for which to acquire tokens for
      */
-    @NonNull
     private String username;
 
     /**
@@ -67,10 +66,21 @@ public class IntegratedWindowsAuthenticationParameters implements IAcquireTokenP
     public static IntegratedWindowsAuthenticationParametersBuilder builder(Set<String> scopes, String username) {
 
         validateNotNull("scopes", scopes);
-        validateNotBlank("username", username);
-
         return builder()
                 .scopes(scopes)
                 .username(username);
+    }
+
+    /**
+     * Builder for {@link IntegratedWindowsAuthenticationParameters}
+     *
+     * @param scopes   scopes application is requesting access to
+     * @return builder that can be used to construct IntegratedWindowsAuthenticationParameters
+     */
+    public static IntegratedWindowsAuthenticationParametersBuilder builder(Set<String> scopes) {
+
+        validateNotNull("scopes", scopes);
+        return builder()
+                .scopes(scopes);
     }
 }
