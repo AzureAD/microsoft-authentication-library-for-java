@@ -25,7 +25,7 @@ public class TokenCache implements ITokenCache {
 
     protected static final int MIN_ACCESS_TOKEN_EXPIRE_IN_SEC = 5 * 60;
 
-    transient private ReadWriteLock lock = new ReentrantReadWriteLock();
+    private transient ReadWriteLock lock = new ReentrantReadWriteLock();
 
     /**
      * Constructor for token cache
@@ -456,7 +456,7 @@ public class TokenCache implements ITokenCache {
         }
 
         return credential.userAssertionHash() != null &&
-                credential.userAssertionHash().equalsIgnoreCase(userAssertionHash);
+                credential.userAssertionHash().equals(userAssertionHash);
     }
 
     private boolean userAssertionHashMatches(AccountCacheEntity accountCacheEntity, String userAssertionHash) {
@@ -465,7 +465,7 @@ public class TokenCache implements ITokenCache {
         }
 
         return accountCacheEntity.userAssertionHash() != null &&
-                accountCacheEntity.userAssertionHash().equalsIgnoreCase(userAssertionHash);
+                accountCacheEntity.userAssertionHash().equals(userAssertionHash);
     }
 
     private Optional<AccessTokenCacheEntity> getAccessTokenCacheEntity(
