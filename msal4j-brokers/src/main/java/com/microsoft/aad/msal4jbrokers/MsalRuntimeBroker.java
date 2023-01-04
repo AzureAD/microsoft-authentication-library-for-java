@@ -16,12 +16,14 @@ import com.microsoft.azure.javamsalruntime.Account;
 import com.microsoft.azure.javamsalruntime.AuthParameters;
 import com.microsoft.azure.javamsalruntime.AuthResult;
 import com.microsoft.azure.javamsalruntime.MsalInteropException;
+import com.microsoft.azure.javamsalruntime.MsalRuntimeFuture;
 import com.microsoft.azure.javamsalruntime.MsalRuntimeInterop;
 import com.microsoft.azure.javamsalruntime.ReadAccountResult;
 
 import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.UUID;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -41,16 +43,13 @@ public class MsalRuntimeBroker implements IBroker {
     @Override
     public void acquireToken(PublicClientApplication application, SilentParameters parameters, CompletableFuture<IAuthenticationResult> future) {
         Account accountResult = null;
-
         //If request has an account ID, MSALRuntime data cached for that account
         //  try to get account info from MSALRuntime
         if (parameters.account() != null) {
             try {
                 accountResult = ((ReadAccountResult) interop.readAccountById(parameters.account().homeAccountId(), application.correlationId()).get()).getAccount();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
+            } catch (InterruptedException | ExecutionException e) {
+                //TODO: these exceptions can occur when waiting on a result from MSALRuntime. Not possible to continue? Rethrow exception or create MSAL exception?
             }
         }
 
@@ -60,16 +59,19 @@ public class MsalRuntimeBroker implements IBroker {
                              application.authority(),
                              parameters.scopes().toString())
                              .build()) {
+            MsalRuntimeFuture currentAsyncOperation;
 
             //Account was not cached in MSALRuntime, must perform sign in first to populate account info
             if (accountResult == null) {
-                accountResult = ((AuthResult) interop.signInSilently(authParameters, application.correlationId()).get()).getAccount();
+                currentAsyncOperation = interop.signInSilently(authParameters, application.correlationId());
+                setFutureToCancel(future, currentAsyncOperation);
+                accountResult = ((AuthResult) currentAsyncOperation.get()).getAccount();
             }
-
             //Either account was already cached or silent sign in was successful, so we can retrieve tokens from MSALRuntime,
             // parse the result into an MSAL Java AuthenticationResult, and complete the future
-            interop.acquireTokenSilently(authParameters, application.correlationId(), accountResult)
-                    .thenApply(authResult -> future.complete(parseBrokerAuthResult(
+            currentAsyncOperation = interop.acquireTokenSilently(authParameters, application.correlationId(), accountResult);
+            setFutureToCancel(future, currentAsyncOperation);
+            currentAsyncOperation.thenApply(authResult -> future.complete(parseBrokerAuthResult(
                             application.authority(),
                             ((AuthResult) authResult).getIdToken(),
                             ((AuthResult) authResult).getAccessToken(),
@@ -79,7 +81,7 @@ public class MsalRuntimeBroker implements IBroker {
         } catch (MsalInteropException interopException) {
             throw new MsalException(interopException.getErrorMessage(), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
         } catch (InterruptedException | ExecutionException ex) {
-            //TODO: these exceptions can occur when waiting on a result from MSALRuntime. Not possible to continue? Retrow exception or create MSAL exception?
+            //TODO: these exceptions can occur when waiting on a result from MSALRuntime. Not possible to continue? Rethrow exception or create MSAL exception?
         }
     }
 
@@ -94,10 +96,15 @@ public class MsalRuntimeBroker implements IBroker {
                              .claims(parameters.claims().toString())
                              .build()) {
 
-            Account accountResult = ((AuthResult) interop.signInInteractively(parameters.windowHandle(), authParameters, application.correlationId(), parameters.loginHint()).get()).getAccount();
+            MsalRuntimeFuture currentMsalRuntimeFuture;
 
-            interop.acquireTokenInteractively(parameters.windowHandle(), authParameters, application.correlationId(), accountResult)
-                    .thenApply(authResult -> future.complete(parseBrokerAuthResult(
+            currentMsalRuntimeFuture = interop.signInInteractively(parameters.windowHandle(), authParameters, application.correlationId(), parameters.loginHint());
+            setFutureToCancel(future, currentMsalRuntimeFuture);
+            Account accountResult = ((AuthResult) currentMsalRuntimeFuture.get()).getAccount();
+
+            currentMsalRuntimeFuture = interop.acquireTokenInteractively(parameters.windowHandle(), authParameters, application.correlationId(), accountResult);
+            setFutureToCancel(future, currentMsalRuntimeFuture);
+            currentMsalRuntimeFuture.thenApply(authResult -> future.complete(parseBrokerAuthResult(
                             application.authority(),
                             ((AuthResult) authResult).getIdToken(),
                             ((AuthResult) authResult).getAccessToken(),
@@ -126,14 +133,19 @@ public class MsalRuntimeBroker implements IBroker {
                              .claims(parameters.claims().toString())
                              .build()) {
 
+            MsalRuntimeFuture currentMsalRuntimeFuture;
+
             authParameters.setUsernamePassword(parameters.username(), new String(parameters.password()));
 
-            Account accountResult = ((AuthResult) interop.signInSilently(authParameters, application.correlationId()).get()).getAccount();
+            currentMsalRuntimeFuture = interop.signInSilently(authParameters, application.correlationId());
+            setFutureToCancel(future, currentMsalRuntimeFuture);
+            Account accountResult = ((AuthResult) currentMsalRuntimeFuture.get()).getAccount();
 
             //Either account was already cached or silent sign in was successful, so we can retrieve tokens from MSALRuntime,
             // parse the result into an MSAL Java AuthenticationResult, and complete the future
-            interop.acquireTokenSilently(authParameters, application.correlationId(), accountResult)
-                    .thenApply(authResult -> future.complete(parseBrokerAuthResult(
+            currentMsalRuntimeFuture = interop.acquireTokenSilently(authParameters, application.correlationId(), accountResult);
+            setFutureToCancel(future, currentMsalRuntimeFuture);
+            currentMsalRuntimeFuture.thenApply(authResult -> future.complete(parseBrokerAuthResult(
                             application.authority(),
                             ((AuthResult) authResult).getIdToken(),
                             ((AuthResult) authResult).getAccessToken(),
@@ -161,6 +173,17 @@ public class MsalRuntimeBroker implements IBroker {
         } catch (InterruptedException | ExecutionException ex) {
             //TODO: these exceptions can occur when waiting on a result from MSALRuntime. Not possible to continue? Retrow exception or create MSAL exception?
         }
+    }
+
+    /**
+     * If the future returned by MSAL Java is canceled before we can complete it using a result from MSALRuntime, we must cancel the async operations MSALRuntime is performing
+     *
+     * However, there are multiple sequential calls that need to be made to MSALRuntime, each of which returns an MsalRuntimeFuture which we'd need to cancel
+     *
+     * This utility method encapsulates the logic for swapping which MsalRuntimeFuture gets canceled if the main future is canceled
+     */
+    public void setFutureToCancel(CompletableFuture<IAuthenticationResult> future, MsalRuntimeFuture futureToCancel) {
+        future.whenComplete((result, ex) -> {if (ex instanceof CancellationException) futureToCancel.cancelAsyncOperation();});
     }
 
     //Simple manual test for early development/testing

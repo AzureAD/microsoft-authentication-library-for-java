@@ -7,7 +7,6 @@ import com.nimbusds.jwt.JWTParser;
 
 import java.net.URL;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Used to define the basic set of methods that all Brokers must implement
@@ -59,7 +58,6 @@ public interface IBroker {
                                                             String accountId, String clientInfo,
                                                             long accessTokenExpirationTime) {
 
-        //TODO: need to either make AuthenticationResult public or implement IAuthenticationResult here in the interop layer
         AuthenticationResult.AuthenticationResultBuilder builder =  AuthenticationResult.builder();
 
         try {
