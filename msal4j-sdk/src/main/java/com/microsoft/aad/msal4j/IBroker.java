@@ -22,31 +22,27 @@ public interface IBroker {
      * This may be accomplished by returning tokens from a token cache, using cached refresh tokens to get new tokens,
      * or via any authentication flow where a user is not prompted to enter credentials
      */
-    default void acquireToken(PublicClientApplication application, SilentParameters requestParameters, CompletableFuture<IAuthenticationResult> future) {
+    default CompletableFuture<IAuthenticationResult> acquireToken(PublicClientApplication application, SilentParameters requestParameters) {
         throw new MsalClientException("Broker implementation missing", AuthenticationErrorCode.MISSING_BROKER);
     }
 
     /**
      * Acquire a token interactively, by prompting users to enter their credentials in some way
      */
-    default void acquireToken(PublicClientApplication application, InteractiveRequestParameters parameters, CompletableFuture<IAuthenticationResult> future) {
+    default CompletableFuture<IAuthenticationResult> acquireToken(PublicClientApplication application, InteractiveRequestParameters parameters) {
         throw new MsalClientException("Broker implementation missing", AuthenticationErrorCode.MISSING_BROKER);
     }
 
     /**
      * Acquire a token silently, i.e. without direct user interaction, using username/password authentication
      */
-    default void acquireToken(PublicClientApplication application, UserNamePasswordParameters parameters, CompletableFuture<IAuthenticationResult> future) {
+    default CompletableFuture<IAuthenticationResult> acquireToken(PublicClientApplication application, UserNamePasswordParameters parameters) {
         throw new MsalClientException("Broker implementation missing", AuthenticationErrorCode.MISSING_BROKER);
     }
 
     default void removeAccount(PublicClientApplication application, IAccount account) throws MsalClientException {
         throw new MsalClientException("Broker implementation missing", AuthenticationErrorCode.MISSING_BROKER);
     }
-
-    //TODO: Any better place to put this helper method? This feels wrong
-    //AuthenticationResult requires many package-private classes that broker package can't access, so helper methods will be
-    //  made for each broker to create the sort of AuthenticationResult that the rest of MSAL Java expects
 
     /**
      * MSAL Java's AuthenticationResult requires several package-private classes that a broker implementation can't access,
@@ -75,7 +71,7 @@ public interface IBroker {
                 builder.expiresOn(accessTokenExpirationTime);
             }
         } catch (Exception e) {
-            //TODO: throw new msalexception. Could a valid broker result be an invalid MSAL Java result?
+            throw new MsalClientException(String.format("Exception when converting broker result to MSAL Java AuthenticationResult: %s", e.getMessage()), AuthenticationErrorCode.MSALJAVA_BROKERS_ERROR);
         }
         return builder.build();
     }

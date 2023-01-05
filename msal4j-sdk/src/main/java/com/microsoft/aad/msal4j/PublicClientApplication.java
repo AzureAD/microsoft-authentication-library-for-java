@@ -37,10 +37,10 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
                 parameters,
                 UserIdentifier.fromUpn(parameters.username()));
 
-        CompletableFuture<IAuthenticationResult> future = new CompletableFuture<>();
+        CompletableFuture<IAuthenticationResult> future;
 
         if (this.broker != null) {
-            broker.acquireToken(this, parameters, future);
+            future = broker.acquireToken(this, parameters);
         } else {
             UserNamePasswordRequest userNamePasswordRequest =
                     new UserNamePasswordRequest(parameters,
@@ -122,10 +122,10 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
                 this,
                 context);
 
-        CompletableFuture<IAuthenticationResult> future = new CompletableFuture<>();
+        CompletableFuture<IAuthenticationResult> future;
 
         if (this.broker != null) {
-            broker.acquireToken(this, parameters, future);
+            future = broker.acquireToken(this, parameters);
         } else {
             future = executeRequest(interactiveRequest);
         }
@@ -137,10 +137,10 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
 
     @Override
     public CompletableFuture<IAuthenticationResult> acquireTokenSilently(SilentParameters parameters) throws MalformedURLException {
-        CompletableFuture<IAuthenticationResult> future = new CompletableFuture<>();
+        CompletableFuture<IAuthenticationResult> future;
 
         if (this.broker != null) {
-            broker.acquireToken(this, parameters, future);
+            future = broker.acquireToken(this, parameters);
         } else {
             future = super.acquireTokenSilently(parameters);
         }

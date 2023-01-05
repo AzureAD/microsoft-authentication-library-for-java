@@ -41,9 +41,10 @@ public class MsalRuntimeBroker implements IBroker {
     }
 
     @Override
-    public void acquireToken(PublicClientApplication application, SilentParameters parameters, CompletableFuture<IAuthenticationResult> future) {
+    public CompletableFuture<IAuthenticationResult> acquireToken(PublicClientApplication application, SilentParameters parameters) {
         Account accountResult = null;
-        
+        CompletableFuture<IAuthenticationResult> future = new CompletableFuture<>();
+
         //If request has an account ID, MSALRuntime likely has data cached for that account that we can retrieve
         if (parameters.account() != null) {
             try {
@@ -59,34 +60,40 @@ public class MsalRuntimeBroker implements IBroker {
                              application.authority(),
                              parameters.scopes().toString())
                              .build()) {
-            MsalRuntimeFuture currentAsyncOperation;
+
+            MsalRuntimeFuture msalRuntimeAsyncOperation = new MsalRuntimeFuture();
+            setFutureToCancel(future, msalRuntimeAsyncOperation);
 
             //Account was not cached in MSALRuntime, must perform sign in first to populate account info
             if (accountResult == null) {
-                currentAsyncOperation = interop.signInSilently(authParameters, application.correlationId());
-                setFutureToCancel(future, currentAsyncOperation);
-                accountResult = ((AuthResult) currentAsyncOperation.get()).getAccount();
+                msalRuntimeAsyncOperation = interop.signInSilently(authParameters, application.correlationId());
+                accountResult = ((AuthResult) msalRuntimeAsyncOperation.get()).getAccount();
             }
+
             //Either account was already cached or silent sign in was successful, so we can retrieve tokens from MSALRuntime,
             // parse the result into an MSAL Java AuthenticationResult, and complete the future
-            currentAsyncOperation = interop.acquireTokenSilently(authParameters, application.correlationId(), accountResult);
-            setFutureToCancel(future, currentAsyncOperation);
-            currentAsyncOperation.thenApply(authResult -> future.complete(parseBrokerAuthResult(
+            msalRuntimeAsyncOperation = interop.acquireTokenSilently(authParameters, application.correlationId(), accountResult);
+            setFutureToCancel(future, msalRuntimeAsyncOperation);
+            msalRuntimeAsyncOperation.thenApply(authResult -> future.complete(parseBrokerAuthResult(
                             application.authority(),
                             ((AuthResult) authResult).getIdToken(),
                             ((AuthResult) authResult).getAccessToken(),
                             ((AuthResult) authResult).getAccount().getAccountId(),
                             ((AuthResult) authResult).getAccount().getClientInfo(),
                             ((AuthResult) authResult).getAccessTokenExpirationTime())));
+
         } catch (MsalInteropException interopException) {
             throw new MsalClientException(interopException.getErrorMessage(), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
         } catch (InterruptedException | ExecutionException ex) {
             throw new MsalClientException(String.format("MSALRuntime async operation interrupted when waiting for result: %s", ex.getMessage()), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
         }
+
+        return future;
     }
 
     @Override
-    public void acquireToken(PublicClientApplication application, InteractiveRequestParameters parameters, CompletableFuture<IAuthenticationResult> future) {
+    public CompletableFuture<IAuthenticationResult> acquireToken(PublicClientApplication application, InteractiveRequestParameters parameters) {
+        CompletableFuture<IAuthenticationResult> future = new CompletableFuture<>();
 
         try (AuthParameters authParameters =
                      new AuthParameters
@@ -96,15 +103,14 @@ public class MsalRuntimeBroker implements IBroker {
                              .claims(parameters.claims().toString())
                              .build()) {
 
-            MsalRuntimeFuture currentMsalRuntimeFuture;
+            MsalRuntimeFuture msalRuntimeAsyncOperation = new MsalRuntimeFuture();
+            setFutureToCancel(future, msalRuntimeAsyncOperation);
 
-            currentMsalRuntimeFuture = interop.signInInteractively(parameters.windowHandle(), authParameters, application.correlationId(), parameters.loginHint());
-            setFutureToCancel(future, currentMsalRuntimeFuture);
-            Account accountResult = ((AuthResult) currentMsalRuntimeFuture.get()).getAccount();
+            msalRuntimeAsyncOperation = interop.signInInteractively(parameters.windowHandle(), authParameters, application.correlationId(), parameters.loginHint());
+            Account accountResult = ((AuthResult) msalRuntimeAsyncOperation.get()).getAccount();
 
-            currentMsalRuntimeFuture = interop.acquireTokenInteractively(parameters.windowHandle(), authParameters, application.correlationId(), accountResult);
-            setFutureToCancel(future, currentMsalRuntimeFuture);
-            currentMsalRuntimeFuture.thenApply(authResult -> future.complete(parseBrokerAuthResult(
+            msalRuntimeAsyncOperation = interop.acquireTokenInteractively(parameters.windowHandle(), authParameters, application.correlationId(), accountResult);
+            msalRuntimeAsyncOperation.thenApply(authResult -> future.complete(parseBrokerAuthResult(
                             application.authority(),
                             ((AuthResult) authResult).getIdToken(),
                             ((AuthResult) authResult).getAccessToken(),
@@ -116,6 +122,8 @@ public class MsalRuntimeBroker implements IBroker {
         } catch (InterruptedException | ExecutionException ex) {
             throw new MsalClientException(String.format("MSALRuntime async operation interrupted when waiting for result: %s", ex.getMessage()), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
         }
+
+        return future;
     }
 
     /**
@@ -123,7 +131,9 @@ public class MsalRuntimeBroker implements IBroker {
      */
     @Deprecated
     @Override
-    public void acquireToken(PublicClientApplication application, UserNamePasswordParameters parameters, CompletableFuture<IAuthenticationResult> future) {
+    public CompletableFuture<IAuthenticationResult> acquireToken(PublicClientApplication application, UserNamePasswordParameters parameters) {
+
+        CompletableFuture<IAuthenticationResult> future = new CompletableFuture<>();
 
         try (AuthParameters authParameters =
                      new AuthParameters
@@ -133,17 +143,16 @@ public class MsalRuntimeBroker implements IBroker {
                              .claims(parameters.claims().toString())
                              .build()) {
 
-            MsalRuntimeFuture currentMsalRuntimeFuture;
-
             authParameters.setUsernamePassword(parameters.username(), new String(parameters.password()));
 
-            currentMsalRuntimeFuture = interop.signInSilently(authParameters, application.correlationId());
-            setFutureToCancel(future, currentMsalRuntimeFuture);
-            Account accountResult = ((AuthResult) currentMsalRuntimeFuture.get()).getAccount();
+            MsalRuntimeFuture msalRuntimeAsyncOperation = new MsalRuntimeFuture();
+            setFutureToCancel(future, msalRuntimeAsyncOperation);
 
-            currentMsalRuntimeFuture = interop.acquireTokenSilently(authParameters, application.correlationId(), accountResult);
-            setFutureToCancel(future, currentMsalRuntimeFuture);
-            currentMsalRuntimeFuture.thenApply(authResult -> future.complete(parseBrokerAuthResult(
+            msalRuntimeAsyncOperation = interop.signInSilently(authParameters, application.correlationId());
+            Account accountResult = ((AuthResult) msalRuntimeAsyncOperation.get()).getAccount();
+
+            msalRuntimeAsyncOperation = interop.acquireTokenSilently(authParameters, application.correlationId(), accountResult);
+            msalRuntimeAsyncOperation.thenApply(authResult -> future.complete(parseBrokerAuthResult(
                             application.authority(),
                             ((AuthResult) authResult).getIdToken(),
                             ((AuthResult) authResult).getAccessToken(),
@@ -155,6 +164,8 @@ public class MsalRuntimeBroker implements IBroker {
         } catch (InterruptedException | ExecutionException ex) {
             throw new MsalClientException(String.format("MSALRuntime async operation interrupted when waiting for result: %s", ex.getMessage()), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
         }
+
+        return future;
     }
 
     @Override
@@ -197,13 +208,12 @@ public class MsalRuntimeBroker implements IBroker {
                 clientId).
                 authority(authority).
                 correlationId(UUID.randomUUID().toString()).
+                broker(broker).
                 build();
 
         SilentParameters parameters = SilentParameters.builder(Collections.singleton(scopes)).build();
 
-        CompletableFuture<IAuthenticationResult> future = new CompletableFuture<>();
-
-        broker.acquireToken(pca, parameters, future);
+        CompletableFuture<IAuthenticationResult> future = pca.acquireTokenSilently(parameters);
 
         IAuthenticationResult result = future.get();
 
