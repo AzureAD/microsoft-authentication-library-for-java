@@ -192,7 +192,7 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
         /**
          * Implementation of IBroker that will be used to retrieve tokens
          * <p>
-         * Setting this will cause MSAL Java to use a broker (such as WAM/MSALRuntime) in flows that support that broker
+         * Setting this will cause MSAL Java to use the given broker implementation to retrieve tokens from a broker (such as WAM/MSALRuntime) in flows that support it
          */
         public PublicClientApplication.Builder broker(IBroker val) {
             this.broker = val;

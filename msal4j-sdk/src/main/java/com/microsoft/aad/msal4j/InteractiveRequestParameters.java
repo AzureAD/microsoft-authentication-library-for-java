@@ -101,7 +101,14 @@ public class InteractiveRequestParameters implements IAcquireTokenParameters {
     private boolean instanceAware;
 
     /**
-     * The parent window handle used to open UI elements in non-browser scenarios
+     * The parent window handle used to open UI elements with the correct parent
+     *
+     *
+     * For browser scenarios and Windows console applications, this value should not need to be set
+     *
+     * For Windows console applications, MSAL Java will attempt to discover the console's window handle if this parameter is not set
+     *
+     * For scenarios where MSAL Java is responsible for opening UI elements (such as when using MSALRuntime), this parameter is required and an exception will be thrown if not set
      */
     private long windowHandle;
 

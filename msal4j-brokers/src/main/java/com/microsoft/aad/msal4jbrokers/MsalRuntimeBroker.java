@@ -9,7 +9,7 @@ import com.microsoft.aad.msal4j.InteractiveRequestParameters;
 import com.microsoft.aad.msal4j.PublicClientApplication;
 import com.microsoft.aad.msal4j.SilentParameters;
 import com.microsoft.aad.msal4j.UserNamePasswordParameters;
-import com.microsoft.aad.msal4j.MsalException;
+import com.microsoft.aad.msal4j.MsalClientException;
 import com.microsoft.aad.msal4j.AuthenticationErrorCode;
 import com.microsoft.aad.msal4j.IAccount;
 import com.microsoft.azure.javamsalruntime.Account;
@@ -36,20 +36,20 @@ public class MsalRuntimeBroker implements IBroker {
             // so when an MsalRuntimeBroker is created this will cause the interop layer to initialize
             interop = new MsalRuntimeInterop();
         } catch (MsalInteropException e) {
-            //TODO: Meaningful error message explaining why MSALRuntime failed to initialize (unsupported platform, error from MSALRuntime, etc.)
+            throw new MsalClientException(String.format("Could not initialize MSALRuntime: %s", e.getErrorMessage()), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
         }
     }
 
     @Override
     public void acquireToken(PublicClientApplication application, SilentParameters parameters, CompletableFuture<IAuthenticationResult> future) {
         Account accountResult = null;
-        //If request has an account ID, MSALRuntime data cached for that account
-        //  try to get account info from MSALRuntime
+        
+        //If request has an account ID, MSALRuntime likely has data cached for that account that we can retrieve
         if (parameters.account() != null) {
             try {
                 accountResult = ((ReadAccountResult) interop.readAccountById(parameters.account().homeAccountId(), application.correlationId()).get()).getAccount();
-            } catch (InterruptedException | ExecutionException e) {
-                //TODO: these exceptions can occur when waiting on a result from MSALRuntime. Not possible to continue? Rethrow exception or create MSAL exception?
+            } catch (InterruptedException | ExecutionException ex) {
+                throw new MsalClientException(String.format("MSALRuntime async operation interrupted when waiting for result: %s", ex.getMessage()), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
             }
         }
 
@@ -79,9 +79,9 @@ public class MsalRuntimeBroker implements IBroker {
                             ((AuthResult) authResult).getAccount().getClientInfo(),
                             ((AuthResult) authResult).getAccessTokenExpirationTime())));
         } catch (MsalInteropException interopException) {
-            throw new MsalException(interopException.getErrorMessage(), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
+            throw new MsalClientException(interopException.getErrorMessage(), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
         } catch (InterruptedException | ExecutionException ex) {
-            //TODO: these exceptions can occur when waiting on a result from MSALRuntime. Not possible to continue? Rethrow exception or create MSAL exception?
+            throw new MsalClientException(String.format("MSALRuntime async operation interrupted when waiting for result: %s", ex.getMessage()), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
         }
     }
 
@@ -112,9 +112,9 @@ public class MsalRuntimeBroker implements IBroker {
                             ((AuthResult) authResult).getAccount().getClientInfo(),
                             ((AuthResult) authResult).getAccessTokenExpirationTime())));
         } catch (MsalInteropException interopException) {
-            throw new MsalException(interopException.getErrorMessage(), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
+            throw new MsalClientException(interopException.getErrorMessage(), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
         } catch (InterruptedException | ExecutionException ex) {
-            //TODO: these exceptions can occur when waiting on a result from MSALRuntime. Not possible to continue? Retrow exception or create MSAL exception?
+            throw new MsalClientException(String.format("MSALRuntime async operation interrupted when waiting for result: %s", ex.getMessage()), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
         }
     }
 
@@ -141,8 +141,6 @@ public class MsalRuntimeBroker implements IBroker {
             setFutureToCancel(future, currentMsalRuntimeFuture);
             Account accountResult = ((AuthResult) currentMsalRuntimeFuture.get()).getAccount();
 
-            //Either account was already cached or silent sign in was successful, so we can retrieve tokens from MSALRuntime,
-            // parse the result into an MSAL Java AuthenticationResult, and complete the future
             currentMsalRuntimeFuture = interop.acquireTokenSilently(authParameters, application.correlationId(), accountResult);
             setFutureToCancel(future, currentMsalRuntimeFuture);
             currentMsalRuntimeFuture.thenApply(authResult -> future.complete(parseBrokerAuthResult(
@@ -153,9 +151,9 @@ public class MsalRuntimeBroker implements IBroker {
                             ((AuthResult) authResult).getAccount().getClientInfo(),
                             ((AuthResult) authResult).getAccessTokenExpirationTime())));
         } catch (MsalInteropException interopException) {
-            throw new MsalException(interopException.getErrorMessage(), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
+            throw new MsalClientException(interopException.getErrorMessage(), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
         } catch (InterruptedException | ExecutionException ex) {
-            //TODO: these exceptions can occur when waiting on a result from MSALRuntime. Not possible to continue? Retrow exception or create MSAL exception?
+            throw new MsalClientException(String.format("MSALRuntime async operation interrupted when waiting for result: %s", ex.getMessage()), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
         }
     }
 
@@ -169,9 +167,9 @@ public class MsalRuntimeBroker implements IBroker {
                 interop.signOutSilently(application.clientId(), application.correlationId(), msalRuntimeAccount);
             }
         } catch (MsalInteropException interopException) {
-            throw new MsalException(interopException.getErrorMessage(), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
+            throw new MsalClientException(interopException.getErrorMessage(), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
         } catch (InterruptedException | ExecutionException ex) {
-            //TODO: these exceptions can occur when waiting on a result from MSALRuntime. Not possible to continue? Retrow exception or create MSAL exception?
+            throw new MsalClientException(String.format("MSALRuntime async operation interrupted when waiting for result: %s", ex.getMessage()), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
         }
     }
 
@@ -186,7 +184,7 @@ public class MsalRuntimeBroker implements IBroker {
         future.whenComplete((result, ex) -> {if (ex instanceof CancellationException) futureToCancel.cancelAsyncOperation();});
     }
 
-    //Simple manual test for early development/testing
+    //Simple manual test for early development/testing, will be removed for final version
     public static void main(String args[]) throws MalformedURLException, ExecutionException, InterruptedException {
         String clientId = "903c8a8a-9e74-415e-9921-711a293d90cb";
         String authority = "https://login.microsoftonline.com/common";

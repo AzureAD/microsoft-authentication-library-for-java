@@ -17,13 +17,6 @@ import java.util.concurrent.CompletableFuture;
 public interface IBroker {
 
     /**
-     * Checks if an IBroker implementation is accessible by MSAL Java
-     */
-    default boolean isAvailable(){
-        return false;
-    }
-
-    /**
      * Acquire a token silently, i.e. without direct user interaction
      *
      * This may be accomplished by returning tokens from a token cache, using cached refresh tokens to get new tokens,
@@ -54,6 +47,11 @@ public interface IBroker {
     //TODO: Any better place to put this helper method? This feels wrong
     //AuthenticationResult requires many package-private classes that broker package can't access, so helper methods will be
     //  made for each broker to create the sort of AuthenticationResult that the rest of MSAL Java expects
+
+    /**
+     * MSAL Java's AuthenticationResult requires several package-private classes that a broker implementation can't access,
+     *  so this helper method can be used to create AuthenticationResults from within the MSAL Java package
+     */
     default IAuthenticationResult parseBrokerAuthResult(String authority, String idToken, String accessToken,
                                                             String accountId, String clientInfo,
                                                             long accessTokenExpirationTime) {
