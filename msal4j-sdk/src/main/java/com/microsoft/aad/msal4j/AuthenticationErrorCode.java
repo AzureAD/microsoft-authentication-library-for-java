@@ -127,5 +127,5 @@ public class AuthenticationErrorCode {
      * Indicates an error from the Java/MSALRuntime interop layer used by the Java Brokers package,
      * and will generally just be forwarding an error message from the interop layer or MSALRuntime itself
      */
-    public final static String MSALRUNTIME_INTEROP_ERROR = "missing_broker";
+    public final static String MSALRUNTIME_INTEROP_ERROR = "interop_error";
 }

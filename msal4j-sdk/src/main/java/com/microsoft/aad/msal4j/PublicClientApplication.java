@@ -126,11 +126,11 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
 
         if (this.broker != null) {
             broker.acquireToken(this, parameters, future);
-            futureReference.set(future);
         } else {
             future = executeRequest(interactiveRequest);
-            futureReference.set(future);
         }
+
+        futureReference.set(future);
 
         return future;
     }
