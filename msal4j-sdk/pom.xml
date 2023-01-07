@@ -70,7 +70,7 @@
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <version>7.7.0</version>
+            <version>7.7.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -240,6 +240,8 @@
                 <configuration>
                     <source>8</source>
                     <target>8</target>
+                    <testSource>11</testSource>
+                    <testTarget>11</testTarget>
                 </configuration>
             </plugin>
             <plugin>
