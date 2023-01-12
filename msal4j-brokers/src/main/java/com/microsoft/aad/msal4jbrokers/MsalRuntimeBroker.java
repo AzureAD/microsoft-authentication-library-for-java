@@ -18,11 +18,15 @@ import com.microsoft.azure.javamsalruntime.AuthResult;
 import com.microsoft.azure.javamsalruntime.MsalInteropException;
 import com.microsoft.azure.javamsalruntime.MsalRuntimeInterop;
 import com.microsoft.azure.javamsalruntime.ReadAccountResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 public class MsalRuntimeBroker implements IBroker {
+    private static final Logger LOG = LoggerFactory.getLogger(AuthResult.class);
+
     private static MsalRuntimeInterop interop;
 
     static {
@@ -30,7 +34,6 @@ public class MsalRuntimeBroker implements IBroker {
             //MsalRuntimeInterop performs various initialization steps in a similar static block,
             // so when an MsalRuntimeBroker is created this will cause the interop layer to initialize
             interop = new MsalRuntimeInterop();
-            interop.startupMsalRuntime();
         } catch (MsalInteropException e) {
             throw new MsalClientException(String.format("Could not initialize MSALRuntime: %s", e.getErrorMessage()), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
         }
@@ -150,7 +153,26 @@ public class MsalRuntimeBroker implements IBroker {
         }
     }
 
+    /**
+     * Calls MSALRuntime's startup API. If MSALRuntime started successfully, we can assume that the broker is available for use.
+     *
+     * If an exception is thrown when trying to start MSALRuntime, we assume that we cannot use the broker and will not make any more attempts to do so.
+     *
+     * @return boolean representing whether or not MSALRuntime started successfully
+     */
+    @Override
     public boolean isBrokerAvailable() {
-        return MsalRuntimeInterop.isPlatformSupported();
+        try {
+            interop.startupMsalRuntime();
+
+            LOG.info("MSALRuntime started successfully. MSAL Java will use MSALRuntime in all supported broker flows.");
+
+            return true;
+        } catch (MsalInteropException e) {
+            LOG.warn("Exception thrown when trying to start MSALRuntime: {}", e.getErrorMessage());
+            LOG.warn("MSALRuntime could not be started. MSAL Java will fall back to non-broker flows.");
+
+            return false;
+        }
     }
 }
