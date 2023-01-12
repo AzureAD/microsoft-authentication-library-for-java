@@ -25,6 +25,7 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
 
     private final ClientAuthenticationPost clientAuthentication;
     private IBroker broker;
+    private boolean brokerEnabled;
 
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(UserNamePasswordParameters parameters) {
@@ -39,7 +40,7 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
 
         CompletableFuture<IAuthenticationResult> future;
 
-        if (this.broker != null) {
+        if (brokerEnabled) {
             future = broker.acquireToken(this, parameters);
         } else {
             UserNamePasswordRequest userNamePasswordRequest =
@@ -124,7 +125,7 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
 
         CompletableFuture<IAuthenticationResult> future;
 
-        if (this.broker != null) {
+        if (brokerEnabled) {
             future = broker.acquireToken(this, parameters);
         } else {
             future = executeRequest(interactiveRequest);
@@ -139,7 +140,7 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
     public CompletableFuture<IAuthenticationResult> acquireTokenSilently(SilentParameters parameters) throws MalformedURLException {
         CompletableFuture<IAuthenticationResult> future;
 
-        if (this.broker != null) {
+        if (brokerEnabled) {
             future = broker.acquireToken(this, parameters);
         } else {
             future = super.acquireTokenSilently(parameters);
@@ -150,7 +151,7 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
 
     @Override
     public CompletableFuture<Void> removeAccount(IAccount account) {
-        if (this.broker != null) {
+        if (brokerEnabled) {
             broker.removeAccount(this, account);
         }
 
@@ -164,6 +165,7 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
         this.clientAuthentication = new ClientAuthenticationPost(ClientAuthenticationMethod.NONE,
                 new ClientID(clientId()));
         this.broker = builder.broker;
+        this.brokerEnabled = builder.brokerEnabled;
     }
 
     @Override
@@ -188,6 +190,7 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
         }
 
         private IBroker broker = null;
+        private boolean brokerEnabled = false;
 
         /**
          * Implementation of IBroker that will be used to retrieve tokens
@@ -196,6 +199,8 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
          */
         public PublicClientApplication.Builder broker(IBroker val) {
             this.broker = val;
+
+            this.brokerEnabled = this.broker.isBrokerAvailable();
 
             return self();
         }

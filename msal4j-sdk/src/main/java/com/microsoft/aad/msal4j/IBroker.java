@@ -44,6 +44,10 @@ public interface IBroker {
         throw new MsalClientException("Broker implementation missing", AuthenticationErrorCode.MISSING_BROKER);
     }
 
+    default boolean isBrokerAvailable() {
+        throw new MsalClientException("Broker implementation missing", AuthenticationErrorCode.MISSING_BROKER);
+    }
+
     /**
      * MSAL Java's AuthenticationResult requires several package-private classes that a broker implementation can't access,
      *  so this helper method can be used to create AuthenticationResults from within the MSAL Java package
