@@ -16,14 +16,9 @@ import com.microsoft.azure.javamsalruntime.Account;
 import com.microsoft.azure.javamsalruntime.AuthParameters;
 import com.microsoft.azure.javamsalruntime.AuthResult;
 import com.microsoft.azure.javamsalruntime.MsalInteropException;
-import com.microsoft.azure.javamsalruntime.MsalRuntimeFuture;
 import com.microsoft.azure.javamsalruntime.MsalRuntimeInterop;
 import com.microsoft.azure.javamsalruntime.ReadAccountResult;
 
-import java.net.MalformedURLException;
-import java.util.Collections;
-import java.util.UUID;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -155,41 +150,7 @@ public class MsalRuntimeBroker implements IBroker {
         }
     }
 
-    /**
-     * If the future returned by MSAL Java is canceled before we can complete it using a result from MSALRuntime, we must cancel the async operations MSALRuntime is performing
-     * <p>
-     * However, there are multiple sequential calls that need to be made to MSALRuntime, each of which returns an MsalRuntimeFuture which we'd need to cancel
-     * <p>
-     * This utility method encapsulates the logic for swapping which MsalRuntimeFuture gets canceled if the main future is canceled
-     */
-    public void setFutureToCancel(CompletableFuture<IAuthenticationResult> future, MsalRuntimeFuture futureToCancel) {
-        future.whenComplete((result, ex) -> {
-            if (ex instanceof CancellationException) futureToCancel.cancelAsyncOperation();
-        });
-    }
-
-    //Simple manual test for early development/testing, will be removed for final version
-    public static void main(String args[]) throws MalformedURLException, ExecutionException, InterruptedException {
-        String clientId = "903c8a8a-9e74-415e-9921-711a293d90cb";
-        String authority = "https://login.microsoftonline.com/common";
-        String scopes = "https://graph.microsoft.com/.default";
-        
-        MsalRuntimeBroker broker = new MsalRuntimeBroker();
-
-        PublicClientApplication pca = PublicClientApplication.builder(
-                clientId).
-                authority(authority).
-                correlationId(UUID.randomUUID().toString()).
-                broker(broker).
-                build();
-
-        SilentParameters parameters = SilentParameters.builder(Collections.singleton(scopes)).build();
-
-        CompletableFuture<IAuthenticationResult> future = pca.acquireTokenSilently(parameters);
-
-        IAuthenticationResult result = future.get();
-
-        System.out.println(result.idToken());
-        System.out.println(result.accessToken());
+    public boolean isBrokerAvailable() {
+        return MsalRuntimeInterop.isPlatformSupported();
     }
 }
