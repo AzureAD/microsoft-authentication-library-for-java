@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.microsoft.azure</groupId>
 	<artifactId>msal4j</artifactId>
-	<version>1.13.3</version>
+	<version>1.13.4</version>
 	<packaging>jar</packaging>
 	<name>msal4j</name>
 	<description>
@@ -240,6 +240,8 @@
                 <configuration>
                     <source>8</source>
                     <target>8</target>
+                    <testSource>11</testSource>
+                    <testTarget>11</testTarget>
                 </configuration>
             </plugin>
             <plugin>
