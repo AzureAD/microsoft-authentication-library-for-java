@@ -240,8 +240,6 @@
                 <configuration>
                     <source>8</source>
                     <target>8</target>
-                    <testSource>11</testSource>
-                    <testTarget>11</testTarget>
                 </configuration>
             </plugin>
             <plugin>
