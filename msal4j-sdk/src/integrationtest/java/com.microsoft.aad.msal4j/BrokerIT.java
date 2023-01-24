@@ -1,8 +1,6 @@
-package com.microsoft.aad.msal4jbrokers;
+package com.microsoft.aad.msal4j;
 
-import com.microsoft.aad.msal4j.IAuthenticationResult;
-import com.microsoft.aad.msal4j.PublicClientApplication;
-import com.microsoft.aad.msal4j.SilentParameters;
+import com.microsoft.aad.msal4jbrokers.MsalRuntimeBroker;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
