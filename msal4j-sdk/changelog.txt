@@ -1,5 +1,7 @@
-Version 1.0.0-beta.1
+Version 1.13.4
 =============
+- regional endpoint updates
+- fixed manifest
 - Expose instance discovery flag to perform instance discovery.
 
 Version 1.13.3
