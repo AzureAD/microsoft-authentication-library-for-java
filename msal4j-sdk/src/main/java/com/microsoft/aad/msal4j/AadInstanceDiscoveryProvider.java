@@ -26,14 +26,15 @@ class AadInstanceDiscoveryProvider {
     private final static String SOVEREIGN_HOST_TEMPLATE_WITH_REGION = "{region}.{host}";
     private final static String REGION_NAME = "REGION_NAME";
     private final static int PORT_NOT_SET = -1;
+
     // For information of the current api-version refer: https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service#versioning
-    private final static String DEFAULT_API_VERSION = "2020-06-01";
-    private final static String IMDS_ENDPOINT = "https://169.254.169.254/metadata/instance/compute/location?" + DEFAULT_API_VERSION + "&format=text";
+    private static final String DEFAULT_API_VERSION = "2020-06-01";
+    private static final String IMDS_ENDPOINT = "https://169.254.169.254/metadata/instance/compute/location?" + DEFAULT_API_VERSION + "&format=text";
 
-    final static TreeSet<String> TRUSTED_HOSTS_SET = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-    final static TreeSet<String> TRUSTED_SOVEREIGN_HOSTS_SET = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    static final TreeSet<String> TRUSTED_HOSTS_SET = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    static final TreeSet<String> TRUSTED_SOVEREIGN_HOSTS_SET = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
-    private final static Logger log = LoggerFactory.getLogger(HttpHelper.class);
+    private static final Logger log = LoggerFactory.getLogger(AadInstanceDiscoveryProvider.class);
 
     static ConcurrentHashMap<String, InstanceDiscoveryMetadataEntry> cache = new ConcurrentHashMap<>();
 
@@ -67,10 +68,9 @@ class AadInstanceDiscoveryProvider {
 
             //If region autodetection is enabled and a specific region not already set,
             // set the application's region to the discovered region so that future requests can skip the IMDS endpoint call
-            if (msalRequest.application().azureRegion() == null && msalRequest.application().autoDetectRegion()) {
-                if (detectedRegion != null) {
+            if (null == msalRequest.application().azureRegion() && msalRequest.application().autoDetectRegion()
+                        && null != detectedRegion) {
                     msalRequest.application().azureRegion = detectedRegion;
-                }
             }
             cacheRegionInstanceMetadata(authorityUrl.getHost(), msalRequest.application().azureRegion());
             serviceBundle.getServerSideTelemetry().getCurrentRequest().regionOutcome(
@@ -80,7 +80,16 @@ class AadInstanceDiscoveryProvider {
         InstanceDiscoveryMetadataEntry result = cache.get(host);
 
         if (result == null) {
-            doInstanceDiscoveryAndCache(authorityUrl, validateAuthority, msalRequest, serviceBundle);
+            if(msalRequest.application().instanceDiscovery()){
+                doInstanceDiscoveryAndCache(authorityUrl, validateAuthority, msalRequest, serviceBundle);
+            } else {
+                // instanceDiscovery flag is set to False. Do not perform instanceDiscovery.
+                return InstanceDiscoveryMetadataEntry.builder().
+                        preferredCache(host).
+                        preferredNetwork(host).
+                        aliases(Collections.singleton(host)).
+                        build();
+            }
         }
 
         return cache.get(host);

@@ -2,6 +2,7 @@ Version 1.13.4
 =============
 - regional endpoint updates
 - fixed manifest
+- Expose instance discovery flag to perform instance discovery.
 
 Version 1.13.3
 =============
