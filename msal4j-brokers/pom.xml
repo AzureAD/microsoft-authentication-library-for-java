@@ -22,6 +22,12 @@
     <scm>
         <url>https://github.com/AzureAD/microsoft-authentication-library-for-java</url>
     </scm>
+    <developers>
+        <developer>
+            <id>ms</id>
+            <name>Microsoft Corporation</name>
+        </developer>
+    </developers>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
