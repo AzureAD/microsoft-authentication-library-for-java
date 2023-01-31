@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.microsoft.azure</groupId>
     <artifactId>msal4j-brokers</artifactId>
-    <version>1.0.0-beta</version>
+    <version>0.0.1</version>
     <packaging>jar</packaging>
     <name>msal4j-brokers</name>
     <description>
@@ -26,38 +26,17 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <dependencies>
+        <!-- https://mvnrepository.com/artifact/com.microsoft.azure/msal4j -->
         <dependency>
             <groupId>com.microsoft.azure</groupId>
             <artifactId>msal4j</artifactId>
-            <version>1.13.4</version>
-        </dependency>
-        <dependency>
-            <groupId>com.microsoft.azure</groupId>
-            <artifactId>javamsalruntime</artifactId>
-            <version>0.13.4</version>
+            <version>1.13.2</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.6</version>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>7.1.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.36</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.2.3</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -81,6 +60,7 @@
         </pluginRepository>
     </pluginRepositories>
     <build>
+        <sourceDirectory>${project.build.directory}/delombok</sourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.projectlombok</groupId>
