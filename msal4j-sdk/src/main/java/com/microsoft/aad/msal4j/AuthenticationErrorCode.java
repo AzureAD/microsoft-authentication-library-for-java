@@ -115,9 +115,22 @@ public class AuthenticationErrorCode {
      * A JWT parsing failure, indicating the JWT provided to MSAL is of invalid format.
      */
     public final static String INVALID_JWT = "invalid_jwt";
+
     /**
      * Indicates that a Broker implementation is missing from the device, such as when an app developer
      * does not include one of our broker packages as a dependency in their project, or otherwise cannot
-     * be accessed by MSAL Java*/
+     * be accessed by MSAL Java
+     */
     public final static String MISSING_BROKER = "missing_broker";
+
+    /**
+     * Indicates an error from the MSAL Java/MSALRuntime interop layer used by the Java Brokers package,
+     * and will generally just be forwarding an error message from the interop layer or MSALRuntime itself
+     */
+    public final static String MSALRUNTIME_INTEROP_ERROR = "interop_package_error";
+
+    /**
+     * Indicates an error in the MSAL Java Brokers package
+     */
+    public final static String MSALJAVA_BROKERS_ERROR = "brokers_package_error";
 }
