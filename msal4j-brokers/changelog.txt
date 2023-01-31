@@ -1,0 +1,4 @@
+Version 1.0.0-beta
+=============
+- Initial release
+- Provides the API and dependencies needed to utilize auth brokers through MSALRuntime
