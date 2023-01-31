@@ -1,3 +1,8 @@
+Version 1.14.0-beta
+=============
+- Add IBroker interface
+- Add app-level parameter for enabling the use of auth brokers
+
 Version 1.13.4
 =============
 - regional endpoint updates
