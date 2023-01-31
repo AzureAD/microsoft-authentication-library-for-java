@@ -25,7 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 public class MsalRuntimeBroker implements IBroker {
-    private static final Logger LOG = LoggerFactory.getLogger(AuthResult.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MsalRuntimeBroker.class);
 
     private static MsalRuntimeInterop interop;
 
@@ -115,12 +115,13 @@ public class MsalRuntimeBroker implements IBroker {
     @Deprecated
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(PublicClientApplication application, UserNamePasswordParameters parameters) {
-        try (AuthParameters authParameters =
+        try {
+            AuthParameters authParameters =
                      new AuthParameters
                              .AuthParametersBuilder(application.clientId(),
                              application.authority(),
                              String.join(" ", parameters.scopes()))
-                             .build()) {
+                             .build();
 
             authParameters.setUsernamePassword(parameters.username(), new String(parameters.password()));
 
