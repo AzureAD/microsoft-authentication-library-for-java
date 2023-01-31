@@ -3,14 +3,14 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.microsoft.azure</groupId>
 	<artifactId>msal4j</artifactId>
-	<version>1.13.4</version>
+	<version>1.14.0-beta</version>
 	<packaging>jar</packaging>
 	<name>msal4j</name>
 	<description>
     Microsoft Authentication Library for Java gives you the ability to obtain tokens from Azure AD v2 (work and school
 		accounts, MSA) and Azure AD B2C, gaining access to Microsoft Cloud API and any other API secured by Microsoft
 		identities
-  </description>
+    </description>
 	<url>https://github.com/AzureAD/microsoft-authentication-library-for-java</url>
 	<developers>
 		<developer>
