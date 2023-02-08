@@ -4,9 +4,12 @@
 package com.microsoft.aad.msal4j;
 
 import labapi.*;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.net.MalformedURLException;
 import java.util.Collections;
@@ -16,19 +19,22 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class AcquireTokenSilentIT {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class AcquireTokenSilentIT {
     private LabUserProvider labUserProvider;
 
     private Config cfg;
 
-    @BeforeClass
+    @BeforeAll
     public void setUp() {
         labUserProvider = LabUserProvider.getInstance();
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenSilent_OrganizationAuthority_TokenRefreshed(String environment) throws Exception {
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    void acquireTokenSilent_OrganizationAuthority_TokenRefreshed(String environment) throws Exception {
         cfg = new Config(environment);
 
         // When using common, organization, or consumer tenants, cache has no way
@@ -40,8 +46,9 @@ public class AcquireTokenSilentIT {
         assertResultNotNull(result);
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenSilent_LabAuthority_TokenNotRefreshed(String environment) throws Exception {
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    void acquireTokenSilent_LabAuthority_TokenNotRefreshed(String environment) throws Exception {
         cfg = new Config(environment);
 
         // Access token should be returned from cache, and not using refresh token
@@ -61,12 +68,13 @@ public class AcquireTokenSilentIT {
         assertResultNotNull(result);
 
         // Check that access and id tokens are coming from cache
-        Assert.assertEquals(result.accessToken(), acquireSilentResult.accessToken());
-        Assert.assertEquals(result.idToken(), acquireSilentResult.idToken());
+        assertEquals(result.accessToken(), acquireSilentResult.accessToken());
+        assertEquals(result.idToken(), acquireSilentResult.idToken());
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenSilent_ForceRefresh(String environment) throws Exception {
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    void acquireTokenSilent_ForceRefresh(String environment) throws Exception {
         cfg = new Config(environment);
 
         User user = labUserProvider.getDefaultUser(environment);
@@ -87,8 +95,9 @@ public class AcquireTokenSilentIT {
         assertTokensAreNotEqual(result, resultAfterRefresh);
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenSilent_MultipleAccountsInCache_UseCorrectAccount(String environment) throws Exception {
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    void acquireTokenSilent_MultipleAccountsInCache_UseCorrectAccount(String environment) throws Exception {
         cfg = new Config(environment);
 
         IPublicClientApplication pca = getPublicClientApplicationWithTokensInCache();
@@ -106,11 +115,12 @@ public class AcquireTokenSilentIT {
 
         IAuthenticationResult result = acquireTokenSilently(pca, account, cfg.graphDefaultScope(), false);
         assertResultNotNull(result);
-        Assert.assertEquals(result.account().username(), user.getUpn());
+        assertEquals(result.account().username(), user.getUpn());
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenSilent_ADFS2019(String environment) throws Exception {
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    void acquireTokenSilent_ADFS2019(String environment) throws Exception {
         cfg = new Config(environment);
 
         UserQueryParameters query = new UserQueryParameters();
@@ -141,7 +151,7 @@ public class AcquireTokenSilentIT {
 
     // Commented out due to unclear B2C behavior causing occasional errors
     //@Test
-    public void acquireTokenSilent_B2C() throws Exception {
+    void acquireTokenSilent_B2C() throws Exception {
         UserQueryParameters query = new UserQueryParameters();
         query.parameters.put(UserQueryParameters.USER_TYPE, UserType.B2C);
         query.parameters.put(UserQueryParameters.B2C_PROVIDER, B2CProvider.LOCAL);
@@ -164,17 +174,18 @@ public class AcquireTokenSilentIT {
 
 
     @Test
-    public void acquireTokenSilent_usingCommonAuthority_returnCachedAt() throws Exception {
+    void acquireTokenSilent_usingCommonAuthority_returnCachedAt() throws Exception {
         acquireTokenSilent_returnCachedTokens(cfg.organizationsAuthority());
     }
 
     @Test
-    public void acquireTokenSilent_usingTenantSpecificAuthority_returnCachedAt() throws Exception {
+    void acquireTokenSilent_usingTenantSpecificAuthority_returnCachedAt() throws Exception {
         acquireTokenSilent_returnCachedTokens(cfg.tenantSpecificAuthority());
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenSilent_ConfidentialClient_acquireTokenSilent(String environment) throws Exception {
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    void acquireTokenSilent_ConfidentialClient_acquireTokenSilent(String environment) throws Exception {
         cfg = new Config(environment);
 
         IConfidentialClientApplication cca = getConfidentialClientApplications();
@@ -184,8 +195,8 @@ public class AcquireTokenSilentIT {
                 .build())
                 .get();
 
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
 
         String cachedAt = result.accessToken();
 
@@ -194,12 +205,12 @@ public class AcquireTokenSilentIT {
                 .build())
                 .get();
 
-        Assert.assertNotNull(result);
-        Assert.assertEquals(result.accessToken(), cachedAt);
+        assertNotNull(result);
+        assertEquals(result.accessToken(), cachedAt);
     }
 
-    @Test(expectedExceptions = ExecutionException.class)
-    public void acquireTokenSilent_ConfidentialClient_acquireTokenSilentDifferentScopeThrowsException()
+    @Test
+    void acquireTokenSilent_ConfidentialClient_acquireTokenSilentDifferentScopeThrowsException()
             throws Exception {
         cfg = new Config(AzureEnvironment.AZURE);
 
@@ -210,18 +221,21 @@ public class AcquireTokenSilentIT {
                 .build())
                 .get();
 
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
 
-        //Acquiring token for different scope, expect exception to be thrown
-        cca.acquireTokenSilently(SilentParameters
-                .builder(Collections.singleton(cfg.graphDefaultScope()))
-                .build())
-                .get();
+        Assertions.assertThrows(ExecutionException.class, () -> {
+            //Acquiring token for different scope, expect exception to be thrown
+            cca.acquireTokenSilently(SilentParameters
+                            .builder(Collections.singleton(cfg.graphDefaultScope()))
+                            .build())
+                    .get();
+        });
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenSilent_WithRefreshOn(String environment) throws Exception {
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    void acquireTokenSilent_WithRefreshOn(String environment) throws Exception {
         cfg = new Config(environment);
 
         User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
@@ -235,7 +249,7 @@ public class AcquireTokenSilentIT {
         assertResultNotNull(resultOriginal);
 
         IAuthenticationResult resultSilent = acquireTokenSilently(pca, resultOriginal.account(), cfg.graphDefaultScope(), false);
-        Assert.assertNotNull(resultSilent);
+        assertNotNull(resultSilent);
         assertTokensAreEqual(resultOriginal, resultSilent);
 
         //When this test was made, token responses did not contain the refresh_in field needed for an end-to-end test.
@@ -250,8 +264,8 @@ public class AcquireTokenSilentIT {
 
         IAuthenticationResult resultSilentWithRefreshOn = acquireTokenSilently(pca, resultOriginal.account(), cfg.graphDefaultScope(), false);
         //Current time is before refreshOn, so token should not have been refreshed
-        Assert.assertNotNull(resultSilentWithRefreshOn);
-        Assert.assertEquals(pca.tokenCache.accessTokens.get(key).refreshOn(), Long.toString(currTimestampSec + 60));
+        assertNotNull(resultSilentWithRefreshOn);
+        assertEquals(pca.tokenCache.accessTokens.get(key).refreshOn(), Long.toString(currTimestampSec + 60));
         assertTokensAreEqual(resultSilent, resultSilentWithRefreshOn);
 
         token = pca.tokenCache.accessTokens.get(key);
@@ -260,12 +274,13 @@ public class AcquireTokenSilentIT {
 
         resultSilentWithRefreshOn = acquireTokenSilently(pca, resultOriginal.account(), cfg.graphDefaultScope(), false);
         //Current time is after refreshOn, so token should be refreshed
-        Assert.assertNotNull(resultSilentWithRefreshOn);
+        assertNotNull(resultSilentWithRefreshOn);
         assertTokensAreNotEqual(resultSilent, resultSilentWithRefreshOn);
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenSilent_TenantAsParameter(String environment) throws Exception {
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    void acquireTokenSilent_TenantAsParameter(String environment) throws Exception {
         cfg = new Config(environment);
 
         User user = labUserProvider.getDefaultUser(environment);
@@ -295,8 +310,9 @@ public class AcquireTokenSilentIT {
         assertTokensAreNotEqual(result, resultWithTenantParam);
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenSilent_emptyStringScope(String environment) throws Exception {
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    void acquireTokenSilent_emptyStringScope(String environment) throws Exception {
         cfg = new Config(environment);
         User user = labUserProvider.getDefaultUser(environment);
 
@@ -312,11 +328,12 @@ public class AcquireTokenSilentIT {
         IAccount account = pca.getAccounts().join().iterator().next();
         IAuthenticationResult silentResult = acquireTokenSilently(pca, account, emptyScope, false);
         assertResultNotNull(silentResult);
-        Assert.assertEquals(result.accessToken(), silentResult.accessToken());
+        assertEquals(result.accessToken(), silentResult.accessToken());
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenSilent_emptyScopeSet(String environment) throws Exception {
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    void acquireTokenSilent_emptyScopeSet(String environment) throws Exception {
         cfg = new Config(environment);
         User user = labUserProvider.getDefaultUser(environment);
 
@@ -341,7 +358,7 @@ public class AcquireTokenSilentIT {
                 .get();
 
         assertResultNotNull(silentResult);
-        Assert.assertEquals(result.accessToken(), silentResult.accessToken());
+        assertEquals(result.accessToken(), silentResult.accessToken());
     }
 
     private IConfidentialClientApplication getConfidentialClientApplications() throws Exception {
@@ -367,7 +384,7 @@ public class AcquireTokenSilentIT {
 
         IAuthenticationResult interactiveAuthResult = acquireTokenUsernamePassword(user, pca, cfg.graphDefaultScope());
 
-        Assert.assertNotNull(interactiveAuthResult);
+        assertNotNull(interactiveAuthResult);
 
         IAuthenticationResult silentAuthResult = pca.acquireTokenSilently(
                 SilentParameters.builder(
@@ -375,8 +392,8 @@ public class AcquireTokenSilentIT {
                         .build())
                 .get();
 
-        Assert.assertNotNull(silentAuthResult);
-        Assert.assertEquals(interactiveAuthResult.accessToken(), silentAuthResult.accessToken());
+        assertNotNull(silentAuthResult);
+        assertEquals(interactiveAuthResult.accessToken(), silentAuthResult.accessToken());
     }
 
     private IPublicClientApplication getPublicClientApplicationWithTokensInCache()
@@ -410,18 +427,18 @@ public class AcquireTokenSilentIT {
     }
 
     private void assertResultNotNull(IAuthenticationResult result) {
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.idToken());
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
+        assertNotNull(result.idToken());
     }
 
     private void assertTokensAreNotEqual(IAuthenticationResult result, IAuthenticationResult secondResult) {
-        Assert.assertNotEquals(result.accessToken(), secondResult.accessToken());
-        Assert.assertNotEquals(result.idToken(), secondResult.idToken());
+        assertNotEquals(result.accessToken(), secondResult.accessToken());
+        assertNotEquals(result.idToken(), secondResult.idToken());
     }
 
     private void assertTokensAreEqual(IAuthenticationResult result, IAuthenticationResult secondResult) {
-        Assert.assertEquals(result.accessToken(), secondResult.accessToken());
-        Assert.assertEquals(result.idToken(), secondResult.idToken());
+        assertEquals(result.accessToken(), secondResult.accessToken());
+        assertEquals(result.idToken(), secondResult.idToken());
     }
 }

@@ -5,35 +5,39 @@ package com.microsoft.aad.msal4j;
 
 import infrastructure.SeleniumExtensions;
 import labapi.*;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.Assert;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-import org.testng.util.Strings;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.function.Consumer;
 
-@Test
-public class DeviceCodeIT {
+import static org.junit.jupiter.api.Assertions.*;
+
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class DeviceCodeIT {
     private final static Logger LOG = LoggerFactory.getLogger(DeviceCodeIT.class);
 
     private LabUserProvider labUserProvider;
     private WebDriver seleniumDriver;
 
-    @BeforeClass
+    @BeforeAll
     public void setUp() {
         labUserProvider = LabUserProvider.getInstance();
         seleniumDriver = SeleniumExtensions.createDefaultWebDriver();
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void DeviceCodeFlowADTest(String environment) throws Exception {
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    void DeviceCodeFlowADTest(String environment) throws Exception {
         Config cfg = new Config(environment);
 
         User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
@@ -53,12 +57,14 @@ public class DeviceCodeIT {
                 .build())
                 .get();
 
-        Assert.assertNotNull(result);
-        Assert.assertFalse(Strings.isNullOrEmpty(result.accessToken()));
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
+        assertFalse(result.accessToken().isEmpty());
+//        assertFalse(Strings.isNullOrEmpty(result.accessToken()));
     }
 
     @Test()
-    public void DeviceCodeFlowADFSv2019Test() throws Exception {
+    void DeviceCodeFlowADFSv2019Test() throws Exception {
 
         User user = labUserProvider.getOnPremAdfsUser(FederationProvider.ADFS_2019);
 
@@ -77,12 +83,14 @@ public class DeviceCodeIT {
                 .build())
                 .get();
 
-        Assert.assertNotNull(result);
-        Assert.assertFalse(Strings.isNullOrEmpty(result.accessToken()));
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
+        assertFalse(result.accessToken().isEmpty());
+//        assertFalse(Strings.isNullOrEmpty(result.accessToken()));
     }
 
-    @Test()
-    public void DeviceCodeFlowMSATest() throws Exception {
+    @Test
+    void DeviceCodeFlowMSATest() throws Exception {
 
         User user = labUserProvider.getMSAUser();
 
@@ -101,16 +109,20 @@ public class DeviceCodeIT {
                 .build())
                 .get();
 
-        Assert.assertNotNull(result);
-        Assert.assertFalse(Strings.isNullOrEmpty(result.accessToken()));
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
+        assertFalse(result.accessToken().isEmpty());
+//        assertFalse(Strings.isNullOrEmpty(result.accessToken()));
 
         result = pca.acquireTokenSilently(SilentParameters.
                 builder(Collections.singleton(""), result.account()).
                 build())
                 .get();
 
-        Assert.assertNotNull(result);
-        Assert.assertFalse(Strings.isNullOrEmpty(result.accessToken()));
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
+        assertFalse(result.accessToken().isEmpty());
+//        assertFalse(Strings.isNullOrEmpty(result.accessToken()));
     }
 
     private void runAutomatedDeviceCodeFlow(DeviceCode deviceCode, User user) {

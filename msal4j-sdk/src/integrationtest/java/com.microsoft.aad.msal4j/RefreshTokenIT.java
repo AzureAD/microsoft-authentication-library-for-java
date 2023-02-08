@@ -5,15 +5,18 @@ package com.microsoft.aad.msal4j;
 
 import labapi.LabUserProvider;
 import labapi.User;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
+import static org.junit.jupiter.api.Assertions.*;
 
-@Test()
-public class RefreshTokenIT {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class RefreshTokenIT {
     private String refreshToken;
     private PublicClientApplication pca;
 
@@ -38,8 +41,9 @@ public class RefreshTokenIT {
         refreshToken = result.refreshToken();
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenWithRefreshToken(String environment) throws Exception {
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    void acquireTokenWithRefreshToken(String environment) throws Exception {
         cfg = new Config(environment);
 
         setUp(environment);
@@ -51,18 +55,25 @@ public class RefreshTokenIT {
                 .build())
                 .get();
 
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.idToken());
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
+        assertNotNull(result.idToken());
     }
 
-    @Test(expectedExceptions = ExecutionException.class)
-    public void acquireTokenWithRefreshToken_WrongScopes() throws Exception {
-        IAuthenticationResult result = pca.acquireToken(RefreshTokenParameters
-                .builder(
-                        Collections.singleton(TestConstants.KEYVAULT_DEFAULT_SCOPE),
-                        refreshToken)
-                .build())
-                .get();
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    void acquireTokenWithRefreshToken_WrongScopes(String environment) throws Exception {
+        cfg = new Config(environment);
+
+        setUp(environment);
+        assertThrows(ExecutionException.class, () -> {
+
+            pca.acquireToken(RefreshTokenParameters
+                            .builder(
+                                    Collections.singleton(TestConstants.KEYVAULT_DEFAULT_SCOPE),
+                                    refreshToken)
+                            .build())
+                    .get();
+        });
     }
 }

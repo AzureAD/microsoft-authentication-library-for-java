@@ -4,27 +4,30 @@
 package com.microsoft.aad.msal4j;
 
 import labapi.*;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
 import java.util.Collections;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class AzureEnvironmentIT {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class AzureEnvironmentIT {
     private LabUserProvider labUserProvider;
 
-    @BeforeClass
+    @BeforeAll
     public void setUp() {
         labUserProvider = LabUserProvider.getInstance();
     }
 
     @Test
-    public void acquireTokenWithUsernamePassword_AzureChina() throws Exception {
+    void acquireTokenWithUsernamePassword_AzureChina() throws Exception {
         assertAcquireTokenCommon(AzureEnvironment.AZURE_CHINA);
     }
 
     @Test
-    public void acquireTokenWithUsernamePassword_AzureGovernment() throws Exception {
+    void acquireTokenWithUsernamePassword_AzureGovernment() throws Exception {
         assertAcquireTokenCommon(AzureEnvironment.AZURE_US_GOVERNMENT);
     }
 
@@ -45,10 +48,10 @@ public class AzureEnvironmentIT {
                 .build())
                 .get();
 
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.idToken());
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
+        assertNotNull(result.idToken());
 
-        Assert.assertEquals(user.getUpn(), result.account().username());
+        assertEquals(user.getUpn(), result.account().username());
     }
 }
