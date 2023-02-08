@@ -4,39 +4,45 @@
 package com.microsoft.aad.msal4j;
 
 import org.easymock.EasyMock;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.security.KeyStore;
 import java.security.KeyStoreSpi;
 import java.util.Arrays;
 import java.util.Collections;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
-@Test
+//@Test
 public class ClientCertificatePkcs12Test extends AbstractMsalTests {
 
     private KeyStoreSpi keyStoreSpi;
     private KeyStore keystore;
 
-    @BeforeMethod
+    @BeforeEach
     public void setUp() throws Exception {
         keyStoreSpi = EasyMock.createMock(KeyStoreSpi.class);
         keystore = new KeyStore(keyStoreSpi, null, "PKCS12") {};
         keystore.load(null);
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "certificate not loaded from input stream")
+    @Test
     public void testNoEntries() throws Exception {
         EasyMock.expect(keyStoreSpi.engineAliases())
                 .andReturn(Collections.enumeration(Collections.emptyList())).times(1);
         EasyMock.replay(keyStoreSpi);
 
-        ClientCertificate.getPrivateKeyAlias(keystore);
+        IllegalArgumentException exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            ClientCertificate.getPrivateKeyAlias(keystore);
+        });
+
+        assertEquals("certificate not loaded from input stream", exception.getMessage());
+
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "certificate not loaded from input stream")
+    @Test
     public void testNoPrivateKey() throws Exception {
         EasyMock.expect(keyStoreSpi.engineAliases())
                 .andReturn(Collections.enumeration(Arrays.asList("CA_cert1", "CA_cert2"))).times(1);
@@ -44,10 +50,15 @@ public class ClientCertificatePkcs12Test extends AbstractMsalTests {
         EasyMock.expect(keyStoreSpi.engineEntryInstanceOf("CA_cert2", KeyStore.PrivateKeyEntry.class)).andReturn(false).times(1);
         EasyMock.replay(keyStoreSpi);
 
-        ClientCertificate.getPrivateKeyAlias(keystore);
+        IllegalArgumentException exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            ClientCertificate.getPrivateKeyAlias(keystore);
+        });
+
+        assertEquals("certificate not loaded from input stream", exception.getMessage());
+
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "more than one certificate alias found in input stream")
+    @Test
     public void testMultiplePrivateKeyAliases() throws Exception {
         EasyMock.expect(keyStoreSpi.engineAliases())
                 .andReturn(Collections.enumeration(Arrays.asList("private_key1", "private_key2", "CA_cert"))).times(1);
@@ -56,7 +67,11 @@ public class ClientCertificatePkcs12Test extends AbstractMsalTests {
         EasyMock.expect(keyStoreSpi.engineEntryInstanceOf("CA_cert", KeyStore.PrivateKeyEntry.class)).andReturn(false).times(1);
         EasyMock.replay(keyStoreSpi);
 
-        ClientCertificate.getPrivateKeyAlias(keystore);
+        IllegalArgumentException exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            ClientCertificate.getPrivateKeyAlias(keystore);
+        });
+
+        assertEquals("more than one certificate alias found in input stream", exception.getMessage());
     }
 
     @Test

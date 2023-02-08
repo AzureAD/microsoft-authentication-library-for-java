@@ -5,12 +5,14 @@ package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.AuthorizationCode;
 import com.nimbusds.oauth2.sdk.AuthorizationCodeGrant;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  *
@@ -21,7 +23,7 @@ public class MsalOauthAuthorizatonGrantTest {
     public void testConstructor() {
         final OAuthAuthorizationGrant grant = new OAuthAuthorizationGrant(null,
                 new HashMap<>());
-        Assert.assertNotNull(grant);
+        assertNotNull(grant);
     }
 
     @Test
@@ -30,7 +32,7 @@ public class MsalOauthAuthorizatonGrantTest {
                 new AuthorizationCodeGrant(new AuthorizationCode("grant"),
                         new URI("http://microsoft.com")),
                 null);
-        Assert.assertNotNull(grant);
-        Assert.assertNotNull(grant.toParameters());
+        assertNotNull(grant);
+        assertNotNull(grant.toParameters());
     }
 }

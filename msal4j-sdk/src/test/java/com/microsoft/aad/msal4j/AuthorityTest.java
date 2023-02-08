@@ -6,109 +6,131 @@ package com.microsoft.aad.msal4j;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.testng.Assert;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
 
-@Test(groups = {"checkin"})
-@PrepareForTest({AADAuthority.class, HttpHelper.class,
-        JsonHelper.class, AadInstanceDiscoveryResponse.class})
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+// @Test(groups = {"checkin"})
+////@PrepareForTest({AADAuthority.class, HttpHelper.class,
+//        JsonHelper.class, AadInstanceDiscoveryResponse.class})
 public class AuthorityTest extends AbstractMsalTests {
 
     @Test
     public void testDetectAuthorityType_AAD() throws Exception {
         URL url = new URL(TestConfiguration.AAD_TENANT_ENDPOINT);
-        Assert.assertEquals(Authority.detectAuthorityType(url), AuthorityType.AAD);
+        assertEquals(Authority.detectAuthorityType(url), AuthorityType.AAD);
     }
 
     @Test
     public void testDetectAuthorityType_ADFS() throws Exception {
         URL url = new URL(TestConfiguration.ADFS_TENANT_ENDPOINT);
-        Assert.assertEquals(Authority.detectAuthorityType(url), AuthorityType.ADFS);
+        assertEquals(Authority.detectAuthorityType(url), AuthorityType.ADFS);
     }
 
     @Test
     public void testDetectAuthorityType_B2C() throws Exception {
         URL url = new URL(TestConfiguration.B2C_AUTHORITY);
-        Assert.assertEquals(Authority.detectAuthorityType(url), AuthorityType.B2C);
+        assertEquals(Authority.detectAuthorityType(url), AuthorityType.B2C);
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp =
-                    "B2C 'authority' Uri should have at least 3 segments in the path \\(i.e. https://<host>/tfp/<tenant>/<policy>/...\\)")
-    public void testB2CAuthorityConstructor_NotEnoughSegments() throws MalformedURLException {
-        new B2CAuthority(new URL("https://something.com/tfp/somethingelse/"));
+    @Test
+    public void testB2CAuthorityConstructor_NotEnoughSegments(){
+
+        IllegalArgumentException exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            new B2CAuthority(new URL("https://something.com/tfp/somethingelse/"));
+        });
+
+        assertEquals("B2C 'authority' Uri should have at least 3 segments in the path (i.e. https://<host>/tfp/<tenant>/<policy>/...)", exception.getMessage());
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "authority should use the 'https' scheme")
-    public void testAADAuthorityConstructor_HttpAuthority() throws MalformedURLException {
-        Authority.validateAuthority(new URL("http://I.com/not/h/t/t/p/s/"));
+    @Test
+    public void testAADAuthorityConstructor_HttpAuthority(){
+        IllegalArgumentException exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            Authority.validateAuthority(new URL("http://I.com/not/h/t/t/p/s/"));
+        });
+
+        assertEquals("authority should use the 'https' scheme", exception.getMessage());
+
+
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "authority is invalid format \\(contains fragment\\)")
+    @Test
     public void testAADAuthorityConstructor_UrlHasFragment() throws MalformedURLException {
-        Authority.validateAuthority(new URL("https://I.com/something/#haha"));
+        IllegalArgumentException exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            Authority.validateAuthority(new URL("https://I.com/something/#haha"));
+        });
+
+        assertEquals("authority is invalid format (contains fragment)", exception.getMessage());
     }
 
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "authority cannot contain query parameters")
+    @Test
     public void testAADAuthorityConstructor_AuthorityHasQuery()
             throws MalformedURLException {
-        Authority.validateAuthority(new URL("https://I.com/not/?query=not-allowed"));
+        IllegalArgumentException exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            Authority.validateAuthority(new URL("https://I.com/not/?query=not-allowed"));
+        });
+
+        assertEquals("authority cannot contain query parameters", exception.getMessage());
+
     }
 
 
     @Test
     public void testConstructor_AADAuthority() throws MalformedURLException {
         final AADAuthority aa = new AADAuthority(new URL(TestConfiguration.AAD_TENANT_ENDPOINT));
-        Assert.assertNotNull(aa);
-        Assert.assertEquals(aa.authority(),
+        assertNotNull(aa);
+        assertEquals(aa.authority(),
                 TestConfiguration.AAD_TENANT_ENDPOINT);
-        Assert.assertEquals(aa.host(), TestConfiguration.AAD_HOST_NAME);
-        Assert.assertEquals(aa.tokenEndpoint(),
+        assertEquals(aa.host(), TestConfiguration.AAD_HOST_NAME);
+        assertEquals(aa.tokenEndpoint(),
                 TestConfiguration.AAD_TENANT_ENDPOINT + "oauth2/v2.0/token");
-        Assert.assertEquals(aa.selfSignedJwtAudience(),
+        assertEquals(aa.selfSignedJwtAudience(),
                 TestConfiguration.AAD_TENANT_ENDPOINT + "oauth2/v2.0/token");
-        Assert.assertEquals(aa.tokenEndpoint(),
+        assertEquals(aa.tokenEndpoint(),
                 TestConfiguration.AAD_TENANT_ENDPOINT + "oauth2/v2.0/token");
-        Assert.assertEquals(aa.authorityType(), AuthorityType.AAD);
-        Assert.assertFalse(aa.isTenantless());
-        Assert.assertEquals(aa.deviceCodeEndpoint(),
+        assertEquals(aa.authorityType(), AuthorityType.AAD);
+        assertFalse(aa.isTenantless());
+        assertEquals(aa.deviceCodeEndpoint(),
                 TestConfiguration.AAD_TENANT_ENDPOINT + "oauth2/v2.0/devicecode");
     }
 
     @Test
     public void testConstructor_B2CAuthority() throws MalformedURLException {
         final B2CAuthority aa = new B2CAuthority(new URL(TestConfiguration.B2C_AUTHORITY));
-        Assert.assertNotNull(aa);
-        Assert.assertEquals(aa.authority(),
+        assertNotNull(aa);
+        assertEquals(aa.authority(),
                 TestConfiguration.B2C_AUTHORITY + "/");
-        Assert.assertEquals(aa.host(), TestConfiguration.B2C_HOST_NAME);
-        Assert.assertEquals(aa.selfSignedJwtAudience(),
+        assertEquals(aa.host(), TestConfiguration.B2C_HOST_NAME);
+        assertEquals(aa.selfSignedJwtAudience(),
                 TestConfiguration.B2C_AUTHORITY_ENDPOINT + "/oauth2/v2.0/token?p=" + TestConfiguration.B2C_SIGN_IN_POLICY);
-        Assert.assertEquals(aa.tokenEndpoint(),
+        assertEquals(aa.tokenEndpoint(),
                 TestConfiguration.B2C_AUTHORITY_ENDPOINT + "/oauth2/v2.0/token?p=" + TestConfiguration.B2C_SIGN_IN_POLICY);
-        Assert.assertEquals(aa.authorityType(), AuthorityType.B2C);
-        Assert.assertEquals(aa.tokenEndpoint(),
+        assertEquals(aa.authorityType(), AuthorityType.B2C);
+        assertEquals(aa.tokenEndpoint(),
                 TestConfiguration.B2C_AUTHORITY_ENDPOINT + "/oauth2/v2.0/token?p=" + TestConfiguration.B2C_SIGN_IN_POLICY);
-        Assert.assertFalse(aa.isTenantless());
+        assertFalse(aa.isTenantless());
     }
 
     @Test
     public void testConstructor_ADFSAuthority() throws MalformedURLException {
         final ADFSAuthority a = new ADFSAuthority(new URL(TestConfiguration.ADFS_TENANT_ENDPOINT));
-        Assert.assertNotNull(a);
-        Assert.assertEquals(a.authority(), TestConfiguration.ADFS_TENANT_ENDPOINT);
-        Assert.assertEquals(a.host(), TestConfiguration.ADFS_HOST_NAME);
-        Assert.assertEquals(a.selfSignedJwtAudience(),
+        assertNotNull(a);
+        assertEquals(a.authority(), TestConfiguration.ADFS_TENANT_ENDPOINT);
+        assertEquals(a.host(), TestConfiguration.ADFS_HOST_NAME);
+        assertEquals(a.selfSignedJwtAudience(),
                 TestConfiguration.ADFS_TENANT_ENDPOINT + ADFSAuthority.TOKEN_ENDPOINT);
 
-        Assert.assertEquals(a.authorityType(), AuthorityType.ADFS);
+        assertEquals(a.authorityType(), AuthorityType.ADFS);
 
-        Assert.assertEquals(a.tokenEndpoint(),
+        assertEquals(a.tokenEndpoint(),
                 TestConfiguration.ADFS_TENANT_ENDPOINT + ADFSAuthority.TOKEN_ENDPOINT);
-        Assert.assertFalse(a.isTenantless());
+        assertFalse(a.isTenantless());
     }
 
     @Test
@@ -116,12 +138,12 @@ public class AuthorityTest extends AbstractMsalTests {
 
         PublicClientApplication pca = PublicClientApplication.builder("client_id").
                 b2cAuthority(TestConfiguration.B2C_AUTHORITY_CUSTOM_PORT).build();
-        Assert.assertEquals(pca.authenticationAuthority.authority,
+        assertEquals(pca.authenticationAuthority.authority,
                 TestConfiguration.B2C_AUTHORITY_CUSTOM_PORT_TAIL_SLASH);
 
         PublicClientApplication pca2 = PublicClientApplication.builder("client_id").
                 b2cAuthority(TestConfiguration.B2C_AUTHORITY_CUSTOM_PORT_TAIL_SLASH).build();
-        Assert.assertEquals(pca2.authenticationAuthority.authority,
+        assertEquals(pca2.authenticationAuthority.authority,
                 TestConfiguration.B2C_AUTHORITY_CUSTOM_PORT_TAIL_SLASH);
     }
 
@@ -129,48 +151,56 @@ public class AuthorityTest extends AbstractMsalTests {
     public void testNoAuthorityPassedIn_DefaultsToCommonAuthority() {
         PublicClientApplication pca = PublicClientApplication.builder("client_id").build();
 
-        Assert.assertEquals(pca.authority(), TestConfiguration.AAD_COMMON_AUTHORITY);
-        Assert.assertNotNull(pca.authenticationAuthority);
+        assertEquals(pca.authority(), TestConfiguration.AAD_COMMON_AUTHORITY);
+        assertNotNull(pca.authenticationAuthority);
     }
 
     @Test
     public void testDoStaticInstanceDiscovery_ValidateTrue_TrustedAuthority()
             throws Exception {
         final AADAuthority aa = new AADAuthority(new URL(TestConfiguration.AAD_TENANT_ENDPOINT));
-        //PS Assert.assertTrue(aa.doStaticInstanceDiscovery(true));
+        //PS assertTrue(aa.doStaticInstanceDiscovery(true));
     }
 
     @Test
     public void testDoStaticInstanceDiscovery_ValidateTrue_UntrustedAuthority()
             throws Exception {
         final AADAuthority aa = new AADAuthority(new URL(TestConfiguration.AAD_UNKNOWN_TENANT_ENDPOINT));
-        //PS Assert.assertFalse(aa.doStaticInstanceDiscovery(true));
+        //PS assertFalse(aa.doStaticInstanceDiscovery(true));
     }
 
     @Test
     public void testDoStaticInstanceDiscovery_ValidateFalse_TrustedAuthority()
             throws Exception {
         final AADAuthority aa = new AADAuthority(new URL(TestConfiguration.AAD_UNKNOWN_TENANT_ENDPOINT));
-        //PS Assert.assertTrue(aa.doStaticInstanceDiscovery(false));
+        //PS assertTrue(aa.doStaticInstanceDiscovery(false));
     }
 
 
-    @DataProvider(name = "authoritiesWithEmptyPath")
     public static Object[][] createData() {
         return new Object[][]{{"https://login.microsoftonline.com/"},
                 {"https://login.microsoftonline.com//tenant"},
                 {"https://login.microsoftonline.com////tenant//path1"}};
     }
 
-    @Test(dataProvider = "authoritiesWithEmptyPath", expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = IllegalArgumentExceptionMessages.AUTHORITY_URI_EMPTY_PATH_SEGMENT)
+    @ParameterizedTest
+    @MethodSource("createData")
     public void testValidateAuthorityEmptyPathSegments(String authority) throws MalformedURLException {
-        Authority.validateAuthority(new URL(authority));
+        IllegalArgumentException exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            Authority.validateAuthority(new URL(authority));
+        });
+
+        assertEquals(IllegalArgumentExceptionMessages.AUTHORITY_URI_EMPTY_PATH_SEGMENT, exception.getMessage());
+
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = IllegalArgumentExceptionMessages.AUTHORITY_URI_EMPTY_PATH)
+    @Test
     public void testValidateAuthorityEmptyPath() throws MalformedURLException {
-        Authority.validateAuthority(new URL("https://login.microsoftonline.com"));
+        IllegalArgumentException exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            Authority.validateAuthority(new URL("https://login.microsoftonline.com"));
+        });
+
+        assertEquals(IllegalArgumentExceptionMessages.AUTHORITY_URI_EMPTY_PATH, exception.getMessage());
+
     }
 }

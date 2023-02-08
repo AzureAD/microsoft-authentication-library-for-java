@@ -3,18 +3,33 @@
 
 package com.microsoft.aad.msal4j;
 
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-@Test(groups = {"checkin"})
-public class AssertionCredentialTest {
+import java.util.Collections;
 
-    @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "assertion")
-    public void testAssertionNull() {
-        new ClientAssertion(null);
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+//// @Test(groups = {"checkin"})
+class AssertionCredentialTest {
+
+    @Test
+    void testAssertionNull() {
+        NullPointerException exception = Assertions.assertThrows(NullPointerException.class, () -> {
+            new ClientAssertion(null);
+        });
+
+        assertEquals("assertion", exception.getMessage());
+
+
     }
 
-    @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "assertion")
-    public void testAssertionEmpty() {
-        new ClientAssertion("");
+    @Test
+    void testAssertionEmpty() {
+        NullPointerException exception = Assertions.assertThrows(NullPointerException.class, () -> {
+            new ClientAssertion("");
+        });
+
+        assertEquals("assertion", exception.getMessage());
     }
 }

@@ -4,10 +4,13 @@
 package com.microsoft.aad.msal4j;
 
 import org.apache.commons.text.StringEscapeUtils;
-import org.testng.Assert;
-import org.testng.annotations.Test;
 
-@Test(groups = {"checkin"})
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+// @Test(groups = {"checkin"})
 public class WSTrustRequestTest {
 
     @Test
@@ -15,7 +18,7 @@ public class WSTrustRequestTest {
         String msg = WSTrustRequest.buildMessage("address", "username",
                 "password", WSTrustVersion.WSTRUST2005, "cloudAudienceUrn").toString();
 
-        Assert.assertTrue(msg.contains("<a:EndpointReference><a:Address>cloudAudienceUrn</a:Address></a:EndpointReference>"));
+        assertTrue(msg.contains("<a:EndpointReference><a:Address>cloudAudienceUrn</a:Address></a:EndpointReference>"));
     }
 
     @Test
@@ -23,7 +26,7 @@ public class WSTrustRequestTest {
         String msg = WSTrustRequest.buildMessage("address", "username",
                 "password", WSTrustVersion.WSTRUST2005, null).toString();
 
-        Assert.assertTrue(msg.contains("<a:EndpointReference><a:Address>" + WSTrustRequest.DEFAULT_APPLIES_TO + "</a:Address></a:EndpointReference>"));
+        assertTrue(msg.contains("<a:EndpointReference><a:Address>" + WSTrustRequest.DEFAULT_APPLIES_TO + "</a:Address></a:EndpointReference>"));
     }
 
     @Test
@@ -31,7 +34,7 @@ public class WSTrustRequestTest {
         String msg = WSTrustRequest.buildMessage("address", "username",
                 "password", WSTrustVersion.WSTRUST2005, "").toString();
 
-        Assert.assertTrue(msg.contains("<a:EndpointReference><a:Address>" + WSTrustRequest.DEFAULT_APPLIES_TO + "</a:Address></a:EndpointReference>"));
+        assertTrue(msg.contains("<a:EndpointReference><a:Address>" + WSTrustRequest.DEFAULT_APPLIES_TO + "</a:Address></a:EndpointReference>"));
     }
 
     @Test
@@ -39,8 +42,8 @@ public class WSTrustRequestTest {
         String msg = WSTrustRequest.buildMessage("address", null,
                 null, WSTrustVersion.WSTRUST13, "cloudAudienceUrn").toString();
 
-        Assert.assertTrue(msg.contains("<a:EndpointReference><a:Address>cloudAudienceUrn</a:Address></a:EndpointReference>"));
-        Assert.assertTrue(!msg.contains("<o:Security s:mustUnderstand"));
+        assertTrue(msg.contains("<a:EndpointReference><a:Address>cloudAudienceUrn</a:Address></a:EndpointReference>"));
+        assertTrue(!msg.contains("<o:Security s:mustUnderstand"));
     }
 
     @Test
@@ -48,8 +51,8 @@ public class WSTrustRequestTest {
         String DATA_TO_ESCAPE = "o_!as & a34~'fe<> \" a1";
         String XML_ESCAPED_DATA = "o_!as &amp; a34~&apos;fe&lt;&gt; &quot; a1";
 
-        Assert.assertEquals(WSTrustRequest.escapeXMLElementData(DATA_TO_ESCAPE), XML_ESCAPED_DATA);
-        Assert.assertEquals(WSTrustRequest.escapeXMLElementData(DATA_TO_ESCAPE),
+        assertEquals(WSTrustRequest.escapeXMLElementData(DATA_TO_ESCAPE), XML_ESCAPED_DATA);
+        assertEquals(WSTrustRequest.escapeXMLElementData(DATA_TO_ESCAPE),
                 StringEscapeUtils.escapeXml10(DATA_TO_ESCAPE));
     }
 }

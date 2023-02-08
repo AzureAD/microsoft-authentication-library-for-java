@@ -3,8 +3,8 @@
 
 package com.microsoft.aad.msal4j;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -12,7 +12,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Test(groups = {"checkin"})
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+// @Test(groups = {"checkin"})
 public class HttpUtilsTest {
 
     private final String COOKIE_HEADER_NAME = "Set-Cookie";
@@ -27,7 +30,7 @@ public class HttpUtilsTest {
         }};
 
         String headerValue = HttpUtils.headerValue(singleValuedHeader, COOKIE_HEADER_NAME);
-        Assert.assertEquals(headerValue, COOKIE_HEADER_VALUE_1);
+        assertEquals(headerValue, COOKIE_HEADER_VALUE_1);
     }
 
     @Test
@@ -39,7 +42,7 @@ public class HttpUtilsTest {
 
         String headerValue = HttpUtils.headerValue(multiValuedHeader, COOKIE_HEADER_NAME);
         String expectedValue = COOKIE_HEADER_VALUE_1 + "," + COOKIE_HEADER_VALUE_2;
-        Assert.assertEquals(headerValue, expectedValue);
+        assertEquals(headerValue, expectedValue);
     }
 
     @Test
@@ -50,6 +53,6 @@ public class HttpUtilsTest {
         }};
 
         String headerValue = HttpUtils.headerValue(nullValuedHeader, COOKIE_HEADER_NAME);
-        Assert.assertNull(headerValue);
+        assertNull(headerValue);
     }
 }

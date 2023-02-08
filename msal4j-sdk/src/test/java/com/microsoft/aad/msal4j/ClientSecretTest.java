@@ -3,22 +3,31 @@
 
 package com.microsoft.aad.msal4j;
 
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  *
  */
 public class ClientSecretTest {
 
-    @Test(expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "clientSecret is null or empty")
+    @Test
     public void testConstructorNullClientId() {
-        new ClientSecret(null);
+        IllegalArgumentException exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            new ClientSecret(null);
+        });
+
+        assertEquals("clientSecret is null or empty", exception.getMessage());
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "clientSecret is null or empty")
+    @Test
     public void testConstructorEmptyClientId() {
-        new ClientSecret("");
+        IllegalArgumentException exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            new ClientSecret("");
+        });
+
+        assertEquals("clientSecret is null or empty", exception.getMessage());
     }
 }

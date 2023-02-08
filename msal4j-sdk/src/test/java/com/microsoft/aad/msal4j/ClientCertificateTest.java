@@ -3,34 +3,44 @@
 
 package com.microsoft.aad.msal4j;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-
 import java.math.BigInteger;
 import java.security.PrivateKey;
 import java.security.interfaces.RSAPrivateKey;
+import java.util.Collections;
 
 import org.easymock.EasyMock;
+import org.junit.jupiter.api.Assertions;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
 
-@Test(groups = {"checkin"})
-@PrepareForTest({RSAPrivateKey.class})
+import static org.junit.jupiter.api.Assertions.*;
+
+//@Test//(groups = {"checkin"})
+//@PrepareForTest({RSAPrivateKey.class})
 public class ClientCertificateTest extends AbstractMsalTests {
 
-    @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "PrivateKey is null or empty")
+    @Test
     public void testNullKey() {
-        ClientCertificate.create((PrivateKey) null, null);
+        NullPointerException exception = Assertions.assertThrows(NullPointerException.class, () -> {
+            ClientCertificate.create((PrivateKey) null, null);
+        });
+
+        assertEquals("PrivateKey is null or empty", exception.getMessage());
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "certificate key size must be at least 2048")
+    @Test
     public void testInvalidKeysize() {
         final RSAPrivateKey key = EasyMock.createMock(RSAPrivateKey.class);
         final BigInteger modulus = EasyMock.createMock(BigInteger.class);
         EasyMock.expect(modulus.bitLength()).andReturn(2047).times(1);
         EasyMock.expect(key.getModulus()).andReturn(modulus).times(1);
         EasyMock.replay(modulus, key);
-        ClientCertificate.create(key, null);
+        IllegalArgumentException exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            ClientCertificate.create(key, null);
+        });
+
+        assertEquals("certificate key size must be at least 2048", exception.getMessage());
+
     }
 
     @Test
