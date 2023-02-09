@@ -74,7 +74,15 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         cfg = new Config(environment);
 
         User user = labUserProvider.getB2cUser(cfg.azureEnvironment, B2CProvider.LOCAL);
-        assertAcquireTokenB2C(user);
+        assertAcquireTokenB2C(user, TestConstants.B2C_AUTHORITY);
+    }
+
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenWithAuthorizationCode_B2C_LegacyFormat(String environment) {
+        cfg = new Config(environment);
+
+        User user = labUserProvider.getB2cUser(cfg.azureEnvironment, B2CProvider.LOCAL);
+        assertAcquireTokenB2C(user, TestConstants.B2C_AUTHORITY_LEGACY_FORMAT);
     }
 
     @Test
@@ -126,13 +134,13 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         Assert.assertEquals(user.getUpn(), result.account().username());
     }
 
-    private void assertAcquireTokenB2C(User user) {
+    private void assertAcquireTokenB2C(User user, String authority) {
 
         PublicClientApplication pca;
         try {
             pca = PublicClientApplication.builder(
                     user.getAppId()).
-                    b2cAuthority(TestConstants.B2C_AUTHORITY_SIGN_IN).
+                    b2cAuthority(authority + TestConstants.B2C_SIGN_IN_POLICY).
                     build();
         } catch (MalformedURLException ex) {
             throw new RuntimeException(ex.getMessage());
