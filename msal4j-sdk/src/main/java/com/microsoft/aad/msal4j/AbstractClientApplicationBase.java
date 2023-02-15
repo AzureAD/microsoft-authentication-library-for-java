@@ -376,9 +376,9 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
         /**
          * Set URL of the authenticating B2C authority from which MSAL will acquire tokens
          *
-         * Valid B2C authorities should look like: https://<something>.b2clogin.com/<tenant>/<policy>
+         * Valid B2C authorities should look like: https://&lt;something.b2clogin.com/&lt;tenant&gt;/&lt;policy&gt;
          *
-         * MSAL Java also supports a legacy B2C authority format, which looks like: https://<host>/tfp/<tenant>/<policy>
+         * MSAL Java also supports a legacy B2C authority format, which looks like: https://&lt;host&gt;/tfp/&lt;tenant&gt;/&lt;policy&gt;
          *
          * However, MSAL Java will eventually stop supporting the legacy format. See here for information on how to migrate to the new format: https://aka.ms/msal4j-b2c
          *
