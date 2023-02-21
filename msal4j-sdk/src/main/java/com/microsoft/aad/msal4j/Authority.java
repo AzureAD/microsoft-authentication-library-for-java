@@ -20,6 +20,7 @@ abstract class Authority {
 
     private static final String ADFS_PATH_SEGMENT = "adfs";
     private static final String B2C_PATH_SEGMENT = "tfp";
+    private static final String B2C_HOST_SEGMENT = "b2clogin.com";
 
     private final static String USER_REALM_ENDPOINT = "common/userrealm";
     private final static String userRealmEndpointFormat = "https://%s/" + USER_REALM_ENDPOINT + "/%s?api-version=1.0";
@@ -79,9 +80,10 @@ abstract class Authority {
                     "authority Uri should have at least one segment in the path (i.e. https://<host>/<path>/...)");
         }
 
+        final String host = authorityUrl.getHost();
         final String firstPath = path.substring(0, path.indexOf("/"));
 
-        if (isB2CAuthority(firstPath)) {
+        if (isB2CAuthority(host, firstPath)) {
             return AuthorityType.B2C;
         } else if (isAdfsAuthority(firstPath)) {
             return AuthorityType.ADFS;
@@ -131,7 +133,11 @@ abstract class Authority {
     static String getTenant(URL authorityUrl, AuthorityType authorityType) {
         String[] segments = authorityUrl.getPath().substring(1).split("/");
         if (authorityType == AuthorityType.B2C) {
-            return segments[1];
+            if (segments.length < 3){
+                return segments[0];
+            } else {
+                return segments[1];
+            }
         }
         return segments[0];
     }
@@ -144,8 +150,8 @@ abstract class Authority {
         return firstPath.compareToIgnoreCase(ADFS_PATH_SEGMENT) == 0;
     }
 
-    private static boolean isB2CAuthority(final String firstPath) {
-        return firstPath.compareToIgnoreCase(B2C_PATH_SEGMENT) == 0;
+    private static boolean isB2CAuthority(final String host, final String firstPath) {
+        return host.contains(B2C_HOST_SEGMENT) || firstPath.compareToIgnoreCase(B2C_PATH_SEGMENT) == 0;
     }
 
     String deviceCodeEndpoint() {

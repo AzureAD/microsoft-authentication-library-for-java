@@ -26,27 +26,42 @@ class B2CAuthority extends Authority {
     }
 
     private void validatePathSegments(String[] segments) {
-        if (segments.length < 3) {
+        if (segments.length < 2) {
             throw new IllegalArgumentException(
-                    "B2C 'authority' Uri should have at least 3 segments in the path " +
-                            "(i.e. https://<host>/tfp/<tenant>/<policy>/...)");
+                    "Valid B2C 'authority' URLs should follow either of these formats: https://<host>/<tenant>/<policy>/... or https://<host>/something/<tenant>/<policy>/...");
         }
     }
 
     private void setAuthorityProperties() {
         String[] segments = canonicalAuthorityUrl.getPath().substring(1).split("/");
 
+        // In the early days of MSAL, the only way for the library to identify a B2C authority was whether or not the authority
+        //   had three segments in the path, and the first segment was 'tfp'. Valid B2C authorities looked like: https://<host>/tfp/<tenant>/<policy>/...
+        //
+        // More recent changes to B2C should ensure that any new B2C authorities have 'b2clogin.com' in the host of the URL,
+        //   so app developers shouldn't need to add 'tfp' and the first path segment should just be the tenant: https://<something>.b2clogin.com/<tenant>/<policy>/...
+        //
+        // However, legacy URLs using the old format must still be supported by these sorts of checks here and elsewhere, so for the near
+        //   future at least we must consider both formats as valid until we're either sure all customers are swapped,
+        //   or until we're comfortable with a potentially breaking change
         validatePathSegments(segments);
 
-        policy = segments[2];
-
-        final String b2cAuthorityFormat = "https://%s/%s/%s/%s/";
-        this.authority = String.format(
-                b2cAuthorityFormat,
-                canonicalAuthorityUrl.getAuthority(),
-                segments[0],
-                segments[1],
-                segments[2]);
+        try {
+            policy = segments[2];
+            this.authority = String.format(
+                    "https://%s/%s/%s/%s/",
+                    canonicalAuthorityUrl.getAuthority(),
+                    segments[0],
+                    segments[1],
+                    segments[2]);
+        } catch (IndexOutOfBoundsException e){
+            policy = segments[1];
+            this.authority = String.format(
+                    "https://%s/%s/%s/",
+                    canonicalAuthorityUrl.getAuthority(),
+                    segments[0],
+                    segments[1]);
+        }
 
         this.authorizationEndpoint = String.format(B2C_AUTHORIZATION_ENDPOINT_FORMAT, host, tenant, policy);
         this.tokenEndpoint = String.format(B2C_TOKEN_ENDPOINT_FORMAT, host, tenant, policy);
