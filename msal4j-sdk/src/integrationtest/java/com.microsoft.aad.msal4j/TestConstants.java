@@ -32,14 +32,14 @@ public class TestConstants {
     public final static String TENANT_SPECIFIC_AUTHORITY = MICROSOFT_AUTHORITY_HOST + MICROSOFT_AUTHORITY_TENANT;
     public final static String REGIONAL_MICROSOFT_AUTHORITY_BASIC_HOST_WESTUS = "westus.login.microsoft.com";
 
+    public final static String REGIONAL_MICROSOFT_AUTHORITY_BASIC_HOST_EASTUS = "eastus.login.microsoft.com";
+
     public final static String ARLINGTON_ORGANIZATIONS_AUTHORITY = ARLINGTON_MICROSOFT_AUTHORITY_HOST + "organizations/";
-    public final static String ARLINGTON_COMMON_AUTHORITY = ARLINGTON_MICROSOFT_AUTHORITY_HOST + "common/";
     public final static String ARLINGTON_TENANT_SPECIFIC_AUTHORITY = ARLINGTON_MICROSOFT_AUTHORITY_HOST + ARLINGTON_AUTHORITY_TENANT;
     public final static String ARLINGTON_GRAPH_DEFAULT_SCOPE = "https://graph.microsoft.us/.default";
 
 
     public final static String B2C_AUTHORITY = "https://msidlabb2c.b2clogin.com/tfp/msidlabb2c.onmicrosoft.com/";
-    public final static String B2C_AUTHORITY_URL = "https://msidlabb2c.b2clogin.com/msidlabb2c.onmicrosoft.com/";
     public final static String B2C_ROPC_POLICY = "B2C_1_ROPC_Auth";
     public final static String B2C_SIGN_IN_POLICY = "B2C_1_SignInPolicy";
     public final static String B2C_AUTHORITY_SIGN_IN = B2C_AUTHORITY + B2C_SIGN_IN_POLICY;
@@ -49,7 +49,6 @@ public class TestConstants {
     public final static String B2C_MICROSOFTLOGIN_ROPC = B2C_MICROSOFTLOGIN_AUTHORITY + B2C_ROPC_POLICY;
 
     public final static String LOCALHOST = "http://localhost:";
-    public final static String LOCAL_FLAG_ENV_VAR = "MSAL_JAVA_RUN_LOCAL";
 
     public final static String ADFS_AUTHORITY = "https://fs.msidlab8.com/adfs/";
     public final static String ADFS_SCOPE = USER_READ_SCOPE;
@@ -57,11 +56,6 @@ public class TestConstants {
 
     public final static String CLAIMS = "{\"id_token\":{\"auth_time\":{\"essential\":true}}}";
     public final static Set<String> CLIENT_CAPABILITIES_EMPTY = new HashSet<>(Collections.emptySet());
-    public final static Set<String> CLIENT_CAPABILITIES_LLT = new HashSet<>(Collections.singletonList("llt"));
-
-    // cross cloud b2b settings
-    public final static String AUTHORITY_ARLINGTON = "https://login.microsoftonline.us/" + ARLINGTON_AUTHORITY_TENANT;
-    public final static String AUTHORITY_MOONCAKE = "https://login.chinacloudapi.cn/mncmsidlab1.partner.onmschina.cn";
     public final static String AUTHORITY_PUBLIC_TENANT_SPECIFIC = "https://login.microsoftonline.com/" + MICROSOFT_AUTHORITY_TENANT;
 
     public final static String DEFAULT_ACCESS_TOKEN = "defaultAccessToken";

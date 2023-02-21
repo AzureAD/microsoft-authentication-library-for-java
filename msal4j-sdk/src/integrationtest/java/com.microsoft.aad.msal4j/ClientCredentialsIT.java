@@ -7,6 +7,7 @@ import labapi.AppCredentialProvider;
 import labapi.AzureEnvironment;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -118,13 +119,18 @@ public class ClientCredentialsIT {
         Assert.assertNotEquals(result2.accessToken(), result3.accessToken());
     }
 
-    @Test
-    public void acquireTokenClientCredentials_Regional() throws Exception {
-        String clientId = "2afb0add-2f32-4946-ac90-81a02aa4550e";
-
-        assertAcquireTokenCommon_withRegion(clientId, certificate);
+    @DataProvider(name = "regionWithAuthority")
+    public static Object[][] createData() {
+        return new Object[][]{{"westus", TestConstants.REGIONAL_MICROSOFT_AUTHORITY_BASIC_HOST_WESTUS},
+                {"eastus", TestConstants.REGIONAL_MICROSOFT_AUTHORITY_BASIC_HOST_EASTUS}};
     }
 
+    @Test(dataProvider = "regionWithAuthority")
+    public void acquireTokenClientCredentials_Regional(String[] regionWithAuthority) throws Exception {
+        String clientId = "2afb0add-2f32-4946-ac90-81a02aa4550e";
+
+        assertAcquireTokenCommon_withRegion(clientId, certificate, regionWithAuthority[0], regionWithAuthority[1]);
+    }
     private ClientAssertion getClientAssertion(String clientId) {
         return JwtHelper.buildJwt(
                 clientId,
@@ -164,7 +170,7 @@ public class ClientCredentialsIT {
         Assert.assertNotNull(result.accessToken());
     }
 
-    private void assertAcquireTokenCommon_withRegion(String clientId, IClientCredential credential) throws Exception {
+    private void assertAcquireTokenCommon_withRegion(String clientId, IClientCredential credential, String region, String regionalAuthority) throws Exception {
         ConfidentialClientApplication ccaNoRegion = ConfidentialClientApplication.builder(
                 clientId, credential).
                 authority(TestConstants.MICROSOFT_AUTHORITY).
@@ -172,7 +178,7 @@ public class ClientCredentialsIT {
 
         ConfidentialClientApplication ccaRegion = ConfidentialClientApplication.builder(
                 clientId, credential).
-                authority("https://login.microsoft.com/microsoft.onmicrosoft.com").azureRegion("westus").
+                authority("https://login.microsoft.com/microsoft.onmicrosoft.com").azureRegion(region).
                 build();
 
         //Ensure behavior when region not specified
@@ -193,7 +199,7 @@ public class ClientCredentialsIT {
 
         Assert.assertNotNull(resultRegion);
         Assert.assertNotNull(resultRegion.accessToken());
-        Assert.assertEquals(resultRegion.environment(), TestConstants.REGIONAL_MICROSOFT_AUTHORITY_BASIC_HOST_WESTUS);
+        Assert.assertEquals(resultRegion.environment(), regionalAuthority);
 
         IAuthenticationResult resultRegionCached = ccaRegion.acquireToken(ClientCredentialParameters
                 .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))

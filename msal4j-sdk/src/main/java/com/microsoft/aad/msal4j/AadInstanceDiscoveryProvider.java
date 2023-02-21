@@ -14,7 +14,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 
 class AadInstanceDiscoveryProvider {
 
@@ -60,23 +60,21 @@ class AadInstanceDiscoveryProvider {
                                                            ServiceBundle serviceBundle) {
         String host = authorityUrl.getHost();
 
-        if (shouldUseRegionalEndpoint(msalRequest)) {
-            //Server side telemetry requires the result from region discovery when any part of the region API is used
-            String detectedRegion = discoverRegion(msalRequest, serviceBundle);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
 
-            if (msalRequest.application().azureRegion() != null) {
-                host = getRegionalizedHost(authorityUrl.getHost(), msalRequest.application().azureRegion());
-            }
+        Future<String> future = executor.submit(() -> performRegionalDiscovery(authorityUrl, msalRequest, serviceBundle));
 
-            //If region autodetection is enabled and a specific region not already set,
-            // set the application's region to the discovered region so that future requests can skip the IMDS endpoint call
-            if (null == msalRequest.application().azureRegion() && msalRequest.application().autoDetectRegion()
-                        && null != detectedRegion) {
-                    msalRequest.application().azureRegion = detectedRegion;
-            }
-            cacheRegionInstanceMetadata(authorityUrl.getHost(), msalRequest.application().azureRegion());
-            serviceBundle.getServerSideTelemetry().getCurrentRequest().regionOutcome(
-                    determineRegionOutcome(detectedRegion, msalRequest.application().azureRegion(), msalRequest.application().autoDetectRegion()));
+        try {
+            log.info("Starting call to IMDS endpoint.");
+            host = future.get(2, TimeUnit.SECONDS);
+        } catch (TimeoutException ex) {
+            log.info("Cancelled call to IMDS endpoint after waiting for 2 seconds");
+            future.cancel(true);
+        } catch (Exception ex) {
+            // handle other exceptions
+            log.info("Exception while calling IMDS endpoint" + ex.getMessage());
+        } finally {
+            executor.shutdownNow();
         }
 
         InstanceDiscoveryMetadataEntry result = cache.get(host);
@@ -95,6 +93,32 @@ class AadInstanceDiscoveryProvider {
         }
 
         return cache.get(host);
+    }
+
+    private static String performRegionalDiscovery(URL authorityUrl, MsalRequest msalRequest, ServiceBundle serviceBundle){
+
+        String host = authorityUrl.getHost();
+
+        if (shouldUseRegionalEndpoint(msalRequest)) {
+            //Server side telemetry requires the result from region discovery when any part of the region API is used
+            String detectedRegion = discoverRegion(msalRequest, serviceBundle);
+
+            if (msalRequest.application().azureRegion() != null) {
+                host = getRegionalizedHost(authorityUrl.getHost(), msalRequest.application().azureRegion());
+            }
+
+            //If region autodetection is enabled and a specific region not already set,
+            // set the application's region to the discovered region so that future requests can skip the IMDS endpoint call
+            if (null == msalRequest.application().azureRegion() && msalRequest.application().autoDetectRegion()
+                    && null != detectedRegion) {
+                msalRequest.application().azureRegion = detectedRegion;
+            }
+            cacheRegionInstanceMetadata(authorityUrl.getHost(), msalRequest.application().azureRegion());
+            serviceBundle.getServerSideTelemetry().getCurrentRequest().regionOutcome(
+                    determineRegionOutcome(detectedRegion, msalRequest.application().azureRegion(), msalRequest.application().autoDetectRegion()));
+        }
+
+        return host;
     }
 
     static Set<String> getAliases(String host) {
@@ -299,7 +323,7 @@ class AadInstanceDiscoveryProvider {
 
             //If call to IMDS endpoint was successful, return region from response body
             if (httpResponse.statusCode() == HttpHelper.HTTP_STATUS_200 && !httpResponse.body().isEmpty()) {
-                log.info("Region retrieved from IMDS endpoint: " + httpResponse.body());
+                log.info(String.format("Region retrieved from IMDS endpoint: %s", httpResponse.body()));
                 currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_IMDS.telemetryValue);
 
                 return httpResponse.body();
