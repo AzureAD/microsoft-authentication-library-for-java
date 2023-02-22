@@ -293,34 +293,6 @@ class AadInstanceDiscoveryProvider {
             return System.getenv(REGION_NAME);
         }
 
-//        try {
-//            //Check the IMDS endpoint to retrieve current region (will only work if application is running in an Azure VM)
-//            Map<String, String> headers = new HashMap<>();
-//            headers.put("Metadata", "true");
-//            IHttpResponse httpResponse = executeRequest(IMDS_ENDPOINT, headers, msalRequest, serviceBundle);
-//
-//            //If call to IMDS endpoint was successful, return region from response body
-//            if (httpResponse.statusCode() == HttpHelper.HTTP_STATUS_200 && !httpResponse.body().isEmpty()) {
-//                log.info(String.format("Region retrieved from IMDS endpoint: %s", httpResponse.body()));
-//                currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_IMDS.telemetryValue);
-//
-//                return httpResponse.body();
-//            }
-//
-//            log.warn(String.format("Call to local IMDS failed with status code: %s, or response was empty", httpResponse.statusCode()));
-//            currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_FAILED_AUTODETECT.telemetryValue);
-//
-//            return null;
-//        } catch (Exception e) {
-//            //IMDS call failed, cannot find region
-//            //The IMDS endpoint is only available from within an Azure environment, so the most common cause of this
-//            //  exception will likely be java.net.SocketException: Network is unreachable: connect
-//            log.warn(String.format("Exception during call to local IMDS endpoint: %s", e.getMessage()));
-//            currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_FAILED_AUTODETECT.telemetryValue);
-//
-//            return null;
-//        }
-
         //Check the IMDS endpoint to retrieve current region (will only work if application is running in an Azure VM)
         Map<String, String> headers = new HashMap<>();
         headers.put("Metadata", "true");
