@@ -31,6 +31,8 @@ class AadInstanceDiscoveryProvider {
     private static final String DEFAULT_API_VERSION = "2020-06-01";
     private static final String IMDS_ENDPOINT = "https://169.254.169.254/metadata/instance/compute/location?" + DEFAULT_API_VERSION + "&format=text";
 
+    private static final int IMDS_TIMEOUT = 2;
+    private static final TimeUnit IMDS_TIMEOUT_UNIT = TimeUnit.SECONDS;
     static final TreeSet<String> TRUSTED_HOSTS_SET = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     static final TreeSet<String> TRUSTED_SOVEREIGN_HOSTS_SET = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
@@ -66,13 +68,19 @@ class AadInstanceDiscoveryProvider {
 
         try {
             log.info("Starting call to IMDS endpoint.");
-            host = future.get(2, TimeUnit.SECONDS);
+            host = future.get(IMDS_TIMEOUT, IMDS_TIMEOUT_UNIT);
         } catch (TimeoutException ex) {
             log.info("Cancelled call to IMDS endpoint after waiting for 2 seconds");
             future.cancel(true);
+            if (msalRequest.application().azureRegion() != null) {
+                host = getRegionalizedHost(authorityUrl.getHost(), msalRequest.application().azureRegion());
+            }
         } catch (Exception ex) {
             // handle other exceptions
             log.info("Exception while calling IMDS endpoint" + ex.getMessage());
+            if (msalRequest.application().azureRegion() != null) {
+                host = getRegionalizedHost(authorityUrl.getHost(), msalRequest.application().azureRegion());
+            }
         } finally {
             executor.shutdownNow();
         }
@@ -113,7 +121,7 @@ class AadInstanceDiscoveryProvider {
                     && null != detectedRegion) {
                 msalRequest.application().azureRegion = detectedRegion;
             }
-            cacheRegionInstanceMetadata(authorityUrl.getHost(), msalRequest.application().azureRegion());
+            cacheRegionInstanceMetadata(host, authorityUrl.getHost());
             serviceBundle.getServerSideTelemetry().getCurrentRequest().regionOutcome(
                     determineRegionOutcome(detectedRegion, msalRequest.application().azureRegion(), msalRequest.application().autoDetectRegion()));
         }
@@ -184,11 +192,10 @@ class AadInstanceDiscoveryProvider {
         return false;
     }
 
-    static void cacheRegionInstanceMetadata(String host, String region) {
+    static void cacheRegionInstanceMetadata(String regionalHost, String host) {
 
         Set<String> aliases = new HashSet<>();
         aliases.add(host);
-        String regionalHost = getRegionalizedHost(host, region);
 
         cache.putIfAbsent(regionalHost, InstanceDiscoveryMetadataEntry.builder().
                 preferredCache(host).
