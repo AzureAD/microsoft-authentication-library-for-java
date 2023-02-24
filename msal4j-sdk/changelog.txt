@@ -1,3 +1,10 @@
+Version 1.13.5
+=============
+- fixed url for admin consent.
+- added 2s timeout to IMDS endpoint call.
+- fixed url for regional endpoint calls.
+- added support for current and legacy B2c authority formats.
+
 Version 1.13.4
 =============
 - regional endpoint updates
