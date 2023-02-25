@@ -92,6 +92,7 @@ public class AuthorizationRequestUrlParametersTest {
                         .state("app_state")
                         .nonce("app_nonce")
                         .correlationId("corr_id")
+                        .idTokenHint("json_web_token")
                         .loginHint("hint")
                         .domainHint("domain_hint")
                         .claimsChallenge("{\"id_token\":{\"auth_time\":{\"essential\":true}},\"access_token\":{\"auth_time\":{\"essential\":true}}}")
@@ -123,6 +124,7 @@ public class AuthorizationRequestUrlParametersTest {
         Assert.assertEquals(queryParameters.get("state"), "app_state");
         Assert.assertEquals(queryParameters.get("nonce"), "app_nonce");
         Assert.assertEquals(queryParameters.get("correlation_id"), "corr_id");
+        Assert.assertEquals(queryParameters.get("id_token_hint"), "json_web_token");
         Assert.assertEquals(queryParameters.get("login_hint"), "hint");
         Assert.assertEquals(queryParameters.get("domain_hint"), "domain_hint");
         Assert.assertEquals(queryParameters.get("claims"), "{\"id_token\":{\"auth_time\":{\"essential\":true}},\"access_token\":{\"auth_time\":{\"essential\":true},\"xms_cc\":{\"values\":[\"llt\",\"ssm\"]}}}");

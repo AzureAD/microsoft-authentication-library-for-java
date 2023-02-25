@@ -33,6 +33,7 @@ public class AuthorizationRequestUrlParameters {
     private Prompt prompt;
     private String correlationId;
     private boolean instanceAware;
+    private String idTokenHint;
 
     //Unlike other prompts (which are sent as query parameters), admin consent has its own endpoint format
     private static final String ADMIN_CONSENT_ENDPOINT = "https://login.microsoftonline.com/{tenant}/adminconsent";
@@ -152,6 +153,11 @@ public class AuthorizationRequestUrlParameters {
             this.instanceAware = builder.instanceAware;
             requestParameters.put("instance_aware", Collections.singletonList(String.valueOf(instanceAware)));
         }
+
+        if (builder.idTokenHint != null) {
+            this.idTokenHint = builder.idTokenHint;
+            requestParameters.put("id_token_hint", Collections.singletonList(builder.idTokenHint));
+        }
     }
 
     URL createAuthorizationURL(Authority authority,
@@ -194,6 +200,7 @@ public class AuthorizationRequestUrlParameters {
         private Prompt prompt;
         private String correlationId;
         private boolean instanceAware;
+        private String idTokenHint;
 
         public AuthorizationRequestUrlParameters build() {
             return new AuthorizationRequestUrlParameters(this);
@@ -338,6 +345,14 @@ public class AuthorizationRequestUrlParameters {
          */
         public Builder instanceAware(boolean val) {
             this.instanceAware = val;
+            return self();
+        }
+
+        /**
+         * A json web token (JWT) containing user claims that can be used as hints to custom policies.
+         */
+        public Builder idTokenHint(String val) {
+            this.idTokenHint = val;
             return self();
         }
     }
