@@ -35,11 +35,7 @@ public class KeyVaultSecretsProvider {
         secretClient = getAuthenticatedSecretClient();
     }
 
-    String getSecret(String secretUrl) {
-
-        // extract keyName from secretUrl
-        KeyVaultSecretIdentifier keyVaultSecretIdentifier = new KeyVaultSecretIdentifier(secretUrl);
-        String key = keyVaultSecretIdentifier.getName();
+    String getSecret(String key) {
 
         if (cache.containsKey(key)) {
             return cache.get(key);

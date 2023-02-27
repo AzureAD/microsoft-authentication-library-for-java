@@ -33,7 +33,7 @@ public class ClientCredentialsIT {
     @Test
     public void acquireTokenClientCredentials_ClientCertificate() throws Exception {
         String clientId = "2afb0add-2f32-4946-ac90-81a02aa4550e";
-        assertAcquireTokenCommon(clientId, certificate);
+        assertAcquireTokenCommon(clientId, certificate, TestConstants.MICROSOFT_AUTHORITY);
     }
 
     @Test
@@ -43,7 +43,7 @@ public class ClientCredentialsIT {
         final String password = appProvider.getLabVaultPassword();
         IClientCredential credential = ClientCredentialFactory.createFromSecret(password);
 
-        assertAcquireTokenCommon(clientId, credential);
+        assertAcquireTokenCommon(clientId, credential, TestConstants.MICROSOFT_AUTHORITY);
     }
 
     @Test
@@ -54,7 +54,17 @@ public class ClientCredentialsIT {
 
         IClientCredential credential = ClientCredentialFactory.createFromClientAssertion(clientAssertion.assertion());
 
-        assertAcquireTokenCommon(clientId, credential);
+        assertAcquireTokenCommon(clientId, credential, TestConstants.MICROSOFT_AUTHORITY);
+    }
+
+    @Test
+    public void acquireTokenClientCredentials_ClientSecret_Ciam() throws Exception {
+        String clientId = "b8e9d222-c4ee-414c-ac29-b0eff1f32400";
+
+        AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.CIAM);
+        IClientCredential credential = ClientCredentialFactory.createFromSecret(appProvider.getSecret());
+
+        assertAcquireTokenCommon(clientId, credential, TestConstants.CIAM_AUTHORITY);
     }
 
     @Test
@@ -70,7 +80,7 @@ public class ClientCredentialsIT {
 
         IClientCredential credential = ClientCredentialFactory.createFromCallback(callable);
 
-        assertAcquireTokenCommon(clientId, credential);
+        assertAcquireTokenCommon(clientId, credential, TestConstants.MICROSOFT_AUTHORITY);
 
         // Creates an invalid client assertion to build the application, but overrides it with a valid client assertion
         //  in the request parameters in order to make a successful token request
@@ -139,10 +149,10 @@ public class ClientCredentialsIT {
                 true);
     }
 
-    private void assertAcquireTokenCommon(String clientId, IClientCredential credential) throws Exception {
+    private void assertAcquireTokenCommon(String clientId, IClientCredential credential, String authority) throws Exception {
         ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
                 clientId, credential).
-                authority(TestConstants.MICROSOFT_AUTHORITY).
+                authority(authority).
                 build();
 
         IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters

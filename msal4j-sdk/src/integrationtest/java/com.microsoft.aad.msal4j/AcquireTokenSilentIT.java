@@ -346,7 +346,7 @@ public class AcquireTokenSilentIT {
 
     private IConfidentialClientApplication getConfidentialClientApplications() throws Exception {
         String clientId = cfg.appProvider.getOboAppId();
-        String password = cfg.appProvider.getOboAppPassword();
+        String password = cfg.appProvider.getSecret();
 
         IClientCredential credential = ClientCredentialFactory.createFromSecret(password);
 

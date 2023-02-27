@@ -20,7 +20,7 @@ public class OnBehalfOfIT {
         String accessToken = this.getAccessToken();
 
         final String clientId = cfg.appProvider.getOboAppId();
-        final String password = cfg.appProvider.getOboAppPassword();
+        final String password = cfg.appProvider.getSecret();
 
         ConfidentialClientApplication cca =
                 ConfidentialClientApplication.builder(clientId, ClientCredentialFactory.createFromSecret(password)).
@@ -43,7 +43,7 @@ public class OnBehalfOfIT {
         String accessToken = this.getAccessToken();
 
         final String clientId = cfg.appProvider.getOboAppId();
-        final String password = cfg.appProvider.getOboAppPassword();
+        final String password = cfg.appProvider.getSecret();
 
         ConfidentialClientApplication cca =
                 ConfidentialClientApplication.builder(clientId, ClientCredentialFactory.createFromSecret(password)).

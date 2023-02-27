@@ -113,6 +113,31 @@ public class DeviceCodeIT {
         Assert.assertFalse(Strings.isNullOrEmpty(result.accessToken()));
     }
 
+    @Test
+    public void DeviceCodeFlowCiamTest() throws Exception {
+        Config cfg = new Config(AzureEnvironment.CIAM);
+
+        User user = labUserProvider.getCiamUser();
+
+        PublicClientApplication pca = PublicClientApplication.builder(
+                user.getAppId()).
+                authority(cfg.tenantSpecificAuthority()).
+                build();
+
+        Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
+            runAutomatedDeviceCodeFlow(deviceCode, user);
+        };
+
+        IAuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
+                .builder(Collections.singleton(cfg.graphDefaultScope()),
+                        deviceCodeConsumer)
+                .build())
+                .get();
+
+        Assert.assertNotNull(result);
+        Assert.assertFalse(Strings.isNullOrEmpty(result.accessToken()));
+    }
+
     private void runAutomatedDeviceCodeFlow(DeviceCode deviceCode, User user) {
         boolean isRunningLocally = true;//!Strings.isNullOrEmpty(
         //System.getenv(TestConstants.LOCAL_FLAG_ENV_VAR));

@@ -32,8 +32,8 @@ public class LabService {
     static void initLabApp() throws MalformedURLException {
         KeyVaultSecretsProvider keyVaultSecretsProvider = new KeyVaultSecretsProvider();
 
-        String appID = keyVaultSecretsProvider.getSecret(LabConstants.APP_ID_KEY_VAULT_SECRET);
-        String appSecret = keyVaultSecretsProvider.getSecret(LabConstants.APP_PASSWORD_KEY_VAULT_SECRET);
+        String appID = keyVaultSecretsProvider.getSecret(LabConstants.APP_ID_KEY_VAULT_SECRET_KEY);
+        String appSecret = keyVaultSecretsProvider.getSecret(LabConstants.APP_PASSWORD_KEY_VAULT_SECRET_KEY);
 
         labApp = ConfidentialClientApplication.builder(
                 appID, ClientCredentialFactory.createFromSecret(appSecret)).
