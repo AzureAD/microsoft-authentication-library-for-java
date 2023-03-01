@@ -38,7 +38,7 @@ public class AppCredentialProvider {
                 oboPassword = keyVaultSecretsProvider.getSecret(LabConstants.ARLINGTON_SECRET_KEY);
                 break;
             case AzureEnvironment.CIAM:
-                oboPassword = keyVaultSecretsProvider.getSecret(LabConstants.CIAM_SECRET_KEY);
+                oboPassword = keyVaultSecretsProvider.getSecret(LabConstants.CIAM_KEY_VAULT_SECRET_KEY);
 
                 break;
             default:
