@@ -13,7 +13,7 @@ public class AppCredentialProvider {
 
     private String oboClientId;
     private String oboAppIdURI;
-    private String secret;
+    private String oboPassword;
 
     public AppCredentialProvider(String azureEnvironment) {
         keyVaultSecretsProvider = new KeyVaultSecretsProvider();
@@ -27,7 +27,7 @@ public class AppCredentialProvider {
 
                 oboClientId = "f4aa5217-e87c-42b2-82af-5624dd14ee72";
                 oboAppIdURI = "api://f4aa5217-e87c-42b2-82af-5624dd14ee72";
-                secret = keyVaultSecretsProvider.getSecret(LabConstants.OBO_APP_PASSWORD_KEY);
+                oboPassword = keyVaultSecretsProvider.getSecret(LabConstants.OBO_APP_PASSWORD_KEY);
                 break;
             case AzureEnvironment.AZURE_US_GOVERNMENT:
                 clientId = LabConstants.ARLINGTON_APP_ID;
@@ -35,10 +35,10 @@ public class AppCredentialProvider {
                 oboClientId = LabConstants.ARLINGTON_OBO_APP_ID;
                 oboAppIdURI = "https://arlmsidlab1.us/IDLABS_APP_Confidential_Client";
 
-                secret = keyVaultSecretsProvider.getSecret(LabConstants.ARLINGTON_SECRET_KEY);
+                oboPassword = keyVaultSecretsProvider.getSecret(LabConstants.ARLINGTON_SECRET_KEY);
                 break;
             case AzureEnvironment.CIAM:
-                secret = keyVaultSecretsProvider.getSecret(LabConstants.CIAM_SECRET_KEY);
+                oboPassword = keyVaultSecretsProvider.getSecret(LabConstants.CIAM_SECRET_KEY);
 
                 break;
             default:
@@ -58,8 +58,8 @@ public class AppCredentialProvider {
         return oboAppIdURI;
     }
 
-    public String getSecret() {
-        return secret;
+    public String getOboAppPassword() {
+        return oboPassword;
     }
 
     public String getLabVaultAppId() {

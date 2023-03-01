@@ -62,7 +62,7 @@ public class ClientCredentialsIT {
         String clientId = "b8e9d222-c4ee-414c-ac29-b0eff1f32400";
 
         AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.CIAM);
-        IClientCredential credential = ClientCredentialFactory.createFromSecret(appProvider.getSecret());
+        IClientCredential credential = ClientCredentialFactory.createFromSecret(appProvider.getOboAppPassword());
 
         assertAcquireTokenCommon(clientId, credential, TestConstants.CIAM_AUTHORITY);
     }
