@@ -35,7 +35,7 @@ public class AppCredentialProvider {
                 oboClientId = LabConstants.ARLINGTON_OBO_APP_ID;
                 oboAppIdURI = "https://arlmsidlab1.us/IDLABS_APP_Confidential_Client";
 
-                oboPassword = keyVaultSecretsProvider.getSecret(LabConstants.ARLINGTON_SECRET_KEY);
+                oboPassword = keyVaultSecretsProvider.getSecret(LabService.getApp(oboClientId).clientSecret);
                 break;
             case AzureEnvironment.CIAM:
                 oboPassword = keyVaultSecretsProvider.getSecret(LabConstants.CIAM_KEY_VAULT_SECRET_KEY);

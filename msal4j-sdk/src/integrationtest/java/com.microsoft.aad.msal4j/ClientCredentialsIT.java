@@ -5,6 +5,7 @@ package com.microsoft.aad.msal4j;
 
 import labapi.AppCredentialProvider;
 import labapi.AzureEnvironment;
+import labapi.LabUserProvider;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -24,10 +25,12 @@ import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 @Test
 public class ClientCredentialsIT {
     private IClientCertificate certificate;
+    private LabUserProvider labUserProvider;
 
     @BeforeClass
     void init() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, NoSuchProviderException, IOException {
         certificate = CertificateHelper.getClientCertificate();
+        labUserProvider = LabUserProvider.getInstance();
     }
 
     @Test
@@ -59,7 +62,7 @@ public class ClientCredentialsIT {
 
     @Test
     public void acquireTokenClientCredentials_ClientSecret_Ciam() throws Exception {
-        String clientId = "b8e9d222-c4ee-414c-ac29-b0eff1f32400";
+        String clientId = labUserProvider.getCiamUser().getAppId();
 
         AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.CIAM);
         IClientCredential credential = ClientCredentialFactory.createFromSecret(appProvider.getOboAppPassword());
