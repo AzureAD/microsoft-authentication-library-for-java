@@ -18,8 +18,8 @@ public class AppCredentialProvider {
     public AppCredentialProvider(String azureEnvironment) {
         keyVaultSecretsProvider = new KeyVaultSecretsProvider();
 
-        labVaultClientId = keyVaultSecretsProvider.getSecret(LabConstants.APP_ID_KEY_VAULT_SECRET_KEY);
-        labVaultPassword = keyVaultSecretsProvider.getSecret(LabConstants.APP_PASSWORD_KEY_VAULT_SECRET_KEY);
+        labVaultClientId = keyVaultSecretsProvider.getSecret(LabConstants.APP_ID_KEY_VAULT_SECRET);
+        labVaultPassword = keyVaultSecretsProvider.getSecret(LabConstants.APP_PASSWORD_KEY_VAULT_SECRET);
 
         switch (azureEnvironment) {
             case AzureEnvironment.AZURE:
@@ -27,7 +27,7 @@ public class AppCredentialProvider {
 
                 oboClientId = "f4aa5217-e87c-42b2-82af-5624dd14ee72";
                 oboAppIdURI = "api://f4aa5217-e87c-42b2-82af-5624dd14ee72";
-                oboPassword = keyVaultSecretsProvider.getSecret(LabConstants.OBO_APP_PASSWORD_KEY);
+                oboPassword = keyVaultSecretsProvider.getSecret(LabConstants.OBO_APP_PASSWORD_URL);
                 break;
             case AzureEnvironment.AZURE_US_GOVERNMENT:
                 clientId = LabConstants.ARLINGTON_APP_ID;

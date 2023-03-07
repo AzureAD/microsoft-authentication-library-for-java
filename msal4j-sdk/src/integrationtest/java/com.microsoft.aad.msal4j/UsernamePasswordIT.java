@@ -99,11 +99,10 @@ public class UsernamePasswordIT {
 
     @Test
     public void acquireTokenWithUsernamePassword_Ciam() throws Exception {
-        cfg = new Config(AzureEnvironment.CIAM);
 
         User user = labUserProvider.getCiamUser();
 
-        assertAcquireTokenCommon(user, cfg.tenantSpecificAuthority(), cfg.graphDefaultScope(),
+        assertAcquireTokenCommon(user, TestConstants.CIAM_AUTHORITY, TestConstants.USER_READ_SCOPE,
                 user.getAppId());
     }
 

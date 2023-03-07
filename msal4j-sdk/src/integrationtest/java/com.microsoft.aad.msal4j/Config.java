@@ -37,10 +37,6 @@ public class Config {
                 appProvider = new AppCredentialProvider(azureEnvironment);
                 tenant = TestConstants.ARLINGTON_AUTHORITY_TENANT;
                 break;
-            case "ciam" :
-                tenantSpecificAuthority = TestConstants.CIAM_AUTHORITY;
-                graphDefaultScope = TestConstants.GRAPH_DEFAULT_SCOPE;
-                break;
             default:
                 throw new UnsupportedOperationException("Azure Environment - " + azureEnvironment + " unsupported");
         }

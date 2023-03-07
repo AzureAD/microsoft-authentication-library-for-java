@@ -71,11 +71,9 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
 
     @Test
     public void acquireTokenInteractive_Ciam() {
-        cfg = new Config(AzureEnvironment.CIAM);
-
         User user = labUserProvider.getCiamUser();
 
-        assertAcquireTokenCommon(user, cfg.tenantSpecificAuthority(), cfg.graphDefaultScope());
+        assertAcquireTokenCommon(user, TestConstants.CIAM_AUTHORITY, TestConstants.USER_READ_SCOPE);
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)

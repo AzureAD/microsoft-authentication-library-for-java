@@ -115,13 +115,11 @@ public class DeviceCodeIT {
 
     @Test
     public void DeviceCodeFlowCiamTest() throws Exception {
-        Config cfg = new Config(AzureEnvironment.CIAM);
-
         User user = labUserProvider.getCiamUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
                 user.getAppId()).
-                authority(cfg.tenantSpecificAuthority()).
+                authority(TestConstants.CIAM_AUTHORITY).
                 build();
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
@@ -129,7 +127,7 @@ public class DeviceCodeIT {
         };
 
         IAuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
-                .builder(Collections.singleton(cfg.graphDefaultScope()),
+                .builder(Collections.singleton(TestConstants.USER_READ_SCOPE),
                         deviceCodeConsumer)
                 .build())
                 .get();
