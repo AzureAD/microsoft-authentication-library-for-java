@@ -22,6 +22,9 @@ class HttpHelper {
     public static final int RETRY_DELAY_MS = 1000;
 
     public static final int HTTP_STATUS_200 = 200;
+
+    public static final int HTTP_STATUS_400 = 400;
+
     public static final int HTTP_STATUS_429 = 429;
     public static final int HTTP_STATUS_500 = 500;
 

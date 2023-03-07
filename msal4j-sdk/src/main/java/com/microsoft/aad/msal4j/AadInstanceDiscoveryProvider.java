@@ -38,6 +38,8 @@ class AadInstanceDiscoveryProvider {
 
     private static final Logger log = LoggerFactory.getLogger(AadInstanceDiscoveryProvider.class);
 
+    //flag to check if instance discovery has failed
+    private static boolean instanceDiscoveryFailed = false;
     static ConcurrentHashMap<String, InstanceDiscoveryMetadataEntry> cache = new ConcurrentHashMap<>();
 
     static {
@@ -84,7 +86,7 @@ class AadInstanceDiscoveryProvider {
         InstanceDiscoveryMetadataEntry result = cache.get(host);
 
         if (result == null) {
-            if(msalRequest.application().instanceDiscovery()){
+            if(msalRequest.application().instanceDiscovery() && !instanceDiscoveryFailed){
                 doInstanceDiscoveryAndCache(authorityUrl, validateAuthority, msalRequest, serviceBundle);
             } else {
                 // instanceDiscovery flag is set to False. Do not perform instanceDiscovery.
@@ -235,7 +237,12 @@ class AadInstanceDiscoveryProvider {
         httpResponse = executeRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
 
         if (httpResponse.statusCode() != HttpHelper.HTTP_STATUS_200) {
-            throw MsalServiceExceptionFactory.fromHttpResponse(httpResponse);
+            if(httpResponse.statusCode() == HttpHelper.HTTP_STATUS_400 && httpResponse.body().equals("invalid_instance")){
+                // instance discovery failed due to an invalid authority, throw an exception.
+                throw MsalServiceExceptionFactory.fromHttpResponse(httpResponse);
+            }
+            // instance discovery failed due to reasons other than an invalid authority, do not perform instance discovery again in this environment.
+            instanceDiscoveryFailed = true;
         }
 
 
