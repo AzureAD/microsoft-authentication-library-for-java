@@ -73,7 +73,7 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
     public void acquireTokenInteractive_Ciam() {
         User user = labUserProvider.getCiamUser();
 
-        assertAcquireTokenCommon(user, TestConstants.CIAM_AUTHORITY, TestConstants.USER_READ_SCOPE);
+        assertAcquireTokenCommon(user, TestConstants.CIAM_AUTHORITY, TestConstants.GRAPH_DEFAULT_SCOPE);
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)

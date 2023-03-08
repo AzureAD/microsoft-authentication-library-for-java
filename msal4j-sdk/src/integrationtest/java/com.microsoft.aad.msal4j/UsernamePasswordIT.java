@@ -102,7 +102,7 @@ public class UsernamePasswordIT {
 
         User user = labUserProvider.getCiamUser();
 
-        assertAcquireTokenCommon(user, TestConstants.CIAM_AUTHORITY, TestConstants.USER_READ_SCOPE,
+        assertAcquireTokenCommon(user, TestConstants.CIAM_AUTHORITY, TestConstants.GRAPH_DEFAULT_SCOPE,
                 user.getAppId());
     }
 
