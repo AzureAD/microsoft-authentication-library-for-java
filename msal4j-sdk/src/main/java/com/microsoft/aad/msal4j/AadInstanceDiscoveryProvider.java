@@ -236,8 +236,10 @@ class AadInstanceDiscoveryProvider {
 
         httpResponse = executeRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
 
+        AadInstanceDiscoveryResponse response = JsonHelper.convertJsonToObject(httpResponse.body(), AadInstanceDiscoveryResponse.class);
+
         if (httpResponse.statusCode() != HttpHelper.HTTP_STATUS_200) {
-            if(httpResponse.statusCode() == HttpHelper.HTTP_STATUS_400 && httpResponse.body().equals("invalid_instance")){
+            if(httpResponse.statusCode() == HttpHelper.HTTP_STATUS_400 && response.error().equals("invalid_instance")){
                 // instance discovery failed due to an invalid authority, throw an exception.
                 throw MsalServiceExceptionFactory.fromHttpResponse(httpResponse);
             }
@@ -245,8 +247,7 @@ class AadInstanceDiscoveryProvider {
             instanceDiscoveryFailed = true;
         }
 
-
-        return JsonHelper.convertJsonToObject(httpResponse.body(), AadInstanceDiscoveryResponse.class);
+        return response;
     }
 
     private static int determineRegionOutcome(String detectedRegion, String providedRegion, boolean autoDetect) {
