@@ -35,8 +35,11 @@ public class AppCredentialProvider {
                 oboClientId = LabConstants.ARLINGTON_OBO_APP_ID;
                 oboAppIdURI = "https://arlmsidlab1.us/IDLABS_APP_Confidential_Client";
 
-                oboPassword = keyVaultSecretsProvider.
-                        getSecret(LabService.getApp(oboClientId).clientSecret);
+                oboPassword = keyVaultSecretsProvider.getSecret(LabService.getApp(oboClientId).clientSecret);
+                break;
+            case AzureEnvironment.CIAM:
+                oboPassword = keyVaultSecretsProvider.getSecret(LabConstants.CIAM_KEY_VAULT_SECRET_KEY);
+
                 break;
             default:
                 throw new UnsupportedOperationException("Azure Environment - " + azureEnvironment + " unsupported");

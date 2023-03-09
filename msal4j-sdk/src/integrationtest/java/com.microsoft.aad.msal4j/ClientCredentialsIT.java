@@ -5,6 +5,7 @@ package com.microsoft.aad.msal4j;
 
 import labapi.AppCredentialProvider;
 import labapi.AzureEnvironment;
+import labapi.LabUserProvider;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -24,16 +25,18 @@ import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 @Test
 public class ClientCredentialsIT {
     private IClientCertificate certificate;
+    private LabUserProvider labUserProvider;
 
     @BeforeClass
     void init() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, NoSuchProviderException, IOException {
         certificate = CertificateHelper.getClientCertificate();
+        labUserProvider = LabUserProvider.getInstance();
     }
 
     @Test
     public void acquireTokenClientCredentials_ClientCertificate() throws Exception {
         String clientId = "2afb0add-2f32-4946-ac90-81a02aa4550e";
-        assertAcquireTokenCommon(clientId, certificate);
+        assertAcquireTokenCommon(clientId, certificate, TestConstants.MICROSOFT_AUTHORITY);
     }
 
     @Test
@@ -43,7 +46,7 @@ public class ClientCredentialsIT {
         final String password = appProvider.getLabVaultPassword();
         IClientCredential credential = ClientCredentialFactory.createFromSecret(password);
 
-        assertAcquireTokenCommon(clientId, credential);
+        assertAcquireTokenCommon(clientId, credential, TestConstants.MICROSOFT_AUTHORITY);
     }
 
     @Test
@@ -54,7 +57,17 @@ public class ClientCredentialsIT {
 
         IClientCredential credential = ClientCredentialFactory.createFromClientAssertion(clientAssertion.assertion());
 
-        assertAcquireTokenCommon(clientId, credential);
+        assertAcquireTokenCommon(clientId, credential, TestConstants.MICROSOFT_AUTHORITY);
+    }
+
+    @Test
+    public void acquireTokenClientCredentials_ClientSecret_Ciam() throws Exception {
+        String clientId = labUserProvider.getCiamUser().getAppId();
+
+        AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.CIAM);
+        IClientCredential credential = ClientCredentialFactory.createFromSecret(appProvider.getOboAppPassword());
+
+        assertAcquireTokenCommon(clientId, credential, TestConstants.CIAM_AUTHORITY);
     }
 
     @Test
@@ -70,7 +83,7 @@ public class ClientCredentialsIT {
 
         IClientCredential credential = ClientCredentialFactory.createFromCallback(callable);
 
-        assertAcquireTokenCommon(clientId, credential);
+        assertAcquireTokenCommon(clientId, credential, TestConstants.MICROSOFT_AUTHORITY);
 
         // Creates an invalid client assertion to build the application, but overrides it with a valid client assertion
         //  in the request parameters in order to make a successful token request
@@ -139,10 +152,10 @@ public class ClientCredentialsIT {
                 true);
     }
 
-    private void assertAcquireTokenCommon(String clientId, IClientCredential credential) throws Exception {
+    private void assertAcquireTokenCommon(String clientId, IClientCredential credential, String authority) throws Exception {
         ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
                 clientId, credential).
-                authority(TestConstants.MICROSOFT_AUTHORITY).
+                authority(authority).
                 build();
 
         IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
