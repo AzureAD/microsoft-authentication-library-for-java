@@ -37,6 +37,8 @@ public class AuthorizationRequestUrlParameters {
     //Unlike other prompts (which are sent as query parameters), admin consent has its own endpoint format
     private static final String ADMIN_CONSENT_ENDPOINT = "https://login.microsoftonline.com/{tenant}/adminconsent";
 
+    Map<String, String> extraQueryParameters;
+
     Map<String, List<String>> requestParameters = new HashMap<>();
 
     public static Builder builder(String redirectUri,
@@ -152,6 +154,7 @@ public class AuthorizationRequestUrlParameters {
             this.instanceAware = builder.instanceAware;
             requestParameters.put("instance_aware", Collections.singletonList(String.valueOf(instanceAware)));
         }
+
     }
 
     URL createAuthorizationURL(Authority authority,
@@ -164,6 +167,14 @@ public class AuthorizationRequestUrlParameters {
                         .replace("{tenant}", authority.tenant);
             } else {
                 authorizationCodeEndpoint = authority.authorizationEndpoint();
+            }
+
+            if(null != extraQueryParameters && !extraQueryParameters.isEmpty()){
+                for(Map.Entry<String, String> entry: extraQueryParameters.entrySet()){
+                    String key = entry.getKey();
+                    String value = entry.getValue();
+                    requestParameters.put(key, Collections.singletonList(value));
+                }
             }
 
             String uriString = authorizationCodeEndpoint + "?" +

@@ -12,6 +12,8 @@ import java.net.URI;
 import java.net.URL;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
@@ -90,8 +92,20 @@ class InteractiveRequest extends MsalRequest {
                         .instanceAware(interactiveRequestParameters.instanceAware());
 
         addPkceAndState(authorizationRequestUrlBuilder);
+        AuthorizationRequestUrlParameters authorizationRequestUrlParameters =
+                authorizationRequestUrlBuilder.build();
+
+        if(null != interactiveRequestParameters.extraQueryParameters() && !interactiveRequestParameters.extraQueryParameters().isEmpty()){
+            Map<String, String> extraQueryParameters = interactiveRequestParameters.extraQueryParameters();
+            for(Map.Entry<String, String> entry: extraQueryParameters.entrySet()){
+                String key = entry.getKey();
+                String value = entry.getValue();
+                authorizationRequestUrlParameters.requestParameters.put(key, Collections.singletonList(value));
+            }
+        }
+
         return publicClientApplication.getAuthorizationRequestUrl(
-                authorizationRequestUrlBuilder.build());
+                authorizationRequestUrlParameters);
     }
 
     private void addPkceAndState(AuthorizationRequestUrlParameters.Builder builder) {

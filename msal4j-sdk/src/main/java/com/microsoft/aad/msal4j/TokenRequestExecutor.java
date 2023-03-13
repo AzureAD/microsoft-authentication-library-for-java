@@ -67,6 +67,15 @@ class TokenRequestExecutor {
             params.put("claims", Collections.singletonList(claimsRequest));
         }
 
+        if(msalRequest.requestContext().apiParameters().extraQueryParameters() != null ){
+            for(String key: msalRequest.requestContext().apiParameters().extraQueryParameters().keySet()){
+                    if(params.containsKey(key)){
+                        throw new MsalClientException("Conflicting keys","");
+                    }
+                    params.put(key, Collections.singletonList(msalRequest.requestContext().apiParameters().extraQueryParameters().get(key)));
+            }
+        }
+
         oauthHttpRequest.setQuery(URLUtils.serializeParameters(params));
       
         if (msalRequest.application().clientAuthentication() != null) {

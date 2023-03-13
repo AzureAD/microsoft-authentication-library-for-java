@@ -54,6 +54,11 @@ public class UserNamePasswordParameters implements IAcquireTokenParameters {
     private Map<String, String> extraHttpHeaders;
 
     /**
+     * Adds additional query parameters to the token request
+     */
+    private Map<String, String> extraQueryParameters;
+
+    /**
      * Overrides the tenant value in the authority URL for this request
      */
     private String tenant;
