@@ -70,7 +70,7 @@ class TokenRequestExecutor {
         if(msalRequest.requestContext().apiParameters().extraQueryParameters() != null ){
             for(String key: msalRequest.requestContext().apiParameters().extraQueryParameters().keySet()){
                     if(params.containsKey(key)){
-                        throw new MsalClientException("Conflicting keys","");
+                        throw new MsalClientException("Conflicting parameters","400 - Bad Request");
                     }
                     params.put(key, Collections.singletonList(msalRequest.requestContext().apiParameters().extraQueryParameters().get(key)));
             }

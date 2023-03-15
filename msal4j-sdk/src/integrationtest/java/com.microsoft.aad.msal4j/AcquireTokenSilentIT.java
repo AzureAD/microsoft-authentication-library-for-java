@@ -9,10 +9,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.net.MalformedURLException;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
@@ -178,9 +175,12 @@ public class AcquireTokenSilentIT {
         cfg = new Config(environment);
 
         IConfidentialClientApplication cca = getConfidentialClientApplications();
-
+        //test that adding extra query parameters does not break the flow
+        Map<String, String> extraParameters = new HashMap<>();
+        extraParameters.put("test","test");
         IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
                 .builder(Collections.singleton(cfg.graphDefaultScope()))
+                        .extraQueryParameters(extraParameters)
                 .build())
                 .get();
 
@@ -191,6 +191,7 @@ public class AcquireTokenSilentIT {
 
         result = cca.acquireTokenSilently(SilentParameters
                 .builder(Collections.singleton(cfg.graphDefaultScope()))
+                        .extraQueryParameters(extraParameters)
                 .build())
                 .get();
 
@@ -401,10 +402,13 @@ public class AcquireTokenSilentIT {
     }
 
     private IAuthenticationResult acquireTokenUsernamePassword(User user, IPublicClientApplication pca, String scope) throws InterruptedException, ExecutionException {
+        Map<String, String> map = new HashMap<>();
+        map.put("test","test");
         return pca.acquireToken(UserNamePasswordParameters.
                 builder(Collections.singleton(scope),
                         user.getUpn(),
                         user.getPassword().toCharArray())
+                        .extraQueryParameters(map)
                 .build())
                 .get();
     }

@@ -155,6 +155,18 @@ public class AuthorizationRequestUrlParameters {
             requestParameters.put("instance_aware", Collections.singletonList(String.valueOf(instanceAware)));
         }
 
+        if(null != builder.extraQueryParameters && !builder.extraQueryParameters.isEmpty()){
+            this.extraQueryParameters = builder.extraQueryParameters;
+            for(Map.Entry<String, String> entry: this.extraQueryParameters.entrySet()){
+                String key = entry.getKey();
+                String value = entry.getValue();
+                if(requestParameters.containsKey(key)){
+                    throw new MsalClientException("Conflicting parameters", "400 - Bad Request");
+                }
+                requestParameters.put(key, Collections.singletonList(value));
+            }
+        }
+
     }
 
     URL createAuthorizationURL(Authority authority,
@@ -167,14 +179,6 @@ public class AuthorizationRequestUrlParameters {
                         .replace("{tenant}", authority.tenant);
             } else {
                 authorizationCodeEndpoint = authority.authorizationEndpoint();
-            }
-
-            if(null != extraQueryParameters && !extraQueryParameters.isEmpty()){
-                for(Map.Entry<String, String> entry: extraQueryParameters.entrySet()){
-                    String key = entry.getKey();
-                    String value = entry.getValue();
-                    requestParameters.put(key, Collections.singletonList(value));
-                }
             }
 
             String uriString = authorizationCodeEndpoint + "?" +
@@ -205,6 +209,7 @@ public class AuthorizationRequestUrlParameters {
         private Prompt prompt;
         private String correlationId;
         private boolean instanceAware;
+        private Map<String, String> extraQueryParameters;
 
         public AuthorizationRequestUrlParameters build() {
             return new AuthorizationRequestUrlParameters(this);
@@ -349,6 +354,15 @@ public class AuthorizationRequestUrlParameters {
          */
         public Builder instanceAware(boolean val) {
             this.instanceAware = val;
+            return self();
+        }
+
+        /**
+         * Query parameters that you can add to the request,
+         * in addition to the list of parameters already provided.
+         */
+        public Builder extraQueryParameters(Map<String, String> val) {
+            this.extraQueryParameters = val;
             return self();
         }
     }
