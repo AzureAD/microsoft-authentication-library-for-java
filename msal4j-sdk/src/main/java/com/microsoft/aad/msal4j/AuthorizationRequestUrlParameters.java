@@ -166,7 +166,6 @@ public class AuthorizationRequestUrlParameters {
                 requestParameters.put(key, Collections.singletonList(value));
             }
         }
-
     }
 
     URL createAuthorizationURL(Authority authority,
