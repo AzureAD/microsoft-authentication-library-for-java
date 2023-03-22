@@ -31,7 +31,6 @@ import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
-import java.util.function.Function;
 
 import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 import static org.easymock.EasyMock.*;
@@ -261,6 +260,8 @@ public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
         Assert.assertTrue(body.contains("client_assertion_type=" + URLEncoder.encode(JWTAuthentication.CLIENT_ASSERTION_TYPE, "utf-8")));
         Assert.assertTrue(body.contains("scope=" + URLEncoder.encode("openid profile offline_access " + scope, "utf-8")));
         Assert.assertTrue(body.contains("client_id=" + TestConfiguration.AAD_CLIENT_ID));
+        Assert.assertTrue(body.contains("test=test"));
+        Assert.assertTrue(body.contains("id_token_hint=token_hint_value"));
     }
 
     private ServiceBundle mockedServiceBundle(IHttpClient httpClientMock) {
@@ -274,7 +275,15 @@ public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
     private ClientCredentialRequest getClientCredentialRequest(ConfidentialClientApplication app, String scope) {
         Set<String> scopes = new HashSet<>();
         scopes.add(scope);
-        ClientCredentialParameters clientCredentials = ClientCredentialParameters.builder(scopes).tenant(IdToken.TENANT_IDENTIFIER).build();
+
+        Map<String, String> extraQueryParameters = new HashMap<>();
+        extraQueryParameters.put("id_token_hint", "token_hint_value");
+        extraQueryParameters.put("test", "test");
+
+        ClientCredentialParameters clientCredentials = ClientCredentialParameters.builder(scopes)
+                .tenant(IdToken.TENANT_IDENTIFIER)
+                .extraQueryParameters(extraQueryParameters)
+                .build();
         RequestContext requestContext = new RequestContext(
                 app,
                 PublicApi.ACQUIRE_TOKEN_FOR_CLIENT,
