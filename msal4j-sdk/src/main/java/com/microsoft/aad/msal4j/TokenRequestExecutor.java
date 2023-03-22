@@ -34,7 +34,7 @@ class TokenRequestExecutor {
 
     AuthenticationResult executeTokenRequest() throws ParseException, IOException {
 
-        log.debug("Sending token request to: " + requestAuthority.canonicalAuthorityUrl());
+        log.debug("Sending token request to: {}", requestAuthority.canonicalAuthorityUrl());
         OAuthHttpRequest oAuthHttpRequest = createOauthHttpRequest();
         HTTPResponse oauthHttpResponse = oAuthHttpRequest.send();
         return createAuthenticationResultFromOauthHttpResponse(oauthHttpResponse);
@@ -70,7 +70,7 @@ class TokenRequestExecutor {
         if(msalRequest.requestContext().apiParameters().extraQueryParameters() != null ){
             for(String key: msalRequest.requestContext().apiParameters().extraQueryParameters().keySet()){
                     if(params.containsKey(key)){
-                        throw new MsalClientException("Conflicting parameters","400 - Bad Request");
+                       log.warn("A query parameter {} has been provided with values multiple times.", key);
                     }
                     params.put(key, Collections.singletonList(msalRequest.requestContext().apiParameters().extraQueryParameters().get(key)));
             }

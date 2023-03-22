@@ -78,7 +78,7 @@ public class AuthorizationRequestUrlParametersTest {
                         .build();
     }
 
-    @Test(expectedExceptions = MsalClientException.class, expectedExceptionsMessageRegExp = "Conflicting parameters")
+    @Test
     public void testBuilder_conflictingParameters() {
         PublicClientApplication app = PublicClientApplication.builder("client_id").build();
 

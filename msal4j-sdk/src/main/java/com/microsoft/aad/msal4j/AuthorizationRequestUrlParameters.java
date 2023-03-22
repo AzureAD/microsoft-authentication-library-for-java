@@ -7,6 +7,8 @@ import com.nimbusds.oauth2.sdk.util.URLUtils;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -40,6 +42,8 @@ public class AuthorizationRequestUrlParameters {
     Map<String, String> extraQueryParameters;
 
     Map<String, List<String>> requestParameters = new HashMap<>();
+
+    Logger log = LoggerFactory.getLogger(AuthorizationRequestUrlParameters.class);
 
     public static Builder builder(String redirectUri,
                                   Set<String> scopes) {
@@ -161,7 +165,7 @@ public class AuthorizationRequestUrlParameters {
                 String key = entry.getKey();
                 String value = entry.getValue();
                 if(requestParameters.containsKey(key)){
-                    throw new MsalClientException("Conflicting parameters", "400 - Bad Request");
+                    log.warn("A query parameter {} has been provided with values multiple times.", key);
                 }
                 requestParameters.put(key, Collections.singletonList(value));
             }
