@@ -20,14 +20,20 @@ public class AuthorizationRequestUrlParametersTest {
         String redirectUri = "http://localhost:8080";
         Set<String> scope = Collections.singleton("scope");
 
+        Map<String, String> extraParameters = new HashMap<>();
+        extraParameters.put("id_token_hint", "test");
+        extraParameters.put("another_param", "some_value");
+
         AuthorizationRequestUrlParameters parameters =
                 AuthorizationRequestUrlParameters
                         .builder(redirectUri, scope)
+                        .extraQueryParameters(extraParameters)
                         .build();
 
         Assert.assertEquals(parameters.responseMode(), ResponseMode.FORM_POST);
         Assert.assertEquals(parameters.redirectUri(), redirectUri);
         Assert.assertEquals(parameters.scopes().size(), 4);
+        Assert.assertEquals(parameters.extraQueryParameters.size(), 2);
 
         Assert.assertNull(parameters.loginHint());
         Assert.assertNull(parameters.codeChallenge());
@@ -58,6 +64,7 @@ public class AuthorizationRequestUrlParametersTest {
         Assert.assertEquals(queryParameters.get("redirect_uri"), "http://localhost:8080");
         Assert.assertEquals(queryParameters.get("client_id"), "client_id");
         Assert.assertEquals(queryParameters.get("response_mode"), "form_post");
+        Assert.assertEquals(queryParameters.get("id_token_hint"),"test");
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
@@ -69,6 +76,22 @@ public class AuthorizationRequestUrlParametersTest {
                 AuthorizationRequestUrlParameters
                         .builder(redirectUri, scope)
                         .build();
+    }
+
+    @Test
+    public void testBuilder_conflictingParameters() {
+        PublicClientApplication app = PublicClientApplication.builder("client_id").build();
+
+        String redirectUri = "http://localhost:8080";
+        Set<String> scope = Collections.singleton("scope");
+
+        Map<String, String> extraParameters = new HashMap<>();
+        extraParameters.put("scope", "scope");
+
+        AuthorizationRequestUrlParameters
+                .builder(redirectUri, scope)
+                .extraQueryParameters(extraParameters)
+                .build();
     }
 
     @Test
