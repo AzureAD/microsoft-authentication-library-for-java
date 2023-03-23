@@ -1,3 +1,9 @@
+Version 1.13.6
+=============
+- Added ExtraQueryParameters API.
+- added tests for a CIAM user.
+- updated condition to throw exception only for an invalid authority while performing instance discovery.
+
 Version 1.13.5
 =============
 - fixed url for admin consent.
