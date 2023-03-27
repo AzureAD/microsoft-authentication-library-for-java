@@ -1,3 +1,7 @@
+Version 1.13.7
+=============
+- Update json-smart library version to a secured one.
+
 Version 1.13.6
 =============
 - Added ExtraQueryParameters API.
