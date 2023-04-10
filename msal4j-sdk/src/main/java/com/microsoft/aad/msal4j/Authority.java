@@ -55,20 +55,22 @@ abstract class Authority {
     }
 
     static Authority createAuthority(URL authorityUrl) throws MalformedURLException{
-        validateAuthority(authorityUrl);
-
+//        validateAuthority(authorityUrl);
+        Authority createdAuthority;
         AuthorityType authorityType = detectAuthorityType(authorityUrl);
         if (authorityType == AuthorityType.AAD) {
-            return new AADAuthority(authorityUrl);
+            createdAuthority = new AADAuthority(authorityUrl);
         } else if (authorityType == AuthorityType.B2C) {
-            return new B2CAuthority(authorityUrl);
+            createdAuthority = new B2CAuthority(authorityUrl);
         } else if (authorityType == AuthorityType.ADFS) {
-            return new ADFSAuthority(authorityUrl);
+            createdAuthority = new ADFSAuthority(authorityUrl);
         } else if(authorityType == AuthorityType.CIAM){
-            return new CIAMAuthority(authorityUrl);
+            createdAuthority = new CIAMAuthority(authorityUrl);
         } else {
             throw new IllegalArgumentException("Unsupported Authority Type");
         }
+        validateAuthority(createdAuthority.canonicalAuthorityUrl());
+        return createdAuthority;
     }
 
     static AuthorityType detectAuthorityType(URL authorityUrl) {
@@ -110,10 +112,10 @@ abstract class Authority {
                     "authority is invalid format (contains fragment)");
         }
 
-//        if (!StringHelper.isBlank(authorityUrl.getQuery())) {
-//            throw new IllegalArgumentException(
-//                    "authority cannot contain query parameters");
-//        }
+        if (!StringHelper.isBlank(authorityUrl.getQuery())) {
+            throw new IllegalArgumentException(
+                    "authority cannot contain query parameters");
+        }
 
         final String path = authorityUrl.getPath();
 
@@ -129,12 +131,12 @@ abstract class Authority {
                     IllegalArgumentExceptionMessages.AUTHORITY_URI_MISSING_PATH_SEGMENT);
         }
 
-//        for (String segment : segments) {
-//            if (StringHelper.isBlank(segment)) {
-//                throw new IllegalArgumentException(
-//                        IllegalArgumentExceptionMessages.AUTHORITY_URI_EMPTY_PATH_SEGMENT);
-//            }
-//        }
+        for (String segment : segments) {
+            if (StringHelper.isBlank(segment)) {
+                throw new IllegalArgumentException(
+                        IllegalArgumentExceptionMessages.AUTHORITY_URI_EMPTY_PATH_SEGMENT);
+            }
+        }
     }
 
     static String getTenant(URL authorityUrl, AuthorityType authorityType) {

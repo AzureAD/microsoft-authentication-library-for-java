@@ -27,13 +27,13 @@ public class CIAMAuthority extends Authority{
     }
 
     protected static URL transformAuthority(URL originalAuthority) throws MalformedURLException {
-        URL fullAuthorityUrl = getFullAuthorityUrlFromAuthorityWithoutPath(originalAuthority);
-        String host = fullAuthorityUrl.getHost() + fullAuthorityUrl.getPath();
-        String transformedAuthority = fullAuthorityUrl.toString();
-        if(fullAuthorityUrl.getPath().equals("/")){
+//        URL fullAuthorityUrl = getFullAuthorityUrlFromAuthorityWithoutPath(originalAuthority);
+        String host = originalAuthority.getHost() + originalAuthority.getPath();
+        String transformedAuthority = originalAuthority.toString();
+        if(originalAuthority.getPath().equals("/")){
             int ciamHostIndex = host.indexOf(CIAMAuthority.CIAM_HOST_SEGMENT);
             String tenant = host.substring(0 , ciamHostIndex);
-            transformedAuthority = fullAuthorityUrl + tenant + ".onmicrosoft.com/";
+            transformedAuthority = originalAuthority + tenant + ".onmicrosoft.com/";
         }
         return new URL(transformedAuthority);
     }
@@ -61,6 +61,6 @@ public class CIAMAuthority extends Authority{
         }
         // Split environment to isolate the tenant
         final String tenant = authority.split("\\.")[0];
-        return new URL("https://" + authority + "/" + tenant + ".onmicrosoft.com");
+        return new URL("https://" + authority + "/" + tenant + ".onmicrosoft.com/");
     }
 }
