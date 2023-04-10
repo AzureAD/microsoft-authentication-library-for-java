@@ -366,6 +366,9 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
                 case ADFS:
                     authenticationAuthority = new ADFSAuthority(authorityURL);
                     break;
+                case CIAM:
+                    authenticationAuthority = new CIAMAuthority(authorityURL);
+                    break;
                 default:
                     throw new IllegalArgumentException("Unsupported authority type.");
             }

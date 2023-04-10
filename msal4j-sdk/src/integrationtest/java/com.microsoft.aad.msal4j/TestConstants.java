@@ -34,7 +34,10 @@ public class TestConstants {
 
     public final static String REGIONAL_MICROSOFT_AUTHORITY_BASIC_HOST_EASTUS = "eastus.login.microsoft.com";
 
-    public final static String CIAM_AUTHORITY = MICROSOFT_AUTHORITY_HOST + "msidlabciam1.onmicrosoft.com";
+//    public final static String CIAM_AUTHORITY = MICROSOFT_AUTHORITY_HOST + "msidlabciam1.onmicrosoft.com";
+    public final static String CIAM_AUTHORITY = "https://msidlabciam1.ciamlogin.com/" + "msidlabciam1.onmicrosoft.com";
+
+    public final static String CIAM_TEST_AUTHORITY = "https://contoso0781.ciamlogin.com/6babcaad-604b-40ac-a9d7-9fd97c0b779f/v2.0/.well-known/openid-configuration?dc=ESTS-PUB-EUS-AZ1-FD000-TEST1&ciamhost=true";
 
     public final static String ARLINGTON_ORGANIZATIONS_AUTHORITY = ARLINGTON_MICROSOFT_AUTHORITY_HOST + "organizations/";
     public final static String ARLINGTON_TENANT_SPECIFIC_AUTHORITY = ARLINGTON_MICROSOFT_AUTHORITY_HOST + ARLINGTON_AUTHORITY_TENANT;
