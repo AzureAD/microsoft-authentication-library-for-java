@@ -3,10 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import labapi.AzureEnvironment;
-import labapi.B2CProvider;
-import labapi.FederationProvider;
-import labapi.User;
+import labapi.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
@@ -102,6 +99,7 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
                     .builder(url)
                     .scopes(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE))
                     .extraQueryParameters(extraQueryParameters)
+                    .systemBrowserOptions(browserOptions)
                     .build();
 
             result = pca.acquireToken(parameters).get();
