@@ -119,7 +119,7 @@ public class DeviceCodeIT {
 
         PublicClientApplication pca = PublicClientApplication.builder(
                 user.getAppId()).
-                authority(TestConstants.CIAM_AUTHORITY).
+                authority("https://" + user.getLabName() + ".ciamlogin.com/").
                 build();
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {

@@ -36,10 +36,6 @@ public final class TestConfiguration {
     public final static String B2C_AUTHORITY_CUSTOM_PORT = "https://login.microsoftonline.in:444/tfp/tenant/policy";
     public final static String B2C_AUTHORITY_CUSTOM_PORT_TAIL_SLASH = "https://login.microsoftonline.in:444/tfp/tenant/policy/";
 
-    public final static String CIAM_TENANT_NAME = "tenantName.";
-    public final static String CIAM_HOST_NAME = "ciamlogin.com";
-    public final static String CIAM_AUTHORITY_ENDPOINT = "https://" + CIAM_TENANT_NAME +  CIAM_HOST_NAME;
-
     public static String INSTANCE_DISCOVERY_RESPONSE = "{" +
             "\"tenant_discovery_endpoint\":\"https://login.microsoftonline.com/organizations/v2.0/.well-known/openid-appConfiguration\"," +
             "\"api-version\":\"1.1\"," +

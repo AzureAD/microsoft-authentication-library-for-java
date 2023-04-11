@@ -357,7 +357,7 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
             authority = Authority.enforceTrailingSlash(val);
 
             URL authorityURL = new URL(authority);
-            Authority.validateAuthority(authorityURL);
+
 
             switch (Authority.detectAuthorityType(authorityURL)) {
                 case AAD:
@@ -372,6 +372,8 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
                 default:
                     throw new IllegalArgumentException("Unsupported authority type.");
             }
+
+            Authority.validateAuthority(authenticationAuthority.canonicalAuthorityUrl());
 
             return self();
         }

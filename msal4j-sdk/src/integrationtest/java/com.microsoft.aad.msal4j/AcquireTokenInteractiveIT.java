@@ -16,6 +16,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 public class AcquireTokenInteractiveIT extends SeleniumTest {
@@ -73,7 +75,44 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
     public void acquireTokenInteractive_Ciam() {
         User user = labUserProvider.getCiamUser();
 
-        assertAcquireTokenCommon(user, TestConstants.CIAM_AUTHORITY, TestConstants.GRAPH_DEFAULT_SCOPE);
+        Map<String, String> extraQueryParameters = new HashMap<>();
+        extraQueryParameters.put("dc","ESTS-PUB-EUS-AZ1-FD000-TEST1");
+
+        PublicClientApplication pca;
+        try {
+            pca = PublicClientApplication.builder(
+                            user.getAppId()).
+                    authority("https://" + user.getLabName() + ".ciamlogin.com/")
+            .build();
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException(ex.getMessage());
+        }
+
+        IAuthenticationResult result;
+        try {
+            URI url = new URI("http://localhost:8080");
+
+            SystemBrowserOptions browserOptions =
+                    SystemBrowserOptions
+                            .builder()
+                            .openBrowserAction(new SeleniumOpenBrowserAction(user, pca))
+                            .build();
+
+            InteractiveRequestParameters parameters = InteractiveRequestParameters
+                    .builder(url)
+                    .scopes(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE))
+                    .extraQueryParameters(extraQueryParameters)
+                    .build();
+
+            result = pca.acquireToken(parameters).get();
+
+        } catch (Exception e) {
+            LOG.error("Error acquiring token with authCode: " + e.getMessage());
+            throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
+        }
+
+        assertTokenResultNotNull(result);
+        Assert.assertEquals(user.getUpn(), result.account().username());
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)

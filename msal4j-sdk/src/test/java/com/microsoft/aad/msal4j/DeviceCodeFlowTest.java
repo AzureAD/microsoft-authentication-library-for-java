@@ -145,7 +145,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "Invalid authority type. Device Flow is only supported by AAD and ADFS authorities")
+            expectedExceptionsMessageRegExp = "Invalid authority type. Device Flow is only supported by AAD, ADFS and CIAM authorities")
     public void executeAcquireDeviceCode_B2CAuthorityUsed_IllegalArgumentExceptionThrown()
             throws Exception {
 
