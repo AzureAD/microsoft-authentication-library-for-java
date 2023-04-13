@@ -26,8 +26,12 @@ public class CIAMAuthority extends Authority{
         this.authority = String.format(CIAM_AUTHORITY_FORMAT,host,tenant);
     }
 
+    /** This method takes a CIAM authority string of format "tenant.ciamlogin.com" or "https://tenant.ciamlogin.com"
+     and converts it into a full authority url with a path segment of format "/tenant.onmicrosoft.com"
+     * @param originalAuthority authority to be transformed
+     * @return full CIAM authority with path
+     */
     protected static URL transformAuthority(URL originalAuthority) throws MalformedURLException {
-//        URL fullAuthorityUrl = getFullAuthorityUrlFromAuthorityWithoutPath(originalAuthority);
         String host = originalAuthority.getHost() + originalAuthority.getPath();
         String transformedAuthority = originalAuthority.toString();
         if(originalAuthority.getPath().equals("/")){
@@ -43,24 +47,5 @@ public class CIAMAuthority extends Authority{
         this.tokenEndpoint = String.format(CIAM_TOKEN_ENDPOINT_FORMAT, host, tenant);
         this.deviceCodeEndpoint = String.format(DEVICE_CODE_ENDPOINT_FORMAT, host, tenant);
         this.selfSignedJwtAudience = this.tokenEndpoint;
-    }
-
-    /** This method takes a CIAM authority string of format "tenant.ciamlogin.com" or "https://tenant.ciamlogin.com"
-       and converts it into a full authority url with a path segment of format "/tenant.onmicrosoft.com"
-            * @param authorityURL authority to be transformed
-     * @return full CIAM authority with path
-     */
-    public static URL getFullAuthorityUrlFromAuthorityWithoutPath(URL authorityURL) throws MalformedURLException {
-        String authority = authorityURL.toString();
-        // Remove "https://" if it was included as part of the authority
-        if (authority.startsWith("https://")){
-            authority = authority.substring(8);
-        }
-        if (authority.endsWith("/")){
-            authority = authority.substring(0, authority.length() - 1);
-        }
-        // Split environment to isolate the tenant
-        final String tenant = authority.split("\\.")[0];
-        return new URL("https://" + authority + "/" + tenant + ".onmicrosoft.com/");
     }
 }
