@@ -68,7 +68,7 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
 
         if (AuthorityType.B2C.equals(authenticationAuthority.authorityType())) {
             throw new IllegalArgumentException(
-                    "Invalid authority type. Device Flow is only supported by AAD, ADFS and CIAM authorities");
+                    "Invalid authority type. Device Flow is not supported by B2C authority.");
         }
 
         validateNotNull("parameters", parameters);
