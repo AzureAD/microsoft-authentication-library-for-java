@@ -55,7 +55,6 @@ abstract class Authority {
     }
 
     static Authority createAuthority(URL authorityUrl) throws MalformedURLException{
-//        validateAuthority(authorityUrl);
         Authority createdAuthority;
         AuthorityType authorityType = detectAuthorityType(authorityUrl);
         if (authorityType == AuthorityType.AAD) {
