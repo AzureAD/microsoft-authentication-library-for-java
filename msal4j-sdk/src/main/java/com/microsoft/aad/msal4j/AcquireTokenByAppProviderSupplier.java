@@ -35,6 +35,13 @@ class AcquireTokenByAppProviderSupplier extends AuthenticationResultSupplier {
         if (null == tokenProviderResult.getTenantId() || tokenProviderResult.getTenantId().isEmpty()) {
             handleInvalidExternalValueError(tokenProviderResult.getTenantId());
         }
+
+        if (0 == tokenProviderResult.getRefreshInSeconds()){
+            long expireInSeconds = tokenProviderResult.getExpiresInSeconds();
+            if(expireInSeconds >= TWO_HOURS){
+                tokenProviderResult.setRefreshInSeconds(expireInSeconds/2);
+            }
+        }
     }
 
     private static void handleInvalidExternalValueError(String nameOfValue) {
