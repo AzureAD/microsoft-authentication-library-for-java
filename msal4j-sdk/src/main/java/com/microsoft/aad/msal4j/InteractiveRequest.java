@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.UUID;
@@ -55,24 +56,31 @@ class InteractiveRequest extends MsalRequest {
     }
 
     private void validateRedirectUrl(URI redirectUri) {
-        try {
-            if (!InetAddress.getByName(redirectUri.getHost()).isLoopbackAddress()) {
-                throw new MsalClientException(String.format(
-                        "Only loopback redirect uri is supported, but %s was found " +
-                                "Configure http://localhost or http://localhost:port both during app registration" +
-                                "and when you create the create the InteractiveRequestParameters object", redirectUri.getHost()),
-                        AuthenticationErrorCode.LOOPBACK_REDIRECT_URI);
-            }
+        String host = redirectUri.getHost();
+        String scheme = redirectUri.getScheme();
+        InetAddress address;
 
-            if (!redirectUri.getScheme().equals("http")) {
-                throw new MsalClientException(String.format(
-                        "Only http uri scheme is supported but %s was found. Configure http://localhost" +
-                                "or http://localhost:port both during app registration and when you create" +
-                                " the create the InteractiveRequestParameters object", redirectUri.toString()),
-                        AuthenticationErrorCode.LOOPBACK_REDIRECT_URI);
-            }
-        } catch (Exception exception) {
-            throw new MsalClientException(exception);
+        //Validate URI scheme. Only http is valid, as determined by the HttpListener created in AcquireTokenByInteractiveFlowSupplier.startHttpListener()
+        if (scheme == null || !scheme.equals("http")) {
+            throw new MsalClientException(String.format(
+                    "Only http is supported for the redirect URI of an interactive request, but \"%s\" was found. For more information about redirect URI formats, see https://aka.ms/msal4j-interactive-request", scheme),
+                    AuthenticationErrorCode.LOOPBACK_REDIRECT_URI);
+        }
+
+        //Ensure that the given redirect URI has a known address
+        try {
+            address = InetAddress.getByName(host);
+        } catch (UnknownHostException e) {
+            throw new MsalClientException(String.format(
+                    "Unknown host exception for host \"%s\". For more information about redirect URI formats, see https://aka.ms/msal4j-interactive-request", host),
+                    AuthenticationErrorCode.LOOPBACK_REDIRECT_URI);
+        }
+
+        //Ensure that the redirect URI is considered a loopback address
+        if (address == null || !address.isLoopbackAddress()) {
+            throw new MsalClientException(
+                    "Only loopback redirect URI is supported for interactive requests. For more information about redirect URI formats, see https://aka.ms/msal4j-interactive-request",
+                    AuthenticationErrorCode.LOOPBACK_REDIRECT_URI);
         }
     }
 
