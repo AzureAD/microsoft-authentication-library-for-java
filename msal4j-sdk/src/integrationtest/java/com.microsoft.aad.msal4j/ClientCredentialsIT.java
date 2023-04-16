@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j;
 import labapi.AppCredentialProvider;
 import labapi.AzureEnvironment;
 import labapi.LabUserProvider;
+import labapi.User;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -18,6 +19,8 @@ import java.security.NoSuchProviderException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
@@ -62,11 +65,29 @@ public class ClientCredentialsIT {
 
     @Test
     public void acquireTokenClientCredentials_ClientSecret_Ciam() throws Exception {
-        String clientId = labUserProvider.getCiamUser().getAppId();
+
+        User user = labUserProvider.getCiamUser();
+        String clientId = user.getAppId();
+
+        Map<String, String> extraQueryParameters = new HashMap<>();
+        extraQueryParameters.put("dc","ESTS-PUB-EUS-AZ1-FD000-TEST1");
 
         AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.CIAM);
         IClientCredential credential = ClientCredentialFactory.createFromSecret(appProvider.getOboAppPassword());
 
+        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
+                        clientId, credential).
+                authority("https://" + user.getLabName() + ".ciamlogin.com/").
+                build();
+
+        IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
+                        .builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE))
+                        .extraQueryParameters(extraQueryParameters)
+                        .build())
+                .get();
+
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.accessToken());
         assertAcquireTokenCommon(clientId, credential, TestConstants.CIAM_AUTHORITY);
     }
 

@@ -54,19 +54,22 @@ abstract class Authority {
         this.host = canonicalAuthorityUrl.getAuthority().toLowerCase();
     }
 
-    static Authority createAuthority(URL authorityUrl) {
-        validateAuthority(authorityUrl);
-
+    static Authority createAuthority(URL authorityUrl) throws MalformedURLException{
+        Authority createdAuthority;
         AuthorityType authorityType = detectAuthorityType(authorityUrl);
         if (authorityType == AuthorityType.AAD) {
-            return new AADAuthority(authorityUrl);
+            createdAuthority = new AADAuthority(authorityUrl);
         } else if (authorityType == AuthorityType.B2C) {
-            return new B2CAuthority(authorityUrl);
+            createdAuthority = new B2CAuthority(authorityUrl);
         } else if (authorityType == AuthorityType.ADFS) {
-            return new ADFSAuthority(authorityUrl);
+            createdAuthority = new ADFSAuthority(authorityUrl);
+        } else if(authorityType == AuthorityType.CIAM){
+            createdAuthority = new CIAMAuthority(authorityUrl);
         } else {
             throw new IllegalArgumentException("Unsupported Authority Type");
         }
+        validateAuthority(createdAuthority.canonicalAuthorityUrl());
+        return createdAuthority;
     }
 
     static AuthorityType detectAuthorityType(URL authorityUrl) {
@@ -76,6 +79,9 @@ abstract class Authority {
 
         final String path = authorityUrl.getPath().substring(1);
         if (StringHelper.isBlank(path)) {
+            if(isCiamAuthority(authorityUrl.getHost())){
+                return AuthorityType.CIAM;
+            }
             throw new IllegalArgumentException(
                     "authority Uri should have at least one segment in the path (i.e. https://<host>/<path>/...)");
         }
@@ -87,7 +93,9 @@ abstract class Authority {
             return AuthorityType.B2C;
         } else if (isAdfsAuthority(firstPath)) {
             return AuthorityType.ADFS;
-        } else {
+        } else if(isCiamAuthority(host)){
+            return AuthorityType.CIAM;
+        } else{
             return AuthorityType.AAD;
         }
     }
@@ -152,6 +160,10 @@ abstract class Authority {
 
     private static boolean isB2CAuthority(final String host, final String firstPath) {
         return host.contains(B2C_HOST_SEGMENT) || firstPath.compareToIgnoreCase(B2C_PATH_SEGMENT) == 0;
+    }
+
+    private static boolean isCiamAuthority(final String host){
+        return host.endsWith(CIAMAuthority.CIAM_HOST_SEGMENT);
     }
 
     String deviceCodeEndpoint() {

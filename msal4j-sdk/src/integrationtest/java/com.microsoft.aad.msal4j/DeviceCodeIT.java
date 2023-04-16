@@ -43,9 +43,7 @@ public class DeviceCodeIT {
                 authority(cfg.tenantSpecificAuthority()).
                 build();
 
-        Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
-            runAutomatedDeviceCodeFlow(deviceCode, user);
-        };
+        Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> runAutomatedDeviceCodeFlow(deviceCode, user);
 
         IAuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
                 .builder(Collections.singleton(cfg.graphDefaultScope()),
@@ -119,7 +117,7 @@ public class DeviceCodeIT {
 
         PublicClientApplication pca = PublicClientApplication.builder(
                 user.getAppId()).
-                authority(TestConstants.CIAM_AUTHORITY).
+                authority("https://" + user.getLabName() + ".ciamlogin.com/").
                 build();
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
@@ -174,7 +172,7 @@ public class DeviceCodeIT {
             if (isADFS2019) {
                 SeleniumExtensions.performADFS2019Login(seleniumDriver, user);
             } else {
-                SeleniumExtensions.performADLogin(seleniumDriver, user);
+                SeleniumExtensions.performADOrCiamLogin(seleniumDriver, user);
             }
         } catch (Exception e) {
             if (!isRunningLocally) {

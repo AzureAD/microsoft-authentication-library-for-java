@@ -51,9 +51,11 @@ abstract class SeleniumTest {
                     break;
             }
         } else if (authorityType == AuthorityType.AAD) {
-            SeleniumExtensions.performADLogin(seleniumDriver, user);
+            SeleniumExtensions.performADOrCiamLogin(seleniumDriver, user);
         } else if (authorityType == AuthorityType.ADFS) {
             SeleniumExtensions.performADFS2019Login(seleniumDriver, user);
+        } else if (authorityType == AuthorityType.CIAM) {
+            SeleniumExtensions.performADOrCiamLogin(seleniumDriver, user);
         }
     }
 }

@@ -9,6 +9,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @Test()
 public class UsernamePasswordIT {
@@ -100,10 +102,24 @@ public class UsernamePasswordIT {
     @Test
     public void acquireTokenWithUsernamePassword_Ciam() throws Exception {
 
-        User user = labUserProvider.getCiamUser();
+        Map<String, String> extraQueryParameters = new HashMap<>();
+        extraQueryParameters.put("dc","ESTS-PUB-EUS-AZ1-FD000-TEST1");
 
-        assertAcquireTokenCommon(user, TestConstants.CIAM_AUTHORITY, TestConstants.GRAPH_DEFAULT_SCOPE,
-                user.getAppId());
+        User user = labUserProvider.getCiamUser();
+        PublicClientApplication pca = PublicClientApplication.builder(user.getAppId())
+                        .authority("https://" + user.getLabName() + ".ciamlogin.com/")
+                                .build();
+
+
+        IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters.
+                        builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                                user.getUpn(),
+                                user.getPassword().toCharArray())
+                       .extraQueryParameters(extraQueryParameters)
+                        .build())
+                .get();
+
+        Assert.assertNotNull(result.accessToken());
     }
 
     @Test
@@ -125,6 +141,7 @@ public class UsernamePasswordIT {
 
     private void assertAcquireTokenCommon(User user, String authority, String scope, String appId)
             throws Exception {
+
         PublicClientApplication pca = PublicClientApplication.builder(
                 appId).
                 authority(authority).
@@ -135,6 +152,7 @@ public class UsernamePasswordIT {
                         user.getUpn(),
                         user.getPassword().toCharArray())
                 .build())
+
                 .get();
 
         assertTokenResultNotNull(result);
