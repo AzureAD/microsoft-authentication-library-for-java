@@ -1,3 +1,9 @@
+Version 1.13.8
+=============
+- Added support for CIAM authority
+- Better exception handling in interactive flow
+- Updated vulnerable dependency versions
+
 Version 1.13.7
 =============
 - Update json-smart library version to a secured one.
