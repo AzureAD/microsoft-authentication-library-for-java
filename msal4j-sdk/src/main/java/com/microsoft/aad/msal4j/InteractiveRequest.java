@@ -63,7 +63,7 @@ class InteractiveRequest extends MsalRequest {
         //Validate URI scheme. Only http is valid, as determined by the HttpListener created in AcquireTokenByInteractiveFlowSupplier.startHttpListener()
         if (scheme == null || !scheme.equals("http")) {
             throw new MsalClientException(String.format(
-                    "Only http is supported for the redirect URI of an interactive request, but \"%s\" was found. For more information about redirect URI formats, see https://aka.ms/msal4j-interactive-request", scheme),
+                    "Only http://localhost or http://localhost:port is supported for the redirect URI of an interactive request using a browser, but \"%s\" was found. For more information about redirect URI formats, see https://aka.ms/msal4j-interactive-request", scheme),
                     AuthenticationErrorCode.LOOPBACK_REDIRECT_URI);
         }
 
