@@ -3,15 +3,7 @@
 
 package com.microsoft.aad.msal4jbrokers;
 
-import com.microsoft.aad.msal4j.IAuthenticationResult;
-import com.microsoft.aad.msal4j.IBroker;
-import com.microsoft.aad.msal4j.InteractiveRequestParameters;
-import com.microsoft.aad.msal4j.PublicClientApplication;
-import com.microsoft.aad.msal4j.SilentParameters;
-import com.microsoft.aad.msal4j.UserNamePasswordParameters;
-import com.microsoft.aad.msal4j.MsalClientException;
-import com.microsoft.aad.msal4j.AuthenticationErrorCode;
-import com.microsoft.aad.msal4j.IAccount;
+import com.microsoft.aad.msal4j.*;
 import com.microsoft.azure.javamsalruntime.Account;
 import com.microsoft.azure.javamsalruntime.AuthParameters;
 import com.microsoft.azure.javamsalruntime.AuthResult;
@@ -59,6 +51,13 @@ public class MsalRuntimeBroker implements IBroker {
                     String.join(" ", parameters.scopes()))
                     .build();
 
+            //If POP auth scheme configured, set parameters to get MSALRuntime to return POP tokens
+            if (parameters.authScheme() != null && parameters.authScheme().getType() == AuthScheme.SchemeType.POP) {
+                authParameters.setPopParameters(parameters.authScheme().getHttpMethod(),
+                        parameters.authScheme().getUri(),
+                        parameters.authScheme().getNonce());
+            }
+
             if (accountResult == null) {
                 return interop.signInSilently(authParameters, application.correlationId())
                         .thenCompose(acctResult -> interop.acquireTokenSilently(authParameters, application.correlationId(), ((AuthResult) acctResult).getAccount()))
@@ -94,6 +93,13 @@ public class MsalRuntimeBroker implements IBroker {
                     String.join(" ", parameters.scopes()))
                     .build();
 
+            //If POP auth scheme configured, set parameters to get MSALRuntime to return POP tokens
+            if (parameters.authScheme() != null && parameters.authScheme().getType() == AuthScheme.SchemeType.POP) {
+                authParameters.setPopParameters(parameters.authScheme().getHttpMethod(),
+                        parameters.authScheme().getUri(),
+                        parameters.authScheme().getNonce());
+            }
+
             return interop.signInInteractively(parameters.windowHandle(), authParameters, application.correlationId(), parameters.loginHint())
                     .thenCompose(acctResult -> interop.acquireTokenInteractively(parameters.windowHandle(), authParameters, application.correlationId(), ((AuthResult) acctResult).getAccount()))
                     .thenApply(authResult -> parseBrokerAuthResult(
@@ -124,6 +130,13 @@ public class MsalRuntimeBroker implements IBroker {
                              .build();
 
             authParameters.setUsernamePassword(parameters.username(), new String(parameters.password()));
+
+            //If POP auth scheme configured, set parameters to get MSALRuntime to return POP tokens
+            if (parameters.authScheme() != null && parameters.authScheme().getType() == AuthScheme.SchemeType.POP) {
+                authParameters.setPopParameters(parameters.authScheme().getHttpMethod(),
+                        parameters.authScheme().getUri(),
+                        parameters.authScheme().getNonce());
+            }
 
             return interop.signInSilently(authParameters, application.correlationId())
                     .thenCompose(acctResult -> interop.acquireTokenSilently(authParameters, application.correlationId(), ((AuthResult) acctResult).getAccount()))

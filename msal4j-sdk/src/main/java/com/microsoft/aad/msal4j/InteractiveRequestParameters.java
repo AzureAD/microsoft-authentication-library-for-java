@@ -112,6 +112,13 @@ public class InteractiveRequestParameters implements IAcquireTokenParameters {
      */
     private long windowHandle;
 
+    /**
+     * Sets the auth scheme for this request.
+     *
+     * For more information about auth schemes, see {@link AuthScheme} and (TODO: link to documentation page)
+     */
+    private AuthScheme authScheme;
+
     private static InteractiveRequestParametersBuilder builder() {
         return new InteractiveRequestParametersBuilder();
     }

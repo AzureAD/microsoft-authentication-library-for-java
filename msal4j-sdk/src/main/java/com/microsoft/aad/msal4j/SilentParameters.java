@@ -59,6 +59,13 @@ public class SilentParameters implements IAcquireTokenParameters {
      */
     private String tenant;
 
+    /**
+     * Sets the auth scheme for this request.
+     *
+     * For more information about auth schemes, see {@link AuthScheme} and (TODO: link to documentation page)
+     */
+    private AuthScheme authScheme;
+
     private static SilentParametersBuilder builder() {
 
         return new SilentParametersBuilder();
