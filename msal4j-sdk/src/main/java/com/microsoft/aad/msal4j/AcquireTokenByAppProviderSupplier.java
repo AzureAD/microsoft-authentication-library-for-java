@@ -70,7 +70,6 @@ class AcquireTokenByAppProviderSupplier extends AuthenticationResultSupplier {
 
         TokenProviderResult tokenProviderResult;
         try{
-
             CompletableFuture<TokenProviderResult> completableFuture = this.clientCredentialRequest.appTokenProvider.apply(appTokenProviderParameters);
             tokenProviderResult = completableFuture.get();
 
