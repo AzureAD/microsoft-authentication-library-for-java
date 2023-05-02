@@ -11,6 +11,8 @@ import org.testng.annotations.Test;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  *

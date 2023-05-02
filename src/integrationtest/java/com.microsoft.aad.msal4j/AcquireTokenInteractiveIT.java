@@ -206,12 +206,12 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         Assert.assertEquals(result.account().environment(), cachedResult.environment());
     }
 
-    //@Test
+    @Test
     public void acquireTokensInHomeAndGuestClouds_ArlingtonAccount() throws MalformedURLException, ExecutionException, InterruptedException {
         acquireTokensInHomeAndGuestClouds(AzureEnvironment.AZURE_US_GOVERNMENT);
     }
 
-    //@Test
+    @Test
     public void acquireTokensInHomeAndGuestClouds_MooncakeAccount() throws MalformedURLException, ExecutionException, InterruptedException {
         acquireTokensInHomeAndGuestClouds(AzureEnvironment.AZURE_CHINA);
     }

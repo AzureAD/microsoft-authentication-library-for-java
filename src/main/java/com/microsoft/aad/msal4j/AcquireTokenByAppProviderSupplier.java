@@ -6,9 +6,6 @@ package com.microsoft.aad.msal4j;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-/** Disclaimer - This  class is meant to be used by the Azure SDK team only.
- *  Any other teams are discouraged from using this class to prevent any side effects.
- */
 class AcquireTokenByAppProviderSupplier extends AuthenticationResultSupplier {
 
     private static final int TWO_HOURS = 2*3600;
@@ -68,16 +65,9 @@ class AcquireTokenByAppProviderSupplier extends AuthenticationResultSupplier {
 
     public AuthenticationResult fetchTokenUsingAppTokenProvider(AppTokenProviderParameters appTokenProviderParameters) throws ExecutionException, InterruptedException {
 
-        TokenProviderResult tokenProviderResult;
+        CompletableFuture<TokenProviderResult> completableFuture = this.clientCredentialRequest.appTokenProvider.apply(appTokenProviderParameters);
 
-        try{
-
-            CompletableFuture<TokenProviderResult> completableFuture = this.clientCredentialRequest.appTokenProvider.apply(appTokenProviderParameters);
-            tokenProviderResult = completableFuture.get();
-
-        } catch (Exception ex){
-            throw new MsalAzureSDKException(ex);
-        }
+        TokenProviderResult tokenProviderResult = completableFuture.get();
 
         validateAndUpdateTokenProviderResult(tokenProviderResult);
 
@@ -88,5 +78,6 @@ class AcquireTokenByAppProviderSupplier extends AuthenticationResultSupplier {
                 .expiresOn(tokenProviderResult.getExpiresInSeconds())
                 .refreshOn(tokenProviderResult.getRefreshInSeconds())
                 .build();
+
     }
 }

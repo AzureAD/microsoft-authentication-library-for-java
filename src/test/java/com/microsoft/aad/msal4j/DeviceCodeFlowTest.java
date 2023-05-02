@@ -24,6 +24,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+import static com.microsoft.aad.msal4j.TestConfiguration.*;
+
 
 @Test(groups = {"checkin"})
 @PrepareForTest({HttpHelper.class, PublicClientApplication.class})
@@ -74,7 +76,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         HttpResponse instanceDiscoveryResponse = new HttpResponse();
         instanceDiscoveryResponse.statusCode(200);
-        instanceDiscoveryResponse.body(TestConfiguration.INSTANCE_DISCOVERY_RESPONSE);
+        instanceDiscoveryResponse.body(INSTANCE_DISCOVERY_RESPONSE);
 
         EasyMock.expect(
                 HttpHelper.executeHttpRequest(
@@ -119,19 +121,19 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         PowerMock.replay(app);
 
         IAuthenticationResult authResult = app.acquireToken(
-                DeviceCodeFlowParameters.builder(Collections.singleton(TestConfiguration.AAD_RESOURCE_ID), deviceCodeConsumer)
+                DeviceCodeFlowParameters.builder(Collections.singleton(AAD_RESOURCE_ID), deviceCodeConsumer)
                         .build())
                 .get();
 
         // validate HTTP GET request used to get device code
         URL url = capturedHttpRequest.getValue().url();
-        Assert.assertEquals(url.getAuthority(), TestConfiguration.AAD_PREFERRED_NETWORK_ENV_ALIAS);
+        Assert.assertEquals(url.getAuthority(), AAD_PREFERRED_NETWORK_ENV_ALIAS);
         Assert.assertEquals(url.getPath(),
-                "/" + TestConfiguration.AAD_TENANT_NAME + "/" + AADAuthority.DEVICE_CODE_ENDPOINT);
+                "/" + AAD_TENANT_NAME + "/" + AADAuthority.DEVICE_CODE_ENDPOINT);
 
         String expectedScope = URLEncoder.encode(AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM +
-                AbstractMsalAuthorizationGrant.SCOPES_DELIMITER + TestConfiguration.AAD_RESOURCE_ID, "UTF-8");
-        String expectedBody = String.format("scope=%s&client_id=%s", expectedScope, TestConfiguration.AAD_CLIENT_ID);
+                AbstractMsalAuthorizationGrant.SCOPES_DELIMITER + AAD_RESOURCE_ID, "UTF-8");
+        String expectedBody = String.format("scope=%s&client_id=%s", expectedScope, AAD_CLIENT_ID);
 
         String body = capturedHttpRequest.getValue().body();
         Assert.assertEquals(body, expectedBody);
@@ -155,7 +157,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
 
         app.acquireToken
                 (DeviceCodeFlowParameters
-                        .builder(Collections.singleton(TestConfiguration.AAD_RESOURCE_ID), (DeviceCode deviceCode) -> {
+                        .builder(Collections.singleton(AAD_RESOURCE_ID), (DeviceCode deviceCode) -> {
                         })
                         .build());
     }
@@ -173,7 +175,7 @@ public class DeviceCodeFlowTest extends PowerMockTestCase {
         };
 
         app = PublicClientApplication.builder("client_id")
-                .authority(TestConfiguration.AAD_TENANT_ENDPOINT)
+                .authority(AAD_TENANT_ENDPOINT)
                 .validateAuthority(false)
                 .correlationId("corr_id")
                 .build();

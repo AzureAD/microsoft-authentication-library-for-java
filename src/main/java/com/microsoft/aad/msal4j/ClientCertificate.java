@@ -3,9 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.Getter;
-import lombok.experimental.Accessors;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -22,11 +19,10 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
+
+import lombok.Getter;
+import lombok.experimental.Accessors;
 
 final class ClientCertificate implements IClientCertificate {
 
@@ -101,7 +97,14 @@ final class ClientCertificate implements IClientCertificate {
         final KeyStore keystore = KeyStore.getInstance("PKCS12");
         keystore.load(pkcs12Certificate, password.toCharArray());
 
-        String alias = getPrivateKeyAlias(keystore);
+        final Enumeration<String> aliases = keystore.aliases();
+        if (!aliases.hasMoreElements()) {
+            throw new IllegalArgumentException("certificate not loaded from input stream");
+        }
+        String alias = aliases.nextElement();
+        if (aliases.hasMoreElements()) {
+            throw new IllegalArgumentException("more than one certificate alias found in input stream");
+        }
 
         ArrayList<X509Certificate> publicKeyCertificateChain = new ArrayList<>();
         PrivateKey privateKey = (PrivateKey) keystore.getKey(alias, password.toCharArray());
@@ -118,26 +121,6 @@ final class ClientCertificate implements IClientCertificate {
         }
 
         return new ClientCertificate(privateKey, publicKeyCertificateChain);
-    }
-
-    static String getPrivateKeyAlias(KeyStore keystore) throws KeyStoreException {
-        String alias = null;
-        final Enumeration<String> aliases = keystore.aliases();
-        while (aliases.hasMoreElements()) {
-            String currentAlias = aliases.nextElement();
-            if (keystore.entryInstanceOf(currentAlias, KeyStore.PrivateKeyEntry.class)) {
-                if (alias != null) {
-                    throw new IllegalArgumentException("more than one certificate alias found in input stream");
-                }
-                alias = currentAlias;
-            }
-        }
-
-        if (alias == null) {
-            throw new IllegalArgumentException("certificate not loaded from input stream");
-        }
-
-        return alias;
     }
 
     static ClientCertificate create(final PrivateKey key, final X509Certificate publicKeyCertificate) {
