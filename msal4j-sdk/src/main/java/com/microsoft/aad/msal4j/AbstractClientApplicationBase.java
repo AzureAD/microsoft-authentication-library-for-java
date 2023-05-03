@@ -292,7 +292,12 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
             supplier = new AcquireTokenByOnBehalfOfSupplier(
                     (ConfidentialClientApplication) this,
                     (OnBehalfOfRequest) msalRequest);
-        } else {
+        } else if(msalRequest instanceof ManagedIdentityRequest){
+            supplier = new AcquireTokenByManagedIdentitySupplier(
+                    this,
+                    msalRequest
+            );
+        }else {
             supplier = new AcquireTokenByAuthorizationGrantSupplier(
                     this,
                     msalRequest, null);
@@ -340,6 +345,10 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
         public Builder(String clientId) {
             validateNotBlank("clientId", clientId);
             this.clientId = clientId;
+        }
+
+        public Builder() {
+
         }
 
         abstract T self();

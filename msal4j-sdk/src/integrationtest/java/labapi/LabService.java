@@ -9,6 +9,7 @@ import com.microsoft.aad.msal4j.*;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -109,6 +110,16 @@ public class LabService {
 
             return convertJsonToObject(result, UserSecret.class).value;
         } catch (Exception ex) {
+            throw new RuntimeException("Error getting user secret from lab: " + ex.getMessage());
+        }
+    }
+
+    public static String getLabResponse(String address){
+        try {
+            String result = HttpClientHelper.sendRequestToLab(
+                    new URL(address), getLabAccessToken());
+            return result;
+        }  catch (Exception ex) {
             throw new RuntimeException("Error getting user secret from lab: " + ex.getMessage());
         }
     }

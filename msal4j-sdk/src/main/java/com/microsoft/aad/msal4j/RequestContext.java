@@ -53,6 +53,12 @@ class RequestContext {
         this.userIdentifier = userIdentifier;
     }
 
+    public RequestContext(AbstractClientApplicationBase clientApplication,
+                          ManagedIdentityParameters apiParameters) {
+        this.clientApplication = clientApplication;
+
+    }
+
     private static String generateNewCorrelationId() {
         return UUID.randomUUID().toString();
     }

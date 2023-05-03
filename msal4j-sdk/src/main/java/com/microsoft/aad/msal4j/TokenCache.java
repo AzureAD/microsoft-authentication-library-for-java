@@ -708,4 +708,8 @@ public class TokenCache implements ITokenCache {
             return builder.build();
         }
     }
+
+    AuthenticationResult getCacheAuthenticationResult(){
+        return null;
+    }
 }

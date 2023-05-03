@@ -123,4 +123,12 @@ public class LabUserProvider {
         userCache.put(userQuery, response);
         return response;
     }
+
+    public String getMSIEnvironmentVariables(String uri)
+    {
+        String result = labService.getLabResponse(uri);
+        return result;
+    }
+
+
 }

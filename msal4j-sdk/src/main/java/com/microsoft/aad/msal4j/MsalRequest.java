@@ -33,4 +33,19 @@ abstract class MsalRequest {
         CurrentRequest currentRequest = new CurrentRequest(requestContext.publicApi());
         application.getServiceBundle().getServerSideTelemetry().setCurrentRequest(currentRequest);
     }
+
+    MsalRequest(AbstractClientApplicationBase clientApplicationBase,
+                RequestContext requestContext) {
+
+        this.application = clientApplicationBase;
+        this.requestContext = requestContext;
+
+        CurrentRequest currentRequest = new CurrentRequest(requestContext.publicApi());
+        application.getServiceBundle().getServerSideTelemetry().setCurrentRequest(currentRequest);
+    }
+
+    MsalRequest(){
+        this.application = null;
+        this.requestContext = null;
+    }
 }

@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class TestConstants {
+
     public final static String KEYVAULT_DEFAULT_SCOPE = "https://vault.azure.net/.default";
     public final static String MSIDLAB_DEFAULT_SCOPE = "https://msidlab.com/.default";
     public final static String MSIDLAB_VAULT_URL = "https://msidlabs.vault.azure.net/";
@@ -65,4 +66,15 @@ public class TestConstants {
     public final static String AUTHORITY_PUBLIC_TENANT_SPECIFIC = "https://login.microsoftonline.com/" + MICROSOFT_AUTHORITY_TENANT;
 
     public final static String DEFAULT_ACCESS_TOKEN = "defaultAccessToken";
+
+    //MSI Azure resources
+    public enum MsiAzureResource
+    {
+        WebApp,
+        Function,
+        VM,
+        AzureArc,
+        CloudShell,
+        ServiceFabric
+    }
 }
