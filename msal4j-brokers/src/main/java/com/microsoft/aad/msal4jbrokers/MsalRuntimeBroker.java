@@ -91,6 +91,7 @@ public class MsalRuntimeBroker implements IBroker {
                     .AuthParametersBuilder(application.clientId(),
                     application.authority(),
                     String.join(" ", parameters.scopes()))
+                    .additionalParameters(parameters.extraQueryParameters())
                     .build();
 
             //If POP auth scheme configured, set parameters to get MSALRuntime to return POP tokens
@@ -127,6 +128,7 @@ public class MsalRuntimeBroker implements IBroker {
                              .AuthParametersBuilder(application.clientId(),
                              application.authority(),
                              String.join(" ", parameters.scopes()))
+                             .additionalParameters(parameters.extraQueryParameters())
                              .build();
 
             authParameters.setUsernamePassword(parameters.username(), new String(parameters.password()));
