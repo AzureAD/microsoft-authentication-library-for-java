@@ -112,12 +112,7 @@ public class InteractiveRequestParameters implements IAcquireTokenParameters {
      */
     private long windowHandle;
 
-    /**
-     * Sets the auth scheme for this request.
-     *
-     * For more information about auth schemes, see {@link AuthScheme} and (TODO: link to documentation page)
-     */
-    private AuthScheme authScheme;
+    private PopParameters proofOfPossession;
 
     private static InteractiveRequestParametersBuilder builder() {
         return new InteractiveRequestParametersBuilder();
@@ -129,5 +124,24 @@ public class InteractiveRequestParameters implements IAcquireTokenParameters {
 
         return builder()
                 .redirectUri(redirectUri);
+    }
+
+    //This Builder class is used to override Lombok's default setter behavior for any fields defined in it
+    public static class InteractiveRequestParametersBuilder {
+
+        /**
+         * Sets the PopParameters for this request, allowing the request to retrieve proof-of-possession tokens rather than bearer tokens
+         *
+         * For more information, see {@link PopParameters} and https://aka.ms/msal4j-pop
+         *
+         * @param httpMethod a valid HTTP method, such as "GET" or "POST"
+         * @param uri URI to associate with the token
+         * @param nonce optional nonce value for the token, can be empty or null
+         */
+        public InteractiveRequestParametersBuilder proofOfPossession(String httpMethod, URI uri, String nonce) {
+            this.proofOfPossession = new PopParameters(httpMethod, uri, nonce);
+
+            return this;
+        }
     }
 }

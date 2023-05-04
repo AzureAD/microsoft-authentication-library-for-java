@@ -52,10 +52,10 @@ public class MsalRuntimeBroker implements IBroker {
                     .build();
 
             //If POP auth scheme configured, set parameters to get MSALRuntime to return POP tokens
-            if (parameters.authScheme() != null && parameters.authScheme().getType() == AuthScheme.SchemeType.POP) {
-                authParameters.setPopParameters(parameters.authScheme().getHttpMethod(),
-                        parameters.authScheme().getUri(),
-                        parameters.authScheme().getNonce());
+            if (parameters.proofOfPossession() != null) {
+                authParameters.setPopParameters(parameters.proofOfPossession().getHttpMethod(),
+                        parameters.proofOfPossession().getUri(),
+                        parameters.proofOfPossession().getNonce());
             }
 
             if (accountResult == null) {
@@ -95,10 +95,10 @@ public class MsalRuntimeBroker implements IBroker {
                     .build();
 
             //If POP auth scheme configured, set parameters to get MSALRuntime to return POP tokens
-            if (parameters.authScheme() != null && parameters.authScheme().getType() == AuthScheme.SchemeType.POP) {
-                authParameters.setPopParameters(parameters.authScheme().getHttpMethod(),
-                        parameters.authScheme().getUri(),
-                        parameters.authScheme().getNonce());
+            if (parameters.proofOfPossession() != null) {
+                authParameters.setPopParameters(parameters.proofOfPossession().getHttpMethod(),
+                        parameters.proofOfPossession().getUri(),
+                        parameters.proofOfPossession().getNonce());
             }
 
             return interop.signInInteractively(parameters.windowHandle(), authParameters, application.correlationId(), parameters.loginHint())
@@ -134,10 +134,10 @@ public class MsalRuntimeBroker implements IBroker {
             authParameters.setUsernamePassword(parameters.username(), new String(parameters.password()));
 
             //If POP auth scheme configured, set parameters to get MSALRuntime to return POP tokens
-            if (parameters.authScheme() != null && parameters.authScheme().getType() == AuthScheme.SchemeType.POP) {
-                authParameters.setPopParameters(parameters.authScheme().getHttpMethod(),
-                        parameters.authScheme().getUri(),
-                        parameters.authScheme().getNonce());
+            if (parameters.proofOfPossession() != null) {
+                authParameters.setPopParameters(parameters.proofOfPossession().getHttpMethod(),
+                        parameters.proofOfPossession().getUri(),
+                        parameters.proofOfPossession().getNonce());
             }
 
             return interop.signInSilently(authParameters, application.correlationId())
