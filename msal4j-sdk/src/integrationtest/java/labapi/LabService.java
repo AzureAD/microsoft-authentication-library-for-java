@@ -19,6 +19,8 @@ public class LabService {
 
     static ConfidentialClientApplication labApp;
 
+    private static String msiAccessToken;
+
     static ObjectMapper mapper = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
@@ -36,10 +38,24 @@ public class LabService {
         String appID = keyVaultSecretsProvider.getSecret(LabConstants.APP_ID_KEY_VAULT_SECRET);
         String appSecret = keyVaultSecretsProvider.getSecret(LabConstants.APP_PASSWORD_KEY_VAULT_SECRET);
 
+
         labApp = ConfidentialClientApplication.builder(
                 appID, ClientCredentialFactory.createFromSecret(appSecret)).
                 authority(TestConstants.MICROSOFT_AUTHORITY).
                 build();
+    }
+
+    static void initLapAppForMsi() throws MalformedURLException{
+        KeyVaultSecretsProvider keyVaultSecretsProvider = new KeyVaultSecretsProvider();
+
+        String appID = keyVaultSecretsProvider.getSecret(LabConstants.APP_ID_KEY_VAULT_SECRET);
+        String msiSecret = keyVaultSecretsProvider.getSecret(LabConstants.MSI_HELPER_SERVICE_SECRET);
+
+        labApp = ConfidentialClientApplication.builder(
+                        appID, ClientCredentialFactory.createFromSecret(msiSecret)).
+                authority(TestConstants.MICROSOFT_AUTHORITY).
+                build();
+
     }
 
     static String getLabAccessToken() throws MalformedURLException, ExecutionException, InterruptedException {
@@ -50,6 +66,21 @@ public class LabService {
                 .builder(Collections.singleton(TestConstants.MSIDLAB_DEFAULT_SCOPE))
                 .build()).
                 get().accessToken();
+    }
+
+    static String getLabAccessTokenForMsi(){
+        try {
+            if (labApp == null) {
+                initLapAppForMsi();
+            }
+
+            return labApp.acquireToken(ClientCredentialParameters
+                            .builder(Collections.singleton(TestConstants.MSIDLAB_DEFAULT_SCOPE))
+                            .build()).
+                    get().accessToken();
+        }catch (Exception ex){
+            throw new RuntimeException("Error getting access token for MSI: " + ex.getMessage());
+        }
     }
 
     User getUser(UserQueryParameters query) {
@@ -122,5 +153,15 @@ public class LabService {
         }  catch (Exception ex) {
             throw new RuntimeException("Error getting user secret from lab: " + ex.getMessage());
         }
+    }
+
+    public static String getMSIToken(){
+        if (msiAccessToken == null)
+        {
+            msiAccessToken =
+                getLabAccessTokenForMsi();
+        }
+
+        return msiAccessToken;
     }
 }

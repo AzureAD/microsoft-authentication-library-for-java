@@ -24,8 +24,8 @@ public class AzureArcManagedIdentity extends AbstractManagedIdentity{
 
     public static AbstractManagedIdentity tryCreate(RequestContext requestContext)
     {
-        String identityEndpoint = EnvironmentVariables.IDENTITY_ENDPOINT;
-        String imdsEndpoint = EnvironmentVariables.IMDS_ENDPOINT;
+        String identityEndpoint = EnvironmentVariables.getIdentityEndpoint();
+        String imdsEndpoint = EnvironmentVariables.getImdsEndpoint();
 
         // if BOTH the env vars IDENTITY_ENDPOINT and IMDS_ENDPOINT are set the MsiType is Azure Arc
         if (StringHelper.isNullOrBlank(identityEndpoint) || StringHelper.isNullOrBlank(imdsEndpoint))

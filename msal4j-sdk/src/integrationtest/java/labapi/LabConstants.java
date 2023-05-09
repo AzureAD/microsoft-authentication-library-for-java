@@ -24,4 +24,6 @@ public class LabConstants {
     public final static String ARLINGTON_LAB_NAME = "ARLMSIDLAB1";
     public final static String GUEST_USER_TYPE = "Guest";
 
+    public final static String MSI_HELPER_SERVICE_SECRET = "MSIHelperServiceSecret";
+
 }

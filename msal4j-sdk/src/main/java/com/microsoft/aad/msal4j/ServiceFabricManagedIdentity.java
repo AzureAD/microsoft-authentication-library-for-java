@@ -30,9 +30,9 @@ public class ServiceFabricManagedIdentity extends AbstractManagedIdentity{
 
     public static AbstractManagedIdentity tryCreate(RequestContext requestContext)
     {
-        String identityEndpoint = EnvironmentVariables.IDENTITY_ENDPOINT;
-        String identityHeader = EnvironmentVariables.IDENTITY_HEADER;
-        String identityServerThumbprint = EnvironmentVariables.IDENTITY_SERVER_THUMBPRINT;
+        String identityEndpoint = EnvironmentVariables.getIdentityEndpoint();
+        String identityHeader = EnvironmentVariables.getIdentityHeader();
+        String identityServerThumbprint = EnvironmentVariables.getIdentityServerThumbprint();
 
         if (StringHelper.isNullOrBlank(identityEndpoint) || StringHelper.isNullOrBlank(identityHeader) || StringHelper.isNullOrBlank(identityServerThumbprint))
         {

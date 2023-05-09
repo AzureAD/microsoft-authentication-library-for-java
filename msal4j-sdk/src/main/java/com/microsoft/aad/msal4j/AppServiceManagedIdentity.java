@@ -61,9 +61,9 @@ public class AppServiceManagedIdentity extends AbstractManagedIdentity {
     }
 
     protected static AbstractManagedIdentity tryCreate(RequestContext requestContext) {
-        String msiSecret = EnvironmentVariables.IDENTITY_HEADER;
+        String msiSecret = EnvironmentVariables.getIdentityHeader();
 
-        return tryValidateEnvironmentVariables(EnvironmentVariables.IDENTITY_ENDPOINT, msiSecret)
+        return tryValidateEnvironmentVariables(EnvironmentVariables.getIdentityEndpoint(), msiSecret)
                 ? new AppServiceManagedIdentity(requestContext, endpointUri, msiSecret)
                 : null;
     }

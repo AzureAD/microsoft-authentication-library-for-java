@@ -21,7 +21,7 @@ public class CloudShellManagedIdentity extends AbstractManagedIdentity {
 
     public static AbstractManagedIdentity tryCreate(RequestContext requestContext)
     {
-        String msiEndpoint = EnvironmentVariables.MSI_ENDPOINT;
+        String msiEndpoint = EnvironmentVariables.getMsiEndpoint();
 
         // if ONLY the env var MSI_ENDPOINT is set the MsiType is CloudShell
         if (StringHelper.isNullOrBlank(msiEndpoint))

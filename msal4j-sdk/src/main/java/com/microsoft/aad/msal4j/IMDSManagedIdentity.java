@@ -36,15 +36,15 @@ public class IMDSManagedIdentity extends AbstractManagedIdentity {
 
     public IMDSManagedIdentity(RequestContext requestContext) {
         super(requestContext, ManagedIdentitySourceType.Imds);
-        if (!StringHelper.isNullOrBlank(EnvironmentVariables.AZURE_POD_IDENTITY_AUTHORITY_HOST)){
-            LOG.info("[Managed Identity] Environment variable AZURE_POD_IDENTITY_AUTHORITY_HOST for IMDS returned endpoint: " + EnvironmentVariables.AZURE_POD_IDENTITY_AUTHORITY_HOST);
+        if (!StringHelper.isNullOrBlank(EnvironmentVariables.getAzurePodIdentityAuthorityHost())){
+            LOG.info("[Managed Identity] Environment variable AZURE_POD_IDENTITY_AUTHORITY_HOST for IMDS returned endpoint: " + EnvironmentVariables.getAzurePodIdentityAuthorityHost());
             try {
-                imdsEndpoint = new URI(EnvironmentVariables.AZURE_POD_IDENTITY_AUTHORITY_HOST);
+                imdsEndpoint = new URI(EnvironmentVariables.getAzurePodIdentityAuthorityHost());
             } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
             }
 
-            StringBuilder builder = new StringBuilder(EnvironmentVariables.AZURE_POD_IDENTITY_AUTHORITY_HOST);
+            StringBuilder builder = new StringBuilder(EnvironmentVariables.getAzurePodIdentityAuthorityHost());
             builder.append("/" + imdsTokenPath);
             try {
                 URI imdsEndpoint = new URI(builder.toString());

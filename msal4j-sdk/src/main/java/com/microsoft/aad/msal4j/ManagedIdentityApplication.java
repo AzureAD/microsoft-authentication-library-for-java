@@ -21,7 +21,7 @@ public class ManagedIdentityApplication extends AbstractClientApplicationBase{
 
     private String resource;
 
-    private ManagedIdentityConfiguration managedIdentityConfiguration;
+    private ManagedIdentityId managedIdentityId;
 
     private ManagedIdentityApplication(Builder builder) {
         super(builder);
@@ -32,12 +32,12 @@ public class ManagedIdentityApplication extends AbstractClientApplicationBase{
     /**
      * Creates instance of Builder of ManagedIdentityApplication
      *
-     * @param managedIdentityConfiguration         Client ID (Application ID) of the application as registered
+     * @param managedIdentityId         Client ID (Application ID) of the application as registered
      *                         in the application registration portal (portal.azure.com)
      * @return instance of Builder of ManagedIdentityApplication
      */
-    public static Builder builder(ManagedIdentityConfiguration managedIdentityConfiguration) {
-        return new Builder(managedIdentityConfiguration);
+    public static Builder builder(ManagedIdentityId managedIdentityId) {
+        return new Builder(managedIdentityId);
     }
 
     public static Builder builder() {
@@ -67,11 +67,11 @@ public class ManagedIdentityApplication extends AbstractClientApplicationBase{
 
         private String resource;
 
-        private ManagedIdentityConfiguration managedIdentityConfiguration;
+        private ManagedIdentityId managedIdentityId;
 
-        private Builder(ManagedIdentityConfiguration managedIdentityConfiguration) {
+        private Builder(ManagedIdentityId managedIdentityId) {
             super();
-            this.managedIdentityConfiguration = managedIdentityConfiguration;
+            this.managedIdentityId = managedIdentityId;
         }
 
         private Builder() {

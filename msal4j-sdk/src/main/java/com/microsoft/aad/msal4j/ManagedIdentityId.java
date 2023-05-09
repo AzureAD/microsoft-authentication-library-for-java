@@ -1,50 +1,50 @@
 package com.microsoft.aad.msal4j;
 
-public class ManagedIdentityConfiguration {
+public class ManagedIdentityId {
 
     private String userAssignedId;
     private ManagedIdentityIdType idType;
 
-    private ManagedIdentityConfiguration(ManagedIdentityIdType idType)
+    private ManagedIdentityId(ManagedIdentityIdType idType)
     {
         this.idType = idType;
     }
 
-    private ManagedIdentityConfiguration(ManagedIdentityIdType idType, String id) {
+    private ManagedIdentityId(ManagedIdentityIdType idType, String id) {
         this.idType = idType;
         this.userAssignedId = id;
     }
 
     // Create an instance of ManagedIdentityConfiguration for a system assigned managed identity.
-    public static ManagedIdentityConfiguration SystemAssigned()
+    public static ManagedIdentityId SystemAssigned()
     {
-        return new ManagedIdentityConfiguration(ManagedIdentityIdType.SystemAssigned);
+        return new ManagedIdentityId(ManagedIdentityIdType.SystemAssigned);
     }
     /** Create an instance of ManagedIdentityConfiguration for a user assigned managed identity from a client id.
      <param name="clientId">Client id of the user assigned managed identity assigned to azure resource.</param>
      <returns>Instance of ManagedIdentityConfiguration.</returns>
      <exception cref="NullPointerException"></exception> */
-    public static ManagedIdentityConfiguration UserAssignedClientId(String clientId)
+    public static ManagedIdentityId UserAssignedClientId(String clientId)
     {
         if (StringHelper.isNullOrBlank(clientId))
         {
             throw new NullPointerException(clientId);
         }
 
-        return new ManagedIdentityConfiguration(ManagedIdentityIdType.ClientId, clientId);
+        return new ManagedIdentityId(ManagedIdentityIdType.ClientId, clientId);
     }
 
     /** Create an instance of ManagedIdentityConfiguration for a user assigned managed identity from a resource id.
      <param name="resourceId">Resource id of the user assigned managed identity assigned to azure resource.</param>
      <returns>Instance of ManagedIdentityConfiguration.</returns>
      <exception cref="NullPointerException"></exception> */
-    public static ManagedIdentityConfiguration UserAssignedResourceId(String resourceId)
+    public static ManagedIdentityId UserAssignedResourceId(String resourceId)
     {
         if (StringHelper.isNullOrBlank(resourceId))
         {
             throw new NullPointerException(resourceId);
         }
 
-        return new ManagedIdentityConfiguration(ManagedIdentityIdType.ResourceId, resourceId);
+        return new ManagedIdentityId(ManagedIdentityIdType.ResourceId, resourceId);
     }
 }
