@@ -1,6 +1,7 @@
-package com.microsoft.aad.msal4j;
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
 
-import com.nimbusds.oauth2.sdk.ClientCredentialsGrant;
+package com.microsoft.aad.msal4j;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -8,7 +9,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 public class ManagedIdentityRequest extends MsalRequest{
 

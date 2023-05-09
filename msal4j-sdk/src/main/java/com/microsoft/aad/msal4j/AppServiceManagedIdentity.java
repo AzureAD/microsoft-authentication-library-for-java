@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.microsoft.aad.msal4j;
 
 import org.slf4j.Logger;
@@ -85,7 +88,7 @@ public class AppServiceManagedIdentity extends AbstractManagedIdentity {
         }
         catch (URISyntaxException ex)
         {
-            throw new MsalManagedIdentityException(MsalError.InvalidManagedIdentityEndpoint, String.format(
+            throw new MsalManagedIdentityException(MsalError.INVALID_MANAGED_IDENTITY_ENDPOINT, String.format(
                     MsalErrorMessage.MANAGED_IDENTITY_ENDPOINT_INVALID_URI_ERROR, "IDENTITY_ENDPOINT", msiEndpoint, "App Service"),
                     ManagedIdentitySourceType.AppService);
         }

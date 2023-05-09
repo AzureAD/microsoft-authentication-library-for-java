@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.microsoft.aad.msal4j;
 
 import org.slf4j.Logger;
@@ -11,15 +14,11 @@ public class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultS
 
     private ManagedIdentityParameters managedIdentityParameters;
 
-//    AcquireTokenByManagedIdentitySupplier(ManagedIdentityParameters managedIdentityParameters) {
-//        RequestContext requestContext = new RequestContext(clientApplication, managedIdentityParameters);
-//        super(requestContext, )
-//        this.managedIdentityParameters = managedIdentityParameters;
-//
-//    }
+
 
     AcquireTokenByManagedIdentitySupplier(AbstractClientApplicationBase abstractClientApplicationBase, MsalRequest msalRequest){
         super(abstractClientApplicationBase, msalRequest);
+        this.managedIdentityParameters = (ManagedIdentityParameters) msalRequest.requestContext().apiParameters();
     }
 
     @Override
@@ -28,7 +27,7 @@ public class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultS
         if (StringHelper.isNullOrBlank(managedIdentityParameters.resource))
         {
             throw new MsalClientException(
-                    MsalError.ScopesRequired,
+                    MsalError.SCOPES_REQUIRED,
                     MsalErrorMessage.SCOPES_REQUIRED);
         }
 
@@ -51,33 +50,29 @@ public class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultS
             AuthenticationResult authenticationResult = clientApplication.tokenCache.getCacheAuthenticationResult();
 
             if (authenticationResult == null) {
-                throw new MsalClientException(AuthenticationErrorMessage.NO_TOKEN_IN_CACHE, AuthenticationErrorCode.CACHE_MISS);
+                return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor, clientApplication.authenticationAuthority.host);
             }
-
             if (!StringHelper.isBlank(authenticationResult.accessToken())) {
                 clientApplication.getServiceBundle().getServerSideTelemetry().incrementSilentSuccessfulCount();
             }
-
-            if(authenticationResult != null) {
-                return authenticationResult;
-            }
+            return authenticationResult;
         }
             LOG.info("Skipped looking for an Access Token in the cache because forceRefresh or Claims were set. ");
 
             // No AT in the cache
-            AuthenticationResult authenticationResult = fetchNewAccessToken();
-            clientApplication.tokenCache.saveTokens(tokenRequestExecutor,authenticationResult,clientApplication.authenticationAuthority.host);
-            return authenticationResult;
+            return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor, clientApplication.authenticationAuthority.host);
         }
 
-    private AuthenticationResult fetchNewAccessToken() {
+    private AuthenticationResult fetchNewAccessTokenAndSaveToCache(TokenRequestExecutor tokenRequestExecutor, String host) {
 
         ManagedIdentityClient managedIdentityClient = new ManagedIdentityClient(msalRequest.requestContext());
 
         ManagedIdentityResponse managedIdentityResponse = managedIdentityClient
                 .sendTokenRequest(managedIdentityParameters);
 
-        return createFromManagedIdentityResponse(managedIdentityResponse);
+        AuthenticationResult authenticationResult =  createFromManagedIdentityResponse(managedIdentityResponse);
+        clientApplication.tokenCache.saveTokens(tokenRequestExecutor,authenticationResult,clientApplication.authenticationAuthority.host);
+        return authenticationResult;
     }
 
     private AuthenticationResult createFromManagedIdentityResponse(ManagedIdentityResponse managedIdentityResponse){
@@ -91,7 +86,7 @@ public class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultS
                 .expiresOn(expiresOn)
                 .extExpiresOn(0)
                 .refreshOn(refreshOn)
-                .scopes(managedIdentityParameters.getScopes().toString())
+                .scopes(managedIdentityParameters.scopes().toString())
                 .build();
     }
 }

@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.microsoft.aad.msal4j;
 
 import org.slf4j.Logger;
@@ -38,7 +41,7 @@ public class CloudShellManagedIdentity extends AbstractManagedIdentity {
         catch (URISyntaxException ex)
         {
             LOG.error("[Managed Identity] Invalid endpoint found for the environment variable MSI_ENDPOINT: " + msiEndpoint);
-            throw new MsalManagedIdentityException(MsalError.InvalidManagedIdentityEndpoint, String.format(
+            throw new MsalManagedIdentityException(MsalError.INVALID_MANAGED_IDENTITY_ENDPOINT, String.format(
                     MsalErrorMessage.MANAGED_IDENTITY_ENDPOINT_INVALID_URI_ERROR, "MSI_ENDPOINT", msiEndpoint, CloudShell),
                     ManagedIdentitySourceType.CloudShell);
         }
@@ -53,7 +56,7 @@ public class CloudShellManagedIdentity extends AbstractManagedIdentity {
 
         if (isUserAssignedManagedIdentity())
         {
-            throw new MsalManagedIdentityException(MsalError.UserAssignedManagedIdentityNotSupported,
+            throw new MsalManagedIdentityException(MsalError.USER_ASSIGNED_MANAGED_IDENTITY_NOT_SUPPORTED,
                     MsalErrorMessage.MANAGED_IDENTITY_USER_ASSIGNED_NOT_SUPPORTED,
                     ManagedIdentitySourceType.CloudShell);
         }

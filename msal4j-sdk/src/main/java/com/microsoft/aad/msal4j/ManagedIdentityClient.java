@@ -1,6 +1,7 @@
-package com.microsoft.aad.msal4j;
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
 
-import java.util.concurrent.CompletableFuture;
+package com.microsoft.aad.msal4j;
 
 /** Class to initialize a managed identity and identify the service.
  Original source of code: https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/identity/Azure.Identity/src/ManagedIdentityClient.cs */

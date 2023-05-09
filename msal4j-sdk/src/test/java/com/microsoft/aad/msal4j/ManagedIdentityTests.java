@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.microsoft.aad.msal4j;
 
 import org.easymock.EasyMock;
@@ -6,52 +9,51 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
 
 import static com.microsoft.aad.msal4j.ManagedIdentityTestUtils.setEnvironmentVariables;
 
 public class ManagedIdentityTests extends SeleniumTest{
-    private static final String s_msi_scopes = "https://management.azure.com";
-    private static final String s_wrong_msi_scopes = "https://managements.azure.com";
+    private static final String S_MSI_SCOPES = "https://management.azure.com";
+    private static final String S_WRONG_MSI_SCOPES = "https://managements.azure.com";
 
     //http proxy base URL 
-    private static final String s_baseURL = "https://service.msidlab.com/";
+    private static final String S_BASE_URL = "https://service.msidlab.com/";
 
     //Shared User Assigned Client ID
-    private static final String UserAssignedClientID = "3b57c42c-3201-4295-ae27-d6baec5b7027";
+    private static final String USER_ASSIGNED_CLIENT_ID = "3b57c42c-3201-4295-ae27-d6baec5b7027";
 
     //Non Existent User Assigned Client ID 
-    private static final String NonExistentUserAssignedClientID = "72f988bf-86f1-41af-91ab-2d7cd011db47";
+    private static final String NON_EXISTENT_USER_ASSIGNED_CLIENT_ID = "72f988bf-86f1-41af-91ab-2d7cd011db47";
 
     //Error Messages
-    private static final String UserAssignedIdDoesNotExist = "Managed Identity Error Message: " +
+    private static final String USER_ASSIGNED_ID_DOES_NOT_EXIST = "Managed Identity Error Message: " +
             "No User Assigned or Delegated Managed Identity found for specified ClientId/ResourceId/PrincipalId.";
 
     //Resource ID of the User Assigned Identity 
-    private static final String UamiResourceId = "/subscriptions/c1686c51-b717-4fe0-9af3-24a20a41fb0c/" +
+    private static final String UAMI_RESOURCE_ID = "/subscriptions/c1686c51-b717-4fe0-9af3-24a20a41fb0c/" +
             "resourcegroups/MSAL_MSI/providers/Microsoft.ManagedIdentity/userAssignedIdentities/" +
             "MSAL_MSI_USERID";
 
-    private static final String Non_Existent_UamiResourceId = "/subscriptions/userAssignedIdentities/NO_ID";
+    private static final String NON_EXISTENT_UAMI_RESOURCE_ID = "/subscriptions/userAssignedIdentities/NO_ID";
 
     @DataProvider(name = "msiAzureResources")
-    public static Object[][] msiAzureResources() throws MalformedURLException {
-        return new Object[][]{{TestConstants.MsiAzureResource.WebApp, ""},
-                {TestConstants.MsiAzureResource.Function, ""},
-                {TestConstants.MsiAzureResource.VM, ""},
-                {TestConstants.MsiAzureResource.WebApp, UserAssignedClientID},
-                {TestConstants.MsiAzureResource.Function, UserAssignedClientID},
-                {TestConstants.MsiAzureResource.VM, UserAssignedClientID},
-                {TestConstants.MsiAzureResource.WebApp, UamiResourceId},
-                {TestConstants.MsiAzureResource.Function, UamiResourceId},
-                {TestConstants.MsiAzureResource.VM, UamiResourceId}};
+    public static Object[][] msiAzureResources(){
+        return new Object[][]{{TestConstants.MsiAzureResource.WebApp, "", ManagedIdentityIdType.SystemAssigned},
+                {TestConstants.MsiAzureResource.Function, "", ManagedIdentityIdType.SystemAssigned},
+                {TestConstants.MsiAzureResource.VM, "", ManagedIdentityIdType.SystemAssigned},
+                {TestConstants.MsiAzureResource.WebApp, USER_ASSIGNED_CLIENT_ID, ManagedIdentityIdType.ClientId},
+                {TestConstants.MsiAzureResource.Function, USER_ASSIGNED_CLIENT_ID, ManagedIdentityIdType.ClientId},
+                {TestConstants.MsiAzureResource.VM, USER_ASSIGNED_CLIENT_ID, ManagedIdentityIdType.ClientId},
+                {TestConstants.MsiAzureResource.WebApp, UAMI_RESOURCE_ID, ManagedIdentityIdType.ResourceId},
+                {TestConstants.MsiAzureResource.Function, UAMI_RESOURCE_ID, ManagedIdentityIdType.ResourceId},
+                {TestConstants.MsiAzureResource.VM, UAMI_RESOURCE_ID, ManagedIdentityIdType.ResourceId}};
     }
 
     //non-existent Resource ID of the User Assigned Identity
     @Test(dataProvider = "msiAzureResources")
-    public void acquireMSITokenAsync(TestConstants.MsiAzureResource azureResource, String userIdentity) throws Exception {
+    public void acquireMSITokenAsync(TestConstants.MsiAzureResource azureResource, String userIdentity, ManagedIdentityIdType idType) throws Exception {
         //Arrange
 //
 //            // Fetch the env variables from the resource and set them locally
@@ -61,28 +63,28 @@ public class ManagedIdentityTests extends SeleniumTest{
 //            //Set the Environment Variables
 //            setEnvironmentVariables(envVariables);
 
-        PowerMock.mockStatic(EnvironmentVariables.class);
-        EasyMock.expect(
-                EnvironmentVariables.getAzurePodIdentityAuthorityHost()).andReturn("AZURE_POD_IDENTITY");
-        EasyMock.expect(
-                EnvironmentVariables.getIdentityEndpoint()).andReturn("IDENTITY_ENDPOINT");
-        EasyMock.expect(
-                EnvironmentVariables.getIdentityHeader()).andReturn("IDENTITY_HEADER");
-        EasyMock.expect(
-                EnvironmentVariables.getIdentityServerThumbprint()).andReturn("THUMBPRINT");
-        EasyMock.expect(
-                EnvironmentVariables.getImdsEndpoint()).andReturn("IMDS");
-        EasyMock.expect(
-                EnvironmentVariables.getMsiEndpoint()).andReturn("MSI");
+//        PowerMock.mockStatic(EnvironmentVariables.class);
+//        EasyMock.expect(
+//                EnvironmentVariables.getAzurePodIdentityAuthorityHost()).andReturn("AZURE_POD_IDENTITY");
+//        EasyMock.expect(
+//                EnvironmentVariables.getIdentityEndpoint()).andReturn("IDENTITY_ENDPOINT");
+//        EasyMock.expect(
+//                EnvironmentVariables.getIdentityHeader()).andReturn("IDENTITY_HEADER");
+//        EasyMock.expect(
+//                EnvironmentVariables.getIdentityServerThumbprint()).andReturn("THUMBPRINT");
+//        EasyMock.expect(
+//                EnvironmentVariables.getImdsEndpoint()).andReturn("IMDS");
+//        EasyMock.expect(
+//                EnvironmentVariables.getMsiEndpoint()).andReturn("MSI");
             //form the http proxy URI
-            String uri = s_baseURL + "MSIToken?" +
+            String uri = S_BASE_URL + "MSIToken?" +
                 "azureresource=" + azureResource + "&uri=";
 
             //Create CCA with Proxy
-            ManagedIdentityApplication managedIdentityApplication = createMIAWithProxy(uri, userIdentity);
+            ManagedIdentityApplication managedIdentityApplication = createManagedIdentityApplicationWithProxy(uri, userIdentity, idType);
 
             IAuthenticationResult result = managedIdentityApplication
-                .acquireTokenForManagedIdentity(ManagedIdentityParameters.builder(s_msi_scopes).forceRefresh(false).build())
+                .acquireTokenForManagedIdentity(ManagedIdentityParameters.builder(S_MSI_SCOPES).forceRefresh(false).build())
                     .get();
             
             //1. Token Type
@@ -98,24 +100,23 @@ public class ManagedIdentityTests extends SeleniumTest{
 //                    TimeSpan.FromHours(24));
 
             //4. Validate the scope
-            Assert.assertTrue(result.scopes().contains(s_msi_scopes));
+            Assert.assertTrue(result.scopes().contains(S_MSI_SCOPES));
 
             //5. Validate the second call to token endpoint gets returned from the cache
 //            Assert.assertEquals(TokenSource.Cache,
 //                    result.AuthenticationResultMetadata.TokenSource);
     }
 
-    @DataProvider(name = "msiWrongClientIDs")
-    public static Object[][] msiWrongClientIDs() throws MalformedURLException {
-        return new Object[][]{{TestConstants.MsiAzureResource.WebApp, NonExistentUserAssignedClientID},
-                {TestConstants.MsiAzureResource.WebApp, Non_Existent_UamiResourceId}};
+    @DataProvider(name = "msiWrongIDs")
+    public static Object[][] msiWrongIDs() {
+        return new Object[][]{{TestConstants.MsiAzureResource.WebApp, NON_EXISTENT_USER_ASSIGNED_CLIENT_ID, ManagedIdentityIdType.ClientId},
+                {TestConstants.MsiAzureResource.WebApp, NON_EXISTENT_UAMI_RESOURCE_ID, ManagedIdentityIdType.ResourceId}};
 
     }
 
-    @Test(dataProvider = "msiWrongClientIDs", expectedExceptions = MsalManagedIdentityException.class,
-    expectedExceptionsMessageRegExp = UserAssignedIdDoesNotExist )
-
-    public void acquireTokenUsingWrongClientID(TestConstants.MsiAzureResource azureResource, String userIdentity) throws Exception {
+    @Test(dataProvider = "msiWrongIDs", expectedExceptions = MsalManagedIdentityException.class,
+    expectedExceptionsMessageRegExp = USER_ASSIGNED_ID_DOES_NOT_EXIST )
+    public void acquireTokenUsingWrongClientID(TestConstants.MsiAzureResource azureResource, String userIdentity, ManagedIdentityIdType idType) throws Exception {
             //Get the Environment Variables
             Map<String, String> envVariables =
                     getEnvironmentVariables(azureResource);
@@ -124,29 +125,29 @@ public class ManagedIdentityTests extends SeleniumTest{
             setEnvironmentVariables(envVariables);
 
             //form the http proxy URI
-            String uri = s_baseURL + "MSIToken?" +
+            String uri = S_BASE_URL + "MSIToken?" +
             "azureresource=" + azureResource + "&uri=";
 
 
             //Create CCA with Proxy
-            ManagedIdentityApplication managedIdentityApplication = createMIAWithProxy(uri, userIdentity);
+            ManagedIdentityApplication managedIdentityApplication = createManagedIdentityApplicationWithProxy(uri, userIdentity, idType);
 
-        managedIdentityApplication.acquireTokenForManagedIdentity(ManagedIdentityParameters.builder(s_msi_scopes).forceRefresh(false).build());
+        managedIdentityApplication.acquireTokenForManagedIdentity(ManagedIdentityParameters.builder(S_MSI_SCOPES).forceRefresh(false).build());
 
             //Assert
 //            Assert.assertTrue(ex.getMessage().contains(UserAssignedIdDoesNotExist));
 //            Assert.assertEquals(AbstractManagedIdentity.AppService, ex.ManagedIdentitySource);
         }
 
-    @DataProvider(name = "msiWrongClientIDsForFunctions")
-    public static Object[][] msiWrongClientIDsForFunctions() throws MalformedURLException {
-        return new Object[][]{{TestConstants.MsiAzureResource.Function, NonExistentUserAssignedClientID},
-                {TestConstants.MsiAzureResource.Function, Non_Existent_UamiResourceId}};
+    @DataProvider(name = "msiWrongIDsForFunctions")
+    public static Object[][] msiWrongIDsForFunctions(){
+        return new Object[][]{{TestConstants.MsiAzureResource.Function, NON_EXISTENT_USER_ASSIGNED_CLIENT_ID, ManagedIdentityIdType.ClientId},
+                {TestConstants.MsiAzureResource.Function, NON_EXISTENT_UAMI_RESOURCE_ID, ManagedIdentityIdType.ResourceId}};
 
     }
 
-  @Test(dataProvider = "msiWrongClientIDsForFunctions", expectedExceptions = MsalManagedIdentityException.class, expectedExceptionsMessageRegExp = "")
-    public void functionAppErrorNotInExpectedFormatAsync(TestConstants.MsiAzureResource azureResource, String userIdentity) throws Exception {
+  @Test(dataProvider = "msiWrongIDsForFunctions", expectedExceptions = MsalManagedIdentityException.class, expectedExceptionsMessageRegExp = "")
+    public void functionAppErrorNotInExpectedFormatAsync(TestConstants.MsiAzureResource azureResource, String userIdentity, ManagedIdentityIdType idType) throws Exception {
         //Arrange
             //Get the Environment Variables
             Map<String, String> envVariables =
@@ -156,29 +157,29 @@ public class ManagedIdentityTests extends SeleniumTest{
             setEnvironmentVariables(envVariables);
 
             //form the http proxy URI
-            String uri = s_baseURL + "MSIToken?" +
+            String uri = S_BASE_URL + "MSIToken?" +
                 "azureresource=" + azureResource + "&uri=";
 
             //Create CCA with Proxy
-            ManagedIdentityApplication managedIdentityApplication = createMIAWithProxy(uri, userIdentity);
+            ManagedIdentityApplication managedIdentityApplication = createManagedIdentityApplicationWithProxy(uri, userIdentity, idType);
 
             managedIdentityApplication
-                        .acquireTokenForManagedIdentity(ManagedIdentityParameters.builder(s_msi_scopes).forceRefresh(false).build());
+                        .acquireTokenForManagedIdentity(ManagedIdentityParameters.builder(S_MSI_SCOPES).forceRefresh(false).build());
 
             //Assert
 //            Assert.assertEquals(AbstractManagedIdentity.AppService, ex.ManagedIdentitySource);
     }
 
     @DataProvider(name = "msiWebApps")
-    public static Object[][] msiWebApps() throws MalformedURLException {
-        return new Object[][]{{TestConstants.MsiAzureResource.WebApp, ""},
-                {TestConstants.MsiAzureResource.WebApp, UserAssignedClientID},
-                {TestConstants.MsiAzureResource.WebApp, UamiResourceId}};
+    public static Object[][] msiWebApps(){
+        return new Object[][]{{TestConstants.MsiAzureResource.WebApp, "", ManagedIdentityIdType.SystemAssigned},
+                {TestConstants.MsiAzureResource.WebApp, USER_ASSIGNED_CLIENT_ID, ManagedIdentityIdType.ClientId},
+                {TestConstants.MsiAzureResource.WebApp, UAMI_RESOURCE_ID, ManagedIdentityIdType.ResourceId}};
 
     }
 
-    @Test(dataProvider = "msiWebApps", expectedExceptions = MsalManagedIdentityException.class, expectedExceptionsMessageRegExp = MsalError.ManagedIdentityRequestFailed )
-    public void mSIWrongScopesAsync(TestConstants.MsiAzureResource azureResource, String userIdentity) throws Exception {
+    @Test(dataProvider = "msiWebApps", expectedExceptions = MsalManagedIdentityException.class, expectedExceptionsMessageRegExp = MsalError.MANAGED_IDENTITY_REQUEST_FAILED )
+    public void mSIWrongScopesAsync(TestConstants.MsiAzureResource azureResource, String userIdentity, ManagedIdentityIdType idType) throws Exception {
         //Arrange
             //Get the Environment Variables
             Map<String, String> envVariables =
@@ -188,14 +189,14 @@ public class ManagedIdentityTests extends SeleniumTest{
             setEnvironmentVariables(envVariables);
 
             //form the http proxy URI
-            String uri = s_baseURL + "MSIToken?" +
+            String uri = S_BASE_URL + "MSIToken?" +
                 "azureresource=" + azureResource + "&uri=";
 
             //Create CCA with Proxy
-            ManagedIdentityApplication managedIdentityApplication = createMIAWithProxy(uri, userIdentity);
+            ManagedIdentityApplication managedIdentityApplication = createManagedIdentityApplicationWithProxy(uri, userIdentity, idType);
 
             managedIdentityApplication
-                        .acquireTokenForManagedIdentity(ManagedIdentityParameters.builder(s_wrong_msi_scopes)
+                        .acquireTokenForManagedIdentity(ManagedIdentityParameters.builder(S_WRONG_MSI_SCOPES)
                                 .forceRefresh(false).build());
 
             //Assert
@@ -208,10 +209,10 @@ public class ManagedIdentityTests extends SeleniumTest{
     private Map<String, String> getEnvironmentVariables(
             TestConstants.MsiAzureResource resource)
     {
-        Map<String, String> environmentVariables = new HashMap<String, String>();
+        Map<String, String> environmentVariables = new HashMap<>();
 
         //Get the Environment Variables from the MSI Helper Service
-        String uri = s_baseURL + "EnvironmentVariables?resource=" + resource;
+        String uri = S_BASE_URL + "EnvironmentVariables?resource=" + resource;
 
         String environmentVariableResponse = labUserProvider
             .getMSIEnvironmentVariables(uri);
@@ -232,23 +233,26 @@ public class ManagedIdentityTests extends SeleniumTest{
     /// <param name="url"></param>
     /// <param name="userAssignedId"></param>
     /// <returns></returns>
-    private ManagedIdentityApplication createMIAWithProxy(String url, String userAssignedId)
+    private ManagedIdentityApplication createManagedIdentityApplicationWithProxy(String url, String userAssignedId, ManagedIdentityIdType idType)
     {
         //Proxy the MSI token request 
 //        MsiProxyHttpManager proxyHttpManager = new MsiProxyHttpManager(url);
 
-        ManagedIdentityApplication.Builder builder = ManagedIdentityApplication.builder();
+        ManagedIdentityApplication.Builder builder;
 //                .withHttpManager(proxyHttpManager);
 
         if (!StringHelper.isNullOrBlank(userAssignedId))
         {
-            builder = ManagedIdentityApplication.builder(ManagedIdentityId.UserAssignedClientId(userAssignedId));
-//                    .withHttpManager(proxyHttpManager);
+            if(ManagedIdentityIdType.ClientId.equals(idType)){
+                builder = ManagedIdentityApplication.builder(ManagedIdentityId.UserAssignedClientId(userAssignedId));
+            }else{
+                builder = ManagedIdentityApplication.builder(ManagedIdentityId.UserAssignedResourceId(userAssignedId));
+            }
+        }else{
+            builder = ManagedIdentityApplication.builder(ManagedIdentityId.SystemAssigned());
         }
 
-        ManagedIdentityApplication managedIdentityApplication = builder.build();
-
-        return managedIdentityApplication;
+        return builder.build();
     }
 
     private static class MockEnvironment{
