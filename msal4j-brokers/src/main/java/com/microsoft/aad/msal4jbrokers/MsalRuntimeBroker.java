@@ -187,7 +187,7 @@ public class MsalRuntimeBroker implements IBroker {
      *
      * @param enableLogging true to enable MSALRuntime logs, false to disable it
      */
-    public void toggleLogging(boolean enableLogging) {
+    public void enableBrokerLogging(boolean enableLogging) {
         try {
             MsalRuntimeInterop.toggleMsalRuntimeLogging(enableLogging);
         } catch (Exception ex) {
@@ -202,7 +202,7 @@ public class MsalRuntimeBroker implements IBroker {
      *
      * @param enablePII true to allow PII to appear in logs and error messages, false to disallow it
      */
-    public void togglePII(boolean enablePII) {
+    public void enableBrokerPIILogging(boolean enablePII) {
         try {
             MsalRuntimeInterop.toggleMsalRuntimePIILogging(enablePII);
         } catch (Exception ex) {
