@@ -108,6 +108,17 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
     }
 
     private void openDefaultSystemBrowser(URL url) {
+        String os = System.getProperty("os.name").toLowerCase();
+        if (os.contains("windows")) {
+            openDefaultSystemBrowserInWindows(url);
+        } else if (os.contains("mac")) { // mac os
+            openDefaultSystemBrowserInMac(url);
+        } else if(os.contains("nux") || os.contains("nix")) { //linux or unix os
+            openDefaultSystemBrowserInLinux(url);
+        }
+    }
+
+    private static void openDefaultSystemBrowserInWindows(URL url){
         try {
             if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
                 Desktop.getDesktop().browse(url.toURI());
@@ -118,6 +129,24 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
             }
         } catch (URISyntaxException | IOException ex) {
             throw new MsalClientException(ex);
+        }
+    }
+
+    private static void openDefaultSystemBrowserInMac(URL url){
+        Runtime runtime = Runtime.getRuntime();
+        try {
+            runtime.exec("open " + url);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static void openDefaultSystemBrowserInLinux(URL url){
+        Runtime runtime = Runtime.getRuntime();
+        try {
+            runtime.exec("xdg-open " + url);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
