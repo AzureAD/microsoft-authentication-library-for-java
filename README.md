@@ -18,7 +18,7 @@ The library supports the following Java environments:
 
 Current version - 1.13.8
 
-You can find the changes for each version in the [change log](https://github.com/AzureAD/microsoft-authentication-library-for-java/blob/master/changelog.txt).
+You can find the changes for each version in the [change log](https://github.com/AzureAD/microsoft-authentication-library-for-java/blob/main/msal4j-sdk/changelog.txt).
 
 You can get the com.microsoft.aad.msal4j package through Maven or Gradle.
 
