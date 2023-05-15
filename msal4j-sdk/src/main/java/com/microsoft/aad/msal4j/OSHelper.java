@@ -1,38 +1,39 @@
 package com.microsoft.aad.msal4j;
 
 public class OSHelper {
+    enum OSType{
+        MAC,
+        WINDOWS,
+        LINUX
+    }
 
-    private static String os;
-    private static boolean mac;
-    private static boolean windows;
-    private static boolean linux;
+    private static final String OS;
+    private static OSType osType;
 
     static{
-        os = System.getProperty("os.name").toLowerCase();
-        if(os.contains("windows")){
-            windows = true;
-        }else if (os.contains("mac")){
-            mac = true;
-        }else if (os.contains("nux") || os.contains("nix")){
-            linux = true;
+        OS = System.getProperty("os.name").toLowerCase();
+        if(OS.contains("windows")){
+            osType = OSType.WINDOWS;
+        }else if (OS.contains("mac")){
+            osType = OSType.MAC;
+        }else if (OS.contains("nux") || OS.contains("nix")){
+            osType = OSType.LINUX;
         }
     }
 
     public static String getOs(){
-        return os;
+        return OS;
     }
 
     public static boolean isMac(){
-        return mac;
+        return OSType.MAC.equals(osType);
     }
 
     public static boolean isWindows(){
-        return windows;
+        return OSType.WINDOWS.equals(osType);
     }
 
     public static boolean isLinux(){
-        return linux;
+        return OSType.LINUX.equals(osType);
     }
-
-
 }
