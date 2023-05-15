@@ -135,8 +135,8 @@ public class InteractiveRequestParameters implements IAcquireTokenParameters {
          * For more information, see {@link PopParameters} and https://aka.ms/msal4j-pop
          *
          * @param httpMethod a valid HTTP method, such as "GET" or "POST"
-         * @param uri URI to associate with the token
-         * @param nonce optional nonce value for the token, can be empty or null
+         * @param uri the URI on the downstream protected API which the application is trying to access, e.g. https://graph.microsoft.com/beta/me/profile
+         * @param nonce a string obtained by calling the resource (e.g. Microsoft Graph) un-authenticated and parsing the WWW-Authenticate header associated with pop authentication scheme and extracting the nonce parameter, or, on subsequent calls, by parsing the Autheticate-Info header and extracting the nextnonce parameter.
          */
         public InteractiveRequestParametersBuilder proofOfPossession(String httpMethod, URI uri, String nonce) {
             this.proofOfPossession = new PopParameters(httpMethod, uri, nonce);
