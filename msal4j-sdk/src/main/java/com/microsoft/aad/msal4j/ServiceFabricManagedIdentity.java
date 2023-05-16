@@ -8,7 +8,7 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ServiceFabricManagedIdentity extends AbstractManagedIdentity{
+public class ServiceFabricManagedIdentity extends AbstractManagedIdentitySource{
 
     private final static Logger LOG = LoggerFactory.getLogger(ServiceFabricManagedIdentity.class);
     private static final String SERVICE_FABRIC_MSI_API_VERSION = "2019-07-01-preview";
@@ -17,8 +17,8 @@ public class ServiceFabricManagedIdentity extends AbstractManagedIdentity{
 
     private String identityHeaderValue;
 
-    private ServiceFabricManagedIdentity(RequestContext requestContext, URI endpoint, String identityHeaderValue) {
-        super(requestContext, ManagedIdentitySourceType.ServiceFabric);
+    private ServiceFabricManagedIdentity(RequestContext requestContext, ServiceBundle serviceBundle, URI endpoint, String identityHeaderValue) {
+        super(requestContext, serviceBundle, ManagedIdentitySourceType.ServiceFabric);
         this.endpoint = endpoint;
         this.identityHeaderValue = identityHeaderValue;
 
@@ -28,7 +28,8 @@ public class ServiceFabricManagedIdentity extends AbstractManagedIdentity{
         }
     }
 
-    public static AbstractManagedIdentity tryCreate(RequestContext requestContext)
+    public static AbstractManagedIdentitySource create(RequestContext requestContext,
+                                                       ServiceBundle serviceBundle)
     {
         String identityEndpoint = EnvironmentVariables.getIdentityEndpoint();
         String identityHeader = EnvironmentVariables.getIdentityHeader();
@@ -50,11 +51,11 @@ public class ServiceFabricManagedIdentity extends AbstractManagedIdentity{
         }
 
         LOG.info("[Managed Identity] Creating Service Fabric managed identity. Endpoint URI: " + identityEndpoint);
-        return new ServiceFabricManagedIdentity(requestContext, endpoint, identityHeader);
+        return new ServiceFabricManagedIdentity(requestContext, serviceBundle, endpoint, identityHeader);
     }
 
     @Override
-    public ManagedIdentityRequest createRequest(String resource)
+    public ManagedIdentityRequest createManagedIdentityRequest(String resource)
     {
         ManagedIdentityRequest request = new ManagedIdentityRequest(HttpMethod.GET, endpoint);
 

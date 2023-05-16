@@ -156,8 +156,7 @@ public class LabService {
     }
 
     public static String getMSIToken(){
-        if (msiAccessToken == null)
-        {
+        if (msiAccessToken == null) {
             msiAccessToken =
                 getLabAccessTokenForMsi();
         }

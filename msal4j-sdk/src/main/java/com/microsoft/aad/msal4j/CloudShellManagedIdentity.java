@@ -11,18 +11,16 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CloudShellManagedIdentity extends AbstractManagedIdentity {
-
+public class CloudShellManagedIdentity extends AbstractManagedIdentitySource {
     private final static Logger LOG = LoggerFactory.getLogger(CloudShellManagedIdentity.class);
-    public CloudShellManagedIdentity(RequestContext requestContext) {
-
-        super(requestContext, ManagedIdentitySourceType.CloudShell);
+    public CloudShellManagedIdentity(RequestContext requestContext, ServiceBundle serviceBundle) {
+        super(requestContext, serviceBundle, ManagedIdentitySourceType.CloudShell);
     }
 
     private URI endpoint;
     private static final String CloudShell = "Cloud Shell";
 
-    public static AbstractManagedIdentity tryCreate(RequestContext requestContext)
+    public static AbstractManagedIdentitySource create(RequestContext requestContext, ServiceBundle serviceBundle)
     {
         String msiEndpoint = EnvironmentVariables.getMsiEndpoint();
 
@@ -47,11 +45,11 @@ public class CloudShellManagedIdentity extends AbstractManagedIdentity {
         }
 
         LOG.info("[Managed Identity] Creating cloud shell managed identity. Endpoint URI: " + msiEndpoint);
-        return new CloudShellManagedIdentity(endpointUri, requestContext);
+        return new CloudShellManagedIdentity(endpointUri, requestContext, serviceBundle);
     }
 
-    private CloudShellManagedIdentity(URI endpoint, RequestContext requestContext){
-        super(requestContext, ManagedIdentitySourceType.CloudShell);
+    private CloudShellManagedIdentity(URI endpoint, RequestContext requestContext, ServiceBundle serviceBundle){
+        super(requestContext, serviceBundle, ManagedIdentitySourceType.CloudShell);
         this.endpoint = endpoint;
 
         if (isUserAssignedManagedIdentity())
@@ -63,7 +61,7 @@ public class CloudShellManagedIdentity extends AbstractManagedIdentity {
     }
 
     @Override
-    public ManagedIdentityRequest createRequest(String resource)
+    public ManagedIdentityRequest createManagedIdentityRequest(String resource)
     {
         ManagedIdentityRequest request = new ManagedIdentityRequest(HttpMethod.POST, endpoint);
 

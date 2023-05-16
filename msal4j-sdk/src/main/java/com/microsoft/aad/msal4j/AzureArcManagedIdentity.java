@@ -13,19 +13,19 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class AzureArcManagedIdentity extends AbstractManagedIdentity{
+public class AzureArcManagedIdentity extends AbstractManagedIdentitySource{
 
     private static final String ArcApiVersion = "2019-11-01";
     private static final String AzureArc = "Azure Arc";
 
     private static URI endpoint;
     private final static Logger LOG = LoggerFactory.getLogger(AzureArcManagedIdentity.class);
-    public AzureArcManagedIdentity(RequestContext requestContext) {
+    public AzureArcManagedIdentity(RequestContext requestContext, ServiceBundle serviceBundle) {
 
-        super(requestContext, ManagedIdentitySourceType.AzureArc);
+        super(requestContext, serviceBundle, ManagedIdentitySourceType.AzureArc);
     }
 
-    public static AbstractManagedIdentity tryCreate(RequestContext requestContext)
+    public static AbstractManagedIdentitySource create(RequestContext requestContext, ServiceBundle serviceBundle)
     {
         String identityEndpoint = EnvironmentVariables.getIdentityEndpoint();
         String imdsEndpoint = EnvironmentVariables.getImdsEndpoint();
@@ -46,11 +46,11 @@ public class AzureArcManagedIdentity extends AbstractManagedIdentity{
         }
 
         LOG.info("[Managed Identity] Creating Azure Arc managed identity. Endpoint URI: " + endpoint);
-        return new AzureArcManagedIdentity(endpoint, requestContext);
+        return new AzureArcManagedIdentity(endpoint, requestContext, serviceBundle );
     }
 
-    private AzureArcManagedIdentity(URI endpoint, RequestContext requestContext){
-        super(requestContext, ManagedIdentitySourceType.AzureArc);
+    private AzureArcManagedIdentity(URI endpoint, RequestContext requestContext, ServiceBundle serviceBundle){
+        super(requestContext, serviceBundle, ManagedIdentitySourceType.AzureArc);
         this.endpoint = endpoint;
 
         if (isUserAssignedManagedIdentity())
@@ -62,7 +62,7 @@ public class AzureArcManagedIdentity extends AbstractManagedIdentity{
     }
 
     @Override
-    public ManagedIdentityRequest createRequest(String resource)
+    public ManagedIdentityRequest createManagedIdentityRequest(String resource)
     {
         ManagedIdentityRequest request = new ManagedIdentityRequest(HttpMethod.GET, endpoint);
 
@@ -108,7 +108,7 @@ public class AzureArcManagedIdentity extends AbstractManagedIdentity{
 
             String authHeaderValue = "Basic " + splitChallenge[1];
 
-            ManagedIdentityRequest request = createRequest(parameters.getResource());
+            ManagedIdentityRequest request = createManagedIdentityRequest(parameters.getResource());
 
             LOG.info("[Managed Identity] Adding authorization header to the request.");
 

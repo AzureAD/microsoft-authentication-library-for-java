@@ -10,11 +10,9 @@ import java.util.Date;
 
 public class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier{
 
-    private final static Logger LOG = LoggerFactory.getLogger(AcquireTokenByManagedIdentitySupplier.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AcquireTokenByManagedIdentitySupplier.class);
 
     private ManagedIdentityParameters managedIdentityParameters;
-
-
 
     AcquireTokenByManagedIdentitySupplier(AbstractClientApplicationBase abstractClientApplicationBase, MsalRequest msalRequest){
         super(abstractClientApplicationBase, msalRequest);
@@ -65,7 +63,7 @@ public class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultS
 
     private AuthenticationResult fetchNewAccessTokenAndSaveToCache(TokenRequestExecutor tokenRequestExecutor, String host) {
 
-        ManagedIdentityClient managedIdentityClient = new ManagedIdentityClient(msalRequest.requestContext());
+        ManagedIdentityClient managedIdentityClient = new ManagedIdentityClient(msalRequest.requestContext(), tokenRequestExecutor.getServiceBundle());
 
         ManagedIdentityResponse managedIdentityResponse = managedIdentityClient
                 .sendTokenRequest(managedIdentityParameters);

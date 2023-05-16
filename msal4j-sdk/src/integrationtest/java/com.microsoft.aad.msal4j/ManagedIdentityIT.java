@@ -3,8 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import org.easymock.EasyMock;
-import org.powermock.api.easymock.PowerMock;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -14,7 +12,7 @@ import java.util.Map;
 
 import static com.microsoft.aad.msal4j.ManagedIdentityTestUtils.setEnvironmentVariables;
 
-public class ManagedIdentityTests extends SeleniumTest{
+public class ManagedIdentityIT extends SeleniumTest{
     private static final String S_MSI_SCOPES = "https://management.azure.com";
     private static final String S_WRONG_MSI_SCOPES = "https://managements.azure.com";
 
@@ -53,12 +51,11 @@ public class ManagedIdentityTests extends SeleniumTest{
 
     //non-existent Resource ID of the User Assigned Identity
     @Test(dataProvider = "msiAzureResources")
-    public void acquireMSITokenAsync(TestConstants.MsiAzureResource azureResource, String userIdentity, ManagedIdentityIdType idType) throws Exception {
-        //Arrange
-//
-//            // Fetch the env variables from the resource and set them locally
-//            Map<String, String> envVariables =
-//                    getEnvironmentVariables(azureResource);
+    public void acquireMSIToken(TestConstants.MsiAzureResource azureResource, String userIdentity, ManagedIdentityIdType idType)
+            throws Exception {
+            // Fetch the env variables from the resource and set them locally
+            Map<String, String> envVariables =
+                    getEnvironmentVariables(azureResource);
 //
 //            //Set the Environment Variables
 //            setEnvironmentVariables(envVariables);
@@ -84,7 +81,9 @@ public class ManagedIdentityTests extends SeleniumTest{
             ManagedIdentityApplication managedIdentityApplication = createManagedIdentityApplicationWithProxy(uri, userIdentity, idType);
 
             IAuthenticationResult result = managedIdentityApplication
-                .acquireTokenForManagedIdentity(ManagedIdentityParameters.builder(S_MSI_SCOPES).forceRefresh(false).build())
+                .acquireTokenForManagedIdentity(ManagedIdentityParameters.builder(S_MSI_SCOPES)
+                        .forceRefresh(false)
+                        .build())
                     .get();
             
             //1. Token Type
@@ -204,13 +203,11 @@ public class ManagedIdentityTests extends SeleniumTest{
 //            Assert.assertEquals(AbstractManagedIdentity.AppService, ex.ManagedIdentitySource);
     }
 
-//    /// Gets the environment variable
-//    /// <param name="resource"></param>
+   /// Gets the environment variable
     private Map<String, String> getEnvironmentVariables(
             TestConstants.MsiAzureResource resource)
     {
         Map<String, String> environmentVariables = new HashMap<>();
-
         //Get the Environment Variables from the MSI Helper Service
         String uri = S_BASE_URL + "EnvironmentVariables?resource=" + resource;
 
@@ -226,33 +223,33 @@ public class ManagedIdentityTests extends SeleniumTest{
         return environmentVariables;
     }
 
-
-
-
-    /// Create the ManagedIdentityApplication with the http proxy
+    /** Create the ManagedIdentityApplication with the http proxy
     /// <param name="url"></param>
     /// <param name="userAssignedId"></param>
-    /// <returns></returns>
+     <returns></returns> */
     private ManagedIdentityApplication createManagedIdentityApplicationWithProxy(String url, String userAssignedId, ManagedIdentityIdType idType)
     {
-        //Proxy the MSI token request 
-//        MsiProxyHttpManager proxyHttpManager = new MsiProxyHttpManager(url);
 
-        ManagedIdentityApplication.Builder builder;
-//                .withHttpManager(proxyHttpManager);
+        ManagedIdentityApplication.Builder managedIdentityApplicationbuilder;
 
         if (!StringHelper.isNullOrBlank(userAssignedId))
         {
             if(ManagedIdentityIdType.ClientId.equals(idType)){
-                builder = ManagedIdentityApplication.builder(ManagedIdentityId.UserAssignedClientId(userAssignedId));
+                managedIdentityApplicationbuilder = ManagedIdentityApplication
+                        .builder(ManagedIdentityId.UserAssignedClientId(userAssignedId))
+                        .httpClient(new MSIHttpClient(url)); //proxy the MSI token request
             }else{
-                builder = ManagedIdentityApplication.builder(ManagedIdentityId.UserAssignedResourceId(userAssignedId));
+                managedIdentityApplicationbuilder = ManagedIdentityApplication
+                        .builder(ManagedIdentityId.UserAssignedResourceId(userAssignedId))
+                        .httpClient(new MSIHttpClient(url));
             }
         }else{
-            builder = ManagedIdentityApplication.builder(ManagedIdentityId.SystemAssigned());
+            managedIdentityApplicationbuilder = ManagedIdentityApplication
+                    .builder(ManagedIdentityId.SystemAssigned())
+                    .httpClient(new MSIHttpClient(url));
         }
 
-        return builder.build();
+        return managedIdentityApplicationbuilder.build();
     }
 
     private static class MockEnvironment{

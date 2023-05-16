@@ -24,9 +24,7 @@ public class ManagedIdentityRequest extends MsalRequest{
 
     public ManagedIdentityRequest(ManagedIdentityApplication managedIdentityApplication, RequestContext requestContext){
         super(managedIdentityApplication, requestContext);
-
     }
-
     public ManagedIdentityRequest(HttpMethod method, URI baseEndpoint){
         super();
         this.method = method;

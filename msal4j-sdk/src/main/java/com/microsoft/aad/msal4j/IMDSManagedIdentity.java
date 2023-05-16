@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-public class IMDSManagedIdentity extends AbstractManagedIdentity {
+public class IMDSManagedIdentity extends AbstractManagedIdentitySource{
 
     // IMDS constants. Docs for IMDS are available here https://docs.microsoft.com/azure/active-directory/managed-identities-azure-resources/how-to-use-vm-token#get-a-token-using-http
     private final static Logger LOG = LoggerFactory.getLogger(IMDSManagedIdentity.class);
@@ -34,8 +34,9 @@ public class IMDSManagedIdentity extends AbstractManagedIdentity {
 
     private URI imdsEndpoint;
 
-    public IMDSManagedIdentity(RequestContext requestContext) {
-        super(requestContext, ManagedIdentitySourceType.Imds);
+    public IMDSManagedIdentity(RequestContext requestContext,
+                               ServiceBundle serviceBundle) {
+        super(requestContext, serviceBundle, ManagedIdentitySourceType.Imds);
         if (!StringHelper.isNullOrBlank(EnvironmentVariables.getAzurePodIdentityAuthorityHost())){
             LOG.info("[Managed Identity] Environment variable AZURE_POD_IDENTITY_AUTHORITY_HOST for IMDS returned endpoint: " + EnvironmentVariables.getAzurePodIdentityAuthorityHost());
             try {
@@ -62,7 +63,7 @@ public class IMDSManagedIdentity extends AbstractManagedIdentity {
     }
 
     @Override
-    public ManagedIdentityRequest createRequest(String resource) {
+    public ManagedIdentityRequest createManagedIdentityRequest(String resource) {
         ManagedIdentityRequest request = new ManagedIdentityRequest(HttpMethod.GET, imdsEndpoint);
 
         Map<String, String> headers = new HashMap<>();

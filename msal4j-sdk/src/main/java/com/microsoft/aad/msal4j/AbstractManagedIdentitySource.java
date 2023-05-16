@@ -14,17 +14,15 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 
 //base class for all sources that support managed identity
-public abstract class AbstractManagedIdentity {
+public abstract class AbstractManagedIdentitySource {
 
     protected static final String TIMEOUT_ERROR = "[Managed Identity] Authentication unavailable. The request to the managed identity endpoint timed out.";
-    private final static Logger LOG = LoggerFactory.getLogger(AbstractManagedIdentity.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractManagedIdentitySource.class);
     private static final String MANAGED_IDENTITY_NO_RESPONSE_RECEIVED = "[Managed Identity] Authentication unavailable. No response received from the managed identity endpoint.";
     public static final String MANAGED_IDENTITY_REQUEST_FAILED = "managed_identity_request_failed";
 
     protected final RequestContext requestContext;
-
     private ServiceBundle serviceBundle;
-
     private ManagedIdentitySourceType managedIdentitySourceType;
 
    @Getter
@@ -34,18 +32,20 @@ public abstract class AbstractManagedIdentity {
     @Getter
     private String managedIdentityUserAssignedResourceId;
 
-    public AbstractManagedIdentity(RequestContext requestContext, ManagedIdentitySourceType sourceType) {
+    public AbstractManagedIdentitySource(RequestContext requestContext, ServiceBundle serviceBundle,
+                                         ManagedIdentitySourceType sourceType) {
         this.requestContext = requestContext;
         this.managedIdentitySourceType = sourceType;
+        this.serviceBundle = serviceBundle;
     }
 
-    public ManagedIdentityResponse authenticate(
+    public ManagedIdentityResponse getManagedIdentityResponse(
             ManagedIdentityParameters parameters) {
 
         // Convert the scopes to a resource string.
         String resource = parameters.getResource();
 
-        ManagedIdentityRequest request = createRequest(resource);
+        ManagedIdentityRequest request = createManagedIdentityRequest(resource);
 
         OAuthHttpRequest oAuthHttpRequest = null;
         try {
@@ -127,7 +127,7 @@ public abstract class AbstractManagedIdentity {
         }
     }
 
-    public abstract ManagedIdentityRequest createRequest(String resource);
+    public abstract ManagedIdentityRequest createManagedIdentityRequest(String resource);
 
     protected ManagedIdentityResponse getSuccessfulResponse(HTTPResponse response) {
 

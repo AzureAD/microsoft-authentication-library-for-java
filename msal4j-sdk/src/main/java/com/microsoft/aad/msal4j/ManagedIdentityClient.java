@@ -7,32 +7,33 @@ package com.microsoft.aad.msal4j;
  Original source of code: https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/identity/Azure.Identity/src/ManagedIdentityClient.cs */
 public class ManagedIdentityClient {
 
-    private AbstractManagedIdentity managedIdentitySource;
+    private AbstractManagedIdentitySource managedIdentitySource;
 
-    public ManagedIdentityClient(RequestContext requestContext)
+    public ManagedIdentityClient(RequestContext requestContext, ServiceBundle serviceBundle)
     {
-        managedIdentitySource = selectManagedIdentitySource(requestContext);
+        managedIdentitySource = createManagedIdentitySource(requestContext, serviceBundle);
     }
 
     public ManagedIdentityResponse sendTokenRequest(ManagedIdentityParameters parameters)
     {
-        return managedIdentitySource.authenticate(parameters);
+        return managedIdentitySource.getManagedIdentityResponse(parameters);
     }
 
     // This method tries to create managed identity source for different sources, if none is created then defaults to IMDS.
-    private static AbstractManagedIdentity selectManagedIdentitySource(RequestContext requestContext)
+    private static AbstractManagedIdentitySource createManagedIdentitySource(RequestContext requestContext,
+                                                                             ServiceBundle serviceBundle)
     {
-        AbstractManagedIdentity managedIdentitySource;
-        if((managedIdentitySource = ServiceFabricManagedIdentity.tryCreate(requestContext)) != null){
+        AbstractManagedIdentitySource managedIdentitySource;
+        if((managedIdentitySource = ServiceFabricManagedIdentity.create(requestContext, serviceBundle)) != null){
             return managedIdentitySource;
-        }else if((managedIdentitySource = AppServiceManagedIdentity.tryCreate(requestContext)) != null ){
+        }else if((managedIdentitySource = AppServiceManagedIdentity.create(requestContext, serviceBundle)) != null ){
             return managedIdentitySource;
-        }else if((managedIdentitySource = CloudShellManagedIdentity.tryCreate(requestContext)) != null ){
+        }else if((managedIdentitySource = CloudShellManagedIdentity.create(requestContext, serviceBundle)) != null ){
             return managedIdentitySource;
-        }else if((managedIdentitySource = AzureArcManagedIdentity.tryCreate(requestContext)) != null ){
+        }else if((managedIdentitySource = AzureArcManagedIdentity.create(requestContext, serviceBundle)) != null ){
             return managedIdentitySource;
         }else{
-            return new IMDSManagedIdentity(requestContext);
+            return new IMDSManagedIdentity(requestContext, serviceBundle);
         }
     }
 }

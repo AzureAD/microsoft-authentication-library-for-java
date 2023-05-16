@@ -11,7 +11,7 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class AppServiceManagedIdentity extends AbstractManagedIdentity {
+public class AppServiceManagedIdentity extends AbstractManagedIdentitySource{
 
     private final static Logger LOG = LoggerFactory.getLogger(AppServiceManagedIdentity.class);
 
@@ -23,12 +23,12 @@ public class AppServiceManagedIdentity extends AbstractManagedIdentity {
     private String secret;
 
     private static URI endpointUri;
-    public AppServiceManagedIdentity(RequestContext requestContext) {
-        super(requestContext, ManagedIdentitySourceType.AppService);
+    public AppServiceManagedIdentity(RequestContext requestContext, ServiceBundle serviceBundle) {
+        super(requestContext, serviceBundle, ManagedIdentitySourceType.AppService);
     }
 
     @Override
-    public ManagedIdentityRequest createRequest(String resource) {
+    public ManagedIdentityRequest createManagedIdentityRequest(String resource) {
         ManagedIdentityRequest request = new ManagedIdentityRequest(HttpMethod.GET, endpoint);
 
         Map<String, String> headers = new HashMap<>();
@@ -56,22 +56,22 @@ public class AppServiceManagedIdentity extends AbstractManagedIdentity {
         return request;
     }
 
-    private AppServiceManagedIdentity(RequestContext requestContext, URI endpoint, String secret)
+    private AppServiceManagedIdentity(RequestContext requestContext, ServiceBundle serviceBundle, URI endpoint, String secret)
     {
-        super(requestContext, ManagedIdentitySourceType.AppService);
+        super(requestContext, serviceBundle, ManagedIdentitySourceType.AppService);
         this.endpoint = endpoint;
         this.secret = secret;
     }
 
-    protected static AbstractManagedIdentity tryCreate(RequestContext requestContext) {
+    protected static AbstractManagedIdentitySource create(RequestContext requestContext, ServiceBundle serviceBundle) {
         String msiSecret = EnvironmentVariables.getIdentityHeader();
 
-        return tryValidateEnvironmentVariables(EnvironmentVariables.getIdentityEndpoint(), msiSecret)
-                ? new AppServiceManagedIdentity(requestContext, endpointUri, msiSecret)
+        return validateEnvironmentVariables(EnvironmentVariables.getIdentityEndpoint(), msiSecret)
+                ? new AppServiceManagedIdentity(requestContext, serviceBundle, endpointUri, msiSecret)
                 : null;
     }
 
-    private static boolean tryValidateEnvironmentVariables(String msiEndpoint, String secret)
+    private static boolean validateEnvironmentVariables(String msiEndpoint, String secret)
     {
         endpointUri = null;
 
