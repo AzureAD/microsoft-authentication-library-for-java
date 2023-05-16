@@ -130,7 +130,7 @@ public class AuthenticationErrorCode {
     public final static String MSALRUNTIME_INTEROP_ERROR = "interop_package_error";
 
     /**
-     * Indicates an error in the MSAL Java Brokers package
+     * Indicates an error related to the MSAL Java Brokers package
      */
     public final static String MSALJAVA_BROKERS_ERROR = "brokers_package_error";
 }

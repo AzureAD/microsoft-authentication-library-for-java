@@ -20,6 +20,7 @@ public class MsalRuntimeBroker implements IBroker {
     private static final Logger LOG = LoggerFactory.getLogger(MsalRuntimeBroker.class);
 
     private static MsalRuntimeInterop interop;
+    private static Boolean brokerAvailable;
 
     static {
         try {
@@ -68,7 +69,8 @@ public class MsalRuntimeBroker implements IBroker {
                                 ((AuthResult) authResult).getAccessToken(),
                                 ((AuthResult) authResult).getAccount().getAccountId(),
                                 ((AuthResult) authResult).getAccount().getClientInfo(),
-                                ((AuthResult) authResult).getAccessTokenExpirationTime()));
+                                ((AuthResult) authResult).getAccessTokenExpirationTime(),
+                                ((AuthResult) authResult).isPopAuthorization()));
             } else {
                 return interop.acquireTokenSilently(authParameters, application.correlationId(), accountResult)
                         .thenApply(authResult -> parseBrokerAuthResult(application.authority(),
@@ -76,9 +78,8 @@ public class MsalRuntimeBroker implements IBroker {
                                 ((AuthResult) authResult).getAccessToken(),
                                 ((AuthResult) authResult).getAccount().getAccountId(),
                                 ((AuthResult) authResult).getAccount().getClientInfo(),
-                                ((AuthResult) authResult).getAccessTokenExpirationTime())
-
-                        );
+                                ((AuthResult) authResult).getAccessTokenExpirationTime(),
+                                ((AuthResult) authResult).isPopAuthorization()));
             }
         } catch (MsalInteropException interopException) {
             throw new MsalClientException(interopException.getErrorMessage(), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
@@ -110,8 +111,8 @@ public class MsalRuntimeBroker implements IBroker {
                             ((AuthResult) authResult).getAccessToken(),
                             ((AuthResult) authResult).getAccount().getAccountId(),
                             ((AuthResult) authResult).getAccount().getClientInfo(),
-                            ((AuthResult) authResult).getAccessTokenExpirationTime())
-                    );
+                            ((AuthResult) authResult).getAccessTokenExpirationTime(),
+                            ((AuthResult) authResult).isPopAuthorization()));
         } catch (MsalInteropException interopException) {
             throw new MsalClientException(interopException.getErrorMessage(), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
         }
@@ -146,7 +147,8 @@ public class MsalRuntimeBroker implements IBroker {
                             ((AuthResult) authResult).getAccessToken(),
                             ((AuthResult) authResult).getAccount().getAccountId(),
                             ((AuthResult) authResult).getAccount().getClientInfo(),
-                            ((AuthResult) authResult).getAccessTokenExpirationTime()));
+                            ((AuthResult) authResult).getAccessTokenExpirationTime(),
+                            ((AuthResult) authResult).isPopAuthorization()));
         } catch (MsalInteropException interopException) {
             throw new MsalClientException(interopException.getErrorMessage(), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
         }
@@ -176,17 +178,22 @@ public class MsalRuntimeBroker implements IBroker {
      */
     @Override
     public boolean isBrokerAvailable() {
-        try {
-            interop.startupMsalRuntime();
+        //brokerAvailable is only set after the first attempt to call MSALRuntime's startup API
+        if (brokerAvailable == null) {
+            try {
+                interop.startupMsalRuntime();
 
-            LOG.info("MSALRuntime started successfully. MSAL Java will use MSALRuntime in all supported broker flows.");
+                LOG.info("MSALRuntime started successfully. MSAL Java will use MSALRuntime in all supported broker flows.");
 
-            return true;
-        } catch (MsalInteropException e) {
-            LOG.warn("Exception thrown when trying to start MSALRuntime: {}", e.getErrorMessage());
-            LOG.warn("MSALRuntime could not be started. MSAL Java will fall back to non-broker flows.");
+                brokerAvailable = true;
+            } catch (MsalInteropException e) {
+                LOG.warn("Exception thrown when trying to start MSALRuntime: {}", e.getErrorMessage());
+                LOG.warn("MSALRuntime could not be started. MSAL Java will fall back to non-broker flows.");
 
-            return false;
+                brokerAvailable = false;
+            }
         }
+
+        return brokerAvailable;
     }
 }

@@ -5,7 +5,7 @@ import java.net.URI;
 /**
  * Contains parameters used to request a Proof of Possession (PoP) token in supported flows
  */
-class PopParameters {
+public class PopParameters {
 
     HttpMethod httpMethod;
     URI uri;

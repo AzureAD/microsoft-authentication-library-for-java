@@ -44,4 +44,9 @@ public interface IAuthenticationResult extends Serializable {
      * @return access token expiration date
      */
     java.util.Date expiresOnDate();
+
+    /**
+     * @return whether this is a proof-of-possession token
+     */
+    Boolean isPopAuthorization();
 }
