@@ -7,11 +7,11 @@ import java.net.URI;
  */
 class PopParameters {
 
-    String httpMethod;
+    HttpMethod httpMethod;
     URI uri;
     String nonce;
 
-    public String getHttpMethod() {
+    public HttpMethod getHttpMethod() {
         return httpMethod;
     }
 
@@ -23,7 +23,7 @@ class PopParameters {
         return nonce;
     }
 
-    PopParameters(String httpMethod, URI uri, String nonce) {
+    PopParameters(HttpMethod httpMethod, URI uri, String nonce) {
         validatePopAuthScheme(httpMethod, uri);
 
         this.httpMethod = httpMethod;
@@ -34,11 +34,11 @@ class PopParameters {
     /**
      * Performs any minimum validation to confirm this auth scheme could be valid for a POP request
      */
-    void validatePopAuthScheme(String httpMethod, URI uri) {
+    void validatePopAuthScheme(HttpMethod httpMethod, URI uri) {
         //At a minimum HTTP method and host must be non-null
         if (httpMethod == null || uri == null || uri.getHost() == null) {
             throw new MsalClientException(
-                    "HTTP method and URI host must be non-null", "TBD");//TODO: error code
+                    "HTTP method and URI host must be non-null", AuthenticationErrorCode.MSALJAVA_BROKERS_ERROR);
         }
     }
 }

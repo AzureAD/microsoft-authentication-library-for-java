@@ -106,7 +106,7 @@ public class UserNamePasswordParameters implements IAcquireTokenParameters {
          * @param uri URI to associate with the token
          * @param nonce optional nonce value for the token, can be empty or null
          */
-        public UserNamePasswordParametersBuilder proofOfPossession(String httpMethod, URI uri, String nonce) {
+        public UserNamePasswordParametersBuilder proofOfPossession(HttpMethod httpMethod, URI uri, String nonce) {
             this.proofOfPossession = new PopParameters(httpMethod, uri, nonce);
 
             return this;

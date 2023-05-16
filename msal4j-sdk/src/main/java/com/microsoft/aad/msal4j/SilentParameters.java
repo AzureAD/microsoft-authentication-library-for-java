@@ -125,7 +125,7 @@ public class SilentParameters implements IAcquireTokenParameters {
          * @param uri URI to associate with the token
          * @param nonce optional nonce value for the token, can be empty or null
          */
-        public SilentParametersBuilder proofOfPossession(String httpMethod, URI uri, String nonce) {
+        public SilentParametersBuilder proofOfPossession(HttpMethod httpMethod, URI uri, String nonce) {
             this.proofOfPossession = new PopParameters(httpMethod, uri, nonce);
 
             return this;

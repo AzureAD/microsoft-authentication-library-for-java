@@ -138,7 +138,7 @@ public class InteractiveRequestParameters implements IAcquireTokenParameters {
          * @param uri the URI on the downstream protected API which the application is trying to access, e.g. https://graph.microsoft.com/beta/me/profile
          * @param nonce a string obtained by calling the resource (e.g. Microsoft Graph) un-authenticated and parsing the WWW-Authenticate header associated with pop authentication scheme and extracting the nonce parameter, or, on subsequent calls, by parsing the Autheticate-Info header and extracting the nextnonce parameter.
          */
-        public InteractiveRequestParametersBuilder proofOfPossession(String httpMethod, URI uri, String nonce) {
+        public InteractiveRequestParametersBuilder proofOfPossession(HttpMethod httpMethod, URI uri, String nonce) {
             this.proofOfPossession = new PopParameters(httpMethod, uri, nonce);
 
             return this;

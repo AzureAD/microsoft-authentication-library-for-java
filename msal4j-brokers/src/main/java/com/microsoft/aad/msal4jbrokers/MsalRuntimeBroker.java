@@ -45,18 +45,19 @@ public class MsalRuntimeBroker implements IBroker {
         }
 
         try {
-            AuthParameters authParameters = new AuthParameters
-                    .AuthParametersBuilder(application.clientId(),
+            AuthParameters.AuthParametersBuilder authParamsBuilder = new AuthParameters.
+                    AuthParametersBuilder(application.clientId(),
                     application.authority(),
-                    String.join(" ", parameters.scopes()))
-                    .build();
+                    String.join(" ", parameters.scopes()));
 
             //If POP auth scheme configured, set parameters to get MSALRuntime to return POP tokens
             if (parameters.proofOfPossession() != null) {
-                authParameters.setPopParameters(parameters.proofOfPossession().getHttpMethod(),
+                authParamsBuilder.popParameters(parameters.proofOfPossession().getHttpMethod().methodName,
                         parameters.proofOfPossession().getUri(),
                         parameters.proofOfPossession().getNonce());
             }
+
+            AuthParameters authParameters = authParamsBuilder.build();
 
             if (accountResult == null) {
                 return interop.signInSilently(authParameters, application.correlationId())
@@ -87,19 +88,19 @@ public class MsalRuntimeBroker implements IBroker {
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(PublicClientApplication application, InteractiveRequestParameters parameters) {
         try {
-            AuthParameters authParameters = new AuthParameters
-                    .AuthParametersBuilder(application.clientId(),
+            AuthParameters.AuthParametersBuilder authParamsBuilder = new AuthParameters.
+                    AuthParametersBuilder(application.clientId(),
                     application.authority(),
-                    String.join(" ", parameters.scopes()))
-                    .additionalParameters(parameters.extraQueryParameters())
-                    .build();
+                    String.join(" ", parameters.scopes()));
 
             //If POP auth scheme configured, set parameters to get MSALRuntime to return POP tokens
             if (parameters.proofOfPossession() != null) {
-                authParameters.setPopParameters(parameters.proofOfPossession().getHttpMethod(),
+                authParamsBuilder.popParameters(parameters.proofOfPossession().getHttpMethod().methodName,
                         parameters.proofOfPossession().getUri(),
                         parameters.proofOfPossession().getNonce());
             }
+            
+            AuthParameters authParameters = authParamsBuilder.build();
 
             return interop.signInInteractively(parameters.windowHandle(), authParameters, application.correlationId(), parameters.loginHint())
                     .thenCompose(acctResult -> interop.acquireTokenInteractively(parameters.windowHandle(), authParameters, application.correlationId(), ((AuthResult) acctResult).getAccount()))
@@ -123,22 +124,19 @@ public class MsalRuntimeBroker implements IBroker {
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(PublicClientApplication application, UserNamePasswordParameters parameters) {
         try {
-            AuthParameters authParameters =
-                     new AuthParameters
-                             .AuthParametersBuilder(application.clientId(),
-                             application.authority(),
-                             String.join(" ", parameters.scopes()))
-                             .additionalParameters(parameters.extraQueryParameters())
-                             .build();
-
-            authParameters.setUsernamePassword(parameters.username(), new String(parameters.password()));
+            AuthParameters.AuthParametersBuilder authParamsBuilder = new AuthParameters.
+                    AuthParametersBuilder(application.clientId(),
+                    application.authority(),
+                    String.join(" ", parameters.scopes()));
 
             //If POP auth scheme configured, set parameters to get MSALRuntime to return POP tokens
             if (parameters.proofOfPossession() != null) {
-                authParameters.setPopParameters(parameters.proofOfPossession().getHttpMethod(),
+                authParamsBuilder.popParameters(parameters.proofOfPossession().getHttpMethod().methodName,
                         parameters.proofOfPossession().getUri(),
                         parameters.proofOfPossession().getNonce());
             }
+
+            AuthParameters authParameters = authParamsBuilder.build();
 
             return interop.signInSilently(authParameters, application.correlationId())
                     .thenCompose(acctResult -> interop.acquireTokenSilently(authParameters, application.correlationId(), ((AuthResult) acctResult).getAccount()))
