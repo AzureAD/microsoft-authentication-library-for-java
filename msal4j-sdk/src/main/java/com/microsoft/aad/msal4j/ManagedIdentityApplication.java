@@ -4,6 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
+import lombok.Getter;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
@@ -17,23 +18,22 @@ import java.util.concurrent.CompletableFuture;
  */
 public class ManagedIdentityApplication extends AbstractClientApplicationBase{
 
-    private boolean forceRefresh;
-
     private String resource;
 
+    @Getter
     private ManagedIdentityId managedIdentityId;
 
     private ManagedIdentityApplication(Builder builder) {
         super(builder);
-
+        this.managedIdentityId = builder.managedIdentityId;
         log = LoggerFactory.getLogger(ManagedIdentityApplication.class);
     }
 
     /**
      * Creates instance of Builder of ManagedIdentityApplication
      *
-     * @param managedIdentityId         Client ID (Application ID) of the application as registered
-     *                         in the application registration portal (portal.azure.com)
+     * @param managedIdentityId ManagedIdentityId to specify if it System Assigned or User Assigned
+     *                          and provide id if it is user assigned.
      * @return instance of Builder of ManagedIdentityApplication
      */
     public static Builder builder(ManagedIdentityId managedIdentityId) {
@@ -62,9 +62,6 @@ public class ManagedIdentityApplication extends AbstractClientApplicationBase{
     }
 
     public static class Builder extends AbstractClientApplicationBase.Builder<Builder> {
-
-        private boolean forceRefresh;
-
         private String resource;
 
         private ManagedIdentityId managedIdentityId;
@@ -77,11 +74,6 @@ public class ManagedIdentityApplication extends AbstractClientApplicationBase{
         private Builder() {
             super();
 
-        }
-
-        public ManagedIdentityApplication.Builder forceRefresh(boolean forceRefresh){
-            this.forceRefresh = forceRefresh;
-            return self();
         }
 
         public ManagedIdentityApplication.Builder resource(String resource){

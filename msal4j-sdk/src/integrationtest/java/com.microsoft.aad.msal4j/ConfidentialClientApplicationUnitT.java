@@ -38,7 +38,7 @@ import static org.testng.Assert.*;
 
 @PowerMockIgnore({"javax.net.ssl.*"})
 @PrepareForTest({ConfidentialClientApplication.class,
-        ClientCertificate.class, UserDiscoveryRequest.class, JwtHelper.class})
+        ClientCertificate.class, UserDiscoveryRequest.class, JwtHelper.class, EnvironmentVariables.class})
 public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
 
     private ConfidentialClientApplication app = null;
@@ -50,6 +50,44 @@ public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
             CertificateException, UnrecoverableKeyException, NoSuchProviderException {
 
         clientCertificate = CertificateHelper.getClientCertificate();
+    }
+
+    @Test
+    public void testEnvVariables() throws Exception {
+
+        PowerMock.mockStatic(EnvironmentVariables.class);
+
+        EasyMock.expect(
+                EnvironmentVariables.getAzurePodIdentityAuthorityHost()).andReturn("AZURE_POD_IDENTITY").anyTimes();
+        EasyMock.expect(
+                EnvironmentVariables.getIdentityEndpoint()).andReturn("IDENTITY_ENDPOINT").anyTimes();
+        EasyMock.expect(
+                EnvironmentVariables.getIdentityHeader()).andReturn("IDENTITY_HEADER").anyTimes();
+        EasyMock.expect(
+                EnvironmentVariables.getIdentityServerThumbprint()).andReturn("THUMBPRINT").anyTimes();
+        EasyMock.expect(
+                EnvironmentVariables.getImdsEndpoint()).andReturn("IMDS").anyTimes();
+        EasyMock.expect(
+                EnvironmentVariables.getMsiEndpoint()).andReturn("MSI").anyTimes();
+
+        PowerMock.replay(EnvironmentVariables.class);
+        String env = EnvironmentVariables.getMsiEndpoint();
+
+        Assert.assertEquals(env, "MSI");
+
+        OkHttpClientAdapter okHttpClientAdapter = new OkHttpClientAdapter();
+
+        ManagedIdentityApplication.Builder miBuilder = ManagedIdentityApplication.builder(ManagedIdentityId.SystemAssigned())
+                .httpClient(okHttpClientAdapter);
+
+        ManagedIdentityApplication mi = miBuilder.build();
+
+        ManagedIdentityParameters managedIdentityParameters1 = ManagedIdentityParameters.builder("https://management.azure.com").forceRefresh(false).build();
+
+        IAuthenticationResult result = mi.acquireTokenForManagedIdentity(managedIdentityParameters1).get();
+
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.accessToken());
     }
 
     @Test

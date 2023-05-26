@@ -227,54 +227,26 @@ public class ManagedIdentityIT extends SeleniumTest{
     /// <param name="url"></param>
     /// <param name="userAssignedId"></param>
      <returns></returns> */
-    private ManagedIdentityApplication createManagedIdentityApplicationWithProxy(String url, String userAssignedId, ManagedIdentityIdType idType)
-    {
+    private ManagedIdentityApplication createManagedIdentityApplicationWithProxy(String url, String userAssignedId, ManagedIdentityIdType idType) {
 
         ManagedIdentityApplication.Builder managedIdentityApplicationbuilder;
 
-        if (!StringHelper.isNullOrBlank(userAssignedId))
-        {
-            if(ManagedIdentityIdType.ClientId.equals(idType)){
+        if (!StringHelper.isNullOrBlank(userAssignedId)) {
+            if (ManagedIdentityIdType.ClientId.equals(idType)) {
                 managedIdentityApplicationbuilder = ManagedIdentityApplication
                         .builder(ManagedIdentityId.UserAssignedClientId(userAssignedId))
                         .httpClient(new MSIHttpClient(url)); //proxy the MSI token request
-            }else{
+            } else {
                 managedIdentityApplicationbuilder = ManagedIdentityApplication
                         .builder(ManagedIdentityId.UserAssignedResourceId(userAssignedId))
                         .httpClient(new MSIHttpClient(url));
             }
-        }else{
+        } else {
             managedIdentityApplicationbuilder = ManagedIdentityApplication
                     .builder(ManagedIdentityId.SystemAssigned())
                     .httpClient(new MSIHttpClient(url));
         }
 
         return managedIdentityApplicationbuilder.build();
-    }
-
-    private static class MockEnvironment{
-        public static String getIdentityEndpoint() {
-            return "IDENTITY_ENDPOINT";
-        }
-
-        public static String getIdentityHeader() {
-            return "IDENTITY_HEADER";
-        }
-
-        public static String getAzurePodIdentityAuthorityHost() {
-            return "AZURE_POD_IDENTITY_AUTHORITY_HOST";
-        }
-
-        public static String getImdsEndpoint() {
-            return "IMDS_ENDPOINT";
-        }
-
-        public static String getMsiEndpoint() {
-            return "MSI_ENDPOINT";
-        }
-
-        public static String getIdentityServerThumbprint() {
-            return "IDENTITY_SERVER_THUMBPRINT";
-        }
     }
 }

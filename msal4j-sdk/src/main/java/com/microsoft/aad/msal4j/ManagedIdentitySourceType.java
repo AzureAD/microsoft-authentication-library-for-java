@@ -4,8 +4,6 @@
 package com.microsoft.aad.msal4j;
 
 public enum ManagedIdentitySourceType {
-
-    
     /// Default.
     None,
     /// The source to acquire token for managed identity is IMDS.
@@ -18,5 +16,4 @@ public enum ManagedIdentitySourceType {
     CloudShell,
     /// The source to acquire token for managed identity is Service Fabric.
     ServiceFabric
-
 }

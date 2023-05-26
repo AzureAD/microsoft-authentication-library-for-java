@@ -3,9 +3,13 @@
 
 package com.microsoft.aad.msal4j;
 
+import lombok.Getter;
+
 public class ManagedIdentityId {
 
+    @Getter
     private String userAssignedId;
+    @Getter
     private ManagedIdentityIdType idType;
 
     private ManagedIdentityId(ManagedIdentityIdType idType)

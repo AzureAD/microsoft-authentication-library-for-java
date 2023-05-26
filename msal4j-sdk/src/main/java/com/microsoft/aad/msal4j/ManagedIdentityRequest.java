@@ -10,7 +10,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ManagedIdentityRequest extends MsalRequest{
+class ManagedIdentityRequest extends MsalRequest{
 
     private URI baseEndpoint;
 

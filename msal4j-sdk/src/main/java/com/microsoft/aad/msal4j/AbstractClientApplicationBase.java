@@ -294,7 +294,7 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
                     (OnBehalfOfRequest) msalRequest);
         } else if(msalRequest instanceof ManagedIdentityRequest){
             supplier = new AcquireTokenByManagedIdentitySupplier(
-                    this,
+                    (ManagedIdentityApplication) this,
                     msalRequest
             );
         }else {

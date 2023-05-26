@@ -8,7 +8,7 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ServiceFabricManagedIdentity extends AbstractManagedIdentitySource{
+class ServiceFabricManagedIdentity extends AbstractManagedIdentitySource{
 
     private final static Logger LOG = LoggerFactory.getLogger(ServiceFabricManagedIdentity.class);
     private static final String SERVICE_FABRIC_MSI_API_VERSION = "2019-07-01-preview";
@@ -21,7 +21,6 @@ public class ServiceFabricManagedIdentity extends AbstractManagedIdentitySource{
         super(requestContext, serviceBundle, ManagedIdentitySourceType.ServiceFabric);
         this.endpoint = endpoint;
         this.identityHeaderValue = identityHeaderValue;
-
         if (isUserAssignedManagedIdentity())
         {
             LOG.warn(MsalErrorMessage.MANAGED_IDENTITY_USER_ASSIGNED_NOT_CONFIGURABLE_AT_RUNTIME);

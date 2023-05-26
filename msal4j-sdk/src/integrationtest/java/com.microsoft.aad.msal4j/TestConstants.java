@@ -67,6 +67,11 @@ public class TestConstants {
 
     public final static String DEFAULT_ACCESS_TOKEN = "defaultAccessToken";
 
+    public static final String CLIENT_ID = "d3adb33f-c0de-ed0c-c0de-deadb33fc0d3";
+
+    public static final String MI_RESOURCE_ID = "/subscriptions/ffa4aaa2-4444-4444-5555-e3ccedd3d046/resourcegroups/UAMI_group/providers/Microsoft.ManagedIdentityClient/userAssignedIdentities/UAMI";
+
+
     //MSI Azure resources
     public enum MsiAzureResource
     {

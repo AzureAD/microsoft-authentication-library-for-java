@@ -11,7 +11,7 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class AppServiceManagedIdentity extends AbstractManagedIdentitySource{
+class AppServiceManagedIdentity extends AbstractManagedIdentitySource{
 
     private final static Logger LOG = LoggerFactory.getLogger(AppServiceManagedIdentity.class);
 

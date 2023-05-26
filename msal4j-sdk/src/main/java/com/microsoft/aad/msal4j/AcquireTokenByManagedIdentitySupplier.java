@@ -14,8 +14,8 @@ public class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultS
 
     private ManagedIdentityParameters managedIdentityParameters;
 
-    AcquireTokenByManagedIdentitySupplier(AbstractClientApplicationBase abstractClientApplicationBase, MsalRequest msalRequest){
-        super(abstractClientApplicationBase, msalRequest);
+    AcquireTokenByManagedIdentitySupplier(ManagedIdentityApplication managedIdentityApplication, MsalRequest msalRequest){
+        super(managedIdentityApplication, msalRequest);
         this.managedIdentityParameters = (ManagedIdentityParameters) msalRequest.requestContext().apiParameters();
     }
 
@@ -63,10 +63,10 @@ public class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultS
 
     private AuthenticationResult fetchNewAccessTokenAndSaveToCache(TokenRequestExecutor tokenRequestExecutor, String host) {
 
-        ManagedIdentityClient managedIdentityClient = new ManagedIdentityClient(msalRequest.requestContext(), tokenRequestExecutor.getServiceBundle());
+        ManagedIdentityClient managedIdentityClient = new ManagedIdentityClient(msalRequest, tokenRequestExecutor.getServiceBundle());
 
         ManagedIdentityResponse managedIdentityResponse = managedIdentityClient
-                .sendTokenRequest(managedIdentityParameters);
+                .getManagedIdentityResponse(managedIdentityParameters);
 
         AuthenticationResult authenticationResult =  createFromManagedIdentityResponse(managedIdentityResponse);
         clientApplication.tokenCache.saveTokens(tokenRequestExecutor,authenticationResult,clientApplication.authenticationAuthority.host);

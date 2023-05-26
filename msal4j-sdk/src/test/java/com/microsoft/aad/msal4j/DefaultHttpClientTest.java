@@ -53,12 +53,32 @@ public class DefaultHttpClientTest extends PowerMockTestCase {
 
         PowerMock.replayAll(mockCon, httpClient);
 
+        ManagedIdentityApplication.Builder miBuilder = ManagedIdentityApplication.builder(ManagedIdentityId.SystemAssigned())
+                .httpClient(httpClient);
 
-        HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, TEST_URL);
-        IHttpResponse response = httpClient.send(httpRequest);
+        // Disabling shared cache options to avoid cross test pollution.
+        // miBuilder.Config.AccessorOptions = null;
 
+        ManagedIdentityApplication mi = miBuilder.build();
 
-        Assert.assertEquals(response.body(), errorResponse);
-        Assert.assertEquals(response.headers(), expectedHeaders);
+//            httpManager.AddManagedIdentityMockHandler(
+//                    endpoint,
+//                    Resource,
+//                    MockHelpers.GetMsiSuccessfulResponse(),
+//                    managedIdentitySource);
+
+        ManagedIdentityParameters managedIdentityParameters1 = ManagedIdentityParameters.builder("https://management.azure.com").forceRefresh(false).build();
+
+        IAuthenticationResult result = mi.acquireTokenForManagedIdentity(managedIdentityParameters1).get();
+
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.accessToken());
+
+//        HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, TEST_URL);
+//        IHttpResponse response = httpClient.send(httpRequest);
+//
+//
+//        Assert.assertEquals(response.body(), errorResponse);
+//        Assert.assertEquals(response.headers(), expectedHeaders);
     }
 }

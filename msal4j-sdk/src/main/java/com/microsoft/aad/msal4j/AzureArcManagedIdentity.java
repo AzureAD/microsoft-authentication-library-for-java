@@ -13,7 +13,7 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class AzureArcManagedIdentity extends AbstractManagedIdentitySource{
+class AzureArcManagedIdentity extends AbstractManagedIdentitySource{
 
     private static final String ArcApiVersion = "2019-11-01";
     private static final String AzureArc = "Azure Arc";
@@ -25,7 +25,7 @@ public class AzureArcManagedIdentity extends AbstractManagedIdentitySource{
         super(requestContext, serviceBundle, ManagedIdentitySourceType.AzureArc);
     }
 
-    public static AbstractManagedIdentitySource create(RequestContext requestContext, ServiceBundle serviceBundle)
+    static AbstractManagedIdentitySource create(RequestContext requestContext, ServiceBundle serviceBundle)
     {
         String identityEndpoint = EnvironmentVariables.getIdentityEndpoint();
         String imdsEndpoint = EnvironmentVariables.getImdsEndpoint();

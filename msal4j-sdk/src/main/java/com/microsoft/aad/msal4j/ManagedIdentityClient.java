@@ -9,12 +9,22 @@ public class ManagedIdentityClient {
 
     private AbstractManagedIdentitySource managedIdentitySource;
 
-    public ManagedIdentityClient(RequestContext requestContext, ServiceBundle serviceBundle)
+    public ManagedIdentityClient(MsalRequest msalRequest, ServiceBundle serviceBundle)
     {
-        managedIdentitySource = createManagedIdentitySource(requestContext, serviceBundle);
+        managedIdentitySource = createManagedIdentitySource(msalRequest.requestContext(), serviceBundle);
+        ManagedIdentityApplication managedIdentityApplication = (ManagedIdentityApplication) msalRequest.application();
+        ManagedIdentityIdType identityIdType= managedIdentityApplication.getManagedIdentityId().getIdType();
+        if(!identityIdType.equals(ManagedIdentityIdType.SystemAssigned)){
+            managedIdentitySource.setUserAssignedManagedIdentity(true);
+            String userAssignedId = managedIdentityApplication.getManagedIdentityId().getUserAssignedId();
+            if(identityIdType.equals(ManagedIdentityIdType.ClientId)){
+                managedIdentitySource.setManagedIdentityUserAssignedClientId(userAssignedId);
+            }else if(identityIdType.equals(ManagedIdentityIdType.ResourceId)){
+                managedIdentitySource.setManagedIdentityUserAssignedResourceId(userAssignedId);
+            }
+        }
     }
-
-    public ManagedIdentityResponse sendTokenRequest(ManagedIdentityParameters parameters)
+    public ManagedIdentityResponse getManagedIdentityResponse(ManagedIdentityParameters parameters)
     {
         return managedIdentitySource.getManagedIdentityResponse(parameters);
     }

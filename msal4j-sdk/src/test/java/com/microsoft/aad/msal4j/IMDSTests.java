@@ -16,11 +16,9 @@ public class IMDSTests {
         setEnvironmentVariables(ManagedIdentitySourceType.Imds, "http://169.254.169.254");
 
         ManagedIdentityApplication managedIdentityApplication = ManagedIdentityApplication.builder(ManagedIdentityId.SystemAssigned())
-                .forceRefresh(true)
                 .build();
 
         ManagedIdentityApplication managedIdentityApplication1 = ManagedIdentityApplication.builder(ManagedIdentityId.UserAssignedClientId(""))
-                .forceRefresh(true)
                 .build();
 
 //        httpManager.AddManagedIdentityMockHandler(TestConfiguration.IMDS_ENDPOINT, TestConfiguration.RESOURCE, MockHelpers.GetMsiImdsErrorResponse(),

@@ -5,6 +5,7 @@ import com.nimbusds.oauth2.sdk.SerializeException;
 import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import lombok.Getter;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +15,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 
 //base class for all sources that support managed identity
-public abstract class AbstractManagedIdentitySource {
+abstract class AbstractManagedIdentitySource {
 
     protected static final String TIMEOUT_ERROR = "[Managed Identity] Authentication unavailable. The request to the managed identity endpoint timed out.";
     private static final Logger LOG = LoggerFactory.getLogger(AbstractManagedIdentitySource.class);
@@ -26,10 +27,13 @@ public abstract class AbstractManagedIdentitySource {
     private ManagedIdentitySourceType managedIdentitySourceType;
 
    @Getter
+   @Setter
    private boolean isUserAssignedManagedIdentity;
    @Getter
+   @Setter
    private String managedIdentityUserAssignedClientId;
     @Getter
+    @Setter
     private String managedIdentityUserAssignedResourceId;
 
     public AbstractManagedIdentitySource(RequestContext requestContext, ServiceBundle serviceBundle,
@@ -159,8 +163,6 @@ public abstract class AbstractManagedIdentitySource {
 
         return String.format("[Managed Identity] Error Code: %s Error Message: %s",
                 managedIdentityErrorResponse.getError(), managedIdentityErrorResponse.getErrorDescription());
-
-
 
     }
 }
