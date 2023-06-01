@@ -74,8 +74,7 @@ public class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultS
     }
 
     private AuthenticationResult createFromManagedIdentityResponse(ManagedIdentityResponse managedIdentityResponse){
-        long currTimestampSec = new Date().getTime() / 1000;
-        long expiresOn = Long.valueOf(currTimestampSec + managedIdentityResponse.expiresOn);
+        long expiresOn = Long.valueOf(managedIdentityResponse.expiresOn);
         long refreshOn = expiresOn > 2*3600 ? (expiresOn/2) : 0L;
 
         return AuthenticationResult.builder()

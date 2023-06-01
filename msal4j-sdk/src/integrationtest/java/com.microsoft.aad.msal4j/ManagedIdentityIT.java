@@ -3,14 +3,14 @@
 
 package com.microsoft.aad.msal4j;
 
+import org.easymock.EasyMock;
+import org.powermock.api.easymock.PowerMock;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.microsoft.aad.msal4j.ManagedIdentityTestUtils.setEnvironmentVariables;
 
 public class ManagedIdentityIT extends SeleniumTest{
     private static final String S_MSI_SCOPES = "https://management.azure.com";
@@ -58,21 +58,8 @@ public class ManagedIdentityIT extends SeleniumTest{
                     getEnvironmentVariables(azureResource);
 //
 //            //Set the Environment Variables
-//            setEnvironmentVariables(envVariables);
+//            mockEnvironmentVariables(envVariables);
 
-//        PowerMock.mockStatic(EnvironmentVariables.class);
-//        EasyMock.expect(
-//                EnvironmentVariables.getAzurePodIdentityAuthorityHost()).andReturn("AZURE_POD_IDENTITY");
-//        EasyMock.expect(
-//                EnvironmentVariables.getIdentityEndpoint()).andReturn("IDENTITY_ENDPOINT");
-//        EasyMock.expect(
-//                EnvironmentVariables.getIdentityHeader()).andReturn("IDENTITY_HEADER");
-//        EasyMock.expect(
-//                EnvironmentVariables.getIdentityServerThumbprint()).andReturn("THUMBPRINT");
-//        EasyMock.expect(
-//                EnvironmentVariables.getImdsEndpoint()).andReturn("IMDS");
-//        EasyMock.expect(
-//                EnvironmentVariables.getMsiEndpoint()).andReturn("MSI");
             //form the http proxy URI
             String uri = S_BASE_URL + "MSIToken?" +
                 "azureresource=" + azureResource + "&uri=";
@@ -121,7 +108,7 @@ public class ManagedIdentityIT extends SeleniumTest{
                     getEnvironmentVariables(azureResource);
 
             //Set the Environment Variables
-            setEnvironmentVariables(envVariables);
+//            mockEnvironmentVariables(envVariables);
 
             //form the http proxy URI
             String uri = S_BASE_URL + "MSIToken?" +
@@ -153,7 +140,7 @@ public class ManagedIdentityIT extends SeleniumTest{
                     getEnvironmentVariables(azureResource);
 
             //Set the Environment Variables
-            setEnvironmentVariables(envVariables);
+//            mockEnvironmentVariables(envVariables);
 
             //form the http proxy URI
             String uri = S_BASE_URL + "MSIToken?" +
@@ -185,7 +172,7 @@ public class ManagedIdentityIT extends SeleniumTest{
                     getEnvironmentVariables(azureResource);
 
             //Set the Environment Variables
-            setEnvironmentVariables(envVariables);
+//            mockEnvironmentVariables(envVariables);
 
             //form the http proxy URI
             String uri = S_BASE_URL + "MSIToken?" +
@@ -248,5 +235,38 @@ public class ManagedIdentityIT extends SeleniumTest{
         }
 
         return managedIdentityApplicationbuilder.build();
+    }
+
+    private void mockEnvironmentVariables(String endpoint, String managedIdentitySource){
+        PowerMock.mockStatic(EnvironmentVariables.class);
+        String secret = "secret";
+        if(managedIdentitySource.equals(ManagedIdentitySourceType.AppService.toString())){
+            EasyMock.expect(
+                    EnvironmentVariables.getIdentityEndpoint()).andReturn(endpoint).anyTimes();
+            EasyMock.expect(
+                    EnvironmentVariables.getIdentityHeader()).andReturn(secret).anyTimes();
+            EasyMock.expect(
+                    EnvironmentVariables.getIdentityServerThumbprint()).andReturn(null).anyTimes();
+        }else if(managedIdentitySource.equals(ManagedIdentitySourceType.Imds.toString())) {
+            EasyMock.expect(
+                    EnvironmentVariables.getAzurePodIdentityAuthorityHost()).andReturn(endpoint).anyTimes();
+        }else if(managedIdentitySource.equals(ManagedIdentitySourceType.AzureArc.toString())) {
+            EasyMock.expect(
+                    EnvironmentVariables.getIdentityEndpoint()).andReturn(endpoint).anyTimes();
+            EasyMock.expect(
+                    EnvironmentVariables.getImdsEndpoint()).andReturn("http://localhost:40342").anyTimes();
+        }else if(managedIdentitySource.equals(ManagedIdentitySourceType.CloudShell.toString())){
+            EasyMock.expect(
+                    EnvironmentVariables.getMsiEndpoint()).andReturn(endpoint).anyTimes();
+        }else if(managedIdentitySource.equals(ManagedIdentitySourceType.ServiceFabric.toString())){
+            EasyMock.expect(
+                    EnvironmentVariables.getIdentityEndpoint()).andReturn(endpoint).anyTimes();
+            EasyMock.expect(
+                    EnvironmentVariables.getIdentityHeader()).andReturn(secret).anyTimes();
+            EasyMock.expect(
+                    EnvironmentVariables.getIdentityServerThumbprint()).andReturn("thumbprint").anyTimes();
+        }
+
+        PowerMock.replay(EnvironmentVariables.class);
     }
 }
