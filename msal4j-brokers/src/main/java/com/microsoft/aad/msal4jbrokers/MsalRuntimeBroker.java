@@ -176,4 +176,37 @@ public class MsalRuntimeBroker implements IBroker {
             return false;
         }
     }
+
+    /**
+     * Toggles whether or not detailed MSALRuntime logs will appear in MSAL Java's normal logging framework.
+     *
+     * If enabled, you will see logs directly from MSALRuntime, containing verbose information relating to telemetry, API calls,successful/failed requests, and more.
+     * These logs will appear alongside MSAL Java's logs (with a message indicating they came from MSALRuntime), and will follow the same log level as MSAL Java's logs (info/debug/error/etc.).
+     *
+     * If disabled (default), MSAL Java will still produce some logs related to MSALRuntime, particularly in error messages, but will be much less verbose.
+     *
+     * @param enableLogging true to enable MSALRuntime logs, false to disable it
+     */
+    public void enableBrokerLogging(boolean enableLogging) {
+        try {
+            MsalRuntimeInterop.toggleMsalRuntimeLogging(enableLogging);
+        } catch (Exception ex) {
+            throw new MsalClientException(String.format("Error occurred when calling MSALRuntime logging API: %s", ex.getMessage()), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
+        }
+    }
+
+    /**
+     * If enabled, Personal Identifiable Information (PII) can appear in logs and error messages produced by MSALRuntime.
+     *
+     * If disabled (default), PII will not be shown, and you will simply see "(PII)" or similar notes in places where PII data would have appeared.
+     *
+     * @param enablePII true to allow PII to appear in logs and error messages, false to disallow it
+     */
+    public void enableBrokerPIILogging(boolean enablePII) {
+        try {
+            MsalRuntimeInterop.toggleMsalRuntimePIILogging(enablePII);
+        } catch (Exception ex) {
+            throw new MsalClientException(String.format("Error occurred when calling MSALRuntime PII logging API: %s", ex.getMessage()), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
+        }
+    }
 }
