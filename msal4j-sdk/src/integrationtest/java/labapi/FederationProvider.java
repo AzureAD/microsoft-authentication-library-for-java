@@ -12,6 +12,7 @@ public class FederationProvider {
     public static final String ADFS_2019 = "adfsv2019";
     public static final String PING = "ping";
     public static final String SHIBBOLETH = "shibboleth";
+    public static final String CIAM = "ciam";
 
 }
 

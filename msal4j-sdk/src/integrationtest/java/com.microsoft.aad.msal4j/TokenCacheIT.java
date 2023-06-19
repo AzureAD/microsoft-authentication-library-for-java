@@ -9,6 +9,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 public class TokenCacheIT {
@@ -32,10 +34,14 @@ public class TokenCacheIT {
         // Check that cache is empty
         Assert.assertEquals(pca.getAccounts().join().size(), 0);
 
+        Map<String, String> extraQueryParameters = new HashMap<>();
+        extraQueryParameters.put("test", "test");
+
         pca.acquireToken(UserNamePasswordParameters.
                 builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
                         user.getUpn(),
                         user.getPassword().toCharArray())
+                        .extraQueryParameters(extraQueryParameters)
                 .build())
                 .get();
 

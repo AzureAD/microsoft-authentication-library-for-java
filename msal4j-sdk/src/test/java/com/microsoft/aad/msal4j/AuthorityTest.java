@@ -34,11 +34,37 @@ public class AuthorityTest extends AbstractMsalTests {
         Assert.assertEquals(Authority.detectAuthorityType(url), AuthorityType.B2C);
     }
 
+    @DataProvider(name = "ciamAuthorities")
+    public static Object[][] createCiamAuthorityData() throws MalformedURLException {
+        return new Object[][]{{new URL("https://msidlabciam1.ciamlogin.com/")},
+                {new URL("https://msidlabciam1.ciamlogin.com/d57fb3d4-4b5a-4144-9328-9c1f7d58179d/")},
+                {new URL("https://msidlabciam1.ciamlogin.com/msidlabciam1.onmicrosoft.com/")},
+                {new URL("https://msidlabciam1.ciamlogin.com/aDomain/")}};
+    }
+
+    @Test(dataProvider = "ciamAuthorities")
+    public void testDetectAuthorityType_CIAM(URL authority) throws Exception {
+        Assert.assertEquals(Authority.detectAuthorityType(authority), AuthorityType.CIAM);
+    }
+
+    @DataProvider(name = "validCiamAuthoritiesAndTransformedAuthority")
+    public static Object[][] createCiamAndTransformedAuthorityData() throws MalformedURLException {
+        return new Object[][]{{new URL("https://msidlabciam1.ciamlogin.com/"),new URL("https://msidlabciam1.ciamlogin.com/msidlabciam1.onmicrosoft.com/")},
+                {new URL("https://msidlabciam1.ciamlogin.com/d57fb3d4-4b5a-4144-9328-9c1f7d58179d"),new URL("https://msidlabciam1.ciamlogin.com/d57fb3d4-4b5a-4144-9328-9c1f7d58179d")},
+                {new URL("https://msidlabciam1.ciamlogin.com/msidlabciam1.onmicrosoft.com"),new URL("https://msidlabciam1.ciamlogin.com/msidlabciam1.onmicrosoft.com")},
+                {new URL("https://msidlabciam1.ciamlogin.com/aDomain"),new URL("https://msidlabciam1.ciamlogin.com/aDomain")}};
+    }
+
+    @Test(dataProvider = "validCiamAuthoritiesAndTransformedAuthority")
+    public void testCiamAuthorityTransformation(URL authority, URL transformedAuthority) throws Exception{
+        Assert.assertEquals(CIAMAuthority.transformAuthority(authority), transformedAuthority);
+    }
+
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp =
-                    "B2C 'authority' Uri should have at least 3 segments in the path \\(i.e. https://<host>/tfp/<tenant>/<policy>/...\\)")
+                    "Valid B2C 'authority' URLs should follow either of these formats.*")
     public void testB2CAuthorityConstructor_NotEnoughSegments() throws MalformedURLException {
-        new B2CAuthority(new URL("https://something.com/tfp/somethingelse/"));
+        new B2CAuthority(new URL("https://something.com/somethingelse/"));
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "authority should use the 'https' scheme")
