@@ -49,7 +49,8 @@ public class MsalRuntimeBroker implements IBroker {
             AuthParameters.AuthParametersBuilder authParamsBuilder = new AuthParameters.
                     AuthParametersBuilder(application.clientId(),
                     application.authority(),
-                    String.join(" ", parameters.scopes()));
+                    String.join(" ", parameters.scopes()))
+                    .additionalParameters(parameters.extraQueryParameters());
 
             //If POP auth scheme configured, set parameters to get MSALRuntime to return POP tokens
             if (parameters.proofOfPossession() != null) {
@@ -93,7 +94,8 @@ public class MsalRuntimeBroker implements IBroker {
                     AuthParametersBuilder(application.clientId(),
                     application.authority(),
                     String.join(" ", parameters.scopes()))
-                    .redirectUri(parameters.redirectUri().toString());
+                    .redirectUri(parameters.redirectUri().toString())
+                    .additionalParameters(parameters.extraQueryParameters());
 
             //If POP auth scheme configured, set parameters to get MSALRuntime to return POP tokens
             if (parameters.proofOfPossession() != null) {
@@ -129,7 +131,8 @@ public class MsalRuntimeBroker implements IBroker {
             AuthParameters.AuthParametersBuilder authParamsBuilder = new AuthParameters.
                     AuthParametersBuilder(application.clientId(),
                     application.authority(),
-                    String.join(" ", parameters.scopes()));
+                    String.join(" ", parameters.scopes()))
+                    .additionalParameters(parameters.extraQueryParameters());
 
             //If POP auth scheme configured, set parameters to get MSALRuntime to return POP tokens
             if (parameters.proofOfPossession() != null) {
