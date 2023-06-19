@@ -7,23 +7,32 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier {
 
-    private final static Logger LOG = LoggerFactory.getLogger(AcquireTokenByAuthorizationGrantSupplier.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AcquireTokenByInteractiveFlowSupplier.class);
 
     private PublicClientApplication clientApplication;
     private InteractiveRequest interactiveRequest;
 
     private BlockingQueue<AuthorizationResult> authorizationResultQueue;
     private HttpListener httpListener;
+
+    /**MSAL tried to open the browser on Linux using the xdg-open, gnome-open, or kfmclient tools, but failed.
+     Make sure you can open a page using xdg-open tool. See <a href="https://aka.ms/msal-net-os-browser">...</a> for details. */
+    public static final String LINUX_XDG_OPEN = "linux_xdg_open_failed";
+
+    public static final String LINUX_OPEN_AS_SUDO_NOT_SUPPORTED = "Unable to open a web page using xdg-open, gnome-open, kfmclient or wslview tools in sudo mode. Please run the process as non-sudo user.";
 
     AcquireTokenByInteractiveFlowSupplier(PublicClientApplication clientApplication,
                                           InteractiveRequest request) {
@@ -106,8 +115,38 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
                     AuthenticationErrorCode.INVALID_REDIRECT_URI);
         }
     }
+    private static List<String> getOpenToolsLinux() {
+            return Arrays.asList("xdg-open", "gnome-open", "kfmclient", "microsoft-edge", "wslview");
+    }
 
-    private void openDefaultSystemBrowser(URL url) {
+    private static String getExecutablePath(String executable) {
+        String pathEnvVar = System.getenv("PATH");
+        if (pathEnvVar != null) {
+            String[] paths = pathEnvVar.split(File
+                    .pathSeparator);
+            for (String basePath : paths) {
+                String path = basePath + File.separator + executable;
+                if (new File(path).exists()) {
+                    return path;
+                }
+            }
+        }
+        return null;
+    }
+
+    private void openDefaultSystemBrowser(URL url){
+        if (OSHelper.isWindows()) { //windows
+            openDefaultSystemBrowserInWindows(url);
+        } else if (OSHelper.isMac()) { // mac os
+            openDefaultSystemBrowserInMac(url);
+        } else if (OSHelper.isLinux()) { //linux or unix os
+            openDefaultSystemBrowserInLinux(url);
+        } else {
+            throw new UnsupportedOperationException(OSHelper.getOs() + "Operating system not supported exception.");
+        }
+    }
+
+    private static void openDefaultSystemBrowserInWindows(URL url){
         try {
             if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
                 Desktop.getDesktop().browse(url.toURI());
@@ -118,6 +157,41 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
             }
         } catch (URISyntaxException | IOException ex) {
             throw new MsalClientException(ex);
+        }
+    }
+
+    private static void openDefaultSystemBrowserInMac(URL url){
+        Runtime runtime = Runtime.getRuntime();
+        try {
+            runtime.exec("open " + url);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static void openDefaultSystemBrowserInLinux(URL url){
+        String sudoUser = System.getenv("SUDO_USER");
+        if (sudoUser != null && !sudoUser.isEmpty()) {
+            throw new MsalClientException(LINUX_XDG_OPEN, LINUX_OPEN_AS_SUDO_NOT_SUPPORTED);
+        }
+
+        boolean opened = false;
+        List<String> openTools = getOpenToolsLinux();
+        for (String openTool : openTools) {
+            String openToolPath = getExecutablePath(openTool);
+            if (openToolPath != null) {
+                Runtime runtime = Runtime.getRuntime();
+                try {
+                    runtime.exec(openTool + url);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                opened = true;
+                break;
+            }
+        }
+        if (!opened) {
+            throw new MsalClientException(LINUX_XDG_OPEN, LINUX_OPEN_AS_SUDO_NOT_SUPPORTED);
         }
     }
 

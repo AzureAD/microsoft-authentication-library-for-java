@@ -16,4 +16,6 @@ interface IAcquireTokenParameters {
 
     Map<String, String> extraHttpHeaders();
     String tenant();
+
+    Map<String, String> extraQueryParameters();
 }

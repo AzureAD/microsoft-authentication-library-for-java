@@ -31,7 +31,6 @@ import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
-import java.util.function.Function;
 
 import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 import static org.easymock.EasyMock.*;
@@ -261,6 +260,8 @@ public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
         Assert.assertTrue(body.contains("client_assertion_type=" + URLEncoder.encode(JWTAuthentication.CLIENT_ASSERTION_TYPE, "utf-8")));
         Assert.assertTrue(body.contains("scope=" + URLEncoder.encode("openid profile offline_access " + scope, "utf-8")));
         Assert.assertTrue(body.contains("client_id=" + TestConfiguration.AAD_CLIENT_ID));
+        Assert.assertTrue(body.contains("test=test"));
+        Assert.assertTrue(body.contains("id_token_hint=token_hint_value"));
     }
 
     private ServiceBundle mockedServiceBundle(IHttpClient httpClientMock) {
@@ -274,7 +275,15 @@ public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
     private ClientCredentialRequest getClientCredentialRequest(ConfidentialClientApplication app, String scope) {
         Set<String> scopes = new HashSet<>();
         scopes.add(scope);
-        ClientCredentialParameters clientCredentials = ClientCredentialParameters.builder(scopes).tenant(IdToken.TENANT_IDENTIFIER).build();
+
+        Map<String, String> extraQueryParameters = new HashMap<>();
+        extraQueryParameters.put("id_token_hint", "token_hint_value");
+        extraQueryParameters.put("test", "test");
+
+        ClientCredentialParameters clientCredentials = ClientCredentialParameters.builder(scopes)
+                .tenant(IdToken.TENANT_IDENTIFIER)
+                .extraQueryParameters(extraQueryParameters)
+                .build();
         RequestContext requestContext = new RequestContext(
                 app,
                 PublicApi.ACQUIRE_TOKEN_FOR_CLIENT,
@@ -309,6 +318,7 @@ public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
         IClientCredential iClientCredential = ClientCredentialFactory.createFromClientAssertion(
                 clientAssertion.assertion());
 
+        Long refreshInSeconds = new Date().getTime() / 1000 + + 800000;
         //builds client with AppTokenProvider
         ConfidentialClientApplication cca = ConfidentialClientApplication.
                 builder(TestConfiguration.AAD_CLIENT_ID, iClientCredential)
@@ -316,7 +326,7 @@ public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
                     Assert.assertNotNull(parameters.scopes);
                     Assert.assertNotNull(parameters.correlationId);
                     Assert.assertNotNull(parameters.tenantId);
-                    return getAppTokenProviderResult("/default");
+                    return getAppTokenProviderResult("/default", refreshInSeconds);
                 })
                 .build();
 
@@ -329,6 +339,10 @@ public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
         Assert.assertNotNull(result1.accessToken());
 
         Assert.assertEquals(cca.tokenCache.accessTokens.size(), 1);
+        //check that refreshOn is set correctly when provided by an app developer
+        Assert.assertNotNull(cca.tokenCache.accessTokens.values().iterator().next().refreshOn());
+        Assert.assertEquals(cca.tokenCache.accessTokens.values().iterator().next().refreshOn(), refreshInSeconds.toString());
+        System.out.println(cca.tokenCache.accessTokens.values().iterator().next().refreshOn());
 
         //Acquire token from cache
 
@@ -347,7 +361,7 @@ public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
                     Assert.assertNotNull(parameters.scopes);
                     Assert.assertNotNull(parameters.correlationId);
                     Assert.assertNotNull(parameters.tenantId);
-                    return getAppTokenProviderResult("/newScope");
+                    return getAppTokenProviderResult("/newScope", 0L);
                 })
                 .build();
 
@@ -360,17 +374,20 @@ public class ConfidentialClientApplicationUnitT extends PowerMockTestCase {
 
         Assert.assertNotEquals(result2.accessToken(), result3.accessToken());
         Assert.assertEquals(cca.tokenCache.accessTokens.size(), 1);
-
+        //check that refreshOn is set correctly when a value is not provided by an app developer
+        Assert.assertNotNull(cca.tokenCache.accessTokens.values().iterator().next().refreshOn());
+        System.out.println(cca.tokenCache.accessTokens.values().iterator().next().refreshOn());
     }
 
-    private CompletableFuture<TokenProviderResult> getAppTokenProviderResult(String differentScopesForAt)
+    private CompletableFuture<TokenProviderResult> getAppTokenProviderResult(String differentScopesForAt,
+                                                                             long refreshInSeconds)
     {
         long currTimestampSec = new Date().getTime() / 1000;
         TokenProviderResult token = new TokenProviderResult();
         token.setAccessToken(TestConstants.DEFAULT_ACCESS_TOKEN + differentScopesForAt); //Used to indicate that there is a new access token for a different set of scopes
         token.setTenantId("tenantId");
         token.setExpiresInSeconds(currTimestampSec + 1000000);
-        token.setRefreshInSeconds(currTimestampSec + 800000);
+        token.setRefreshInSeconds(refreshInSeconds);
 
         return CompletableFuture.completedFuture(token);
     }

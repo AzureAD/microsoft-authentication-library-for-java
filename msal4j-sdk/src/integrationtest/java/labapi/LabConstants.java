@@ -14,6 +14,7 @@ public class LabConstants {
     public final static String USER_MSA_USERNAME_URL = "https://msidlabs.vault.azure.net/secrets/MSA-MSIDLAB4-UserName";
     public final static String USER_MSA_PASSWORD_URL = "https://msidlabs.vault.azure.net/secrets/MSA-MSIDLAB4-Password";
     public final static String OBO_APP_PASSWORD_URL = "https://msidlabs.vault.azure.net/secrets/TodoListServiceV2-OBO";
+    public final static String CIAM_KEY_VAULT_SECRET_KEY = "https://msidlabs.vault.azure.net/secrets/MSIDLABCIAM1-cc";
 
     public final static String ARLINGTON_APP_ID = "cb7faed4-b8c0-49ee-b421-f5ed16894c83";
     public final static String ARLINGTON_OBO_APP_ID = "c0555d2d-02f2-4838-802e-3463422e571d";

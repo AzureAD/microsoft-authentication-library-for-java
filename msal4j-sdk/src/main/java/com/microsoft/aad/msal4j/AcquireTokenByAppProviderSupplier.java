@@ -11,6 +11,8 @@ import java.util.concurrent.ExecutionException;
  */
 class AcquireTokenByAppProviderSupplier extends AuthenticationResultSupplier {
 
+    private static final int TWO_HOURS = 2*3600;
+
     private AppTokenProviderParameters appTokenProviderParameters;
 
     private ClientCredentialRequest clientCredentialRequest;
@@ -23,7 +25,7 @@ class AcquireTokenByAppProviderSupplier extends AuthenticationResultSupplier {
         this.appTokenProviderParameters = appTokenProviderParameters;
     }
 
-    private static void validateTokenProviderResult(TokenProviderResult tokenProviderResult) {
+    private static void validateAndUpdateTokenProviderResult(TokenProviderResult tokenProviderResult) {
         if (null == tokenProviderResult.getAccessToken() || tokenProviderResult.getAccessToken().isEmpty()) {
             handleInvalidExternalValueError(tokenProviderResult.getAccessToken());
         }
@@ -34,6 +36,13 @@ class AcquireTokenByAppProviderSupplier extends AuthenticationResultSupplier {
 
         if (null == tokenProviderResult.getTenantId() || tokenProviderResult.getTenantId().isEmpty()) {
             handleInvalidExternalValueError(tokenProviderResult.getTenantId());
+        }
+
+        if (0 == tokenProviderResult.getRefreshInSeconds()){
+            long expireInSeconds = tokenProviderResult.getExpiresInSeconds();
+            if(expireInSeconds >= TWO_HOURS){
+                tokenProviderResult.setRefreshInSeconds(expireInSeconds/2);
+            }
         }
     }
 
@@ -70,7 +79,7 @@ class AcquireTokenByAppProviderSupplier extends AuthenticationResultSupplier {
             throw new MsalAzureSDKException(ex);
         }
 
-        validateTokenProviderResult(tokenProviderResult);
+        validateAndUpdateTokenProviderResult(tokenProviderResult);
 
         return AuthenticationResult.builder()
                 .accessToken(tokenProviderResult.getAccessToken())

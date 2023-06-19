@@ -65,8 +65,8 @@ public class SeleniumExtensions {
         return waitForElementToBeVisibleAndEnable(driver, by, DEFAULT_TIMEOUT_IN_SEC);
     }
 
-    public static void performADLogin(WebDriver driver, User user) {
-        LOG.info("PerformADLogin");
+    public static void performADOrCiamLogin(WebDriver driver, User user) {
+        LOG.info("performADOrCiamLogin");
 
         UserInformationFields fields = new UserInformationFields(user);
 
@@ -76,7 +76,7 @@ public class SeleniumExtensions {
         LOG.info("Loggin in ... Clicking <Next> after username");
         driver.findElement(new By.ById(fields.getAadSignInButtonId())).click();
 
-        if (user.getFederationProvider() == FederationProvider.ADFS_2 &&
+        if (user.getFederationProvider().equals(FederationProvider.ADFS_2) &&
                 !user.getLabName().equals(LabConstants.ARLINGTON_LAB_NAME)) {
 
             LOG.info("Loggin in ... ADFS-V2 - Entering the username in ADFSv2 form");
@@ -96,6 +96,7 @@ public class SeleniumExtensions {
             checkAuthenticationCompletePage(driver);
             return;
         } catch (TimeoutException ex) {
+            LOG.error(ex.getMessage());
         }
 
         LOG.info("Checking optional questions");
@@ -107,6 +108,7 @@ public class SeleniumExtensions {
             LOG.info("Are you trying to sign in to ... ? click Continue");
 
         } catch (TimeoutException ex) {
+            LOG.error(ex.getMessage());
         }
 
         try {
@@ -115,6 +117,7 @@ public class SeleniumExtensions {
                     click();
             LOG.info("Stay signed in?  click NO");
         } catch (TimeoutException ex) {
+            LOG.error(ex.getMessage());
         }
     }
 

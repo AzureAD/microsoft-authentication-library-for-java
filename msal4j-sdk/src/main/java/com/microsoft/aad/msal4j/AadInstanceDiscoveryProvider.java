@@ -14,7 +14,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 
 class AadInstanceDiscoveryProvider {
 
@@ -22,7 +22,7 @@ class AadInstanceDiscoveryProvider {
     private final static String AUTHORIZE_ENDPOINT_TEMPLATE = "https://{host}/{tenant}/oauth2/v2.0/authorize";
     private final static String INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE = "https://{host}:{port}/common/discovery/instance";
     private final static String INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE = "?api-version=1.1&authorization_endpoint={authorizeEndpoint}";
-    private final static String HOST_TEMPLATE_WITH_REGION = "{region}.{host}";
+    private final static String HOST_TEMPLATE_WITH_REGION = "{region}.login.microsoft.com";
     private final static String SOVEREIGN_HOST_TEMPLATE_WITH_REGION = "{region}.{host}";
     private final static String REGION_NAME = "REGION_NAME";
     private final static int PORT_NOT_SET = -1;
@@ -31,11 +31,15 @@ class AadInstanceDiscoveryProvider {
     private static final String DEFAULT_API_VERSION = "2020-06-01";
     private static final String IMDS_ENDPOINT = "https://169.254.169.254/metadata/instance/compute/location?" + DEFAULT_API_VERSION + "&format=text";
 
+    private static final int IMDS_TIMEOUT = 2;
+    private static final TimeUnit IMDS_TIMEOUT_UNIT = TimeUnit.SECONDS;
     static final TreeSet<String> TRUSTED_HOSTS_SET = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     static final TreeSet<String> TRUSTED_SOVEREIGN_HOSTS_SET = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
     private static final Logger log = LoggerFactory.getLogger(AadInstanceDiscoveryProvider.class);
 
+    //flag to check if instance discovery has failed
+    private static boolean instanceDiscoveryFailed = false;
     static ConcurrentHashMap<String, InstanceDiscoveryMetadataEntry> cache = new ConcurrentHashMap<>();
 
     static {
@@ -47,7 +51,9 @@ class AadInstanceDiscoveryProvider {
 
         TRUSTED_HOSTS_SET.addAll(Arrays.asList(
                 "login.windows.net",
-                "login.microsoftonline.com"));
+                "login.microsoftonline.com",
+                "login.microsoft.com",
+                "sts.windows.net"));
 
         TRUSTED_HOSTS_SET.addAll(TRUSTED_SOVEREIGN_HOSTS_SET);
     }
@@ -69,8 +75,8 @@ class AadInstanceDiscoveryProvider {
             //If region autodetection is enabled and a specific region not already set,
             // set the application's region to the discovered region so that future requests can skip the IMDS endpoint call
             if (null == msalRequest.application().azureRegion() && msalRequest.application().autoDetectRegion()
-                        && null != detectedRegion) {
-                    msalRequest.application().azureRegion = detectedRegion;
+                    && null != detectedRegion) {
+                msalRequest.application().azureRegion = detectedRegion;
             }
             cacheRegionInstanceMetadata(authorityUrl.getHost(), msalRequest.application().azureRegion());
             serviceBundle.getServerSideTelemetry().getCurrentRequest().regionOutcome(
@@ -80,7 +86,7 @@ class AadInstanceDiscoveryProvider {
         InstanceDiscoveryMetadataEntry result = cache.get(host);
 
         if (result == null) {
-            if(msalRequest.application().instanceDiscovery()){
+            if(msalRequest.application().instanceDiscovery() && !instanceDiscoveryFailed){
                 doInstanceDiscoveryAndCache(authorityUrl, validateAuthority, msalRequest, serviceBundle);
             } else {
                 // instanceDiscovery flag is set to False. Do not perform instanceDiscovery.
@@ -187,8 +193,7 @@ class AadInstanceDiscoveryProvider {
         //  whereas sovereign cloud endpoints and any non-Microsoft authorities are assumed to follow another template
         if (TRUSTED_HOSTS_SET.contains(host) && !TRUSTED_SOVEREIGN_HOSTS_SET.contains(host)){
             regionalizedHost = HOST_TEMPLATE_WITH_REGION.
-                    replace("{region}", region).
-                    replace("{host}", host);
+                    replace("{region}", region);
 
         } else {
             regionalizedHost = SOVEREIGN_HOST_TEMPLATE_WITH_REGION.
@@ -231,12 +236,18 @@ class AadInstanceDiscoveryProvider {
 
         httpResponse = executeRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
 
+        AadInstanceDiscoveryResponse response = JsonHelper.convertJsonToObject(httpResponse.body(), AadInstanceDiscoveryResponse.class);
+
         if (httpResponse.statusCode() != HttpHelper.HTTP_STATUS_200) {
-            throw MsalServiceExceptionFactory.fromHttpResponse(httpResponse);
+            if(httpResponse.statusCode() == HttpHelper.HTTP_STATUS_400 && response.error().equals("invalid_instance")){
+                // instance discovery failed due to an invalid authority, throw an exception.
+                throw MsalServiceExceptionFactory.fromHttpResponse(httpResponse);
+            }
+            // instance discovery failed due to reasons other than an invalid authority, do not perform instance discovery again in this environment.
+            instanceDiscoveryFailed = true;
         }
 
-
-        return JsonHelper.convertJsonToObject(httpResponse.body(), AadInstanceDiscoveryResponse.class);
+        return response;
     }
 
     private static int determineRegionOutcome(String detectedRegion, String providedRegion, boolean autoDetect) {
@@ -290,33 +301,39 @@ class AadInstanceDiscoveryProvider {
             return System.getenv(REGION_NAME);
         }
 
-        try {
-            //Check the IMDS endpoint to retrieve current region (will only work if application is running in an Azure VM)
-            Map<String, String> headers = new HashMap<>();
-            headers.put("Metadata", "true");
-            IHttpResponse httpResponse = executeRequest(IMDS_ENDPOINT, headers, msalRequest, serviceBundle);
+        //Check the IMDS endpoint to retrieve current region (will only work if application is running in an Azure VM)
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Metadata", "true");
 
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Future<IHttpResponse> future = executor.submit(() -> executeRequest(IMDS_ENDPOINT, headers, msalRequest, serviceBundle));
+
+        try {
+            log.info("Starting call to IMDS endpoint.");
+            IHttpResponse httpResponse = future.get(IMDS_TIMEOUT, IMDS_TIMEOUT_UNIT);
             //If call to IMDS endpoint was successful, return region from response body
             if (httpResponse.statusCode() == HttpHelper.HTTP_STATUS_200 && !httpResponse.body().isEmpty()) {
-                log.info("Region retrieved from IMDS endpoint: " + httpResponse.body());
+                log.info(String.format("Region retrieved from IMDS endpoint: %s", httpResponse.body()));
                 currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_IMDS.telemetryValue);
 
                 return httpResponse.body();
             }
-
             log.warn(String.format("Call to local IMDS failed with status code: %s, or response was empty", httpResponse.statusCode()));
             currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_FAILED_AUTODETECT.telemetryValue);
-
-            return null;
-        } catch (Exception e) {
+        } catch (Exception ex) {
+            // handle other exceptions
             //IMDS call failed, cannot find region
             //The IMDS endpoint is only available from within an Azure environment, so the most common cause of this
             //  exception will likely be java.net.SocketException: Network is unreachable: connect
-            log.warn(String.format("Exception during call to local IMDS endpoint: %s", e.getMessage()));
+            log.warn(String.format("Exception during call to local IMDS endpoint: %s", ex.getMessage()));
             currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_FAILED_AUTODETECT.telemetryValue);
+            future.cancel(true);
 
-            return null;
+        } finally {
+            executor.shutdownNow();
         }
+
+        return null;
     }
 
     private static void doInstanceDiscoveryAndCache(URL authorityUrl,

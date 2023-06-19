@@ -3,10 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import labapi.AzureEnvironment;
-import labapi.B2CProvider;
-import labapi.FederationProvider;
-import labapi.User;
+import labapi.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
@@ -16,6 +13,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 public class AcquireTokenInteractiveIT extends SeleniumTest {
@@ -28,13 +27,13 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         cfg = new Config(environment);
 
         User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
-        assertAcquireTokenAAD(user);
+        assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope());
     }
 
     @Test()
     public void acquireTokenInteractive_ADFSv2019_OnPrem() {
         User user = labUserProvider.getOnPremAdfsUser(FederationProvider.ADFS_2019);
-        assertAcquireTokenADFS2019(user);
+        assertAcquireTokenCommon(user, TestConstants.ADFS_AUTHORITY, TestConstants.ADFS_SCOPE);
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
@@ -42,7 +41,7 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         cfg = new Config(environment);
 
         User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_2019);
-        assertAcquireTokenAAD(user);
+        assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope());
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
@@ -50,7 +49,7 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         cfg = new Config(environment);
 
         User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_4);
-        assertAcquireTokenAAD(user);
+        assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope());
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
@@ -58,7 +57,7 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         cfg = new Config(environment);
 
         User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_3);
-        assertAcquireTokenAAD(user);
+        assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope());
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
@@ -66,7 +65,52 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         cfg = new Config(environment);
 
         User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_2);
-        assertAcquireTokenAAD(user);
+        assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope());
+    }
+
+    @Test
+    public void acquireTokenInteractive_Ciam() {
+        User user = labUserProvider.getCiamUser();
+
+        Map<String, String> extraQueryParameters = new HashMap<>();
+        extraQueryParameters.put("dc","ESTS-PUB-EUS-AZ1-FD000-TEST1");
+
+        PublicClientApplication pca;
+        try {
+            pca = PublicClientApplication.builder(
+                            user.getAppId()).
+                    authority("https://" + user.getLabName() + ".ciamlogin.com/")
+            .build();
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException(ex.getMessage());
+        }
+
+        IAuthenticationResult result;
+        try {
+            URI url = new URI("http://localhost:8080");
+
+            SystemBrowserOptions browserOptions =
+                    SystemBrowserOptions
+                            .builder()
+                            .openBrowserAction(new SeleniumOpenBrowserAction(user, pca))
+                            .build();
+
+            InteractiveRequestParameters parameters = InteractiveRequestParameters
+                    .builder(url)
+                    .scopes(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE))
+                    .extraQueryParameters(extraQueryParameters)
+                    .systemBrowserOptions(browserOptions)
+                    .build();
+
+            result = pca.acquireToken(parameters).get();
+
+        } catch (Exception e) {
+            LOG.error("Error acquiring token with authCode: " + e.getMessage());
+            throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
+        }
+
+        assertTokenResultNotNull(result);
+        Assert.assertEquals(user.getUpn(), result.account().username());
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
@@ -74,7 +118,15 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         cfg = new Config(environment);
 
         User user = labUserProvider.getB2cUser(cfg.azureEnvironment, B2CProvider.LOCAL);
-        assertAcquireTokenB2C(user);
+        assertAcquireTokenB2C(user, TestConstants.B2C_AUTHORITY);
+    }
+
+    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    public void acquireTokenWithAuthorizationCode_B2C_LegacyFormat(String environment) {
+        cfg = new Config(environment);
+
+        User user = labUserProvider.getB2cUser(cfg.azureEnvironment, B2CProvider.LOCAL);
+        assertAcquireTokenB2C(user, TestConstants.B2C_AUTHORITY_LEGACY_FORMAT);
     }
 
     @Test
@@ -85,12 +137,12 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         assertAcquireTokenInstanceAware(user);
     }
 
-    private void assertAcquireTokenAAD(User user) {
+    private void assertAcquireTokenCommon(User user, String authority, String scope) {
         PublicClientApplication pca;
         try {
             pca = PublicClientApplication.builder(
                     user.getAppId()).
-                    authority(cfg.organizationsAuthority()).
+                    authority(authority).
                     build();
         } catch (MalformedURLException ex) {
             throw new RuntimeException(ex.getMessage());
@@ -99,49 +151,26 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         IAuthenticationResult result = acquireTokenInteractive(
                 user,
                 pca,
-                cfg.graphDefaultScope());
+                scope);
 
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.idToken());
+        assertTokenResultNotNull(result);
         Assert.assertEquals(user.getUpn(), result.account().username());
     }
 
-    private void assertAcquireTokenADFS2019(User user) {
-        PublicClientApplication pca;
-        try {
-            pca = PublicClientApplication.builder(
-                    TestConstants.ADFS_APP_ID).
-                    authority(TestConstants.ADFS_AUTHORITY).
-                    build();
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException(ex.getMessage());
-        }
-
-        IAuthenticationResult result = acquireTokenInteractive(user, pca, TestConstants.ADFS_SCOPE);
-
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.idToken());
-        Assert.assertEquals(user.getUpn(), result.account().username());
-    }
-
-    private void assertAcquireTokenB2C(User user) {
+    private void assertAcquireTokenB2C(User user, String authority) {
 
         PublicClientApplication pca;
         try {
             pca = PublicClientApplication.builder(
                     user.getAppId()).
-                    b2cAuthority(TestConstants.B2C_AUTHORITY_SIGN_IN).
+                    b2cAuthority(authority + TestConstants.B2C_SIGN_IN_POLICY).
                     build();
         } catch (MalformedURLException ex) {
             throw new RuntimeException(ex.getMessage());
         }
 
         IAuthenticationResult result = acquireTokenInteractive(user, pca, user.getAppId());
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.idToken());
+        assertTokenResultNotNull(result);
     }
 
     private void assertAcquireTokenInstanceAware(User user) {
@@ -157,9 +186,7 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
 
         IAuthenticationResult result = acquireTokenInteractive_instanceAware(user, pca, cfg.graphDefaultScope());
 
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.idToken());
+        assertTokenResultNotNull(result);
         Assert.assertEquals(user.getUpn(), result.account().username());
 
         //This test is using a client app with the login.microsoftonline.com config to get tokens for a login.microsoftonline.us user,
@@ -223,9 +250,7 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
                 build();
 
         IAuthenticationResult result = acquireTokenInteractive(user, publicCloudPca, TestConstants.USER_READ_SCOPE);
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.idToken());
+        assertTokenResultNotNull(result);
         Assert.assertEquals(user.getHomeUPN(), result.account().username());
 
         publicCloudPca.removeAccount(publicCloudPca.getAccounts().join().iterator().next()).join();
@@ -261,6 +286,12 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
             throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
         }
         return result;
+    }
+
+    private void assertTokenResultNotNull(IAuthenticationResult result) {
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.accessToken());
+        Assert.assertNotNull(result.idToken());
     }
 
     private IAuthenticationResult acquireTokenInteractive_instanceAware(

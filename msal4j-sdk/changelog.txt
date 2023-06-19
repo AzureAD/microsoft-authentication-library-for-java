@@ -8,6 +8,30 @@ Version 1.14.0-beta
 - Add IBroker interface
 - Add app-level parameter for enabling the use of auth brokers
 
+Version 1.13.8
+=============
+- Added support for CIAM authority
+- Added refresh_in logic for managed identity flow
+- Better exception handling in interactive flow
+- Updated vulnerable dependency versions
+
+Version 1.13.7
+=============
+- Update json-smart library version to a secured one.
+
+Version 1.13.6
+=============
+- Added ExtraQueryParameters API.
+- added tests for a CIAM user.
+- updated condition to throw exception only for an invalid authority while performing instance discovery.
+
+Version 1.13.5
+=============
+- fixed url for admin consent.
+- added 2s timeout to IMDS endpoint call.
+- fixed url for regional endpoint calls.
+- added support for current and legacy B2c authority formats.
+
 Version 1.13.4
 =============
 - regional endpoint updates
