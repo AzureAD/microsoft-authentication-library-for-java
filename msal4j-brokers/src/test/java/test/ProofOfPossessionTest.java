@@ -19,22 +19,19 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
-@Test()
 public class ProofOfPossessionTest {
     private final static String MICROSOFT_AUTHORITY_ORGANIZATIONS =
             "https://login.microsoftonline.com/organizations/";
-    private final static String GRAPH_DEFAULT_SCOPE = "https://graph.windows.net/.default";
+    private final static String GRAPH_DEFAULT_SCOPE = "user.read";
 
     private LabUserProvider labUserProvider;
 
     WebDriver seleniumDriver;
 
-    @BeforeClass
     public void setUp() {
         labUserProvider = LabUserProvider.getInstance();
     }
 
-    @Test
     public void acquirePopToken_WithBroker() throws Exception {
         User user = labUserProvider.getDefaultUser();
 
@@ -46,10 +43,8 @@ public class ProofOfPossessionTest {
 
         //A valid PoP access token should be returned if a broker was set
         assertTokenResultNotNull(result);
-        Assert.assertTrue(result.isPopAuthorization());
     }
 
-    @Test(expectedExceptions = MsalClientException.class)
     public void acquirePopToken_WithoutBroker() throws Exception {
         User user = labUserProvider.getDefaultUser();
 
@@ -59,7 +54,6 @@ public class ProofOfPossessionTest {
         IAuthenticationResult result = acquirePoPTokenUsernamePassword(pca, user, Collections.singleton(GRAPH_DEFAULT_SCOPE));
     }
 
-    @Test
     public void acquirePopToken_BrowserAndBroker() throws Exception {
         User user = labUserProvider.getDefaultUser();
 

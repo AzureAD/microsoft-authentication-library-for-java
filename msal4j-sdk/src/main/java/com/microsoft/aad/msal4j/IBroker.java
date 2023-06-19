@@ -69,7 +69,6 @@ public interface IBroker {
                 if (accountId != null) {
                     String idTokenJson =
                             JWTParser.parse(idToken).getParsedParts()[1].decodeToString();
-                    //TODO: need to figure out if 'policy' field is relevant for brokers
                     builder.accountCacheEntity(AccountCacheEntity.create(clientInfo,
                             Authority.createAuthority(new URL(authority)), JsonHelper.convertJsonToObject(idTokenJson,
                                     IdToken.class), null));

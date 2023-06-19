@@ -92,7 +92,8 @@ public class MsalRuntimeBroker implements IBroker {
             AuthParameters.AuthParametersBuilder authParamsBuilder = new AuthParameters.
                     AuthParametersBuilder(application.clientId(),
                     application.authority(),
-                    String.join(" ", parameters.scopes()));
+                    String.join(" ", parameters.scopes()))
+                    .redirectUri(parameters.redirectUri().toString());
 
             //If POP auth scheme configured, set parameters to get MSALRuntime to return POP tokens
             if (parameters.proofOfPossession() != null) {
@@ -209,7 +210,7 @@ public class MsalRuntimeBroker implements IBroker {
      */
     public void enableBrokerLogging(boolean enableLogging) {
         try {
-            MsalRuntimeInterop.toggleMsalRuntimeLogging(enableLogging);
+            MsalRuntimeInterop.enableLogging(enableLogging);
         } catch (Exception ex) {
             throw new MsalClientException(String.format("Error occurred when calling MSALRuntime logging API: %s", ex.getMessage()), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
         }
@@ -224,7 +225,7 @@ public class MsalRuntimeBroker implements IBroker {
      */
     public void enableBrokerPIILogging(boolean enablePII) {
         try {
-            MsalRuntimeInterop.toggleMsalRuntimePIILogging(enablePII);
+            MsalRuntimeInterop.enableLoggingPii(enablePII);
         } catch (Exception ex) {
             throw new MsalClientException(String.format("Error occurred when calling MSALRuntime PII logging API: %s", ex.getMessage()), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
         }

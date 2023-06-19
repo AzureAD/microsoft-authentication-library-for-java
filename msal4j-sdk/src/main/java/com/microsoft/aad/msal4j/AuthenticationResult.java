@@ -91,5 +91,6 @@ final class AuthenticationResult implements IAuthenticationResult {
 
     private final String scopes;
 
+    @Getter(value = AccessLevel.PACKAGE)
     private final Boolean isPopAuthorization;
 }
