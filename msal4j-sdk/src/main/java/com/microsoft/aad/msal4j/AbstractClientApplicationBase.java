@@ -292,6 +292,10 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
             supplier = new AcquireTokenByOnBehalfOfSupplier(
                     (ConfidentialClientApplication) this,
                     (OnBehalfOfRequest) msalRequest);
+        } else if (msalRequest instanceof ManagedIdentityRequest) {
+            supplier = new AcquireTokenByManagedIdentitySupplier(
+                    (ManagedIdentityApplication) this,
+                    (ManagedIdentityRequest) msalRequest);
         } else {
             supplier = new AcquireTokenByAuthorizationGrantSupplier(
                     this,
@@ -329,7 +333,7 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
         private String azureRegion;
         private Integer connectTimeoutForDefaultHttpClient;
         private Integer readTimeoutForDefaultHttpClient;
-        private boolean instanceDiscovery = true;
+        protected boolean instanceDiscovery = true;
 
         /**
          * Constructor to create instance of Builder of client application

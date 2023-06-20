@@ -40,4 +40,8 @@ final class StringHelper {
         }
         return res;
     }
+
+    public static boolean isNullOrBlank(final String str) {
+        return str == null || str.trim().length() == 0;
+    }
 }

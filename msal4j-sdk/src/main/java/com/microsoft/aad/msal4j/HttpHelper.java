@@ -102,6 +102,8 @@ class HttpHelper {
             }
             Thread.sleep(RETRY_DELAY_MS);
         }
+
+        log.info(httpResponse.body());
         return httpResponse;
     }
 

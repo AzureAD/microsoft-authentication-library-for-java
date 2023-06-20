@@ -10,4 +10,8 @@ final class Constants {
     static final String POINT_DELIMITER = ".";
 
     static final int AAD_JWT_TOKEN_LIFETIME_SECONDS = 60 * 10;
+
+    public static final String MANAGED_IDENTITY_CLIENT_ID = "client_id";
+    public static final String MANAGED_IDENTITY_RESOURCE_ID = "mi_res_id";
+
 }
