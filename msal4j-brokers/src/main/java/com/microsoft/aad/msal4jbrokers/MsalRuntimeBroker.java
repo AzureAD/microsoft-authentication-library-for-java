@@ -46,7 +46,7 @@ public class MsalRuntimeBroker implements IBroker {
         //If request has an account ID, MSALRuntime likely has data cached for that account that we can retrieve
         if (parameters.account() != null) {
             try {
-                accountResult = ((ReadAccountResult) interop.readAccountById(parameters.account().homeAccountId(), application.correlationId()).get()).getAccount();
+                accountResult = ((ReadAccountResult) interop.readAccountById(parameters.account().homeAccountId().split("\\.")[0], application.correlationId()).get()).getAccount();
             } catch (InterruptedException | ExecutionException ex) {
                 throw new MsalClientException(String.format("MSALRuntime async operation interrupted when waiting for result: %s", ex.getMessage()), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
             }
@@ -142,7 +142,7 @@ public class MsalRuntimeBroker implements IBroker {
     @Override
     public void removeAccount(PublicClientApplication application, IAccount msalJavaAccount) {
         try {
-            Account msalRuntimeAccount = ((ReadAccountResult) interop.readAccountById(msalJavaAccount.homeAccountId(), application.correlationId()).get()).getAccount();
+            Account msalRuntimeAccount = ((ReadAccountResult) interop.readAccountById(msalJavaAccount.homeAccountId().split("\\.")[0], application.correlationId()).get()).getAccount();
 
             if (msalRuntimeAccount != null) {
                 interop.signOutSilently(application.clientId(), application.correlationId(), msalRuntimeAccount);
