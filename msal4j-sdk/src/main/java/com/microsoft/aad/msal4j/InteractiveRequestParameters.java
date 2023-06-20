@@ -81,6 +81,11 @@ public class InteractiveRequestParameters implements IAcquireTokenParameters {
     private Map<String, String> extraHttpHeaders;
 
     /**
+     * Adds additional query parameters to the token request
+     */
+    private Map<String, String> extraQueryParameters;
+
+    /**
      * Overrides the tenant value in the authority URL for this request
      */
     private String tenant;
@@ -112,6 +117,8 @@ public class InteractiveRequestParameters implements IAcquireTokenParameters {
      */
     private long windowHandle;
 
+    private PopParameters proofOfPossession;
+
     private static InteractiveRequestParametersBuilder builder() {
         return new InteractiveRequestParametersBuilder();
     }
@@ -122,5 +129,24 @@ public class InteractiveRequestParameters implements IAcquireTokenParameters {
 
         return builder()
                 .redirectUri(redirectUri);
+    }
+
+    //This Builder class is used to override Lombok's default setter behavior for any fields defined in it
+    public static class InteractiveRequestParametersBuilder {
+
+        /**
+         * Sets the PopParameters for this request, allowing the request to retrieve proof-of-possession tokens rather than bearer tokens
+         *
+         * For more information, see {@link PopParameters} and https://aka.ms/msal4j-pop
+         *
+         * @param httpMethod a valid HTTP method, such as "GET" or "POST"
+         * @param uri the URI on the downstream protected API which the application is trying to access, e.g. https://graph.microsoft.com/beta/me/profile
+         * @param nonce a string obtained by calling the resource (e.g. Microsoft Graph) un-authenticated and parsing the WWW-Authenticate header associated with pop authentication scheme and extracting the nonce parameter, or, on subsequent calls, by parsing the Autheticate-Info header and extracting the nextnonce parameter.
+         */
+        public InteractiveRequestParametersBuilder proofOfPossession(HttpMethod httpMethod, URI uri, String nonce) {
+            this.proofOfPossession = new PopParameters(httpMethod, uri, nonce);
+
+            return this;
+        }
     }
 }

@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.microsoft.azure</groupId>
 	<artifactId>msal4j</artifactId>
-	<version>1.14.0-beta</version>
+	<version>1.14.1-beta</version>
 	<packaging>jar</packaging>
 	<name>msal4j</name>
 	<description>
@@ -36,12 +36,12 @@
         <dependency>
             <groupId>com.nimbusds</groupId>
             <artifactId>oauth2-oidc-sdk</artifactId>
-            <version>9.35</version>
+            <version>10.7.1</version>
         </dependency>
         <dependency>
             <groupId>net.minidev</groupId>
             <artifactId>json-smart</artifactId>
-            <version>2.4.8</version>
+            <version>2.4.10</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

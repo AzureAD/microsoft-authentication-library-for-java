@@ -10,15 +10,15 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * Used to define the basic set of methods that all Brokers must implement
- *
+ * <p>
  * All methods are marked as default so they can be referenced by MSAL Java without an implementation,
- *  and most will simply throw an exception if not overridden by an IBroker implementation
+ * and most will simply throw an exception if not overridden by an IBroker implementation
  */
 public interface IBroker {
 
     /**
      * Acquire a token silently, i.e. without direct user interaction
-     *
+     * <p>
      * This may be accomplished by returning tokens from a token cache, using cached refresh tokens to get new tokens,
      * or via any authentication flow where a user is not prompted to enter credentials
      */
@@ -44,27 +44,31 @@ public interface IBroker {
         throw new MsalClientException("Broker implementation missing", AuthenticationErrorCode.MISSING_BROKER);
     }
 
+    /**
+     * Returns whether a broker is available and ready to use on this machine, allowing the use of the methods
+     * in this interface and other broker-only features in MSAL Java
+     */
     default boolean isBrokerAvailable() {
         throw new MsalClientException("Broker implementation missing", AuthenticationErrorCode.MISSING_BROKER);
     }
 
     /**
      * MSAL Java's AuthenticationResult requires several package-private classes that a broker implementation can't access,
-     *  so this helper method can be used to create AuthenticationResults from within the MSAL Java package
+     * so this helper method can be used to create AuthenticationResults from within the MSAL Java package
      */
     default IAuthenticationResult parseBrokerAuthResult(String authority, String idToken, String accessToken,
-                                                            String accountId, String clientInfo,
-                                                            long accessTokenExpirationTime) {
+                                                        String accountId, String clientInfo,
+                                                        long accessTokenExpirationTime,
+                                                        boolean isPopAuthorization) {
 
-        AuthenticationResult.AuthenticationResultBuilder builder =  AuthenticationResult.builder();
+        AuthenticationResult.AuthenticationResultBuilder builder = AuthenticationResult.builder();
 
         try {
             if (idToken != null) {
                 builder.idToken(idToken);
-                if (accountId!= null) {
+                if (accountId != null) {
                     String idTokenJson =
                             JWTParser.parse(idToken).getParsedParts()[1].decodeToString();
-                    //TODO: need to figure out if 'policy' field is relevant for brokers
                     builder.accountCacheEntity(AccountCacheEntity.create(clientInfo,
                             Authority.createAuthority(new URL(authority)), JsonHelper.convertJsonToObject(idTokenJson,
                                     IdToken.class), null));
@@ -74,6 +78,9 @@ public interface IBroker {
                 builder.accessToken(accessToken);
                 builder.expiresOn(accessTokenExpirationTime);
             }
+
+            builder.isPopAuthorization(isPopAuthorization);
+
         } catch (Exception e) {
             throw new MsalClientException(String.format("Exception when converting broker result to MSAL Java AuthenticationResult: %s", e.getMessage()), AuthenticationErrorCode.MSALJAVA_BROKERS_ERROR);
         }

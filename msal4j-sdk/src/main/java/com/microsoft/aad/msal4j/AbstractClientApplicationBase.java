@@ -357,7 +357,7 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
             authority = Authority.enforceTrailingSlash(val);
 
             URL authorityURL = new URL(authority);
-            Authority.validateAuthority(authorityURL);
+
 
             switch (Authority.detectAuthorityType(authorityURL)) {
                 case AAD:
@@ -366,13 +366,30 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
                 case ADFS:
                     authenticationAuthority = new ADFSAuthority(authorityURL);
                     break;
+                case CIAM:
+                    authenticationAuthority = new CIAMAuthority(authorityURL);
+                    break;
                 default:
                     throw new IllegalArgumentException("Unsupported authority type.");
             }
 
+            Authority.validateAuthority(authenticationAuthority.canonicalAuthorityUrl());
+
             return self();
         }
 
+        /**
+         * Set URL of the authenticating B2C authority from which MSAL will acquire tokens
+         *
+         * Valid B2C authorities should look like: https://&lt;something.b2clogin.com/&lt;tenant&gt;/&lt;policy&gt;
+         *
+         * MSAL Java also supports a legacy B2C authority format, which looks like: https://&lt;host&gt;/tfp/&lt;tenant&gt;/&lt;policy&gt;
+         *
+         * However, MSAL Java will eventually stop supporting the legacy format. See here for information on how to migrate to the new format: https://aka.ms/msal4j-b2c
+         *
+         * @param val a boolean value for validateAuthority
+         * @return instance of the Builder on which method was called
+         */
         public T b2cAuthority(String val) throws MalformedURLException {
             authority = Authority.enforceTrailingSlash(val);
 

@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j;
 import lombok.*;
 import lombok.experimental.Accessors;
 
+import java.net.URI;
 import java.util.Map;
 import java.util.Set;
 
@@ -54,9 +55,16 @@ public class UserNamePasswordParameters implements IAcquireTokenParameters {
     private Map<String, String> extraHttpHeaders;
 
     /**
+     * Adds additional query parameters to the token request
+     */
+    private Map<String, String> extraQueryParameters;
+
+    /**
      * Overrides the tenant value in the authority URL for this request
      */
     private String tenant;
+
+    private PopParameters proofOfPossession;
 
     public char[] password() {
         return password.clone();
@@ -91,6 +99,21 @@ public class UserNamePasswordParameters implements IAcquireTokenParameters {
     public static class UserNamePasswordParametersBuilder {
         public UserNamePasswordParametersBuilder password(char[] password) {
             this.password = password.clone();
+            return this;
+        }
+
+        /**
+         * Sets the PopParameters for this request, allowing the request to retrieve proof-of-possession tokens rather than bearer tokens
+         *
+         * For more information, see {@link PopParameters} and https://aka.ms/msal4j-pop
+         *
+         * @param httpMethod a valid HTTP method, such as "GET" or "POST"
+         * @param uri URI to associate with the token
+         * @param nonce optional nonce value for the token, can be empty or null
+         */
+        public UserNamePasswordParametersBuilder proofOfPossession(HttpMethod httpMethod, URI uri, String nonce) {
+            this.proofOfPossession = new PopParameters(httpMethod, uri, nonce);
+
             return this;
         }
     }

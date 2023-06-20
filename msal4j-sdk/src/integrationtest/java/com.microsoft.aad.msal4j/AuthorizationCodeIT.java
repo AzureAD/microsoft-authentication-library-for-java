@@ -229,6 +229,7 @@ public class AuthorizationCodeIT extends SeleniumTest {
             result = cca.acquireToken(AuthorizationCodeParameters
                     .builder(authCode, new URI(TestConstants.LOCALHOST + httpListener.port()))
                     .scopes(Collections.singleton(TestConstants.B2C_LAB_SCOPE))
+                    .extraQueryParameters(new HashMap<>())
                     .build())
                     .get();
         } catch (Exception e) {

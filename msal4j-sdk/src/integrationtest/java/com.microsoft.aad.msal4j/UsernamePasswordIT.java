@@ -9,6 +9,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @Test()
 public class UsernamePasswordIT {
@@ -27,7 +29,7 @@ public class UsernamePasswordIT {
 
         User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
 
-        assertAcquireTokenCommonAAD(user);
+        assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope(), user.getAppId());
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
@@ -41,7 +43,7 @@ public class UsernamePasswordIT {
 
         User user = labUserProvider.getLabUser(query);
 
-        assertAcquireTokenCommonAAD(user);
+        assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope(), user.getAppId());
     }
 
     @Test
@@ -52,7 +54,7 @@ public class UsernamePasswordIT {
 
         User user = labUserProvider.getLabUser(query);
 
-        assertAcquireTokenCommonADFS(user);
+        assertAcquireTokenCommon(user, TestConstants.ADFS_AUTHORITY, TestConstants.ADFS_SCOPE, TestConstants.ADFS_APP_ID);
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
@@ -66,7 +68,7 @@ public class UsernamePasswordIT {
 
         User user = labUserProvider.getLabUser(query);
 
-        assertAcquireTokenCommonAAD(user);
+        assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope(), user.getAppId());
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
@@ -80,7 +82,7 @@ public class UsernamePasswordIT {
 
         User user = labUserProvider.getLabUser(query);
 
-        assertAcquireTokenCommonAAD(user);
+        assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope(), user.getAppId());
     }
 
     @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
@@ -98,6 +100,29 @@ public class UsernamePasswordIT {
     }
 
     @Test
+    public void acquireTokenWithUsernamePassword_Ciam() throws Exception {
+
+        Map<String, String> extraQueryParameters = new HashMap<>();
+        extraQueryParameters.put("dc","ESTS-PUB-EUS-AZ1-FD000-TEST1");
+
+        User user = labUserProvider.getCiamUser();
+        PublicClientApplication pca = PublicClientApplication.builder(user.getAppId())
+                        .authority("https://" + user.getLabName() + ".ciamlogin.com/")
+                                .build();
+
+
+        IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters.
+                        builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                                user.getUpn(),
+                                user.getPassword().toCharArray())
+                       .extraQueryParameters(extraQueryParameters)
+                        .build())
+                .get();
+
+        Assert.assertNotNull(result.accessToken());
+    }
+
+    @Test
     public void acquireTokenWithUsernamePassword_AuthorityWithPort() throws Exception {
         User user = labUserProvider.getDefaultUser();
 
@@ -108,10 +133,6 @@ public class UsernamePasswordIT {
                 user.getAppId());
     }
 
-    private void assertAcquireTokenCommonADFS(User user) throws Exception {
-        assertAcquireTokenCommon(user, TestConstants.ADFS_AUTHORITY, TestConstants.ADFS_SCOPE,
-                TestConstants.ADFS_APP_ID);
-    }
 
     private void assertAcquireTokenCommonAAD(User user) throws Exception {
         assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope(),
@@ -120,6 +141,7 @@ public class UsernamePasswordIT {
 
     private void assertAcquireTokenCommon(User user, String authority, String scope, String appId)
             throws Exception {
+
         PublicClientApplication pca = PublicClientApplication.builder(
                 appId).
                 authority(authority).
@@ -130,11 +152,10 @@ public class UsernamePasswordIT {
                         user.getUpn(),
                         user.getPassword().toCharArray())
                 .build())
+
                 .get();
 
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.idToken());
+        assertTokenResultNotNull(result);
         Assert.assertEquals(user.getUpn(), result.account().username());
     }
 
@@ -157,9 +178,7 @@ public class UsernamePasswordIT {
                 .build())
                 .get();
 
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.idToken());
+        assertTokenResultNotNull(result);
 
         IAccount account = pca.getAccounts().join().iterator().next();
         SilentParameters.builder(Collections.singleton(TestConstants.B2C_READ_SCOPE), account);
@@ -169,9 +188,7 @@ public class UsernamePasswordIT {
                         .build())
                 .get();
 
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.idToken());
+        assertTokenResultNotNull(result);
     }
 
     @Test
@@ -193,9 +210,7 @@ public class UsernamePasswordIT {
                 .build())
                 .get();
 
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.idToken());
+        assertTokenResultNotNull(result);
 
         IAccount account = pca.getAccounts().join().iterator().next();
         SilentParameters.builder(Collections.singleton(TestConstants.B2C_READ_SCOPE), account);
@@ -205,6 +220,10 @@ public class UsernamePasswordIT {
                         .build())
                 .get();
 
+        assertTokenResultNotNull(result);
+    }
+
+    private void assertTokenResultNotNull(IAuthenticationResult result) {
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.accessToken());
         Assert.assertNotNull(result.idToken());

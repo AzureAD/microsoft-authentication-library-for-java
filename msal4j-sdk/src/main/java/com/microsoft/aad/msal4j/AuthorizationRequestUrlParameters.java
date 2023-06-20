@@ -7,6 +7,8 @@ import com.nimbusds.oauth2.sdk.util.URLUtils;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -34,7 +36,14 @@ public class AuthorizationRequestUrlParameters {
     private String correlationId;
     private boolean instanceAware;
 
+    //Unlike other prompts (which are sent as query parameters), admin consent has its own endpoint format
+    private static final String ADMIN_CONSENT_ENDPOINT = "https://login.microsoftonline.com/{tenant}/adminconsent";
+
+    Map<String, String> extraQueryParameters;
+
     Map<String, List<String>> requestParameters = new HashMap<>();
+
+    Logger log = LoggerFactory.getLogger(AuthorizationRequestUrlParameters.class);
 
     public static Builder builder(String redirectUri,
                                   Set<String> scopes) {
@@ -149,13 +158,32 @@ public class AuthorizationRequestUrlParameters {
             this.instanceAware = builder.instanceAware;
             requestParameters.put("instance_aware", Collections.singletonList(String.valueOf(instanceAware)));
         }
+
+        if(null != builder.extraQueryParameters && !builder.extraQueryParameters.isEmpty()){
+            this.extraQueryParameters = builder.extraQueryParameters;
+            for(Map.Entry<String, String> entry: this.extraQueryParameters.entrySet()){
+                String key = entry.getKey();
+                String value = entry.getValue();
+                if(requestParameters.containsKey(key)){
+                    log.warn("A query parameter {} has been provided with values multiple times.", key);
+                }
+                requestParameters.put(key, Collections.singletonList(value));
+            }
+        }
     }
 
     URL createAuthorizationURL(Authority authority,
                                Map<String, List<String>> requestParameters) {
         URL authorizationRequestUrl;
         try {
-            String authorizationCodeEndpoint = authority.authorizationEndpoint();
+            String authorizationCodeEndpoint;
+            if (prompt == Prompt.ADMIN_CONSENT) {
+                authorizationCodeEndpoint = ADMIN_CONSENT_ENDPOINT
+                        .replace("{tenant}", authority.tenant);
+            } else {
+                authorizationCodeEndpoint = authority.authorizationEndpoint();
+            }
+
             String uriString = authorizationCodeEndpoint + "?" +
                     URLUtils.serializeParameters(requestParameters);
 
@@ -184,6 +212,7 @@ public class AuthorizationRequestUrlParameters {
         private Prompt prompt;
         private String correlationId;
         private boolean instanceAware;
+        private Map<String, String> extraQueryParameters;
 
         public AuthorizationRequestUrlParameters build() {
             return new AuthorizationRequestUrlParameters(this);
@@ -328,6 +357,15 @@ public class AuthorizationRequestUrlParameters {
          */
         public Builder instanceAware(boolean val) {
             this.instanceAware = val;
+            return self();
+        }
+
+        /**
+         * Query parameters that you can add to the request,
+         * in addition to the list of parameters already provided.
+         */
+        public Builder extraQueryParameters(Map<String, String> val) {
+            this.extraQueryParameters = val;
             return self();
         }
     }
