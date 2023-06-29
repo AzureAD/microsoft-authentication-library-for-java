@@ -4,15 +4,19 @@
 package com.microsoft.aad.msal4j;
 
 import org.apache.commons.lang3.StringUtils;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
-public class OAuthRequestValidationUnitT extends OAuthRequestValidationTest {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class OAuthRequestValidationUnitT extends OAuthRequestValidationTest {
     @Test
-    public void oAuthRequest_for_acquireTokenByClientCertificate() throws Exception {
+    void oAuthRequest_for_acquireTokenByClientCertificate() throws Exception {
         try {
             IClientCertificate clientCertificate = CertificateHelper.getClientCertificate();
 
@@ -27,40 +31,40 @@ public class OAuthRequestValidationUnitT extends OAuthRequestValidationTest {
 
             app.acquireToken(parameters).get();
         } catch (ExecutionException ex) {
-            Assert.assertTrue(ex.getCause() instanceof MsalException);
+            assertTrue(ex.getCause() instanceof MsalException);
         }
 
         Map<String, String> queryParams = splitQuery(query);
-        Assert.assertEquals(queryParams.size(), 8);
+        assertEquals(queryParams.size(), 8);
 
         // validate Authorization Grants query params
-        Assert.assertEquals(queryParams.get("grant_type"), GRANT_TYPE_JWT);
-        Assert.assertEquals(queryParams.get("assertion"), JWT);
+        assertEquals(queryParams.get("grant_type"), GRANT_TYPE_JWT);
+        assertEquals(queryParams.get("assertion"), JWT);
 
         // validate Client Authentication query params
-        Assert.assertFalse(StringUtils.isEmpty(queryParams.get("client_assertion")));
+        assertFalse(StringUtils.isEmpty(queryParams.get("client_assertion")));
 
         Set<String> scopes = new HashSet<>(
                 Arrays.asList(queryParams.get("scope").split(AbstractMsalAuthorizationGrant.SCOPES_DELIMITER)));
 
         // validate custom scopes
-        Assert.assertTrue(scopes.contains(SCOPES));
+        assertTrue(scopes.contains(SCOPES));
 
         // validate common scopes
-        Assert.assertTrue(scopes.contains(AbstractMsalAuthorizationGrant.SCOPE_OPEN_ID));
-        Assert.assertTrue(scopes.contains(AbstractMsalAuthorizationGrant.SCOPE_PROFILE));
-        Assert.assertTrue(scopes.contains(AbstractMsalAuthorizationGrant.SCOPE_OFFLINE_ACCESS));
+        assertTrue(scopes.contains(AbstractMsalAuthorizationGrant.SCOPE_OPEN_ID));
+        assertTrue(scopes.contains(AbstractMsalAuthorizationGrant.SCOPE_PROFILE));
+        assertTrue(scopes.contains(AbstractMsalAuthorizationGrant.SCOPE_OFFLINE_ACCESS));
 
-        Assert.assertEquals(queryParams.get("client_assertion_type"), CLIENT_ASSERTION_TYPE_JWT);
-        Assert.assertEquals(queryParams.get("requested_token_use"), ON_BEHALF_OF_USE_JWT);
+        assertEquals(queryParams.get("client_assertion_type"), CLIENT_ASSERTION_TYPE_JWT);
+        assertEquals(queryParams.get("requested_token_use"), ON_BEHALF_OF_USE_JWT);
 
-        Assert.assertEquals(queryParams.get("client_info"), CLIENT_INFO_VALUE);
-        Assert.assertEquals(queryParams.get("client_id"), CLIENT_ID);
+        assertEquals(queryParams.get("client_info"), CLIENT_INFO_VALUE);
+        assertEquals(queryParams.get("client_id"), CLIENT_ID);
 
     }
 
     @Test
-    public void oAuthRequest_for_acquireTokenByClientAssertion() throws Exception {
+    void oAuthRequest_for_acquireTokenByClientAssertion() throws Exception {
 
         try {
             IClientCertificate clientCertificate = CertificateHelper.getClientCertificate();
@@ -80,24 +84,24 @@ public class OAuthRequestValidationUnitT extends OAuthRequestValidationTest {
                     .get();
 
         } catch (ExecutionException ex) {
-            Assert.assertTrue(ex.getCause() instanceof MsalException);
+            assertTrue(ex.getCause() instanceof MsalException);
         }
 
         Map<String, String> queryParams = splitQuery(query);
 
-        Assert.assertEquals(queryParams.size(), 6);
+        assertEquals(queryParams.size(), 6);
 
         // validate Authorization Grants query params
-        Assert.assertEquals(queryParams.get("grant_type"), CLIENT_CREDENTIALS_GRANT_TYPE);
+        assertEquals(queryParams.get("grant_type"), CLIENT_CREDENTIALS_GRANT_TYPE);
 
         // validate Client Authentication query params
-        Assert.assertTrue(StringUtils.isNotEmpty(queryParams.get("client_assertion")));
-        Assert.assertEquals(queryParams.get("client_assertion_type"), CLIENT_ASSERTION_TYPE_JWT);
+        assertTrue(StringUtils.isNotEmpty(queryParams.get("client_assertion")));
+        assertEquals(queryParams.get("client_assertion_type"), CLIENT_ASSERTION_TYPE_JWT);
 
         // to do validate scopes
-        Assert.assertEquals(queryParams.get("scope"), "https://SomeResource.azure.net openid profile offline_access");
+        assertEquals(queryParams.get("scope"), "https://SomeResource.azure.net openid profile offline_access");
 
-        Assert.assertEquals(queryParams.get("client_info"), CLIENT_INFO_VALUE);
-        Assert.assertEquals(queryParams.get("client_id"), CLIENT_ID);
+        assertEquals(queryParams.get("client_info"), CLIENT_INFO_VALUE);
+        assertEquals(queryParams.get("client_id"), CLIENT_ID);
     }
 }

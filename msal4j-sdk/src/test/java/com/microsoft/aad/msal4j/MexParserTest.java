@@ -6,26 +6,33 @@ package com.microsoft.aad.msal4j;
 import java.io.BufferedReader;
 import java.io.FileReader;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
 
-@Test(groups = {"checkin"})
-public class MexParserTest {
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-    @BeforeTest
-    public void setup() {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class MexParserTest {
+
+    @BeforeAll
+    void setup() {
         System.setProperty("javax.xml.parsers.DocumentBuilderFactory", "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
     }
 
-    @AfterTest
-    public void cleanup() {
+    @AfterAll
+    void cleanup() {
         System.clearProperty("javax.xml.parsers.DocumentBuilderFactory");
     }
 
     @Test
-    public void testMexParsing() throws Exception {
+    void testMexParsing() throws Exception {
 
         StringBuilder sb = new StringBuilder();
         try (BufferedReader br = new BufferedReader(new FileReader(
@@ -41,12 +48,12 @@ public class MexParserTest {
         }
 
         BindingPolicy endpoint = MexParser.getWsTrustEndpointFromMexResponse(sb.toString(), false);
-        Assert.assertEquals(endpoint.getUrl(),
+        assertEquals(endpoint.getUrl(),
                 "https://msft.sts.microsoft.com/adfs/services/trust/13/usernamemixed");
     }
 
     @Test
-    public void testMexParsingWs2005() throws Exception {
+    void testMexParsingWs2005() throws Exception {
 
         StringBuilder sb = new StringBuilder();
         try (BufferedReader br = new BufferedReader(new FileReader(
@@ -62,11 +69,11 @@ public class MexParserTest {
         }
         BindingPolicy endpoint = MexParser.getWsTrustEndpointFromMexResponse(sb
                 .toString(), false);
-        Assert.assertEquals(endpoint.getUrl(), "https://msft.sts.microsoft.com/adfs/services/trust/2005/usernamemixed");
+        assertEquals(endpoint.getUrl(), "https://msft.sts.microsoft.com/adfs/services/trust/2005/usernamemixed");
     }
 
     @Test
-    public void testMexParsingIntegrated() throws Exception {
+    void testMexParsingIntegrated() throws Exception {
 
         StringBuilder sb = new StringBuilder();
         try (BufferedReader br = new BufferedReader(new FileReader(
@@ -82,7 +89,7 @@ public class MexParserTest {
         }
         BindingPolicy endpoint = MexParser.getPolicyFromMexResponseForIntegrated(sb
                 .toString(), false);
-        Assert.assertEquals(endpoint.getUrl(),
+        assertEquals(endpoint.getUrl(),
                 "https://msft.sts.microsoft.com/adfs/services/trust/13/windowstransport");
     }
 }

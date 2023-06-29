@@ -11,10 +11,13 @@ import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
 import com.nimbusds.oauth2.sdk.token.RefreshToken;
 import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
-@Test(groups = {"checkin"})
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TokenResponseTest extends AbstractMsalTests {
 
     private final String idToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6Ik5HVEZ2ZEstZnl0aEV1THdqcHdBSk9NOW4tQSJ9."
@@ -39,11 +42,11 @@ public class TokenResponseTest extends AbstractMsalTests {
         final TokenResponse response = new TokenResponse(
                 new BearerAccessToken("access_token"), new RefreshToken(
                 "refresh_token"), idToken, null, null, expiresIn, extExpiresIn, null, refreshIn);
-        Assert.assertNotNull(response);
+        assertNotNull(response);
         OIDCTokens tokens = response.getOIDCTokens();
-        Assert.assertNotNull(tokens);
+        assertNotNull(tokens);
         final JWT jwt = tokens.getIDToken();
-        Assert.assertTrue(jwt.getJWTClaimsSet().getClaims().size() >= 0);
+        assertTrue(jwt.getJWTClaimsSet().getClaims().size() >= 0);
     }
 
     @Test
@@ -52,12 +55,12 @@ public class TokenResponseTest extends AbstractMsalTests {
         final TokenResponse response = TokenResponse
                 .parseJsonObject(JSONObjectUtils
                         .parse(TestConfiguration.TOKEN_ENDPOINT_OK_RESPONSE));
-        Assert.assertNotNull(response);
+        assertNotNull(response);
         OIDCTokens tokens = response.getOIDCTokens();
-        Assert.assertNotNull(tokens);
-        Assert.assertNotNull(tokens.getIDToken());
-        Assert.assertFalse(StringHelper.isBlank(tokens.getIDTokenString()));
-        Assert.assertFalse(StringHelper.isBlank(response.getScope()));
+        assertNotNull(tokens);
+        assertNotNull(tokens.getIDToken());
+        assertFalse(StringHelper.isBlank(tokens.getIDTokenString()));
+        assertFalse(StringHelper.isBlank(response.getScope()));
     }
 
     @Test
@@ -67,10 +70,10 @@ public class TokenResponseTest extends AbstractMsalTests {
                 new RefreshToken("refresh_token"),
                 "", null, null, expiresIn, extExpiresIn, null, refreshIn);
 
-        Assert.assertNotNull(response);
+        assertNotNull(response);
         OIDCTokens tokens = response.getOIDCTokens();
-        Assert.assertNotNull(tokens);
+        assertNotNull(tokens);
         final AccessToken accessToken = tokens.getAccessToken();
-        Assert.assertNotNull(accessToken);
+        assertNotNull(accessToken);
     }
 }

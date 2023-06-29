@@ -3,18 +3,24 @@
 
 package com.microsoft.aad.msal4j;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.api.BeforeAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-@Test(groups = {"checkin"})
-public class HttpHeaderTest {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class HttpHeaderTest {
 
     @Test
-    public void testHttpHeaderConstructor() {
+    void testHttpHeaderConstructor() {
 
         PublicClientApplication app = PublicClientApplication
                 .builder("client-id")
@@ -34,17 +40,17 @@ public class HttpHeaderTest {
 
         Map<String, String> httpHeaderMap = httpHeaders.getReadonlyHeaderMap();
 
-        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.PRODUCT_HEADER_NAME), HttpHeaders.PRODUCT_HEADER_VALUE);
-        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.PRODUCT_VERSION_HEADER_NAME), HttpHeaders.PRODUCT_VERSION_HEADER_VALUE);
-        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.OS_HEADER_NAME), HttpHeaders.OS_HEADER_VALUE);
-        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.CPU_HEADER_NAME), HttpHeaders.CPU_HEADER_VALUE);
-        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.APPLICATION_NAME_HEADER_NAME), "app-name");
-        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.APPLICATION_VERSION_HEADER_NAME), "app-version");
-        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.CORRELATION_ID_HEADER_NAME), "correlation-id");
+        assertEquals(httpHeaderMap.get(HttpHeaders.PRODUCT_HEADER_NAME), HttpHeaders.PRODUCT_HEADER_VALUE);
+        assertEquals(httpHeaderMap.get(HttpHeaders.PRODUCT_VERSION_HEADER_NAME), HttpHeaders.PRODUCT_VERSION_HEADER_VALUE);
+        assertEquals(httpHeaderMap.get(HttpHeaders.OS_HEADER_NAME), HttpHeaders.OS_HEADER_VALUE);
+        assertEquals(httpHeaderMap.get(HttpHeaders.CPU_HEADER_NAME), HttpHeaders.CPU_HEADER_VALUE);
+        assertEquals(httpHeaderMap.get(HttpHeaders.APPLICATION_NAME_HEADER_NAME), "app-name");
+        assertEquals(httpHeaderMap.get(HttpHeaders.APPLICATION_VERSION_HEADER_NAME), "app-version");
+        assertEquals(httpHeaderMap.get(HttpHeaders.CORRELATION_ID_HEADER_NAME), "correlation-id");
     }
 
     @Test
-    public void testHttpHeaderConstructor_valuesNotSet() {
+    void testHttpHeaderConstructor_valuesNotSet() {
 
         PublicClientApplication app = PublicClientApplication
                 .builder("client-id")
@@ -61,17 +67,17 @@ public class HttpHeaderTest {
 
         Map<String, String> httpHeaderMap = httpHeaders.getReadonlyHeaderMap();
 
-        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.PRODUCT_HEADER_NAME), HttpHeaders.PRODUCT_HEADER_VALUE);
-        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.PRODUCT_VERSION_HEADER_NAME), HttpHeaders.PRODUCT_VERSION_HEADER_VALUE);
-        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.OS_HEADER_NAME), HttpHeaders.OS_HEADER_VALUE);
-        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.CPU_HEADER_NAME), HttpHeaders.CPU_HEADER_VALUE);
-        Assert.assertNull(httpHeaderMap.get(HttpHeaders.APPLICATION_NAME_HEADER_NAME));
-        Assert.assertNull(httpHeaderMap.get(HttpHeaders.APPLICATION_VERSION_HEADER_NAME));
-        Assert.assertNotNull(httpHeaderMap.get(HttpHeaders.CORRELATION_ID_HEADER_NAME));
+        assertEquals(httpHeaderMap.get(HttpHeaders.PRODUCT_HEADER_NAME), HttpHeaders.PRODUCT_HEADER_VALUE);
+        assertEquals(httpHeaderMap.get(HttpHeaders.PRODUCT_VERSION_HEADER_NAME), HttpHeaders.PRODUCT_VERSION_HEADER_VALUE);
+        assertEquals(httpHeaderMap.get(HttpHeaders.OS_HEADER_NAME), HttpHeaders.OS_HEADER_VALUE);
+        assertEquals(httpHeaderMap.get(HttpHeaders.CPU_HEADER_NAME), HttpHeaders.CPU_HEADER_VALUE);
+        assertNull(httpHeaderMap.get(HttpHeaders.APPLICATION_NAME_HEADER_NAME));
+        assertNull(httpHeaderMap.get(HttpHeaders.APPLICATION_VERSION_HEADER_NAME));
+        assertNotNull(httpHeaderMap.get(HttpHeaders.CORRELATION_ID_HEADER_NAME));
     }
 
     @Test
-    public void testHttpHeaderConstructor_userIdentifierUPN() {
+    void testHttpHeaderConstructor_userIdentifierUPN() {
 
         PublicClientApplication app = PublicClientApplication
                 .builder("client-id")
@@ -93,11 +99,11 @@ public class HttpHeaderTest {
         Map<String, String> httpHeaderMap = httpHeaders.getReadonlyHeaderMap();
 
         String expectedValue = String.format(HttpHeaders.X_ANCHOR_MAILBOX_UPN_FORMAT, upn);
-        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.X_ANCHOR_MAILBOX), expectedValue);
+        assertEquals(httpHeaderMap.get(HttpHeaders.X_ANCHOR_MAILBOX), expectedValue);
     }
 
     @Test
-    public void testHttpHeaderConstructor_userIdentifierHomeAccountId() {
+    void testHttpHeaderConstructor_userIdentifierHomeAccountId() {
 
         PublicClientApplication app = PublicClientApplication
                 .builder("client-id")
@@ -118,11 +124,11 @@ public class HttpHeaderTest {
 
         Map<String, String> httpHeaderMap = httpHeaders.getReadonlyHeaderMap();
 
-        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.X_ANCHOR_MAILBOX), "oid:userObjectId@userTenantId");
+        assertEquals(httpHeaderMap.get(HttpHeaders.X_ANCHOR_MAILBOX), "oid:userObjectId@userTenantId");
     }
 
     @Test
-    public void testHttpHeaderConstructor_extraHttpHeadersOverwriteLibraryHeaders() {
+    void testHttpHeaderConstructor_extraHttpHeadersOverwriteLibraryHeaders() {
 
         PublicClientApplication app = PublicClientApplication
                 .builder("client-id")
@@ -154,17 +160,17 @@ public class HttpHeaderTest {
         Map<String, String> httpHeaderMap = httpHeaders.getReadonlyHeaderMap();
 
         // Standard headers
-        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.PRODUCT_HEADER_NAME), HttpHeaders.PRODUCT_HEADER_VALUE);
-        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.PRODUCT_VERSION_HEADER_NAME), HttpHeaders.PRODUCT_VERSION_HEADER_VALUE);
-        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.OS_HEADER_NAME), HttpHeaders.OS_HEADER_VALUE);
-        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.CPU_HEADER_NAME), HttpHeaders.CPU_HEADER_VALUE);
-        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.APPLICATION_VERSION_HEADER_NAME), "app-version");
-        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.CORRELATION_ID_HEADER_NAME), "correlation-id");
+        assertEquals(httpHeaderMap.get(HttpHeaders.PRODUCT_HEADER_NAME), HttpHeaders.PRODUCT_HEADER_VALUE);
+        assertEquals(httpHeaderMap.get(HttpHeaders.PRODUCT_VERSION_HEADER_NAME), HttpHeaders.PRODUCT_VERSION_HEADER_VALUE);
+        assertEquals(httpHeaderMap.get(HttpHeaders.OS_HEADER_NAME), HttpHeaders.OS_HEADER_VALUE);
+        assertEquals(httpHeaderMap.get(HttpHeaders.CPU_HEADER_NAME), HttpHeaders.CPU_HEADER_VALUE);
+        assertEquals(httpHeaderMap.get(HttpHeaders.APPLICATION_VERSION_HEADER_NAME), "app-version");
+        assertEquals(httpHeaderMap.get(HttpHeaders.CORRELATION_ID_HEADER_NAME), "correlation-id");
 
         // Overwritten standard header
-        Assert.assertEquals(httpHeaderMap.get(HttpHeaders.APPLICATION_NAME_HEADER_NAME), uniqueAppName);
+        assertEquals(httpHeaderMap.get(HttpHeaders.APPLICATION_NAME_HEADER_NAME), uniqueAppName);
 
         // Extra header
-        Assert.assertEquals(httpHeaderMap.get(uniqueHeaderKey), uniqueHeaderValue);
+        assertEquals(httpHeaderMap.get(uniqueHeaderKey), uniqueHeaderValue);
     }
 }

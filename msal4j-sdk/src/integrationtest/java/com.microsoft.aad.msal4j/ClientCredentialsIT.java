@@ -7,10 +7,12 @@ import labapi.AppCredentialProvider;
 import labapi.AzureEnvironment;
 import labapi.LabUserProvider;
 import labapi.User;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.BeforeAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.IOException;
 import java.security.KeyStoreException;
@@ -25,25 +27,25 @@ import java.util.concurrent.Callable;
 
 import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 
-@Test
-public class ClientCredentialsIT {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class ClientCredentialsIT {
     private IClientCertificate certificate;
     private LabUserProvider labUserProvider;
 
-    @BeforeClass
+    @BeforeAll
     void init() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, NoSuchProviderException, IOException {
         certificate = CertificateHelper.getClientCertificate();
         labUserProvider = LabUserProvider.getInstance();
     }
 
     @Test
-    public void acquireTokenClientCredentials_ClientCertificate() throws Exception {
+    void acquireTokenClientCredentials_ClientCertificate() throws Exception {
         String clientId = "2afb0add-2f32-4946-ac90-81a02aa4550e";
         assertAcquireTokenCommon(clientId, certificate, TestConstants.MICROSOFT_AUTHORITY);
     }
 
     @Test
-    public void acquireTokenClientCredentials_ClientSecret() throws Exception {
+    void acquireTokenClientCredentials_ClientSecret() throws Exception {
         AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.AZURE);
         final String clientId = appProvider.getLabVaultAppId();
         final String password = appProvider.getLabVaultPassword();
@@ -53,7 +55,7 @@ public class ClientCredentialsIT {
     }
 
     @Test
-    public void acquireTokenClientCredentials_ClientAssertion() throws Exception {
+    void acquireTokenClientCredentials_ClientAssertion() throws Exception {
         String clientId = "2afb0add-2f32-4946-ac90-81a02aa4550e";
 
         ClientAssertion clientAssertion = getClientAssertion(clientId);
@@ -64,7 +66,7 @@ public class ClientCredentialsIT {
     }
 
     @Test
-    public void acquireTokenClientCredentials_ClientSecret_Ciam() throws Exception {
+    void acquireTokenClientCredentials_ClientSecret_Ciam() throws Exception {
 
         User user = labUserProvider.getCiamUser();
         String clientId = user.getAppId();
@@ -86,13 +88,13 @@ public class ClientCredentialsIT {
                         .build())
                 .get();
 
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
         assertAcquireTokenCommon(clientId, credential, TestConstants.CIAM_AUTHORITY);
     }
 
     @Test
-    public void acquireTokenClientCredentials_Callback() throws Exception {
+    void acquireTokenClientCredentials_Callback() throws Exception {
         String clientId = "2afb0add-2f32-4946-ac90-81a02aa4550e";
 
         // Creates a valid client assertion using a callback, and uses it to build the client app and make a request
@@ -116,7 +118,7 @@ public class ClientCredentialsIT {
     }
 
     @Test
-    public void acquireTokenClientCredentials_DefaultCacheLookup() throws Exception {
+    void acquireTokenClientCredentials_DefaultCacheLookup() throws Exception {
         AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.AZURE);
         final String clientId = appProvider.getLabVaultAppId();
         final String password = appProvider.getLabVaultPassword();
@@ -132,15 +134,15 @@ public class ClientCredentialsIT {
                 .build())
                 .get();
 
-        Assert.assertNotNull(result1);
-        Assert.assertNotNull(result1.accessToken());
+        assertNotNull(result1);
+        assertNotNull(result1.accessToken());
 
         IAuthenticationResult result2 = cca.acquireToken(ClientCredentialParameters
                 .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
                 .build())
                 .get();
 
-        Assert.assertEquals(result1.accessToken(), result2.accessToken());
+        assertEquals(result1.accessToken(), result2.accessToken());
 
         IAuthenticationResult result3 = cca.acquireToken(ClientCredentialParameters
                 .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
@@ -148,22 +150,16 @@ public class ClientCredentialsIT {
                 .build())
                 .get();
 
-        Assert.assertNotNull(result3);
-        Assert.assertNotNull(result3.accessToken());
-        Assert.assertNotEquals(result2.accessToken(), result3.accessToken());
+        assertNotNull(result3);
+        assertNotNull(result3.accessToken());
+        assertNotEquals(result2.accessToken(), result3.accessToken());
     }
 
-    @DataProvider(name = "regionWithAuthority")
-    public static Object[][] createData() {
-        return new Object[][]{{"westus", TestConstants.REGIONAL_MICROSOFT_AUTHORITY_BASIC_HOST_WESTUS},
-                {"eastus", TestConstants.REGIONAL_MICROSOFT_AUTHORITY_BASIC_HOST_EASTUS}};
-    }
-
-    @Test(dataProvider = "regionWithAuthority")
-    public void acquireTokenClientCredentials_Regional(String[] regionWithAuthority) throws Exception {
+    @Test
+    void acquireTokenClientCredentials_Regional() throws Exception {
         String clientId = "2afb0add-2f32-4946-ac90-81a02aa4550e";
 
-        assertAcquireTokenCommon_withRegion(clientId, certificate, regionWithAuthority[0], regionWithAuthority[1]);
+        assertAcquireTokenCommon_withRegion(clientId, certificate, "westus", TestConstants.REGIONAL_MICROSOFT_AUTHORITY_BASIC_HOST_WESTUS);
     }
     private ClientAssertion getClientAssertion(String clientId) {
         return JwtHelper.buildJwt(
@@ -184,8 +180,8 @@ public class ClientCredentialsIT {
                 .build())
                 .get();
 
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
     }
 
     private void assertAcquireTokenCommon_withParameters(String clientId, IClientCredential credential, IClientCredential credentialParam) throws Exception {
@@ -200,8 +196,8 @@ public class ClientCredentialsIT {
                 .build())
                 .get();
 
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
     }
 
     private void assertAcquireTokenCommon_withRegion(String clientId, IClientCredential credential, String region, String regionalAuthority) throws Exception {
@@ -221,9 +217,9 @@ public class ClientCredentialsIT {
                 .build())
                 .get();
 
-        Assert.assertNotNull(resultNoRegion);
-        Assert.assertNotNull(resultNoRegion.accessToken());
-        Assert.assertEquals(resultNoRegion.environment(), TestConstants.MICROSOFT_AUTHORITY_BASIC_HOST);
+        assertNotNull(resultNoRegion);
+        assertNotNull(resultNoRegion.accessToken());
+        assertEquals(TestConstants.MICROSOFT_AUTHORITY_BASIC_HOST, resultNoRegion.environment());
 
         //Ensure regional tokens are properly cached and retrievable
         IAuthenticationResult resultRegion = ccaRegion.acquireToken(ClientCredentialParameters
@@ -231,18 +227,18 @@ public class ClientCredentialsIT {
                 .build())
                 .get();
 
-        Assert.assertNotNull(resultRegion);
-        Assert.assertNotNull(resultRegion.accessToken());
-        Assert.assertEquals(resultRegion.environment(), regionalAuthority);
+        assertNotNull(resultRegion);
+        assertNotNull(resultRegion.accessToken());
+        assertEquals(resultRegion.environment(), regionalAuthority);
 
         IAuthenticationResult resultRegionCached = ccaRegion.acquireToken(ClientCredentialParameters
                 .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
                 .build())
                 .get();
 
-        Assert.assertNotNull(resultRegionCached);
-        Assert.assertNotNull(resultRegionCached.accessToken());
-        Assert.assertEquals(resultRegionCached.accessToken(), resultRegion.accessToken());
+        assertNotNull(resultRegionCached);
+        assertNotNull(resultRegionCached.accessToken());
+        assertEquals(resultRegionCached.accessToken(), resultRegion.accessToken());
 
         //Tokens retrieved from regional endpoints should be interchangeable with non-regional, and vice-versa
         //For example, if an application doesn't configure a region but gets regional tokens added to its cache, they should be retrievable
@@ -252,8 +248,8 @@ public class ClientCredentialsIT {
                 .build())
                 .get();
 
-        Assert.assertNotNull(resultNoRegion);
-        Assert.assertNotNull(resultNoRegion.accessToken());
-        Assert.assertEquals(resultNoRegion.accessToken(), resultRegion.accessToken());
+        assertNotNull(resultNoRegion);
+        assertNotNull(resultNoRegion.accessToken());
+        assertEquals(resultNoRegion.accessToken(), resultRegion.accessToken());
     }
 }

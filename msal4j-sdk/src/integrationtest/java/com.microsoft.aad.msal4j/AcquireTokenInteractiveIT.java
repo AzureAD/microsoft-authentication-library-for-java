@@ -6,8 +6,13 @@ package com.microsoft.aad.msal4j;
 import labapi.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -17,13 +22,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-public class AcquireTokenInteractiveIT extends SeleniumTest {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class AcquireTokenInteractiveIT extends SeleniumTest {
     private final static Logger LOG = LoggerFactory.getLogger(AuthorizationCodeIT.class);
 
     private Config cfg;
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenInteractive_ManagedUser(String environment) {
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    void acquireTokenInteractive_ManagedUser(String environment) {
         cfg = new Config(environment);
 
         User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
@@ -31,37 +38,41 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
     }
 
     @Test()
-    public void acquireTokenInteractive_ADFSv2019_OnPrem() {
+    void acquireTokenInteractive_ADFSv2019_OnPrem() {
         User user = labUserProvider.getOnPremAdfsUser(FederationProvider.ADFS_2019);
         assertAcquireTokenCommon(user, TestConstants.ADFS_AUTHORITY, TestConstants.ADFS_SCOPE);
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenInteractive_ADFSv2019_Federated(String environment) {
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    void acquireTokenInteractive_ADFSv2019_Federated(String environment) {
         cfg = new Config(environment);
 
         User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_2019);
         assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope());
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenInteractive_ADFSv4_Federated(String environment) {
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    void acquireTokenInteractive_ADFSv4_Federated(String environment) {
         cfg = new Config(environment);
 
         User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_4);
         assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope());
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenInteractive_ADFSv3_Federated(String environment) {
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    void acquireTokenInteractive_ADFSv3_Federated(String environment) {
         cfg = new Config(environment);
 
         User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_3);
         assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope());
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenInteractive_ADFSv2_Federated(String environment) {
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    void acquireTokenInteractive_ADFSv2_Federated(String environment) {
         cfg = new Config(environment);
 
         User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_2);
@@ -69,7 +80,7 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
     }
 
     @Test
-    public void acquireTokenInteractive_Ciam() {
+    void acquireTokenInteractive_Ciam() {
         User user = labUserProvider.getCiamUser();
 
         Map<String, String> extraQueryParameters = new HashMap<>();
@@ -110,19 +121,21 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         }
 
         assertTokenResultNotNull(result);
-        Assert.assertEquals(user.getUpn(), result.account().username());
+        assertEquals(user.getUpn(), result.account().username());
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenWithAuthorizationCode_B2C_Local(String environment) {
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    void acquireTokenWithAuthorizationCode_B2C_Local(String environment) {
         cfg = new Config(environment);
 
         User user = labUserProvider.getB2cUser(cfg.azureEnvironment, B2CProvider.LOCAL);
         assertAcquireTokenB2C(user, TestConstants.B2C_AUTHORITY);
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenWithAuthorizationCode_B2C_LegacyFormat(String environment) {
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    void acquireTokenWithAuthorizationCode_B2C_LegacyFormat(String environment) {
         cfg = new Config(environment);
 
         User user = labUserProvider.getB2cUser(cfg.azureEnvironment, B2CProvider.LOCAL);
@@ -130,7 +143,7 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
     }
 
     @Test
-    public void acquireTokenInteractive_ManagedUser_InstanceAware() {
+    void acquireTokenInteractive_ManagedUser_InstanceAware() {
         cfg = new Config(AzureEnvironment.AZURE);
 
         User user = labUserProvider.getDefaultUser(AzureEnvironment.AZURE_US_GOVERNMENT);
@@ -154,7 +167,7 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
                 scope);
 
         assertTokenResultNotNull(result);
-        Assert.assertEquals(user.getUpn(), result.account().username());
+        assertEquals(user.getUpn(), result.account().username());
     }
 
     private void assertAcquireTokenB2C(User user, String authority) {
@@ -187,13 +200,13 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         IAuthenticationResult result = acquireTokenInteractive_instanceAware(user, pca, cfg.graphDefaultScope());
 
         assertTokenResultNotNull(result);
-        Assert.assertEquals(user.getUpn(), result.account().username());
+        assertEquals(user.getUpn(), result.account().username());
 
         //This test is using a client app with the login.microsoftonline.com config to get tokens for a login.microsoftonline.us user,
         // so when using instance aware the result's environment will be for the user/account and not the client app
-        Assert.assertNotEquals(pca.authenticationAuthority.host, result.environment());
-        Assert.assertEquals(result.account().environment(), result.environment());
-        Assert.assertEquals(result.account().environment(), pca.getAccounts().join().iterator().next().environment());
+        assertNotEquals(pca.authenticationAuthority.host, result.environment());
+        assertEquals(result.account().environment(), result.environment());
+        assertEquals(result.account().environment(), pca.getAccounts().join().iterator().next().environment());
 
         IAuthenticationResult cachedResult;
         try {
@@ -203,17 +216,7 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
         }
 
         //Ensure that the cached environment matches the original auth result environment (.us) instead of the client app's (.com)
-        Assert.assertEquals(result.account().environment(), cachedResult.environment());
-    }
-
-    //@Test
-    public void acquireTokensInHomeAndGuestClouds_ArlingtonAccount() throws MalformedURLException, ExecutionException, InterruptedException {
-        acquireTokensInHomeAndGuestClouds(AzureEnvironment.AZURE_US_GOVERNMENT);
-    }
-
-    //@Test
-    public void acquireTokensInHomeAndGuestClouds_MooncakeAccount() throws MalformedURLException, ExecutionException, InterruptedException {
-        acquireTokensInHomeAndGuestClouds(AzureEnvironment.AZURE_CHINA);
+        assertEquals(result.account().environment(), cachedResult.environment());
     }
 
     private IAuthenticationResult acquireTokenSilently(IPublicClientApplication pca, IAccount account, String scope) throws InterruptedException, ExecutionException, MalformedURLException {
@@ -251,11 +254,11 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
 
         IAuthenticationResult result = acquireTokenInteractive(user, publicCloudPca, TestConstants.USER_READ_SCOPE);
         assertTokenResultNotNull(result);
-        Assert.assertEquals(user.getHomeUPN(), result.account().username());
+        assertEquals(user.getHomeUPN(), result.account().username());
 
         publicCloudPca.removeAccount(publicCloudPca.getAccounts().join().iterator().next()).join();
 
-        Assert.assertEquals(publicCloudPca.getAccounts().join().size(), 0);
+        assertEquals(publicCloudPca.getAccounts().join().size(), 0);
     }
 
     private IAuthenticationResult acquireTokenInteractive(
@@ -289,9 +292,9 @@ public class AcquireTokenInteractiveIT extends SeleniumTest {
     }
 
     private void assertTokenResultNotNull(IAuthenticationResult result) {
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.idToken());
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
+        assertNotNull(result.idToken());
     }
 
     private IAuthenticationResult acquireTokenInteractive_instanceAware(

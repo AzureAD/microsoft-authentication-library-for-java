@@ -5,28 +5,31 @@ package com.microsoft.aad.msal4j;
 
 import labapi.LabUserProvider;
 import labapi.User;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.BeforeAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.Collections;
 
-public class HttpClientIT {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class HttpClientIT {
     private LabUserProvider labUserProvider;
 
-    @BeforeClass
-    public void setUp() {
+    @BeforeAll
+    void setUp() {
         labUserProvider = LabUserProvider.getInstance();
     }
 
     @Test
-    public void acquireToken_okHttpClient() throws Exception {
+    void acquireToken_okHttpClient() throws Exception {
         User user = labUserProvider.getDefaultUser();
         assertAcquireTokenCommon(user, new OkHttpClientAdapter());
     }
 
     @Test
-    public void acquireToken_apacheHttpClient() throws Exception {
+    void acquireToken_apacheHttpClient() throws Exception {
         User user = labUserProvider.getDefaultUser();
         assertAcquireTokenCommon(user, new ApacheHttpClientAdapter());
     }
@@ -46,9 +49,9 @@ public class HttpClientIT {
                 .build())
                 .get();
 
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.idToken());
-        Assert.assertEquals(user.getUpn(), result.account().username());
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
+        assertNotNull(result.idToken());
+        assertEquals(user.getUpn(), result.account().username());
     }
 }

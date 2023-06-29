@@ -6,8 +6,12 @@ package com.microsoft.aad.msal4j;
 import labapi.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -19,32 +23,19 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-public class AuthorizationCodeIT extends SeleniumTest {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class AuthorizationCodeIT extends SeleniumTest {
     private final static Logger LOG = LoggerFactory.getLogger(AuthorizationCodeIT.class);
 
     private Config cfg;
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
     public void acquireTokenWithAuthorizationCode_ManagedUser(String environment) {
         cfg = new Config(environment);
 
         User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
         assertAcquireTokenAAD(user, null);
-    }
-
-    //TODO: Re-enable test once list of claims/capabilities and their expected behavior is known
-    //@Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenWithAuthorizationCode_ManagedUserWithClaimsAndCapabilities(String environment) {
-        cfg = new Config(environment);
-
-        User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
-
-        Map<String, Set<String>> claimsAndCapabilities = new HashMap<>();
-
-        claimsAndCapabilities.put("claims", Collections.singleton(TestConstants.CLAIMS));
-        claimsAndCapabilities.put("clientCapabilities", TestConstants.CLIENT_CAPABILITIES_EMPTY);
-
-        assertAcquireTokenAAD(user, claimsAndCapabilities);
     }
 
     @Test
@@ -53,7 +44,8 @@ public class AuthorizationCodeIT extends SeleniumTest {
         assertAcquireTokenADFS2019(user);
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
     public void acquireTokenWithAuthorizationCode_ADFSv2019_Federated(String environment) {
         cfg = new Config(environment);
 
@@ -61,7 +53,8 @@ public class AuthorizationCodeIT extends SeleniumTest {
         assertAcquireTokenAAD(user, null);
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
     public void acquireTokenWithAuthorizationCode_ADFSv4_Federated(String environment) {
         cfg = new Config(environment);
 
@@ -70,7 +63,8 @@ public class AuthorizationCodeIT extends SeleniumTest {
         assertAcquireTokenAAD(user, null);
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
     public void acquireTokenWithAuthorizationCode_ADFSv3_Federated(String environment) {
         cfg = new Config(environment);
 
@@ -78,7 +72,8 @@ public class AuthorizationCodeIT extends SeleniumTest {
         assertAcquireTokenAAD(user, null);
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
     public void acquireTokenWithAuthorizationCode_ADFSv2_Federated(String environment) {
         cfg = new Config(environment);
 
@@ -86,42 +81,12 @@ public class AuthorizationCodeIT extends SeleniumTest {
         assertAcquireTokenAAD(user, null);
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
     public void acquireTokenWithAuthorizationCode_B2C_Local(String environment) {
         cfg = new Config(environment);
 
         User user = labUserProvider.getB2cUser(environment, B2CProvider.LOCAL);
-        assertAcquireTokenB2C(user);
-    }
-
-    // failing on azure devOps
-    //@Test
-    // TODO Redirect URI localhost in not registered
-    public void acquireTokenWithAuthorizationCode_B2C_Google() {
-/*        LabResponse labResponse = labUserProvider.getB2cUser(
-                B2CIdentityProvider.GOOGLE,
-                false);
-        labUserProvider.getUserPassword(labResponse.getUser());
-
-        String b2CAppId = "b876a048-55a5-4fc5-9403-f5d90cb1c852";
-        labResponse.setAppId(b2CAppId);*/
-        User user = labUserProvider.getB2cUser(B2CProvider.GOOGLE);
-        assertAcquireTokenB2C(user);
-    }
-
-    // TODO uncomment when lab fixes facebook test account
-    //@Test
-    // TODO Redirect URI localhost in not registered
-    public void acquireTokenWithAuthorizationCode_B2C_Facebook() {
-/*        LabResponse labResponse = labUserProvider.getB2cUser(
-                B2CIdentityProvider.FACEBOOK,
-                false);
-
-
-        String b2CAppId = "b876a048-55a5-4fc5-9403-f5d90cb1c852";
-        labResponse.setAppId(b2CAppId);*/
-        User user = labUserProvider.getB2cUser(B2CProvider.FACEBOOK);
-
         assertAcquireTokenB2C(user);
     }
 
@@ -142,10 +107,10 @@ public class AuthorizationCodeIT extends SeleniumTest {
                 authCode,
                 Collections.singleton(TestConstants.ADFS_SCOPE));
 
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.idToken());
-        Assert.assertEquals(user.getUpn(), result.account().username());
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
+        assertNotNull(result.idToken());
+        assertEquals(user.getUpn(), result.account().username());
     }
 
     private void assertAcquireTokenAAD(User user, Map<String, Set<String>> parameters) {
@@ -171,10 +136,10 @@ public class AuthorizationCodeIT extends SeleniumTest {
                 authCode,
                 Collections.singleton(cfg.graphDefaultScope()));
 
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.idToken());
-        Assert.assertEquals(user.getUpn(), result.account().username());
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
+        assertNotNull(result.idToken());
+        assertEquals(user.getUpn(), result.account().username());
     }
 
     private void assertAcquireTokenB2C(User user) {
@@ -196,9 +161,9 @@ public class AuthorizationCodeIT extends SeleniumTest {
         String authCode = acquireAuthorizationCodeAutomated(user, cca, null);
         IAuthenticationResult result = acquireTokenInteractiveB2C(cca, authCode);
 
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.idToken());
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
+        assertNotNull(result.idToken());
     }
 
     private IAuthenticationResult acquireTokenAuthorizationCodeFlow(
