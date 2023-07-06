@@ -84,7 +84,6 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
         User user = labUserProvider.getCiamUser();
 
         Map<String, String> extraQueryParameters = new HashMap<>();
-        extraQueryParameters.put("dc","ESTS-PUB-EUS-AZ1-FD000-TEST1");
 
         PublicClientApplication pca;
         try {

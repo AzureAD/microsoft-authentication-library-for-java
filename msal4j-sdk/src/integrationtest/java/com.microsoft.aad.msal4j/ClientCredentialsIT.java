@@ -72,7 +72,6 @@ class ClientCredentialsIT {
         String clientId = user.getAppId();
 
         Map<String, String> extraQueryParameters = new HashMap<>();
-        extraQueryParameters.put("dc","ESTS-PUB-EUS-AZ1-FD000-TEST1");
 
         AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.CIAM);
         IClientCredential credential = ClientCredentialFactory.createFromSecret(appProvider.getOboAppPassword());

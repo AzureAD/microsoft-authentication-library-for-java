@@ -112,7 +112,6 @@ class UsernamePasswordIT {
     void acquireTokenWithUsernamePassword_Ciam() throws Exception {
 
         Map<String, String> extraQueryParameters = new HashMap<>();
-        extraQueryParameters.put("dc","ESTS-PUB-EUS-AZ1-FD000-TEST1");
 
         User user = labUserProvider.getCiamUser();
         PublicClientApplication pca = PublicClientApplication.builder(user.getAppId())
