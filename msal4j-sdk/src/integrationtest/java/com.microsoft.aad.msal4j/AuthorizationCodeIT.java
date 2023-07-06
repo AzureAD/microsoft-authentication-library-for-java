@@ -4,6 +4,9 @@
 package com.microsoft.aad.msal4j;
 
 import labapi.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.jupiter.api.Test;
@@ -28,6 +31,21 @@ class AuthorizationCodeIT extends SeleniumTest {
     private final static Logger LOG = LoggerFactory.getLogger(AuthorizationCodeIT.class);
 
     private Config cfg;
+
+    @BeforeAll
+    public void setupUserProvider() {
+        setUpLapUserProvider();
+    }
+
+    @AfterEach
+    public void stopBrowser() {
+        cleanUp();
+    }
+
+    @BeforeEach
+    public void startBrowser() {
+        startUpBrowser();
+    }
 
     @ParameterizedTest
     @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")

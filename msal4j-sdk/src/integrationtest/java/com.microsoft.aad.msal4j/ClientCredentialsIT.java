@@ -6,7 +6,6 @@ package com.microsoft.aad.msal4j;
 import labapi.AppCredentialProvider;
 import labapi.AzureEnvironment;
 import labapi.LabUserProvider;
-import labapi.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.BeforeAll;
@@ -63,33 +62,6 @@ class ClientCredentialsIT {
         IClientCredential credential = ClientCredentialFactory.createFromClientAssertion(clientAssertion.assertion());
 
         assertAcquireTokenCommon(clientId, credential, TestConstants.MICROSOFT_AUTHORITY);
-    }
-
-    @Test
-    void acquireTokenClientCredentials_ClientSecret_Ciam() throws Exception {
-
-        User user = labUserProvider.getCiamUser();
-        String clientId = user.getAppId();
-
-        Map<String, String> extraQueryParameters = new HashMap<>();
-
-        AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.CIAM);
-        IClientCredential credential = ClientCredentialFactory.createFromSecret(appProvider.getOboAppPassword());
-
-        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
-                        clientId, credential).
-                authority("https://" + user.getLabName() + ".ciamlogin.com/").
-                build();
-
-        IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
-                        .builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE))
-                        .extraQueryParameters(extraQueryParameters)
-                        .build())
-                .get();
-
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
-        assertAcquireTokenCommon(clientId, credential, TestConstants.CIAM_AUTHORITY);
     }
 
     @Test

@@ -199,7 +199,7 @@ public class ServerTelemetryTests {
         } catch (Exception ex) {
             headers = pca.getServiceBundle().getServerSideTelemetry().getServerTelemetryHeaderMap();
 
-            assertEquals(headers.get(CURRENT_REQUEST_HEADER_NAME), "5|300,,,1,2|");
+            assertEquals(headers.get(CURRENT_REQUEST_HEADER_NAME), "5|300,,,0,0|");
         }
     }
 

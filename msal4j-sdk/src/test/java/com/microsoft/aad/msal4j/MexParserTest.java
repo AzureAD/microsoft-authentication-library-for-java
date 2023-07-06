@@ -32,7 +32,7 @@ class MexParserTest {
     }
 
     @Test
-    void testMexParsing() throws Exception {
+    void testMexParsingWs13() throws Exception {
 
         StringBuilder sb = new StringBuilder();
         try (BufferedReader br = new BufferedReader(new FileReader(

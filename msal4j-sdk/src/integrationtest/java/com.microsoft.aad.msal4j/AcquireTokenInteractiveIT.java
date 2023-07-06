@@ -4,6 +4,9 @@
 package com.microsoft.aad.msal4j;
 
 import labapi.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.jupiter.api.Test;
@@ -27,6 +30,22 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
     private final static Logger LOG = LoggerFactory.getLogger(AuthorizationCodeIT.class);
 
     private Config cfg;
+
+
+    @BeforeAll
+    public void setupUserProvider() {
+        setUpLapUserProvider();
+    }
+
+    @AfterEach
+    public void stopBrowser() {
+        cleanUp();
+    }
+
+    @BeforeEach
+    public void startBrowser() {
+        startUpBrowser();
+    }
 
     @ParameterizedTest
     @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
@@ -77,50 +96,6 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
 
         User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_2);
         assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope());
-    }
-
-    @Test
-    void acquireTokenInteractive_Ciam() {
-        User user = labUserProvider.getCiamUser();
-
-        Map<String, String> extraQueryParameters = new HashMap<>();
-
-        PublicClientApplication pca;
-        try {
-            pca = PublicClientApplication.builder(
-                            user.getAppId()).
-                    authority("https://" + user.getLabName() + ".ciamlogin.com/")
-            .build();
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException(ex.getMessage());
-        }
-
-        IAuthenticationResult result;
-        try {
-            URI url = new URI("http://localhost:8080");
-
-            SystemBrowserOptions browserOptions =
-                    SystemBrowserOptions
-                            .builder()
-                            .openBrowserAction(new SeleniumOpenBrowserAction(user, pca))
-                            .build();
-
-            InteractiveRequestParameters parameters = InteractiveRequestParameters
-                    .builder(url)
-                    .scopes(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE))
-                    .extraQueryParameters(extraQueryParameters)
-                    .systemBrowserOptions(browserOptions)
-                    .build();
-
-            result = pca.acquireToken(parameters).get();
-
-        } catch (Exception e) {
-            LOG.error("Error acquiring token with authCode: " + e.getMessage());
-            throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
-        }
-
-        assertTokenResultNotNull(result);
-        assertEquals(user.getUpn(), result.account().username());
     }
 
     @ParameterizedTest

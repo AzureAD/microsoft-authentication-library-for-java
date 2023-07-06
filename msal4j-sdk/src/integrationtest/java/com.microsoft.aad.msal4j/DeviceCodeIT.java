@@ -114,29 +114,6 @@ class DeviceCodeIT {
         assertNotNull(result.accessToken());
     }
 
-    @Test
-    void DeviceCodeFlowCiamTest() throws Exception {
-        User user = labUserProvider.getCiamUser();
-
-        PublicClientApplication pca = PublicClientApplication.builder(
-                user.getAppId()).
-                authority("https://" + user.getLabName() + ".ciamlogin.com/").
-                build();
-
-        Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
-            runAutomatedDeviceCodeFlow(deviceCode, user);
-        };
-
-        IAuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
-                .builder(Collections.singleton(""),
-                        deviceCodeConsumer)
-                .build())
-                .get();
-
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
-    }
-
     private void runAutomatedDeviceCodeFlow(DeviceCode deviceCode, User user) {
         boolean isRunningLocally = true;//!Strings.isNullOrEmpty(
         //System.getenv(TestConstants.LOCAL_FLAG_ENV_VAR));

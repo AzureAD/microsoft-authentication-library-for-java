@@ -50,7 +50,7 @@ class AuthorityTest extends AbstractMsalTests {
     void testB2CAuthorityConstructor_NotEnoughSegments() {
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
-                Authority.validateAuthority(new URL("https://something.com/somethingelse/")));
+                new B2CAuthority(new URL("https://something.com/somethingelse/")));
 
         assertTrue(ex.getMessage().contains("Valid B2C 'authority' URLs should follow either of these formats"));
     }
@@ -68,7 +68,7 @@ class AuthorityTest extends AbstractMsalTests {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
                 Authority.validateAuthority(new URL("https://I.com/something/#haha")));
 
-        assertTrue(ex.getMessage().contains("authority is invalid format \\(contains fragment\\)"));
+        assertTrue(ex.getMessage().contains("authority is invalid format (contains fragment)"));
     }
 
     @Test
