@@ -4,11 +4,18 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
-import org.easymock.EasyMock;
-import org.powermock.api.easymock.PowerMock;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -16,13 +23,30 @@ import java.util.*;
 
 import static org.easymock.EasyMock.anyObject;
 
-public class RequestThrottlingTest extends AbstractMsalTests {
+@ExtendWith(MockitoExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_METHOD)
+class RequestThrottlingTest extends AbstractMsalTests {
 
     public final Integer THROTTLE_IN_SEC = 1;
+    public TokenEndpointResponseType responseType;
+    IHttpClient httpClientMock = mock(IHttpClient.class);
 
-    @BeforeMethod
+
+    @BeforeEach
     void init() {
         ThrottlingCache.DEFAULT_THROTTLING_TIME_SEC = THROTTLE_IN_SEC;
+    }
+
+    @AfterEach
+    void check() throws Exception {
+
+        //throttlingTest() makes three non-throttled calls, so for a test without a retry there should be
+        // 3 invocations of httpClientMock.send(), and 6 invocations if the calls are set to retry
+        if (responseType == TokenEndpointResponseType.STATUS_CODE_500) {
+            verify(httpClientMock, times(6)).send(any());
+        } else {
+            verify(httpClientMock, times(3)).send(any());
+        }
     }
 
     private AuthorizationCodeParameters getAcquireTokenApiParameters(String scope) throws URISyntaxException {
@@ -66,9 +90,9 @@ public class RequestThrottlingTest extends AbstractMsalTests {
     }
 
     private PublicClientApplication getClientApplicationMockedWithOneTokenEndpointResponse(
-            TokenEndpointResponseType responseType)
+            TokenEndpointResponseType type)
             throws Exception {
-        IHttpClient httpClientMock = EasyMock.createMock(IHttpClient.class);
+        responseType = type;
 
         HttpResponse httpResponse = new HttpResponse();
         Map<String, List<String>> headers = new HashMap<>();
@@ -102,17 +126,9 @@ public class RequestThrottlingTest extends AbstractMsalTests {
         headers.put("Content-Type", Arrays.asList("application/json"));
         httpResponse.addHeaders(headers);
 
-        if (responseType == TokenEndpointResponseType.STATUS_CODE_500) {
-            // expected to called two times due to retry logic
-            EasyMock.expect(httpClientMock.send(anyObject())).andReturn(httpResponse).times(2);
-        } else {
-            EasyMock.expect(httpClientMock.send(anyObject())).andReturn(httpResponse).times(1);
-        }
+        doReturn(httpResponse).when(httpClientMock).send(any());
 
-        PublicClientApplication app = getPublicClientApp(httpClientMock);
-
-        PowerMock.replayAll(httpClientMock);
-        return app;
+        return getPublicClientApp(httpClientMock);
     }
 
     private void throttlingTest(TokenEndpointResponseType tokenEndpointResponseType) throws Exception {
@@ -125,11 +141,9 @@ public class RequestThrottlingTest extends AbstractMsalTests {
             app.acquireToken(getAcquireTokenApiParameters("scope1")).join();
         } catch (Exception ex) {
             if (!(ex.getCause() instanceof MsalServiceException)) {
-                Assert.fail("Unexpected exception");
+                fail("Unexpected exception");
             }
         }
-        PowerMock.verifyAll();
-        PowerMock.resetAll();
 
         // repeat same request #1, should be throttled
         try {
@@ -137,7 +151,7 @@ public class RequestThrottlingTest extends AbstractMsalTests {
             app.acquireToken(getAcquireTokenApiParameters("scope1")).join();
         } catch (Exception ex) {
             if (!(ex.getCause() instanceof MsalThrottlingException)) {
-                Assert.fail("Unexpected exception");
+                fail("Unexpected exception");
             }
         }
 
@@ -147,11 +161,9 @@ public class RequestThrottlingTest extends AbstractMsalTests {
             app.acquireToken(getAcquireTokenApiParameters("scope2")).join();
         } catch (Exception ex) {
             if (!(ex.getCause() instanceof MsalServiceException)) {
-                Assert.fail("Unexpected exception");
+                fail("Unexpected exception");
             }
         }
-        PowerMock.verifyAll();
-        PowerMock.resetAll();
 
         // repeat request #1, should not be throttled after
         // throttling for this request got expired
@@ -161,37 +173,35 @@ public class RequestThrottlingTest extends AbstractMsalTests {
             app.acquireToken(getAcquireTokenApiParameters("scope1")).join();
         } catch (Exception ex) {
             if (!(ex.getCause() instanceof MsalServiceException)) {
-                Assert.fail("Unexpected exception");
+                fail("Unexpected exception");
             }
         }
-        PowerMock.verifyAll();
-        PowerMock.resetAll();
     }
 
     @Test
-    public void STSResponseContains_RetryAfterHeader() throws Exception {
+    void STSResponseContains_RetryAfterHeader() throws Exception {
         throttlingTest(TokenEndpointResponseType.RETRY_AFTER_HEADER);
     }
 
     @Test
-    public void STSResponseContains_StatusCode429() throws Exception {
+    void STSResponseContains_StatusCode429() throws Exception {
         throttlingTest(TokenEndpointResponseType.STATUS_CODE_429);
     }
 
     @Test
-    public void STSResponseContains_StatusCode429_RetryAfterHeader() throws Exception {
+    void STSResponseContains_StatusCode429_RetryAfterHeader() throws Exception {
         // using big value for DEFAULT_THROTTLING_TIME_SEC to make sure that RetryAfterHeader value used instead
         ThrottlingCache.DEFAULT_THROTTLING_TIME_SEC = 1000;
         throttlingTest(TokenEndpointResponseType.STATUS_CODE_429_RETRY_AFTER_HEADER);
     }
 
     @Test
-    public void STSResponseContains_StatusCode500() throws Exception {
+    void STSResponseContains_StatusCode500() throws Exception {
         throttlingTest(TokenEndpointResponseType.STATUS_CODE_500);
     }
 
     @Test
-    public void STSResponseContains_StatusCode500_RetryAfterHeader() throws Exception {
+    void STSResponseContains_StatusCode500_RetryAfterHeader() throws Exception {
         // using big value for DEFAULT_THROTTLING_TIME_SEC to make sure that RetryAfterHeader value used instead
         ThrottlingCache.DEFAULT_THROTTLING_TIME_SEC = 1000;
         throttlingTest(TokenEndpointResponseType.STATUS_CODE_500_RETRY_AFTER_HEADER);

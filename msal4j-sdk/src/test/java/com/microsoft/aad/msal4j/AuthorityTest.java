@@ -170,28 +170,6 @@ class AuthorityTest extends AbstractMsalTests {
         assertNotNull(pca.authenticationAuthority);
     }
 
-    //TODO: test if this test tests anything
-    @Test
-    void testDoStaticInstanceDiscovery_ValidateTrue_TrustedAuthority()
-            throws Exception {
-        new AADAuthority(new URL(TestConfiguration.AAD_TENANT_ENDPOINT));
-    }
-
-    //TODO: test if this test tests anything
-    @Test
-    void testDoStaticInstanceDiscovery_ValidateTrue_UntrustedAuthority()
-            throws Exception {
-        new AADAuthority(new URL(TestConfiguration.AAD_UNKNOWN_TENANT_ENDPOINT));
-    }
-
-    //TODO: test if this test tests anything
-    @Test
-    void testDoStaticInstanceDiscovery_ValidateFalse_TrustedAuthority()
-            throws Exception {
-        new AADAuthority(new URL(TestConfiguration.AAD_UNKNOWN_TENANT_ENDPOINT));
-    }
-
-
     static Object[][] validCiamAuthoritiesAndTransformedAuthority() throws MalformedURLException {
         return new Object[][]{{new URL("https://msidlabciam1.ciamlogin.com/"), new URL("https://msidlabciam1.ciamlogin.com/msidlabciam1.onmicrosoft.com/")},
                 {new URL("https://msidlabciam1.ciamlogin.com/d57fb3d4-4b5a-4144-9328-9c1f7d58179d"), new URL("https://msidlabciam1.ciamlogin.com/d57fb3d4-4b5a-4144-9328-9c1f7d58179d")},
