@@ -3,11 +3,9 @@
 
 package infrastructure;
 
-import com.microsoft.aad.msal4j.TestConstants;
 import labapi.FederationProvider;
 import labapi.LabConstants;
 import labapi.User;
-import org.testng.util.Strings;
 
 class UserInformationFields {
     private final User user;
@@ -19,14 +17,14 @@ class UserInformationFields {
     }
 
     String getPasswordInputId() {
-        if (Strings.isNullOrEmpty(passwordInputId)) {
+        if (passwordInputId != null) {
             determineFieldIds();
         }
         return passwordInputId;
     }
 
     String getPasswordSigInButtonId() {
-        if (Strings.isNullOrEmpty(passwordSigInButtonId)) {
+        if (passwordSigInButtonId != null) {
             determineFieldIds();
         }
         return passwordSigInButtonId;

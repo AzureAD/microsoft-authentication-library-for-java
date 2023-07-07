@@ -14,7 +14,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class AuthorityTest extends AbstractMsalTests {
+class AuthorityTest {
 
     @Test
     void testDetectAuthorityType_AAD() throws Exception {

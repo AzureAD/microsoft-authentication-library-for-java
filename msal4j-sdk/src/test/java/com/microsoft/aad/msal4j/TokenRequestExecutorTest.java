@@ -32,7 +32,7 @@ import java.util.HashMap;
 
 @ExtendWith(MockitoExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class TokenRequestExecutorTest extends AbstractMsalTests {
+class TokenRequestExecutorTest {
 
     @Test
     void executeOAuthRequest_SCBadRequestErrorInvalidGrant_InteractionRequiredException()

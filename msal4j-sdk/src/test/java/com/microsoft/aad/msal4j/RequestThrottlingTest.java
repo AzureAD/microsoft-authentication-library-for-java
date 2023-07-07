@@ -21,11 +21,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
-import static org.easymock.EasyMock.anyObject;
-
 @ExtendWith(MockitoExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
-class RequestThrottlingTest extends AbstractMsalTests {
+class RequestThrottlingTest {
 
     public final Integer THROTTLE_IN_SEC = 1;
     public TokenEndpointResponseType responseType;

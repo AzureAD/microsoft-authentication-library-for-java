@@ -22,7 +22,7 @@ import java.util.Collections;
 
 @ExtendWith(MockitoExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ClientCertificatePkcs12Test extends AbstractMsalTests {
+class ClientCertificatePkcs12Test {
 
     private KeyStoreSpi keyStoreSpi;
     private KeyStore keystore;

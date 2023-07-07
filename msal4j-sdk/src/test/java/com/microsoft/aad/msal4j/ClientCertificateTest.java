@@ -17,7 +17,7 @@ import java.security.PrivateKey;
 import java.security.interfaces.RSAPrivateKey;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ClientCertificateTest extends AbstractMsalTests {
+class ClientCertificateTest {
 
     @Test
     void testNullKey() {
