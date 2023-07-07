@@ -17,14 +17,14 @@ class UserInformationFields {
     }
 
     String getPasswordInputId() {
-        if (passwordInputId != null) {
+        if (passwordInputId == null || passwordInputId.equals("")) {
             determineFieldIds();
         }
         return passwordInputId;
     }
 
     String getPasswordSigInButtonId() {
-        if (passwordSigInButtonId != null) {
+        if (passwordSigInButtonId == null || passwordSigInButtonId.equals("")) {
             determineFieldIds();
         }
         return passwordSigInButtonId;
