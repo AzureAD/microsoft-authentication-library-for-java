@@ -119,6 +119,27 @@ class UsernamePasswordIT {
                 user.getAppId());
     }
 
+    @Test
+    void acquireTokenWithUsernamePassword_Ciam() throws Exception {
+
+        Map<String, String> extraQueryParameters = new HashMap<>();
+
+        User user = labUserProvider.getCiamUser();
+        PublicClientApplication pca = PublicClientApplication.builder(user.getAppId())
+                .authority("https://" + user.getLabName() + ".ciamlogin.com/")
+                .build();
+
+
+        IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters.
+                        builder(Collections.singleton(TestConstants.USER_READ_SCOPE),
+                                user.getUpn(),
+                                user.getPassword().toCharArray())
+                        .extraQueryParameters(extraQueryParameters)
+                        .build())
+                .get();
+
+        assertNotNull(result.accessToken());
+    }
 
     private void assertAcquireTokenCommonAAD(User user) throws Exception {
         assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope(),

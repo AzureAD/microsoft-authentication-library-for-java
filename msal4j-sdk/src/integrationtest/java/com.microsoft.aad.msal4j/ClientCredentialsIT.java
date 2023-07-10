@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j;
 import labapi.AppCredentialProvider;
 import labapi.AzureEnvironment;
 import labapi.LabUserProvider;
+import labapi.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.BeforeAll;
@@ -62,6 +63,29 @@ class ClientCredentialsIT {
         IClientCredential credential = ClientCredentialFactory.createFromClientAssertion(clientAssertion.assertion());
 
         assertAcquireTokenCommon(clientId, credential, TestConstants.MICROSOFT_AUTHORITY);
+    }
+
+    @Test
+    void acquireTokenClientCredentials_ClientSecret_Ciam() throws Exception {
+
+        User user = labUserProvider.getCiamUser();
+        String clientId = user.getAppId();
+
+        AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.CIAM);
+        IClientCredential credential = ClientCredentialFactory.createFromSecret(appProvider.getOboAppPassword());
+
+        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
+                        clientId, credential).
+                authority("https://" + user.getLabName() + ".ciamlogin.com/").
+                build();
+
+        IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
+                        .builder(Collections.singleton(TestConstants.DEFAULT_SCOPE))
+                        .build())
+                .get();
+
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
     }
 
     @Test
@@ -132,6 +156,7 @@ class ClientCredentialsIT {
 
         assertAcquireTokenCommon_withRegion(clientId, certificate, "westus", TestConstants.REGIONAL_MICROSOFT_AUTHORITY_BASIC_HOST_WESTUS);
     }
+
     private ClientAssertion getClientAssertion(String clientId) {
         return JwtHelper.buildJwt(
                 clientId,

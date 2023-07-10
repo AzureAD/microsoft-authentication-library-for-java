@@ -124,6 +124,50 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
         assertAcquireTokenInstanceAware(user);
     }
 
+    @Test
+    void acquireTokenInteractive_Ciam() {
+        User user = labUserProvider.getCiamUser();
+
+        Map<String, String> extraQueryParameters = new HashMap<>();
+
+        PublicClientApplication pca;
+        try {
+            pca = PublicClientApplication.builder(
+                            user.getAppId()).
+                    authority("https://" + user.getLabName() + ".ciamlogin.com/")
+                    .build();
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException(ex.getMessage());
+        }
+
+        IAuthenticationResult result;
+        try {
+            URI url = new URI("http://localhost:8080");
+
+            SystemBrowserOptions browserOptions =
+                    SystemBrowserOptions
+                            .builder()
+                            .openBrowserAction(new SeleniumOpenBrowserAction(user, pca))
+                            .build();
+
+            InteractiveRequestParameters parameters = InteractiveRequestParameters
+                    .builder(url)
+                    .scopes(Collections.singleton(TestConstants.USER_READ_SCOPE))
+                    .extraQueryParameters(extraQueryParameters)
+                    .systemBrowserOptions(browserOptions)
+                    .build();
+
+            result = pca.acquireToken(parameters).get();
+
+        } catch (Exception e) {
+            LOG.error("Error acquiring token with authCode: " + e.getMessage());
+            throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
+        }
+
+        assertTokenResultNotNull(result);
+        assertEquals(user.getUpn(), result.account().username());
+    }
+
     private void assertAcquireTokenCommon(User user, String authority, String scope) {
         PublicClientApplication pca;
         try {
