@@ -8,9 +8,6 @@ import labapi.B2CProvider;
 import labapi.LabUserProvider;
 import labapi.User;
 import org.openqa.selenium.WebDriver;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 
 abstract class SeleniumTest {
 
@@ -18,12 +15,10 @@ abstract class SeleniumTest {
     WebDriver seleniumDriver;
     HttpListener httpListener;
 
-    @BeforeClass
     public void setUpLapUserProvider() {
         labUserProvider = LabUserProvider.getInstance();
     }
 
-    @AfterMethod
     public void cleanUp() {
         seleniumDriver.quit();
         if (httpListener != null) {
@@ -31,7 +26,6 @@ abstract class SeleniumTest {
         }
     }
 
-    @BeforeMethod
     public void startUpBrowser() {
         seleniumDriver = SeleniumExtensions.createDefaultWebDriver();
     }
