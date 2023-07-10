@@ -4,18 +4,24 @@
 package com.microsoft.aad.msal4j;
 
 import labapi.*;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.Collections;
 
-@Test
-public class OnBehalfOfIT {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class OnBehalfOfIT {
 
     private Config cfg;
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenWithOBO_Managed(String environment) throws Exception {
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    void acquireTokenWithOBO_Managed(String environment) throws Exception {
         cfg = new Config(environment);
         String accessToken = this.getAccessToken();
 
@@ -33,12 +39,13 @@ public class OnBehalfOfIT {
                         new UserAssertion(accessToken)).build()).
                         get();
 
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
     }
 
-    @Test(dataProvider = "environments", dataProviderClass = EnvironmentsProvider.class)
-    public void acquireTokenWithOBO_testCache(String environment) throws Exception {
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    void acquireTokenWithOBO_testCache(String environment) throws Exception {
         cfg = new Config(environment);
         String accessToken = this.getAccessToken();
 
@@ -56,8 +63,8 @@ public class OnBehalfOfIT {
                         new UserAssertion(accessToken)).build()).
                         get();
 
-        Assert.assertNotNull(result1);
-        Assert.assertNotNull(result1.accessToken());
+        assertNotNull(result1);
+        assertNotNull(result1.accessToken());
 
         // Same scope and userAssertion, should return cached tokens
         IAuthenticationResult result2 =
@@ -66,7 +73,7 @@ public class OnBehalfOfIT {
                         new UserAssertion(accessToken)).build()).
                         get();
 
-        Assert.assertEquals(result1.accessToken(), result2.accessToken());
+        assertEquals(result1.accessToken(), result2.accessToken());
 
         // Scope 2, should return new token
         IAuthenticationResult result3 =
@@ -75,9 +82,9 @@ public class OnBehalfOfIT {
                         new UserAssertion(accessToken)).build()).
                         get();
 
-        Assert.assertNotNull(result3);
-        Assert.assertNotNull(result3.accessToken());
-        Assert.assertNotEquals(result2.accessToken(), result3.accessToken());
+        assertNotNull(result3);
+        assertNotNull(result3.accessToken());
+        assertNotEquals(result2.accessToken(), result3.accessToken());
 
         // Scope 2, should return cached token
         IAuthenticationResult result4 =
@@ -86,7 +93,7 @@ public class OnBehalfOfIT {
                         new UserAssertion(accessToken)).build()).
                         get();
 
-        Assert.assertEquals(result3.accessToken(), result4.accessToken());
+        assertEquals(result3.accessToken(), result4.accessToken());
 
         // skipCache=true, should return new token
         IAuthenticationResult result5 =
@@ -98,10 +105,10 @@ public class OnBehalfOfIT {
                                 .build()).
                         get();
 
-        Assert.assertNotNull(result5);
-        Assert.assertNotNull(result5.accessToken());
-        Assert.assertNotEquals(result5.accessToken(), result4.accessToken());
-        Assert.assertNotEquals(result5.accessToken(), result2.accessToken());
+        assertNotNull(result5);
+        assertNotNull(result5.accessToken());
+        assertNotEquals(result5.accessToken(), result4.accessToken());
+        assertNotEquals(result5.accessToken(), result2.accessToken());
 
 
         String newAccessToken = this.getAccessToken();
@@ -114,11 +121,11 @@ public class OnBehalfOfIT {
                                 .build()).
                         get();
 
-        Assert.assertNotNull(result6);
-        Assert.assertNotNull(result6.accessToken());
-        Assert.assertNotEquals(result6.accessToken(), result5.accessToken());
-        Assert.assertNotEquals(result6.accessToken(), result4.accessToken());
-        Assert.assertNotEquals(result6.accessToken(), result2.accessToken());
+        assertNotNull(result6);
+        assertNotNull(result6.accessToken());
+        assertNotEquals(result6.accessToken(), result5.accessToken());
+        assertNotEquals(result6.accessToken(), result4.accessToken());
+        assertNotEquals(result6.accessToken(), result2.accessToken());
     }
 
     private String getAccessToken() throws Exception {
