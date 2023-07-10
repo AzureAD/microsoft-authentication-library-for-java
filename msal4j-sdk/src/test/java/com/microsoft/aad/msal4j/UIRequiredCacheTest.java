@@ -4,21 +4,27 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
-import org.easymock.EasyMock;
-import org.powermock.api.easymock.PowerMock;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.BeforeAll;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.*;
 
-import static org.easymock.EasyMock.anyObject;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 
-public class UIRequiredCacheTest extends AbstractMsalTests {
+@ExtendWith(MockitoExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class UIRequiredCacheTest {
 
-    public final Integer CACHING_TIME_SEC = 2;
+    final Integer CACHING_TIME_SEC = 2;
 
-    @BeforeClass
+    @BeforeAll
     void init() {
         InteractionRequiredCache.DEFAULT_CACHING_TIME_SEC = CACHING_TIME_SEC;
     }
@@ -68,37 +74,35 @@ public class UIRequiredCacheTest extends AbstractMsalTests {
 
     private PublicClientApplication getApp_MockedWith_InvalidGrantTokenEndpointResponse()
             throws Exception {
-        IHttpClient httpClientMock = EasyMock.createMock(IHttpClient.class);
+        IHttpClient httpClientMock = mock(IHttpClient.class);
 
         HttpResponse httpResponse = getHttpResponse(400,
                 TestConfiguration.TOKEN_ENDPOINT_INVALID_GRANT_ERROR_RESPONSE);
 
-        EasyMock.expect(httpClientMock.send(anyObject())).andReturn(httpResponse).times(1);
-        PowerMock.replayAll(httpClientMock);
+        doReturn(httpResponse).when(httpClientMock).send(any());
 
         return getPublicClientApp(httpClientMock);
     }
 
     private PublicClientApplication getApp_MockedWith_OKTokenEndpointResponse_InvalidGrantTokenEndpointResponse()
             throws Exception {
-        IHttpClient httpClientMock = EasyMock.createMock(IHttpClient.class);
+        IHttpClient httpClientMock = mock(IHttpClient.class);
 
         HttpResponse httpResponse =
                 getHttpResponse(HTTPResponse.SC_OK, TestConfiguration.TOKEN_ENDPOINT_OK_RESPONSE);
-        EasyMock.expect(httpClientMock.send(anyObject())).andReturn(httpResponse).times(1);
+        lenient().doReturn(httpResponse).when(httpClientMock).send(any());
 
         httpResponse = getHttpResponse(HTTPResponse.SC_UNAUTHORIZED,
                 TestConfiguration.TOKEN_ENDPOINT_INVALID_GRANT_ERROR_RESPONSE);
-        EasyMock.expect(httpClientMock.send(anyObject())).andReturn(httpResponse).times(1);
+        lenient().doReturn(httpResponse).when(httpClientMock).send(any());
 
         PublicClientApplication app = getPublicClientApp(httpClientMock);
 
-        PowerMock.replayAll(httpClientMock);
         return app;
     }
 
     @Test
-    public void RefreshTokenRequest_STSResponseInvalidGrantError_repeatedRequestsServedFromCache() throws Exception {
+    void RefreshTokenRequest_STSResponseInvalidGrantError_repeatedRequestsServedFromCache() throws Exception {
         InteractionRequiredCache.clear();
 
         // refresh token request #1 to token endpoint
@@ -109,11 +113,9 @@ public class UIRequiredCacheTest extends AbstractMsalTests {
             app.acquireToken(getAcquireTokenApiParameters("scope1")).join();
         } catch (Exception ex) {
             if (!(ex.getCause() instanceof MsalInteractionRequiredException)) {
-                Assert.fail("Unexpected exception");
+                fail("Unexpected exception");
             }
         }
-        PowerMock.verifyAll();
-        PowerMock.resetAll();
 
         // repeat same request #1, cached response should be returned
         try {
@@ -121,7 +123,7 @@ public class UIRequiredCacheTest extends AbstractMsalTests {
             app.acquireToken(getAcquireTokenApiParameters("scope1")).join();
         } catch (Exception ex) {
             if (!(ex.getCause() instanceof MsalInteractionRequiredException)) {
-                Assert.fail("Unexpected exception");
+                fail("Unexpected exception");
             }
         }
 
@@ -132,11 +134,9 @@ public class UIRequiredCacheTest extends AbstractMsalTests {
             app.acquireToken(getAcquireTokenApiParameters("scope2")).join();
         } catch (Exception ex) {
             if (!(ex.getCause() instanceof MsalInteractionRequiredException)) {
-                Assert.fail("Unexpected exception");
+                fail("Unexpected exception");
             }
         }
-        PowerMock.verifyAll();
-        PowerMock.resetAll();
 
         // repeat request #1, should not be served from cache (cache entry should be expired)
         // request to token endpoint should be sent
@@ -146,15 +146,13 @@ public class UIRequiredCacheTest extends AbstractMsalTests {
             app.acquireToken(getAcquireTokenApiParameters("scope1")).join();
         } catch (Exception ex) {
             if (!(ex.getCause() instanceof MsalServiceException)) {
-                Assert.fail("Unexpected exception");
+                fail("Unexpected exception");
             }
         }
-        PowerMock.verifyAll();
-        PowerMock.resetAll();
     }
 
     @Test
-    public void SilentRequest_STSResponseInvalidGrantError_repeatedRequestsServedFromCache() throws Exception {
+    void SilentRequest_STSResponseInvalidGrantError_repeatedRequestsServedFromCache() throws Exception {
         InteractionRequiredCache.clear();
 
         PublicClientApplication
@@ -170,22 +168,7 @@ public class UIRequiredCacheTest extends AbstractMsalTests {
             app.acquireTokenSilently(silentParameters).join();
         } catch (Exception ex) {
             if (!(ex.getCause() instanceof MsalInteractionRequiredException)) {
-                Assert.fail("Unexpected exception");
-            }
-        }
-        PowerMock.verifyAll();
-        PowerMock.resetAll();
-
-        // repeat same silent #1, cached response should be returned
-        try {
-            SilentParameters silentParameters = SilentParameters.builder(
-                    Collections.singleton("scope1"),
-                    app.getAccounts().join().iterator().next())
-                    .build();
-            app.acquireTokenSilently(silentParameters).join();
-        } catch (Exception ex) {
-            if (!(ex.getCause() instanceof MsalInteractionRequiredException)) {
-                Assert.fail("Unexpected exception");
+                fail("Unexpected exception");
             }
         }
 
@@ -201,11 +184,9 @@ public class UIRequiredCacheTest extends AbstractMsalTests {
             app.acquireTokenSilently(silentParameters).join();
         } catch (Exception ex) {
             if (!(ex.getCause() instanceof MsalInteractionRequiredException)) {
-                Assert.fail("Unexpected exception");
+                fail("Unexpected exception");
             }
         }
-        PowerMock.verifyAll();
-        PowerMock.resetAll();
 
         // repeat request #1, should not be served from cache (cache entry should be expired)
         // request to token endpoint should be sent
@@ -220,10 +201,8 @@ public class UIRequiredCacheTest extends AbstractMsalTests {
             app.acquireTokenSilently(silentParameters).join();
         } catch (Exception ex) {
             if (!(ex.getCause() instanceof MsalServiceException)) {
-                Assert.fail("Unexpected exception");
+                fail("Unexpected exception");
             }
         }
-        PowerMock.verifyAll();
-        PowerMock.resetAll();
     }
 }

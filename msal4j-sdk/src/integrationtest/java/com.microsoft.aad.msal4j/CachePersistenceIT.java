@@ -4,14 +4,16 @@ package com.microsoft.aad.msal4j;
 
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.PlainJWT;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collections;
 
-public class CachePersistenceIT {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class CachePersistenceIT {
 
     static class TokenPersistence implements ITokenCacheAccessAspect {
         String data;
@@ -32,7 +34,7 @@ public class CachePersistenceIT {
     }
 
     @Test
-    public void cacheDeserializationSerializationTest() throws IOException, URISyntaxException {
+    void cacheDeserializationSerializationTest() throws IOException, URISyntaxException {
         String dataToInitCache = TestHelper.readResource(this.getClass(), "/cache_data/serialized_cache.json");
 
         String ID_TOKEN_PLACEHOLDER = "<idToken_placeholder>";
@@ -50,41 +52,41 @@ public class CachePersistenceIT {
         PublicClientApplication app = PublicClientApplication.builder("my_client_id")
                 .setTokenCacheAccessAspect(persistenceAspect).build();
 
-        Assert.assertEquals(app.getAccounts().join().size(), 1);
-        Assert.assertEquals(app.tokenCache.accounts.size(), 1);
-        Assert.assertEquals(app.tokenCache.accessTokens.size(), 2);
-        Assert.assertEquals(app.tokenCache.refreshTokens.size(), 1);
-        Assert.assertEquals(app.tokenCache.idTokens.size(), 1);
-        Assert.assertEquals(app.tokenCache.appMetadata.size(), 1);
+        assertEquals(app.getAccounts().join().size(), 1);
+        assertEquals(app.tokenCache.accounts.size(), 1);
+        assertEquals(app.tokenCache.accessTokens.size(), 2);
+        assertEquals(app.tokenCache.refreshTokens.size(), 1);
+        assertEquals(app.tokenCache.idTokens.size(), 1);
+        assertEquals(app.tokenCache.appMetadata.size(), 1);
 
         // create new instance of app to make sure in memory cache cleared
         app = PublicClientApplication.builder("my_client_id")
                 .setTokenCacheAccessAspect(persistenceAspect).build();
 
-        Assert.assertEquals(app.getAccounts().join().size(), 1);
-        Assert.assertEquals(app.tokenCache.accounts.size(), 1);
-        Assert.assertEquals(app.tokenCache.accessTokens.size(), 2);
-        Assert.assertEquals(app.tokenCache.refreshTokens.size(), 1);
-        Assert.assertEquals(app.tokenCache.idTokens.size(), 1);
-        Assert.assertEquals(app.tokenCache.appMetadata.size(), 1);
+        assertEquals(app.getAccounts().join().size(), 1);
+        assertEquals(app.tokenCache.accounts.size(), 1);
+        assertEquals(app.tokenCache.accessTokens.size(), 2);
+        assertEquals(app.tokenCache.refreshTokens.size(), 1);
+        assertEquals(app.tokenCache.idTokens.size(), 1);
+        assertEquals(app.tokenCache.appMetadata.size(), 1);
 
         app.removeAccount(app.getAccounts().join().iterator().next()).join();
 
-        Assert.assertEquals(app.getAccounts().join().size(), 0);
-        Assert.assertEquals(app.tokenCache.accounts.size(), 0);
-        Assert.assertEquals(app.tokenCache.accessTokens.size(), 1);
-        Assert.assertEquals(app.tokenCache.refreshTokens.size(), 0);
-        Assert.assertEquals(app.tokenCache.idTokens.size(), 0);
-        Assert.assertEquals(app.tokenCache.appMetadata.size(), 1);
+        assertEquals(app.getAccounts().join().size(), 0);
+        assertEquals(app.tokenCache.accounts.size(), 0);
+        assertEquals(app.tokenCache.accessTokens.size(), 1);
+        assertEquals(app.tokenCache.refreshTokens.size(), 0);
+        assertEquals(app.tokenCache.idTokens.size(), 0);
+        assertEquals(app.tokenCache.appMetadata.size(), 1);
 
         app = PublicClientApplication.builder("my_client_id")
                 .setTokenCacheAccessAspect(persistenceAspect).build();
 
-        Assert.assertEquals(app.getAccounts().join().size(), 0);
-        Assert.assertEquals(app.tokenCache.accounts.size(), 0);
-        Assert.assertEquals(app.tokenCache.accessTokens.size(), 1);
-        Assert.assertEquals(app.tokenCache.refreshTokens.size(), 0);
-        Assert.assertEquals(app.tokenCache.idTokens.size(), 0);
-        Assert.assertEquals(app.tokenCache.appMetadata.size(), 1);
+        assertEquals(app.getAccounts().join().size(), 0);
+        assertEquals(app.tokenCache.accounts.size(), 0);
+        assertEquals(app.tokenCache.accessTokens.size(), 1);
+        assertEquals(app.tokenCache.refreshTokens.size(), 0);
+        assertEquals(app.tokenCache.idTokens.size(), 0);
+        assertEquals(app.tokenCache.appMetadata.size(), 1);
     }
 }

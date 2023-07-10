@@ -3,8 +3,10 @@
 
 package com.microsoft.aad.msal4j;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -16,62 +18,8 @@ import java.util.Set;
 
 import static com.microsoft.aad.msal4j.Constants.POINT_DELIMITER;
 
-public class AccountTest {
-
-    // @Test
-    // hardcoded token secrets should not be used to not trigger CredScan
-    public void testMultiTenantAccount_AccessTenantProfile() throws IOException, URISyntaxException {
-
-        ITokenCacheAccessAspect accountCache = new CachePersistenceIT.TokenPersistence(
-                TestHelper.readResource(this.getClass(),
-                        "/cache_data/multi-tenant-account-cache.json"));
-
-        PublicClientApplication app = PublicClientApplication.builder("client_id")
-                .setTokenCacheAccessAspect(accountCache).build();
-
-        Assert.assertEquals(app.getAccounts().join().size(), 3);
-        Iterator<IAccount> acctIterator = app.getAccounts().join().iterator();
-
-        IAccount curAccount;
-        while (acctIterator.hasNext()) {
-            curAccount = acctIterator.next();
-
-            switch (curAccount.username()) {
-                case "MultiTenantAccount": {
-                    Assert.assertEquals(curAccount.homeAccountId(), "uid1.utid1");
-                    Map<String, ITenantProfile> tenantProfiles = curAccount.getTenantProfiles();
-                    Assert.assertNotNull(tenantProfiles);
-                    Assert.assertEquals(tenantProfiles.size(), 3);
-                    Assert.assertNotNull(tenantProfiles.get("utid1"));
-                    Assert.assertNotNull(tenantProfiles.get("utid1").getClaims());
-                    Assert.assertNotNull(tenantProfiles.get("utid2"));
-                    Assert.assertNotNull(tenantProfiles.get("utid2").getClaims());
-                    Assert.assertNotNull(tenantProfiles.get("utid3"));
-                    Assert.assertNotNull(tenantProfiles.get("utid3").getClaims());
-                    break;
-                }
-                case "SingleTenantAccount": {
-                    Assert.assertEquals(curAccount.homeAccountId(), "uid6.utid5");
-                    Map<String, ITenantProfile> tenantProfiles = curAccount.getTenantProfiles();
-                    Assert.assertNotNull(tenantProfiles);
-                    Assert.assertEquals(tenantProfiles.size(), 1);
-                    Assert.assertNotNull(tenantProfiles.get("utid5"));
-                    Assert.assertNotNull(tenantProfiles.get("utid5").getClaims());
-                    break;
-                }
-                case "TenantProfileNoHome": {
-                    Assert.assertEquals(curAccount.homeAccountId(), "uid5.utid4");
-                    Map<String, ITenantProfile> tenantProfiles = curAccount.getTenantProfiles();
-                    Assert.assertNotNull(tenantProfiles);
-                    Assert.assertEquals(tenantProfiles.size(), 1);
-                    Assert.assertNotNull(tenantProfiles.get("utid4"));
-                    Assert.assertNotNull(tenantProfiles.get("utid4").getClaims());
-                    break;
-                }
-            }
-        }
-    }
-
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class AccountTest {
 
     String getEmptyBase64EncodedJson() {
         return new String(Base64.getEncoder().encode("{}".getBytes()));
@@ -97,7 +45,7 @@ public class AccountTest {
     }
 
     @Test
-    public void multiCloudAccount_aggregatedInGetAccountsRemoveAccountApis() throws IOException, URISyntaxException {
+    void multiCloudAccount_aggregatedInGetAccountsRemoveAccountApis() throws IOException, URISyntaxException {
         String BLACK_FORESRT_TENANT = "de_tid";
         String WW_TENTANT = "tid";
         String BLACK_FOREST_ENV = "login.microsoftonline.de";
@@ -143,22 +91,22 @@ public class AccountTest {
 
         Set<IAccount> accounts = pca.getAccounts().join();
 
-        Assert.assertEquals(accounts.size(), 1);
+        assertEquals(accounts.size(), 1);
         IAccount account = accounts.iterator().next();
 
         Map<String, ITenantProfile> tenantProfiles = account.getTenantProfiles();
-        Assert.assertEquals(tenantProfiles.size(), 2);
+        assertEquals(tenantProfiles.size(), 2);
 
-        Assert.assertTrue(tenantProfiles.containsKey(BLACK_FORESRT_TENANT));
-        Assert.assertTrue(tenantProfiles.containsKey(WW_TENTANT));
+        assertTrue(tenantProfiles.containsKey(BLACK_FORESRT_TENANT));
+        assertTrue(tenantProfiles.containsKey(WW_TENTANT));
 
         pca.removeAccount(account).join();
         accounts = pca.getAccounts().join();
-        Assert.assertEquals(accounts.size(), 0);
+        assertEquals(accounts.size(), 0);
 
-        Assert.assertEquals(pca.tokenCache.accounts.size(), 0);
-        Assert.assertEquals(pca.tokenCache.idTokens.size(), 0);
-        Assert.assertEquals(pca.tokenCache.refreshTokens.size(), 0);
-        Assert.assertEquals(pca.tokenCache.accessTokens.size(), 0);
+        assertEquals(pca.tokenCache.accounts.size(), 0);
+        assertEquals(pca.tokenCache.idTokens.size(), 0);
+        assertEquals(pca.tokenCache.refreshTokens.size(), 0);
+        assertEquals(pca.tokenCache.accessTokens.size(), 0);
     }
 }
