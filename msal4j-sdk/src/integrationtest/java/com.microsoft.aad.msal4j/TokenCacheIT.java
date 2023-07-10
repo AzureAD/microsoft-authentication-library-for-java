@@ -4,26 +4,29 @@
 package com.microsoft.aad.msal4j;
 
 import labapi.*;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.TestInstance;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class TokenCacheIT {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class TokenCacheIT {
 
     private LabUserProvider labUserProvider;
 
-    @BeforeClass
-    public void setUp() {
+    @BeforeAll
+    void setUp() {
         labUserProvider = LabUserProvider.getInstance();
     }
 
     @Test
-    public void singleAccountInCache_RemoveAccountTest() throws Exception {
+    void singleAccountInCache_RemoveAccountTest() throws Exception {
         User user = labUserProvider.getDefaultUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
@@ -32,7 +35,7 @@ public class TokenCacheIT {
                 build();
 
         // Check that cache is empty
-        Assert.assertEquals(pca.getAccounts().join().size(), 0);
+        assertEquals(pca.getAccounts().join().size(), 0);
 
         Map<String, String> extraQueryParameters = new HashMap<>();
         extraQueryParameters.put("test", "test");
@@ -46,16 +49,16 @@ public class TokenCacheIT {
                 .get();
 
         // Check that cache contains one account
-        Assert.assertEquals(pca.getAccounts().join().size(), 1);
+        assertEquals(pca.getAccounts().join().size(), 1);
 
         pca.removeAccount(pca.getAccounts().join().iterator().next()).join();
 
         // Check that account has been removed
-        Assert.assertEquals(pca.getAccounts().join().size(), 0);
+        assertEquals(pca.getAccounts().join().size(), 0);
     }
 
     @Test
-    public void twoAccountsInCache_RemoveAccountTest() throws Exception {
+    void twoAccountsInCache_RemoveAccountTest() throws Exception {
 
         User managedUser = labUserProvider.getDefaultUser();
 
@@ -64,7 +67,7 @@ public class TokenCacheIT {
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
 
-        Assert.assertEquals(pca.getAccounts().join().size(), 0);
+        assertEquals(pca.getAccounts().join().size(), 0);
 
         pca.acquireToken(UserNamePasswordParameters.
                 builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
@@ -73,7 +76,7 @@ public class TokenCacheIT {
                 .build())
                 .get();
 
-        Assert.assertEquals(pca.getAccounts().join().size(), 1);
+        assertEquals(pca.getAccounts().join().size(), 1);
 
         // get lab user for different account
         User adfsUser = labUserProvider.getFederatedAdfsUser(FederationProvider.ADFS_4);
@@ -86,7 +89,7 @@ public class TokenCacheIT {
                 .build())
                 .get();
 
-        Assert.assertEquals(pca.getAccounts().join().size(), 2);
+        assertEquals(pca.getAccounts().join().size(), 2);
 
         Set<IAccount> accounts = pca.getAccounts().join();
         IAccount accountLabResponse1 = accounts.stream().filter(
@@ -95,16 +98,16 @@ public class TokenCacheIT {
 
         pca.removeAccount(accountLabResponse1).join();
 
-        Assert.assertEquals(pca.getAccounts().join().size(), 1);
+        assertEquals(pca.getAccounts().join().size(), 1);
 
         IAccount accountLabResponse2 = pca.getAccounts().get().iterator().next();
 
         // Check that the right account was left in the cache
-        Assert.assertEquals(accountLabResponse2.username(), adfsUser.getUpn());
+        assertEquals(accountLabResponse2.username(), adfsUser.getUpn());
     }
 
     @Test
-    public void twoAccountsInCache_SameUserDifferentTenants_RemoveAccountTest() throws Exception {
+    void twoAccountsInCache_SameUserDifferentTenants_RemoveAccountTest() throws Exception {
 
         UserQueryParameters query = new UserQueryParameters();
         query.parameters.put(UserQueryParameters.USER_TYPE, UserType.GUEST);
@@ -117,7 +120,7 @@ public class TokenCacheIT {
                 "/cache_data/remove-account-test-cache.json");
 
         // check that cache is empty
-        Assert.assertEquals(dataToInitCache, "");
+        assertEquals(dataToInitCache, "");
 
         ITokenCacheAccessAspect persistenceAspect = new TokenPersistence(dataToInitCache);
 
@@ -152,14 +155,14 @@ public class TokenCacheIT {
                 .get();
 
         // There should be two tokens in cache, with same accounts except for tenant
-        Assert.assertEquals(pca2.getAccounts().join().iterator().next().getTenantProfiles().size(), 2);
+        assertEquals(pca2.getAccounts().join().iterator().next().getTenantProfiles().size(), 2);
 
         IAccount account = pca2.getAccounts().get().iterator().next();
 
         // RemoveAccount should remove both cache entities
         pca2.removeAccount(account).join();
 
-        Assert.assertEquals(pca.getAccounts().join().size(), 0);
+        assertEquals(pca.getAccounts().join().size(), 0);
 
         //clean up file
         TestHelper.deleteFileContent(
