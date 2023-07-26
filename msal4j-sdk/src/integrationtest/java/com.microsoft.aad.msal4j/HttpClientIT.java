@@ -8,10 +8,14 @@ import labapi.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.BeforeAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class HttpClientIT {
@@ -34,6 +38,14 @@ class HttpClientIT {
         assertAcquireTokenCommon(user, new ApacheHttpClientAdapter());
     }
 
+    @Test
+    void acquireToken_readTimeout() throws Exception {
+        User user = labUserProvider.getDefaultUser();
+
+        //Set a 1ms read timeout, which will almost certainly occur before the service can respond
+        assertAcquireTokenCommon_WithTimeout(user, 1);
+    }
+
     private void assertAcquireTokenCommon(User user, IHttpClient httpClient)
             throws Exception {
         PublicClientApplication pca = PublicClientApplication.builder(
@@ -53,5 +65,23 @@ class HttpClientIT {
         assertNotNull(result.accessToken());
         assertNotNull(result.idToken());
         assertEquals(user.getUpn(), result.account().username());
+    }
+
+    private void assertAcquireTokenCommon_WithTimeout(User user, int readTimeout)
+            throws Exception {
+        PublicClientApplication pca = PublicClientApplication.builder(
+                        user.getAppId()).
+                authority(TestConstants.ORGANIZATIONS_AUTHORITY).
+                readTimeoutForDefaultHttpClient(readTimeout).
+                build();
+
+        ExecutionException ex = assertThrows(ExecutionException.class, () -> pca.acquireToken(UserNamePasswordParameters.
+                        builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                                user.getUpn(),
+                                user.getPassword().toCharArray())
+                        .build())
+                .get());
+
+        assertTrue(ex.getMessage().contains("Timeout while waiting for response from service."));
     }
 }
