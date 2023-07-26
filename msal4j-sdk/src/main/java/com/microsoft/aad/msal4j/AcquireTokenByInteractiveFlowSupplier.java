@@ -182,7 +182,7 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
             if (openToolPath != null) {
                 Runtime runtime = Runtime.getRuntime();
                 try {
-                    runtime.exec(openTool + url);
+                    runtime.exec(openTool + " " + url);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
