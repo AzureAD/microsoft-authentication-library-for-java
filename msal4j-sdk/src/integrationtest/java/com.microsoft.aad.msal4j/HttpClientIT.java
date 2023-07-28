@@ -15,7 +15,6 @@ import java.util.concurrent.ExecutionException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class HttpClientIT {
@@ -82,6 +81,6 @@ class HttpClientIT {
                         .build())
                 .get());
 
-        assertTrue(ex.getMessage().contains("Timeout while waiting for response from service."));
+        assertEquals("com.microsoft.aad.msal4j.MsalClientException: java.net.SocketTimeoutException: Read timed out", ex.getMessage());
     }
 }

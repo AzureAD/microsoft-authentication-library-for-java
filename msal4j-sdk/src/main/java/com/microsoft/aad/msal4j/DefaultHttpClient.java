@@ -1,5 +1,8 @@
 package com.microsoft.aad.msal4j;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.DataOutputStream;
@@ -14,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 class DefaultHttpClient implements IHttpClient {
+    private final static Logger LOG = LoggerFactory.getLogger(DefaultHttpClient.class);
 
     private final Proxy proxy;
     private final SSLSocketFactory sslSocketFactory;
@@ -118,10 +122,14 @@ class DefaultHttpClient implements IHttpClient {
             httpResponse.addHeaders(conn.getHeaderFields());
             httpResponse.body(inputStreamToString(is));
             return httpResponse;
-        } catch (SocketTimeoutException readException) {conn.getURL();
-            throw new MsalServiceException("Timeout while waiting for response from service. If custom timeouts were set, increasing them may resolve this issue. See https://aka.ms/msal4j-http-client for more information and solutions.", AuthenticationErrorCode.HTTP_TIMEOUT);
+        } catch (SocketTimeoutException readException) {
+            LOG.error("Timeout while waiting for response from service. If custom timeouts were set, increasing them may resolve this issue. See https://aka.ms/msal4j-http-client for more information and solutions.");
+
+            throw readException;
         } catch (ConnectException timeoutException) {
-            throw new MsalServiceException("Exception while connecting to service, there may be network issues preventing MSAL Java from connecting. See https://aka.ms/msal4j-http-client for more information and solutions.", AuthenticationErrorCode.HTTP_TIMEOUT);
+            LOG.error("Exception while connecting to service, there may be network issues preventing MSAL Java from connecting. See https://aka.ms/msal4j-http-client for more information and solutions.");
+
+            throw timeoutException;
         } finally {
             if (is != null) {
                 is.close();
