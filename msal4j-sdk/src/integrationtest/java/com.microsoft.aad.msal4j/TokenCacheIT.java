@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -169,6 +170,31 @@ class TokenCacheIT {
                 this.getClass(),
                 "/cache_data/remove-account-test-cache.json");
     }
+
+    @Test
+    void retrieveAccounts_ADFSOnPrem() throws Exception {
+        UserQueryParameters query = new UserQueryParameters();
+        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, FederationProvider.ADFS_2019);
+        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.ON_PREM);
+
+        User user = labUserProvider.getLabUser(query);
+
+        PublicClientApplication pca = PublicClientApplication.builder(
+                        TestConstants.ADFS_APP_ID).
+                authority(TestConstants.ADFS_AUTHORITY).
+                build();
+
+        pca.acquireToken(UserNamePasswordParameters.
+                        builder(Collections.singleton(TestConstants.ADFS_SCOPE),
+                                user.getUpn(),
+                                user.getPassword().toCharArray())
+                        .build())
+                .get();
+
+        assertNotNull(pca.getAccounts().join().iterator().next());
+        assertEquals(pca.getAccounts().join().size(), 1);
+    }
+
 
     private static class TokenPersistence implements ITokenCacheAccessAspect {
         String data;
