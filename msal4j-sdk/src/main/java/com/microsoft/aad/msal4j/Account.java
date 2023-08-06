@@ -4,6 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -17,6 +18,7 @@ import java.util.Map;
 @Accessors(fluent = true)
 @Getter
 @Setter
+@EqualsAndHashCode(of = {"homeAccountId"})
 @AllArgsConstructor
 class Account implements IAccount {
 
