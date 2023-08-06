@@ -1,3 +1,10 @@
+Version 1.13.10
+=============
+- Remove default HTTP timeout (#664)
+- Add equals/hash logic to Account class based on homeAccountID (#681)
+- Fix issue with command to open default browser on Linux (#683)
+- Handle null pointer exception in certain ADFS scenarios (#669)
+
 Version 1.13.9
 =============
 - Update automated tests to use JUnit 5/Mockito instead of TestNG/Powermock
