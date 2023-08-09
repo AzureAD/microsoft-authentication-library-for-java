@@ -25,12 +25,10 @@ class AppServiceManagedIdentity extends AbstractManagedIdentitySource{
     private static URI endpointUri;
 
     @Override
-    public ManagedIdentityRequest createManagedIdentityRequest(String resource) {
-        ManagedIdentityRequest request = new ManagedIdentityRequest(HttpMethod.GET, endpoint);
-
+    public void createManagedIdentityRequest(String resource) {
         Map<String, String> headers = new HashMap<>();
         headers.put(SecretHeaderName, secret);
-        request.headers = headers;
+        managedIdentityRequest.headers = headers;
 
         Map<String, String> queryParameters = new HashMap<>();
         queryParameters.put("api-version", APP_SERVICE_MSI_API_VERSION );
@@ -48,26 +46,24 @@ class AppServiceManagedIdentity extends AbstractManagedIdentitySource{
             queryParameters.put(Constants.MANAGED_IDENTITY_RESOURCE_ID, getManagedIdentityUserAssignedResourceId());
         }
 
-        request.queryParameters = queryParameters;
-
-        return request;
+        managedIdentityRequest.queryParameters = queryParameters;
     }
 
-    private AppServiceManagedIdentity(RequestContext requestContext, ServiceBundle serviceBundle, URI endpoint, String secret)
+    private AppServiceManagedIdentity(MsalRequest msalRequest, ServiceBundle serviceBundle, URI endpoint, String secret)
     {
-        super(requestContext, serviceBundle, ManagedIdentitySourceType.AppService);
+        super(msalRequest, serviceBundle, ManagedIdentitySourceType.AppService);
         this.endpoint = endpoint;
         this.secret = secret;
     }
 
-    protected static AbstractManagedIdentitySource create(RequestContext requestContext, ServiceBundle serviceBundle) {
+    protected static AbstractManagedIdentitySource create(MsalRequest msalRequest, ServiceBundle serviceBundle) {
 
-        IEnvironmentVariables environmentVariables = getEnvironmentVariables((ManagedIdentityParameters) requestContext.apiParameters());
+        IEnvironmentVariables environmentVariables = getEnvironmentVariables((ManagedIdentityParameters) msalRequest.requestContext().apiParameters());
         String msiSecret = environmentVariables.getEnvironmentVariable(IEnvironmentVariables.IDENTITY_HEADER);
         String msiEndpoint = environmentVariables.getEnvironmentVariable(IEnvironmentVariables.IDENTITY_ENDPOINT);
 
         return validateEnvironmentVariables(msiEndpoint, msiSecret)
-                ? new AppServiceManagedIdentity(requestContext, serviceBundle, endpointUri, msiSecret)
+                ? new AppServiceManagedIdentity(msalRequest, serviceBundle, endpointUri, msiSecret)
                 : null;
     }
 

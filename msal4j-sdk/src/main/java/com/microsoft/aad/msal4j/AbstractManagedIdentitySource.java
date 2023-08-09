@@ -23,7 +23,7 @@ abstract class AbstractManagedIdentitySource {
     private static final String MANAGED_IDENTITY_NO_RESPONSE_RECEIVED = "[Managed Identity] Authentication unavailable. No response received from the managed identity endpoint.";
     public static final String MANAGED_IDENTITY_REQUEST_FAILED = "managed_identity_request_failed";
 
-    protected final RequestContext requestContext;
+    protected final ManagedIdentityRequest managedIdentityRequest;
     private ServiceBundle serviceBundle;
     private ManagedIdentitySourceType managedIdentitySourceType;
 
@@ -37,9 +37,9 @@ abstract class AbstractManagedIdentitySource {
     @Setter
     private String managedIdentityUserAssignedResourceId;
 
-    public AbstractManagedIdentitySource(RequestContext requestContext, ServiceBundle serviceBundle,
+    public AbstractManagedIdentitySource(MsalRequest msalRequest, ServiceBundle serviceBundle,
                                          ManagedIdentitySourceType sourceType) {
-        this.requestContext = requestContext;
+        this.managedIdentityRequest = (ManagedIdentityRequest) msalRequest;
         this.managedIdentitySourceType = sourceType;
         this.serviceBundle = serviceBundle;
     }
@@ -47,12 +47,12 @@ abstract class AbstractManagedIdentitySource {
     public ManagedIdentityResponse getManagedIdentityResponse(
             ManagedIdentityParameters parameters) {
 
-        ManagedIdentityRequest request = createManagedIdentityRequest(parameters.resource);
+        createManagedIdentityRequest(parameters.resource);
         IHttpResponse response;
 
         try {
-            HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, request.computeURI().toString());
-            response = HttpHelper.executeHttpRequest(httpRequest, requestContext, serviceBundle);
+            HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, managedIdentityRequest.computeURI().toString());
+            response = HttpHelper.executeHttpRequest(httpRequest, managedIdentityRequest.requestContext(), serviceBundle);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
@@ -90,7 +90,7 @@ abstract class AbstractManagedIdentitySource {
         }
     }
 
-    public abstract ManagedIdentityRequest createManagedIdentityRequest(String resource);
+    public abstract void createManagedIdentityRequest(String resource);
 
     protected ManagedIdentityResponse getSuccessfulResponse(IHttpResponse response) {
 

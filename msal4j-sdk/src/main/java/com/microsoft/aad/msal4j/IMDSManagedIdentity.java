@@ -35,11 +35,11 @@ public class IMDSManagedIdentity extends AbstractManagedIdentitySource{
 
     private URI imdsEndpoint;
 
-    public IMDSManagedIdentity(RequestContext requestContext,
+    public IMDSManagedIdentity(MsalRequest msalRequest,
                                ServiceBundle serviceBundle) {
-        super(requestContext, serviceBundle, ManagedIdentitySourceType.Imds);
-        ManagedIdentityParameters parameters = (ManagedIdentityParameters) requestContext.apiParameters();
-        IEnvironmentVariables environmentVariables = ((ManagedIdentityParameters) requestContext.apiParameters()).environmentVariables == null ?
+        super(msalRequest, serviceBundle, ManagedIdentitySourceType.Imds);
+        ManagedIdentityParameters parameters = (ManagedIdentityParameters) msalRequest.requestContext().apiParameters();
+        IEnvironmentVariables environmentVariables = ((ManagedIdentityParameters) msalRequest.requestContext().apiParameters()).environmentVariables == null ?
                 new EnvironmentVariables() :
                 parameters.environmentVariables;
         if (!StringHelper.isNullOrBlank(environmentVariables.getEnvironmentVariable(IEnvironmentVariables.AZURE_POD_IDENTITY_AUTHORITY_HOST))){
@@ -53,7 +53,7 @@ public class IMDSManagedIdentity extends AbstractManagedIdentitySource{
             StringBuilder builder = new StringBuilder(environmentVariables.getEnvironmentVariable(IEnvironmentVariables.AZURE_POD_IDENTITY_AUTHORITY_HOST));
             builder.append("/" + imdsTokenPath);
             try {
-                URI imdsEndpoint = new URI(builder.toString());
+                imdsEndpoint = new URI(builder.toString());
             } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
             }
@@ -68,12 +68,10 @@ public class IMDSManagedIdentity extends AbstractManagedIdentitySource{
     }
 
     @Override
-    public ManagedIdentityRequest createManagedIdentityRequest(String resource) {
-        ManagedIdentityRequest request = new ManagedIdentityRequest(HttpMethod.GET, imdsEndpoint);
-
+    public void createManagedIdentityRequest(String resource) {
         Map<String, String> headers = new HashMap<>();
         headers.put("Metadata", "true");
-        request.headers = headers;
+        managedIdentityRequest.headers = headers;
 
         Map<String, String> queryParameters = new HashMap<>();
         queryParameters.put("api-version",imdsApiVersion);
@@ -93,8 +91,7 @@ public class IMDSManagedIdentity extends AbstractManagedIdentitySource{
             queryParameters.put(Constants.MANAGED_IDENTITY_RESOURCE_ID, resourceId);
         }
 
-        request.queryParameters = queryParameters;
-        return request;
+        managedIdentityRequest.queryParameters = queryParameters;
     }
 
     @Override

@@ -11,7 +11,7 @@ class ManagedIdentityClient {
     private AbstractManagedIdentitySource managedIdentitySource;
 
     public ManagedIdentityClient(MsalRequest msalRequest, ServiceBundle serviceBundle) throws Exception {
-        managedIdentitySource = createManagedIdentitySource(msalRequest.requestContext(), serviceBundle);
+        managedIdentitySource = createManagedIdentitySource(msalRequest, serviceBundle);
 
         ManagedIdentityApplication managedIdentityApplication = (ManagedIdentityApplication) msalRequest.application();
         ManagedIdentityIdType identityIdType = managedIdentityApplication.getManagedIdentityId().getIdType();
@@ -31,13 +31,13 @@ class ManagedIdentityClient {
     }
 
     // This method tries to create managed identity source for different sources, if none is created then defaults to IMDS.
-    private static AbstractManagedIdentitySource createManagedIdentitySource(RequestContext requestContext,
+    private static AbstractManagedIdentitySource createManagedIdentitySource(MsalRequest msalRequest,
             ServiceBundle serviceBundle) throws Exception {
         AbstractManagedIdentitySource managedIdentitySource;
-        if ((managedIdentitySource = AppServiceManagedIdentity.create(requestContext, serviceBundle)) != null) {
+        if ((managedIdentitySource = AppServiceManagedIdentity.create(msalRequest, serviceBundle)) != null) {
             return managedIdentitySource;
         } else {
-            return new IMDSManagedIdentity(requestContext, serviceBundle);
+            return new IMDSManagedIdentity(msalRequest, serviceBundle);
         }
     }
 }
