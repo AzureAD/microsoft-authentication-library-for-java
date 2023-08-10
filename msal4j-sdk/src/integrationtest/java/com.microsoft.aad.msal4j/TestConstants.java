@@ -13,6 +13,7 @@ public class TestConstants {
     public final static String MSIDLAB_VAULT_URL = "https://msidlabs.vault.azure.net/";
     public final static String GRAPH_DEFAULT_SCOPE = "https://graph.windows.net/.default";
     public final static String USER_READ_SCOPE = "user.read";
+    public final static String DEFAULT_SCOPE = ".default";
     public final static String B2C_LAB_SCOPE = "https://msidlabb2c.onmicrosoft.com/msaapp/user_impersonation";
     public final static String B2C_CONFIDENTIAL_CLIENT_APP_SECRETID = "MSIDLABB2C-MSAapp-AppSecret";
     public final static String B2C_CONFIDENTIAL_CLIENT_LAB_APP_ID = "MSIDLABB2C-MSAapp-AppID";

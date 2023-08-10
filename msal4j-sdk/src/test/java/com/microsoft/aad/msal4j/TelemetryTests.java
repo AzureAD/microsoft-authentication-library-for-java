@@ -3,9 +3,15 @@
 
 package com.microsoft.aad.msal4j;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.AfterEach;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -14,8 +20,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
 
-@Test(groups = {"checkin"})
-public class TelemetryTests {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class TelemetryTests {
 
     private List<HashMap<String, String>> eventsReceived = new ArrayList<>();
     private String tenantId = "tenantId123";
@@ -34,22 +40,22 @@ public class TelemetryTests {
                 };
     }
 
-    @AfterMethod
-    private void cleanUp() {
+    @AfterEach
+    void cleanUp() {
         eventsReceived.clear();
     }
 
     @Test
-    public void telemetryConsumerRegistration_ConsumerNotNullTest() {
+    void telemetryConsumerRegistration_ConsumerNotNullTest() {
         PublicClientApplication app = PublicClientApplication.builder("a1b2c3")
                 .telemetryConsumer(new MyTelemetryConsumer().telemetryConsumer)
                 .build();
 
-        Assert.assertNotNull(app.telemetryConsumer());
+        assertNotNull(app.telemetryConsumer());
     }
 
     @Test
-    public void telemetryManagerFlush_EventCountTest() {
+    void telemetryManagerFlush_EventCountTest() {
         Consumer<List<HashMap<String, String>>> telemetryConsumer =
                 new MyTelemetryConsumer().telemetryConsumer;
         TelemetryManager telemetryManager = new TelemetryManager(telemetryConsumer, false);
@@ -68,11 +74,11 @@ public class TelemetryTests {
         telemetryManager.flush(reqId, clientId);
 
         // 1 Default event, 1 API event, 1 Http event
-        Assert.assertEquals(eventsReceived.size(), 3);
+        assertEquals(eventsReceived.size(), 3);
     }
 
     @Test
-    public void onSendFailureTrue_SkipEventsIfSuccessfulTest() {
+    void onSendFailureTrue_SkipEventsIfSuccessfulTest() {
         Consumer<List<HashMap<String, String>>> telemetryConsumer =
                 new MyTelemetryConsumer().telemetryConsumer;
         // Only send on failure
@@ -93,7 +99,7 @@ public class TelemetryTests {
         telemetryManager.flush(reqId, clientId);
 
         // API event was successful, so count should be 0
-        Assert.assertEquals(eventsReceived.size(), 0);
+        assertEquals(eventsReceived.size(), 0);
         eventsReceived.clear();
 
         String reqId2 = telemetryManager.generateRequestId();
@@ -110,27 +116,27 @@ public class TelemetryTests {
         telemetryManager.flush(reqId2, clientId);
 
         // API event failed, so count should be 3 (1 default, 1 Api, 1 http)
-        Assert.assertEquals(eventsReceived.size(), 3);
+        assertEquals(eventsReceived.size(), 3);
     }
 
     @Test
-    public void telemetryInternalApi_ScrubTenantFromUriTest() throws Exception {
-        Assert.assertEquals(Event.scrubTenant(new URI("https://login.microsoftonline.com/common/oauth2/v2.0/token")),
+    void telemetryInternalApi_ScrubTenantFromUriTest() throws Exception {
+        assertEquals(Event.scrubTenant(new URI("https://login.microsoftonline.com/common/oauth2/v2.0/token")),
                 "https://login.microsoftonline.com/<tenant>/oauth2/v2.0/token");
 
-        Assert.assertEquals(Event.scrubTenant(new URI("https://login.microsoftonline.com/common")),
+        assertEquals(Event.scrubTenant(new URI("https://login.microsoftonline.com/common")),
                 "https://login.microsoftonline.com/<tenant>");
 
-        Assert.assertEquals(Event.scrubTenant(new URI("https://login.microsoftonline.com/tfp/msidlabb2c.onmicrosoft.com/B2C_1_ROPC_Auth")),
+        assertEquals(Event.scrubTenant(new URI("https://login.microsoftonline.com/tfp/msidlabb2c.onmicrosoft.com/B2C_1_ROPC_Auth")),
                 "https://login.microsoftonline.com/tfp/<tenant>/B2C_1_ROPC_Auth");
 
-        Assert.assertNull(Event.scrubTenant(new URI("https://msidlabb2c.b2clogin.com/tfp/msidlabb2c.onmicrosoft.com/B2C_1_ROPC_Auth")));
+        assertNull(Event.scrubTenant(new URI("https://msidlabb2c.b2clogin.com/tfp/msidlabb2c.onmicrosoft.com/B2C_1_ROPC_Auth")));
 
-        Assert.assertNull(Event.scrubTenant(new URI("https://login.contoso.com/adfs")));
+        assertNull(Event.scrubTenant(new URI("https://login.contoso.com/adfs")));
     }
 
     @Test
-    public void telemetryContainsDefaultEventTest() {
+    void telemetryContainsDefaultEventTest() {
         Consumer<List<HashMap<String, String>>> telemetryConsumer =
                 new MyTelemetryConsumer().telemetryConsumer;
         // Only send on failure
@@ -149,11 +155,11 @@ public class TelemetryTests {
 
         telemetryManager.flush(reqId, clientId);
 
-        Assert.assertEquals(eventsReceived.get(0).get("event_name"), "msal.default_event");
+        assertEquals(eventsReceived.get(0).get("event_name"), "msal.default_event");
     }
 
     @Test
-    public void telemetryFlushEventWithoutStopping_OrphanedEventIncludedTest() {
+    void telemetryFlushEventWithoutStopping_OrphanedEventIncludedTest() {
         Consumer<List<HashMap<String, String>>> telemetryConsumer =
                 new MyTelemetryConsumer().telemetryConsumer;
         TelemetryManager telemetryManager = new TelemetryManager(telemetryConsumer, false);
@@ -171,12 +177,12 @@ public class TelemetryTests {
         telemetryManager.stopEvent(reqId, apiEvent1);
         telemetryManager.flush(reqId, clientId);
 
-        Assert.assertEquals(eventsReceived.size(), 3);
-        Assert.assertTrue(eventsReceived.stream().anyMatch(event -> event.get("event_name").equals("msal.http_event")));
+        assertEquals(eventsReceived.size(), 3);
+        assertTrue(eventsReceived.stream().anyMatch(event -> event.get("event_name").equals("msal.http_event")));
     }
 
     @Test
-    public void telemetryStopEventWithoutStarting_NoExceptionThrownTest() {
+    void telemetryStopEventWithoutStarting_NoExceptionThrownTest() {
         Consumer<List<HashMap<String, String>>> telemetryConsumer =
                 new MyTelemetryConsumer().telemetryConsumer;
         TelemetryManager telemetryManager = new TelemetryManager(telemetryConsumer, false);
@@ -196,12 +202,12 @@ public class TelemetryTests {
 
         telemetryManager.flush(reqId, clientId);
 
-        Assert.assertEquals(eventsReceived.size(), 2);
-        Assert.assertFalse(eventsReceived.stream().anyMatch(event -> event.get("event_name").equals("msal.http_event")));
+        assertEquals(eventsReceived.size(), 2);
+        assertFalse(eventsReceived.stream().anyMatch(event -> event.get("event_name").equals("msal.http_event")));
     }
 
     @Test
-    public void piiLoggingEnabled_ApiEventHashTest() {
+    void piiLoggingEnabled_ApiEventHashTest() {
         Consumer<List<HashMap<String, String>>> telemetryConsumer =
                 new MyTelemetryConsumer().telemetryConsumer;
         TelemetryManager telemetryManager = new TelemetryManager(telemetryConsumer, false);
@@ -215,12 +221,12 @@ public class TelemetryTests {
         apiEvent.setWasSuccessful(true);
         telemetryManager.stopEvent(reqId, apiEvent);
 
-        Assert.assertNotNull(apiEvent.get("msal.tenant_id"));
-        Assert.assertNotEquals(apiEvent.get("msal.tenant_id"), tenantId);
+        assertNotNull(apiEvent.get("msal.tenant_id"));
+        assertNotEquals(apiEvent.get("msal.tenant_id"), tenantId);
     }
 
     @Test
-    public void piiLoggingEnabledFalse_TenantIdUserIdSetToNullTest() {
+    void piiLoggingEnabledFalse_TenantIdUserIdSetToNullTest() {
         Consumer<List<HashMap<String, String>>> telemetryConsumer =
                 new MyTelemetryConsumer().telemetryConsumer;
         TelemetryManager telemetryManager = new TelemetryManager(telemetryConsumer, false);
@@ -234,11 +240,11 @@ public class TelemetryTests {
         apiEvent.setWasSuccessful(true);
         telemetryManager.stopEvent(reqId, apiEvent);
 
-        Assert.assertNull(apiEvent.get("msal.tenant_id"));
+        assertNull(apiEvent.get("msal.tenant_id"));
     }
 
     @Test
-    public void authorityNotInTrustedHostList_AuthorityIsNullTest() throws URISyntaxException {
+    void authorityNotInTrustedHostList_AuthorityIsNullTest() throws URISyntaxException {
         Consumer<List<HashMap<String, String>>> telemetryConsumer =
                 new MyTelemetryConsumer().telemetryConsumer;
         TelemetryManager telemetryManager = new TelemetryManager(telemetryConsumer, false);
@@ -250,7 +256,7 @@ public class TelemetryTests {
         apiEvent.setWasSuccessful(true);
         telemetryManager.stopEvent(reqId, apiEvent);
 
-        Assert.assertEquals(apiEvent.get("msal.authority"), "https://login.microsoftonline.com");
+        assertEquals(apiEvent.get("msal.authority"), "https://login.microsoftonline.com");
 
 
         ApiEvent apiEvent2 = new ApiEvent(false);
@@ -259,40 +265,40 @@ public class TelemetryTests {
         apiEvent2.setWasSuccessful(true);
         telemetryManager.stopEvent(reqId, apiEvent2);
 
-        Assert.assertNull(apiEvent2.get("msal.authority"));
+        assertNull(apiEvent2.get("msal.authority"));
     }
 
     @Test
-    public void xmsCliTelemetryTest_CorrectFormatTest() {
+    void xmsCliTelemetryTest_CorrectFormatTest() {
         String responseHeader = "1,0,0,,";
         XmsClientTelemetryInfo info = XmsClientTelemetryInfo.parseXmsTelemetryInfo(responseHeader);
 
-        Assert.assertEquals(info.getServerErrorCode(), "0");
-        Assert.assertEquals(info.getServerSubErrorCode(), "0");
-        Assert.assertEquals(info.getTokenAge(), "");
-        Assert.assertEquals(info.getSpeInfo(), "");
+        assertEquals(info.getServerErrorCode(), "0");
+        assertEquals(info.getServerSubErrorCode(), "0");
+        assertEquals(info.getTokenAge(), "");
+        assertEquals(info.getSpeInfo(), "");
     }
 
     @Test
-    public void xmsCliTelemetryTest_IncorrectFormatTest() {
+    void xmsCliTelemetryTest_IncorrectFormatTest() {
         String responseHeader = "1,2,3,4,5,6";
         XmsClientTelemetryInfo info = XmsClientTelemetryInfo.parseXmsTelemetryInfo(responseHeader);
 
-        Assert.assertNull(info.getServerErrorCode());
-        Assert.assertNull(info.getServerSubErrorCode());
-        Assert.assertNull(info.getTokenAge());
-        Assert.assertNull(info.getSpeInfo());
+        assertNull(info.getServerErrorCode());
+        assertNull(info.getServerSubErrorCode());
+        assertNull(info.getTokenAge());
+        assertNull(info.getSpeInfo());
     }
 
     @Test
-    public void xmsCliTelemetryTest_IncorrectHeaderTest() {
+    void xmsCliTelemetryTest_IncorrectHeaderTest() {
         String responseHeader = "3,0,0,,";
         XmsClientTelemetryInfo info = XmsClientTelemetryInfo.parseXmsTelemetryInfo(responseHeader);
 
-        Assert.assertNull(info);
+        assertNull(info);
     }
 
-    private ApiEvent createApiEvent(Boolean logPii) {
+    ApiEvent createApiEvent(Boolean logPii) {
         ApiEvent apiEvent1;
         try {
             apiEvent1 = new ApiEvent(logPii);
@@ -305,7 +311,7 @@ public class TelemetryTests {
         return apiEvent1;
     }
 
-    private HttpEvent createHttpEvent() {
+    HttpEvent createHttpEvent() {
         HttpEvent httpEvent1;
         try {
             httpEvent1 = new HttpEvent();

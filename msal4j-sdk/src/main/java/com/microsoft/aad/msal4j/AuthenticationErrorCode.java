@@ -115,9 +115,19 @@ public class AuthenticationErrorCode {
      * A JWT parsing failure, indicating the JWT provided to MSAL is of invalid format.
      */
     public final static String INVALID_JWT = "invalid_jwt";
+
     /**
      * Indicates that a Broker implementation is missing from the device, such as when an app developer
      * does not include one of our broker packages as a dependency in their project, or otherwise cannot
-     * be accessed by MSAL Java*/
+     * be accessed by MSAL Java
+     */
     public final static String MISSING_BROKER = "missing_broker";
+
+    /**
+     * Indicates that a timeout occurred during an HTTP call. If this was thrown in relation to a connection timeout error,
+     * there is likely a network issue preventing the library from reaching a service, such as being blocked by a firewall.
+     * If this was thrown in relation to a read timeout error, there is likely an issue in the service itself causing a
+     * slow response, and this may be resolvable by increasing timeouts. For more details, see https://aka.ms/msal4j-http-client
+     */
+    public final static String HTTP_TIMEOUT = "http_timeout";
 }

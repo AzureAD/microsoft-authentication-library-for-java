@@ -1,26 +1,31 @@
 package com.microsoft.aad.msal4j;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 class DefaultHttpClient implements IHttpClient {
+    private final static Logger LOG = LoggerFactory.getLogger(DefaultHttpClient.class);
 
     private final Proxy proxy;
     private final SSLSocketFactory sslSocketFactory;
-    public int DEFAULT_CONNECT_TIMEOUT = 10000;
-    public int DEFAULT_READ_TIMEOUT = 15000;
 
-    private int connectTimeout = DEFAULT_CONNECT_TIMEOUT;
-    private int readTimeout = DEFAULT_READ_TIMEOUT;
+    //By default, rely on the timeout behavior of the services requests are sent to
+    private int connectTimeout = 0;
+    private int readTimeout = 0;
 
     DefaultHttpClient(Proxy proxy, SSLSocketFactory sslSocketFactory, Integer connectTimeout, Integer readTimeout) {
         this.proxy = proxy;
@@ -130,6 +135,14 @@ class DefaultHttpClient implements IHttpClient {
             httpResponse.addHeaders(conn.getHeaderFields());
             httpResponse.body(inputStreamToString(is));
             return httpResponse;
+        } catch (SocketTimeoutException readException) {
+            LOG.error("Timeout while waiting for response from service. If custom timeouts were set, increasing them may resolve this issue. See https://aka.ms/msal4j-http-client for more information and solutions.");
+
+            throw readException;
+        } catch (ConnectException timeoutException) {
+            LOG.error("Exception while connecting to service, there may be network issues preventing MSAL Java from connecting. See https://aka.ms/msal4j-http-client for more information and solutions.");
+
+            throw timeoutException;
         } finally {
             if (is != null) {
                 is.close();
