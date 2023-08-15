@@ -12,7 +12,7 @@ import java.util.Map;
 
 class ManagedIdentityRequest extends MsalRequest {
 
-    private URI baseEndpoint;
+    URI baseEndpoint;
 
     HttpMethod method;
 
@@ -24,15 +24,6 @@ class ManagedIdentityRequest extends MsalRequest {
 
     public ManagedIdentityRequest(ManagedIdentityApplication managedIdentityApplication, RequestContext requestContext){
         super(managedIdentityApplication, requestContext);
-    }
-
-    public ManagedIdentityRequest(HttpMethod method, URI baseEndpoint){
-        super();
-        this.method = method;
-        this.baseEndpoint = baseEndpoint;
-        headers = new HashMap<>();
-        bodyParameters = new HashMap<>();
-        queryParameters = new HashMap<>();
     }
 
     public URL computeURI() throws URISyntaxException {
@@ -56,6 +47,8 @@ class ManagedIdentityRequest extends MsalRequest {
             }
             String toAppend = key + "=" + queryParameters.get(key);
             stringBuilder.append(toAppend);
+
+            isFirstValue = false;
         }
 
         return stringBuilder.toString();

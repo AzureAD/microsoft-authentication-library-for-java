@@ -87,4 +87,20 @@ public class HttpRequest {
 
         return url;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this)
+            return true;
+
+        if (!(o instanceof HttpRequest))
+            return false;
+
+        HttpRequest otherRequest = (HttpRequest) o;
+
+        return this.url.equals(otherRequest.url)
+                && this.httpMethod.equals(otherRequest.httpMethod)
+                && ((this.headers == null && otherRequest.headers == null) || this.headers.equals(otherRequest.headers))
+                && ((this.body == null && otherRequest.body == null) || this.body.equals(otherRequest.body));
+    }
 }

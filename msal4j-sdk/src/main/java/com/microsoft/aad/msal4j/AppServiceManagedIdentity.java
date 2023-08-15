@@ -18,14 +18,16 @@ class AppServiceManagedIdentity extends AbstractManagedIdentitySource{
     // MSI Constants. Docs for MSI are available here https://docs.microsoft.com/azure/app-service/overview-managed-identity
     private static final String APP_SERVICE_MSI_API_VERSION = "2019-08-01";
     private static final String SecretHeaderName = "X-IDENTITY-HEADER";
+    private static URI endpointUri;
 
     private URI endpoint;
     private String secret;
 
-    private static URI endpointUri;
-
     @Override
     public void createManagedIdentityRequest(String resource) {
+        managedIdentityRequest.baseEndpoint = endpoint;
+        managedIdentityRequest.method = HttpMethod.GET;
+
         Map<String, String> headers = new HashMap<>();
         headers.put(SecretHeaderName, secret);
         managedIdentityRequest.headers = headers;

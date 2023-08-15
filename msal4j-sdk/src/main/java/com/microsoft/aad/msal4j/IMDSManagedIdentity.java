@@ -69,6 +69,9 @@ public class IMDSManagedIdentity extends AbstractManagedIdentitySource{
 
     @Override
     public void createManagedIdentityRequest(String resource) {
+        managedIdentityRequest.baseEndpoint = imdsEndpoint;
+        managedIdentityRequest.method = HttpMethod.GET;
+
         Map<String, String> headers = new HashMap<>();
         headers.put("Metadata", "true");
         managedIdentityRequest.headers = headers;

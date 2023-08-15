@@ -3,80 +3,105 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.azure.core.util.UrlBuilder;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.client.utils.URIUtils;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.nimbusds.oauth2.sdk.http.HTTPResponse;
-import org.apache.http.HttpStatus;
-import org.easymock.EasyMock;
-import org.powermock.api.easymock.PowerMock;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.testng.PowerMockTestCase;
-import org.testng.Assert;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
-import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
-@PowerMockIgnore({"javax.net.ssl.*"})
-@PrepareForTest({DefaultHttpClient.class})
-public class ManagedIdentityTests extends AbstractMsalTests {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
-    final static String Resource = "https://management.azure.com";
+@ExtendWith(MockitoExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_METHOD)
+public class ManagedIdentityTests {
 
-    final static String ResourceDefaultSuffix = "https://management.azure.com/.default";
-    final static String AppServiceEndpoint = "http://127.0.0.1:41564/msi/token";
+    static final String resource = "https://management.azure.com";
+    private final static String resourceDefaultSuffix = "https://management.azure.com/.default";
+    final static String appServiceEndpoint = "http://127.0.0.1:41564/msi/token";
     final static String IMDS_ENDPOINT = "http://169.254.169.254/metadata/identity/oauth2/token";
-    final static String AzureArcEndpoint = "http://localhost:40342/metadata/identity/oauth2/token";
-    final static String CloudShellEndpoint = "http://localhost:40342/metadata/identity/oauth2/token";
-    final static String ServiceFabricEndpoint = "http://localhost:40342/metadata/identity/oauth2/token";
+    final static String azureArcEndpoint = "http://localhost:40342/metadata/identity/oauth2/token";
+    final static String cloudShellEndpoint = "http://localhost:40342/metadata/identity/oauth2/token";
+    final static String serviceFabricEndpoint = "http://localhost:40342/metadata/identity/oauth2/token";
 
-    private String getResponse() {
+    private String getResponse(String resource) {
         long expiresOn = Instant.now().plus(1, ChronoUnit.HOURS).getEpochSecond();
-        String response = "{\"access_token\":\"accesstoken\",\"expires_on\":\"" + expiresOn + "\",\"resource\":\"https://management.azure.com/\",\"token_type\":" +
+        String response = "{\"access_token\":\"accesstoken\",\"expires_on\":\"" + expiresOn + "\",\"resource\":\"" + resource + "\",\"token_type\":" +
                 "\"Bearer\",\"client_id\":\"client_id\"}";
 
         return response;
     }
 
-    @Test
-    public void managedIdentityHappyPathAsync() throws Exception {
+    private HttpRequest expectedRequest(ManagedIdentitySourceType source, String resource) throws URISyntaxException {
+        HttpRequest request;
+        Map<String, String> headers = new HashMap<>();
 
-        HttpResponse response = new HttpResponse();
-        response.statusCode(200);
-        response.body(getResponse());
+        switch (source) {
+            case AppService: {
+                String endpoint = appServiceEndpoint + "?api-version=2019-08-01&resource=" + resource;
+                headers.put("X-IDENTITY-HEADER", "secret");
+                return new HttpRequest(HttpMethod.GET, endpoint, headers);
+            }
+            case Imds: {
+                String endpoint = IMDS_ENDPOINT + "?api-version=2018-02-01&resource=" + resource;
+                headers.put("Metadata", "true");
+                return new HttpRequest(HttpMethod.GET, endpoint, headers);
+            }
+        }
 
-        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(ManagedIdentitySourceType.AppService, AppServiceEndpoint);
+        return null;
+    }
 
-        // Mock
-        DefaultHttpClient defaultHttpClient = PowerMock.createMock(DefaultHttpClient.class);
-        EasyMock.expect(defaultHttpClient.send((HttpRequest)EasyMock.anyObject())).andReturn(response).times(1);
+    private HttpResponse expectedResponse(int statusCode, String response) {
+        HttpResponse httpResponse = new HttpResponse();
+        httpResponse.statusCode(statusCode);
+        httpResponse.body(response);
 
-        ManagedIdentityApplication.Builder miBuilder = ManagedIdentityApplication.builder(ManagedIdentityId.SystemAssigned())
-                .httpClient(defaultHttpClient);
+        return httpResponse;
+    }
 
-        ManagedIdentityApplication mi = miBuilder.build();
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.ManagedIdentityTestDataProvider#createData")
+    void managedIdentityTest_SuccessfulResponse(ManagedIdentitySourceType source, String endpoint, String resource) throws Exception {
+        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        PowerMock.replay(defaultHttpClient);
+        lenient().when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(200, getResponse(resource)));
 
-        // Execute
-        IAuthenticationResult result = mi.acquireTokenForManagedIdentity(ManagedIdentityParameters.builder(Resource)
-                .environmentVariables(environmentVariables)
-                .build()).get();
+        ManagedIdentityApplication miApp = ManagedIdentityApplication
+                .builder(ManagedIdentityId.SystemAssigned())
+                .httpClient(httpClientMock)
+                .build();
 
-        // Assert
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
+        IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
+                ManagedIdentityParameters.builder(resource)
+                        .environmentVariables(environmentVariables)
+                        .build()).get();
 
-        IAuthenticationResult resultFromCache = mi.acquireTokenForManagedIdentity(ManagedIdentityParameters.builder(Resource)
-                .environmentVariables(environmentVariables)
-                .build()).get();
+        assertNotNull(result.accessToken());
 
-        Assert.assertNotNull(resultFromCache);
-        Assert.assertEquals(result.accessToken(), resultFromCache.accessToken());
+        String accessToken = result.accessToken();
+
+        result = miApp.acquireTokenForManagedIdentity(
+                ManagedIdentityParameters.builder(resource)
+                        .environmentVariables(environmentVariables)
+                        .build()).get();
+
+        assertNotNull(result.accessToken());
+        assertEquals(accessToken, result.accessToken());
     }
 }
