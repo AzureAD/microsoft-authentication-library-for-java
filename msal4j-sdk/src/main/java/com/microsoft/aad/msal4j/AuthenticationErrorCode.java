@@ -130,4 +130,10 @@ public class AuthenticationErrorCode {
      * slow response, and this may be resolvable by increasing timeouts. For more details, see https://aka.ms/msal4j-http-client
      */
     public final static String HTTP_TIMEOUT = "http_timeout";
+
+    /**
+     * Indicates that a request to managed identity endpoint failed, see error message for detailed reason and correlation id.
+     * For more information on managed identity see https://aka.ms/msal4j-managed-identity.
+     */
+    public static final String MANAGED_IDENTITY_REQUEST_FAILED = "managed_identity_request_failed";
 }

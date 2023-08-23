@@ -15,6 +15,10 @@ public class EnvironmentVariablesHelper implements IEnvironmentVariables {
                 mockedEnvironmentVariables.put(IEnvironmentVariables.IDENTITY_HEADER, "secret");
                 break;
 
+            case Imds:
+                mockedEnvironmentVariables.put(EnvironmentVariables.IMDS_ENDPOINT, endpoint);
+                break;
+
             case ServiceFabric:
                 mockedEnvironmentVariables.put(IEnvironmentVariables.IDENTITY_ENDPOINT, endpoint);
                 mockedEnvironmentVariables.put(IEnvironmentVariables.IDENTITY_HEADER, "secret");

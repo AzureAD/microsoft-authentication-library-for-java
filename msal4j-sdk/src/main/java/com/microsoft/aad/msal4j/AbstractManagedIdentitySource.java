@@ -21,7 +21,6 @@ abstract class AbstractManagedIdentitySource {
     protected static final String TIMEOUT_ERROR = "[Managed Identity] Authentication unavailable. The request to the managed identity endpoint timed out.";
     private static final Logger LOG = LoggerFactory.getLogger(AbstractManagedIdentitySource.class);
     private static final String MANAGED_IDENTITY_NO_RESPONSE_RECEIVED = "[Managed Identity] Authentication unavailable. No response received from the managed identity endpoint.";
-    public static final String MANAGED_IDENTITY_REQUEST_FAILED = "managed_identity_request_failed";
 
     protected final ManagedIdentityRequest managedIdentityRequest;
     private ServiceBundle serviceBundle;
@@ -75,7 +74,7 @@ abstract class AbstractManagedIdentitySource {
                 LOG.error(
                         String.format("[Managed Identity] request failed, HttpStatusCode: %s Error message: %s",
                                 response.statusCode(), message));
-                throw new MsalManagedIdentityException(MANAGED_IDENTITY_REQUEST_FAILED, message, managedIdentitySourceType);
+                throw new MsalManagedIdentityException(AuthenticationErrorCode.MANAGED_IDENTITY_REQUEST_FAILED, message, managedIdentitySourceType);
             }
         } catch (Exception e) {
             if (!(e instanceof MsalServiceException)) {
@@ -86,7 +85,7 @@ abstract class AbstractManagedIdentitySource {
             } else {
                 throw e;
             }
-            throw new MsalManagedIdentityException(MANAGED_IDENTITY_REQUEST_FAILED, message, managedIdentitySourceType);
+            throw new MsalManagedIdentityException(AuthenticationErrorCode.MANAGED_IDENTITY_REQUEST_FAILED, message, managedIdentitySourceType);
         }
     }
 
