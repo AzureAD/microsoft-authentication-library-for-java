@@ -3,7 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.azure.core.exception.HttpRequestException;
 import org.apache.http.HttpException;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,7 +45,7 @@ public class ManagedIdentityTests {
     }
 
     private HttpRequest expectedRequest(ManagedIdentitySourceType source, String resource) throws URISyntaxException {
-        return expectedRequest(source, resource, ManagedIdentityId.SystemAssigned());
+        return expectedRequest(source, resource, ManagedIdentityId.systemAssigned());
     }
 
     private HttpRequest expectedRequest(ManagedIdentitySourceType source, String resource,
@@ -124,7 +123,7 @@ public class ManagedIdentityTests {
         lenient().when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
 
         ManagedIdentityApplication miApp = ManagedIdentityApplication
-                .builder(ManagedIdentityId.SystemAssigned())
+                .builder(ManagedIdentityId.systemAssigned())
                 .httpClient(httpClientMock)
                 .build();
 
@@ -180,7 +179,7 @@ public class ManagedIdentityTests {
         lenient().when(httpClientMock.send(eq(expectedRequest(source, anotherResource)))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
 
         ManagedIdentityApplication miApp = ManagedIdentityApplication
-                .builder(ManagedIdentityId.SystemAssigned())
+                .builder(ManagedIdentityId.systemAssigned())
                 .httpClient(httpClientMock)
                 .build();
 
@@ -209,7 +208,7 @@ public class ManagedIdentityTests {
         lenient().when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(500, getMsiErrorResponse()));
 
         ManagedIdentityApplication miApp = ManagedIdentityApplication
-                .builder(ManagedIdentityId.SystemAssigned())
+                .builder(ManagedIdentityId.systemAssigned())
                 .httpClient(httpClientMock)
                 .build();
 
@@ -240,7 +239,7 @@ public class ManagedIdentityTests {
         lenient().when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(500, ""));
 
         ManagedIdentityApplication miApp = ManagedIdentityApplication
-                .builder(ManagedIdentityId.SystemAssigned())
+                .builder(ManagedIdentityId.systemAssigned())
                 .httpClient(httpClientMock)
                 .build();
 
@@ -271,7 +270,7 @@ public class ManagedIdentityTests {
         lenient().when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(200, ""));
 
         ManagedIdentityApplication miApp = ManagedIdentityApplication
-                .builder(ManagedIdentityId.SystemAssigned())
+                .builder(ManagedIdentityId.systemAssigned())
                 .httpClient(httpClientMock)
                 .build();
 
@@ -301,7 +300,7 @@ public class ManagedIdentityTests {
         lenient().when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenThrow(new HttpException("A socket operation was attempted to an unreachable network."));
 
         ManagedIdentityApplication miApp = ManagedIdentityApplication
-                .builder(ManagedIdentityId.SystemAssigned())
+                .builder(ManagedIdentityId.systemAssigned())
                 .httpClient(httpClientMock)
                 .build();
 

@@ -13,11 +13,11 @@ import java.util.Map;
 
 class AppServiceManagedIdentity extends AbstractManagedIdentitySource{
 
-    private final static Logger LOG = LoggerFactory.getLogger(AppServiceManagedIdentity.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AppServiceManagedIdentity.class);
 
     // MSI Constants. Docs for MSI are available here https://docs.microsoft.com/azure/app-service/overview-managed-identity
     private static final String APP_SERVICE_MSI_API_VERSION = "2019-08-01";
-    private static final String SecretHeaderName = "X-IDENTITY-HEADER";
+    private static final String SECRET_HEADER_NAME = "X-IDENTITY-HEADER";
     private static URI endpointUri;
 
     private URI endpoint;
@@ -29,7 +29,7 @@ class AppServiceManagedIdentity extends AbstractManagedIdentitySource{
         managedIdentityRequest.method = HttpMethod.GET;
 
         Map<String, String> headers = new HashMap<>();
-        headers.put(SecretHeaderName, secret);
+        headers.put(SECRET_HEADER_NAME, secret);
         managedIdentityRequest.headers = headers;
 
         Map<String, String> queryParameters = new HashMap<>();

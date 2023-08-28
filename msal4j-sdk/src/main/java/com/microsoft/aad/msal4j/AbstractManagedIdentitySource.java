@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.ParseException;
@@ -100,7 +103,6 @@ abstract class AbstractManagedIdentitySource {
                 || managedIdentityResponse.getAccessToken().isEmpty() || managedIdentityResponse.getExpiresOn() == null
                 || managedIdentityResponse.getExpiresOn().isEmpty()) {
             LOG.error("[Managed Identity] Response is either null or insufficient for authentication.");
-
         }
 
         return managedIdentityResponse;
@@ -121,7 +123,6 @@ abstract class AbstractManagedIdentitySource {
 
         return String.format("[Managed Identity] Error Code: %s Error Message: %s",
                 managedIdentityErrorResponse.getError(), managedIdentityErrorResponse.getErrorDescription());
-
     }
 
     protected static IEnvironmentVariables getEnvironmentVariables(ManagedIdentityParameters parameters) {

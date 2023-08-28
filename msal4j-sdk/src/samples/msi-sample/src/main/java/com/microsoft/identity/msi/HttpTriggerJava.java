@@ -36,7 +36,7 @@ public class HttpTriggerJava {
 
         try {
             ManagedIdentityApplication msiApp = ManagedIdentityApplication
-                    .builder(ManagedIdentityId.SystemAssigned())
+                    .builder(ManagedIdentityId.systemAssigned())
                     .logPii(true)
                     .build();
             IAuthenticationResult result = msiApp.acquireTokenForManagedIdentity(ManagedIdentityParameters.builder(resource).build()).get();

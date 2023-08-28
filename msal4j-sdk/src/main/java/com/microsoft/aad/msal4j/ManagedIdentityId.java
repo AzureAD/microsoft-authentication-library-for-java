@@ -26,7 +26,7 @@ public class ManagedIdentityId {
      * Create an instance of a system assigned managed identity.
      * @return Instance of ManagedIdentityId.
      */
-    public static ManagedIdentityId SystemAssigned() {
+    public static ManagedIdentityId systemAssigned() {
         return new ManagedIdentityId(ManagedIdentityIdType.SystemAssigned);
     }
 
@@ -36,7 +36,7 @@ public class ManagedIdentityId {
      * @return Instance of ManagedIdentityId
      * @exception NullPointerException
      */
-    public static ManagedIdentityId UserAssignedClientId(String clientId) {
+    public static ManagedIdentityId userAssignedClientId(String clientId) {
         if (StringHelper.isNullOrBlank(clientId)) {
             throw new NullPointerException(clientId);
         }
@@ -50,7 +50,7 @@ public class ManagedIdentityId {
      * @return Instance of ManagedIdentityId
      * @exception NullPointerException
      */
-    public static ManagedIdentityId UserAssignedResourceId(String resourceId)
+    public static ManagedIdentityId userAssignedResourceId(String resourceId)
     {
         if (StringHelper.isNullOrBlank(resourceId))
         {

@@ -3,9 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import labapi.AzureEnvironment;
 import org.junit.jupiter.params.provider.Arguments;
-import reactor.netty.transport.ClientTransport;
 
 import java.util.stream.Stream;
 
@@ -30,13 +28,13 @@ public class ManagedIdentityTestDataProvider {
     public static Stream<Arguments> createDataUserAssigned() {
         return Stream.of(
                 Arguments.of(ManagedIdentitySourceType.AppService, ManagedIdentityTests.appServiceEndpoint,
-                        ManagedIdentityId.UserAssignedClientId(CLIENT_ID)),
+                        ManagedIdentityId.userAssignedClientId(CLIENT_ID)),
                 Arguments.of(ManagedIdentitySourceType.AppService, ManagedIdentityTests.appServiceEndpoint,
-                        ManagedIdentityId.UserAssignedResourceId(RESOURCE_ID)),
+                        ManagedIdentityId.userAssignedResourceId(RESOURCE_ID)),
                 Arguments.of(ManagedIdentitySourceType.Imds, null,
-                        ManagedIdentityId.UserAssignedClientId(CLIENT_ID)),
+                        ManagedIdentityId.userAssignedClientId(CLIENT_ID)),
                 Arguments.of(ManagedIdentitySourceType.Imds, null,
-                        ManagedIdentityId.UserAssignedResourceId(RESOURCE_ID)));
+                        ManagedIdentityId.userAssignedResourceId(RESOURCE_ID)));
     }
 
     public static Stream<Arguments> createDataWrongScope() {
