@@ -169,6 +169,7 @@
     </pluginRepositories>
 
     <build>
+        <sourceDirectory>${project.build.directory}/delombok</sourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.projectlombok</groupId>
