@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class MsalManagedIdentityException extends MsalServiceException{
 
-    ManagedIdentitySourceType managedIdentitySourceType;
+    public ManagedIdentitySourceType managedIdentitySourceType;
 
     public MsalManagedIdentityException(String errorCode, String errorMessage, ManagedIdentitySourceType sourceType ){
         super(errorMessage, errorCode);

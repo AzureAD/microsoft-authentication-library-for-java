@@ -69,7 +69,7 @@ public class ManagedIdentityApplication extends AbstractClientApplicationBase im
                     "system_assigned_managed_identity" : managedIdentityId.getUserAssignedId());
 
             this.managedIdentityId = managedIdentityId;
-            this.instanceDiscovery = false;
+            this.isInstanceDiscoveryEnabled = false;
         }
 
         public Builder resource(String resource) {

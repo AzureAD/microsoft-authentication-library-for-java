@@ -16,6 +16,7 @@ import java.beans.Encoder;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.SocketException;
 import java.net.URISyntaxException;
 
 //base class for all sources that support managed identity
@@ -57,6 +58,12 @@ abstract class AbstractManagedIdentitySource {
             response = HttpHelper.executeHttpRequest(httpRequest, managedIdentityRequest.requestContext(), serviceBundle);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
+        } catch (MsalClientException e) {
+            if (e.getCause() instanceof SocketException) {
+                throw new MsalManagedIdentityException(MsalError.MANAGED_IDENTITY_UNREACHABLE_NETWORK, e.getMessage(), managedIdentitySourceType);
+            }
+
+            throw e;
         }
 
         return handleResponse(parameters, response);
@@ -103,6 +110,7 @@ abstract class AbstractManagedIdentitySource {
                 || managedIdentityResponse.getAccessToken().isEmpty() || managedIdentityResponse.getExpiresOn() == null
                 || managedIdentityResponse.getExpiresOn().isEmpty()) {
             LOG.error("[Managed Identity] Response is either null or insufficient for authentication.");
+            throw new MsalManagedIdentityException(MsalError.MANAGED_IDENTITY_REQUEST_FAILED, MsalErrorMessage.MANAGED_IDENTITY_UNEXPECTED_RESPONSE, managedIdentitySourceType);
         }
 
         return managedIdentityResponse;

@@ -80,10 +80,6 @@ class DefaultHttpClient implements IHttpClient {
     private HttpURLConnection openConnection(final URL finalURL)
             throws IOException {
         URLConnection connection;
-        HttpURLConnection httpConnection = null;
-        HttpsURLConnection httpsConnection = null;
-
-        Boolean isHttp = false;
 
         if (proxy != null) {
             connection = finalURL.openConnection(proxy);
@@ -95,17 +91,16 @@ class DefaultHttpClient implements IHttpClient {
         connection.setReadTimeout(readTimeout);
 
         if (connection instanceof HttpURLConnection) {
-            httpConnection = (HttpURLConnection) connection;
-            isHttp = true;
+            return (HttpURLConnection) connection;
         } else {
-            httpsConnection = (HttpsURLConnection) connection;
-        }
+            HttpsURLConnection httpsConnection = (HttpsURLConnection) connection;
 
-        if (!isHttp && sslSocketFactory != null) {
-            httpsConnection.setSSLSocketFactory(sslSocketFactory);
-        }
+            if (sslSocketFactory != null) {
+                httpsConnection.setSSLSocketFactory(sslSocketFactory);
+            }
 
-        return isHttp? httpConnection : httpsConnection;
+            return httpsConnection;
+        }
     }
 
     private void configureAdditionalHeaders(final HttpURLConnection conn, final HttpRequest httpRequest) {

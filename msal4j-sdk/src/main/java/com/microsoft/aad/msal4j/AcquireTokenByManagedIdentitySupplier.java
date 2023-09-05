@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashSet;
 import java.util.Set;
 
-public class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier {
+class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier {
 
     private static final Logger LOG = LoggerFactory.getLogger(AcquireTokenByManagedIdentitySupplier.class);
 
@@ -62,8 +62,13 @@ public class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultS
 
                 return supplier.execute();
             } catch (MsalClientException ex) {
-                LOG.debug(String.format("Cache lookup failed: %s", ex.getMessage()));
-                return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor, clientApplication.authenticationAuthority.host);
+                if (ex.errorCode().equals(AuthenticationErrorCode.CACHE_MISS)) {
+                    LOG.debug(String.format("Cache lookup failed: %s", ex.getMessage()));
+                    return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor, clientApplication.authenticationAuthority.host);
+                } else {
+                    LOG.error("Error occurred while cache lookup. " + ex.getMessage());
+                    throw ex;
+                }
             }
         }
 

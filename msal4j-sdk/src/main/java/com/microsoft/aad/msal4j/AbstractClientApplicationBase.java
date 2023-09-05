@@ -333,7 +333,7 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
         private String azureRegion;
         private Integer connectTimeoutForDefaultHttpClient;
         private Integer readTimeoutForDefaultHttpClient;
-        protected boolean instanceDiscovery = true;
+        protected boolean isInstanceDiscoveryEnabled = true;
 
         /**
          * Constructor to create instance of Builder of client application
@@ -677,7 +677,7 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
         yet still want MSAL to accept any authority that you will provide,
         you can use a ``False`` to unconditionally disable Instance Discovery. */
         public T instanceDiscovery(boolean val) {
-            instanceDiscovery = val;
+            isInstanceDiscoveryEnabled = val;
             return self();
         }
 
@@ -709,7 +709,7 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
         clientCapabilities = builder.clientCapabilities;
         autoDetectRegion = builder.autoDetectRegion;
         azureRegion = builder.azureRegion;
-        instanceDiscovery = builder.instanceDiscovery;
+        instanceDiscovery = builder.isInstanceDiscoveryEnabled;
 
         if (aadAadInstanceDiscoveryResponse != null) {
             AadInstanceDiscoveryProvider.cacheInstanceDiscoveryMetadata(

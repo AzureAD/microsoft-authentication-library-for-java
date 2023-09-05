@@ -11,4 +11,6 @@ class MsalError {
     public static final String MANAGED_IDENTITY_REQUEST_FAILED = "managed_identity_request_failed";
 
     public static final String SCOPES_REQUIRED = "scopes_required_client_credentials";
+
+    public static final String MANAGED_IDENTITY_UNREACHABLE_NETWORK = "managed_identity_unreachable_network";
 }

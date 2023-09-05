@@ -3,7 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-public class EnvironmentVariables implements IEnvironmentVariables {
+class EnvironmentVariables implements IEnvironmentVariables {
 
     @Override
     public String getEnvironmentVariable(String envVariable) {
