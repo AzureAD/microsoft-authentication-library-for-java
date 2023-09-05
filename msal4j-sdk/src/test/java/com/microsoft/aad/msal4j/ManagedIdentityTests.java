@@ -10,6 +10,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.net.SocketException;
 import java.net.URISyntaxException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -297,7 +298,7 @@ public class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        lenient().when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenThrow(new HttpException("A socket operation was attempted to an unreachable network."));
+        lenient().when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenThrow(new SocketException("A socket operation was attempted to an unreachable network."));
 
         ManagedIdentityApplication miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
@@ -314,7 +315,7 @@ public class ManagedIdentityTests {
 
             MsalManagedIdentityException miException = (MsalManagedIdentityException) exception.getCause();
             assertEquals(source, miException.managedIdentitySourceType);
-            assertEquals(AuthenticationErrorCode.MANAGED_IDENTITY_REQUEST_FAILED, miException.errorCode());
+            assertEquals(MsalError.MANAGED_IDENTITY_UNREACHABLE_NETWORK, miException.errorCode());
             return;
         }
 
