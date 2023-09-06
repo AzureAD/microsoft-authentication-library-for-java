@@ -14,27 +14,27 @@ public class EnvironmentVariablesHelper implements IEnvironmentVariables {
 
         switch (source) {
             case AppService:
-                mockedEnvironmentVariables.put(IEnvironmentVariables.IDENTITY_ENDPOINT, endpoint);
-                mockedEnvironmentVariables.put(IEnvironmentVariables.IDENTITY_HEADER, "secret");
+                mockedEnvironmentVariables.put(Constants.IDENTITY_ENDPOINT, endpoint);
+                mockedEnvironmentVariables.put(Constants.IDENTITY_HEADER, "secret");
                 break;
 
             case Imds:
-                mockedEnvironmentVariables.put(EnvironmentVariables.IMDS_ENDPOINT, endpoint);
+                mockedEnvironmentVariables.put(Constants.IMDS_ENDPOINT, endpoint);
                 break;
 
             case ServiceFabric:
-                mockedEnvironmentVariables.put(IEnvironmentVariables.IDENTITY_ENDPOINT, endpoint);
-                mockedEnvironmentVariables.put(IEnvironmentVariables.IDENTITY_HEADER, "secret");
-                mockedEnvironmentVariables.put(IEnvironmentVariables.IDENTITY_SERVER_THUMBPRINT, "thumbprint");
+                mockedEnvironmentVariables.put(Constants.IDENTITY_ENDPOINT, endpoint);
+                mockedEnvironmentVariables.put(Constants.IDENTITY_HEADER, "secret");
+                mockedEnvironmentVariables.put(Constants.IDENTITY_SERVER_THUMBPRINT, "thumbprint");
                 break;
 
             case CloudShell:
-                mockedEnvironmentVariables.put(IEnvironmentVariables.MSI_ENDPOINT, endpoint);
+                mockedEnvironmentVariables.put(Constants.MSI_ENDPOINT, endpoint);
                 break;
 
             case AzureArc:
-                mockedEnvironmentVariables.put(IEnvironmentVariables.IDENTITY_ENDPOINT, endpoint);
-                mockedEnvironmentVariables.put(IEnvironmentVariables.IMDS_ENDPOINT, endpoint);
+                mockedEnvironmentVariables.put(Constants.IDENTITY_ENDPOINT, endpoint);
+                mockedEnvironmentVariables.put(Constants.IMDS_ENDPOINT, endpoint);
                 break;
         }
     }

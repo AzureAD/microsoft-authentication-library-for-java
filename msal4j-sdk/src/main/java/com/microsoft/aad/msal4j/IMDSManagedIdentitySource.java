@@ -12,17 +12,17 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class IMDSManagedIdentity extends AbstractManagedIdentitySource{
+class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
 
     // IMDS constants. Docs for IMDS are available here https://docs.microsoft.com/azure/active-directory/managed-identities-azure-resources/how-to-use-vm-token#get-a-token-using-http
-    private final static Logger LOG = LoggerFactory.getLogger(IMDSManagedIdentity.class);
-    private static URI DEFAULT_IMDS_ENDPOINT;
+    private static final Logger LOG = LoggerFactory.getLogger(IMDSManagedIdentitySource.class);
+    private static final URI DEFAULT_IMDS_ENDPOINT;
 
     static {
         try {
             DEFAULT_IMDS_ENDPOINT = new URI("http://169.254.169.254/metadata/identity/oauth2/token");
         } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
+            throw new MsalManagedIdentityException(MsalError.INVALID_MANAGED_IDENTITY_ENDPOINT, ManagedIdentitySourceType.Imds);
         }
     }
 
@@ -35,27 +35,32 @@ public class IMDSManagedIdentity extends AbstractManagedIdentitySource{
 
     private URI imdsEndpoint;
 
-    public IMDSManagedIdentity(MsalRequest msalRequest,
-                               ServiceBundle serviceBundle) {
+    public IMDSManagedIdentitySource(MsalRequest msalRequest,
+                                     ServiceBundle serviceBundle) {
         super(msalRequest, serviceBundle, ManagedIdentitySourceType.Imds);
         ManagedIdentityParameters parameters = (ManagedIdentityParameters) msalRequest.requestContext().apiParameters();
         IEnvironmentVariables environmentVariables = ((ManagedIdentityParameters) msalRequest.requestContext().apiParameters()).environmentVariables == null ?
                 new EnvironmentVariables() :
                 parameters.environmentVariables;
-        if (!StringHelper.isNullOrBlank(environmentVariables.getEnvironmentVariable(IEnvironmentVariables.AZURE_POD_IDENTITY_AUTHORITY_HOST))){
-            LOG.info("[Managed Identity] Environment variable AZURE_POD_IDENTITY_AUTHORITY_HOST for IMDS returned endpoint: " + environmentVariables.getEnvironmentVariable(IEnvironmentVariables.AZURE_POD_IDENTITY_AUTHORITY_HOST));
+        if (!StringHelper.isNullOrBlank(environmentVariables.getEnvironmentVariable(Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST))){
+            LOG.info("[Managed Identity] Environment variable AZURE_POD_IDENTITY_AUTHORITY_HOST for IMDS returned endpoint: " + environmentVariables.getEnvironmentVariable(Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST));
             try {
-                imdsEndpoint = new URI(environmentVariables.getEnvironmentVariable(IEnvironmentVariables.AZURE_POD_IDENTITY_AUTHORITY_HOST));
+                imdsEndpoint = new URI(environmentVariables.getEnvironmentVariable(Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST));
             } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
             }
 
-            StringBuilder builder = new StringBuilder(environmentVariables.getEnvironmentVariable(IEnvironmentVariables.AZURE_POD_IDENTITY_AUTHORITY_HOST));
+            StringBuilder builder = new StringBuilder(environmentVariables.getEnvironmentVariable(Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST));
             builder.append("/" + imdsTokenPath);
             try {
                 imdsEndpoint = new URI(builder.toString());
             } catch (URISyntaxException e) {
-                throw new RuntimeException(e);
+                throw new MsalManagedIdentityException(MsalError.INVALID_MANAGED_IDENTITY_ENDPOINT,
+                        String.format(MsalErrorMessage.MANAGED_IDENTITY_ENDPOINT_INVALID_URI_ERROR,
+                                Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST,
+                                builder.toString(),
+                                ManagedIdentitySourceType.Imds),
+                        ManagedIdentitySourceType.Imds);
             }
         }
         else

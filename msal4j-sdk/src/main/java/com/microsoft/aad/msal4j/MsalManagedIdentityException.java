@@ -14,15 +14,8 @@ public class MsalManagedIdentityException extends MsalServiceException{
         super(errorMessage, errorCode);
         this.managedIdentitySourceType = sourceType;
     }
-    public MsalManagedIdentityException(String message, String error) {
-        super(message, error);
-    }
 
-    public MsalManagedIdentityException(ErrorResponse errorResponse, Map<String, List<String>> httpHeaders) {
-        super(errorResponse, httpHeaders);
-    }
-
-    public MsalManagedIdentityException(AadInstanceDiscoveryResponse discoveryResponse) {
-        super(discoveryResponse);
+    public MsalManagedIdentityException(String errorCode, ManagedIdentitySourceType sourceType) {
+        this(errorCode, "", sourceType);
     }
 }

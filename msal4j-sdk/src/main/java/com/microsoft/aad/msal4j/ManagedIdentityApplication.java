@@ -20,7 +20,7 @@ public class ManagedIdentityApplication extends AbstractClientApplicationBase im
     private String resource;
 
     @Getter
-    private ManagedIdentityId managedIdentityId;
+    private final ManagedIdentityId managedIdentityId;
 
     private ManagedIdentityApplication(Builder builder) {
         super(builder);

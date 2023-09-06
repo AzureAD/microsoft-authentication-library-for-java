@@ -3,7 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-public enum ManagedIdentityIdType {
+enum ManagedIdentityIdType {
 
     SystemAssigned,
     ClientId,

@@ -3,7 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import org.apache.http.HttpException;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;

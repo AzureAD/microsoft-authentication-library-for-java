@@ -34,10 +34,10 @@ class ManagedIdentityClient {
     private static AbstractManagedIdentitySource createManagedIdentitySource(MsalRequest msalRequest,
             ServiceBundle serviceBundle) throws Exception {
         AbstractManagedIdentitySource managedIdentitySource;
-        if ((managedIdentitySource = AppServiceManagedIdentity.create(msalRequest, serviceBundle)) != null) {
+        if ((managedIdentitySource = AppServiceManagedIdentitySource.create(msalRequest, serviceBundle)) != null) {
             return managedIdentitySource;
         } else {
-            return new IMDSManagedIdentity(msalRequest, serviceBundle);
+            return new IMDSManagedIdentitySource(msalRequest, serviceBundle);
         }
     }
 }

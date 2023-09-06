@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
@@ -16,6 +17,7 @@ import java.util.Map;
  */
 @Getter
 @Accessors(fluent = true)
+@EqualsAndHashCode
 public class HttpRequest {
 
     /**
@@ -86,37 +88,5 @@ public class HttpRequest {
         }
 
         return url;
-    }
-
-    // Adding this for unit tests to be able to compare expected and actual request.
-    @Override
-    public boolean equals(Object o) {
-        if (o == this)
-            return true;
-
-        if (!(o instanceof HttpRequest))
-            return false;
-
-        HttpRequest otherRequest = (HttpRequest) o;
-
-        return this.url.equals(otherRequest.url)
-                && this.httpMethod.equals(otherRequest.httpMethod)
-                && ((this.headers == null && otherRequest.headers == null) || this.headers.equals(otherRequest.headers))
-                && ((this.body == null && otherRequest.body == null) || this.body.equals(otherRequest.body));
-    }
-
-    @Override
-    public final int hashCode() {
-        int result = 17;
-        if (httpMethod != null) {
-            result = 31 * result + httpMethod.hashCode();
-        }
-        if (headers != null) {
-            result = 31 * result + headers.hashCode();
-        }
-        if (body != null) {
-            result = 31 * result + body.hashCode();
-        }
-        return result;
     }
 }

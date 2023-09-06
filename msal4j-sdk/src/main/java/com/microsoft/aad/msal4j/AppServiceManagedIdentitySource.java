@@ -11,9 +11,9 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
-class AppServiceManagedIdentity extends AbstractManagedIdentitySource{
+class AppServiceManagedIdentitySource extends AbstractManagedIdentitySource{
 
-    private static final Logger LOG = LoggerFactory.getLogger(AppServiceManagedIdentity.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AppServiceManagedIdentitySource.class);
 
     // MSI Constants. Docs for MSI are available here https://docs.microsoft.com/azure/app-service/overview-managed-identity
     private static final String APP_SERVICE_MSI_API_VERSION = "2019-08-01";
@@ -51,7 +51,7 @@ class AppServiceManagedIdentity extends AbstractManagedIdentitySource{
         managedIdentityRequest.queryParameters = queryParameters;
     }
 
-    private AppServiceManagedIdentity(MsalRequest msalRequest, ServiceBundle serviceBundle, URI endpoint, String secret)
+    private AppServiceManagedIdentitySource(MsalRequest msalRequest, ServiceBundle serviceBundle, URI endpoint, String secret)
     {
         super(msalRequest, serviceBundle, ManagedIdentitySourceType.AppService);
         this.endpoint = endpoint;
@@ -61,11 +61,11 @@ class AppServiceManagedIdentity extends AbstractManagedIdentitySource{
     protected static AbstractManagedIdentitySource create(MsalRequest msalRequest, ServiceBundle serviceBundle) {
 
         IEnvironmentVariables environmentVariables = getEnvironmentVariables((ManagedIdentityParameters) msalRequest.requestContext().apiParameters());
-        String msiSecret = environmentVariables.getEnvironmentVariable(IEnvironmentVariables.IDENTITY_HEADER);
-        String msiEndpoint = environmentVariables.getEnvironmentVariable(IEnvironmentVariables.IDENTITY_ENDPOINT);
+        String msiSecret = environmentVariables.getEnvironmentVariable(Constants.IDENTITY_HEADER);
+        String msiEndpoint = environmentVariables.getEnvironmentVariable(Constants.IDENTITY_ENDPOINT);
 
         return validateEnvironmentVariables(msiEndpoint, msiSecret)
-                ? new AppServiceManagedIdentity(msalRequest, serviceBundle, endpointUri, msiSecret)
+                ? new AppServiceManagedIdentitySource(msalRequest, serviceBundle, endpointUri, msiSecret)
                 : null;
     }
 

@@ -3,13 +3,8 @@
 
 package com.microsoft.aad.msal4j;
 
-public interface IEnvironmentVariables {
-    String IDENTITY_ENDPOINT = "IDENTITY_ENDPOINT";
-    public static final String IDENTITY_HEADER = "IDENTITY_HEADER";
-    public static final String AZURE_POD_IDENTITY_AUTHORITY_HOST = "AZURE_POD_IDENTITY_AUTHORITY_HOST";
-    public static final String IMDS_ENDPOINT = "IMDS_ENDPOINT";
-    public static final String MSI_ENDPOINT = "MSI_ENDPOINT";
-    public static final String IDENTITY_SERVER_THUMBPRINT = "IDENTITY_SERVER_THUMBPRINT";
+interface IEnvironmentVariables {
+
 
     String getEnvironmentVariable(String envVariable);
 }
