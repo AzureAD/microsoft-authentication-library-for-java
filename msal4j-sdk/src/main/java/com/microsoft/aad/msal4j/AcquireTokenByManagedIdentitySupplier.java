@@ -25,7 +25,7 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
 
         if (StringHelper.isNullOrBlank(managedIdentityParameters.resource)) {
             throw new MsalClientException(
-                    MsalError.SCOPES_REQUIRED,
+                    MsalError.RESOURCE_REQUIRED_MANAGED_IDENTITY,
                     MsalErrorMessage.SCOPES_REQUIRED);
         }
 
