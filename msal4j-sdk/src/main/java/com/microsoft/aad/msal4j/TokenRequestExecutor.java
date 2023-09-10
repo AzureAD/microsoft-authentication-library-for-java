@@ -149,6 +149,7 @@ class TokenRequestExecutor {
                     refreshOn(response.getRefreshIn() > 0 ? currTimestampSec + response.getRefreshIn() : 0).
                     accountCacheEntity(accountCacheEntity).
                     scopes(response.getScope()).
+                    metadata(new AuthenticationResultMetadata(TokenSource.IDENTITY_PROVIDER, CacheRefreshReason.NOT_APPLICABLE)).
                     build();
 
         } else {

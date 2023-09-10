@@ -24,8 +24,7 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
     AuthenticationResult execute() throws Exception {
         Authority requestAuthority = silentRequest.requestAuthority();
         if (requestAuthority.authorityType != AuthorityType.B2C) {
-            requestAuthority =
-                    getAuthorityWithPrefNetworkHost(silentRequest.requestAuthority().authority());
+            requestAuthority = getAuthorityWithPrefNetworkHost(silentRequest.requestAuthority().authority());
         }
 
         AuthenticationResult res;
@@ -46,6 +45,9 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
                 throw new MsalClientException(AuthenticationErrorMessage.NO_TOKEN_IN_CACHE, AuthenticationErrorCode.CACHE_MISS);
             }
 
+            //Some cached tokens were found, but this metadata will be overwritten if token needs to be refreshed
+            res.metadata().tokenSource(TokenSource.CACHE);
+
             if (!StringHelper.isBlank(res.accessToken())) {
                 clientApplication.getServiceBundle().getServerSideTelemetry().incrementSilentSuccessfulCount();
             }
@@ -60,15 +62,19 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
                 //As of version 3 of the telemetry schema, there is a field for collecting data about why a token was refreshed,
                 // so here we set the telemetry value based on the cause of the refresh
                 if (silentRequest.parameters().forceRefresh()) {
+                    this.silentRequest.requestContext().refreshReason(CacheRefreshReason.FORCE_REFRESH);
                     clientApplication.getServiceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
                             CacheTelemetry.REFRESH_FORCE_REFRESH.telemetryValue);
                 } else if (afterRefreshOn) {
+                    this.silentRequest.requestContext().refreshReason(CacheRefreshReason.PROACTIVE_REFRESH);
                     clientApplication.getServiceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
                             CacheTelemetry.REFRESH_REFRESH_IN.telemetryValue);
                 } else if (res.expiresOn() < currTimeStampSec) {
+                    this.silentRequest.requestContext().refreshReason(CacheRefreshReason.EXPIRED);
                     clientApplication.getServiceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
                             CacheTelemetry.REFRESH_ACCESS_TOKEN_EXPIRED.telemetryValue);
                 } else if (StringHelper.isBlank(res.accessToken())) {
+                    this.silentRequest.requestContext().refreshReason(CacheRefreshReason.NO_CACHED_ACCESS_TOKEN);
                     clientApplication.getServiceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
                             CacheTelemetry.REFRESH_NO_ACCESS_TOKEN.telemetryValue);
                 }
@@ -93,14 +99,20 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
 
                     try {
                         res = acquireTokenByAuthorisationGrantSupplier.execute();
+                        res.metadata().cacheRefreshReason(this.silentRequest.requestContext().refreshReason());
+                        res.metadata().tokenSource(TokenSource.IDENTITY_PROVIDER);
+
+                        log.info("Access token refreshed successfully.");
                     } catch (MsalServiceException ex) {
                         //If the token refresh attempt threw a MsalServiceException but the refresh attempt was done
                         // only because of refreshOn, then simply return the existing cached token
                         if (afterRefreshOn && !(silentRequest.parameters().forceRefresh() || StringHelper.isBlank(res.accessToken()))) {
+
                             return res;
                         } else throw ex;
                     }
                 } else {
+                    log.warn("Refresh token not found in cache, cannot return valid tokens.");
                     res = null;
                 }
             }
@@ -108,8 +120,6 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
         if (res == null || StringHelper.isBlank(res.accessToken())) {
             throw new MsalClientException(AuthenticationErrorMessage.NO_TOKEN_IN_CACHE, AuthenticationErrorCode.CACHE_MISS);
         }
-
-        log.info("Returning token from cache");
 
         return res;
     }
