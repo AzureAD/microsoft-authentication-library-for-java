@@ -22,15 +22,25 @@ abstract class MsalRequest {
     @Getter(value = AccessLevel.PACKAGE, lazy = true)
     private final HttpHeaders headers = new HttpHeaders(requestContext);
 
-    MsalRequest(AbstractClientApplicationBase clientApplicationBase,
-                AbstractMsalAuthorizationGrant abstractMsalAuthorizationGrant,
-                RequestContext requestContext) {
-
+    MsalRequest(AbstractClientApplicationBase clientApplicationBase, AbstractMsalAuthorizationGrant abstractMsalAuthorizationGrant, RequestContext requestContext) {
         this.application = clientApplicationBase;
         this.msalAuthorizationGrant = abstractMsalAuthorizationGrant;
         this.requestContext = requestContext;
 
         CurrentRequest currentRequest = new CurrentRequest(requestContext.publicApi());
         application.getServiceBundle().getServerSideTelemetry().setCurrentRequest(currentRequest);
+    }
+
+    MsalRequest(AbstractClientApplicationBase clientApplicationBase, RequestContext requestContext) {
+        this.application = clientApplicationBase;
+        this.requestContext = requestContext;
+
+        CurrentRequest currentRequest = new CurrentRequest(requestContext.publicApi());
+        application.getServiceBundle().getServerSideTelemetry().setCurrentRequest(currentRequest);
+    }
+
+    MsalRequest() {
+        this.application = null;
+        this.requestContext = null;
     }
 }

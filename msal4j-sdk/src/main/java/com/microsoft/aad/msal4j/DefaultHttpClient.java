@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.microsoft.aad.msal4j;
 
 import org.slf4j.Logger;
@@ -13,6 +16,7 @@ import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
@@ -46,7 +50,7 @@ class DefaultHttpClient implements IHttpClient {
 
     private HttpResponse executeHttpGet(HttpRequest httpRequest) throws Exception {
 
-        final HttpsURLConnection conn = openConnection(httpRequest.url());
+        final HttpURLConnection conn = openConnection(httpRequest.url());
         configureAdditionalHeaders(conn, httpRequest);
 
         return readResponseFromConnection(conn);
@@ -54,7 +58,7 @@ class DefaultHttpClient implements IHttpClient {
 
     private HttpResponse executeHttpPost(HttpRequest httpRequest) throws Exception {
 
-        final HttpsURLConnection conn = openConnection(httpRequest.url());
+        final HttpURLConnection conn = openConnection(httpRequest.url());
         configureAdditionalHeaders(conn, httpRequest);
         conn.setRequestMethod("POST");
         conn.setDoOutput(true);
@@ -73,26 +77,33 @@ class DefaultHttpClient implements IHttpClient {
         }
     }
 
-    private HttpsURLConnection openConnection(final URL finalURL)
+    private HttpURLConnection openConnection(final URL finalURL)
             throws IOException {
-        HttpsURLConnection connection;
-        if (proxy != null) {
-            connection = (HttpsURLConnection) finalURL.openConnection(proxy);
-        } else {
-            connection = (HttpsURLConnection) finalURL.openConnection();
-        }
+        URLConnection connection;
 
-        if (sslSocketFactory != null) {
-            connection.setSSLSocketFactory(sslSocketFactory);
+        if (proxy != null) {
+            connection = finalURL.openConnection(proxy);
+        } else {
+            connection = finalURL.openConnection();
         }
 
         connection.setConnectTimeout(connectTimeout);
         connection.setReadTimeout(readTimeout);
 
-        return connection;
+        if (connection instanceof HttpURLConnection) {
+            return (HttpURLConnection) connection;
+        } else {
+            HttpsURLConnection httpsConnection = (HttpsURLConnection) connection;
+
+            if (sslSocketFactory != null) {
+                httpsConnection.setSSLSocketFactory(sslSocketFactory);
+            }
+
+            return httpsConnection;
+        }
     }
 
-    private void configureAdditionalHeaders(final HttpsURLConnection conn, final HttpRequest httpRequest) {
+    private void configureAdditionalHeaders(final HttpURLConnection conn, final HttpRequest httpRequest) {
         if (httpRequest.headers() != null) {
             for (final Map.Entry<String, String> entry : httpRequest.headers().entrySet()) {
                 if (entry.getValue() != null) {
@@ -102,7 +113,7 @@ class DefaultHttpClient implements IHttpClient {
         }
     }
 
-    private HttpResponse readResponseFromConnection(final HttpsURLConnection conn) throws
+    private HttpResponse readResponseFromConnection(final HttpURLConnection conn) throws
             IOException {
         InputStream is = null;
         try {
