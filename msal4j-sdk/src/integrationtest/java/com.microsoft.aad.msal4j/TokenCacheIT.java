@@ -8,7 +8,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 
+import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.Collections;
@@ -193,6 +195,68 @@ class TokenCacheIT {
 
         assertNotNull(pca.getAccounts().join().iterator().next());
         assertEquals(pca.getAccounts().join().size(), 1);
+    }
+
+    @Test
+    void testStaticCache() throws Exception {
+        AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.AZURE);
+        final String clientId = appProvider.getLabVaultAppId();
+        final String password = appProvider.getLabVaultPassword();
+        IClientCredential credential = ClientCredentialFactory.createFromSecret(password);
+
+        //Create three client applications: one that uses its own instance of a TokenCache,
+        // and two that use the useSharedCache option to use the same static TokenCache
+        ConfidentialClientApplication cca_notStatic = ConfidentialClientApplication.builder(
+                        clientId, credential).
+                authority(TestConstants.MICROSOFT_AUTHORITY).
+                build();
+
+        ConfidentialClientApplication cca_sharedCache1 = ConfidentialClientApplication.builder(
+                        clientId, credential).
+                authority(TestConstants.MICROSOFT_AUTHORITY).
+                useSharedCache(true).
+                build();
+
+        ConfidentialClientApplication cca_sharedCache2 = ConfidentialClientApplication.builder(
+                        clientId, credential).
+                authority(TestConstants.MICROSOFT_AUTHORITY).
+                useSharedCache(true).
+                build();
+
+        ClientCredentialParameters parameters = ClientCredentialParameters
+                .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                .build();
+
+        //Make a number of token calls using the different ConfidentialClientApplications
+        //  1. Retrieve and cache new tokens using the ConfidentialClientApplication that does not use the shared cache
+        IAuthenticationResult result_notStatic1 = cca_notStatic.acquireToken(parameters).get();
+        //  2. The client credential flow does a cache lookup by default, so making the same acquireToken call should retrieve the tokens cached during call 1
+        IAuthenticationResult result_notStatic2 = cca_notStatic.acquireToken(parameters).get();
+        //  3. Retrieve and cache new tokens using the ConfidentialClientApplication that uses the static cache
+        IAuthenticationResult result_sharedCache1 = cca_sharedCache1.acquireToken(parameters).get();
+        //  4. Due to using the static cache this should behave like token call 2 and retrieve the tokens cached in call 3
+        IAuthenticationResult result_sharedCache2 = cca_sharedCache2.acquireToken(parameters).get();
+
+        assertNotNull(result_notStatic1);
+        assertNotNull(result_notStatic1.accessToken());
+        assertNotNull(result_notStatic2);
+        assertNotNull(result_notStatic2.accessToken());
+        assertNotNull(result_sharedCache1);
+        assertNotNull(result_sharedCache1.accessToken());
+        assertNotNull(result_sharedCache2);
+        assertNotNull(result_sharedCache2.accessToken());
+
+        //None of the tokens retrieved using cca_notStatic should be the same as those retrieved using cca_sharedCache1 or cca_sharedCache2
+        assertNotEquals(result_notStatic1.accessToken(), result_sharedCache1.accessToken());
+        assertNotEquals(result_notStatic1.accessToken(), result_sharedCache2.accessToken());
+        assertNotEquals(result_notStatic2.accessToken(), result_sharedCache1.accessToken());
+        assertNotEquals(result_notStatic2.accessToken(), result_sharedCache2.accessToken());
+
+        //Because the confidential client flow has an internal silent call:
+        //  -result_notStatic1 and result_notStatic2 should be the same, because they both used the non-static cache from one ConfidentialClientApplication instance
+        //  -result_sharedCache1 and result_sharedCache2 should be the same, because they both used the static cache shared between two ConfidentialClientApplication instances
+        assertEquals(result_notStatic1.accessToken(), result_notStatic2.accessToken());
+        assertEquals(result_sharedCache1.accessToken(), result_sharedCache2.accessToken());
     }
 
 

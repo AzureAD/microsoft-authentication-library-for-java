@@ -79,6 +79,9 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
     protected TokenCache tokenCache;
 
     @Accessors(fluent = true)
+    protected static TokenCache sharedTokenCache = new TokenCache();
+
+    @Accessors(fluent = true)
     @Getter
     private String applicationName;
 

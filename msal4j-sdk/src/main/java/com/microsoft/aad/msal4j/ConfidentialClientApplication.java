@@ -43,6 +43,10 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
     @Getter
     private boolean sendX5c;
 
+    @Accessors(fluent = true)
+    @Getter
+    private boolean useSharedCache;
+
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(ClientCredentialParameters parameters) {
         validateNotNull("parameters", parameters);
@@ -83,6 +87,8 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
         super(builder);
         sendX5c = builder.sendX5c;
         appTokenProvider = builder.appTokenProvider;
+        useSharedCache = builder.useSharedCache;
+        if (useSharedCache) tokenCache = sharedTokenCache;
 
         log = LoggerFactory.getLogger(ConfidentialClientApplication.class);
 
@@ -169,6 +175,7 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
         private IClientCredential clientCredential;
 
         private boolean sendX5c = true;
+        private boolean useSharedCache = false;
 
         private Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> appTokenProvider;
 
@@ -206,6 +213,12 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
             }
 
             throw new NullPointerException("appTokenProvider is null") ;
+        }
+
+        public ConfidentialClientApplication.Builder useSharedCache(boolean val) {
+            useSharedCache = val;
+
+            return self();
         }
 
         @Override
