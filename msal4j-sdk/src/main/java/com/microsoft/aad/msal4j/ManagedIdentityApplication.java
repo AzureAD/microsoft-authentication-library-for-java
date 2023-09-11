@@ -17,8 +17,6 @@ import java.util.concurrent.CompletableFuture;
  */
 public class ManagedIdentityApplication extends AbstractClientApplicationBase implements IManagedIdentityApplication {
 
-    private String resource;
-
     @Getter
     private final ManagedIdentityId managedIdentityId;
 
@@ -31,7 +29,7 @@ public class ManagedIdentityApplication extends AbstractClientApplicationBase im
     /**
      * Creates instance of Builder of ManagedIdentityApplication
      *
-     * @param managedIdentityId ManagedIdentityId to specify if it System Assigned or User Assigned
+     * @param managedIdentityId ManagedIdentityId to specify if System Assigned or User Assigned
      *                          and provide id if it is user assigned.
      * @return instance of Builder of ManagedIdentityApplication
      */
@@ -67,6 +65,7 @@ public class ManagedIdentityApplication extends AbstractClientApplicationBase im
         private Builder(ManagedIdentityId managedIdentityId) {
             super(managedIdentityId.getIdType() == ManagedIdentityIdType.SystemAssigned ?
                     "system_assigned_managed_identity" : managedIdentityId.getUserAssignedId());
+
 
             this.managedIdentityId = managedIdentityId;
             this.isInstanceDiscoveryEnabled = false;

@@ -27,15 +27,17 @@ abstract class AbstractManagedIdentitySource {
     private static final String MANAGED_IDENTITY_NO_RESPONSE_RECEIVED = "[Managed Identity] Authentication unavailable. No response received from the managed identity endpoint.";
 
     protected final ManagedIdentityRequest managedIdentityRequest;
-    private ServiceBundle serviceBundle;
+    protected final ServiceBundle serviceBundle;
     private ManagedIdentitySourceType managedIdentitySourceType;
 
     @Getter
     @Setter
     private boolean isUserAssignedManagedIdentity;
+
     @Getter
     @Setter
     private String managedIdentityUserAssignedClientId;
+
     @Getter
     @Setter
     private String managedIdentityUserAssignedResourceId;

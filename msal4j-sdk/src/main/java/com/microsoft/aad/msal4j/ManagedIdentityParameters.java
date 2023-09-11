@@ -28,22 +28,6 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
 
     IEnvironmentVariables environmentVariables;
 
-    public String getResource() {
-        return resource;
-    }
-
-    public void setResource(String resource) {
-        this.resource = resource;
-    }
-
-    public boolean isForceRefresh() {
-        return forceRefresh;
-    }
-
-    public void setForceRefresh(boolean forceRefresh) {
-        this.forceRefresh = forceRefresh;
-    }
-
     @Override
     public Set<String> scopes() {
         return null;

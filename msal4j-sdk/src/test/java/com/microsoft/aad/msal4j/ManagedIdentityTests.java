@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.nimbusds.oauth2.sdk.util.URLUtils;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -13,11 +14,12 @@ import java.net.SocketException;
 import java.net.URISyntaxException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,27 +51,25 @@ public class ManagedIdentityTests {
     }
 
     private HttpRequest expectedRequest(ManagedIdentitySourceType source, String resource,
-            ManagedIdentityId id)
-            throws URISyntaxException {
-        HttpRequest request;
+            ManagedIdentityId id) {
         String endpoint = null;
         Map<String, String> headers = new HashMap<>();
-        Map<String, String> queryParameters = new HashMap<>();
+        Map<String, List<String>> queryParameters = new HashMap<>();
 
         switch (source) {
             case AppService: {
                 endpoint = appServiceEndpoint;
                 queryParameters = new HashMap<>();
-                queryParameters.put("api-version", "2019-08-01");
-                queryParameters.put("resource", resource);
+                queryParameters.put("api-version", Collections.singletonList("2019-08-01"));
+                queryParameters.put("resource", Collections.singletonList(resource));
                 headers = new HashMap<>();
                 headers.put("X-IDENTITY-HEADER", "secret");
                 break;
             }
             case Imds: {
                 endpoint = IMDS_ENDPOINT;
-                queryParameters.put("api-version", "2018-02-01");
-                queryParameters.put("resource", resource);
+                queryParameters.put("api-version", Collections.singletonList("2018-02-01"));
+                queryParameters.put("resource", Collections.singletonList(resource));
                 headers.put("Metadata", "true");
                 break;
             }
@@ -77,33 +77,24 @@ public class ManagedIdentityTests {
 
         switch (id.getIdType()) {
             case ClientId:
-                queryParameters.put("client_id", id.getUserAssignedId());
+                queryParameters.put("client_id", Collections.singletonList(id.getUserAssignedId()));
                 break;
             case ResourceId:
-                queryParameters.put("mi_res_id", id.getUserAssignedId());
+                queryParameters.put("mi_res_id", Collections.singletonList(id.getUserAssignedId()));
                 break;
         }
 
         return new HttpRequest(HttpMethod.GET, computeUri(endpoint, queryParameters), headers);
     }
 
-    private String computeUri(String endpoint, Map<String, String> queryParameters) {
-        StringBuilder stringBuilder = new StringBuilder(endpoint);
-        if(!queryParameters.isEmpty()){
-            stringBuilder.append("?");
-        }
-        boolean isFirstValue = true;
-        for(String key: queryParameters.keySet()){
-            if(!isFirstValue){
-                stringBuilder.append("&");
-            }
-            String toAppend = key + "=" + queryParameters.get(key);
-            stringBuilder.append(toAppend);
-
-            isFirstValue = false;
+    private String computeUri(String endpoint, Map<String, List<String>> queryParameters) {
+        if (queryParameters.isEmpty()) {
+            return endpoint.toString();
         }
 
-        return stringBuilder.toString();
+        String queryString = URLUtils.serializeParameters(queryParameters);
+
+        return endpoint.toString() + "?" + queryString;
     }
 
     private HttpResponse expectedResponse(int statusCode, String response) {
@@ -196,6 +187,7 @@ public class ManagedIdentityTests {
                         .build()).get();
 
         assertNotNull(result.accessToken());
+        // TODO: Assert token source to check the token source is IDP and not Cache.
     }
 
     @ParameterizedTest

@@ -3,11 +3,15 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.nimbusds.oauth2.sdk.util.URIUtils;
+import com.nimbusds.oauth2.sdk.util.URLUtils;
+
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 class ManagedIdentityRequest extends MsalRequest {
@@ -20,9 +24,9 @@ class ManagedIdentityRequest extends MsalRequest {
 
     Map<String, String> bodyParameters;
 
-    Map<String, String> queryParameters;
+    Map<String, List<String>> queryParameters;
 
-    public ManagedIdentityRequest(ManagedIdentityApplication managedIdentityApplication, RequestContext requestContext){
+    public ManagedIdentityRequest(ManagedIdentityApplication managedIdentityApplication, RequestContext requestContext) {
         super(managedIdentityApplication, requestContext);
     }
 
@@ -35,22 +39,13 @@ class ManagedIdentityRequest extends MsalRequest {
         }
     }
 
-    private String appendQueryParametersToBaseEndpoint(){
-        StringBuilder stringBuilder = new StringBuilder(baseEndpoint.toString());
-        if(!queryParameters.isEmpty()){
-            stringBuilder.append("?");
-        }
-        boolean isFirstValue = true;
-        for(String key: queryParameters.keySet()){
-            if(!isFirstValue){
-                stringBuilder.append("&");
-            }
-            String toAppend = key + "=" + queryParameters.get(key);
-            stringBuilder.append(toAppend);
-
-            isFirstValue = false;
+    private String appendQueryParametersToBaseEndpoint() {
+        if (queryParameters.isEmpty()) {
+            return baseEndpoint.toString();
         }
 
-        return stringBuilder.toString();
+        String queryString = URLUtils.serializeParameters(queryParameters);
+
+        return baseEndpoint.toString() + "?" + queryString;
     }
 }
