@@ -8,7 +8,9 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 class AppServiceManagedIdentitySource extends AbstractManagedIdentitySource{
@@ -28,27 +30,26 @@ class AppServiceManagedIdentitySource extends AbstractManagedIdentitySource{
         managedIdentityRequest.baseEndpoint = endpoint;
         managedIdentityRequest.method = HttpMethod.GET;
 
-        Map<String, String> headers = new HashMap<>();
-        headers.put(SECRET_HEADER_NAME, secret);
-        managedIdentityRequest.headers = headers;
+        managedIdentityRequest.headers = new HashMap<>();
+        managedIdentityRequest.headers.put(SECRET_HEADER_NAME, secret);
 
-        Map<String, String> queryParameters = new HashMap<>();
-        queryParameters.put("api-version", APP_SERVICE_MSI_API_VERSION );
-        queryParameters.put("resource", resource);
+        managedIdentityRequest.queryParameters = new HashMap<>();
+        managedIdentityRequest.queryParameters.put("api-version", Collections.singletonList(APP_SERVICE_MSI_API_VERSION));
+        managedIdentityRequest.queryParameters.put("resource", Collections.singletonList(resource));
 
+        String clientId = getManagedIdentityUserAssignedClientId();
+        String resourceId = getManagedIdentityUserAssignedResourceId();
         if (!StringHelper.isNullOrBlank(getManagedIdentityUserAssignedClientId()))
         {
             LOG.info("[Managed Identity] Adding user assigned client id to the request.");
-            queryParameters.put(Constants.MANAGED_IDENTITY_CLIENT_ID, getManagedIdentityUserAssignedClientId());
+            managedIdentityRequest.queryParameters.put(Constants.MANAGED_IDENTITY_CLIENT_ID, Collections.singletonList(getManagedIdentityUserAssignedClientId()));
         }
 
         if (!StringHelper.isNullOrBlank(getManagedIdentityUserAssignedResourceId()))
         {
             LOG.info("[Managed Identity] Adding user assigned resource id to the request.");
-            queryParameters.put(Constants.MANAGED_IDENTITY_RESOURCE_ID, getManagedIdentityUserAssignedResourceId());
+            managedIdentityRequest.queryParameters.put(Constants.MANAGED_IDENTITY_RESOURCE_ID, Collections.singletonList(getManagedIdentityUserAssignedResourceId()));
         }
-
-        managedIdentityRequest.queryParameters = queryParameters;
     }
 
     private AppServiceManagedIdentitySource(MsalRequest msalRequest, ServiceBundle serviceBundle, URI endpoint, String secret)

@@ -94,7 +94,7 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
 
         return AuthenticationResult.builder()
                 .accessToken(managedIdentityResponse.getAccessToken())
-                .scopes(managedIdentityParameters.getResource())
+                .scopes(managedIdentityParameters.resource())
                 .expiresOn(expiresOn)
                 .extExpiresOn(0)
                 .refreshOn(refreshOn)
