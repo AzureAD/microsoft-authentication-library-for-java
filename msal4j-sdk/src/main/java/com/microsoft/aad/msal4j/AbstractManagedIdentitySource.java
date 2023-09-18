@@ -3,19 +3,12 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.oauth2.sdk.SerializeException;
-import com.nimbusds.oauth2.sdk.http.HTTPRequest;
-import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.beans.Encoder;
-import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.URISyntaxException;
 
@@ -56,7 +49,15 @@ abstract class AbstractManagedIdentitySource {
         IHttpResponse response;
 
         try {
-            HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, managedIdentityRequest.computeURI().toString(), managedIdentityRequest.headers);
+
+            HttpRequest httpRequest = managedIdentityRequest.method.equals(HttpMethod.GET) ?
+                    new HttpRequest(HttpMethod.GET,
+                            managedIdentityRequest.computeURI().toString(),
+                            managedIdentityRequest.headers) :
+                    new HttpRequest(HttpMethod.POST,
+                            managedIdentityRequest.computeURI().toString(),
+                            managedIdentityRequest.headers,
+                            managedIdentityRequest.getBodyAsString());
             response = HttpHelper.executeHttpRequest(httpRequest, managedIdentityRequest.requestContext(), serviceBundle);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);

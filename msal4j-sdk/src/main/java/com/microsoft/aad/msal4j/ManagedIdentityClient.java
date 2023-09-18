@@ -32,9 +32,11 @@ class ManagedIdentityClient {
 
     // This method tries to create managed identity source for different sources, if none is created then defaults to IMDS.
     private static AbstractManagedIdentitySource createManagedIdentitySource(MsalRequest msalRequest,
-            ServiceBundle serviceBundle) throws Exception {
+            ServiceBundle serviceBundle) {
         AbstractManagedIdentitySource managedIdentitySource;
         if ((managedIdentitySource = AppServiceManagedIdentitySource.create(msalRequest, serviceBundle)) != null) {
+            return managedIdentitySource;
+        } else if ((managedIdentitySource = CloudShellManagedIdentitySource.create(msalRequest, serviceBundle)) != null) {
             return managedIdentitySource;
         } else {
             return new IMDSManagedIdentitySource(msalRequest, serviceBundle);

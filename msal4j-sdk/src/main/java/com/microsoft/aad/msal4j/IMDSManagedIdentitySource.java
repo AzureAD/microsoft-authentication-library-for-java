@@ -11,7 +11,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Map;
 
 class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
 
@@ -125,7 +124,7 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
 
             message = message + " " + errorContentMessage;
 
-            LOG.error("Error message: {message} Http status code: {response.StatusCode}");
+            LOG.error(String.format("Error message: %s Http status code: %s"), message, response.statusCode());
             throw new MsalManagedIdentityException("managed_identity_request_failed", message,
                     ManagedIdentitySourceType.Imds);
         }
