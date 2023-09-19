@@ -90,7 +90,7 @@ abstract class AbstractManagedIdentitySource {
                 throw new MsalManagedIdentityException(AuthenticationErrorCode.MANAGED_IDENTITY_REQUEST_FAILED, message, managedIdentitySourceType);
             }
         } catch (Exception e) {
-            if (!(e instanceof MsalServiceException)) {
+            if (!(e instanceof MsalManagedIdentityException)) {
                 LOG.error(
                         String.format("[Managed Identity] Exception: %s Http status code: %s", e.getMessage(),
                                 response != null ? response.statusCode() : ""));
