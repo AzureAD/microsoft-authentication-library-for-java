@@ -18,4 +18,9 @@ class MsalErrorMessage {
     public static final String MANAGED_IDENTITY_USER_ASSIGNED_NOT_SUPPORTED = "[Managed Identity] User assigned identity is not supported by the %s Managed Identity. To authenticate with the system assigned identity use ManagedIdentityApplication.builder(ManagedIdentityId.systemAssigned()).build().";
 
     public static final String SCOPES_REQUIRED = "At least one scope needs to be requested for this authentication flow. ";
+
+    public static final String DEFAULT_MESSAGE = "[Managed Identity] Service request failed.";
+
+    public static final String IDENTITY_UNAVAILABLE_ERROR = "[Managed Identity] Authentication unavailable. The requested identity has not been assigned to this resource.";
+    public static final String GATEWAY_ERROR = "[Managed Identity] Authentication unavailable. The request failed due to a gateway error.";
 }

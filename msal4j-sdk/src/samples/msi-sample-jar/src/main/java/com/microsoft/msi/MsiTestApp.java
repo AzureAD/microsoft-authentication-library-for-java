@@ -16,15 +16,14 @@ import java.io.InputStreamReader;
  * To create a jar run mvn install -Dmaven.test.skip=true for msal4j pom and then msi-sample-jar pom.
  * Copy the jar with dependencies and run on a VM or cloud shell using java -jar msi-sample-jar-1.0.1-jar-with-dependencies.jar
  */
-public class App 
+public class MsiTestApp
 {
     public static void main( String[] args ) throws IOException {
-        String response;
         String resource = "https://management.azure.com";
         int option = 1;
         BufferedReader reader = new BufferedReader(
                 new InputStreamReader(System.in));
-        final Logger logger = LoggerFactory.getLogger(App.class);
+        final Logger logger = LoggerFactory.getLogger(MsiTestApp.class);
 
         while (option != 0) {
             System.out.println("Enter one of the following options to create a managed identity application:");

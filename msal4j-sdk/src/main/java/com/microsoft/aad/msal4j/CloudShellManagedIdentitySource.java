@@ -3,7 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.util.URLUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,14 +15,11 @@ class CloudShellManagedIdentitySource extends AbstractManagedIdentitySource{
 
     private static final Logger LOG = LoggerFactory.getLogger(CloudShellManagedIdentitySource.class);
 
-    // MSI Constants. Docs for MSI are available here https://learn.microsoft.com/en-us/azure/cloud-shell/msi-authorization
-    private static URI endpointUri;
-
-    private URI endpoint;
+    private final URI MSI_ENDPOINT;
 
     @Override
     public void createManagedIdentityRequest(String resource) {
-        managedIdentityRequest.baseEndpoint = endpoint;
+        managedIdentityRequest.baseEndpoint = MSI_ENDPOINT;
         managedIdentityRequest.method = HttpMethod.POST;
 
         managedIdentityRequest.headers = new HashMap<>();
@@ -34,10 +30,10 @@ class CloudShellManagedIdentitySource extends AbstractManagedIdentitySource{
         managedIdentityRequest.bodyParameters.put("resource", Collections.singletonList(resource));
     }
 
-    private CloudShellManagedIdentitySource(MsalRequest msalRequest, ServiceBundle serviceBundle, URI endpoint)
+    private CloudShellManagedIdentitySource(MsalRequest msalRequest, ServiceBundle serviceBundle, URI msiEndpoint)
     {
         super(msalRequest, serviceBundle, ManagedIdentitySourceType.CloudShell);
-        this.endpoint = endpoint;
+        this.MSI_ENDPOINT = msiEndpoint;
 
         ManagedIdentityIdType idType =
                 ((ManagedIdentityApplication) msalRequest.application()).getManagedIdentityId().getIdType();
@@ -48,7 +44,7 @@ class CloudShellManagedIdentitySource extends AbstractManagedIdentitySource{
         }
     }
 
-    protected static AbstractManagedIdentitySource create(MsalRequest msalRequest, ServiceBundle serviceBundle) {
+    static AbstractManagedIdentitySource create(MsalRequest msalRequest, ServiceBundle serviceBundle) {
 
         IEnvironmentVariables environmentVariables = getEnvironmentVariables((ManagedIdentityParameters) msalRequest.requestContext().apiParameters());
         String msiEndpoint = environmentVariables.getEnvironmentVariable(Constants.MSI_ENDPOINT);
@@ -61,14 +57,14 @@ class CloudShellManagedIdentitySource extends AbstractManagedIdentitySource{
             return null;
         }
 
-        return validateEnvironmentVariables(msiEndpoint)
-                ? new CloudShellManagedIdentitySource(msalRequest, serviceBundle, endpointUri)
-                : null;
+        URI validatedUri = validateAndGetUri(msiEndpoint);
+        return validatedUri == null ? null
+                : new CloudShellManagedIdentitySource(msalRequest, serviceBundle, validatedUri);
     }
 
-    private static boolean validateEnvironmentVariables(String msiEndpoint)
+    private static URI validateAndGetUri(String msiEndpoint)
     {
-        endpointUri = null;
+        URI endpointUri = null;
 
         try
         {
@@ -82,7 +78,7 @@ class CloudShellManagedIdentitySource extends AbstractManagedIdentitySource{
         }
 
         LOG.info("[Managed Identity] Environment variables validation passed for cloud shell managed identity. Endpoint URI: " + endpointUri + ". Creating cloud shell managed identity.");
-        return true;
+        return endpointUri;
     }
 
 }

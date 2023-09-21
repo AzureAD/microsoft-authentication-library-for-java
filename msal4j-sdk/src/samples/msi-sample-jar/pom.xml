@@ -26,7 +26,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>com.microsoft.msi.App</mainClass>
+                            <mainClass>com.microsoft.msi.MsiTestApp</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -38,7 +38,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>com.microsoft.msi.App</mainClass>
+                            <mainClass>com.microsoft.msi.MsiTestApp</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
