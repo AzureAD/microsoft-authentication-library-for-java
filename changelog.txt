@@ -1,3 +1,7 @@
+Version 1.13.11
+=============
+- Hotfix for internal docs generation issue (#705)
+
 Version 1.13.10
 =============
 - Remove default HTTP timeout (#664)
