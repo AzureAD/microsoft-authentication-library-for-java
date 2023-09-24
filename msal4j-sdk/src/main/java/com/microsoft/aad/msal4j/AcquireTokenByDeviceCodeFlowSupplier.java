@@ -33,7 +33,7 @@ class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier 
                 requestAuthority.deviceCodeEndpoint(),
                 clientApplication.clientId(),
                 deviceCodeFlowRequest.headers().getReadonlyHeaderMap(),
-                this.clientApplication.getServiceBundle());
+                this.clientApplication.serviceBundle());
 
         deviceCodeFlowRequest.parameters().deviceCodeConsumer().accept(deviceCode);
 

@@ -15,7 +15,7 @@ import java.util.concurrent.CompletableFuture;
  * <p>
  * Conditionally thread-safe
  */
-public class ManagedIdentityApplication extends AbstractClientApplicationBase implements IManagedIdentityApplication {
+public class ManagedIdentityApplication extends AbstractApplicationBase implements IManagedIdentityApplication {
 
     @Getter
     private final ManagedIdentityId managedIdentityId;
@@ -24,6 +24,7 @@ public class ManagedIdentityApplication extends AbstractClientApplicationBase im
         super(builder);
         this.managedIdentityId = builder.managedIdentityId;
         log = LoggerFactory.getLogger(ManagedIdentityApplication.class);
+        super.tokenCache = new TokenCache();
     }
 
     /**
@@ -52,12 +53,7 @@ public class ManagedIdentityApplication extends AbstractClientApplicationBase im
         return this.executeRequest(managedIdentityRequest);
     }
 
-    @Override
-    protected ClientAuthentication clientAuthentication() {
-        return null;
-    }
-
-    public static class Builder extends AbstractClientApplicationBase.Builder<Builder> {
+    public static class Builder extends AbstractApplicationBase.Builder<Builder> {
         private String resource;
 
         private ManagedIdentityId managedIdentityId;
@@ -68,7 +64,6 @@ public class ManagedIdentityApplication extends AbstractClientApplicationBase im
 
 
             this.managedIdentityId = managedIdentityId;
-            this.isInstanceDiscoveryEnabled = false;
         }
 
         public Builder resource(String resource) {

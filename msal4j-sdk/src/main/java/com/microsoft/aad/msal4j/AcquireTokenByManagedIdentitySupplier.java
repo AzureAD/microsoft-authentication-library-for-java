@@ -32,7 +32,7 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
         TokenRequestExecutor tokenRequestExecutor = new TokenRequestExecutor(
                 clientApplication.authenticationAuthority,
                 msalRequest,
-                clientApplication.getServiceBundle()
+                clientApplication.serviceBundle()
         );
 
         if (!managedIdentityParameters.forceRefresh) {

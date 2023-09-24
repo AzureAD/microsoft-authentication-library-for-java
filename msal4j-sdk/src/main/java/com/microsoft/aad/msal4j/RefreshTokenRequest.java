@@ -17,14 +17,14 @@ class RefreshTokenRequest extends MsalRequest {
     private RefreshTokenParameters parameters;
 
     RefreshTokenRequest(RefreshTokenParameters parameters,
-                        AbstractClientApplicationBase application,
+                        AbstractApplicationBase application,
                         RequestContext requestContext) {
         super(application, createAuthenticationGrant(parameters), requestContext);
         this.parameters = parameters;
     }
 
     RefreshTokenRequest(RefreshTokenParameters parameters,
-                        AbstractClientApplicationBase application,
+                        AbstractApplicationBase application,
                         RequestContext requestContext,
                         SilentRequest silentRequest) {
         this(parameters, application, requestContext);

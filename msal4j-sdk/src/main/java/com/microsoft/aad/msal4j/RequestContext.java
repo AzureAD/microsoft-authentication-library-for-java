@@ -23,10 +23,10 @@ class RequestContext {
     private String applicationVersion;
     private String authority;
     private IAcquireTokenParameters apiParameters;
-    private IClientApplicationBase clientApplication;
+    private IApplicationBase clientApplication;
     private UserIdentifier userIdentifier;
 
-    public RequestContext(AbstractClientApplicationBase clientApplication,
+    public RequestContext(AbstractApplicationBase clientApplication,
                           PublicApi publicApi,
                           IAcquireTokenParameters apiParameters) {
         this.clientApplication = clientApplication;
@@ -45,7 +45,7 @@ class RequestContext {
         this.apiParameters = apiParameters;
     }
 
-    public RequestContext(AbstractClientApplicationBase clientApplication,
+    public RequestContext(AbstractApplicationBase clientApplication,
                           PublicApi publicApi,
                           IAcquireTokenParameters apiParameters,
                           UserIdentifier userIdentifier) {

@@ -14,7 +14,7 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
 
     private SilentRequest silentRequest;
 
-    AcquireTokenSilentSupplier(AbstractClientApplicationBase clientApplication, SilentRequest silentRequest) {
+    AcquireTokenSilentSupplier(AbstractApplicationBase clientApplication, SilentRequest silentRequest) {
         super(clientApplication, silentRequest);
 
         this.silentRequest = silentRequest;
@@ -47,7 +47,7 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
             }
 
             if (!StringHelper.isBlank(res.accessToken())) {
-                clientApplication.getServiceBundle().getServerSideTelemetry().incrementSilentSuccessfulCount();
+                clientApplication.serviceBundle().getServerSideTelemetry().incrementSilentSuccessfulCount();
             }
 
             //Determine if the current token needs to be refreshed according to the refresh_in value
@@ -60,16 +60,16 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
                 //As of version 3 of the telemetry schema, there is a field for collecting data about why a token was refreshed,
                 // so here we set the telemetry value based on the cause of the refresh
                 if (silentRequest.parameters().forceRefresh()) {
-                    clientApplication.getServiceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
+                    clientApplication.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
                             CacheTelemetry.REFRESH_FORCE_REFRESH.telemetryValue);
                 } else if (afterRefreshOn) {
-                    clientApplication.getServiceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
+                    clientApplication.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
                             CacheTelemetry.REFRESH_REFRESH_IN.telemetryValue);
                 } else if (res.expiresOn() < currTimeStampSec) {
-                    clientApplication.getServiceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
+                    clientApplication.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
                             CacheTelemetry.REFRESH_ACCESS_TOKEN_EXPIRED.telemetryValue);
                 } else if (StringHelper.isBlank(res.accessToken())) {
-                    clientApplication.getServiceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
+                    clientApplication.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
                             CacheTelemetry.REFRESH_NO_ACCESS_TOKEN.telemetryValue);
                 }
 
