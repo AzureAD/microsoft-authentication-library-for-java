@@ -281,7 +281,6 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
         public Builder(String clientId) {
             validateNotBlank("clientId", clientId);
             this.clientId = clientId;
-            System.out.println("xxxxxxxxxxxxxxxxx" + clientId);
         }
 
         abstract T self();

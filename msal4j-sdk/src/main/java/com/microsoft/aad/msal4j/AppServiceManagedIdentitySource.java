@@ -10,8 +10,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 class AppServiceManagedIdentitySource extends AbstractManagedIdentitySource{
 
@@ -54,7 +52,7 @@ class AppServiceManagedIdentitySource extends AbstractManagedIdentitySource{
 
     private AppServiceManagedIdentitySource(MsalRequest msalRequest, ServiceBundle serviceBundle, URI endpoint, String secret)
     {
-        super(msalRequest, serviceBundle, ManagedIdentitySourceType.AppService);
+        super(msalRequest, serviceBundle, ManagedIdentitySourceType.APP_SERVICE);
         this.endpoint = endpoint;
         this.secret = secret;
     }
@@ -89,7 +87,7 @@ class AppServiceManagedIdentitySource extends AbstractManagedIdentitySource{
         {
             throw new MsalManagedIdentityException(MsalError.INVALID_MANAGED_IDENTITY_ENDPOINT, String.format(
                     MsalErrorMessage.MANAGED_IDENTITY_ENDPOINT_INVALID_URI_ERROR, "IDENTITY_ENDPOINT", msiEndpoint, "App Service"),
-                    ManagedIdentitySourceType.AppService);
+                    ManagedIdentitySourceType.APP_SERVICE);
         }
 
         LOG.info("[Managed Identity] Environment variables validation passed for app service managed identity. Endpoint URI: {endpointUri}. Creating App Service managed identity.");

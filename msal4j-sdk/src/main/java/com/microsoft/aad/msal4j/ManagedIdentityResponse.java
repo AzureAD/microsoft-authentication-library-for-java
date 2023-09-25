@@ -9,15 +9,11 @@ import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Instant;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.Locale;
-
 @Getter
 public class ManagedIdentityResponse {
 
-    private final static Logger LOG = LoggerFactory.getLogger(ManagedIdentityResponse.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ManagedIdentityResponse.class);
+
     @JsonProperty(value = "token_type")
     String tokenType;
 

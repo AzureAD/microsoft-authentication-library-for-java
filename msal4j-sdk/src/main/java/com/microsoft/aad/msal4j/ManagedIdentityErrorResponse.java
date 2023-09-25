@@ -4,8 +4,12 @@
 package com.microsoft.aad.msal4j;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
+import lombok.Setter;
 
-public class ManagedIdentityErrorResponse {
+@Getter
+@Setter
+class ManagedIdentityErrorResponse {
 
     @JsonProperty("message")
     private String message;
@@ -18,36 +22,4 @@ public class ManagedIdentityErrorResponse {
 
     @JsonProperty("error_description")
     private String errorDescription;
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public String getCorrelationId() {
-        return correlationId;
-    }
-
-    public void setCorrelationId(String correlationId) {
-        this.correlationId = correlationId;
-    }
-
-    public String getError() {
-        return error;
-    }
-
-    public void setError(String error) {
-        this.error = error;
-    }
-
-    public String getErrorDescription() {
-        return errorDescription;
-    }
-
-    public void setErrorDescription(String errorDescription) {
-        this.errorDescription = errorDescription;
-    }
 }

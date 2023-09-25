@@ -11,7 +11,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Map;
 
 class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
 
@@ -23,7 +22,7 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
         try {
             DEFAULT_IMDS_ENDPOINT = new URI("http://169.254.169.254/metadata/identity/oauth2/token");
         } catch (URISyntaxException e) {
-            throw new MsalManagedIdentityException(MsalError.INVALID_MANAGED_IDENTITY_ENDPOINT, ManagedIdentitySourceType.Imds);
+            throw new MsalManagedIdentityException(MsalError.INVALID_MANAGED_IDENTITY_ENDPOINT, ManagedIdentitySourceType.IMDS);
         }
     }
 
@@ -38,7 +37,7 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
 
     public IMDSManagedIdentitySource(MsalRequest msalRequest,
                                      ServiceBundle serviceBundle) {
-        super(msalRequest, serviceBundle, ManagedIdentitySourceType.Imds);
+        super(msalRequest, serviceBundle, ManagedIdentitySourceType.IMDS);
         ManagedIdentityParameters parameters = (ManagedIdentityParameters) msalRequest.requestContext().apiParameters();
         IEnvironmentVariables environmentVariables = ((ManagedIdentityParameters) msalRequest.requestContext().apiParameters()).environmentVariables == null ?
                 new EnvironmentVariables() :
@@ -60,8 +59,8 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
                         String.format(MsalErrorMessage.MANAGED_IDENTITY_ENDPOINT_INVALID_URI_ERROR,
                                 Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST,
                                 builder.toString(),
-                                ManagedIdentitySourceType.Imds),
-                        ManagedIdentitySourceType.Imds);
+                                ManagedIdentitySourceType.IMDS),
+                        ManagedIdentitySourceType.IMDS);
             }
         }
         else
@@ -127,7 +126,7 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
 
             LOG.error("Error message: {message} Http status code: {response.StatusCode}");
             throw new MsalManagedIdentityException("managed_identity_request_failed", message,
-                    ManagedIdentitySourceType.Imds);
+                    ManagedIdentitySourceType.IMDS);
         }
 
         // Default behavior to handle successful scenario and general errors.

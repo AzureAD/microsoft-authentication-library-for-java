@@ -24,7 +24,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
-public class ManagedIdentityTests {
+class ManagedIdentityTests {
 
     static final String resource = "https://management.azure.com";
     final static String resourceDefaultSuffix = "https://management.azure.com/.default";
@@ -57,7 +57,7 @@ public class ManagedIdentityTests {
         Map<String, List<String>> queryParameters = new HashMap<>();
 
         switch (source) {
-            case AppService: {
+            case APP_SERVICE: {
                 endpoint = appServiceEndpoint;
                 queryParameters = new HashMap<>();
                 queryParameters.put("api-version", Collections.singletonList("2019-08-01"));
@@ -66,7 +66,7 @@ public class ManagedIdentityTests {
                 headers.put("X-IDENTITY-HEADER", "secret");
                 break;
             }
-            case Imds: {
+            case IMDS: {
                 endpoint = IMDS_ENDPOINT;
                 queryParameters.put("api-version", Collections.singletonList("2018-02-01"));
                 queryParameters.put("resource", Collections.singletonList(resource));
@@ -76,10 +76,10 @@ public class ManagedIdentityTests {
         }
 
         switch (id.getIdType()) {
-            case ClientId:
+            case CLIENT_ID:
                 queryParameters.put("client_id", Collections.singletonList(id.getUserAssignedId()));
                 break;
-            case ResourceId:
+            case RESOURCE_ID:
                 queryParameters.put("mi_res_id", Collections.singletonList(id.getUserAssignedId()));
                 break;
         }

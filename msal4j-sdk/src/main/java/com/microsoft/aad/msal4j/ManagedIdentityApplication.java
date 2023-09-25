@@ -3,7 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import lombok.Getter;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +26,21 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
         super.tokenCache = new TokenCache();
     }
 
+    @Override
+    public CompletableFuture<IAuthenticationResult> acquireTokenForManagedIdentity(ManagedIdentityParameters managedIdentityParameters)
+            throws Exception {
+        RequestContext requestContext = new RequestContext(
+                this,
+                managedIdentityId.getIdType() == ManagedIdentityIdType.SYSTEM_ASSIGNED ?
+                        PublicApi.ACQUIRE_TOKEN_BY_SYSTEM_ASSIGNED_MANAGED_IDENTITY :
+                        PublicApi.ACQUIRE_TOKEN_BY_USER_ASSIGNED_MANAGED_IDENTITY,
+                managedIdentityParameters);
+
+        ManagedIdentityRequest managedIdentityRequest = new ManagedIdentityRequest(this, requestContext);
+
+        return this.executeRequest(managedIdentityRequest);
+    }
+
     /**
      * Creates instance of Builder of ManagedIdentityApplication
      *
@@ -38,30 +52,14 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
         return new Builder(managedIdentityId);
     }
 
-    @Override
-    public CompletableFuture<IAuthenticationResult> acquireTokenForManagedIdentity(ManagedIdentityParameters managedIdentityParameters)
-            throws Exception {
-        RequestContext requestContext = new RequestContext(
-                this,
-                managedIdentityId.getIdType() == ManagedIdentityIdType.SystemAssigned ?
-                        PublicApi.ACQUIRE_TOKEN_BY_SYSTEM_ASSIGNED_MANAGED_IDENTITY :
-                        PublicApi.ACQUIRE_TOKEN_BY_USER_ASSIGNED_MANAGED_IDENTITY,
-                managedIdentityParameters);
-
-        ManagedIdentityRequest managedIdentityRequest = new ManagedIdentityRequest(this, requestContext);
-
-        return this.executeRequest(managedIdentityRequest);
-    }
-
     public static class Builder extends AbstractApplicationBase.Builder<Builder> {
-        private String resource;
 
+        private String resource;
         private ManagedIdentityId managedIdentityId;
 
         private Builder(ManagedIdentityId managedIdentityId) {
-            super(managedIdentityId.getIdType() == ManagedIdentityIdType.SystemAssigned ?
+            super(managedIdentityId.getIdType() == ManagedIdentityIdType.SYSTEM_ASSIGNED ?
                     "system_assigned_managed_identity" : managedIdentityId.getUserAssignedId());
-
 
             this.managedIdentityId = managedIdentityId;
         }

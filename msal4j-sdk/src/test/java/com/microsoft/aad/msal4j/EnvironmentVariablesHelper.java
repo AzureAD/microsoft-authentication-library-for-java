@@ -13,26 +13,26 @@ public class EnvironmentVariablesHelper implements IEnvironmentVariables {
         mockedEnvironmentVariables = new HashMap<>();
 
         switch (source) {
-            case AppService:
+            case APP_SERVICE:
                 mockedEnvironmentVariables.put(Constants.IDENTITY_ENDPOINT, endpoint);
                 mockedEnvironmentVariables.put(Constants.IDENTITY_HEADER, "secret");
                 break;
 
-            case Imds:
+            case IMDS:
                 mockedEnvironmentVariables.put(Constants.IMDS_ENDPOINT, endpoint);
                 break;
 
-            case ServiceFabric:
+            case SERVICE_FABRIC:
                 mockedEnvironmentVariables.put(Constants.IDENTITY_ENDPOINT, endpoint);
                 mockedEnvironmentVariables.put(Constants.IDENTITY_HEADER, "secret");
                 mockedEnvironmentVariables.put(Constants.IDENTITY_SERVER_THUMBPRINT, "thumbprint");
                 break;
 
-            case CloudShell:
+            case CLOUD_SHELL:
                 mockedEnvironmentVariables.put(Constants.MSI_ENDPOINT, endpoint);
                 break;
 
-            case AzureArc:
+            case AZURE_ARC:
                 mockedEnvironmentVariables.put(Constants.IDENTITY_ENDPOINT, endpoint);
                 mockedEnvironmentVariables.put(Constants.IMDS_ENDPOINT, endpoint);
                 break;
