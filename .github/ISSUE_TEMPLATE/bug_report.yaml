@@ -1,14 +1,5 @@
----
 name: Bug report
-about: Create a report to help us improve
-title: ''
-labels: ''
-assignees: ''
-
----
-
-name: Bug report
-description: Broken or unintended behavior with one of our libraries.
+description: Broken or unintended behavior with MSAL4J library
 title: '[Bug] '
 labels: ["untriaged", "needs attention"]
 body:
@@ -19,7 +10,7 @@ body:
       Please make sure that your question or issue is not already covered in existing issues
 
       **Logs and network traces**
-      Without logs or traces, it is unlikely that the team can investigate your issue. Capturing logs  is described in our [Docs](https://learn.microsoft.com/azure/active-directory/develop/msal-logging-java).
+      Without logs or traces, it is unlikely that the team can investigate your issue. Capturing logs is described in our [Docs](https://learn.microsoft.com/azure/active-directory/develop/msal-logging-java).
 
 - type: markdown
   attributes:
@@ -29,14 +20,14 @@ body:
 - type: input
   attributes:
     label: Library version used
-    description: "Please enter the version of the library where you ran into the issue (e.g. 1.13.10)."
+    description: "Enter the version of the library where you ran into the issue (e.g. 1.13.10)."
   validations:
     required: true
     
 - type: input
   attributes:
     label: Java version
-    description: "Please enter the Java SDK and Framework version your application is developed in."
+    description: "Enter the Java SDK and Framework version your application is developed in."
   validations:
     required: true
 
@@ -46,8 +37,7 @@ body:
     description: "Are you using PublicClientApplication,  ConfidentialClientApplication or ManagedIdentityApplication?"
     multiple: true
     options: 
-      - "PublicClient - desktop app"
-      - "PublicClient - mobile app"
+      - "PublicClient (AcquireTokenInteractive, AcquireTokenByUsernamePassword)"      
       - "ConfidentialClient - web site (AcquireTokenByAuthCode)"
       - "ConfidentialClient - web api (AcquireTokenOnBehalfOf)"
       - "ConfidentialClient - service to service (AcquireTokenForClient)"
