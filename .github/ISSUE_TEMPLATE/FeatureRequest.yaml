@@ -1,5 +1,5 @@
 name: Feature request
-description: Suggest a new feature for MSAL.NET.
+description: Suggest a new feature for MSAL Java
 labels: ["feature request", "untriaged", "needs attention"]
 title : '[Feature Request]     '
 body:
@@ -7,17 +7,17 @@ body:
   attributes:
     value: |
       ## Before submitting your feature request
-      Please make sure that your question or issue is not already covered in [MSAL documentation](https://learn.microsoft.com/entra/msal/dotnet/) or [samples](https://learn.microsoft.com/azure/active-directory/develop/sample-v2-code?tabs=apptype).
+      Please make sure that your question or issue is not already covered in [MSAL documentation](https://learn.microsoft.com/entra/msal/java/) or [samples](https://learn.microsoft.com/azure/active-directory/develop/sample-v2-code?tabs=apptype).
       
 - type: markdown
   attributes:
     value: |
-      ## Feature request for MSAL.NET
+      ## Feature request for MSAL Java
       
 - type: dropdown
   attributes:
     label: MSAL client type
-    description: Are you using PublicClientApplication (desktop and mobile apps), ConfidentialClientApplication (web apps, web APIs, service-to-service) or ManagedIdentityApplication?
+    description: Are you using PublicClientApplication (desktop / CLI apps), ConfidentialClientApplication (web apps, web APIs, service-to-service) or ManagedIdentityApplication?
     multiple: true
     options: 
       - "Public"
