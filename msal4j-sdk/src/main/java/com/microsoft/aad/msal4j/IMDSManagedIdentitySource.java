@@ -11,7 +11,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Map;
 
 class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
 
@@ -27,12 +26,8 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
         }
     }
 
-    private String imdsTokenPath = "/metadata/identity/oauth2/token";
-    private String imdsApiVersion = "2018-02-01";
-    private static String defaultMessage = "[Managed Identity] Service request failed.";
-
-    private static String identityUnavailableError = "[Managed Identity] Authentication unavailable. The requested identity has not been assigned to this resource.";
-    private static String gatewayError = "[Managed Identity] Authentication unavailable. The request failed due to a gateway error.";
+    private static final String IMDS_TOKEN_PATH = "/metadata/identity/oauth2/token";
+    private static final String IMDS_API_VERSION = "2018-02-01";
 
     private URI imdsEndpoint;
 
@@ -52,7 +47,7 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
             }
 
             StringBuilder builder = new StringBuilder(environmentVariables.getEnvironmentVariable(Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST));
-            builder.append("/" + imdsTokenPath);
+            builder.append("/" + IMDS_TOKEN_PATH);
             try {
                 imdsEndpoint = new URI(builder.toString());
             } catch (URISyntaxException e) {
@@ -82,7 +77,7 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
         managedIdentityRequest.headers.put("Metadata", "true");
 
         managedIdentityRequest.queryParameters = new HashMap<>();
-        managedIdentityRequest.queryParameters.put("api-version", Collections.singletonList(imdsApiVersion));
+        managedIdentityRequest.queryParameters.put("api-version", Collections.singletonList(IMDS_API_VERSION));
         managedIdentityRequest.queryParameters.put("resource", Collections.singletonList(resource));
 
         String clientId = getManagedIdentityUserAssignedClientId();
@@ -109,10 +104,10 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
         String baseMessage;
 
         if(response.statusCode()== HttpURLConnection.HTTP_BAD_REQUEST){
-            baseMessage = identityUnavailableError;
+            baseMessage = MsalErrorMessage.IDENTITY_UNAVAILABLE_ERROR;
         }else if(response.statusCode()== HttpURLConnection.HTTP_BAD_GATEWAY ||
                 response.statusCode()== HttpURLConnection.HTTP_GATEWAY_TIMEOUT){
-            baseMessage = gatewayError;
+            baseMessage = MsalErrorMessage.GATEWAY_ERROR;
         }else{
             baseMessage = null;
         }
@@ -125,8 +120,8 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
 
             message = message + " " + errorContentMessage;
 
-            LOG.error("Error message: {message} Http status code: {response.StatusCode}");
-            throw new MsalManagedIdentityException("managed_identity_request_failed", message,
+            LOG.error(String.format("Error message: %s Http status code: %s"), message, response.statusCode());
+            throw new MsalManagedIdentityException(MsalError.MANAGED_IDENTITY_REQUEST_FAILED, message,
                     ManagedIdentitySourceType.Imds);
         }
 
@@ -138,7 +133,7 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
     {
         StringBuilder messageBuilder = new StringBuilder();
 
-        messageBuilder.append(StringHelper.isNullOrBlank(message) ? defaultMessage : message);
+        messageBuilder.append(StringHelper.isNullOrBlank(message) ? MsalErrorMessage.DEFAULT_MESSAGE : message);
         messageBuilder.append("Status: ");
         messageBuilder.append(response.statusCode());
 

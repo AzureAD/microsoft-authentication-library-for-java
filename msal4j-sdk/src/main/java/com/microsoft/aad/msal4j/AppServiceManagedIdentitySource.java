@@ -10,8 +10,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 class AppServiceManagedIdentitySource extends AbstractManagedIdentitySource{
 
@@ -20,25 +18,22 @@ class AppServiceManagedIdentitySource extends AbstractManagedIdentitySource{
     // MSI Constants. Docs for MSI are available here https://docs.microsoft.com/azure/app-service/overview-managed-identity
     private static final String APP_SERVICE_MSI_API_VERSION = "2019-08-01";
     private static final String SECRET_HEADER_NAME = "X-IDENTITY-HEADER";
-    private static URI endpointUri;
 
-    private URI endpoint;
-    private String secret;
+    private final URI MSI_ENDPOINT;
+    private final String SECRET;
 
     @Override
     public void createManagedIdentityRequest(String resource) {
-        managedIdentityRequest.baseEndpoint = endpoint;
+        managedIdentityRequest.baseEndpoint = MSI_ENDPOINT;
         managedIdentityRequest.method = HttpMethod.GET;
 
         managedIdentityRequest.headers = new HashMap<>();
-        managedIdentityRequest.headers.put(SECRET_HEADER_NAME, secret);
+        managedIdentityRequest.headers.put(SECRET_HEADER_NAME, SECRET);
 
         managedIdentityRequest.queryParameters = new HashMap<>();
         managedIdentityRequest.queryParameters.put("api-version", Collections.singletonList(APP_SERVICE_MSI_API_VERSION));
         managedIdentityRequest.queryParameters.put("resource", Collections.singletonList(resource));
 
-        String clientId = getManagedIdentityUserAssignedClientId();
-        String resourceId = getManagedIdentityUserAssignedResourceId();
         if (!StringHelper.isNullOrBlank(getManagedIdentityUserAssignedClientId()))
         {
             LOG.info("[Managed Identity] Adding user assigned client id to the request.");
@@ -52,35 +47,34 @@ class AppServiceManagedIdentitySource extends AbstractManagedIdentitySource{
         }
     }
 
-    private AppServiceManagedIdentitySource(MsalRequest msalRequest, ServiceBundle serviceBundle, URI endpoint, String secret)
+    private AppServiceManagedIdentitySource(MsalRequest msalRequest, ServiceBundle serviceBundle, URI msiEndpoint, String secret)
     {
         super(msalRequest, serviceBundle, ManagedIdentitySourceType.AppService);
-        this.endpoint = endpoint;
-        this.secret = secret;
+        this.MSI_ENDPOINT = msiEndpoint;
+        this.SECRET = secret;
     }
 
-    protected static AbstractManagedIdentitySource create(MsalRequest msalRequest, ServiceBundle serviceBundle) {
+    static AbstractManagedIdentitySource create(MsalRequest msalRequest, ServiceBundle serviceBundle) {
 
         IEnvironmentVariables environmentVariables = getEnvironmentVariables((ManagedIdentityParameters) msalRequest.requestContext().apiParameters());
         String msiSecret = environmentVariables.getEnvironmentVariable(Constants.IDENTITY_HEADER);
         String msiEndpoint = environmentVariables.getEnvironmentVariable(Constants.IDENTITY_ENDPOINT);
 
-        return validateEnvironmentVariables(msiEndpoint, msiSecret)
-                ? new AppServiceManagedIdentitySource(msalRequest, serviceBundle, endpointUri, msiSecret)
-                : null;
+        URI validatedEndpoint = validateAndGetUri(msiEndpoint, msiSecret);
+        return validatedEndpoint == null ? null
+                : new AppServiceManagedIdentitySource(msalRequest, serviceBundle, validatedEndpoint, msiSecret);
     }
 
-    private static boolean validateEnvironmentVariables(String msiEndpoint, String secret)
+    private static URI validateAndGetUri(String msiEndpoint, String secret)
     {
-        endpointUri = null;
-
         // if BOTH the env vars endpoint and secret values are null, this MSI provider is unavailable.
         if (StringHelper.isNullOrBlank(msiEndpoint) || StringHelper.isNullOrBlank(secret))
         {
             LOG.info("[Managed Identity] App service managed identity is unavailable.");
-            return false;
+            return null;
         }
 
+        URI endpointUri;
         try
         {
             endpointUri = new URI(msiEndpoint);
@@ -93,7 +87,7 @@ class AppServiceManagedIdentitySource extends AbstractManagedIdentitySource{
         }
 
         LOG.info("[Managed Identity] Environment variables validation passed for app service managed identity. Endpoint URI: {endpointUri}. Creating App Service managed identity.");
-        return true;
+        return endpointUri;
     }
 
 }
