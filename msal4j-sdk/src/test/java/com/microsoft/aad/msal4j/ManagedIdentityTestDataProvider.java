@@ -17,9 +17,9 @@ class ManagedIdentityTestDataProvider {
                         ManagedIdentityTests.resource),
                 Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTests.appServiceEndpoint,
                         ManagedIdentityTests.resourceDefaultSuffix),
-                Arguments.of(ManagedIdentitySourceType.CloudShell, ManagedIdentityTests.cloudShellEndpoint,
+                Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTests.cloudShellEndpoint,
                         ManagedIdentityTests.resource),
-                Arguments.of(ManagedIdentitySourceType.CloudShell, ManagedIdentityTests.cloudShellEndpoint,
+                Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTests.cloudShellEndpoint,
                         ManagedIdentityTests.resourceDefaultSuffix),
                 Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTests.IMDS_ENDPOINT,
                         ManagedIdentityTests.resource),
@@ -43,9 +43,9 @@ class ManagedIdentityTestDataProvider {
 
     public static Stream<Arguments> createDataUserAssignedNotSupported() {
         return Stream.of(
-                Arguments.of(ManagedIdentitySourceType.CloudShell, ManagedIdentityTests.cloudShellEndpoint,
+                Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTests.cloudShellEndpoint,
                         ManagedIdentityId.userAssignedClientId(CLIENT_ID)),
-                Arguments.of(ManagedIdentitySourceType.CloudShell, ManagedIdentityTests.cloudShellEndpoint,
+                Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTests.cloudShellEndpoint,
                         ManagedIdentityId.userAssignedResourceId(RESOURCE_ID)));
     }
 
@@ -55,9 +55,9 @@ class ManagedIdentityTestDataProvider {
                         "user.read"),
                 Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTests.appServiceEndpoint,
                         "https://management.core.windows.net//user_impersonation"),
-                Arguments.of(ManagedIdentitySourceType.CloudShell, ManagedIdentityTests.cloudShellEndpoint,
+                Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTests.cloudShellEndpoint,
                         "user.read"),
-                Arguments.of(ManagedIdentitySourceType.CloudShell, ManagedIdentityTests.cloudShellEndpoint,
+                Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTests.cloudShellEndpoint,
                         "https://management.core.windows.net//user_impersonation"),
                 Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTests.IMDS_ENDPOINT,
                         "user.read"),
@@ -68,7 +68,7 @@ class ManagedIdentityTestDataProvider {
     public static Stream<Arguments> createDataError() {
         return Stream.of(
                 Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTests.appServiceEndpoint),
-                Arguments.of(ManagedIdentitySourceType.CloudShell, ManagedIdentityTests.cloudShellEndpoint),
+                Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTests.cloudShellEndpoint),
                 Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTests.IMDS_ENDPOINT));
     }
 }

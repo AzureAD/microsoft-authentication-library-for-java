@@ -64,7 +64,7 @@ class ManagedIdentityTests {
                 headers.put("X-IDENTITY-HEADER", "secret");
                 break;
             }
-            case CloudShell: {
+            case CLOUD_SHELL: {
                 endpoint = cloudShellEndpoint;
 
                 headers.put("ContentType", "application/x-www-form-urlencoded");
@@ -185,7 +185,7 @@ class ManagedIdentityTests {
             assertInstanceOf(MsalManagedIdentityException.class, e.getCause());
 
             MsalManagedIdentityException msalMsiException = (MsalManagedIdentityException) e.getCause();
-            assertEquals(ManagedIdentitySourceType.CloudShell, msalMsiException.managedIdentitySourceType);
+            assertEquals(ManagedIdentitySourceType.CLOUD_SHELL, msalMsiException.managedIdentitySourceType);
             assertEquals(MsalError.USER_ASSIGNED_MANAGED_IDENTITY_NOT_SUPPORTED, msalMsiException.errorCode());
             return;
         }
