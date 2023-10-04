@@ -85,18 +85,6 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
     @Getter(AccessLevel.PACKAGE)
     private String authority;
 
-    @Accessors(fluent = true)
-    @Getter(AccessLevel.PACKAGE)
-    private boolean autoDetectRegion;
-
-    @Accessors(fluent = true)
-    @Getter(AccessLevel.PACKAGE)
-    protected String azureRegion;
-
-    @Accessors(fluent = true)
-    @Getter(AccessLevel.PACKAGE)
-    private boolean instanceDiscovery;
-
     CompletableFuture<IAuthenticationResult> executeRequest(
             MsalRequest msalRequest) {
 
