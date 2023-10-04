@@ -71,14 +71,6 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
     @Getter
     private Integer readTimeoutForDefaultHttpClient;
 
-    @Accessors(fluent = true)
-    @Getter
-    private String applicationName;
-
-    @Accessors(fluent = true)
-    @Getter
-    private String applicationVersion;
-
     //The following fields are set in only some applications and/or set internally by the library. To avoid excessive
     // type casting throughout the library they are defined here as package-private, but will not be part of this class's Builder
     @Accessors(fluent = true)
@@ -104,32 +96,6 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
     @Accessors(fluent = true)
     @Getter(AccessLevel.PACKAGE)
     private boolean instanceDiscovery;
-
-    public CompletableFuture<Set<IAccount>> getAccounts() {
-
-        RequestContext context = new RequestContext(this, PublicApi.GET_ACCOUNTS, null);
-        MsalRequest msalRequest =
-                new MsalRequest(this, null, context) {
-                };
-
-        AccountsSupplier supplier = new AccountsSupplier(this, msalRequest);
-
-        return this.serviceBundle.getExecutorService() != null ?
-                CompletableFuture.supplyAsync(supplier, serviceBundle.getExecutorService()) :
-                CompletableFuture.supplyAsync(supplier);
-    }
-
-    public CompletableFuture<Void> removeAccount(IAccount account) {
-        RequestContext context = new RequestContext(this, PublicApi.REMOVE_ACCOUNTS, null);
-        MsalRequest msalRequest = new MsalRequest(this, null, context) {
-        };
-
-        RemoveAccountRunnable runnable = new RemoveAccountRunnable(msalRequest, account);
-
-        return serviceBundle.getExecutorService() != null ?
-                CompletableFuture.runAsync(runnable, serviceBundle.getExecutorService()) :
-                CompletableFuture.runAsync(runnable);
-    }
 
     CompletableFuture<IAuthenticationResult> executeRequest(
             MsalRequest msalRequest) {
@@ -177,54 +143,6 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
         return result;
     }
 
-    @Override
-    public CompletableFuture<IAuthenticationResult> acquireToken(RefreshTokenParameters parameters) {
-
-        validateNotNull("parameters", parameters);
-
-        RequestContext context = new RequestContext(
-                this,
-                PublicApi.ACQUIRE_TOKEN_BY_REFRESH_TOKEN,
-                parameters);
-
-        RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(
-                parameters,
-                this,
-                context);
-
-        return executeRequest(refreshTokenRequest);
-    }
-
-    @Override
-    public CompletableFuture<IAuthenticationResult> acquireTokenSilently(SilentParameters parameters)
-            throws MalformedURLException {
-
-        validateNotNull("parameters", parameters);
-
-        RequestContext context;
-        if (parameters.account() != null) {
-            context = new RequestContext(
-                    this,
-                    PublicApi.ACQUIRE_TOKEN_SILENTLY,
-                    parameters,
-                    UserIdentifier.fromHomeAccountId(parameters.account().homeAccountId()));
-
-        } else {
-            context = new RequestContext(
-                    this,
-                    PublicApi.ACQUIRE_TOKEN_SILENTLY,
-                    parameters);
-        }
-
-        SilentRequest silentRequest = new SilentRequest(
-                parameters,
-                this,
-                context,
-                null);
-
-        return executeRequest(silentRequest);
-    }
-
     private AuthenticationResultSupplier getAuthenticationResultSupplier(MsalRequest msalRequest) {
 
         AuthenticationResultSupplier supplier;
@@ -270,8 +188,6 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
         private Boolean onlySendFailureTelemetry = false;
         private Integer connectTimeoutForDefaultHttpClient;
         private Integer readTimeoutForDefaultHttpClient;
-        private String applicationName;
-        private String applicationVersion;
         private String clientId;
         private Authority authenticationAuthority = createDefaultAADAuthority();
 
@@ -414,32 +330,6 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
             return self();
         }
 
-        /**
-         * Sets application name for telemetry purposes
-         *
-         * @param val application name
-         * @return instance of the Builder on which method was called
-         */
-        public T applicationName(String val) {
-            validateNotNull("applicationName", val);
-
-            applicationName = val;
-            return self();
-        }
-
-        /**
-         * Sets application version for telemetry purposes
-         *
-         * @param val application version
-         * @return instance of the Builder on which method was called
-         */
-        public T applicationVersion(String val) {
-            validateNotNull("applicationVersion", val);
-
-            applicationVersion = val;
-            return self();
-        }
-
         private static Authority createDefaultAADAuthority() {
             Authority authority;
             try {
@@ -468,8 +358,6 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
                         new DefaultHttpClient(builder.proxy, builder.sslSocketFactory, builder.connectTimeoutForDefaultHttpClient, builder.readTimeoutForDefaultHttpClient) :
                         builder.httpClient,
                 new TelemetryManager(telemetryConsumer, builder.onlySendFailureTelemetry));
-        applicationName = builder.applicationName;
-        applicationVersion = builder.applicationVersion;
         authenticationAuthority = builder.authenticationAuthority;
         clientId = builder.clientId;
     }

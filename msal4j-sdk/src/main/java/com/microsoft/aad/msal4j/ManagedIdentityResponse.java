@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Getter
-public class ManagedIdentityResponse {
+class ManagedIdentityResponse {
 
     private static final Logger LOG = LoggerFactory.getLogger(ManagedIdentityResponse.class);
 

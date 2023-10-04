@@ -43,26 +43,4 @@ interface IApplicationBase {
      * @return SSLSocketFactory used by the application for all network communication.
      */
     SSLSocketFactory sslSocketFactory();
-
-
-    /**
-     * Acquires a security token from the authority using a refresh token previously received.
-     * Can be used in migration to MSAL from ADAL, and in various integration
-     * scenarios where you have a refresh token available.
-     *
-     * @param parameters {@link RefreshTokenParameters}
-     * @return A {@link CompletableFuture} object representing the {@link IAuthenticationResult} of the call.
-     */
-    CompletableFuture<IAuthenticationResult> acquireToken(RefreshTokenParameters parameters);
-
-    /**
-     * Returns tokens from cache if present and not expired or acquires new tokens from the authority
-     * by using the refresh token present in cache.
-     *
-     * @param parameters instance of SilentParameters
-     * @return A {@link CompletableFuture} object representing the {@link IAuthenticationResult} of the call.
-     * @throws MalformedURLException if authorityUrl from parameters is malformed URL
-     */
-    CompletableFuture<IAuthenticationResult> acquireTokenSilently(SilentParameters parameters)
-            throws MalformedURLException;
 }

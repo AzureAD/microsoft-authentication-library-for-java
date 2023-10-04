@@ -44,6 +44,14 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
 
     @Accessors(fluent = true)
     @Getter
+    private String applicationName;
+
+    @Accessors(fluent = true)
+    @Getter
+    private String applicationVersion;
+
+    @Accessors(fluent = true)
+    @Getter
     private AadInstanceDiscoveryResponse aadAadInstanceDiscoveryResponse;
 
     protected abstract ClientAuthentication clientAuthentication();
@@ -88,6 +96,80 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
     }
 
     @Override
+    public CompletableFuture<IAuthenticationResult> acquireToken(RefreshTokenParameters parameters) {
+
+        validateNotNull("parameters", parameters);
+
+        RequestContext context = new RequestContext(
+                this,
+                PublicApi.ACQUIRE_TOKEN_BY_REFRESH_TOKEN,
+                parameters);
+
+        RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(
+                parameters,
+                this,
+                context);
+
+        return executeRequest(refreshTokenRequest);
+    }
+
+    @Override
+    public CompletableFuture<IAuthenticationResult> acquireTokenSilently(SilentParameters parameters)
+            throws MalformedURLException {
+
+        validateNotNull("parameters", parameters);
+
+        RequestContext context;
+        if (parameters.account() != null) {
+            context = new RequestContext(
+                    this,
+                    PublicApi.ACQUIRE_TOKEN_SILENTLY,
+                    parameters,
+                    UserIdentifier.fromHomeAccountId(parameters.account().homeAccountId()));
+
+        } else {
+            context = new RequestContext(
+                    this,
+                    PublicApi.ACQUIRE_TOKEN_SILENTLY,
+                    parameters);
+        }
+
+        SilentRequest silentRequest = new SilentRequest(
+                parameters,
+                this,
+                context,
+                null);
+
+        return executeRequest(silentRequest);
+    }
+
+    public CompletableFuture<Set<IAccount>> getAccounts() {
+
+        RequestContext context = new RequestContext(this, PublicApi.GET_ACCOUNTS, null);
+        MsalRequest msalRequest =
+                new MsalRequest(this, null, context) {
+                };
+
+        AccountsSupplier supplier = new AccountsSupplier(this, msalRequest);
+
+        return super.serviceBundle().getExecutorService() != null ?
+                CompletableFuture.supplyAsync(supplier, super.serviceBundle().getExecutorService()) :
+                CompletableFuture.supplyAsync(supplier);
+    }
+
+    public CompletableFuture<Void> removeAccount(IAccount account) {
+        RequestContext context = new RequestContext(this, PublicApi.REMOVE_ACCOUNTS, null);
+        MsalRequest msalRequest = new MsalRequest(this, null, context) {
+        };
+
+        RemoveAccountRunnable runnable = new RemoveAccountRunnable(msalRequest, account);
+
+        return super.serviceBundle().getExecutorService() != null ?
+                CompletableFuture.runAsync(runnable, super.serviceBundle().getExecutorService()) :
+                CompletableFuture.runAsync(runnable);
+    }
+
+    @Override
     public URL getAuthorizationRequestUrl(AuthorizationRequestUrlParameters parameters) {
 
         validateNotNull("parameters", parameters);
@@ -118,6 +200,8 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
         private String authority = DEFAULT_AUTHORITY;
         private Authority authenticationAuthority = createDefaultAADAuthority();
         private boolean validateAuthority = true;
+        private String applicationName;
+        private String applicationVersion;
         private ITokenCacheAccessAspect tokenCacheAccessAspect;
         private AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse;
         private String clientCapabilities;
@@ -212,6 +296,32 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
          */
         public T validateAuthority(boolean val) {
             validateAuthority = val;
+            return self();
+        }
+
+        /**
+         * Sets application name for telemetry purposes
+         *
+         * @param val application name
+         * @return instance of the Builder on which method was called
+         */
+        public T applicationName(String val) {
+            validateNotNull("applicationName", val);
+
+            applicationName = val;
+            return self();
+        }
+
+        /**
+         * Sets application version for telemetry purposes
+         *
+         * @param val application version
+         * @return instance of the Builder on which method was called
+         */
+        public T applicationVersion(String val) {
+            validateNotNull("applicationVersion", val);
+
+            applicationVersion = val;
             return self();
         }
 
@@ -324,6 +434,8 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
         clientId = builder.clientId;
         authority = builder.authority;
         validateAuthority = builder.validateAuthority;
+        applicationName = builder.applicationName;
+        applicationVersion = builder.applicationVersion;
         authenticationAuthority = builder.authenticationAuthority;
         super.tokenCache = new TokenCache(builder.tokenCacheAccessAspect);
         aadAadInstanceDiscoveryResponse = builder.aadInstanceDiscoveryResponse;

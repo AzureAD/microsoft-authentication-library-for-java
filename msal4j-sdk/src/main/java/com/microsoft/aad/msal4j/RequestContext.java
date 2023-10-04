@@ -38,8 +38,10 @@ class RequestContext {
                 generateNewCorrelationId() :
                 clientApplication.correlationId();
 
-        this.applicationVersion = clientApplication.applicationVersion();
-        this.applicationName = clientApplication.applicationName();
+        if (clientApplication instanceof AbstractClientApplicationBase) {
+            this.applicationVersion = ((AbstractClientApplicationBase) clientApplication).applicationVersion();
+            this.applicationName = ((AbstractClientApplicationBase) clientApplication).applicationName();
+        }
         this.publicApi = publicApi;
         this.authority = clientApplication.authority();
         this.apiParameters = apiParameters;
