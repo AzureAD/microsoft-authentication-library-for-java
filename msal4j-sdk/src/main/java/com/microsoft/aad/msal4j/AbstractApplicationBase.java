@@ -32,10 +32,6 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
     protected Authority authenticationAuthority;
 
     @Accessors(fluent = true)
-    @Getter(AccessLevel.PACKAGE)
-    protected TokenCache tokenCache;
-
-    @Accessors(fluent = true)
     @Getter
     private String correlationId;
 
@@ -50,14 +46,6 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
     @Accessors(fluent = true)
     @Getter
     private SSLSocketFactory sslSocketFactory;
-
-    @Accessors(fluent = true)
-    @Getter(AccessLevel.PACKAGE)
-    private ServiceBundle serviceBundle;
-
-    @Accessors(fluent = true)
-    @Getter(AccessLevel.PACKAGE)
-    private Consumer<List<HashMap<String, String>>> telemetryConsumer;
 
     @Accessors(fluent = true)
     @Getter
@@ -84,6 +72,18 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
     @Accessors(fluent = true)
     @Getter(AccessLevel.PACKAGE)
     private String authority;
+
+    @Accessors(fluent = true)
+    @Getter(AccessLevel.PACKAGE)
+    private ServiceBundle serviceBundle;
+
+    @Accessors(fluent = true)
+    @Getter(AccessLevel.PACKAGE)
+    private Consumer<List<HashMap<String, String>>> telemetryConsumer;
+
+    @Accessors(fluent = true)
+    @Getter(AccessLevel.PACKAGE)
+    protected TokenCache tokenCache;
 
     CompletableFuture<IAuthenticationResult> executeRequest(
             MsalRequest msalRequest) {
