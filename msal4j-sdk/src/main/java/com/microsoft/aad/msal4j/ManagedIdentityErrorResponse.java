@@ -5,11 +5,9 @@ package com.microsoft.aad.msal4j;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
-import lombok.Setter;
 
 @Getter
-@Setter
-class ManagedIdentityErrorResponse {
+public class ManagedIdentityErrorResponse {
 
     @JsonProperty("message")
     private String message;

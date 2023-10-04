@@ -20,12 +20,19 @@ class ManagedIdentityRequest extends MsalRequest {
 
     Map<String, String> headers;
 
-    Map<String, String> bodyParameters;
+    Map<String, List<String>> bodyParameters;
 
     Map<String, List<String>> queryParameters;
 
     public ManagedIdentityRequest(ManagedIdentityApplication managedIdentityApplication, RequestContext requestContext) {
         super(managedIdentityApplication, requestContext);
+    }
+
+    public String getBodyAsString() {
+        if (bodyParameters == null || bodyParameters.isEmpty())
+            return "";
+
+        return URLUtils.serializeParameters(bodyParameters);
     }
 
     public URL computeURI() throws URISyntaxException {
@@ -38,7 +45,7 @@ class ManagedIdentityRequest extends MsalRequest {
     }
 
     private String appendQueryParametersToBaseEndpoint() {
-        if (queryParameters.isEmpty()) {
+        if (queryParameters == null || queryParameters.isEmpty()) {
             return baseEndpoint.toString();
         }
 

@@ -11,7 +11,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.SocketException;
-import java.net.URISyntaxException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -36,17 +35,15 @@ class ManagedIdentityTests {
 
     private String getSuccessfulResponse(String resource) {
         long expiresOn = Instant.now().plus(1, ChronoUnit.HOURS).getEpochSecond();
-        String response = "{\"access_token\":\"accesstoken\",\"expires_on\":\"" + expiresOn + "\",\"resource\":\"" + resource + "\",\"token_type\":" +
+        return "{\"access_token\":\"accesstoken\",\"expires_on\":\"" + expiresOn + "\",\"resource\":\"" + resource + "\",\"token_type\":" +
                 "\"Bearer\",\"client_id\":\"client_id\"}";
-
-        return response;
     }
 
     private String getMsiErrorResponse() {
         return "{\"statusCode\":\"500\",\"message\":\"An unexpected error occured while fetching the AAD Token.\",\"correlationId\":\"7d0c9763-ff1d-4842-a3f3-6d49e64f4513\"}";
     }
 
-    private HttpRequest expectedRequest(ManagedIdentitySourceType source, String resource) throws URISyntaxException {
+    private HttpRequest expectedRequest(ManagedIdentitySourceType source, String resource) {
         return expectedRequest(source, resource, ManagedIdentityId.systemAssigned());
     }
 
@@ -55,16 +52,26 @@ class ManagedIdentityTests {
         String endpoint = null;
         Map<String, String> headers = new HashMap<>();
         Map<String, List<String>> queryParameters = new HashMap<>();
+        Map<String, List<String>> bodyParameters = new HashMap<>();
 
         switch (source) {
             case APP_SERVICE: {
                 endpoint = appServiceEndpoint;
-                queryParameters = new HashMap<>();
+
                 queryParameters.put("api-version", Collections.singletonList("2019-08-01"));
                 queryParameters.put("resource", Collections.singletonList(resource));
-                headers = new HashMap<>();
+
                 headers.put("X-IDENTITY-HEADER", "secret");
                 break;
+            }
+            case CloudShell: {
+                endpoint = cloudShellEndpoint;
+
+                headers.put("ContentType", "application/x-www-form-urlencoded");
+                headers.put("Metadata", "true");
+
+                bodyParameters.put("resource", Collections.singletonList(resource));
+                return new HttpRequest(HttpMethod.POST, computeUri(endpoint, queryParameters), headers, URLUtils.serializeParameters(bodyParameters));
             }
             case IMDS: {
                 endpoint = IMDS_ENDPOINT;
@@ -89,12 +96,12 @@ class ManagedIdentityTests {
 
     private String computeUri(String endpoint, Map<String, List<String>> queryParameters) {
         if (queryParameters.isEmpty()) {
-            return endpoint.toString();
+            return endpoint;
         }
 
         String queryString = URLUtils.serializeParameters(queryParameters);
 
-        return endpoint.toString() + "?" + queryString;
+        return endpoint + "?" + queryString;
     }
 
     private HttpResponse expectedResponse(int statusCode, String response) {
@@ -155,6 +162,35 @@ class ManagedIdentityTests {
                         .build()).get();
 
         assertNotNull(result.accessToken());
+    }
+
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.ManagedIdentityTestDataProvider#createDataUserAssignedNotSupported")
+    void managedIdentityTest_UserAssigned_NotSupported(ManagedIdentitySourceType source, String endpoint, ManagedIdentityId id) throws Exception {
+        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        ManagedIdentityApplication miApp = ManagedIdentityApplication
+                .builder(id)
+                .httpClient(httpClientMock)
+                .build();
+
+        try {
+            IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
+                    ManagedIdentityParameters.builder(resource)
+                            .environmentVariables(environmentVariables)
+                            .build()).get();
+        } catch (Exception e) {
+            assertNotNull(e);
+            assertInstanceOf(MsalManagedIdentityException.class, e.getCause());
+
+            MsalManagedIdentityException msalMsiException = (MsalManagedIdentityException) e.getCause();
+            assertEquals(ManagedIdentitySourceType.CloudShell, msalMsiException.managedIdentitySourceType);
+            assertEquals(MsalError.USER_ASSIGNED_MANAGED_IDENTITY_NOT_SUPPORTED, msalMsiException.errorCode());
+            return;
+        }
+
+        fail("MsalManagedIdentityException is expected but not thrown.");
     }
 
     @ParameterizedTest
