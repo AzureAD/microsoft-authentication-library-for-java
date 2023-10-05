@@ -197,7 +197,7 @@ public class ServerTelemetryTests {
 
             fail("Expected MsalException was not thrown");
         } catch (Exception ex) {
-            headers = pca.getServiceBundle().getServerSideTelemetry().getServerTelemetryHeaderMap();
+            headers = pca.serviceBundle().getServerSideTelemetry().getServerTelemetryHeaderMap();
 
             assertEquals(headers.get(CURRENT_REQUEST_HEADER_NAME), "5|300,,,0,0|");
         }

@@ -3,7 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import lombok.Getter;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +14,7 @@ import java.util.concurrent.CompletableFuture;
  * <p>
  * Conditionally thread-safe
  */
-public class ManagedIdentityApplication extends AbstractClientApplicationBase implements IManagedIdentityApplication {
+public class ManagedIdentityApplication extends AbstractApplicationBase implements IManagedIdentityApplication {
 
     @Getter
     private final ManagedIdentityId managedIdentityId;
@@ -24,6 +23,22 @@ public class ManagedIdentityApplication extends AbstractClientApplicationBase im
         super(builder);
         this.managedIdentityId = builder.managedIdentityId;
         log = LoggerFactory.getLogger(ManagedIdentityApplication.class);
+        super.tokenCache = new TokenCache();
+    }
+
+    @Override
+    public CompletableFuture<IAuthenticationResult> acquireTokenForManagedIdentity(ManagedIdentityParameters managedIdentityParameters)
+            throws Exception {
+        RequestContext requestContext = new RequestContext(
+                this,
+                managedIdentityId.getIdType() == ManagedIdentityIdType.SYSTEM_ASSIGNED ?
+                        PublicApi.ACQUIRE_TOKEN_BY_SYSTEM_ASSIGNED_MANAGED_IDENTITY :
+                        PublicApi.ACQUIRE_TOKEN_BY_USER_ASSIGNED_MANAGED_IDENTITY,
+                managedIdentityParameters);
+
+        ManagedIdentityRequest managedIdentityRequest = new ManagedIdentityRequest(this, requestContext);
+
+        return this.executeRequest(managedIdentityRequest);
     }
 
     /**
@@ -37,38 +52,16 @@ public class ManagedIdentityApplication extends AbstractClientApplicationBase im
         return new Builder(managedIdentityId);
     }
 
-    @Override
-    public CompletableFuture<IAuthenticationResult> acquireTokenForManagedIdentity(ManagedIdentityParameters managedIdentityParameters)
-            throws Exception {
-        RequestContext requestContext = new RequestContext(
-                this,
-                managedIdentityId.getIdType() == ManagedIdentityIdType.SystemAssigned ?
-                        PublicApi.ACQUIRE_TOKEN_BY_SYSTEM_ASSIGNED_MANAGED_IDENTITY :
-                        PublicApi.ACQUIRE_TOKEN_BY_USER_ASSIGNED_MANAGED_IDENTITY,
-                managedIdentityParameters);
+    public static class Builder extends AbstractApplicationBase.Builder<Builder> {
 
-        ManagedIdentityRequest managedIdentityRequest = new ManagedIdentityRequest(this, requestContext);
-
-        return this.executeRequest(managedIdentityRequest);
-    }
-
-    @Override
-    protected ClientAuthentication clientAuthentication() {
-        return null;
-    }
-
-    public static class Builder extends AbstractClientApplicationBase.Builder<Builder> {
         private String resource;
-
         private ManagedIdentityId managedIdentityId;
 
         private Builder(ManagedIdentityId managedIdentityId) {
-            super(managedIdentityId.getIdType() == ManagedIdentityIdType.SystemAssigned ?
+            super(managedIdentityId.getIdType() == ManagedIdentityIdType.SYSTEM_ASSIGNED ?
                     "system_assigned_managed_identity" : managedIdentityId.getUserAssignedId());
 
-
             this.managedIdentityId = managedIdentityId;
-            this.isInstanceDiscoveryEnabled = false;
         }
 
         public Builder resource(String resource) {

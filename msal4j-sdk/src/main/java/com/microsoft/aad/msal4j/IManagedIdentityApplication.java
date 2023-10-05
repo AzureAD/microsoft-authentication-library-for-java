@@ -12,7 +12,7 @@ import java.util.concurrent.CompletableFuture;
  * without using credentials.
  * For details see https://aka.ms/msal4jclientapplications
  */
-public interface IManagedIdentityApplication extends IClientApplicationBase {
+public interface IManagedIdentityApplication extends IApplicationBase {
 
     /**
      * Acquires tokens from the configured managed identity on an azure resource.
