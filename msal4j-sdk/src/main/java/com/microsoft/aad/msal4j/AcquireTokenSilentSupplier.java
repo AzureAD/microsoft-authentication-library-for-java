@@ -46,6 +46,9 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
                 throw new MsalClientException(AuthenticationErrorMessage.NO_TOKEN_IN_CACHE, AuthenticationErrorCode.CACHE_MISS);
             }
 
+            //Some cached tokens were found, but this metadata will be overwritten if token needs to be refreshed
+            res.metadata().tokenSource(TokenSource.CACHE);
+
             if (!StringHelper.isBlank(res.accessToken())) {
                 clientApplication.serviceBundle().getServerSideTelemetry().incrementSilentSuccessfulCount();
             }
@@ -93,6 +96,10 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
 
                     try {
                         res = acquireTokenByAuthorisationGrantSupplier.execute();
+
+                        res.metadata().tokenSource(TokenSource.IDENTITY_PROVIDER);
+
+                        log.info("Access token refreshed successfully.");
                     } catch (MsalServiceException ex) {
                         //If the token refresh attempt threw a MsalServiceException but the refresh attempt was done
                         // only because of refreshOn, then simply return the existing cached token
