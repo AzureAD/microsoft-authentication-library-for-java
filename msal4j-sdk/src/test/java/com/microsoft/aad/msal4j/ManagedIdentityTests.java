@@ -348,4 +348,42 @@ class ManagedIdentityTests {
 
         fail("MsalManagedIdentityException is expected but not thrown.");
     }
+
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.ManagedIdentityTestDataProvider#createDataError")
+    void managedIdentity_SharedCache(ManagedIdentitySourceType source, String endpoint) throws Exception {
+        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        lenient().when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+
+        ManagedIdentityApplication miApp1 = ManagedIdentityApplication
+                .builder(ManagedIdentityId.systemAssigned())
+                .httpClient(httpClientMock)
+                .build();
+
+        ManagedIdentityApplication miApp2 = ManagedIdentityApplication
+                .builder(ManagedIdentityId.systemAssigned())
+                .httpClient(httpClientMock)
+                .build();
+
+        IAuthenticationResult resultMiApp1 = miApp1.acquireTokenForManagedIdentity(
+                ManagedIdentityParameters.builder(resource)
+                        .environmentVariables(environmentVariables)
+                        .build()).get();
+
+        assertNotNull(resultMiApp1.accessToken());
+
+        IAuthenticationResult resultMiApp2 = miApp2.acquireTokenForManagedIdentity(
+                ManagedIdentityParameters.builder(resource)
+                        .environmentVariables(environmentVariables)
+                        .build()).get();
+
+        assertNotNull(resultMiApp2.accessToken());
+
+        //acquireTokenForManagedIdentity does a cache lookup by default, and all ManagedIdentityApplication's share a cache,
+        // so calling acquireTokenForManagedIdentity with the same parameters in two different ManagedIdentityApplications
+        // should return the same token
+        assertEquals(resultMiApp1.accessToken(), resultMiApp2.accessToken());
+    }
 }

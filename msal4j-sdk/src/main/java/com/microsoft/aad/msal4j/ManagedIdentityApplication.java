@@ -19,11 +19,14 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
     @Getter
     private final ManagedIdentityId managedIdentityId;
 
+    @Getter
+    static TokenCache sharedTokenCache = new TokenCache();
+
     private ManagedIdentityApplication(Builder builder) {
         super(builder);
         this.managedIdentityId = builder.managedIdentityId;
         log = LoggerFactory.getLogger(ManagedIdentityApplication.class);
-        super.tokenCache = new TokenCache();
+        super.tokenCache = sharedTokenCache;
     }
 
     @Override
