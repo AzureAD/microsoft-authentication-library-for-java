@@ -44,4 +44,9 @@ public interface IAuthenticationResult extends Serializable {
      * @return access token expiration date
      */
     java.util.Date expiresOnDate();
+
+    /**
+     * @return various metadata relating to this authentication result
+     */
+    AuthenticationResultMetadata metadata();
 }

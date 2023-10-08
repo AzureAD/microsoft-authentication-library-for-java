@@ -25,6 +25,8 @@ class RequestContext {
     private IAcquireTokenParameters apiParameters;
     private IClientApplicationBase clientApplication;
     private UserIdentifier userIdentifier;
+    @Setter(AccessLevel.PACKAGE)
+    private CacheRefreshReason refreshReason;
 
     public RequestContext(AbstractClientApplicationBase clientApplication,
                           PublicApi publicApi,
