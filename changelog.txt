@@ -1,3 +1,7 @@
+Version 1.14.2-beta
+=============
+- Add support for Managed Identity (#712)
+
 Version 1.13.10
 =============
 - Remove default HTTP timeout (#664)
