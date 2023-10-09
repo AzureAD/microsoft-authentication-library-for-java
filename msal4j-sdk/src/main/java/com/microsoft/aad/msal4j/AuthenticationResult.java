@@ -90,4 +90,7 @@ final class AuthenticationResult implements IAuthenticationResult {
     private final Date expiresOnDate = new Date(expiresOn * 1000);
 
     private final String scopes;
+
+    @Builder.Default
+    private final AuthenticationResultMetadata metadata = new AuthenticationResultMetadata();
 }

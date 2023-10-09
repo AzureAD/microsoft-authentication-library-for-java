@@ -69,6 +69,8 @@ class AcquireTokenSilentIT {
         // Check that access and id tokens are coming from cache
         assertEquals(result.accessToken(), acquireSilentResult.accessToken());
         assertEquals(result.idToken(), acquireSilentResult.idToken());
+        assertEquals(TokenSource.IDENTITY_PROVIDER, result.metadata().tokenSource());
+        assertEquals(TokenSource.CACHE, acquireSilentResult.metadata().tokenSource());
     }
 
     @ParameterizedTest
@@ -92,6 +94,8 @@ class AcquireTokenSilentIT {
 
         // Check that new refresh and id tokens are being returned
         assertTokensAreNotEqual(result, resultAfterRefresh);
+        assertEquals(TokenSource.IDENTITY_PROVIDER, result.metadata().tokenSource());
+        assertEquals(TokenSource.IDENTITY_PROVIDER, resultAfterRefresh.metadata().tokenSource());
     }
 
     @ParameterizedTest
@@ -253,6 +257,8 @@ class AcquireTokenSilentIT {
         //Current time is after refreshOn, so token should be refreshed
         assertNotNull(resultSilentWithRefreshOn);
         assertTokensAreNotEqual(resultSilent, resultSilentWithRefreshOn);
+        assertEquals(TokenSource.CACHE, resultSilent.metadata().tokenSource());
+        assertEquals(TokenSource.IDENTITY_PROVIDER, resultSilentWithRefreshOn.metadata().tokenSource());
     }
 
     @ParameterizedTest
