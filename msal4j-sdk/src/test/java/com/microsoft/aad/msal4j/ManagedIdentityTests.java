@@ -80,6 +80,11 @@ class ManagedIdentityTests {
                 headers.put("Metadata", "true");
                 break;
             }
+            case SERVICE_FABRIC:
+                endpoint = serviceFabricEndpoint;
+                queryParameters.put("api-version", Collections.singletonList("2019-07-01-preview"));
+                queryParameters.put("resource", Collections.singletonList(resource));
+                break;
         }
 
         switch (id.getIdType()) {
@@ -149,7 +154,7 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        when(httpClientMock.send(eq(expectedRequest(source, resource, id)))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+        lenient().when(httpClientMock.send(eq(expectedRequest(source, resource, id)))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
 
         ManagedIdentityApplication miApp = ManagedIdentityApplication
                 .builder(id)

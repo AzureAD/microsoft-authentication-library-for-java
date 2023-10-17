@@ -26,7 +26,11 @@ class ManagedIdentityTestDataProvider {
                 Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTests.IMDS_ENDPOINT,
                         ManagedIdentityTests.resourceDefaultSuffix),
                 Arguments.of(ManagedIdentitySourceType.IMDS, null,
-                        ManagedIdentityTests.resource));
+                        ManagedIdentityTests.resource),
+                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTests.serviceFabricEndpoint,
+                        ManagedIdentityTests.resource),
+                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTests.serviceFabricEndpoint,
+                        ManagedIdentityTests.resourceDefaultSuffix));
     }
 
     public static Stream<Arguments> createDataUserAssigned() {
@@ -38,6 +42,10 @@ class ManagedIdentityTestDataProvider {
                 Arguments.of(ManagedIdentitySourceType.IMDS, null,
                         ManagedIdentityId.userAssignedClientId(CLIENT_ID)),
                 Arguments.of(ManagedIdentitySourceType.IMDS, null,
+                        ManagedIdentityId.userAssignedResourceId(RESOURCE_ID)),
+                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTests.serviceFabricEndpoint,
+                        ManagedIdentityId.userAssignedResourceId(CLIENT_ID)),
+                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTests.serviceFabricEndpoint,
                         ManagedIdentityId.userAssignedResourceId(RESOURCE_ID)));
     }
 
@@ -62,6 +70,10 @@ class ManagedIdentityTestDataProvider {
                 Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTests.IMDS_ENDPOINT,
                         "user.read"),
                 Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTests.IMDS_ENDPOINT,
+                        "https://management.core.windows.net//user_impersonation"),
+                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTests.serviceFabricEndpoint,
+                        "user.read"),
+                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTests.serviceFabricEndpoint,
                         "https://management.core.windows.net//user_impersonation"));
     }
 
@@ -69,6 +81,7 @@ class ManagedIdentityTestDataProvider {
         return Stream.of(
                 Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTests.appServiceEndpoint),
                 Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTests.cloudShellEndpoint),
-                Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTests.IMDS_ENDPOINT));
+                Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTests.IMDS_ENDPOINT),
+                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTests.serviceFabricEndpoint));
     }
 }
