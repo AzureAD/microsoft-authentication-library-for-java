@@ -17,10 +17,10 @@ import java.util.function.Supplier;
 
 abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationResult> {
 
-    AbstractClientApplicationBase clientApplication;
+    AbstractApplicationBase clientApplication;
     MsalRequest msalRequest;
 
-    AuthenticationResultSupplier(AbstractClientApplicationBase clientApplication, MsalRequest msalRequest) {
+    AuthenticationResultSupplier(AbstractApplicationBase clientApplication, MsalRequest msalRequest) {
         this.clientApplication = clientApplication;
         this.msalRequest = msalRequest;
     }
@@ -40,7 +40,7 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
                         authorityUrl,
                         clientApplication.validateAuthority(),
                         msalRequest,
-                        clientApplication.getServiceBundle());
+                        clientApplication.serviceBundle());
 
         URL updatedAuthorityUrl = new URL(
                 authorityUrl.getProtocol(),
@@ -60,7 +60,7 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
         ApiEvent apiEvent = initializeApiEvent(msalRequest);
 
         try (TelemetryHelper telemetryHelper =
-                     clientApplication.getServiceBundle().getTelemetryManager().createTelemetryHelper(
+                     clientApplication.serviceBundle().getTelemetryManager().createTelemetryHelper(
                              msalRequest.requestContext().telemetryRequestId(),
                              msalRequest.application().clientId(),
                              apiEvent,
@@ -90,7 +90,7 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
                     }
                 }
 
-                clientApplication.getServiceBundle().getServerSideTelemetry().addFailedRequestTelemetry(
+                clientApplication.serviceBundle().getServerSideTelemetry().addFailedRequestTelemetry(
                         String.valueOf(msalRequest.requestContext().publicApi().getApiId()),
                         msalRequest.requestContext().correlationId(),
                         error);
@@ -158,7 +158,7 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
     private ApiEvent initializeApiEvent(MsalRequest msalRequest) {
         ApiEvent apiEvent = new ApiEvent(clientApplication.logPii());
         msalRequest.requestContext().telemetryRequestId(
-                clientApplication.getServiceBundle().getTelemetryManager().generateRequestId());
+                clientApplication.serviceBundle().getTelemetryManager().generateRequestId());
         apiEvent.setApiId(msalRequest.requestContext().publicApi().getApiId());
         apiEvent.setCorrelationId(msalRequest.requestContext().correlationId());
         apiEvent.setRequestId(msalRequest.requestContext().telemetryRequestId());

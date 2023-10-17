@@ -18,7 +18,7 @@ class SilentRequest extends MsalRequest {
     private Authority requestAuthority;
 
     SilentRequest(SilentParameters parameters,
-                  AbstractClientApplicationBase application,
+                  AbstractApplicationBase application,
                   RequestContext requestContext,
                   IUserAssertion assertion) throws MalformedURLException {
 
@@ -31,7 +31,7 @@ class SilentRequest extends MsalRequest {
                 Authority.createAuthority(new URL(Authority.enforceTrailingSlash(parameters.authorityUrl())));
 
         if (parameters.forceRefresh()) {
-            application.getServiceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
+            application.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
                     CacheTelemetry.REFRESH_FORCE_REFRESH.telemetryValue);
         }
     }

@@ -58,7 +58,7 @@ class AcquireTokenByAppProviderSupplier extends AuthenticationResultSupplier {
         TokenRequestExecutor tokenRequestExecutor = new TokenRequestExecutor(
                 clientCredentialRequest.application().authenticationAuthority,
                 msalRequest,
-                clientApplication.getServiceBundle()
+                clientApplication.serviceBundle()
         );
 
         clientApplication.tokenCache.saveTokens(tokenRequestExecutor, authenticationResult, clientCredentialRequest.application().authenticationAuthority.host);

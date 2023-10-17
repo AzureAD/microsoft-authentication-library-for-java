@@ -64,29 +64,35 @@ class AadInstanceDiscoveryProvider {
                                                            ServiceBundle serviceBundle) {
         String host = authorityUrl.getHost();
 
-        if (shouldUseRegionalEndpoint(msalRequest)) {
+        if (msalRequest.application() instanceof AbstractClientApplicationBase && shouldUseRegionalEndpoint(msalRequest)) {
             //Server side telemetry requires the result from region discovery when any part of the region API is used
             String detectedRegion = discoverRegion(msalRequest, serviceBundle);
 
-            if (msalRequest.application().azureRegion() != null) {
-                host = getRegionalizedHost(authorityUrl.getHost(), msalRequest.application().azureRegion());
+            if (((AbstractClientApplicationBase) msalRequest.application()).azureRegion() != null) {
+                host = getRegionalizedHost(authorityUrl.getHost(),
+                        ((AbstractClientApplicationBase) msalRequest.application()).azureRegion());
             }
 
             //If region autodetection is enabled and a specific region not already set,
             // set the application's region to the discovered region so that future requests can skip the IMDS endpoint call
-            if (null == msalRequest.application().azureRegion() && msalRequest.application().autoDetectRegion()
+            if (null == ((AbstractClientApplicationBase) msalRequest.application()).azureRegion()
+                    && ((AbstractClientApplicationBase) msalRequest.application()).autoDetectRegion()
                     && null != detectedRegion) {
-                msalRequest.application().azureRegion = detectedRegion;
+                ((AbstractClientApplicationBase) msalRequest.application()).azureRegion = detectedRegion;
             }
-            cacheRegionInstanceMetadata(authorityUrl.getHost(), msalRequest.application().azureRegion());
+            cacheRegionInstanceMetadata(authorityUrl.getHost(), ((AbstractClientApplicationBase) msalRequest.application()).azureRegion());
             serviceBundle.getServerSideTelemetry().getCurrentRequest().regionOutcome(
-                    determineRegionOutcome(detectedRegion, msalRequest.application().azureRegion(), msalRequest.application().autoDetectRegion()));
+                    determineRegionOutcome(detectedRegion,
+                            ((AbstractClientApplicationBase) msalRequest.application()).azureRegion(),
+                            ((AbstractClientApplicationBase) msalRequest.application()).autoDetectRegion()));
         }
 
         InstanceDiscoveryMetadataEntry result = cache.get(host);
 
         if (result == null) {
-            if(msalRequest.application().instanceDiscovery() && !instanceDiscoveryFailed){
+            if(msalRequest.application() instanceof AbstractClientApplicationBase &&
+                    ((AbstractClientApplicationBase) msalRequest.application()).instanceDiscovery()
+                    && !instanceDiscoveryFailed){
                 doInstanceDiscoveryAndCache(authorityUrl, validateAuthority, msalRequest, serviceBundle);
             } else {
                 // instanceDiscovery flag is set to False. Do not perform instanceDiscovery.
@@ -145,7 +151,8 @@ class AadInstanceDiscoveryProvider {
 
 
     private static boolean shouldUseRegionalEndpoint(MsalRequest msalRequest){
-        if (msalRequest.application().azureRegion() != null || msalRequest.application().autoDetectRegion()){
+        if (((AbstractClientApplicationBase) msalRequest.application()).azureRegion() != null
+                || ((AbstractClientApplicationBase) msalRequest.application()).autoDetectRegion()){
             //This class type check is a quick and dirty fix to accommodate changes to the internal workings of the region API
             //
             //ESTS-R only supports a small, but growing, number of scenarios, and the original design failed silently whenever

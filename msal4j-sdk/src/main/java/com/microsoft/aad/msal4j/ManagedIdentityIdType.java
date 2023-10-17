@@ -5,7 +5,7 @@ package com.microsoft.aad.msal4j;
 
 enum ManagedIdentityIdType {
 
-    SystemAssigned,
-    ClientId,
-    ResourceId
+    SYSTEM_ASSIGNED,
+    CLIENT_ID,
+    RESOURCE_ID
 }
