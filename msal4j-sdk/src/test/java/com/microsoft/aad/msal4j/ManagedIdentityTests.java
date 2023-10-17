@@ -4,6 +4,8 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.util.URLUtils;
+import org.apache.http.HttpStatus;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -77,6 +79,15 @@ public class ManagedIdentityTests {
                 endpoint = IMDS_ENDPOINT;
                 queryParameters.put("api-version", Collections.singletonList("2018-02-01"));
                 queryParameters.put("resource", Collections.singletonList(resource));
+                headers.put("Metadata", "true");
+                break;
+            }
+            case AzureArc: {
+                endpoint = azureArcEndpoint;
+
+                queryParameters.put("api-version", Collections.singletonList("2019-11-01"));
+                queryParameters.put("resource", Collections.singletonList(resource));
+
                 headers.put("Metadata", "true");
                 break;
             }
@@ -182,6 +193,7 @@ public class ManagedIdentityTests {
                             .build()).get();
         } catch (Exception e) {
             assertNotNull(e);
+            assertNotNull(e.getCause());
             assertInstanceOf(MsalManagedIdentityException.class, e.getCause());
 
             MsalManagedIdentityException msalMsiException = (MsalManagedIdentityException) e.getCause();
@@ -343,6 +355,73 @@ public class ManagedIdentityTests {
             MsalManagedIdentityException miException = (MsalManagedIdentityException) exception.getCause();
             assertEquals(source, miException.managedIdentitySourceType);
             assertEquals(MsalError.MANAGED_IDENTITY_UNREACHABLE_NETWORK, miException.errorCode());
+            return;
+        }
+
+        fail("MsalManagedIdentityException is expected but not thrown.");
+    }
+
+    @Test
+    void azureArcManagedIdentity_MissingAuthHeader() throws Exception {
+        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(ManagedIdentitySourceType.AzureArc, azureArcEndpoint);
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        HttpResponse response = new HttpResponse();
+        response.statusCode(HttpStatus.SC_UNAUTHORIZED);
+
+        lenient().when(httpClientMock.send(any())).thenReturn(response);
+
+        ManagedIdentityApplication miApp = ManagedIdentityApplication
+                .builder(ManagedIdentityId.systemAssigned())
+                .httpClient(httpClientMock)
+                .build();
+
+        try {
+            miApp.acquireTokenForManagedIdentity(
+                    ManagedIdentityParameters.builder(resource)
+                            .environmentVariables(environmentVariables)
+                            .build()).get();
+        } catch (Exception exception) {
+            assert(exception.getCause() instanceof MsalManagedIdentityException);
+
+            MsalManagedIdentityException miException = (MsalManagedIdentityException) exception.getCause();
+            assertEquals(ManagedIdentitySourceType.AzureArc, miException.managedIdentitySourceType);
+            assertEquals(MsalError.MANAGED_IDENTITY_REQUEST_FAILED, miException.errorCode());
+            assertEquals(MsalErrorMessage.MANAGED_IDENTITY_NO_CHALLENGE_ERROR, miException.getMessage());
+            return;
+        }
+
+        fail("MsalManagedIdentityException is expected but not thrown.");
+    }
+
+    @Test
+    void azureArcManagedIdentity_InvalidAuthHeader() throws Exception {
+        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(ManagedIdentitySourceType.AzureArc, azureArcEndpoint);
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        HttpResponse response = new HttpResponse();
+        response.statusCode(HttpStatus.SC_UNAUTHORIZED);
+        response.headers().put("WWW-Authenticate", Collections.singletonList("Basic realm=filepath=somepath"));
+
+        lenient().when(httpClientMock.send(any())).thenReturn(response);
+
+        ManagedIdentityApplication miApp = ManagedIdentityApplication
+                .builder(ManagedIdentityId.systemAssigned())
+                .httpClient(httpClientMock)
+                .build();
+
+        try {
+            miApp.acquireTokenForManagedIdentity(
+                    ManagedIdentityParameters.builder(resource)
+                            .environmentVariables(environmentVariables)
+                            .build()).get();
+        } catch (Exception exception) {
+            assert(exception.getCause() instanceof MsalManagedIdentityException);
+
+            MsalManagedIdentityException miException = (MsalManagedIdentityException) exception.getCause();
+            assertEquals(ManagedIdentitySourceType.AzureArc, miException.managedIdentitySourceType);
+            assertEquals(MsalError.MANAGED_IDENTITY_REQUEST_FAILED, miException.errorCode());
+            assertEquals(MsalErrorMessage.MANAGED_IDENTITY_INVALID_CHALLENGE, miException.getMessage());
             return;
         }
 

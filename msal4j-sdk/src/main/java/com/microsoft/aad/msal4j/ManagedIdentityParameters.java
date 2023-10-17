@@ -22,6 +22,7 @@ import java.util.Set;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ManagedIdentityParameters implements IAcquireTokenParameters {
 
+    @Getter
     String resource;
     
     boolean forceRefresh;

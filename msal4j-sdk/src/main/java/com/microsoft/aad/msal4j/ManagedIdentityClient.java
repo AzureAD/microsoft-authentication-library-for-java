@@ -38,6 +38,8 @@ class ManagedIdentityClient {
             return managedIdentitySource;
         } else if ((managedIdentitySource = CloudShellManagedIdentitySource.create(msalRequest, serviceBundle)) != null) {
             return managedIdentitySource;
+        } else if ((managedIdentitySource = AzureArcManagedIdentitySource.create(msalRequest, serviceBundle)) != null) {
+            return managedIdentitySource;
         } else {
             return new IMDSManagedIdentitySource(msalRequest, serviceBundle);
         }
