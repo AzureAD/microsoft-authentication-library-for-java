@@ -19,16 +19,16 @@ class AppServiceManagedIdentitySource extends AbstractManagedIdentitySource{
     private static final String APP_SERVICE_MSI_API_VERSION = "2019-08-01";
     private static final String SECRET_HEADER_NAME = "X-IDENTITY-HEADER";
 
-    private final URI MSI_ENDPOINT;
-    private final String SECRET;
+    private final URI msiEndpoint;
+    private final String identityHeader;
 
     @Override
     public void createManagedIdentityRequest(String resource) {
-        managedIdentityRequest.baseEndpoint = MSI_ENDPOINT;
+        managedIdentityRequest.baseEndpoint = msiEndpoint;
         managedIdentityRequest.method = HttpMethod.GET;
 
         managedIdentityRequest.headers = new HashMap<>();
-        managedIdentityRequest.headers.put(SECRET_HEADER_NAME, SECRET);
+        managedIdentityRequest.headers.put(SECRET_HEADER_NAME, identityHeader);
 
         managedIdentityRequest.queryParameters = new HashMap<>();
         managedIdentityRequest.queryParameters.put("api-version", Collections.singletonList(APP_SERVICE_MSI_API_VERSION));
@@ -50,8 +50,8 @@ class AppServiceManagedIdentitySource extends AbstractManagedIdentitySource{
     private AppServiceManagedIdentitySource(MsalRequest msalRequest, ServiceBundle serviceBundle, URI msiEndpoint, String secret)
     {
         super(msalRequest, serviceBundle, ManagedIdentitySourceType.APP_SERVICE);
-        this.MSI_ENDPOINT = msiEndpoint;
-        this.SECRET = secret;
+        this.msiEndpoint = msiEndpoint;
+        this.identityHeader = secret;
     }
 
     static AbstractManagedIdentitySource create(MsalRequest msalRequest, ServiceBundle serviceBundle) {

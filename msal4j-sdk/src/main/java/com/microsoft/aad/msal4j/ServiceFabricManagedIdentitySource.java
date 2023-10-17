@@ -15,17 +15,16 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
 
     private static final Logger LOG = LoggerFactory.getLogger(ServiceFabricManagedIdentitySource.class);
 
-    //TODO: similar to telemetry API version. New constants class for better management?
     private static final String SERVICE_FABRIC_MSI_API_VERSION = "2019-07-01-preview";
 
-    private final URI MSI_ENDPOINT;//TODO just a local variable, rename to camelCase? (check other *Source classes)
+    private final URI msiEndpoint;
     private final String identityHeader;
     private final ManagedIdentityIdType idType;
     private final String userAssignedId;
 
     @Override
     public void createManagedIdentityRequest(String resource) {
-        managedIdentityRequest.baseEndpoint = MSI_ENDPOINT;
+        managedIdentityRequest.baseEndpoint = msiEndpoint;
         managedIdentityRequest.method = HttpMethod.GET;
 
         managedIdentityRequest.headers = new HashMap<>();
@@ -35,7 +34,6 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
         managedIdentityRequest.queryParameters.put("resource", Collections.singletonList(resource));
         managedIdentityRequest.queryParameters.put("api-version", Collections.singletonList(SERVICE_FABRIC_MSI_API_VERSION));
 
-        //TODO: object ID in .NET but not in Java? Need to confirm
         if (idType == ManagedIdentityIdType.CLIENT_ID) {
             LOG.info("[Managed Identity] Adding user assigned client id to the request.");
             managedIdentityRequest.queryParameters.put(Constants.MANAGED_IDENTITY_CLIENT_ID, Collections.singletonList(userAssignedId));
@@ -48,7 +46,7 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
     private ServiceFabricManagedIdentitySource(MsalRequest msalRequest, ServiceBundle serviceBundle, URI msiEndpoint, String identityHeader)
     {
         super(msalRequest, serviceBundle, ManagedIdentitySourceType.SERVICE_FABRIC);
-        this.MSI_ENDPOINT = msiEndpoint;
+        this.msiEndpoint = msiEndpoint;
         this.identityHeader = identityHeader;
 
         this.idType = ((ManagedIdentityApplication) msalRequest.application()).getManagedIdentityId().getIdType();
@@ -69,20 +67,16 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
             return null;
         }
 
-        //TODO: if null an exception is thrown, ternary not needed (check other *Source classes)
-        URI validatedUri = validateAndGetUri(msiEndpoint);
-        return validatedUri == null ? null
-                : new ServiceFabricManagedIdentitySource(msalRequest, serviceBundle, validatedUri, identityHeader);
+        return new ServiceFabricManagedIdentitySource(msalRequest, serviceBundle, validateAndGetUri(msiEndpoint), identityHeader);
     }
 
     private static URI validateAndGetUri(String msiEndpoint)
     {
-        URI endpointUri = null;
-
         try
         {
-            //TODO: can move info log/return to here, exception would still be thrown (check other *Source classes)
-            endpointUri = new URI(msiEndpoint);
+            URI endpointUri = new URI(msiEndpoint);
+            LOG.info("[Managed Identity] Environment variables validation passed for service fabric managed identity. Endpoint URI: " + endpointUri + ". Creating service fabric managed identity.");
+            return endpointUri;
         }
         catch (URISyntaxException ex)
         {
@@ -90,9 +84,6 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
                     MsalErrorMessage.MANAGED_IDENTITY_ENDPOINT_INVALID_URI_ERROR, "MSI_ENDPOINT", msiEndpoint, "Service Fabric"),
                     ManagedIdentitySourceType.SERVICE_FABRIC);
         }
-
-        LOG.info("[Managed Identity] Environment variables validation passed for service fabric managed identity. Endpoint URI: " + endpointUri + ". Creating service fabric managed identity.");
-        return endpointUri;
     }
 
 }

@@ -15,11 +15,11 @@ class CloudShellManagedIdentitySource extends AbstractManagedIdentitySource{
 
     private static final Logger LOG = LoggerFactory.getLogger(CloudShellManagedIdentitySource.class);
 
-    private final URI MSI_ENDPOINT;
+    private final URI msiEndpoint;
 
     @Override
     public void createManagedIdentityRequest(String resource) {
-        managedIdentityRequest.baseEndpoint = MSI_ENDPOINT;
+        managedIdentityRequest.baseEndpoint = msiEndpoint;
         managedIdentityRequest.method = HttpMethod.POST;
 
         managedIdentityRequest.headers = new HashMap<>();
@@ -33,7 +33,7 @@ class CloudShellManagedIdentitySource extends AbstractManagedIdentitySource{
     private CloudShellManagedIdentitySource(MsalRequest msalRequest, ServiceBundle serviceBundle, URI msiEndpoint)
     {
         super(msalRequest, serviceBundle, ManagedIdentitySourceType.CLOUD_SHELL);
-        this.MSI_ENDPOINT = msiEndpoint;
+        this.msiEndpoint = msiEndpoint;
 
         ManagedIdentityIdType idType =
                 ((ManagedIdentityApplication) msalRequest.application()).getManagedIdentityId().getIdType();
@@ -57,18 +57,16 @@ class CloudShellManagedIdentitySource extends AbstractManagedIdentitySource{
             return null;
         }
 
-        URI validatedUri = validateAndGetUri(msiEndpoint);
-        return validatedUri == null ? null
-                : new CloudShellManagedIdentitySource(msalRequest, serviceBundle, validatedUri);
+        return new CloudShellManagedIdentitySource(msalRequest, serviceBundle, validateAndGetUri(msiEndpoint));
     }
 
     private static URI validateAndGetUri(String msiEndpoint)
     {
-        URI endpointUri = null;
-
         try
         {
-            endpointUri = new URI(msiEndpoint);
+            URI endpointUri = new URI(msiEndpoint);
+            LOG.info("[Managed Identity] Environment variables validation passed for cloud shell managed identity. Endpoint URI: " + endpointUri + ". Creating cloud shell managed identity.");
+            return endpointUri;
         }
         catch (URISyntaxException ex)
         {
@@ -76,9 +74,6 @@ class CloudShellManagedIdentitySource extends AbstractManagedIdentitySource{
                     MsalErrorMessage.MANAGED_IDENTITY_ENDPOINT_INVALID_URI_ERROR, "MSI_ENDPOINT", msiEndpoint, "Cloud Shell"),
                     ManagedIdentitySourceType.CLOUD_SHELL);
         }
-
-        LOG.info("[Managed Identity] Environment variables validation passed for cloud shell managed identity. Endpoint URI: " + endpointUri + ". Creating cloud shell managed identity.");
-        return endpointUri;
     }
 
 }
