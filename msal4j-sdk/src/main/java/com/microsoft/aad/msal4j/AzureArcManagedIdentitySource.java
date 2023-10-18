@@ -45,7 +45,7 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
         } catch (URISyntaxException e) {
             throw new MsalManagedIdentityException(MsalError.INVALID_MANAGED_IDENTITY_ENDPOINT, String.format(
                     MsalErrorMessage.MANAGED_IDENTITY_ENDPOINT_INVALID_URI_ERROR, "IDENTITY_ENDPOINT", identityEndpoint, AZURE_ARC),
-                    ManagedIdentitySourceType.AzureArc);
+                    ManagedIdentitySourceType.AZURE_ARC);
         }
 
         LOG.info("[Managed Identity] Creating Azure Arc managed identity. Endpoint URI: " + endpointUri);
@@ -53,15 +53,15 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
     }
 
     private AzureArcManagedIdentitySource(URI endpoint, MsalRequest msalRequest, ServiceBundle serviceBundle){
-        super(msalRequest, serviceBundle, ManagedIdentitySourceType.AzureArc);
+        super(msalRequest, serviceBundle, ManagedIdentitySourceType.AZURE_ARC);
         this.MSI_ENDPOINT = endpoint;
 
         ManagedIdentityIdType idType =
                 ((ManagedIdentityApplication) msalRequest.application()).getManagedIdentityId().getIdType();
-        if (idType != ManagedIdentityIdType.SystemAssigned) {
+        if (idType != ManagedIdentityIdType.SYSTEM_ASSIGNED) {
             throw new MsalManagedIdentityException(MsalError.USER_ASSIGNED_MANAGED_IDENTITY_NOT_SUPPORTED,
                     String.format(MsalErrorMessage.MANAGED_IDENTITY_USER_ASSIGNED_NOT_SUPPORTED, AZURE_ARC),
-                    ManagedIdentitySourceType.CloudShell);
+                    ManagedIdentitySourceType.AZURE_ARC);
         }
     }
 
@@ -92,7 +92,7 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
                 LOG.error("[Managed Identity] WWW-Authenticate header is expected but not found.");
                 throw new MsalManagedIdentityException(MsalError.MANAGED_IDENTITY_REQUEST_FAILED,
                         MsalErrorMessage.MANAGED_IDENTITY_NO_CHALLENGE_ERROR,
-                        ManagedIdentitySourceType.AzureArc);
+                        ManagedIdentitySourceType.AZURE_ARC);
             }
 
             String challenge = response.headers().get("WWW-Authenticate").get(0);
@@ -103,7 +103,7 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
                 LOG.error("[Managed Identity] The WWW-Authenticate header for Azure arc managed identity is not an expected format.");
                 throw new MsalManagedIdentityException(MsalError.MANAGED_IDENTITY_REQUEST_FAILED,
                         MsalErrorMessage.MANAGED_IDENTITY_INVALID_CHALLENGE,
-                        ManagedIdentitySourceType.AzureArc);
+                        ManagedIdentitySourceType.AZURE_ARC);
             }
 
             String authHeaderValue = "Basic " + splitChallenge[1];

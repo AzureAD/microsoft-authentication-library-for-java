@@ -82,7 +82,7 @@ class ManagedIdentityTests {
                 headers.put("Metadata", "true");
                 break;
             }
-            case AzureArc: {
+            case AZURE_ARC: {
                 endpoint = azureArcEndpoint;
 
                 queryParameters.put("api-version", Collections.singletonList("2019-11-01"));
@@ -129,7 +129,7 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        lenient().when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+        when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
 
         ManagedIdentityApplication miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
@@ -152,6 +152,7 @@ class ManagedIdentityTests {
 
         assertNotNull(result.accessToken());
         assertEquals(accessToken, result.accessToken());
+        verify(httpClientMock, times(1)).send(any());
     }
 
     @ParameterizedTest
@@ -173,6 +174,7 @@ class ManagedIdentityTests {
                         .build()).get();
 
         assertNotNull(result.accessToken());
+        verify(httpClientMock, times(1)).send(any());
     }
 
     @ParameterizedTest
@@ -197,7 +199,7 @@ class ManagedIdentityTests {
             assertInstanceOf(MsalManagedIdentityException.class, e.getCause());
 
             MsalManagedIdentityException msalMsiException = (MsalManagedIdentityException) e.getCause();
-            assertEquals(ManagedIdentitySourceType.CLOUD_SHELL, msalMsiException.managedIdentitySourceType);
+            assertEquals(source, msalMsiException.managedIdentitySourceType);
             assertEquals(MsalError.USER_ASSIGNED_MANAGED_IDENTITY_NOT_SUPPORTED, msalMsiException.errorCode());
             return;
         }
@@ -214,8 +216,8 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        lenient().when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
-        lenient().when(httpClientMock.send(eq(expectedRequest(source, anotherResource)))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+        when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+        when(httpClientMock.send(eq(expectedRequest(source, anotherResource)))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
 
         ManagedIdentityApplication miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
@@ -235,6 +237,7 @@ class ManagedIdentityTests {
                         .build()).get();
 
         assertNotNull(result.accessToken());
+        verify(httpClientMock, times(2)).send(any());
         // TODO: Assert token source to check the token source is IDP and not Cache.
     }
 
@@ -244,8 +247,7 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        lenient().when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(500, getMsiErrorResponse()));
-        lenient().when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(500, getMsiErrorResponse()));
+        when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(500, getMsiErrorResponse()));
 
         ManagedIdentityApplication miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
@@ -267,6 +269,7 @@ class ManagedIdentityTests {
         }
 
         fail("MsalManagedIdentityException is expected but not thrown.");
+        verify(httpClientMock, times(1)).send(any());
     }
 
     @ParameterizedTest
@@ -275,8 +278,7 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        lenient().when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(500, ""));
-        lenient().when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(500, ""));
+        when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(500, ""));
 
         ManagedIdentityApplication miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
@@ -298,6 +300,7 @@ class ManagedIdentityTests {
         }
 
         fail("MsalManagedIdentityException is expected but not thrown.");
+        verify(httpClientMock, times(1)).send(any());
     }
 
     @ParameterizedTest
@@ -306,8 +309,7 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        lenient().when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(200, ""));
-        lenient().when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(200, ""));
+        when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(200, ""));
 
         ManagedIdentityApplication miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
@@ -329,6 +331,7 @@ class ManagedIdentityTests {
         }
 
         fail("MsalManagedIdentityException is expected but not thrown.");
+        verify(httpClientMock, times(1)).send(any());
     }
 
     @ParameterizedTest
@@ -337,7 +340,7 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        lenient().when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenThrow(new SocketException("A socket operation was attempted to an unreachable network."));
+        when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenThrow(new SocketException("A socket operation was attempted to an unreachable network."));
 
         ManagedIdentityApplication miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
@@ -359,17 +362,18 @@ class ManagedIdentityTests {
         }
 
         fail("MsalManagedIdentityException is expected but not thrown.");
+        verify(httpClientMock, times(1)).send(any());
     }
 
     @Test
     void azureArcManagedIdentity_MissingAuthHeader() throws Exception {
-        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(ManagedIdentitySourceType.AzureArc, azureArcEndpoint);
+        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(ManagedIdentitySourceType.AZURE_ARC, azureArcEndpoint);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
         HttpResponse response = new HttpResponse();
         response.statusCode(HttpStatus.SC_UNAUTHORIZED);
 
-        lenient().when(httpClientMock.send(any())).thenReturn(response);
+        when(httpClientMock.send(any())).thenReturn(response);
 
         ManagedIdentityApplication miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
@@ -385,13 +389,14 @@ class ManagedIdentityTests {
             assert(exception.getCause() instanceof MsalManagedIdentityException);
 
             MsalManagedIdentityException miException = (MsalManagedIdentityException) exception.getCause();
-            assertEquals(ManagedIdentitySourceType.AzureArc, miException.managedIdentitySourceType);
+            assertEquals(ManagedIdentitySourceType.AZURE_ARC, miException.managedIdentitySourceType);
             assertEquals(MsalError.MANAGED_IDENTITY_REQUEST_FAILED, miException.errorCode());
             assertEquals(MsalErrorMessage.MANAGED_IDENTITY_NO_CHALLENGE_ERROR, miException.getMessage());
             return;
         }
 
         fail("MsalManagedIdentityException is expected but not thrown.");
+        verify(httpClientMock, times(1)).send(any());
     }
 
     @ParameterizedTest
@@ -400,7 +405,7 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        lenient().when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+        when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
 
         ManagedIdentityApplication miApp1 = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
@@ -430,18 +435,19 @@ class ManagedIdentityTests {
         // so calling acquireTokenForManagedIdentity with the same parameters in two different ManagedIdentityApplications
         // should return the same token
         assertEquals(resultMiApp1.accessToken(), resultMiApp2.accessToken());
+        verify(httpClientMock, times(1)).send(any());
     }
 
     @Test
     void azureArcManagedIdentity_InvalidAuthHeader() throws Exception {
-        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(ManagedIdentitySourceType.AzureArc, azureArcEndpoint);
+        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(ManagedIdentitySourceType.AZURE_ARC, azureArcEndpoint);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
         HttpResponse response = new HttpResponse();
         response.statusCode(HttpStatus.SC_UNAUTHORIZED);
         response.headers().put("WWW-Authenticate", Collections.singletonList("Basic realm=filepath=somepath"));
 
-        lenient().when(httpClientMock.send(any())).thenReturn(response);
+        when(httpClientMock.send(any())).thenReturn(response);
 
         ManagedIdentityApplication miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
@@ -457,12 +463,13 @@ class ManagedIdentityTests {
             assert(exception.getCause() instanceof MsalManagedIdentityException);
 
             MsalManagedIdentityException miException = (MsalManagedIdentityException) exception.getCause();
-            assertEquals(ManagedIdentitySourceType.AzureArc, miException.managedIdentitySourceType);
+            assertEquals(ManagedIdentitySourceType.AZURE_ARC, miException.managedIdentitySourceType);
             assertEquals(MsalError.MANAGED_IDENTITY_REQUEST_FAILED, miException.errorCode());
             assertEquals(MsalErrorMessage.MANAGED_IDENTITY_INVALID_CHALLENGE, miException.getMessage());
             return;
         }
 
         fail("MsalManagedIdentityException is expected but not thrown.");
+        verify(httpClientMock, times(1)).send(any());
     }
 }
