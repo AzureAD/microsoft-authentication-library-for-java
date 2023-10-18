@@ -5,6 +5,8 @@ package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.util.URLUtils;
 import org.apache.http.HttpStatus;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +36,7 @@ class ManagedIdentityTests {
     final static String azureArcEndpoint = "http://localhost:40342/metadata/identity/oauth2/token";
     final static String cloudShellEndpoint = "http://localhost:40342/metadata/identity/oauth2/token";
     final static String serviceFabricEndpoint = "http://localhost:40342/metadata/identity/oauth2/token";
+    private static ManagedIdentityApplication miApp;
 
     private String getSuccessfulResponse(String resource) {
         long expiresOn = Instant.now().plus(1, ChronoUnit.HOURS).getEpochSecond();
@@ -131,10 +134,13 @@ class ManagedIdentityTests {
 
         when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
 
-        ManagedIdentityApplication miApp = ManagedIdentityApplication
+        miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
                 .httpClient(httpClientMock)
                 .build();
+
+        // Clear caching to avoid cross test pollution.
+        miApp.tokenCache().accessTokens.clear();
 
         IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(resource)
@@ -163,10 +169,13 @@ class ManagedIdentityTests {
 
         when(httpClientMock.send(eq(expectedRequest(source, resource, id)))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
 
-        ManagedIdentityApplication miApp = ManagedIdentityApplication
+        miApp = ManagedIdentityApplication
                 .builder(id)
                 .httpClient(httpClientMock)
                 .build();
+
+        // Clear caching to avoid cross test pollution.
+        miApp.tokenCache().accessTokens.clear();
 
         IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(resource)
@@ -183,10 +192,13 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        ManagedIdentityApplication miApp = ManagedIdentityApplication
+        miApp = ManagedIdentityApplication
                 .builder(id)
                 .httpClient(httpClientMock)
                 .build();
+
+        // Clear caching to avoid cross test pollution.
+        miApp.tokenCache().accessTokens.clear();
 
         try {
             IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
@@ -219,10 +231,13 @@ class ManagedIdentityTests {
         when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
         when(httpClientMock.send(eq(expectedRequest(source, anotherResource)))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
 
-        ManagedIdentityApplication miApp = ManagedIdentityApplication
+        miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
                 .httpClient(httpClientMock)
                 .build();
+
+        // Clear caching to avoid cross test pollution.
+        miApp.tokenCache().accessTokens.clear();
 
         IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(resource)
@@ -249,10 +264,13 @@ class ManagedIdentityTests {
 
         when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(500, getMsiErrorResponse()));
 
-        ManagedIdentityApplication miApp = ManagedIdentityApplication
+        miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
                 .httpClient(httpClientMock)
                 .build();
+
+        // Clear caching to avoid cross test pollution.
+        miApp.tokenCache().accessTokens.clear();
 
         try {
             miApp.acquireTokenForManagedIdentity(
@@ -280,10 +298,13 @@ class ManagedIdentityTests {
 
         when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(500, ""));
 
-        ManagedIdentityApplication miApp = ManagedIdentityApplication
+        miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
                 .httpClient(httpClientMock)
                 .build();
+
+        // Clear caching to avoid cross test pollution.
+        miApp.tokenCache().accessTokens.clear();
 
         try {
             miApp.acquireTokenForManagedIdentity(
@@ -311,10 +332,13 @@ class ManagedIdentityTests {
 
         when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(200, ""));
 
-        ManagedIdentityApplication miApp = ManagedIdentityApplication
+        miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
                 .httpClient(httpClientMock)
                 .build();
+
+        // Clear caching to avoid cross test pollution.
+        miApp.tokenCache().accessTokens.clear();
 
         try {
             miApp.acquireTokenForManagedIdentity(
@@ -342,10 +366,13 @@ class ManagedIdentityTests {
 
         when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenThrow(new SocketException("A socket operation was attempted to an unreachable network."));
 
-        ManagedIdentityApplication miApp = ManagedIdentityApplication
+        miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
                 .httpClient(httpClientMock)
                 .build();
+
+        // Clear caching to avoid cross test pollution.
+        miApp.tokenCache().accessTokens.clear();
 
         try {
             miApp.acquireTokenForManagedIdentity(
@@ -375,10 +402,13 @@ class ManagedIdentityTests {
 
         when(httpClientMock.send(any())).thenReturn(response);
 
-        ManagedIdentityApplication miApp = ManagedIdentityApplication
+        miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
                 .httpClient(httpClientMock)
                 .build();
+
+        // Clear caching to avoid cross test pollution.
+        miApp.tokenCache().accessTokens.clear();
   
         try {
             miApp.acquireTokenForManagedIdentity(
@@ -407,17 +437,20 @@ class ManagedIdentityTests {
 
         when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
 
-        ManagedIdentityApplication miApp1 = ManagedIdentityApplication
+        miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
                 .httpClient(httpClientMock)
                 .build();
+
+        // Clear caching to avoid cross test pollution.
+        miApp.tokenCache().accessTokens.clear();
       
         ManagedIdentityApplication miApp2 = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
                 .httpClient(httpClientMock)
                 .build();
       
-      IAuthenticationResult resultMiApp1 = miApp1.acquireTokenForManagedIdentity(
+      IAuthenticationResult resultMiApp1 = miApp.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(resource)
                         .environmentVariables(environmentVariables)
                         .build()).get();
@@ -449,10 +482,13 @@ class ManagedIdentityTests {
 
         when(httpClientMock.send(any())).thenReturn(response);
 
-        ManagedIdentityApplication miApp = ManagedIdentityApplication
+        miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
                 .httpClient(httpClientMock)
                 .build();
+
+        // Clear caching to avoid cross test pollution.
+        miApp.tokenCache().accessTokens.clear();
 
         try {
             miApp.acquireTokenForManagedIdentity(
