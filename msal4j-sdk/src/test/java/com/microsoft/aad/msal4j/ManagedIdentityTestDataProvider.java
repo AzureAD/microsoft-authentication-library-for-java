@@ -21,6 +21,10 @@ class ManagedIdentityTestDataProvider {
                         ManagedIdentityTests.resource),
                 Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTests.cloudShellEndpoint,
                         ManagedIdentityTests.resourceDefaultSuffix),
+                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTests.azureArcEndpoint,
+                        ManagedIdentityTests.resource),
+                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTests.azureArcEndpoint,
+                        ManagedIdentityTests.resourceDefaultSuffix),
                 Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTests.IMDS_ENDPOINT,
                         ManagedIdentityTests.resource),
                 Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTests.IMDS_ENDPOINT,
@@ -54,6 +58,10 @@ class ManagedIdentityTestDataProvider {
                 Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTests.cloudShellEndpoint,
                         ManagedIdentityId.userAssignedClientId(CLIENT_ID)),
                 Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTests.cloudShellEndpoint,
+                        ManagedIdentityId.userAssignedResourceId(RESOURCE_ID)),
+                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTests.azureArcEndpoint,
+                        ManagedIdentityId.userAssignedClientId(CLIENT_ID)),
+                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTests.azureArcEndpoint,
                         ManagedIdentityId.userAssignedResourceId(RESOURCE_ID)));
     }
 
@@ -67,6 +75,10 @@ class ManagedIdentityTestDataProvider {
                         "user.read"),
                 Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTests.cloudShellEndpoint,
                         "https://management.core.windows.net//user_impersonation"),
+                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTests.azureArcEndpoint,
+                        "user.read"),
+                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTests.azureArcEndpoint,
+                        "https://management.core.windows.net//user_impersonation"),
                 Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTests.IMDS_ENDPOINT,
                         "user.read"),
                 Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTests.IMDS_ENDPOINT,
@@ -79,6 +91,7 @@ class ManagedIdentityTestDataProvider {
 
     public static Stream<Arguments> createDataError() {
         return Stream.of(
+                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTests.azureArcEndpoint),
                 Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTests.appServiceEndpoint),
                 Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTests.cloudShellEndpoint),
                 Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTests.IMDS_ENDPOINT),
