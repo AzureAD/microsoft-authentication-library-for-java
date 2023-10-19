@@ -35,10 +35,10 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
         managedIdentityRequest.queryParameters.put("api-version", Collections.singletonList(SERVICE_FABRIC_MSI_API_VERSION));
 
         if (idType == ManagedIdentityIdType.CLIENT_ID) {
-            LOG.info("[Managed Identity] Adding user assigned client id to the request.");
+            LOG.info("[Managed Identity] Adding user assigned client id to the request for Service Fabric Managed Identity.");
             managedIdentityRequest.queryParameters.put(Constants.MANAGED_IDENTITY_CLIENT_ID, Collections.singletonList(userAssignedId));
         } else if (idType == ManagedIdentityIdType.RESOURCE_ID) {
-            LOG.info("[Managed Identity] Adding user assigned resource id to the request.");
+            LOG.info("[Managed Identity] Adding user assigned resource id to the request for Service Fabric Managed Identity.");
             managedIdentityRequest.queryParameters.put(Constants.MANAGED_IDENTITY_RESOURCE_ID, Collections.singletonList(userAssignedId));
         }
     }
@@ -75,7 +75,7 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
         try
         {
             URI endpointUri = new URI(msiEndpoint);
-            LOG.info("[Managed Identity] Environment variables validation passed for service fabric managed identity. Endpoint URI: " + endpointUri + ". Creating service fabric managed identity.");
+            LOG.info("[Managed Identity] Environment variables validation passed for Service Fabric Managed Identity. Endpoint URI: " + endpointUri);
             return endpointUri;
         }
         catch (URISyntaxException ex)

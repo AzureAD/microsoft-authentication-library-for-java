@@ -34,7 +34,9 @@ class ManagedIdentityClient {
     private static AbstractManagedIdentitySource createManagedIdentitySource(MsalRequest msalRequest,
             ServiceBundle serviceBundle) {
         AbstractManagedIdentitySource managedIdentitySource;
-        if ((managedIdentitySource = AppServiceManagedIdentitySource.create(msalRequest, serviceBundle)) != null) {
+        if ((managedIdentitySource = ServiceFabricManagedIdentitySource.create(msalRequest, serviceBundle)) != null) {
+            return managedIdentitySource;
+        } else if ((managedIdentitySource = AppServiceManagedIdentitySource.create(msalRequest, serviceBundle)) != null) {
             return managedIdentitySource;
         } else if ((managedIdentitySource = CloudShellManagedIdentitySource.create(msalRequest, serviceBundle)) != null) {
             return managedIdentitySource;
