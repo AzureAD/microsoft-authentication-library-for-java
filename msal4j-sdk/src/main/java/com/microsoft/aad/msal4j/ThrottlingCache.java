@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 class ThrottlingCache {
 
     static final int MAX_THROTTLING_TIME_SEC = 3600;
-    static int DEFAULT_THROTTLING_TIME_SEC = 120;
+    static int DEFAULT_THROTTLING_TIME_SEC = 5;
     static final int CACHE_SIZE_LIMIT_TO_TRIGGER_EXPIRED_ENTITIES_REMOVAL = 100;
 
     // request hash to expiration timestamp
