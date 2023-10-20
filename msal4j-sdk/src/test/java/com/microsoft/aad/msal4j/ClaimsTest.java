@@ -3,9 +3,9 @@
 
 package com.microsoft.aad.msal4j;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -13,10 +13,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-public class ClaimsTest {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class ClaimsTest {
 
     @Test
-    public void testClaimsRequest_Format() {
+    void testClaimsRequest_Format() {
 
         List<String> values = new ArrayList<>();
         values.add("urn:mace:incommon:iap:silver");
@@ -29,11 +30,11 @@ public class ClaimsTest {
         cr.requestClaimInIdToken("sub", new RequestedClaimAdditionalInfo(true, "248289761001", null));
         cr.requestClaimInIdToken("auth_time", new RequestedClaimAdditionalInfo(false, null, null));
 
-        Assert.assertEquals(cr.formatAsJSONString(), TestConfiguration.CLAIMS_REQUEST);
+        assertEquals(cr.formatAsJSONString(), TestConfiguration.CLAIMS_REQUEST);
     }
 
     @Test
-    public void testClaimsRequest_MergeWithClientCapabilitiesAndClaimsChallenge() throws URISyntaxException {
+    void testClaimsRequest_MergeWithClientCapabilitiesAndClaimsChallenge() throws URISyntaxException {
 
         List<String> values = new ArrayList<>();
         values.add("urn:mace:incommon:iap:silver");
@@ -64,18 +65,18 @@ public class ClaimsTest {
         String mergedClaimsAndChallenge = JsonHelper.mergeJSONString(claimsChallenge, claimsRequest);
         String mergedAll = JsonHelper.mergeJSONString(claimsChallenge, mergedClaimsAndCapabilities);
 
-        Assert.assertEquals(clientCapabilities, TestConfiguration.CLIENT_CAPABILITIES);
-        Assert.assertEquals(claimsChallenge, TestConfiguration.CLAIMS_CHALLENGE);
-        Assert.assertEquals(claimsRequest, TestConfiguration.CLAIMS_REQUEST);
-        Assert.assertEquals(mergedClaimsAndCapabilities, TestConfiguration.MERGED_CLAIMS_AND_CAPABILITIES);
-        Assert.assertEquals(mergedClaimsAndChallenge, TestConfiguration.MERGED_CLAIMS_AND_CHALLENGE);
-        Assert.assertEquals(mergedAll, TestConfiguration.MERGED_CLAIMS_CAPABILITIES_AND_CHALLENGE);
+        assertEquals(clientCapabilities, TestConfiguration.CLIENT_CAPABILITIES);
+        assertEquals(claimsChallenge, TestConfiguration.CLAIMS_CHALLENGE);
+        assertEquals(claimsRequest, TestConfiguration.CLAIMS_REQUEST);
+        assertEquals(mergedClaimsAndCapabilities, TestConfiguration.MERGED_CLAIMS_AND_CAPABILITIES);
+        assertEquals(mergedClaimsAndChallenge, TestConfiguration.MERGED_CLAIMS_AND_CHALLENGE);
+        assertEquals(mergedAll, TestConfiguration.MERGED_CLAIMS_CAPABILITIES_AND_CHALLENGE);
     }
 
     @Test
-    public void testClaimsRequest_StringToClaimsRequest() {
+    void testClaimsRequest_StringToClaimsRequest() {
         ClaimsRequest cr = ClaimsRequest.formatAsClaimsRequest(TestConfiguration.CLAIMS_CHALLENGE);
 
-        Assert.assertEquals(cr.formatAsJSONString(), TestConfiguration.CLAIMS_CHALLENGE);
+        assertEquals(cr.formatAsJSONString(), TestConfiguration.CLAIMS_CHALLENGE);
     }
 }

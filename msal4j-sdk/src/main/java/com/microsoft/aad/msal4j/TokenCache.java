@@ -346,7 +346,7 @@ public class TokenCache implements ITokenCache {
                         ((Account) rootAccounts.get(accCached.homeAccountId())).tenantProfiles.put(accCached.realm(), profile);
                     }
 
-                    if (accCached.homeAccountId().contains(accCached.localAccountId())) {
+                    if (accCached.localAccountId() != null && accCached.homeAccountId().contains(accCached.localAccountId())) {
                         ((Account) rootAccounts.get(accCached.homeAccountId())).username(accCached.username());
                     }
                 }

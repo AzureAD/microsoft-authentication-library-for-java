@@ -3,34 +3,51 @@
 
 package com.microsoft.aad.msal4j;
 
-import org.powermock.api.easymock.PowerMock;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.testng.PowerMockTestCase;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedStatic;
+import org.mockito.junit.jupiter.MockitoExtension;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.mockStatic;
 
 import java.net.URI;
 import java.net.URL;
 
-@PrepareForTest(AadInstanceDiscoveryProvider.class)
-public class AadInstanceDiscoveryTest extends PowerMockTestCase {
+@ExtendWith(MockitoExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class AadInstanceDiscoveryTest {
 
-    @BeforeMethod
+    String instanceDiscoveryValidResponse;
+    AuthorizationCodeParameters parameters;
+
+    @BeforeAll
+    public void init() throws Exception {
+        instanceDiscoveryValidResponse = TestHelper.readResource(
+                this.getClass(),
+                "/instance_discovery_data/aad_instance_discovery_response_valid.json");
+
+        parameters = AuthorizationCodeParameters.builder(
+                "code", new URI("http://my.redirect.com")).build();
+    }
+
+    @BeforeEach
     public void setup() {
         AadInstanceDiscoveryProvider.cache.clear();
     }
 
     @Test
-    public void aadInstanceDiscoveryTest_NotSetByDeveloper() throws Exception {
+    void aadInstanceDiscoveryTest_NotSetByDeveloper() throws Exception {
         PublicClientApplication app = PublicClientApplication.builder("client_id")
                 .correlationId("correlation_id")
                 .authority("https://login.microsoftonline.com/my_tenant")
                 .build();
 
-        AuthorizationCodeParameters parameters = AuthorizationCodeParameters.builder(
-                "code", new URI("http://my.redirect.com")).build();
-
         MsalRequest msalRequest = new AuthorizationCodeRequest(
                 parameters,
                 app,
@@ -38,55 +55,32 @@ public class AadInstanceDiscoveryTest extends PowerMockTestCase {
 
         URL authority = new URL(app.authority());
 
-        String instanceDiscoveryData = TestHelper.readResource(
-                this.getClass(),
-                "/instance_discovery_data/aad_instance_discovery_response_valid.json");
-
         AadInstanceDiscoveryResponse expectedResponse = JsonHelper.convertJsonToObject(
-                instanceDiscoveryData,
+                instanceDiscoveryValidResponse,
                 AadInstanceDiscoveryResponse.class);
 
-        PowerMock.mockStaticPartial(AadInstanceDiscoveryProvider.class, "sendInstanceDiscoveryRequest");
+        try (MockedStatic<AadInstanceDiscoveryProvider> mockedInstanceDiscoveryProvider = mockStatic(AadInstanceDiscoveryProvider.class, CALLS_REAL_METHODS)) {
 
-        PowerMock.expectPrivate(
-                AadInstanceDiscoveryProvider.class,
-                "sendInstanceDiscoveryRequest",
-                authority,
-                msalRequest,
-                app.getServiceBundle()).andReturn(expectedResponse);
+            mockedInstanceDiscoveryProvider.when(() -> AadInstanceDiscoveryProvider.sendInstanceDiscoveryRequest(authority,
+                    msalRequest,
+                    app.getServiceBundle())).thenReturn(expectedResponse);
 
-        PowerMock.replay(AadInstanceDiscoveryProvider.class);
+            InstanceDiscoveryMetadataEntry entry = AadInstanceDiscoveryProvider.getMetadataEntry(
+                    authority,
+                    false,
+                    msalRequest,
+                    app.getServiceBundle());
 
-        InstanceDiscoveryMetadataEntry entry = AadInstanceDiscoveryProvider.getMetadataEntry(
-                new URL(app.authority()),
-                false,
-                msalRequest,
-                app.getServiceBundle());
-
-        PowerMock.verify(AadInstanceDiscoveryProvider.class);
-
-        Assert.assertEquals(entry.preferredNetwork(), "login.microsoftonline.com");
-        Assert.assertEquals(entry.preferredCache(), "login.windows.net");
-        Assert.assertEquals(entry.aliases().size(), 4);
-        Assert.assertTrue(entry.aliases().contains("login.microsoftonline.com"));
-        Assert.assertTrue(entry.aliases().contains("login.windows.net"));
-        Assert.assertTrue(entry.aliases().contains("login.microsoft.com"));
-        Assert.assertTrue(entry.aliases().contains("sts.windows.net"));
+            assertValidResponse(entry);
+        }
     }
 
     @Test
-    public void aadInstanceDiscoveryTest_responseSetByDeveloper_validResponse() throws Exception {
-
-        String instanceDiscoveryResponse = TestHelper.readResource(
-                this.getClass(),
-                "/instance_discovery_data/aad_instance_discovery_response_valid.json");
+    void aadInstanceDiscoveryTest_responseSetByDeveloper_validResponse() throws Exception {
 
         PublicClientApplication app = PublicClientApplication.builder("client_id")
-                .aadInstanceDiscoveryResponse(instanceDiscoveryResponse)
+                .aadInstanceDiscoveryResponse(instanceDiscoveryValidResponse)
                 .build();
-
-        AuthorizationCodeParameters parameters = AuthorizationCodeParameters.builder(
-                "code", new URI("http://my.redirect.com")).build();
 
         MsalRequest msalRequest = new AuthorizationCodeRequest(
                 parameters,
@@ -95,61 +89,34 @@ public class AadInstanceDiscoveryTest extends PowerMockTestCase {
 
         URL authority = new URL(app.authority());
 
-        PowerMock.mockStaticPartial(
-                AadInstanceDiscoveryProvider.class,
-                "sendInstanceDiscoveryRequest");
-
-        // throw exception if we try to get metadata from network.
-        PowerMock.expectPrivate(
-                AadInstanceDiscoveryProvider.class,
-                "sendInstanceDiscoveryRequest",
-                authority,
-                msalRequest,
-                app.getServiceBundle()).andThrow(new AssertionError()).anyTimes();
-
-        PowerMock.replay(AadInstanceDiscoveryProvider.class);
-
         InstanceDiscoveryMetadataEntry entry = AadInstanceDiscoveryProvider.getMetadataEntry(
                 authority,
                 false,
                 msalRequest,
                 app.getServiceBundle());
 
-        Assert.assertEquals(entry.preferredNetwork(), "login.microsoftonline.com");
-        Assert.assertEquals(entry.preferredCache(), "login.windows.net");
-        Assert.assertEquals(entry.aliases().size(), 4);
-        Assert.assertTrue(entry.aliases().contains("login.microsoftonline.com"));
-        Assert.assertTrue(entry.aliases().contains("login.windows.net"));
-        Assert.assertTrue(entry.aliases().contains("login.microsoft.com"));
-        Assert.assertTrue(entry.aliases().contains("sts.windows.net"));
+        assertValidResponse(entry);
     }
 
-    @Test(expectedExceptions = MsalClientException.class)
-    public void aadInstanceDiscoveryTest_responseSetByDeveloper_invalidJson() throws Exception {
+    @Test
+    void aadInstanceDiscoveryTest_responseSetByDeveloper_invalidJson() throws Exception {
 
         String instanceDiscoveryResponse = TestHelper.readResource(
                 this.getClass(),
                 "/instance_discovery_data/aad_instance_discovery_response_invalid_json.json");
 
-        PublicClientApplication app = PublicClientApplication.builder("client_id")
+        assertThrows(MsalClientException.class, () -> PublicClientApplication.builder("client_id")
                 .aadInstanceDiscoveryResponse(instanceDiscoveryResponse)
-                .build();
+                .build());
     }
 
-    @Test()
-    public void aadInstanceDiscoveryTest_AutoDetectRegion_NoRegionDetected() throws Exception {
-
-        String instanceDiscoveryResponse = TestHelper.readResource(
-                this.getClass(),
-                "/instance_discovery_data/aad_instance_discovery_response_valid.json");
+    @Test
+    void aadInstanceDiscoveryTest_AutoDetectRegion_NoRegionDetected() throws Exception {
 
         PublicClientApplication app = PublicClientApplication.builder("client_id")
-                .aadInstanceDiscoveryResponse(instanceDiscoveryResponse)
+                .aadInstanceDiscoveryResponse(instanceDiscoveryValidResponse)
                 .autoDetectRegion(true)
                 .build();
-
-        AuthorizationCodeParameters parameters = AuthorizationCodeParameters.builder(
-                "code", new URI("http://my.redirect.com")).build();
 
         MsalRequest msalRequest = new AuthorizationCodeRequest(
                 parameters,
@@ -158,32 +125,28 @@ public class AadInstanceDiscoveryTest extends PowerMockTestCase {
 
         URL authority = new URL(app.authority());
 
-        PowerMock.mockStaticPartial(
-                AadInstanceDiscoveryProvider.class,
-                "discoverRegion");
+        try (MockedStatic<AadInstanceDiscoveryProvider> mocked = mockStatic(AadInstanceDiscoveryProvider.class, CALLS_REAL_METHODS)) {
 
-        PowerMock.expectPrivate(
-                AadInstanceDiscoveryProvider.class,
-                "discoverRegion",
-                msalRequest,
-                app.getServiceBundle()).andThrow(new AssertionError()).anyTimes();
+            mocked.when(() -> AadInstanceDiscoveryProvider.discoverRegion(msalRequest,
+                    app.getServiceBundle())).thenReturn(null);
 
-        PowerMock.replay(AadInstanceDiscoveryProvider.class);
+            InstanceDiscoveryMetadataEntry entry = AadInstanceDiscoveryProvider.getMetadataEntry(
+                    authority,
+                    false,
+                    msalRequest,
+                    app.getServiceBundle());
 
-        InstanceDiscoveryMetadataEntry entry = AadInstanceDiscoveryProvider.getMetadataEntry(
-                authority,
-                false,
-                msalRequest,
-                app.getServiceBundle());
+            assertValidResponse(entry);
+        }
+    }
 
-        //Region detection will have been performed in the expected discoverRegion method, but these tests (likely) aren't
-        // being run in an Azure VM and instance discovery will fall back to the global endpoint (login.microsoftonline.com)
-        Assert.assertEquals(entry.preferredNetwork(), "login.microsoftonline.com");
-        Assert.assertEquals(entry.preferredCache(), "login.windows.net");
-        Assert.assertEquals(entry.aliases().size(), 4);
-        Assert.assertTrue(entry.aliases().contains("login.microsoftonline.com"));
-        Assert.assertTrue(entry.aliases().contains("login.windows.net"));
-        Assert.assertTrue(entry.aliases().contains("login.microsoft.com"));
-        Assert.assertTrue(entry.aliases().contains("sts.windows.net"));
+    void assertValidResponse(InstanceDiscoveryMetadataEntry entry) {
+        assertEquals(entry.preferredNetwork(), "login.microsoftonline.com");
+        assertEquals(entry.preferredCache(), "login.windows.net");
+        assertEquals(entry.aliases().size(), 4);
+        assertTrue(entry.aliases().contains("login.microsoftonline.com"));
+        assertTrue(entry.aliases().contains("login.windows.net"));
+        assertTrue(entry.aliases().contains("login.microsoft.com"));
+        assertTrue(entry.aliases().contains("sts.windows.net"));
     }
 }

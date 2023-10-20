@@ -182,7 +182,7 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
             if (openToolPath != null) {
                 Runtime runtime = Runtime.getRuntime();
                 try {
-                    runtime.exec(openTool + url);
+                    runtime.exec(openTool + " " + url);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -209,8 +209,11 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
                 expirationTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) + 1;
             }
 
-            while (result == null && !interactiveRequest.futureReference().get().isCancelled() &&
-                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) < expirationTime) {
+            while (result == null && !interactiveRequest.futureReference().get().isCancelled()) {
+                if (TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) > expirationTime) {
+                    LOG.warn(String.format("Listener timed out after %S seconds, no authorization code was returned from the server during that time.", timeFromParameters));
+                    break;
+                }
 
                 result = authorizationResultQueue.poll(100, TimeUnit.MILLISECONDS);
             }

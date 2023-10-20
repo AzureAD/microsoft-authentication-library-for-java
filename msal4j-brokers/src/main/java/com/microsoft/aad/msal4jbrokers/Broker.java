@@ -13,14 +13,17 @@ import com.microsoft.azure.javamsalruntime.ReadAccountResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-public class MsalRuntimeBroker implements IBroker {
-    private static final Logger LOG = LoggerFactory.getLogger(MsalRuntimeBroker.class);
+public class Broker implements IBroker {
+    private static final Logger LOG = LoggerFactory.getLogger(Broker.class);
 
     private static MsalRuntimeInterop interop;
     private static Boolean brokerAvailable;
+
+    private boolean supportWindows;
 
     static {
         try {
@@ -34,12 +37,13 @@ public class MsalRuntimeBroker implements IBroker {
 
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(PublicClientApplication application, SilentParameters parameters) {
+        String correlationID = application.correlationId() == null ? generateCorrelationID() : application.correlationId();
         Account accountResult = null;
 
         //If request has an account ID, MSALRuntime likely has data cached for that account that we can retrieve
         if (parameters.account() != null) {
             try {
-                accountResult = ((ReadAccountResult) interop.readAccountById(parameters.account().homeAccountId().split("\\.")[0], application.correlationId()).get()).getAccount();
+                accountResult = ((ReadAccountResult) interop.readAccountById(parameters.account().homeAccountId().split("\\.")[0], correlationID).get()).getAccount();
             } catch (InterruptedException | ExecutionException ex) {
                 throw new MsalClientException(String.format("MSALRuntime async operation interrupted when waiting for result: %s", ex.getMessage()), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
             }
@@ -62,8 +66,8 @@ public class MsalRuntimeBroker implements IBroker {
             AuthParameters authParameters = authParamsBuilder.build();
 
             if (accountResult == null) {
-                return interop.signInSilently(authParameters, application.correlationId())
-                        .thenCompose(acctResult -> interop.acquireTokenSilently(authParameters, application.correlationId(), ((AuthResult) acctResult).getAccount()))
+                return interop.signInSilently(authParameters, correlationID)
+                        .thenCompose(acctResult -> interop.acquireTokenSilently(authParameters, correlationID, ((AuthResult) acctResult).getAccount()))
                         .thenApply(authResult -> parseBrokerAuthResult(
                                 application.authority(),
                                 ((AuthResult) authResult).getIdToken(),
@@ -73,7 +77,7 @@ public class MsalRuntimeBroker implements IBroker {
                                 ((AuthResult) authResult).getAccessTokenExpirationTime(),
                                 ((AuthResult) authResult).isPopAuthorization()));
             } else {
-                return interop.acquireTokenSilently(authParameters, application.correlationId(), accountResult)
+                return interop.acquireTokenSilently(authParameters, correlationID, accountResult)
                         .thenApply(authResult -> parseBrokerAuthResult(application.authority(),
                                 ((AuthResult) authResult).getIdToken(),
                                 ((AuthResult) authResult).getAccessToken(),
@@ -89,6 +93,8 @@ public class MsalRuntimeBroker implements IBroker {
 
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(PublicClientApplication application, InteractiveRequestParameters parameters) {
+        String correlationID = application.correlationId() == null ? generateCorrelationID() : application.correlationId();
+
         try {
             AuthParameters.AuthParametersBuilder authParamsBuilder = new AuthParameters.
                     AuthParametersBuilder(application.clientId(),
@@ -103,11 +109,11 @@ public class MsalRuntimeBroker implements IBroker {
                         parameters.proofOfPossession().getUri(),
                         parameters.proofOfPossession().getNonce());
             }
-            
+
             AuthParameters authParameters = authParamsBuilder.build();
 
-            return interop.signInInteractively(parameters.windowHandle(), authParameters, application.correlationId(), parameters.loginHint())
-                    .thenCompose(acctResult -> interop.acquireTokenInteractively(parameters.windowHandle(), authParameters, application.correlationId(), ((AuthResult) acctResult).getAccount()))
+            return interop.signInInteractively(parameters.windowHandle(), authParameters, correlationID, parameters.loginHint())
+                    .thenCompose(acctResult -> interop.acquireTokenInteractively(parameters.windowHandle(), authParameters, correlationID, ((AuthResult) acctResult).getAccount()))
                     .thenApply(authResult -> parseBrokerAuthResult(
                             application.authority(),
                             ((AuthResult) authResult).getIdToken(),
@@ -127,6 +133,8 @@ public class MsalRuntimeBroker implements IBroker {
     @Deprecated
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(PublicClientApplication application, UserNamePasswordParameters parameters) {
+        String correlationID = application.correlationId() == null ? generateCorrelationID() : application.correlationId();
+
         try {
             AuthParameters.AuthParametersBuilder authParamsBuilder = new AuthParameters.
                     AuthParametersBuilder(application.clientId(),
@@ -143,8 +151,8 @@ public class MsalRuntimeBroker implements IBroker {
 
             AuthParameters authParameters = authParamsBuilder.build();
 
-            return interop.signInSilently(authParameters, application.correlationId())
-                    .thenCompose(acctResult -> interop.acquireTokenSilently(authParameters, application.correlationId(), ((AuthResult) acctResult).getAccount()))
+            return interop.signInSilently(authParameters, correlationID)
+                    .thenCompose(acctResult -> interop.acquireTokenSilently(authParameters, correlationID, ((AuthResult) acctResult).getAccount()))
                     .thenApply(authResult -> parseBrokerAuthResult(
                             application.authority(),
                             ((AuthResult) authResult).getIdToken(),
@@ -160,11 +168,13 @@ public class MsalRuntimeBroker implements IBroker {
 
     @Override
     public void removeAccount(PublicClientApplication application, IAccount msalJavaAccount) {
+        String correlationID = application.correlationId() == null ? generateCorrelationID() : application.correlationId();
+
         try {
-            Account msalRuntimeAccount = ((ReadAccountResult) interop.readAccountById(msalJavaAccount.homeAccountId().split("\\.")[0], application.correlationId()).get()).getAccount();
+            Account msalRuntimeAccount = ((ReadAccountResult) interop.readAccountById(msalJavaAccount.homeAccountId().split("\\.")[0], correlationID).get()).getAccount();
 
             if (msalRuntimeAccount != null) {
-                interop.signOutSilently(application.clientId(), application.correlationId(), msalRuntimeAccount);
+                interop.signOutSilently(application.clientId(), correlationID, msalRuntimeAccount);
             }
         } catch (MsalInteropException interopException) {
             throw new MsalClientException(interopException.getErrorMessage(), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
@@ -232,5 +242,30 @@ public class MsalRuntimeBroker implements IBroker {
         } catch (Exception ex) {
             throw new MsalClientException(String.format("Error occurred when calling MSALRuntime PII logging API: %s", ex.getMessage()), AuthenticationErrorCode.MSALRUNTIME_INTEROP_ERROR);
         }
+    }
+
+    //Generates a random correlation ID, used when a correlation ID was not set at the application level
+    private String generateCorrelationID() {
+        return UUID.randomUUID().toString();
+    }
+
+    public static class Builder {
+        private boolean supportWindows = false;
+
+        public Builder() {
+        }
+
+        public Builder supportWindows(boolean val) {
+            supportWindows = val;
+            return this;
+        }
+
+        public Broker build() {
+            return new Broker(this);
+        }
+    }
+
+    private Broker(Builder builder) {
+        supportWindows = builder.supportWindows;
     }
 }
