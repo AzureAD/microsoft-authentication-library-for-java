@@ -1,14 +1,12 @@
 package test;
 
 import com.microsoft.aad.msal4j.*;
-import com.microsoft.aad.msal4jbrokers.MsalRuntimeBroker;
+import com.microsoft.aad.msal4jbrokers.Broker;
 import infrastructure.SeleniumExtensions;
 import labapi.LabUserProvider;
 import labapi.User;
 import org.openqa.selenium.WebDriver;
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -35,7 +33,7 @@ public class ProofOfPossessionTest {
     public void acquirePopToken_WithBroker() throws Exception {
         User user = labUserProvider.getDefaultUser();
 
-        MsalRuntimeBroker broker = new MsalRuntimeBroker();
+        Broker broker = new Broker.Builder().supportWindows(true).build();
 
         PublicClientApplication pca = createPublicClientApp(user, broker);
 
@@ -75,7 +73,7 @@ public class ProofOfPossessionTest {
         seleniumDriver.quit();
 
         //Then, get a PoP token silently, using the cache that contains the non-PoP token
-        MsalRuntimeBroker broker = new MsalRuntimeBroker();
+        Broker broker = new Broker.Builder().supportWindows(true).build();
 
         PublicClientApplication pcaWithBroker = createPublicClientApp(user, broker, pcaWithoutBroker.tokenCache().serialize());
 
@@ -93,7 +91,7 @@ public class ProofOfPossessionTest {
                 .build();
     }
 
-    private PublicClientApplication createPublicClientApp(User user, MsalRuntimeBroker broker) throws MalformedURLException {
+    private PublicClientApplication createPublicClientApp(User user, Broker broker) throws MalformedURLException {
         return PublicClientApplication.builder(user.getAppId())
                 .authority(MICROSOFT_AUTHORITY_ORGANIZATIONS)
                 .correlationId(UUID.randomUUID().toString())
@@ -101,7 +99,7 @@ public class ProofOfPossessionTest {
                 .build();
     }
 
-    private PublicClientApplication createPublicClientApp(User user, MsalRuntimeBroker broker, String cache) throws MalformedURLException {
+    private PublicClientApplication createPublicClientApp(User user, Broker broker, String cache) throws MalformedURLException {
         return PublicClientApplication.builder(user.getAppId())
                 .authority(MICROSOFT_AUTHORITY_ORGANIZATIONS)
                 .correlationId(UUID.randomUUID().toString())
