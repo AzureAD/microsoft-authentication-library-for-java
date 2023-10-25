@@ -225,7 +225,7 @@ class AadInstanceDiscoveryProvider {
                 replace("{port}", String.valueOf(port));
     }
 
-    private static AadInstanceDiscoveryResponse sendInstanceDiscoveryRequest(URL authorityUrl,
+     static AadInstanceDiscoveryResponse sendInstanceDiscoveryRequest(URL authorityUrl,
                                                                              MsalRequest msalRequest,
                                                                              ServiceBundle serviceBundle) {
 
@@ -289,7 +289,7 @@ class AadInstanceDiscoveryProvider {
                 serviceBundle);
     }
 
-    private static String discoverRegion(MsalRequest msalRequest, ServiceBundle serviceBundle) {
+    static String discoverRegion(MsalRequest msalRequest, ServiceBundle serviceBundle) {
 
         CurrentRequest currentRequest = serviceBundle.getServerSideTelemetry().getCurrentRequest();
 

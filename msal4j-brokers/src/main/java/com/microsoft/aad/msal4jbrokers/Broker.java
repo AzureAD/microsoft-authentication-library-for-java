@@ -17,11 +17,13 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-public class MsalRuntimeBroker implements IBroker {
-    private static final Logger LOG = LoggerFactory.getLogger(MsalRuntimeBroker.class);
+public class Broker implements IBroker {
+    private static final Logger LOG = LoggerFactory.getLogger(Broker.class);
 
     private static MsalRuntimeInterop interop;
     private static Boolean brokerAvailable;
+
+    private boolean supportWindows;
 
     static {
         try {
@@ -107,7 +109,7 @@ public class MsalRuntimeBroker implements IBroker {
                         parameters.proofOfPossession().getUri(),
                         parameters.proofOfPossession().getNonce());
             }
-            
+
             AuthParameters authParameters = authParamsBuilder.build();
 
             return interop.signInInteractively(parameters.windowHandle(), authParameters, correlationID, parameters.loginHint())
@@ -245,5 +247,25 @@ public class MsalRuntimeBroker implements IBroker {
     //Generates a random correlation ID, used when a correlation ID was not set at the application level
     private String generateCorrelationID() {
         return UUID.randomUUID().toString();
+    }
+
+    public static class Builder {
+        private boolean supportWindows = false;
+
+        public Builder() {
+        }
+
+        public Builder supportWindows(boolean val) {
+            supportWindows = val;
+            return this;
+        }
+
+        public Broker build() {
+            return new Broker(this);
+        }
+    }
+
+    private Broker(Builder builder) {
+        supportWindows = builder.supportWindows;
     }
 }

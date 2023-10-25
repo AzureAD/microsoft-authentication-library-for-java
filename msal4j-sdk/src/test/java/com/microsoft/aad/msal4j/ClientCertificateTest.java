@@ -3,54 +3,48 @@
 
 package com.microsoft.aad.msal4j;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 import java.math.BigInteger;
 import java.security.PrivateKey;
 import java.security.interfaces.RSAPrivateKey;
 
-import org.easymock.EasyMock;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.testng.annotations.Test;
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class ClientCertificateTest {
 
-@Test(groups = {"checkin"})
-@PrepareForTest({RSAPrivateKey.class})
-public class ClientCertificateTest extends AbstractMsalTests {
+    @Test
+    void testNullKey() {
+        NullPointerException ex = assertThrows(NullPointerException.class, () -> ClientCertificate.create((PrivateKey) null, null));
 
-    @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "PrivateKey is null or empty")
-    public void testNullKey() {
-        ClientCertificate.create((PrivateKey) null, null);
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "certificate key size must be at least 2048")
-    public void testInvalidKeysize() {
-        final RSAPrivateKey key = EasyMock.createMock(RSAPrivateKey.class);
-        final BigInteger modulus = EasyMock.createMock(BigInteger.class);
-        EasyMock.expect(modulus.bitLength()).andReturn(2047).times(1);
-        EasyMock.expect(key.getModulus()).andReturn(modulus).times(1);
-        EasyMock.replay(modulus, key);
-        ClientCertificate.create(key, null);
+        assertEquals("PrivateKey is null or empty", ex.getMessage());
     }
 
     @Test
-    public void testGetClient() {
-        final RSAPrivateKey key = EasyMock.createMock(RSAPrivateKey.class);
-        final BigInteger modulus = EasyMock.createMock(BigInteger.class);
-        EasyMock.expect(modulus.bitLength()).andReturn(2048).times(1);
-        EasyMock.expect(key.getModulus()).andReturn(modulus).times(1);
-        EasyMock.replay(modulus, key);
-        final ClientCertificate kc = ClientCertificate.create(key, null);
-        assertNotNull(kc);
+    void testInvalidKeysize() {
+        final RSAPrivateKey key = mock(RSAPrivateKey.class);
+        final BigInteger modulus = mock(BigInteger.class);
+        doReturn(2047).when(modulus).bitLength();
+        doReturn(modulus).when(key).getModulus();
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> ClientCertificate.create(key, null));
+
+        assertEquals("certificate key size must be at least 2048", ex.getMessage());
     }
 
     @Test
-    public void testGetKey() {
-        final RSAPrivateKey key = EasyMock.createMock(RSAPrivateKey.class);
-        final BigInteger modulus = EasyMock.createMock(BigInteger.class);
-        EasyMock.expect(modulus.bitLength()).andReturn(2048).times(1);
-        EasyMock.expect(key.getModulus()).andReturn(modulus).times(1);
-        EasyMock.replay(modulus, key);
+    void testGetClient() {
+        final RSAPrivateKey key = mock(RSAPrivateKey.class);
+        final BigInteger modulus = mock(BigInteger.class);
+        doReturn(2048).when(modulus).bitLength();
+        doReturn(modulus).when(key).getModulus();
+
         final ClientCertificate kc = ClientCertificate.create(key, null);
         assertNotNull(kc);
     }

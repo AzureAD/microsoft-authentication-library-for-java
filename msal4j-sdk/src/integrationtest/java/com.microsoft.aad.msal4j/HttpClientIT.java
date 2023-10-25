@@ -5,30 +5,44 @@ package com.microsoft.aad.msal4j;
 
 import labapi.LabUserProvider;
 import labapi.User;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.BeforeAll;
 
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
 
-public class HttpClientIT {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class HttpClientIT {
     private LabUserProvider labUserProvider;
 
-    @BeforeClass
-    public void setUp() {
+    @BeforeAll
+    void setUp() {
         labUserProvider = LabUserProvider.getInstance();
     }
 
     @Test
-    public void acquireToken_okHttpClient() throws Exception {
+    void acquireToken_okHttpClient() throws Exception {
         User user = labUserProvider.getDefaultUser();
         assertAcquireTokenCommon(user, new OkHttpClientAdapter());
     }
 
     @Test
-    public void acquireToken_apacheHttpClient() throws Exception {
+    void acquireToken_apacheHttpClient() throws Exception {
         User user = labUserProvider.getDefaultUser();
         assertAcquireTokenCommon(user, new ApacheHttpClientAdapter());
+    }
+
+    @Test
+    void acquireToken_readTimeout() throws Exception {
+        User user = labUserProvider.getDefaultUser();
+
+        //Set a 1ms read timeout, which will almost certainly occur before the service can respond
+        assertAcquireTokenCommon_WithTimeout(user, 1);
     }
 
     private void assertAcquireTokenCommon(User user, IHttpClient httpClient)
@@ -46,9 +60,27 @@ public class HttpClientIT {
                 .build())
                 .get();
 
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.accessToken());
-        Assert.assertNotNull(result.idToken());
-        Assert.assertEquals(user.getUpn(), result.account().username());
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
+        assertNotNull(result.idToken());
+        assertEquals(user.getUpn(), result.account().username());
+    }
+
+    private void assertAcquireTokenCommon_WithTimeout(User user, int readTimeout)
+            throws Exception {
+        PublicClientApplication pca = PublicClientApplication.builder(
+                        user.getAppId()).
+                authority(TestConstants.ORGANIZATIONS_AUTHORITY).
+                readTimeoutForDefaultHttpClient(readTimeout).
+                build();
+
+        ExecutionException ex = assertThrows(ExecutionException.class, () -> pca.acquireToken(UserNamePasswordParameters.
+                        builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                                user.getUpn(),
+                                user.getPassword().toCharArray())
+                        .build())
+                .get());
+
+        assertEquals("com.microsoft.aad.msal4j.MsalClientException: java.net.SocketTimeoutException: Read timed out", ex.getMessage());
     }
 }
