@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.microsoft.azure</groupId>
     <artifactId>msal4j-brokers</artifactId>
-    <version>1.0.2-beta</version>
+    <version>1.0.3-beta</version>
     <packaging>jar</packaging>
     <name>msal4j-brokers</name>
     <description>
@@ -34,12 +34,12 @@
         <dependency>
             <groupId>com.microsoft.azure</groupId>
             <artifactId>msal4j</artifactId>
-            <version>1.14.1-beta</version>
+            <version>1.14.3-beta</version>
         </dependency>
         <dependency>
             <groupId>com.microsoft.azure</groupId>
             <artifactId>javamsalruntime</artifactId>
-            <version>0.13.8</version>
+            <version>0.13.10</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
