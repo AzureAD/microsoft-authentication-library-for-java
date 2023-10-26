@@ -3,18 +3,23 @@
 
 package com.microsoft.aad.msal4j;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.*;
 
-public class AuthorizationRequestUrlParametersTest {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class AuthorizationRequestUrlParametersTest {
 
     @Test
-    public void testBuilder_onlyRequiredParameters() throws UnsupportedEncodingException {
+    void testBuilder_onlyRequiredParameters() throws UnsupportedEncodingException {
         PublicClientApplication app = PublicClientApplication.builder("client_id").build();
 
         String redirectUri = "http://localhost:8080";
@@ -30,23 +35,23 @@ public class AuthorizationRequestUrlParametersTest {
                         .extraQueryParameters(extraParameters)
                         .build();
 
-        Assert.assertEquals(parameters.responseMode(), ResponseMode.FORM_POST);
-        Assert.assertEquals(parameters.redirectUri(), redirectUri);
-        Assert.assertEquals(parameters.scopes().size(), 4);
-        Assert.assertEquals(parameters.extraQueryParameters.size(), 2);
+        assertEquals(parameters.responseMode(), ResponseMode.FORM_POST);
+        assertEquals(parameters.redirectUri(), redirectUri);
+        assertEquals(parameters.scopes().size(), 4);
+        assertEquals(parameters.extraQueryParameters.size(), 2);
 
-        Assert.assertNull(parameters.loginHint());
-        Assert.assertNull(parameters.codeChallenge());
-        Assert.assertNull(parameters.codeChallengeMethod());
-        Assert.assertNull(parameters.correlationId());
-        Assert.assertNull(parameters.nonce());
-        Assert.assertNull(parameters.prompt());
-        Assert.assertNull(parameters.state());
+        assertNull(parameters.loginHint());
+        assertNull(parameters.codeChallenge());
+        assertNull(parameters.codeChallengeMethod());
+        assertNull(parameters.correlationId());
+        assertNull(parameters.nonce());
+        assertNull(parameters.prompt());
+        assertNull(parameters.state());
 
         URL authorizationUrl = app.getAuthorizationRequestUrl(parameters);
 
-        Assert.assertEquals(authorizationUrl.getHost(), "login.microsoftonline.com");
-        Assert.assertEquals(authorizationUrl.getPath(), "/common/oauth2/v2.0/authorize");
+        assertEquals(authorizationUrl.getHost(), "login.microsoftonline.com");
+        assertEquals(authorizationUrl.getPath(), "/common/oauth2/v2.0/authorize");
 
         Map<String, String> queryParameters = new HashMap<>();
         String query = authorizationUrl.getQuery();
@@ -59,27 +64,27 @@ public class AuthorizationRequestUrlParametersTest {
                     URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
         }
 
-        Assert.assertEquals(queryParameters.get("scope"), "openid profile offline_access scope");
-        Assert.assertEquals(queryParameters.get("response_type"), "code");
-        Assert.assertEquals(queryParameters.get("redirect_uri"), "http://localhost:8080");
-        Assert.assertEquals(queryParameters.get("client_id"), "client_id");
-        Assert.assertEquals(queryParameters.get("response_mode"), "form_post");
-        Assert.assertEquals(queryParameters.get("id_token_hint"),"test");
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testBuilder_invalidRequiredParameters() {
-        String redirectUri = "";
-        Set<String> scope = Collections.singleton("scope");
-
-        AuthorizationRequestUrlParameters parameters =
-                AuthorizationRequestUrlParameters
-                        .builder(redirectUri, scope)
-                        .build();
+        assertEquals(queryParameters.get("scope"), "openid profile offline_access scope");
+        assertEquals(queryParameters.get("response_type"), "code");
+        assertEquals(queryParameters.get("redirect_uri"), "http://localhost:8080");
+        assertEquals(queryParameters.get("client_id"), "client_id");
+        assertEquals(queryParameters.get("response_mode"), "form_post");
+        assertEquals(queryParameters.get("id_token_hint"),"test");
     }
 
     @Test
-    public void testBuilder_conflictingParameters() {
+    void testBuilder_invalidRequiredParameters() {
+        String redirectUri = "";
+        Set<String> scope = Collections.singleton("scope");
+
+        assertThrows(IllegalArgumentException.class, () ->
+                AuthorizationRequestUrlParameters
+                        .builder(redirectUri, scope)
+                        .build());
+    }
+
+    @Test
+    void testBuilder_conflictingParameters() {
         PublicClientApplication app = PublicClientApplication.builder("client_id").build();
 
         String redirectUri = "http://localhost:8080";
@@ -95,7 +100,7 @@ public class AuthorizationRequestUrlParametersTest {
     }
 
     @Test
-    public void testBuilder_optionalParameters() throws UnsupportedEncodingException {
+    void testBuilder_optionalParameters() throws UnsupportedEncodingException {
         Set<String> clientCapabilities = new HashSet<>();
         clientCapabilities.add("llt");
         clientCapabilities.add("ssm");
@@ -134,23 +139,23 @@ public class AuthorizationRequestUrlParametersTest {
                     URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
         }
 
-        Assert.assertEquals(queryParameters.get("scope"),
+        assertEquals(queryParameters.get("scope"),
                 "openid profile offline_access scope extraScopeToConsent1 extraScopeToConsent2");
-        Assert.assertEquals(queryParameters.get("response_type"), "code");
-        Assert.assertEquals(queryParameters.get("redirect_uri"), "http://localhost:8080");
-        Assert.assertEquals(queryParameters.get("client_id"), "client_id");
-        Assert.assertEquals(queryParameters.get("prompt"), "select_account");
-        Assert.assertEquals(queryParameters.get("response_mode"), "query");
-        Assert.assertEquals(queryParameters.get("code_challenge"), "challenge");
-        Assert.assertEquals(queryParameters.get("code_challenge_method"), "method");
-        Assert.assertEquals(queryParameters.get("state"), "app_state");
-        Assert.assertEquals(queryParameters.get("nonce"), "app_nonce");
-        Assert.assertEquals(queryParameters.get("correlation_id"), "corr_id");
-        Assert.assertEquals(queryParameters.get("login_hint"), "hint");
-        Assert.assertEquals(queryParameters.get("domain_hint"), "domain_hint");
-        Assert.assertEquals(queryParameters.get("claims"), "{\"id_token\":{\"auth_time\":{\"essential\":true}},\"access_token\":{\"auth_time\":{\"essential\":true},\"xms_cc\":{\"values\":[\"llt\",\"ssm\"]}}}");
+        assertEquals(queryParameters.get("response_type"), "code");
+        assertEquals(queryParameters.get("redirect_uri"), "http://localhost:8080");
+        assertEquals(queryParameters.get("client_id"), "client_id");
+        assertEquals(queryParameters.get("prompt"), "select_account");
+        assertEquals(queryParameters.get("response_mode"), "query");
+        assertEquals(queryParameters.get("code_challenge"), "challenge");
+        assertEquals(queryParameters.get("code_challenge_method"), "method");
+        assertEquals(queryParameters.get("state"), "app_state");
+        assertEquals(queryParameters.get("nonce"), "app_nonce");
+        assertEquals(queryParameters.get("correlation_id"), "corr_id");
+        assertEquals(queryParameters.get("login_hint"), "hint");
+        assertEquals(queryParameters.get("domain_hint"), "domain_hint");
+        assertEquals(queryParameters.get("claims"), "{\"id_token\":{\"auth_time\":{\"essential\":true}},\"access_token\":{\"auth_time\":{\"essential\":true},\"xms_cc\":{\"values\":[\"llt\",\"ssm\"]}}}");
 
         // CCS routing
-        Assert.assertEquals(queryParameters.get(HttpHeaders.X_ANCHOR_MAILBOX), String.format(HttpHeaders.X_ANCHOR_MAILBOX_UPN_FORMAT, "hint"));
+        assertEquals(queryParameters.get(HttpHeaders.X_ANCHOR_MAILBOX), String.format(HttpHeaders.X_ANCHOR_MAILBOX_UPN_FORMAT, "hint"));
     }
 }

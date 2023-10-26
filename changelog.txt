@@ -1,4 +1,4 @@
-Version 1.14.1-beta
+Version 1.14.3-beta
 =============
 - Add proof-of-possession token support
 - Add MSALRuntime logging support
@@ -7,6 +7,22 @@ Version 1.14.0-beta
 =============
 - Add IBroker interface
 - Add app-level parameter for enabling the use of auth brokers
+
+Version 1.13.11
+=============
+- Hotfix for internal docs generation issue (#705)
+
+Version 1.13.10
+=============
+- Remove default HTTP timeout (#664)
+- Add equals/hash logic to Account class based on homeAccountID (#681)
+- Fix issue with command to open default browser on Linux (#683)
+- Handle null pointer exception in certain ADFS scenarios (#669)
+
+Version 1.13.9
+=============
+- Update automated tests to use JUnit 5/Mockito instead of TestNG/Powermock
+- Fix issue with interactive flow on macOS/Linux/Unix systems
 
 Version 1.13.8
 =============

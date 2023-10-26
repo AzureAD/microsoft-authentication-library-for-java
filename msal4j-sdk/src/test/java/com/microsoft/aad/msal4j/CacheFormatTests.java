@@ -7,15 +7,19 @@ import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
 import net.minidev.json.JSONObject;
-import org.easymock.EasyMock;
 import org.json.JSONException;
-import org.powermock.api.easymock.PowerMock;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.skyscreamer.jsonassert.JSONCompareResult;
 import org.skyscreamer.jsonassert.comparator.DefaultComparator;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 import java.net.URI;
@@ -28,7 +32,9 @@ import java.util.*;
 
 import static com.microsoft.aad.msal4j.Constants.POINT_DELIMITER;
 
-public class CacheFormatTests extends AbstractMsalTests {
+@ExtendWith(MockitoExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class CacheFormatTests {
     String TOKEN_RESPONSE = "/token_response.json";
     String TOKEN_RESPONSE_ID_TOKEN = "/token_response_id_token.json";
 
@@ -53,7 +59,7 @@ public class CacheFormatTests extends AbstractMsalTests {
     String EXTENDED_EXPIRES_ON_PLACEHOLDER = "<extended_expires_on>";
 
     @Test
-    public void cacheDeserializationSerializationTest() throws IOException, URISyntaxException, JSONException {
+    void cacheDeserializationSerializationTest() throws IOException, URISyntaxException, JSONException {
         ITokenCache tokenCache = new TokenCache(null);
 
         String previouslyStoredCache = readResource("/cache_data/serialized_cache.json");
@@ -108,17 +114,17 @@ public class CacheFormatTests extends AbstractMsalTests {
     }
 
     @Test
-    public void AADTokenCacheEntitiesFormatTest() throws JSONException, IOException, ParseException, URISyntaxException {
+    void AADTokenCacheEntitiesFormatTest() throws JSONException, IOException, ParseException, URISyntaxException {
         tokenCacheEntitiesFormatTest("/AAD_cache_data");
     }
 
     @Test
-    public void MSATokenCacheEntitiesFormatTest() throws JSONException, IOException, ParseException, URISyntaxException {
+    void MSATokenCacheEntitiesFormatTest() throws JSONException, IOException, ParseException, URISyntaxException {
         tokenCacheEntitiesFormatTest("/MSA_cache_data");
     }
 
     @Test
-    public void FociTokenCacheEntitiesFormatTest() throws JSONException, IOException, ParseException, URISyntaxException {
+    void FociTokenCacheEntitiesFormatTest() throws JSONException, IOException, ParseException, URISyntaxException {
         tokenCacheEntitiesFormatTest("/Foci_cache_data");
     }
 
@@ -145,29 +151,17 @@ public class CacheFormatTests extends AbstractMsalTests {
                 null,
                 new TelemetryManager(null, false));
 
-        TokenRequestExecutor request = PowerMock.createPartialMock(
-                TokenRequestExecutor.class, new String[]{"createOauthHttpRequest"},
-                new AADAuthority(new URL(AUTHORIZE_REQUEST_URL)), msalRequest, serviceBundle);
+        TokenRequestExecutor request = spy(new TokenRequestExecutor(
+                new AADAuthority(new URL(AUTHORIZE_REQUEST_URL)), msalRequest, serviceBundle));
+        OAuthHttpRequest msalOAuthHttpRequest = mock(OAuthHttpRequest.class);
+        HTTPResponse httpResponse = mock(HTTPResponse.class);
 
-        OAuthHttpRequest msalOAuthHttpRequest = PowerMock.createMock(OAuthHttpRequest.class);
-
-        HTTPResponse httpResponse = PowerMock.createMock(HTTPResponse.class);
-
-        EasyMock.expect(request.createOauthHttpRequest()).andReturn(msalOAuthHttpRequest).times(1);
-        EasyMock.expect(msalOAuthHttpRequest.send()).andReturn(httpResponse).times(1);
-        EasyMock.expect(httpResponse.getStatusCode()).andReturn(200).times(1);
-        EasyMock.expect(httpResponse.getContentAsJSONObject())
-                .andReturn(
-                        JSONObjectUtils.parse(tokenResponse))
-                .times(1);
-        httpResponse.ensureStatusCode(200);
-        EasyMock.expectLastCall();
-
-        PowerMock.replay(request, msalOAuthHttpRequest, httpResponse);
+        doReturn(msalOAuthHttpRequest).when(request).createOauthHttpRequest();
+        doReturn(httpResponse).when(msalOAuthHttpRequest).send();
+        doReturn(200).when(httpResponse).getStatusCode();
+        doReturn(JSONObjectUtils.parse(tokenResponse)).when(httpResponse).getContentAsJSONObject();
 
         final AuthenticationResult result = request.executeTokenRequest();
-
-        PowerMock.verifyAll();
 
         TokenCache tokenCache = new TokenCache();
 
@@ -183,11 +177,11 @@ public class CacheFormatTests extends AbstractMsalTests {
     private void validateAccessTokenCacheEntity(String folder, String tokenResponse, TokenCache tokenCache)
             throws IOException, URISyntaxException, ParseException, JSONException {
 
-        Assert.assertEquals(tokenCache.accessTokens.size(), 1);
+        assertEquals(tokenCache.accessTokens.size(), 1);
 
         String keyActual = tokenCache.accessTokens.keySet().stream().findFirst().get();
         String keyExpected = readResource(folder + AT_CACHE_ENTITY_KEY);
-        Assert.assertEquals(keyActual, keyExpected);
+        assertEquals(keyActual, keyExpected);
 
         String valueActual = JsonHelper.mapper.writeValueAsString(tokenCache.accessTokens.get(keyActual));
         String valueExpected = readResource(folder + AT_CACHE_ENTITY);
@@ -204,11 +198,11 @@ public class CacheFormatTests extends AbstractMsalTests {
     private void validateRefreshTokenCacheEntity(String folder, TokenCache tokenCache)
             throws IOException, URISyntaxException, JSONException {
 
-        Assert.assertEquals(tokenCache.refreshTokens.size(), 1);
+        assertEquals(tokenCache.refreshTokens.size(), 1);
 
         String actualKey = tokenCache.refreshTokens.keySet().stream().findFirst().get();
         String keyExpected = readResource(folder + RT_CACHE_ENTITY_KEY);
-        Assert.assertEquals(actualKey, keyExpected);
+        assertEquals(actualKey, keyExpected);
 
         String actualValue = JsonHelper.mapper.writeValueAsString(tokenCache.refreshTokens.get(actualKey));
         String valueExpected = readResource(folder + RT_CACHE_ENTITY);
@@ -240,11 +234,11 @@ public class CacheFormatTests extends AbstractMsalTests {
     private void validateIdTokenCacheEntity(String folder, TokenCache tokenCache)
             throws IOException, URISyntaxException, JSONException {
 
-        Assert.assertEquals(tokenCache.idTokens.size(), 1);
+        assertEquals(tokenCache.idTokens.size(), 1);
 
         String actualKey = tokenCache.idTokens.keySet().stream().findFirst().get();
         String keyExpected = readResource(folder + ID_TOKEN_CACHE_ENTITY_KEY);
-        Assert.assertEquals(actualKey, keyExpected);
+        assertEquals(actualKey, keyExpected);
 
         String actualValue = JsonHelper.mapper.writeValueAsString(tokenCache.idTokens.get(actualKey));
         String valueExpected = readResource(folder + ID_TOKEN_CACHE_ENTITY);
@@ -255,11 +249,11 @@ public class CacheFormatTests extends AbstractMsalTests {
     private void validateAccountCacheEntity(String folder, TokenCache tokenCache)
             throws IOException, URISyntaxException, JSONException {
 
-        Assert.assertEquals(tokenCache.accounts.size(), 1);
+        assertEquals(tokenCache.accounts.size(), 1);
 
         String actualKey = tokenCache.accounts.keySet().stream().findFirst().get();
         String keyExpected = readResource(folder + ACCOUNT_CACHE_ENTITY_KEY);
-        Assert.assertEquals(actualKey, keyExpected);
+        assertEquals(actualKey, keyExpected);
 
         String actualValue = JsonHelper.mapper.writeValueAsString(tokenCache.accounts.get(actualKey));
         String valueExpected = readResource(folder + ACCOUNT_CACHE_ENTITY);
@@ -274,11 +268,11 @@ public class CacheFormatTests extends AbstractMsalTests {
             return;
         }
 
-        Assert.assertEquals(tokenCache.appMetadata.size(), 1);
+        assertEquals(tokenCache.appMetadata.size(), 1);
 
         String actualKey = tokenCache.appMetadata.keySet().stream().findFirst().get();
         String keyExpected = readResource(folder + APP_METADATA_ENTITY_KEY);
-        Assert.assertEquals(actualKey, keyExpected);
+        assertEquals(actualKey, keyExpected);
 
         String actualValue = JsonHelper.mapper.writeValueAsString(tokenCache.appMetadata.get(actualKey));
         String valueExpected = readResource(folder + APP_METADATA_CACHE_ENTITY);

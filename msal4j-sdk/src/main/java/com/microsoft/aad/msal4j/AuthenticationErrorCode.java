@@ -124,6 +124,14 @@ public class AuthenticationErrorCode {
     public final static String MISSING_BROKER = "missing_broker";
 
     /**
+     * Indicates that a timeout occurred during an HTTP call. If this was thrown in relation to a connection timeout error,
+     * there is likely a network issue preventing the library from reaching a service, such as being blocked by a firewall.
+     * If this was thrown in relation to a read timeout error, there is likely an issue in the service itself causing a
+     * slow response, and this may be resolvable by increasing timeouts. For more details, see https://aka.ms/msal4j-http-client
+     */
+    public final static String HTTP_TIMEOUT = "http_timeout";
+
+    /**
      * Indicates an error from the MSAL Java/MSALRuntime interop layer used by the Java Brokers package,
      * and will generally just be forwarding an error message from the interop layer or MSALRuntime itself
      */

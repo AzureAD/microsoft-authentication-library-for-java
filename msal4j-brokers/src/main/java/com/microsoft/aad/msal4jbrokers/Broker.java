@@ -17,11 +17,13 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-public class MsalRuntimeBroker implements IBroker {
-    private static final Logger LOG = LoggerFactory.getLogger(MsalRuntimeBroker.class);
+public class Broker implements IBroker {
+    private static final Logger LOG = LoggerFactory.getLogger(Broker.class);
 
     private static MsalRuntimeInterop interop;
     private static Boolean brokerAvailable;
+
+    private boolean supportWindows;
 
     static {
         try {
@@ -107,7 +109,7 @@ public class MsalRuntimeBroker implements IBroker {
                         parameters.proofOfPossession().getUri(),
                         parameters.proofOfPossession().getNonce());
             }
-            
+
             AuthParameters authParameters = authParamsBuilder.build();
 
             return interop.signInInteractively(parameters.windowHandle(), authParameters, correlationID, parameters.loginHint())
@@ -245,5 +247,34 @@ public class MsalRuntimeBroker implements IBroker {
     //Generates a random correlation ID, used when a correlation ID was not set at the application level
     private String generateCorrelationID() {
         return UUID.randomUUID().toString();
+    }
+
+    public static class Builder {
+        private boolean supportWindows = false;
+
+        public Builder() {
+        }
+
+        /**
+         * When set to true, MSAL Java will attempt to use the broker when the application is running on a Windows OS
+         */
+        public Builder supportWindows(boolean val) {
+            supportWindows = val;
+            return this;
+        }
+
+        public Broker build() {
+            return new Broker(this);
+        }
+    }
+
+    private Broker(Builder builder) {
+        this.supportWindows = builder.supportWindows;
+
+        //This will be expanded to cover other OS options, but for now it is only Windows. Since Windows is the only
+        // option, if app developer doesn't want to use the broker on Windows then they shouldn't use the Broker at all
+        if (!this.supportWindows) {
+            throw new MsalClientException("At least one operating system support option must be used when building the Broker instance", AuthenticationErrorCode.MSALJAVA_BROKERS_ERROR);
+        }
     }
 }
