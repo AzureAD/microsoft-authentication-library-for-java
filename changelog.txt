@@ -1,4 +1,4 @@
-Version 1.14.3-beta
+Version 1.14.1-beta
 =============
 - Add proof-of-possession token support
 - Add MSALRuntime logging support
