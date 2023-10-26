@@ -29,7 +29,6 @@ Find [the latest package in the Maven repository](https://mvnrepository.com/arti
     <groupId>com.microsoft.azure</groupId>
     <artifactId>msal4j</artifactId>
     <version>1.14.0</version>
-</dependency>
 ```
 ### Gradle
 

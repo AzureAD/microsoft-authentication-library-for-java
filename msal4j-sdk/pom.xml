@@ -103,6 +103,7 @@
             <version>1.14.5</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.skyscreamer</groupId>
             <artifactId>jsonassert</artifactId>
