@@ -105,6 +105,20 @@ public class InteractiveRequestParameters implements IAcquireTokenParameters {
      */
     private boolean instanceAware;
 
+    /**
+     * The parent window handle used to open UI elements with the correct parent
+     *
+     *
+     * For browser scenarios and Windows console applications, this value should not need to be set
+     *
+     * For Windows console applications, MSAL Java will attempt to discover the console's window handle if this parameter is not set
+     *
+     * For scenarios where MSAL Java is responsible for opening UI elements (such as when using MSALRuntime), this parameter is required and an exception will be thrown if not set
+     */
+    private long windowHandle;
+
+    private PopParameters proofOfPossession;
+
     private static InteractiveRequestParametersBuilder builder() {
         return new InteractiveRequestParametersBuilder();
     }
@@ -115,5 +129,24 @@ public class InteractiveRequestParameters implements IAcquireTokenParameters {
 
         return builder()
                 .redirectUri(redirectUri);
+    }
+
+    //This Builder class is used to override Lombok's default setter behavior for any fields defined in it
+    public static class InteractiveRequestParametersBuilder {
+
+        /**
+         * Sets the PopParameters for this request, allowing the request to retrieve proof-of-possession tokens rather than bearer tokens
+         *
+         * For more information, see {@link PopParameters} and https://aka.ms/msal4j-pop
+         *
+         * @param httpMethod a valid HTTP method, such as "GET" or "POST"
+         * @param uri the URI on the downstream protected API which the application is trying to access, e.g. https://graph.microsoft.com/beta/me/profile
+         * @param nonce a string obtained by calling the resource (e.g. Microsoft Graph) un-authenticated and parsing the WWW-Authenticate header associated with pop authentication scheme and extracting the nonce parameter, or, on subsequent calls, by parsing the Autheticate-Info header and extracting the nextnonce parameter.
+         */
+        public InteractiveRequestParametersBuilder proofOfPossession(HttpMethod httpMethod, URI uri, String nonce) {
+            this.proofOfPossession = new PopParameters(httpMethod, uri, nonce);
+
+            return this;
+        }
     }
 }
