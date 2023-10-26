@@ -1,4 +1,4 @@
-Version 1.0.0-beta
+Version 1.0.0
 =============
 - Initial release
-- Provides the API and dependencies needed to utilize auth brokers through MSALRuntime
+- Provides the API and dependencies needed to acquire tokens via WAM
