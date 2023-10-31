@@ -6,9 +6,15 @@ package com.microsoft.aad.msal4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileReader;
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 
@@ -82,31 +88,36 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
     @Override
     public ManagedIdentityResponse handleResponse(
             ManagedIdentityParameters parameters,
-            IHttpResponse response)
-    {
+            IHttpResponse response) {
+
         LOG.info("[Managed Identity] Response received. Status code: {response.StatusCode}");
 
-        if (response.statusCode() == HttpURLConnection.HTTP_UNAUTHORIZED)
-        {
-            if(!response.headers().containsKey("WWW-Authenticate")){
+        if (response.statusCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+            if(!response.headers().containsKey("Www-Authenticate")) {
                 LOG.error("[Managed Identity] WWW-Authenticate header is expected but not found.");
                 throw new MsalManagedIdentityException(MsalError.MANAGED_IDENTITY_REQUEST_FAILED,
                         MsalErrorMessage.MANAGED_IDENTITY_NO_CHALLENGE_ERROR,
                         ManagedIdentitySourceType.AZURE_ARC);
             }
 
-            String challenge = response.headers().get("WWW-Authenticate").get(0);
+            String challenge = response.headers().get("Www-Authenticate").get(0);
             String[] splitChallenge = challenge.split("=");
 
-            if (splitChallenge.length != 2)
-            {
+            if (splitChallenge.length != 2) {
                 LOG.error("[Managed Identity] The WWW-Authenticate header for Azure arc managed identity is not an expected format.");
                 throw new MsalManagedIdentityException(MsalError.MANAGED_IDENTITY_REQUEST_FAILED,
                         MsalErrorMessage.MANAGED_IDENTITY_INVALID_CHALLENGE,
                         ManagedIdentitySourceType.AZURE_ARC);
             }
 
-            String authHeaderValue = "Basic " + splitChallenge[1];
+            Path path = Paths.get(splitChallenge[1]);
+
+            String authHeaderValue = null;
+            try {
+                authHeaderValue = "Basic " + new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                throw new MsalManagedIdentityException(MsalError.MANAGED_IDENTITY_FILE_READ_ERROR, e.getMessage(), ManagedIdentitySourceType.AZURE_ARC);
+            }
 
             createManagedIdentityRequest(parameters.resource);
 

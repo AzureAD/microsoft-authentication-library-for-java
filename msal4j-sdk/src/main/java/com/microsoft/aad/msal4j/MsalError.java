@@ -32,4 +32,6 @@ public class MsalError {
      * Managed Identity endpoint is not reachable.
      */
     public static final String MANAGED_IDENTITY_UNREACHABLE_NETWORK = "managed_identity_unreachable_network";
+
+    public static final String MANAGED_IDENTITY_FILE_READ_ERROR = "managed_identity_file_read_error";
 }
