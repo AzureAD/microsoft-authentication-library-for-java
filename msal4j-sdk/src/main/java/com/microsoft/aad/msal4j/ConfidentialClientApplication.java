@@ -87,6 +87,8 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
         log = LoggerFactory.getLogger(ConfidentialClientApplication.class);
 
         initClientAuthentication(builder.clientCredential);
+
+        this.tenant = this.authenticationAuthority.tenant;
     }
 
     private void initClientAuthentication(IClientCredential clientCredential) {
