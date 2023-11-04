@@ -11,10 +11,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.withSettings;
 
 import java.math.BigInteger;
 import java.security.PrivateKey;
 import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAKey;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ClientCertificateTest {
@@ -48,4 +50,16 @@ class ClientCertificateTest {
         final ClientCertificate kc = ClientCertificate.create(key, null);
         assertNotNull(kc);
     }
+    
+    @Test
+    void testGetClientRSAKeyIsSufficient() {
+        final PrivateKey key = mock(PrivateKey.class,withSettings().extraInterfaces(RSAKey.class));
+        final BigInteger modulus = mock(BigInteger.class);
+        doReturn(2048).when(modulus).bitLength();
+        doReturn(modulus).when((RSAKey)key).getModulus();
+
+        final ClientCertificate kc = ClientCertificate.create(key, null);
+        assertNotNull(kc);
+    }
+    
 }

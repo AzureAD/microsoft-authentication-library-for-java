@@ -21,7 +21,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -47,8 +47,8 @@ final class ClientCertificate implements IClientCertificate {
 
         this.privateKey = privateKey;
 
-        if (privateKey instanceof RSAPrivateKey) {
-            if (((RSAPrivateKey) privateKey).getModulus().bitLength() < MIN_KEY_SIZE_IN_BITS) {
+        if (privateKey instanceof RSAKey) {
+            if (((RSAKey) privateKey).getModulus().bitLength() < MIN_KEY_SIZE_IN_BITS) {
                 throw new IllegalArgumentException(
                         "certificate key size must be at least " + MIN_KEY_SIZE_IN_BITS);
             }
