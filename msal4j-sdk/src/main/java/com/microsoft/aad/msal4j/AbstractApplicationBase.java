@@ -59,6 +59,10 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
     @Getter
     private Integer readTimeoutForDefaultHttpClient;
 
+    @Accessors(fluent = true)
+    @Getter(AccessLevel.PACKAGE)
+    String tenant;
+
     //The following fields are set in only some applications and/or set internally by the library. To avoid excessive
     // type casting throughout the library they are defined here as package-private, but will not be part of this class's Builder
     @Accessors(fluent = true)
