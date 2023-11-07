@@ -23,6 +23,7 @@ class TokenRequestExecutor {
     Logger log = LoggerFactory.getLogger(TokenRequestExecutor.class);
 
     final Authority requestAuthority;
+    final String tenant;
     private final MsalRequest msalRequest;
     private final ServiceBundle serviceBundle;
 
@@ -30,6 +31,9 @@ class TokenRequestExecutor {
         this.requestAuthority = requestAuthority;
         this.serviceBundle = serviceBundle;
         this.msalRequest = msalRequest;
+        this.tenant = msalRequest.requestContext().apiParameters().tenant() == null ?
+                msalRequest.application().tenant() :
+                msalRequest.requestContext().apiParameters().tenant() ;
     }
 
     AuthenticationResult executeTokenRequest() throws ParseException, IOException {

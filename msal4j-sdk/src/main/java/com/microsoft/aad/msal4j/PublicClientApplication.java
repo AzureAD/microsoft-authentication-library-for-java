@@ -122,6 +122,7 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
         log = LoggerFactory.getLogger(PublicClientApplication.class);
         this.clientAuthentication = new ClientAuthenticationPost(ClientAuthenticationMethod.NONE,
                 new ClientID(clientId()));
+        this.tenant = this.authenticationAuthority.tenant;
     }
 
     @Override
