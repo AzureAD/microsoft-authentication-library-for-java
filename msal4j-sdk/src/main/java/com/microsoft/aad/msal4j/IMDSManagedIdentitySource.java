@@ -120,7 +120,7 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
 
             message = message + " " + errorContentMessage;
 
-            LOG.error(String.format("Error message: %s Http status code: %s"), message, response.statusCode());
+            LOG.error(String.format("Error message: %s Http status code: %s", message, response.statusCode()));
             throw new MsalManagedIdentityException(MsalError.MANAGED_IDENTITY_REQUEST_FAILED, message,
                     ManagedIdentitySourceType.IMDS);
         }
