@@ -46,7 +46,7 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
 
     @Override
     public String tenant() {
-        return "managed_identity";
+        return Constants.MANAGED_IDENTITY_DEFAULT_TENTANT;
     }
 
     @Override
