@@ -15,6 +15,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.SocketException;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -512,5 +515,39 @@ class ManagedIdentityTests {
 
         fail("MsalManagedIdentityException is expected but not thrown.");
         verify(httpClientMock, times(1)).send(any());
+    }
+
+    @Test
+    void azureArcManagedIdentityAuthheaderTest() throws Exception {
+        Path path = Paths.get(this.getClass().getResource("/msi-azure-arc-secret.txt").toURI());
+        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(ManagedIdentitySourceType.AZURE_ARC, azureArcEndpoint);
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        // Mock 401 response that returns www-authenticate header
+        HttpResponse response = new HttpResponse();
+        response.statusCode(HttpStatus.SC_UNAUTHORIZED);
+        response.headers().put("Www-Authenticate", Collections.singletonList("Basic realm=" + path));
+
+        when(httpClientMock.send(eq(expectedRequest(ManagedIdentitySourceType.AZURE_ARC, resource)))).thenReturn(response);
+
+        // Mock the response when Authorization header is sent in request
+        HttpRequest expectedRequest = expectedRequest(ManagedIdentitySourceType.AZURE_ARC, resource);
+        expectedRequest.headers().put("Authorization", "Basic secret");
+        when(httpClientMock.send(eq(expectedRequest))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+
+        miApp = ManagedIdentityApplication
+                .builder(ManagedIdentityId.systemAssigned())
+                .httpClient(httpClientMock)
+                .build();
+
+        // Clear caching to avoid cross test pollution.
+        miApp.tokenCache().accessTokens.clear();
+
+        IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
+                ManagedIdentityParameters.builder(resource)
+                        .environmentVariables(environmentVariables)
+                        .build()).get();
+
+        assertNotNull(result.accessToken());
     }
 }
