@@ -21,7 +21,7 @@ abstract class AbstractManagedIdentitySource {
 
     protected final ManagedIdentityRequest managedIdentityRequest;
     protected final ServiceBundle serviceBundle;
-    private ManagedIdentitySourceType managedIdentitySourceType;
+    ManagedIdentitySourceType managedIdentitySourceType;
 
     @Getter
     @Setter
