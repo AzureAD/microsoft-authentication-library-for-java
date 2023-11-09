@@ -97,6 +97,11 @@ class ManagedIdentityTests {
                 headers.put("Metadata", "true");
                 break;
             }
+            case SERVICE_FABRIC:
+                endpoint = serviceFabricEndpoint;
+                queryParameters.put("api-version", Collections.singletonList("2019-07-01-preview"));
+                queryParameters.put("resource", Collections.singletonList(resource));
+                break;
         }
 
         switch (id.getIdType()) {
@@ -412,7 +417,7 @@ class ManagedIdentityTests {
 
         // Clear caching to avoid cross test pollution.
         miApp.tokenCache().accessTokens.clear();
-  
+
         try {
             miApp.acquireTokenForManagedIdentity(
                     ManagedIdentityParameters.builder(resource)
@@ -447,12 +452,12 @@ class ManagedIdentityTests {
 
         // Clear caching to avoid cross test pollution.
         miApp.tokenCache().accessTokens.clear();
-      
+
         ManagedIdentityApplication miApp2 = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
                 .httpClient(httpClientMock)
                 .build();
-      
+
       IAuthenticationResult resultMiApp1 = miApp.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(resource)
                         .environmentVariables(environmentVariables)
