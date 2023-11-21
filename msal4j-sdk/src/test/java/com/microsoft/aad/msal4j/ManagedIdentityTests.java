@@ -51,6 +51,11 @@ class ManagedIdentityTests {
         return "{\"statusCode\":\"500\",\"message\":\"An unexpected error occured while fetching the AAD Token.\",\"correlationId\":\"7d0c9763-ff1d-4842-a3f3-6d49e64f4513\"}";
     }
 
+    //Cloud Shell error responses follow a different style, the error info is in a second JSON
+    private String getMsiErrorResponseCloudShell() {
+        return "{\"error\":{\"code\":\"AudienceNotSupported\",\"message\":\"Audience user.read is not a supported MSI token audience.\"}}";
+    }
+
     private HttpRequest expectedRequest(ManagedIdentitySourceType source, String resource) {
         return expectedRequest(source, resource, ManagedIdentityId.systemAssigned());
     }
@@ -270,7 +275,11 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(500, getMsiErrorResponse()));
+        if (environmentVariables.getEnvironmentVariable("SourceType").equals(ManagedIdentitySourceType.CLOUD_SHELL.toString())) {
+            when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(500, getMsiErrorResponseCloudShell()));
+        } else {
+            when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(500, getMsiErrorResponse()));
+        }
 
         miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())

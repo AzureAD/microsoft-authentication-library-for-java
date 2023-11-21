@@ -12,6 +12,7 @@ public class EnvironmentVariablesHelper implements IEnvironmentVariables {
     EnvironmentVariablesHelper(ManagedIdentitySourceType source, String endpoint) {
         mockedEnvironmentVariables = new HashMap<>();
 
+        mockedEnvironmentVariables.put("SourceType", source.toString());
         switch (source) {
             case APP_SERVICE:
                 mockedEnvironmentVariables.put(Constants.IDENTITY_ENDPOINT, endpoint);
