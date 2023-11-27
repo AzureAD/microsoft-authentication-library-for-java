@@ -132,6 +132,17 @@ public class AuthenticationErrorCode {
     public final static String HTTP_TIMEOUT = "http_timeout";
 
     /**
+     * Indicates an error from the MSAL Java/MSALRuntime interop layer used by the Java Brokers package,
+     * and will generally just be forwarding an error message from the interop layer or MSALRuntime itself
+     */
+    public final static String MSALRUNTIME_INTEROP_ERROR = "interop_package_error";
+
+    /**
+     * Indicates an error related to the MSAL Java Brokers package
+     */
+    public final static String MSALJAVA_BROKERS_ERROR = "brokers_package_error";
+
+    /**
      * Indicates that a request to managed identity endpoint failed, see error message for detailed reason and correlation id.
      * For more information on managed identity see https://aka.ms/msal4j-managed-identity.
      */

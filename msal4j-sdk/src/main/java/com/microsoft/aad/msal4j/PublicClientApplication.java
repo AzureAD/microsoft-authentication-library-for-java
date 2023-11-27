@@ -8,6 +8,7 @@ import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod;
 import com.nimbusds.oauth2.sdk.id.ClientID;
 import org.slf4j.LoggerFactory;
 
+import java.net.MalformedURLException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -23,6 +24,8 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 public class PublicClientApplication extends AbstractClientApplicationBase implements IPublicClientApplication {
 
     private final ClientAuthenticationPost clientAuthentication;
+    private IBroker broker;
+    private boolean brokerEnabled;
 
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(UserNamePasswordParameters parameters) {
@@ -35,12 +38,20 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
                 parameters,
                 UserIdentifier.fromUpn(parameters.username()));
 
-        UserNamePasswordRequest userNamePasswordRequest =
-                new UserNamePasswordRequest(parameters,
-                        this,
-                        context);
+        CompletableFuture<IAuthenticationResult> future;
 
-        return this.executeRequest(userNamePasswordRequest);
+        if (validateBrokerUsage(parameters)) {
+            future = broker.acquireToken(this, parameters);
+        } else {
+            UserNamePasswordRequest userNamePasswordRequest =
+                    new UserNamePasswordRequest(parameters,
+                            this,
+                            context);
+
+            future = this.executeRequest(userNamePasswordRequest);
+        }
+
+        return future;
     }
 
     @Override
@@ -111,9 +122,39 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
                 this,
                 context);
 
-        CompletableFuture<IAuthenticationResult> future = executeRequest(interactiveRequest);
+        CompletableFuture<IAuthenticationResult> future;
+
+        if (validateBrokerUsage(parameters)) {
+            future = broker.acquireToken(this, parameters);
+        } else {
+            future = executeRequest(interactiveRequest);
+        }
+
         futureReference.set(future);
+
         return future;
+    }
+
+    @Override
+    public CompletableFuture<IAuthenticationResult> acquireTokenSilently(SilentParameters parameters) throws MalformedURLException {
+        CompletableFuture<IAuthenticationResult> future;
+
+        if (validateBrokerUsage(parameters)) {
+            future = broker.acquireToken(this, parameters);
+        } else {
+            future = super.acquireTokenSilently(parameters);
+        }
+
+        return future;
+    }
+
+    @Override
+    public CompletableFuture<Void> removeAccount(IAccount account) {
+        if (brokerEnabled) {
+            broker.removeAccount(this, account);
+        }
+
+        return super.removeAccount(account);
     }
 
     private PublicClientApplication(Builder builder) {
@@ -122,6 +163,8 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
         log = LoggerFactory.getLogger(PublicClientApplication.class);
         this.clientAuthentication = new ClientAuthenticationPost(ClientAuthenticationMethod.NONE,
                 new ClientID(clientId()));
+        this.broker = builder.broker;
+        this.brokerEnabled = builder.brokerEnabled;
         this.tenant = this.authenticationAuthority.tenant;
     }
 
@@ -146,6 +189,22 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
             super(clientId);
         }
 
+        private IBroker broker = null;
+        private boolean brokerEnabled = false;
+
+        /**
+         * Implementation of IBroker that will be used to retrieve tokens
+         * <p>
+         * Setting this will cause MSAL Java to use the given broker implementation to retrieve tokens from a broker (such as WAM/MSALRuntime) in flows that support it
+         */
+        public PublicClientApplication.Builder broker(IBroker val) {
+            this.broker = val;
+
+            this.brokerEnabled = this.broker.isBrokerAvailable();
+
+            return self();
+        }
+
         @Override
         public PublicClientApplication build() {
 
@@ -156,5 +215,62 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
         protected Builder self() {
             return this;
         }
+    }
+
+    /**
+     * Used to determine whether to call into an IBroker instance instead of standard MSAL Java's normal interactive flow,
+     * and may throw exceptions or log messages if broker-only parameters are used when a broker is not enabled/available
+     */
+    private boolean validateBrokerUsage(InteractiveRequestParameters parameters) {
+
+        //Check if broker-only parameters are being used when a broker is not enabled. If they are, either throw an
+        // exception saying a broker is required, or provide a clear log message saying the parameter will be ignored
+        if (!brokerEnabled) {
+            if (parameters.proofOfPossession() != null) {
+                throw new MsalClientException(
+                        "InteractiveRequestParameters.proofOfPossession should not be used when broker is not available, see https://aka.ms/msal4j-pop for more information",
+                        AuthenticationErrorCode.MSALJAVA_BROKERS_ERROR );
+            }
+        }
+
+        return brokerEnabled;
+    }
+
+    /**
+     * Used to determine whether to call into an IBroker instance instead of standard MSAL Java's normal username/password flow,
+     * and may throw exceptions or log messages if broker-only parameters are used when a broker is not enabled/available
+     */
+    private boolean validateBrokerUsage(UserNamePasswordParameters parameters) {
+
+        //Check if broker-only parameters are being used when a broker is not enabled. If they are, either throw an
+        // exception saying a broker is required, or provide a clear log message saying the parameter will be ignored
+        if (!brokerEnabled) {
+            if (parameters.proofOfPossession() != null) {
+                throw new MsalClientException(
+                        "UserNamePasswordParameters.proofOfPossession should not be used when broker is not available, see https://aka.ms/msal4j-pop for more information",
+                        AuthenticationErrorCode.MSALJAVA_BROKERS_ERROR );
+            }
+        }
+
+        return brokerEnabled;
+    }
+
+    /**
+     * Used to determine whether to call into an IBroker instance instead of standard MSAL Java's normal silent flow,
+     * and may throw exceptions or log messages if broker-only parameters are used when a broker is not enabled/available
+     */
+    private boolean validateBrokerUsage(SilentParameters parameters) {
+
+        //Check if broker-only parameters are being used when a broker is not enabled. If they are, either throw an
+        // exception saying a broker is required, or provide a clear log message saying the parameter will be ignored
+        if (!brokerEnabled) {
+            if (parameters.proofOfPossession() != null) {
+                throw new MsalClientException(
+                        "UserNamePasswordParameters.proofOfPossession should not be used when broker is not available, see https://aka.ms/msal4j-pop for more information",
+                        AuthenticationErrorCode.MSALJAVA_BROKERS_ERROR );
+            }
+        }
+
+        return brokerEnabled;
     }
 }
