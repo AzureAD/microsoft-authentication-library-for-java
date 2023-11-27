@@ -1,3 +1,9 @@
+Version 1.14.4-beta
+=============
+- Beta support for MSI in Azure Arc (#730)
+- Beta support for MSI in Service Fabric (#729)
+- Fix Cloud Shell parsing issue (#750)
+
 Version 1.14.0
 =============
 - GA release of MSAL Java Brokers package
