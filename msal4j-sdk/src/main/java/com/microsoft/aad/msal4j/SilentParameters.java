@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j;
 import lombok.*;
 import lombok.experimental.Accessors;
 
+import java.net.URI;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -64,6 +65,8 @@ public class SilentParameters implements IAcquireTokenParameters {
      */
     private String tenant;
 
+    private PopParameters proofOfPossession;
+
     private static SilentParametersBuilder builder() {
 
         return new SilentParametersBuilder();
@@ -113,5 +116,24 @@ public class SilentParameters implements IAcquireTokenParameters {
             }
         }
         return updatedScopes;
+    }
+
+    //This Builder class is used to override Lombok's default setter behavior for any fields defined in it
+    public static class SilentParametersBuilder {
+
+        /**
+         * Sets the PopParameters for this request, allowing the request to retrieve proof-of-possession tokens rather than bearer tokens
+         *
+         * For more information, see {@link PopParameters} and https://aka.ms/msal4j-pop
+         *
+         * @param httpMethod a valid HTTP method, such as "GET" or "POST"
+         * @param uri URI to associate with the token
+         * @param nonce optional nonce value for the token, can be empty or null
+         */
+        public SilentParametersBuilder proofOfPossession(HttpMethod httpMethod, URI uri, String nonce) {
+            this.proofOfPossession = new PopParameters(httpMethod, uri, nonce);
+
+            return this;
+        }
     }
 }
