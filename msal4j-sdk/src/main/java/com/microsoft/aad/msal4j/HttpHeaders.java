@@ -16,9 +16,6 @@ final class HttpHeaders {
     static final String PRODUCT_VERSION_HEADER_NAME = "x-client-VER";
     static final String PRODUCT_VERSION_HEADER_VALUE = getProductVersion();
 
-    static final String CPU_HEADER_NAME = "x-client-CPU";
-    static final String CPU_HEADER_VALUE = System.getProperty("os.arch");
-
     static final String OS_HEADER_NAME = "x-client-OS";
     static final String OS_HEADER_VALUE = System.getProperty("os.name");
 
@@ -78,7 +75,6 @@ final class HttpHeaders {
         init.accept(PRODUCT_HEADER_NAME, PRODUCT_HEADER_VALUE);
         init.accept(PRODUCT_VERSION_HEADER_NAME, PRODUCT_VERSION_HEADER_VALUE);
         init.accept(OS_HEADER_NAME, OS_HEADER_VALUE);
-        init.accept(CPU_HEADER_NAME, CPU_HEADER_VALUE);
         init.accept(REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_NAME, REQUEST_CORRELATION_ID_IN_RESPONSE_HEADER_VALUE);
         init.accept(CORRELATION_ID_HEADER_NAME, this.correlationIdHeaderValue);
 
