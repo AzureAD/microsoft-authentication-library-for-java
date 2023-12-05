@@ -26,9 +26,10 @@ class AccountsSupplier implements Supplier<Set<IAccount>> {
                     (clientApplication.clientId());
 
         } catch (Exception ex) {
-            clientApplication.log.error(
-                    LogHelper.createMessage("Execution of " + this.getClass() + " failed.",
-                            msalRequest.headers().getHeaderCorrelationIdValue()), ex);
+            clientApplication.log.warn(
+                    LogHelper.createMessage(
+                            String.format("Execution of %s failed: %s", this.getClass(), ex.getMessage()),
+                            msalRequest.headers().getHeaderCorrelationIdValue()));
 
             throw new CompletionException(ex);
         }
