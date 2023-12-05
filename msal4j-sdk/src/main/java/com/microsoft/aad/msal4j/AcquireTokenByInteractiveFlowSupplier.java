@@ -209,7 +209,7 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
                 expirationTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) + 1;
             }
 
-            while (result == null && !interactiveRequest.futureReference().get().isCancelled()) {
+            while (result == null && !interactiveRequest.futureReference().get().isDone()) {
                 if (TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) > expirationTime) {
                     LOG.warn(String.format("Listener timed out after %S seconds, no authorization code was returned from the server during that time.", timeFromParameters));
                     break;
