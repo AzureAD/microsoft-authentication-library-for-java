@@ -53,7 +53,10 @@ class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier 
 
         while (getCurrentSystemTimeInSeconds() < expirationTimeInSeconds) {
             if (deviceCodeFlowRequest.futureReference().get().isCancelled()) {
-                throw new InterruptedException("Acquire token Device Code Flow was interrupted");
+                throw new InterruptedException("Device code flow was cancelled before acquiring a token");
+            }
+            if (deviceCodeFlowRequest.futureReference().get().isCompletedExceptionally()) {
+                throw new InterruptedException("Device code flow had an exception before acquiring a token");
             }
             try {
                 return acquireTokenByAuthorisationGrantSupplier.execute();

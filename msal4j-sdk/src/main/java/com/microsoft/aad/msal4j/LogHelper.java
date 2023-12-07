@@ -6,8 +6,7 @@ package com.microsoft.aad.msal4j;
 final class LogHelper {
 
     static String createMessage(String originalMessage, String correlationId) {
-        return String.format("[Correlation ID: %s] " + originalMessage,
-                correlationId);
+        return String.format("[Correlation ID: %s] %s", correlationId, originalMessage);
     }
 
     static String getPiiScrubbedDetails(Throwable ex) {
