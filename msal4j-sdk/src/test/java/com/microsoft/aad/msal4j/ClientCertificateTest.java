@@ -27,18 +27,6 @@ class ClientCertificateTest {
     }
 
     @Test
-    void testInvalidKeysize() {
-        final RSAPrivateKey key = mock(RSAPrivateKey.class);
-        final BigInteger modulus = mock(BigInteger.class);
-        doReturn(2047).when(modulus).bitLength();
-        doReturn(modulus).when(key).getModulus();
-
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> ClientCertificate.create(key, null));
-
-        assertEquals("certificate key size must be at least 2048", ex.getMessage());
-    }
-
-    @Test
     void testGetClient() {
         final RSAPrivateKey key = mock(RSAPrivateKey.class);
         final BigInteger modulus = mock(BigInteger.class);

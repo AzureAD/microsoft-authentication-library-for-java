@@ -30,7 +30,6 @@ import java.util.List;
 
 final class ClientCertificate implements IClientCertificate {
 
-    private final static int MIN_KEY_SIZE_IN_BITS = 2048;
     public static final String DEFAULT_PKCS12_PASSWORD = "";
 
     @Accessors(fluent = true)
@@ -46,30 +45,6 @@ final class ClientCertificate implements IClientCertificate {
         }
 
         this.privateKey = privateKey;
-
-        if (privateKey instanceof RSAPrivateKey) {
-            if (((RSAPrivateKey) privateKey).getModulus().bitLength() < MIN_KEY_SIZE_IN_BITS) {
-                throw new IllegalArgumentException(
-                        "certificate key size must be at least " + MIN_KEY_SIZE_IN_BITS);
-            }
-        } else if ("sun.security.mscapi.RSAPrivateKey".equals(privateKey.getClass().getName()) ||
-                "sun.security.mscapi.CPrivateKey".equals(privateKey.getClass().getName())) {
-            try {
-                Method method = privateKey.getClass().getMethod("length");
-                method.setAccessible(true);
-                if ((int) method.invoke(privateKey) < MIN_KEY_SIZE_IN_BITS) {
-                    throw new IllegalArgumentException(
-                            "certificate key size must be at least " + MIN_KEY_SIZE_IN_BITS);
-                }
-            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ex) {
-                throw new RuntimeException("error accessing sun.security.mscapi.RSAPrivateKey length: "
-                        + ex.getMessage());
-            }
-        } else {
-            throw new IllegalArgumentException(
-                    "certificate key must be an instance of java.security.interfaces.RSAPrivateKey or" +
-                            " sun.security.mscapi.RSAPrivateKey");
-        }
 
         this.publicKeyCertificateChain = publicKeyCertificateChain;
     }
