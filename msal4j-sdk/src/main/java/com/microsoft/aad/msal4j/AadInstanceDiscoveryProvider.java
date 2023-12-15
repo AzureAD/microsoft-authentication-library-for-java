@@ -29,7 +29,7 @@ class AadInstanceDiscoveryProvider {
 
     // For information of the current api-version refer: https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service#versioning
     private static final String DEFAULT_API_VERSION = "2020-06-01";
-    private static final String IMDS_ENDPOINT = "https://169.254.169.254/metadata/instance/compute/location?" + DEFAULT_API_VERSION + "&format=text";
+    private static final String IMDS_ENDPOINT = "http://169.254.169.254/metadata/instance/compute/location?api-version=" + DEFAULT_API_VERSION + "&format=text";
 
     private static final int IMDS_TIMEOUT = 2;
     private static final TimeUnit IMDS_TIMEOUT_UNIT = TimeUnit.SECONDS;
