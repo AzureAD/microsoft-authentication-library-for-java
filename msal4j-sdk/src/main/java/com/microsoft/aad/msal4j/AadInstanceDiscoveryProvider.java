@@ -65,28 +65,36 @@ class AadInstanceDiscoveryProvider {
 
         String host = authorityUrl.getHost();
 
-        //If instanceDiscovery flag set to false or instance discovery previously failed, do not do instance discovery
-        if (!msalRequest.application().instanceDiscovery() || instanceDiscoveryFailed) {
-            return InstanceDiscoveryMetadataEntry.builder().
-                    preferredCache(host).
-                    preferredNetwork(host).
-                    aliases(Collections.singleton(host)).
-                    build();
+        //If instanceDiscovery flag set to false, cache a basic instance metadata entry to skip future lookups
+        if (!msalRequest.application().instanceDiscovery()) {
+            log.debug("Instance discovery set to false, caching a default entry.");
+            cacheInstanceDiscoveryMetadata(host);
         }
 
-        //If there is no cached instance metadata, do instance and region discovery and cache the result
+        //If a region was set by an app developer or previously found through autodetection, adjust the authority host to use it
+        if (shouldUseRegionalEndpoint(msalRequest) && msalRequest.application().azureRegion() != null) {
+            host = getRegionalizedHost(authorityUrl.getHost(), msalRequest.application().azureRegion());
+        }
+
+        //If there is no cached instance metadata, do instance discovery cache the result
         if (cache.get(host) == null) {
+            log.debug("No cached instance metadata, will attempt instance discovery.");
+
             if (shouldUseRegionalEndpoint(msalRequest)) {
+                log.debug("Region API used, will attempt to discover Azure region.");
+
                 //Server side telemetry requires the result from region discovery when any part of the region API is used
                 String detectedRegion = discoverRegion(msalRequest, serviceBundle);
 
-                //If there is a specific region that should be used, adjust the authority URL to include it
-                //  Otherwise, if region autodetection is enabled and a specific region was not set,
-                //  set the application's region to the discovered region so that future requests can skip the IMDS endpoint call
-                if (msalRequest.application().azureRegion() != null) {
-                    host = getRegionalizedHost(authorityUrl.getHost(), msalRequest.application().azureRegion());
-                } else if (msalRequest.application().autoDetectRegion() && detectedRegion != null) {
+                //If region autodetection is enabled and a specific region was not already set, set the application's
+                // region to the discovered region so that future requests can skip the IMDS endpoint call
+                if (msalRequest.application().azureRegion() == null
+                        && msalRequest.application().autoDetectRegion()
+                        && detectedRegion != null) {
+                    log.debug(String.format("Region autodetection found %s, this region will be used for future calls.", detectedRegion));
+
                     msalRequest.application().azureRegion = detectedRegion;
+                    host = getRegionalizedHost(authorityUrl.getHost(), msalRequest.application().azureRegion());
                 }
 
                 cacheRegionInstanceMetadata(authorityUrl.getHost(), host);
@@ -125,7 +133,7 @@ class AadInstanceDiscoveryProvider {
         return aadInstanceDiscoveryResponse;
     }
 
-    static void cacheInstanceDiscoveryMetadata(String host,
+    static void cacheInstanceDiscoveryResponse(String host,
                                                AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse) {
 
         if (aadInstanceDiscoveryResponse != null && aadInstanceDiscoveryResponse.metadata() != null) {
@@ -135,6 +143,11 @@ class AadInstanceDiscoveryProvider {
                 }
             }
         }
+
+        cacheInstanceDiscoveryMetadata(host);
+    }
+
+    static void cacheInstanceDiscoveryMetadata(String host) {
         cache.putIfAbsent(host, InstanceDiscoveryMetadataEntry.builder().
                 preferredCache(host).
                 preferredNetwork(host).
@@ -227,12 +240,10 @@ class AadInstanceDiscoveryProvider {
                                                                              MsalRequest msalRequest,
                                                                              ServiceBundle serviceBundle) {
 
-        IHttpResponse httpResponse = null;
-
         String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpoint(authorityUrl) +
                 formInstanceDiscoveryParameters(authorityUrl);
 
-        httpResponse = executeRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
+        IHttpResponse httpResponse = executeRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
 
         AadInstanceDiscoveryResponse response = JsonHelper.convertJsonToObject(httpResponse.body(), AadInstanceDiscoveryResponse.class);
 
@@ -242,7 +253,8 @@ class AadInstanceDiscoveryProvider {
                 throw MsalServiceExceptionFactory.fromHttpResponse(httpResponse);
             }
             // instance discovery failed due to reasons other than an invalid authority, do not perform instance discovery again in this environment.
-            instanceDiscoveryFailed = true;
+            log.debug("Instance discovery failed due to an unknown error, no more instance discovery attempts will be made.");
+            cacheInstanceDiscoveryMetadata(authorityUrl.getHost());
         }
 
         return response;
@@ -349,7 +361,7 @@ class AadInstanceDiscoveryProvider {
             }
         }
 
-        cacheInstanceDiscoveryMetadata(authorityUrl.getHost(), aadInstanceDiscoveryResponse);
+        cacheInstanceDiscoveryResponse(authorityUrl.getHost(), aadInstanceDiscoveryResponse);
     }
 
     private static void validate(AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse) {
