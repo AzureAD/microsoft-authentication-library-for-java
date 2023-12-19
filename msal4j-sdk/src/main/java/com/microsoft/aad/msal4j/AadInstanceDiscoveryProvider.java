@@ -66,9 +66,12 @@ class AadInstanceDiscoveryProvider {
         String host = authorityUrl.getHost();
 
         //If instanceDiscovery flag set to false, cache a basic instance metadata entry to skip future lookups
-        if (!msalRequest.application().instanceDiscovery() && cache.get(host) == null) {
-            log.debug("Instance discovery set to false, caching a default entry.");
-            cacheInstanceDiscoveryMetadata(host);
+        if (!msalRequest.application().instanceDiscovery()) {
+            if (cache.get(host) == null) {
+                log.debug("Instance discovery set to false, caching a default entry.");
+                cacheInstanceDiscoveryMetadata(host);
+            }
+            return cache.get(host);
         }
 
         //If a region was set by an app developer or previously found through autodetection, adjust the authority host to use it
