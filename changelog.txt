@@ -1,3 +1,8 @@
+Version 1.14.2
+=============
+- Correct IMDS endpoint used for region discovery (#762)
+- Improve performance of instance/region discovery (#763)
+
 Version 1.14.1
 =============
 - Remove key size requirements for certificates (#749)
