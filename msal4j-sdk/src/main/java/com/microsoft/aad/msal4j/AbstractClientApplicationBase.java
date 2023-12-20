@@ -708,7 +708,7 @@ public abstract class AbstractClientApplicationBase implements IClientApplicatio
         instanceDiscovery = builder.instanceDiscovery;
 
         if (aadAadInstanceDiscoveryResponse != null) {
-            AadInstanceDiscoveryProvider.cacheInstanceDiscoveryMetadata(
+            AadInstanceDiscoveryProvider.cacheInstanceDiscoveryResponse(
                     authenticationAuthority.host,
                     aadAadInstanceDiscoveryResponse);
         }
