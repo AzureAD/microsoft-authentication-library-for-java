@@ -221,15 +221,15 @@ class ManagedIdentityTests {
         } catch (Exception e) {
             assertNotNull(e);
             assertNotNull(e.getCause());
-            assertInstanceOf(MsalManagedIdentityException.class, e.getCause());
+            assertInstanceOf(MsalServiceException.class, e.getCause());
 
-            MsalManagedIdentityException msalMsiException = (MsalManagedIdentityException) e.getCause();
-            assertEquals(source, msalMsiException.managedIdentitySourceType);
+            MsalServiceException msalMsiException = (MsalServiceException) e.getCause();
+            assertEquals(source.name(), msalMsiException.managedIdentitySource());
             assertEquals(MsalError.USER_ASSIGNED_MANAGED_IDENTITY_NOT_SUPPORTED, msalMsiException.errorCode());
             return;
         }
 
-        fail("MsalManagedIdentityException is expected but not thrown.");
+        fail("MsalServiceException is expected but not thrown.");
     }
 
     @ParameterizedTest
@@ -295,15 +295,15 @@ class ManagedIdentityTests {
                             .environmentVariables(environmentVariables)
                             .build()).get();
         } catch (Exception exception) {
-            assert(exception.getCause() instanceof MsalManagedIdentityException);
+            assert(exception.getCause() instanceof MsalServiceException);
 
-            MsalManagedIdentityException miException = (MsalManagedIdentityException) exception.getCause();
-            assertEquals(source, miException.managedIdentitySourceType);
+            MsalServiceException miException = (MsalServiceException) exception.getCause();
+            assertEquals(source.name(), miException.managedIdentitySource());
             assertEquals(AuthenticationErrorCode.MANAGED_IDENTITY_REQUEST_FAILED, miException.errorCode());
             return;
         }
 
-        fail("MsalManagedIdentityException is expected but not thrown.");
+        fail("MsalServiceException is expected but not thrown.");
         verify(httpClientMock, times(1)).send(any());
     }
 
@@ -329,15 +329,15 @@ class ManagedIdentityTests {
                             .environmentVariables(environmentVariables)
                             .build()).get();
         } catch (Exception exception) {
-            assert(exception.getCause() instanceof MsalManagedIdentityException);
+            assert(exception.getCause() instanceof MsalServiceException);
 
-            MsalManagedIdentityException miException = (MsalManagedIdentityException) exception.getCause();
-            assertEquals(source, miException.managedIdentitySourceType);
+            MsalServiceException miException = (MsalServiceException) exception.getCause();
+            assertEquals(source.name(), miException.managedIdentitySource());
             assertEquals(AuthenticationErrorCode.MANAGED_IDENTITY_REQUEST_FAILED, miException.errorCode());
             return;
         }
 
-        fail("MsalManagedIdentityException is expected but not thrown.");
+        fail("MsalServiceException is expected but not thrown.");
         verify(httpClientMock, times(1)).send(any());
     }
 
@@ -363,15 +363,15 @@ class ManagedIdentityTests {
                             .environmentVariables(environmentVariables)
                             .build()).get();
         } catch (Exception exception) {
-            assert(exception.getCause() instanceof MsalManagedIdentityException);
+            assert(exception.getCause() instanceof MsalServiceException);
 
-            MsalManagedIdentityException miException = (MsalManagedIdentityException) exception.getCause();
-            assertEquals(source, miException.managedIdentitySourceType);
+            MsalServiceException miException = (MsalServiceException) exception.getCause();
+            assertEquals(source.name(), miException.managedIdentitySource());
             assertEquals(AuthenticationErrorCode.MANAGED_IDENTITY_REQUEST_FAILED, miException.errorCode());
             return;
         }
 
-        fail("MsalManagedIdentityException is expected but not thrown.");
+        fail("MsalServiceException is expected but not thrown.");
         verify(httpClientMock, times(1)).send(any());
     }
 
@@ -397,15 +397,15 @@ class ManagedIdentityTests {
                             .environmentVariables(environmentVariables)
                             .build()).get();
         } catch (Exception exception) {
-            assert(exception.getCause() instanceof MsalManagedIdentityException);
+            assert(exception.getCause() instanceof MsalServiceException);
 
-            MsalManagedIdentityException miException = (MsalManagedIdentityException) exception.getCause();
-            assertEquals(source, miException.managedIdentitySourceType);
+            MsalServiceException miException = (MsalServiceException) exception.getCause();
+            assertEquals(source.name(), miException.managedIdentitySource());
             assertEquals(MsalError.MANAGED_IDENTITY_UNREACHABLE_NETWORK, miException.errorCode());
             return;
         }
 
-        fail("MsalManagedIdentityException is expected but not thrown.");
+        fail("MsalServiceException is expected but not thrown.");
         verify(httpClientMock, times(1)).send(any());
     }
 
@@ -433,16 +433,16 @@ class ManagedIdentityTests {
                             .environmentVariables(environmentVariables)
                             .build()).get();
         } catch (Exception exception) {
-            assert(exception.getCause() instanceof MsalManagedIdentityException);
+            assert(exception.getCause() instanceof MsalServiceException);
 
-            MsalManagedIdentityException miException = (MsalManagedIdentityException) exception.getCause();
-            assertEquals(ManagedIdentitySourceType.AZURE_ARC, miException.managedIdentitySourceType);
+            MsalServiceException miException = (MsalServiceException) exception.getCause();
+            assertEquals(ManagedIdentitySourceType.AZURE_ARC.name(), miException.managedIdentitySource());
             assertEquals(MsalError.MANAGED_IDENTITY_REQUEST_FAILED, miException.errorCode());
             assertEquals(MsalErrorMessage.MANAGED_IDENTITY_NO_CHALLENGE_ERROR, miException.getMessage());
             return;
         }
 
-        fail("MsalManagedIdentityException is expected but not thrown.");
+        fail("MsalServiceException is expected but not thrown.");
         verify(httpClientMock, times(1)).send(any());
     }
 
@@ -513,16 +513,16 @@ class ManagedIdentityTests {
                             .environmentVariables(environmentVariables)
                             .build()).get();
         } catch (Exception exception) {
-            assert(exception.getCause() instanceof MsalManagedIdentityException);
+            assert(exception.getCause() instanceof MsalServiceException);
 
-            MsalManagedIdentityException miException = (MsalManagedIdentityException) exception.getCause();
-            assertEquals(ManagedIdentitySourceType.AZURE_ARC, miException.managedIdentitySourceType);
+            MsalServiceException miException = (MsalServiceException) exception.getCause();
+            assertEquals(ManagedIdentitySourceType.AZURE_ARC.name(), miException.managedIdentitySource());
             assertEquals(MsalError.MANAGED_IDENTITY_REQUEST_FAILED, miException.errorCode());
             assertEquals(MsalErrorMessage.MANAGED_IDENTITY_INVALID_CHALLENGE, miException.getMessage());
             return;
         }
 
-        fail("MsalManagedIdentityException is expected but not thrown.");
+        fail("MsalServiceException is expected but not thrown.");
         verify(httpClientMock, times(1)).send(any());
     }
 

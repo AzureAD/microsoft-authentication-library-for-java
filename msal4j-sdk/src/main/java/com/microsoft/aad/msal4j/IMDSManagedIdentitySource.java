@@ -22,7 +22,7 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
         try {
             DEFAULT_IMDS_ENDPOINT = new URI("http://169.254.169.254/metadata/identity/oauth2/token");
         } catch (URISyntaxException e) {
-            throw new MsalManagedIdentityException(MsalError.INVALID_MANAGED_IDENTITY_ENDPOINT, ManagedIdentitySourceType.IMDS);
+            throw new MsalServiceException(e.getMessage(), MsalError.INVALID_MANAGED_IDENTITY_ENDPOINT, ManagedIdentitySourceType.IMDS);
         }
     }
 
@@ -51,11 +51,10 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
             try {
                 imdsEndpoint = new URI(builder.toString());
             } catch (URISyntaxException e) {
-                throw new MsalManagedIdentityException(MsalError.INVALID_MANAGED_IDENTITY_ENDPOINT,
-                        String.format(MsalErrorMessage.MANAGED_IDENTITY_ENDPOINT_INVALID_URI_ERROR,
-                                Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST,
-                                builder.toString(),
-                                ManagedIdentitySourceType.IMDS),
+                throw new MsalServiceException(String.format(MsalErrorMessage.MANAGED_IDENTITY_ENDPOINT_INVALID_URI_ERROR,
+                        Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST,
+                        builder.toString(),
+                        ManagedIdentitySourceType.IMDS), MsalError.INVALID_MANAGED_IDENTITY_ENDPOINT,
                         ManagedIdentitySourceType.IMDS);
             }
         }
@@ -121,7 +120,7 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
             message = message + " " + errorContentMessage;
 
             LOG.error(String.format("Error message: %s Http status code: %s", message, response.statusCode()));
-            throw new MsalManagedIdentityException(MsalError.MANAGED_IDENTITY_REQUEST_FAILED, message,
+            throw new MsalServiceException(message, MsalError.MANAGED_IDENTITY_REQUEST_FAILED,
                     ManagedIdentitySourceType.IMDS);
         }
 

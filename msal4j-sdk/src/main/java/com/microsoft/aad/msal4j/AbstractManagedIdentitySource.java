@@ -63,7 +63,7 @@ abstract class AbstractManagedIdentitySource {
             throw new RuntimeException(e);
         } catch (MsalClientException e) {
             if (e.getCause() instanceof SocketException) {
-                throw new MsalManagedIdentityException(MsalError.MANAGED_IDENTITY_UNREACHABLE_NETWORK, e.getMessage(), managedIdentitySourceType);
+                throw new MsalServiceException(e.getMessage(), MsalError.MANAGED_IDENTITY_UNREACHABLE_NETWORK, managedIdentitySourceType);
             }
 
             throw e;
@@ -87,10 +87,10 @@ abstract class AbstractManagedIdentitySource {
                 LOG.error(
                         String.format("[Managed Identity] request failed, HttpStatusCode: %s Error message: %s",
                                 response.statusCode(), message));
-                throw new MsalManagedIdentityException(AuthenticationErrorCode.MANAGED_IDENTITY_REQUEST_FAILED, message, managedIdentitySourceType);
+                throw new MsalServiceException(message, AuthenticationErrorCode.MANAGED_IDENTITY_REQUEST_FAILED, managedIdentitySourceType);
             }
         } catch (Exception e) {
-            if (!(e instanceof MsalManagedIdentityException)) {
+            if (!(e instanceof MsalServiceException)) {
                 LOG.error(
                         String.format("[Managed Identity] Exception: %s Http status code: %s", e.getMessage(),
                                 response != null ? response.statusCode() : ""));
@@ -98,7 +98,7 @@ abstract class AbstractManagedIdentitySource {
             } else {
                 throw e;
             }
-            throw new MsalManagedIdentityException(AuthenticationErrorCode.MANAGED_IDENTITY_REQUEST_FAILED, message, managedIdentitySourceType);
+            throw new MsalServiceException(message, AuthenticationErrorCode.MANAGED_IDENTITY_REQUEST_FAILED, managedIdentitySourceType);
         }
     }
 
@@ -113,7 +113,7 @@ abstract class AbstractManagedIdentitySource {
                 || managedIdentityResponse.getAccessToken().isEmpty() || managedIdentityResponse.getExpiresOn() == null
                 || managedIdentityResponse.getExpiresOn().isEmpty()) {
             LOG.error("[Managed Identity] Response is either null or insufficient for authentication.");
-            throw new MsalManagedIdentityException(MsalError.MANAGED_IDENTITY_REQUEST_FAILED, MsalErrorMessage.MANAGED_IDENTITY_UNEXPECTED_RESPONSE, managedIdentitySourceType);
+            throw new MsalServiceException(MsalErrorMessage.MANAGED_IDENTITY_UNEXPECTED_RESPONSE, MsalError.MANAGED_IDENTITY_REQUEST_FAILED, managedIdentitySourceType);
         }
 
         return managedIdentityResponse;
