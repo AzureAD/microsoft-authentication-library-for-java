@@ -65,21 +65,24 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
             } catch (MsalClientException ex) {
                 if (ex.errorCode().equals(AuthenticationErrorCode.CACHE_MISS)) {
                     LOG.debug(String.format("Cache lookup failed: %s", ex.getMessage()));
-                    return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor, clientApplication.authenticationAuthority.host);
+                    return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor);
                 } else {
-                    LOG.error("Error occurred while cache lookup. " + ex.getMessage());
+                    LOG.error(String.format("Error occurred while cache lookup: %s", ex.getMessage()));
                     throw ex;
                 }
             }
         }
 
         LOG.info("Skipped looking for an Access Token in the cache because forceRefresh or Claims were set. ");
-        return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor, clientApplication.authenticationAuthority.host);
+        return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor);
     }
 
-    private AuthenticationResult fetchNewAccessTokenAndSaveToCache(TokenRequestExecutor tokenRequestExecutor, String host) throws Exception {
+    private AuthenticationResult fetchNewAccessTokenAndSaveToCache(TokenRequestExecutor tokenRequestExecutor) {
 
         ManagedIdentityClient managedIdentityClient = new ManagedIdentityClient(msalRequest, tokenRequestExecutor.getServiceBundle());
+
+        LOG.debug(String.format("[Managed Identity] Managed Identity source and ID type identified and set successfully, request will use Managed Identity for %s",
+                managedIdentityClient.managedIdentitySource.managedIdentitySourceType.name()));
 
         ManagedIdentityResponse managedIdentityResponse = managedIdentityClient
                 .getManagedIdentityResponse(managedIdentityParameters);

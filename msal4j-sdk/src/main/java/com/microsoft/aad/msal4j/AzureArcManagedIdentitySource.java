@@ -53,7 +53,7 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
                     ManagedIdentitySourceType.AZURE_ARC);
         }
 
-        LOG.info("[Managed Identity] Creating Azure Arc managed identity. Endpoint URI: " + endpointUri);
+        LOG.info(String.format("[Managed Identity] Creating Azure Arc managed identity. Endpoint URI: %s", endpointUri));
         return endpointUri;
     }
 

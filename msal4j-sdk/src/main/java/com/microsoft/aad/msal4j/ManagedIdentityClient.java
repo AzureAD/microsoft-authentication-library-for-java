@@ -3,14 +3,18 @@
 
 package com.microsoft.aad.msal4j;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Class to initialize a managed identity and identify the service.
  */
 class ManagedIdentityClient {
+    private static final Logger LOG = LoggerFactory.getLogger(ManagedIdentityClient.class);
 
-    private AbstractManagedIdentitySource managedIdentitySource;
+    AbstractManagedIdentitySource managedIdentitySource;
 
-    ManagedIdentityClient(MsalRequest msalRequest, ServiceBundle serviceBundle) throws Exception {
+    ManagedIdentityClient(MsalRequest msalRequest, ServiceBundle serviceBundle) {
         managedIdentitySource = createManagedIdentitySource(msalRequest, serviceBundle);
 
         ManagedIdentityApplication managedIdentityApplication = (ManagedIdentityApplication) msalRequest.application();
