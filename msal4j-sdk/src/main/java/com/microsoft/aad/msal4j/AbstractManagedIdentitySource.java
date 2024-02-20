@@ -85,16 +85,14 @@ abstract class AbstractManagedIdentitySource {
             } else {
                 message = getMessageFromErrorResponse(response);
                 LOG.error(
-                        String.format("[Managed Identity] request failed, HttpStatusCode: %s Error message: %s",
+                        String.format("[Managed Identity] request failed, HttpStatusCode: %s, Error message: %s",
                                 response.statusCode(), message));
                 throw new MsalServiceException(message, AuthenticationErrorCode.MANAGED_IDENTITY_REQUEST_FAILED, managedIdentitySourceType);
             }
         } catch (Exception e) {
             if (!(e instanceof MsalServiceException)) {
-                LOG.error(
-                        String.format("[Managed Identity] Exception: %s Http status code: %s", e.getMessage(),
-                                response != null ? response.statusCode() : ""));
-                message = MsalErrorMessage.MANAGED_IDENTITY_UNEXPECTED_RESPONSE;
+                message = String.format("[Managed Identity] Unexpected exception occurred when parsing the response, HttpStatusCode: %s, Error message: %s",
+                        response.statusCode(), e.getMessage());
             } else {
                 throw e;
             }
@@ -112,8 +110,7 @@ abstract class AbstractManagedIdentitySource {
         if (managedIdentityResponse == null || managedIdentityResponse.getAccessToken() == null
                 || managedIdentityResponse.getAccessToken().isEmpty() || managedIdentityResponse.getExpiresOn() == null
                 || managedIdentityResponse.getExpiresOn().isEmpty()) {
-            LOG.error("[Managed Identity] Response is either null or insufficient for authentication.");
-            throw new MsalServiceException(MsalErrorMessage.MANAGED_IDENTITY_UNEXPECTED_RESPONSE, MsalError.MANAGED_IDENTITY_REQUEST_FAILED, managedIdentitySourceType);
+            throw new MsalServiceException("[Managed Identity] Response is either null or insufficient for authentication.", MsalError.MANAGED_IDENTITY_REQUEST_FAILED, managedIdentitySourceType);
         }
 
         return managedIdentityResponse;
