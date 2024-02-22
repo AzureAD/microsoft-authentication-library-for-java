@@ -1,3 +1,7 @@
+Version 1.14.3
+=============
+- Hotfix to update oauth2-oidc-sdk dependency (#781)
+
 Version 1.14.2
 =============
 - Correct IMDS endpoint used for region discovery (#762)
