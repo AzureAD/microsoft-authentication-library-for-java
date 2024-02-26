@@ -290,7 +290,7 @@ class AadInstanceDiscoveryProvider {
                 requestUrl,
                 headers);
 
-        return HttpHelper.executeHttpRequest(
+        return serviceBundle.getHttpHelper().executeHttpRequest(
                 httpRequest,
                 msalRequest.requestContext(),
                 serviceBundle);

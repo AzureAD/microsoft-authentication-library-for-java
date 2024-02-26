@@ -45,7 +45,7 @@ class OAuthHttpRequest extends HTTPRequest {
                 httpHeaders,
                 this.getQuery());
 
-        IHttpResponse httpResponse = HttpHelper.executeHttpRequest(
+        IHttpResponse httpResponse = serviceBundle.getHttpHelper().executeHttpRequest(
                 httpRequest,
                 this.requestContext,
                 this.serviceBundle);

@@ -120,8 +120,9 @@ class TokenRequestExecutorTest {
 
         ServiceBundle serviceBundle = new ServiceBundle(
                 null,
+                new TelemetryManager(null, false),
                 new DefaultHttpClient(null, null, null, null),
-                new TelemetryManager(null, false));
+                new HttpHelper());
 
         return spy(new TokenRequestExecutor(
                 new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)), refreshTokenRequest, serviceBundle));
@@ -146,7 +147,7 @@ class TokenRequestExecutorTest {
         final TokenRequestExecutor request = new TokenRequestExecutor(
                 new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
                 acr,
-                new ServiceBundle(null, null, null));
+                new ServiceBundle(null, null, null, null));
         assertNotNull(request);
     }
 
@@ -169,7 +170,7 @@ class TokenRequestExecutorTest {
         TokenRequestExecutor request = new TokenRequestExecutor(
                 new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
                 acr,
-                new ServiceBundle(null, null, null));
+                new ServiceBundle(null, null, null, null));
         assertNotNull(request);
         OAuthHttpRequest req = request.createOauthHttpRequest();
         assertNotNull(req);
@@ -198,7 +199,7 @@ class TokenRequestExecutorTest {
         final TokenRequestExecutor request = new TokenRequestExecutor(
                 new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
                 acr,
-                new ServiceBundle(null, null, null));
+                new ServiceBundle(null, null, null, null));
         assertNotNull(request);
         final OAuthHttpRequest req = request.createOauthHttpRequest();
         assertNotNull(req);
@@ -222,8 +223,9 @@ class TokenRequestExecutorTest {
 
         ServiceBundle serviceBundle = new ServiceBundle(
                 null,
+                new TelemetryManager(null, false),
                 null,
-                new TelemetryManager(null, false));
+                null);
 
         final TokenRequestExecutor request = spy(new TokenRequestExecutor(
                 new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)), acr, serviceBundle));
@@ -268,8 +270,9 @@ class TokenRequestExecutorTest {
 
         ServiceBundle serviceBundle = new ServiceBundle(
                 null,
+                new TelemetryManager(null, false),
                 null,
-                new TelemetryManager(null, false));
+                null);
 
         final TokenRequestExecutor request = spy(new TokenRequestExecutor(
                 new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)), acr, serviceBundle));

@@ -28,7 +28,7 @@ class UserDiscoveryRequest {
         headers.putAll(clientDataHeaders);
 
         HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, uri, headers);
-        IHttpResponse response = HttpHelper.executeHttpRequest(httpRequest, requestContext, serviceBundle);
+        IHttpResponse response = serviceBundle.getHttpHelper().executeHttpRequest(httpRequest, requestContext, serviceBundle);
 
         if (response.statusCode() != HttpHelper.HTTP_STATUS_200) {
             throw MsalServiceExceptionFactory.fromHttpResponse(response);

@@ -346,10 +346,12 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
         readTimeoutForDefaultHttpClient = builder.readTimeoutForDefaultHttpClient;
         serviceBundle = new ServiceBundle(
                 builder.executorService,
+                new TelemetryManager(telemetryConsumer, builder.onlySendFailureTelemetry),
                 builder.httpClient == null ?
                         new DefaultHttpClient(builder.proxy, builder.sslSocketFactory, builder.connectTimeoutForDefaultHttpClient, builder.readTimeoutForDefaultHttpClient) :
                         builder.httpClient,
-                new TelemetryManager(telemetryConsumer, builder.onlySendFailureTelemetry));
+                this instanceof ManagedIdentityApplication ? new HttpHelperManagedIdentity() : new HttpHelper()
+                );
         authenticationAuthority = builder.authenticationAuthority;
         clientId = builder.clientId;
     }

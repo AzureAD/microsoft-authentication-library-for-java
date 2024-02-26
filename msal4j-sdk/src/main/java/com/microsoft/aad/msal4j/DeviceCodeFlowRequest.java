@@ -46,7 +46,7 @@ class DeviceCodeFlowRequest extends MsalRequest {
 
         HttpRequest httpRequest = new HttpRequest(HttpMethod.POST, url, headers, bodyParams);
 
-        final IHttpResponse response = HttpHelper.executeHttpRequest(
+        final IHttpResponse response = serviceBundle.getHttpHelper().executeHttpRequest(
                 httpRequest,
                 this.requestContext(),
                 serviceBundle);
