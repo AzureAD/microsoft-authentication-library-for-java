@@ -75,13 +75,13 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
         try
         {
             URI endpointUri = new URI(msiEndpoint);
-            LOG.info("[Managed Identity] Environment variables validation passed for Service Fabric Managed Identity. Endpoint URI: " + endpointUri);
+            LOG.info(String.format("[Managed Identity] Environment variables validation passed for Service Fabric Managed Identity. Endpoint URI: %s", endpointUri));
             return endpointUri;
         }
         catch (URISyntaxException ex)
         {
-            throw new MsalManagedIdentityException(MsalError.INVALID_MANAGED_IDENTITY_ENDPOINT, String.format(
-                    MsalErrorMessage.MANAGED_IDENTITY_ENDPOINT_INVALID_URI_ERROR, "MSI_ENDPOINT", msiEndpoint, "Service Fabric"),
+            throw new MsalServiceException(String.format(
+                    MsalErrorMessage.MANAGED_IDENTITY_ENDPOINT_INVALID_URI_ERROR, "MSI_ENDPOINT", msiEndpoint, "Service Fabric"), MsalError.INVALID_MANAGED_IDENTITY_ENDPOINT,
                     ManagedIdentitySourceType.SERVICE_FABRIC);
         }
     }
