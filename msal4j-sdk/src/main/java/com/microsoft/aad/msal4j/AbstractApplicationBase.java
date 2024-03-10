@@ -79,11 +79,11 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
 
     @Accessors(fluent = true)
     @Getter(AccessLevel.PACKAGE)
-    private ServiceBundle serviceBundle;
+    ServiceBundle serviceBundle;
 
     @Accessors(fluent = true)
     @Getter(AccessLevel.PACKAGE)
-    private Consumer<List<HashMap<String, String>>> telemetryConsumer;
+    Consumer<List<HashMap<String, String>>> telemetryConsumer;
 
     @Accessors(fluent = true)
     @Getter(AccessLevel.PACKAGE)
@@ -181,14 +181,14 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
         // Optional parameters - initialized to default values
         private String correlationId;
         private boolean logPii = false;
-        private ExecutorService executorService;
-        private Proxy proxy;
-        private SSLSocketFactory sslSocketFactory;
-        private IHttpClient httpClient;
+        ExecutorService executorService;
+        Proxy proxy;
+        SSLSocketFactory sslSocketFactory;
+        IHttpClient httpClient;
         private Consumer<List<HashMap<String, String>>> telemetryConsumer;
-        private Boolean onlySendFailureTelemetry = false;
-        private Integer connectTimeoutForDefaultHttpClient;
-        private Integer readTimeoutForDefaultHttpClient;
+        Boolean onlySendFailureTelemetry = false;
+        Integer connectTimeoutForDefaultHttpClient;
+        Integer readTimeoutForDefaultHttpClient;
         private String clientId;
         private Authority authenticationAuthority = createDefaultAADAuthority();
 
@@ -353,12 +353,6 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
         sslSocketFactory = builder.sslSocketFactory;
         connectTimeoutForDefaultHttpClient = builder.connectTimeoutForDefaultHttpClient;
         readTimeoutForDefaultHttpClient = builder.readTimeoutForDefaultHttpClient;
-        serviceBundle = new ServiceBundle(
-                builder.executorService,
-                builder.httpClient == null ?
-                        determineHttpClientType(builder) :
-                        builder.httpClient,
-                new TelemetryManager(telemetryConsumer, builder.onlySendFailureTelemetry));
         authenticationAuthority = builder.authenticationAuthority;
         clientId = builder.clientId;
     }
