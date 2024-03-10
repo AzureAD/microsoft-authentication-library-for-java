@@ -168,15 +168,6 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
         return supplier;
     }
 
-    private IHttpClient determineHttpClientType(Builder<?> builder) {
-
-        if (this instanceof ManagedIdentityApplication) {
-            return new DefaultHttpClientManagedIdentity(builder.proxy, builder.sslSocketFactory, builder.connectTimeoutForDefaultHttpClient, builder.readTimeoutForDefaultHttpClient);
-        } else {
-            return new DefaultHttpClient(builder.proxy, builder.sslSocketFactory, builder.connectTimeoutForDefaultHttpClient, builder.readTimeoutForDefaultHttpClient);
-        }
-    }
-
     public abstract static class Builder<T extends Builder<T>> {
         // Optional parameters - initialized to default values
         private String correlationId;
