@@ -26,6 +26,12 @@ class HttpHelper implements IHttpHelper {
     public static final int HTTP_STATUS_429 = 429;
     public static final int HTTP_STATUS_500 = 500;
 
+    private IHttpClient httpClient;
+
+    HttpHelper(IHttpClient httpClient) {
+        this.httpClient = httpClient;
+    }
+
     public IHttpResponse executeHttpRequest(HttpRequest httpRequest,
                                             RequestContext requestContext,
                                             ServiceBundle serviceBundle) {
@@ -43,7 +49,6 @@ class HttpHelper implements IHttpHelper {
             addRequestInfoToTelemetry(httpRequest, httpEvent);
 
             try {
-                IHttpClient httpClient = serviceBundle.getHttpClient();
                 httpResponse = executeHttpRequestWithRetries(httpRequest, httpClient);
 
             } catch (Exception e) {

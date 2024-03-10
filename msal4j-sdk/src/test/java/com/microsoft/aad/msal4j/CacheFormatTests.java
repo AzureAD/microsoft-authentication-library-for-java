@@ -149,7 +149,7 @@ class CacheFormatTests {
         ServiceBundle serviceBundle = new ServiceBundle(
                 null,
                 new TelemetryManager(null, false),
-                null, null);
+                null);
 
         TokenRequestExecutor request = spy(new TokenRequestExecutor(
                 new AADAuthority(new URL(AUTHORIZE_REQUEST_URL)), msalRequest, serviceBundle));

@@ -29,10 +29,9 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
         super.serviceBundle = new ServiceBundle(
                 builder.executorService,
                 new TelemetryManager(telemetryConsumer, builder.onlySendFailureTelemetry),
-                builder.httpClient == null ?
+                new HttpHelperManagedIdentity(builder.httpClient == null ?
                         new DefaultHttpClient(builder.proxy, builder.sslSocketFactory, builder.connectTimeoutForDefaultHttpClient, builder.readTimeoutForDefaultHttpClient) :
-                        builder.httpClient,
-                new HttpHelperManagedIdentity()
+                        builder.httpClient)
         );
         log = LoggerFactory.getLogger(ManagedIdentityApplication.class);
 

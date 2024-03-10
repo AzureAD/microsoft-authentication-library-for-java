@@ -5,6 +5,10 @@ package com.microsoft.aad.msal4j;
 
 class HttpHelperManagedIdentity extends HttpHelper {
 
+    HttpHelperManagedIdentity(IHttpClient httpClient) {
+        super(httpClient);
+    }
+
     /**
      * For most flows, MSAL Java will attempt to retry a request if the response status code is 5xx
      * <p>
