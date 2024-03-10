@@ -26,7 +26,7 @@ class HttpHelper implements IHttpHelper {
     public static final int HTTP_STATUS_429 = 429;
     public static final int HTTP_STATUS_500 = 500;
 
-     public IHttpResponse executeHttpRequest(HttpRequest httpRequest,
+    public IHttpResponse executeHttpRequest(HttpRequest httpRequest,
                                             RequestContext requestContext,
                                             ServiceBundle serviceBundle) {
         checkForThrottling(requestContext);
