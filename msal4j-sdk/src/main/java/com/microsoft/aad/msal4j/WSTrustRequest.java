@@ -43,7 +43,7 @@ class WSTrustRequest {
                 policy.getVersion(), cloudAudienceUrn).toString();
 
         HttpRequest httpRequest = new HttpRequest(HttpMethod.POST, policy.getUrl(), headers, body);
-        IHttpResponse response = HttpHelper.executeHttpRequest(httpRequest, requestContext, serviceBundle);
+        IHttpResponse response = serviceBundle.getHttpHelper().executeHttpRequest(httpRequest, requestContext, serviceBundle);
 
         return WSTrustResponse.parse(response.body(), policy.getVersion());
     }
@@ -57,7 +57,7 @@ class WSTrustRequest {
                                    boolean logPii) throws Exception {
 
         HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, url);
-        IHttpResponse mexResponse = HttpHelper.executeHttpRequest(httpRequest, requestContext, serviceBundle);
+        IHttpResponse mexResponse = serviceBundle.getHttpHelper().executeHttpRequest(httpRequest, requestContext, serviceBundle);
 
         if (mexResponse.statusCode() != HttpHelper.HTTP_STATUS_200 || StringHelper.isBlank(mexResponse.body())) {
             throw MsalServiceExceptionFactory.fromHttpResponse(mexResponse);
@@ -81,7 +81,7 @@ class WSTrustRequest {
                                    boolean logPii) throws Exception {
 
         HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, mexURL);
-        IHttpResponse mexResponse = HttpHelper.executeHttpRequest(httpRequest, requestContext, serviceBundle);
+        IHttpResponse mexResponse = serviceBundle.getHttpHelper().executeHttpRequest(httpRequest, requestContext, serviceBundle);
 
         BindingPolicy policy = MexParser.getPolicyFromMexResponseForIntegrated(mexResponse.body(), logPii);
 

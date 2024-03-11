@@ -122,7 +122,7 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
             managedIdentityRequest.headers.put("Authorization", authHeaderValue);
 
             try {
-                response = HttpHelper.executeHttpRequest(
+                response = serviceBundle.getHttpHelper().executeHttpRequest(
                         new HttpRequest(HttpMethod.GET, managedIdentityRequest.computeURI().toString(),
                                 managedIdentityRequest.headers),
                         managedIdentityRequest.requestContext(),

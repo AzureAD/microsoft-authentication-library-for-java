@@ -56,6 +56,10 @@ class ManagedIdentityTests {
         return "{\"error\":{\"code\":\"AudienceNotSupported\",\"message\":\"Audience user.read is not a supported MSI token audience.\"}}";
     }
 
+    private String getMsiErrorResponseNoRetry() {
+        return "{\"statusCode\":\"123\",\"message\":\"Not one of the retryable error responses\",\"correlationId\":\"7d0c9763-ff1d-4842-a3f3-6d49e64f4513\"}";
+    }
+
     private HttpRequest expectedRequest(ManagedIdentitySourceType source, String resource) {
         return expectedRequest(source, resource, ManagedIdentityId.systemAssigned());
     }
@@ -305,6 +309,56 @@ class ManagedIdentityTests {
 
         fail("MsalServiceException is expected but not thrown.");
         verify(httpClientMock, times(1)).send(any());
+    }
+
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.ManagedIdentityTestDataProvider#createDataWrongScope")
+    void managedIdentityTest_Retry(ManagedIdentitySourceType source, String endpoint, String resource) throws Exception {
+        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        miApp = ManagedIdentityApplication
+                .builder(ManagedIdentityId.systemAssigned())
+                .httpClient(httpClientMock)
+                .build();
+
+        // Clear caching to avoid cross test pollution.
+        miApp.tokenCache().accessTokens.clear();
+
+        //Several specific 4xx and 5xx errors, such as 500, should trigger MSAL's retry logic
+        when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(500, getMsiErrorResponse()));
+
+        try {
+            miApp.acquireTokenForManagedIdentity(
+                    ManagedIdentityParameters.builder(resource)
+                            .environmentVariables(environmentVariables)
+                            .build()).get();
+        } catch (Exception exception) {
+            assert(exception.getCause() instanceof MsalManagedIdentityException);
+
+            //MSAL retries certain calls once, so there two be two invocations of HttpClient's send method: the original call, and the retry
+            verify(httpClientMock, times(2)).send(any());
+        }
+
+        clearInvocations(httpClientMock);
+        //Status codes that aren't on the list, such as 123, should not cause a retry
+        when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(123, getMsiErrorResponseNoRetry()));
+
+        try {
+            miApp.acquireTokenForManagedIdentity(
+                    ManagedIdentityParameters.builder(resource)
+                            .environmentVariables(environmentVariables)
+                            .build()).get();
+        } catch (Exception exception) {
+            assert(exception.getCause() instanceof MsalManagedIdentityException);
+
+            //Because there was no retry, there should only be one invocation of HttpClient's send method
+            verify(httpClientMock, times(1)).send(any());
+
+            return;
+        }
+
+        fail("MsalManagedIdentityException is expected but not thrown.");
     }
 
     @ParameterizedTest
