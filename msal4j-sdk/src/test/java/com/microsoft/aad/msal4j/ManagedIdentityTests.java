@@ -334,7 +334,7 @@ class ManagedIdentityTests {
                             .environmentVariables(environmentVariables)
                             .build()).get();
         } catch (Exception exception) {
-            assert(exception.getCause() instanceof MsalManagedIdentityException);
+            assert(exception.getCause() instanceof MsalServiceException);
 
             //MSAL retries certain calls once, so there two be two invocations of HttpClient's send method: the original call, and the retry
             verify(httpClientMock, times(2)).send(any());
@@ -350,7 +350,7 @@ class ManagedIdentityTests {
                             .environmentVariables(environmentVariables)
                             .build()).get();
         } catch (Exception exception) {
-            assert(exception.getCause() instanceof MsalManagedIdentityException);
+            assert(exception.getCause() instanceof MsalServiceException);
 
             //Because there was no retry, there should only be one invocation of HttpClient's send method
             verify(httpClientMock, times(1)).send(any());
@@ -358,7 +358,7 @@ class ManagedIdentityTests {
             return;
         }
 
-        fail("MsalManagedIdentityException is expected but not thrown.");
+        fail("MsalServiceException is expected but not thrown.");
     }
 
     @ParameterizedTest

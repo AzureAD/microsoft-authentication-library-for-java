@@ -22,6 +22,8 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
     private final String identityHeader;
     private final ManagedIdentityIdType idType;
     private final String userAssignedId;
+    private final IHttpClient httpClient = new DefaultHttpClientManagedIdentity(null, null, null, null);
+    private final HttpHelper httpHelper = new HttpHelper(httpClient);
 
     @Override
     public void createManagedIdentityRequest(String resource) {
@@ -72,13 +74,13 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
                             managedIdentityRequest.headers,
                             managedIdentityRequest.getBodyAsString());
 
-            response = HttpHelper.executeHttpRequest(httpRequest, managedIdentityRequest.requestContext(), serviceBundle.getTelemetryManager(),
+            response = httpHelper.executeHttpRequest(httpRequest, managedIdentityRequest.requestContext(), serviceBundle.getTelemetryManager(),
                     new DefaultHttpClientManagedIdentity(null, null, null, null));
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         } catch (MsalClientException e) {
             if (e.getCause() instanceof SocketException) {
-                throw new MsalManagedIdentityException(MsalError.MANAGED_IDENTITY_UNREACHABLE_NETWORK, e.getMessage(), managedIdentitySourceType);
+                throw new MsalServiceException(e.getMessage(), MsalError.MANAGED_IDENTITY_UNREACHABLE_NETWORK, managedIdentitySourceType);
             }
 
             throw e;
