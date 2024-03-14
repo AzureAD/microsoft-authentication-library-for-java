@@ -90,18 +90,18 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
     static AbstractManagedIdentitySource create(MsalRequest msalRequest, ServiceBundle serviceBundle) {
 
         IEnvironmentVariables environmentVariables = getEnvironmentVariables((ManagedIdentityParameters) msalRequest.requestContext().apiParameters());
-        String msiEndpoint = environmentVariables.getEnvironmentVariable(Constants.MSI_ENDPOINT);
-        String identityHeader = environmentVariables.getEnvironmentVariable(Constants.IDENTITY_ENDPOINT);
+        String identityEndpoint = environmentVariables.getEnvironmentVariable(Constants.IDENTITY_ENDPOINT);
+        String identityHeader = environmentVariables.getEnvironmentVariable(Constants.IDENTITY_HEADER);
         String identityServerThumbprint = environmentVariables.getEnvironmentVariable(Constants.IDENTITY_SERVER_THUMBPRINT);
 
 
-        if (StringHelper.isNullOrBlank(msiEndpoint) || StringHelper.isNullOrBlank(identityHeader) || StringHelper.isNullOrBlank(identityServerThumbprint))
+        if (StringHelper.isNullOrBlank(identityEndpoint) || StringHelper.isNullOrBlank(identityHeader) || StringHelper.isNullOrBlank(identityServerThumbprint))
         {
             LOG.info("[Managed Identity] Service fabric managed identity is unavailable.");
             return null;
         }
 
-        return new ServiceFabricManagedIdentitySource(msalRequest, serviceBundle, validateAndGetUri(msiEndpoint), identityHeader);
+        return new ServiceFabricManagedIdentitySource(msalRequest, serviceBundle, validateAndGetUri(identityEndpoint), identityHeader);
     }
 
     private static URI validateAndGetUri(String msiEndpoint)
