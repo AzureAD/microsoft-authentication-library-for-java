@@ -22,7 +22,7 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
         try {
             DEFAULT_IMDS_ENDPOINT = new URI("http://169.254.169.254/metadata/identity/oauth2/token");
         } catch (URISyntaxException e) {
-            throw new MsalManagedIdentityException(MsalError.INVALID_MANAGED_IDENTITY_ENDPOINT, ManagedIdentitySourceType.IMDS);
+            throw new MsalServiceException(e.getMessage(), MsalError.INVALID_MANAGED_IDENTITY_ENDPOINT, ManagedIdentitySourceType.IMDS);
         }
     }
 
@@ -39,7 +39,7 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
                 new EnvironmentVariables() :
                 parameters.environmentVariables;
         if (!StringHelper.isNullOrBlank(environmentVariables.getEnvironmentVariable(Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST))){
-            LOG.info("[Managed Identity] Environment variable AZURE_POD_IDENTITY_AUTHORITY_HOST for IMDS returned endpoint: " + environmentVariables.getEnvironmentVariable(Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST));
+            LOG.info(String.format("[Managed Identity] Environment variable AZURE_POD_IDENTITY_AUTHORITY_HOST for IMDS returned endpoint: %s", environmentVariables.getEnvironmentVariable(Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST)));
             try {
                 imdsEndpoint = new URI(environmentVariables.getEnvironmentVariable(Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST));
             } catch (URISyntaxException e) {
@@ -51,11 +51,10 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
             try {
                 imdsEndpoint = new URI(builder.toString());
             } catch (URISyntaxException e) {
-                throw new MsalManagedIdentityException(MsalError.INVALID_MANAGED_IDENTITY_ENDPOINT,
-                        String.format(MsalErrorMessage.MANAGED_IDENTITY_ENDPOINT_INVALID_URI_ERROR,
-                                Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST,
-                                builder.toString(),
-                                ManagedIdentitySourceType.IMDS),
+                throw new MsalServiceException(String.format(MsalErrorMessage.MANAGED_IDENTITY_ENDPOINT_INVALID_URI_ERROR,
+                        Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST,
+                        builder.toString(),
+                        ManagedIdentitySourceType.IMDS), MsalError.INVALID_MANAGED_IDENTITY_ENDPOINT,
                         ManagedIdentitySourceType.IMDS);
             }
         }
@@ -65,7 +64,7 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
             imdsEndpoint = DEFAULT_IMDS_ENDPOINT;
         }
 
-        LOG.info("[Managed Identity] Creating IMDS managed identity source. Endpoint URI: " + imdsEndpoint);
+        LOG.info(String.format("[Managed Identity] Creating IMDS managed identity source. Endpoint URI: %s", imdsEndpoint));
     }
 
     @Override
@@ -121,7 +120,7 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
             message = message + " " + errorContentMessage;
 
             LOG.error(String.format("Error message: %s Http status code: %s", message, response.statusCode()));
-            throw new MsalManagedIdentityException(MsalError.MANAGED_IDENTITY_REQUEST_FAILED, message,
+            throw new MsalServiceException(message, MsalError.MANAGED_IDENTITY_REQUEST_FAILED,
                     ManagedIdentitySourceType.IMDS);
         }
 

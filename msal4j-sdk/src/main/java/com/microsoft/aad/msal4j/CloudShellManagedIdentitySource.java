@@ -38,8 +38,7 @@ class CloudShellManagedIdentitySource extends AbstractManagedIdentitySource{
         ManagedIdentityIdType idType =
                 ((ManagedIdentityApplication) msalRequest.application()).getManagedIdentityId().getIdType();
         if (idType != ManagedIdentityIdType.SYSTEM_ASSIGNED) {
-            throw new MsalManagedIdentityException(MsalError.USER_ASSIGNED_MANAGED_IDENTITY_NOT_SUPPORTED,
-                    String.format(MsalErrorMessage.MANAGED_IDENTITY_USER_ASSIGNED_NOT_SUPPORTED, "cloud shell"),
+            throw new MsalServiceException(String.format(MsalErrorMessage.MANAGED_IDENTITY_USER_ASSIGNED_NOT_SUPPORTED, "cloud shell"), MsalError.USER_ASSIGNED_MANAGED_IDENTITY_NOT_SUPPORTED,
                     ManagedIdentitySourceType.CLOUD_SHELL);
         }
     }
@@ -65,13 +64,13 @@ class CloudShellManagedIdentitySource extends AbstractManagedIdentitySource{
         try
         {
             URI endpointUri = new URI(msiEndpoint);
-            LOG.info("[Managed Identity] Environment variables validation passed for cloud shell managed identity. Endpoint URI: " + endpointUri + ". Creating cloud shell managed identity.");
+            LOG.info(String.format("[Managed Identity] Environment variables validation passed for cloud shell managed identity. Endpoint URI: %s. Creating cloud shell managed identity.", endpointUri));
             return endpointUri;
         }
         catch (URISyntaxException ex)
         {
-            throw new MsalManagedIdentityException(MsalError.INVALID_MANAGED_IDENTITY_ENDPOINT, String.format(
-                    MsalErrorMessage.MANAGED_IDENTITY_ENDPOINT_INVALID_URI_ERROR, "MSI_ENDPOINT", msiEndpoint, "Cloud Shell"),
+            throw new MsalServiceException(String.format(
+                    MsalErrorMessage.MANAGED_IDENTITY_ENDPOINT_INVALID_URI_ERROR, "MSI_ENDPOINT", msiEndpoint, "Cloud Shell"), MsalError.INVALID_MANAGED_IDENTITY_ENDPOINT,
                     ManagedIdentitySourceType.CLOUD_SHELL);
         }
     }

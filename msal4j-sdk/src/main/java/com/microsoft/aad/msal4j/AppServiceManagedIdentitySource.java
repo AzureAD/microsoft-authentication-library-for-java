@@ -81,8 +81,8 @@ class AppServiceManagedIdentitySource extends AbstractManagedIdentitySource{
         }
         catch (URISyntaxException ex)
         {
-            throw new MsalManagedIdentityException(MsalError.INVALID_MANAGED_IDENTITY_ENDPOINT, String.format(
-                    MsalErrorMessage.MANAGED_IDENTITY_ENDPOINT_INVALID_URI_ERROR, "IDENTITY_ENDPOINT", msiEndpoint, "App Service"),
+            throw new MsalServiceException(String.format(
+                    MsalErrorMessage.MANAGED_IDENTITY_ENDPOINT_INVALID_URI_ERROR, "IDENTITY_ENDPOINT", msiEndpoint, "App Service"), MsalError.INVALID_MANAGED_IDENTITY_ENDPOINT,
                     ManagedIdentitySourceType.APP_SERVICE);
         }
 
