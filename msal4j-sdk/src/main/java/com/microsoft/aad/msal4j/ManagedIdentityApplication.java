@@ -24,9 +24,9 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
 
     private ManagedIdentityApplication(Builder builder) {
         super(builder);
-        super.tokenCache = sharedTokenCache;
 
         log = LoggerFactory.getLogger(ManagedIdentityApplication.class);
+        super.tokenCache = sharedTokenCache;
 
         this.managedIdentityId = builder.managedIdentityId;
         this.tenant = Constants.MANAGED_IDENTITY_DEFAULT_TENTANT;

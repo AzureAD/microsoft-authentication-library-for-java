@@ -79,11 +79,11 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
 
     @Accessors(fluent = true)
     @Getter(AccessLevel.PACKAGE)
-    ServiceBundle serviceBundle;
+    private ServiceBundle serviceBundle;
 
     @Accessors(fluent = true)
     @Getter(AccessLevel.PACKAGE)
-    Consumer<List<HashMap<String, String>>> telemetryConsumer;
+    private Consumer<List<HashMap<String, String>>> telemetryConsumer;
 
     @Accessors(fluent = true)
     @Getter(AccessLevel.PACKAGE)
