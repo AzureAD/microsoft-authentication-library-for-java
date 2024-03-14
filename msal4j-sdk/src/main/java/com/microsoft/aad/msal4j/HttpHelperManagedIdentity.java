@@ -8,6 +8,8 @@ class HttpHelperManagedIdentity extends HttpHelper {
     HttpHelperManagedIdentity(IHttpClient httpClient) {
         super(httpClient);
     }
+    static final int RETRY_NUM = 3;
+    static final int RETRY_DELAY_MS = 1000;
 
     /**
      * For most flows, MSAL Java will attempt to retry a request if the response status code is 5xx
@@ -28,5 +30,23 @@ class HttpHelperManagedIdentity extends HttpHelper {
             default:
                 return false;
         }
+    }
+
+    @Override
+    IHttpResponse executeHttpRequestWithRetries(HttpRequest httpRequest, IHttpClient httpClient)
+            throws Exception {
+        IHttpResponse httpResponse = null;
+
+        //For Managed Identity, there should be three retries with a 1 second delay
+        //  Starting at i = 0 for the first attempt, it will then loop 3 times (i <= RETRY_NUM)
+        for (int i = 0; i <= RETRY_NUM; i++) {
+            httpResponse = httpClient.send(httpRequest);
+            if (!isRetryable(httpResponse)) {
+                break;
+            }
+            Thread.sleep(RETRY_DELAY_MS);
+        }
+
+        return httpResponse;
     }
 }

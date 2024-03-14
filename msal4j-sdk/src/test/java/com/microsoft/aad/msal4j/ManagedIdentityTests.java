@@ -336,8 +336,9 @@ class ManagedIdentityTests {
         } catch (Exception exception) {
             assert(exception.getCause() instanceof MsalManagedIdentityException);
 
-            //MSAL retries certain calls once, so there two be two invocations of HttpClient's send method: the original call, and the retry
-            verify(httpClientMock, times(2)).send(any());
+            //There should be three retries for certain MSI error codes, so there will be four invocations of
+            // HttpClient's send method: the original call, and the three retries
+            verify(httpClientMock, times(4)).send(any());
         }
 
         clearInvocations(httpClientMock);
