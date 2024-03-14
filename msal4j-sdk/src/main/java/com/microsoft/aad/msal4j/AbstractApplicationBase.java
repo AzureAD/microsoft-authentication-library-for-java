@@ -172,14 +172,14 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
         // Optional parameters - initialized to default values
         private String correlationId;
         private boolean logPii = false;
-        ExecutorService executorService;
-        Proxy proxy;
-        SSLSocketFactory sslSocketFactory;
-        IHttpClient httpClient;
+        private ExecutorService executorService;
+        private Proxy proxy;
+        private SSLSocketFactory sslSocketFactory;
+        private IHttpClient httpClient;
         private Consumer<List<HashMap<String, String>>> telemetryConsumer;
-        Boolean onlySendFailureTelemetry = false;
-        Integer connectTimeoutForDefaultHttpClient;
-        Integer readTimeoutForDefaultHttpClient;
+        private Boolean onlySendFailureTelemetry = false;
+        private Integer connectTimeoutForDefaultHttpClient;
+        private Integer readTimeoutForDefaultHttpClient;
         private String clientId;
         private Authority authenticationAuthority = createDefaultAADAuthority();
 
@@ -344,6 +344,12 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
         sslSocketFactory = builder.sslSocketFactory;
         connectTimeoutForDefaultHttpClient = builder.connectTimeoutForDefaultHttpClient;
         readTimeoutForDefaultHttpClient = builder.readTimeoutForDefaultHttpClient;
+        serviceBundle = new ServiceBundle(
+                builder.executorService,
+                builder.httpClient == null ?
+                        new DefaultHttpClient(builder.proxy, builder.sslSocketFactory, builder.connectTimeoutForDefaultHttpClient, builder.readTimeoutForDefaultHttpClient) :
+                        builder.httpClient,
+                new TelemetryManager(telemetryConsumer, builder.onlySendFailureTelemetry));
         authenticationAuthority = builder.authenticationAuthority;
         clientId = builder.clientId;
     }

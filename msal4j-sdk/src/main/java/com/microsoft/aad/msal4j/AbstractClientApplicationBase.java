@@ -443,12 +443,6 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
         autoDetectRegion = builder.autoDetectRegion;
         azureRegion = builder.azureRegion;
         instanceDiscovery = builder.isInstanceDiscoveryEnabled;
-        super.serviceBundle = new ServiceBundle(
-                builder.executorService,
-                builder.httpClient == null ?
-                        new DefaultHttpClient(builder.proxy, builder.sslSocketFactory, builder.connectTimeoutForDefaultHttpClient, builder.readTimeoutForDefaultHttpClient) :
-                        builder.httpClient,
-                new TelemetryManager(telemetryConsumer, builder.onlySendFailureTelemetry));
 
         if (aadAadInstanceDiscoveryResponse != null) {
             AadInstanceDiscoveryProvider.cacheInstanceDiscoveryMetadata(

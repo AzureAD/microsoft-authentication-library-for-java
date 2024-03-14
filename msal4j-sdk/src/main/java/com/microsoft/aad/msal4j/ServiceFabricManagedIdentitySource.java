@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
@@ -51,6 +52,39 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
 
         this.idType = ((ManagedIdentityApplication) msalRequest.application()).getManagedIdentityId().getIdType();
         this.userAssignedId = ((ManagedIdentityApplication) msalRequest.application()).getManagedIdentityId().getUserAssignedId();
+    }
+
+    @Override
+    public ManagedIdentityResponse getManagedIdentityResponse(
+            ManagedIdentityParameters parameters) {
+
+        createManagedIdentityRequest(parameters.resource);
+        IHttpResponse response;
+
+        try {
+
+            HttpRequest httpRequest = managedIdentityRequest.method.equals(HttpMethod.GET) ?
+                    new HttpRequest(HttpMethod.GET,
+                            managedIdentityRequest.computeURI().toString(),
+                            managedIdentityRequest.headers) :
+                    new HttpRequest(HttpMethod.POST,
+                            managedIdentityRequest.computeURI().toString(),
+                            managedIdentityRequest.headers,
+                            managedIdentityRequest.getBodyAsString());
+
+            response = HttpHelper.executeHttpRequest(httpRequest, managedIdentityRequest.requestContext(), serviceBundle.getTelemetryManager(),
+                    new DefaultHttpClientManagedIdentity(null, null, null, null));
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        } catch (MsalClientException e) {
+            if (e.getCause() instanceof SocketException) {
+                throw new MsalManagedIdentityException(MsalError.MANAGED_IDENTITY_UNREACHABLE_NETWORK, e.getMessage(), managedIdentitySourceType);
+            }
+
+            throw e;
+        }
+
+        return handleResponse(parameters, response);
     }
 
     static AbstractManagedIdentitySource create(MsalRequest msalRequest, ServiceBundle serviceBundle) {

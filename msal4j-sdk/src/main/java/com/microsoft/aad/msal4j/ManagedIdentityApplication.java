@@ -25,12 +25,6 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
     private ManagedIdentityApplication(Builder builder) {
         super(builder);
         super.tokenCache = sharedTokenCache;
-        super.serviceBundle = new ServiceBundle(
-                builder.executorService,
-                builder.httpClient == null ?
-                        new DefaultHttpClientManagedIdentity(builder.proxy, builder.sslSocketFactory, builder.connectTimeoutForDefaultHttpClient, builder.readTimeoutForDefaultHttpClient) :
-                        builder.httpClient,
-                new TelemetryManager(telemetryConsumer, builder.onlySendFailureTelemetry));
 
         log = LoggerFactory.getLogger(ManagedIdentityApplication.class);
 
