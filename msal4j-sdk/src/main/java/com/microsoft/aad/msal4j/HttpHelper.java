@@ -92,7 +92,7 @@ class HttpHelper implements IHttpHelper {
                 getRetryAfterHeader(httpResponse) == null;
     }
 
-    private IHttpResponse executeHttpRequestWithRetries(HttpRequest httpRequest, IHttpClient httpClient)
+    IHttpResponse executeHttpRequestWithRetries(HttpRequest httpRequest, IHttpClient httpClient)
             throws Exception {
         IHttpResponse httpResponse = null;
         for (int i = 0; i < RETRY_NUM; i++) {
