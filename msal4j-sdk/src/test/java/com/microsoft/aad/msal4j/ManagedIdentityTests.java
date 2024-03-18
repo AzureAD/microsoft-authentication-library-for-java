@@ -86,6 +86,7 @@ class ManagedIdentityTests {
 
                 headers.put("ContentType", "application/x-www-form-urlencoded");
                 headers.put("Metadata", "true");
+                headers.put("resource", resource);
 
                 bodyParameters.put("resource", Collections.singletonList(resource));
                 return new HttpRequest(HttpMethod.POST, computeUri(endpoint, queryParameters), headers, URLUtils.serializeParameters(bodyParameters));
@@ -149,7 +150,7 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+        when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
 
         miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
@@ -184,7 +185,7 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        when(httpClientMock.send(eq(expectedRequest(source, resource, id)))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+        when(httpClientMock.send(expectedRequest(source, resource, id))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
 
         miApp = ManagedIdentityApplication
                 .builder(id)
@@ -245,8 +246,8 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
-        when(httpClientMock.send(eq(expectedRequest(source, anotherResource)))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+        when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+        when(httpClientMock.send(expectedRequest(source, anotherResource))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
 
         miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
@@ -280,9 +281,9 @@ class ManagedIdentityTests {
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
         if (environmentVariables.getEnvironmentVariable("SourceType").equals(ManagedIdentitySourceType.CLOUD_SHELL.toString())) {
-            when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(500, getMsiErrorResponseCloudShell()));
+            when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(500, getMsiErrorResponseCloudShell()));
         } else {
-            when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(500, getMsiErrorResponse()));
+            when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(500, getMsiErrorResponse()));
         }
 
         miApp = ManagedIdentityApplication
@@ -326,7 +327,7 @@ class ManagedIdentityTests {
         miApp.tokenCache().accessTokens.clear();
 
         //Several specific 4xx and 5xx errors, such as 500, should trigger MSAL's retry logic
-        when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(500, getMsiErrorResponse()));
+        when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(500, getMsiErrorResponse()));
 
         try {
             miApp.acquireTokenForManagedIdentity(
@@ -334,7 +335,7 @@ class ManagedIdentityTests {
                             .environmentVariables(environmentVariables)
                             .build()).get();
         } catch (Exception exception) {
-            assert(exception.getCause() instanceof MsalManagedIdentityException);
+            assert(exception.getCause() instanceof MsalServiceException);
 
             //There should be three retries for certain MSI error codes, so there will be four invocations of
             // HttpClient's send method: the original call, and the three retries
@@ -343,7 +344,7 @@ class ManagedIdentityTests {
 
         clearInvocations(httpClientMock);
         //Status codes that aren't on the list, such as 123, should not cause a retry
-        when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(123, getMsiErrorResponseNoRetry()));
+        when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(123, getMsiErrorResponseNoRetry()));
 
         try {
             miApp.acquireTokenForManagedIdentity(
@@ -351,7 +352,7 @@ class ManagedIdentityTests {
                             .environmentVariables(environmentVariables)
                             .build()).get();
         } catch (Exception exception) {
-            assert(exception.getCause() instanceof MsalManagedIdentityException);
+            assert(exception.getCause() instanceof MsalServiceException);
 
             //Because there was no retry, there should only be one invocation of HttpClient's send method
             verify(httpClientMock, times(1)).send(any());
@@ -368,7 +369,7 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(500, ""));
+        when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(500, ""));
 
         miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
@@ -402,7 +403,7 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(200, ""));
+        when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(200, ""));
 
         miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
@@ -436,7 +437,7 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenThrow(new SocketException("A socket operation was attempted to an unreachable network."));
+        when(httpClientMock.send(expectedRequest(source, resource))).thenThrow(new SocketException("A socket operation was attempted to an unreachable network."));
 
         miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
@@ -507,7 +508,7 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        when(httpClientMock.send(eq(expectedRequest(source, resource)))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+        when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
 
         miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
@@ -592,12 +593,12 @@ class ManagedIdentityTests {
         response.statusCode(HttpStatus.SC_UNAUTHORIZED);
         response.headers().put("Www-Authenticate", Collections.singletonList("Basic realm=" + path));
 
-        when(httpClientMock.send(eq(expectedRequest(ManagedIdentitySourceType.AZURE_ARC, resource)))).thenReturn(response);
+        when(httpClientMock.send(expectedRequest(ManagedIdentitySourceType.AZURE_ARC, resource))).thenReturn(response);
 
         // Mock the response when Authorization header is sent in request
         HttpRequest expectedRequest = expectedRequest(ManagedIdentitySourceType.AZURE_ARC, resource);
         expectedRequest.headers().put("Authorization", "Basic secret");
-        when(httpClientMock.send(eq(expectedRequest))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+        when(httpClientMock.send(expectedRequest)).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
 
         miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
