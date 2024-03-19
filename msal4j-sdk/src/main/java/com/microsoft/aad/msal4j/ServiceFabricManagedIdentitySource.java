@@ -24,7 +24,6 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
     private final String userAssignedId;
 
     //Service Fabric requires a special check for an environment variable containing a certificate thumbprint used for validating requests.
-    //
     //No other flow need this and an app developer may not be aware of it, so it was decided that for the Service Fabric flow we will simply override
     // any HttpClient that may have been set by the app developer with our own client which performs the validation logic.
     private final IHttpClient httpClient = new DefaultHttpClientManagedIdentity(null, null, null, null);
@@ -80,7 +79,7 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
                             managedIdentityRequest.getBodyAsString());
 
             response = httpHelper.executeHttpRequest(httpRequest, managedIdentityRequest.requestContext(), serviceBundle.getTelemetryManager(),
-                    new DefaultHttpClientManagedIdentity(null, null, null, null));
+                    httpClient);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         } catch (MsalClientException e) {

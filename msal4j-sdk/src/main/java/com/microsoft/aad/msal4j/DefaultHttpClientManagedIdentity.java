@@ -23,6 +23,10 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
+/** An extension for the default HttpClient which is meant to perform any extra HTTP behavior needed for a managed identity flow.
+ * <p>
+ * Currently the only extra behavior is the Service Fabric flow, where we must add a certificate thumbprint to the HTTP connection.
+ */
 class DefaultHttpClientManagedIdentity extends DefaultHttpClient {
 
     public static final HostnameVerifier ALL_HOSTS_ACCEPT_HOSTNAME_VERIFIER;
