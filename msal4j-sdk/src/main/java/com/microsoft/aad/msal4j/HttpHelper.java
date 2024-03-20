@@ -67,6 +67,44 @@ class HttpHelper implements IHttpHelper {
         return httpResponse;
     }
 
+    //Overloaded version of the more commonly used HTTP executor. It does not use ServiceBundle, allowing an HTTP call to be
+    // made only with more bespoke request-level parameters rather than those from the app-level ServiceBundle
+    IHttpResponse executeHttpRequest(HttpRequest httpRequest,
+                                            RequestContext requestContext,
+                                            TelemetryManager telemetryManager,
+                                            IHttpClient httpClient) {
+        checkForThrottling(requestContext);
+
+        HttpEvent httpEvent = new HttpEvent(); // for tracking http telemetry
+        IHttpResponse httpResponse;
+
+        try (TelemetryHelper telemetryHelper = telemetryManager.createTelemetryHelper(
+                requestContext.telemetryRequestId(),
+                requestContext.clientId(),
+                httpEvent,
+                false)) {
+
+            addRequestInfoToTelemetry(httpRequest, httpEvent);
+
+            try {
+                httpResponse = executeHttpRequestWithRetries(httpRequest, httpClient);
+
+            } catch (Exception e) {
+                httpEvent.setOauthErrorCode(AuthenticationErrorCode.UNKNOWN);
+                throw new MsalClientException(e);
+            }
+
+            addResponseInfoToTelemetry(httpResponse, httpEvent);
+
+            if (httpResponse.headers() != null) {
+                HttpHelper.verifyReturnedCorrelationId(httpRequest, httpResponse);
+            }
+        }
+        processThrottlingInstructions(httpResponse, requestContext);
+
+        return httpResponse;
+    }
+
     private String getRequestThumbprint(RequestContext requestContext) {
         StringBuilder sb = new StringBuilder();
         sb.append(requestContext.clientId() + POINT_DELIMITER);

@@ -360,7 +360,7 @@ class ManagedIdentityTests {
             return;
         }
 
-        fail("MsalManagedIdentityException is expected but not thrown.");
+        fail("MsalServiceException is expected but not thrown.");
     }
 
     @ParameterizedTest

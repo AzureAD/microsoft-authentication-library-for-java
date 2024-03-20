@@ -21,14 +21,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 class DefaultHttpClient implements IHttpClient {
-    private final static Logger LOG = LoggerFactory.getLogger(DefaultHttpClient.class);
+    private static final  Logger LOG = LoggerFactory.getLogger(DefaultHttpClient.class);
 
-    private final Proxy proxy;
-    private final SSLSocketFactory sslSocketFactory;
+    final Proxy proxy;
+    final SSLSocketFactory sslSocketFactory;
 
     //By default, rely on the timeout behavior of the services requests are sent to
-    private int connectTimeout = 0;
-    private int readTimeout = 0;
+    int connectTimeout = 0;
+    int readTimeout = 0;
 
     DefaultHttpClient(Proxy proxy, SSLSocketFactory sslSocketFactory, Integer connectTimeout, Integer readTimeout) {
         this.proxy = proxy;
@@ -77,7 +77,7 @@ class DefaultHttpClient implements IHttpClient {
         }
     }
 
-    private HttpURLConnection openConnection(final URL finalURL)
+    HttpURLConnection openConnection(final URL finalURL)
             throws IOException {
         URLConnection connection;
 

@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
@@ -21,6 +22,12 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
     private final String identityHeader;
     private final ManagedIdentityIdType idType;
     private final String userAssignedId;
+
+    //Service Fabric requires a special check for an environment variable containing a certificate thumbprint used for validating requests.
+    //No other flow need this and an app developer may not be aware of it, so it was decided that for the Service Fabric flow we will simply override
+    // any HttpClient that may have been set by the app developer with our own client which performs the validation logic.
+    private final IHttpClient httpClient = new DefaultHttpClientManagedIdentity(null, null, null, null);
+    private final HttpHelper httpHelper = new HttpHelper(httpClient);
 
     @Override
     public void createManagedIdentityRequest(String resource) {
@@ -53,21 +60,54 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
         this.userAssignedId = ((ManagedIdentityApplication) msalRequest.application()).getManagedIdentityId().getUserAssignedId();
     }
 
+    @Override
+    public ManagedIdentityResponse getManagedIdentityResponse(
+            ManagedIdentityParameters parameters) {
+
+        createManagedIdentityRequest(parameters.resource);
+        IHttpResponse response;
+
+        try {
+
+            HttpRequest httpRequest = managedIdentityRequest.method.equals(HttpMethod.GET) ?
+                    new HttpRequest(HttpMethod.GET,
+                            managedIdentityRequest.computeURI().toString(),
+                            managedIdentityRequest.headers) :
+                    new HttpRequest(HttpMethod.POST,
+                            managedIdentityRequest.computeURI().toString(),
+                            managedIdentityRequest.headers,
+                            managedIdentityRequest.getBodyAsString());
+
+            response = httpHelper.executeHttpRequest(httpRequest, managedIdentityRequest.requestContext(), serviceBundle.getTelemetryManager(),
+                    httpClient);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        } catch (MsalClientException e) {
+            if (e.getCause() instanceof SocketException) {
+                throw new MsalServiceException(e.getMessage(), MsalError.MANAGED_IDENTITY_UNREACHABLE_NETWORK, managedIdentitySourceType);
+            }
+
+            throw e;
+        }
+
+        return handleResponse(parameters, response);
+    }
+
     static AbstractManagedIdentitySource create(MsalRequest msalRequest, ServiceBundle serviceBundle) {
 
         IEnvironmentVariables environmentVariables = getEnvironmentVariables((ManagedIdentityParameters) msalRequest.requestContext().apiParameters());
-        String msiEndpoint = environmentVariables.getEnvironmentVariable(Constants.MSI_ENDPOINT);
-        String identityHeader = environmentVariables.getEnvironmentVariable(Constants.IDENTITY_ENDPOINT);
+        String identityEndpoint = environmentVariables.getEnvironmentVariable(Constants.IDENTITY_ENDPOINT);
+        String identityHeader = environmentVariables.getEnvironmentVariable(Constants.IDENTITY_HEADER);
         String identityServerThumbprint = environmentVariables.getEnvironmentVariable(Constants.IDENTITY_SERVER_THUMBPRINT);
 
 
-        if (StringHelper.isNullOrBlank(msiEndpoint) || StringHelper.isNullOrBlank(identityHeader) || StringHelper.isNullOrBlank(identityServerThumbprint))
+        if (StringHelper.isNullOrBlank(identityEndpoint) || StringHelper.isNullOrBlank(identityHeader) || StringHelper.isNullOrBlank(identityServerThumbprint))
         {
             LOG.info("[Managed Identity] Service fabric managed identity is unavailable.");
             return null;
         }
 
-        return new ServiceFabricManagedIdentitySource(msalRequest, serviceBundle, validateAndGetUri(msiEndpoint), identityHeader);
+        return new ServiceFabricManagedIdentitySource(msalRequest, serviceBundle, validateAndGetUri(identityEndpoint), identityHeader);
     }
 
     private static URI validateAndGetUri(String msiEndpoint)
