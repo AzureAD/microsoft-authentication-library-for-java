@@ -1,3 +1,18 @@
+Version 1.14.3
+=============
+- Hotfix to update oauth2-oidc-sdk dependency (#781)
+
+Version 1.14.2
+=============
+- Correct IMDS endpoint used for region discovery (#762)
+- Improve performance of instance/region discovery (#763)
+
+Version 1.14.1
+=============
+- Remove key size requirements for certificates (#749)
+- Improve timeout behavior for futures (#756)
+- Reduce verbosity of certain info logs (#756)
+
 Version 1.14.4-beta
 =============
 - Beta support for MSI in Azure Arc (#730)

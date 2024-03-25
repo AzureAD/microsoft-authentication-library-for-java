@@ -452,7 +452,7 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
         );
 
         if (aadAadInstanceDiscoveryResponse != null) {
-            AadInstanceDiscoveryProvider.cacheInstanceDiscoveryMetadata(
+            AadInstanceDiscoveryProvider.cacheInstanceDiscoveryResponse(
                     authenticationAuthority.host,
                     aadAadInstanceDiscoveryResponse);
         }

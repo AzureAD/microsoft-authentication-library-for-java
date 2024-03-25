@@ -95,7 +95,11 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
                         msalRequest.requestContext().correlationId(),
                         error);
 
-                logException(ex);
+                clientApplication.log.warn(
+                        LogHelper.createMessage(
+                                String.format("Execution of %s failed: %s", this.getClass(), ex.getMessage()),
+                                msalRequest.headers().getHeaderCorrelationIdValue()));
+
                 throw new CompletionException(ex);
             }
         }
@@ -133,26 +137,6 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
                 }
             }
         }
-    }
-
-    private void logException(Exception ex) {
-
-        String logMessage = LogHelper.createMessage(
-                "Execution of " + this.getClass() + " failed.",
-                msalRequest.headers().getHeaderCorrelationIdValue());
-
-        if (ex instanceof MsalClientException) {
-            MsalClientException exception = (MsalClientException) ex;
-            if (exception.errorCode() != null && exception.errorCode().equalsIgnoreCase(AuthenticationErrorCode.CACHE_MISS)) {
-                clientApplication.log.debug(logMessage, ex);
-                return;
-            }
-        } else if (ex instanceof MsalAzureSDKException) {
-            clientApplication.log.debug(ex.getMessage(), ex);
-            return;
-        }
-
-        clientApplication.log.error(logMessage, ex);
     }
 
     private ApiEvent initializeApiEvent(MsalRequest msalRequest) {

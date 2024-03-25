@@ -116,7 +116,7 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
             throw new MsalClientException(AuthenticationErrorMessage.NO_TOKEN_IN_CACHE, AuthenticationErrorCode.CACHE_MISS);
         }
 
-        log.info("Returning token from cache");
+        log.debug("Returning token from cache");
 
         return res;
     }

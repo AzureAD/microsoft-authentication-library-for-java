@@ -11,6 +11,7 @@ import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 @Accessors(fluent = true)
@@ -25,7 +26,13 @@ class HttpListener {
 
     void startListener(int port, HttpHandler httpHandler) {
         try {
-            server = HttpServer.create(new InetSocketAddress(port), 0);
+            // since we only allow loopback address, we can use InetAddress.getLoopbackAddress() directly
+            // why? because currently we are creating Socket using InetSocketAddress(port)
+            // which is using wildcard address, so it will attempt to bind to all available network interfaces
+            // that includes private IP like 192.168.x.x, 10.x.x.x, etc.
+            // which in turns, will trigger the firewall prompt
+            // https://github.com/AzureAD/microsoft-authentication-library-for-java/issues/796
+            server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), port), 0);
             server.createContext("/", httpHandler);
             this.port = server.getAddress().getPort();
             server.start();

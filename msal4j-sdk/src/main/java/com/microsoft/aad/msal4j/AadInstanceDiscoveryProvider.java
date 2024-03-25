@@ -29,7 +29,7 @@ class AadInstanceDiscoveryProvider {
 
     // For information of the current api-version refer: https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service#versioning
     private static final String DEFAULT_API_VERSION = "2020-06-01";
-    private static final String IMDS_ENDPOINT = "https://169.254.169.254/metadata/instance/compute/location?" + DEFAULT_API_VERSION + "&format=text";
+    private static final String IMDS_ENDPOINT = "http://169.254.169.254/metadata/instance/compute/location?api-version=" + DEFAULT_API_VERSION + "&format=text";
 
     private static final int IMDS_TIMEOUT = 2;
     private static final TimeUnit IMDS_TIMEOUT_UNIT = TimeUnit.SECONDS;
@@ -64,44 +64,47 @@ class AadInstanceDiscoveryProvider {
                                                            ServiceBundle serviceBundle) {
         String host = authorityUrl.getHost();
 
-        if (msalRequest.application() instanceof AbstractClientApplicationBase && shouldUseRegionalEndpoint(msalRequest)) {
-            //Server side telemetry requires the result from region discovery when any part of the region API is used
-            String detectedRegion = discoverRegion(msalRequest, serviceBundle);
-
-            if (((AbstractClientApplicationBase) msalRequest.application()).azureRegion() != null) {
-                host = getRegionalizedHost(authorityUrl.getHost(),
-                        ((AbstractClientApplicationBase) msalRequest.application()).azureRegion());
+        //If instanceDiscovery flag set to false, cache a basic instance metadata entry to skip future lookups
+        if (!msalRequest.application().instanceDiscovery()) {
+            if (cache.get(host) == null) {
+                log.debug("Instance discovery set to false, caching a default entry.");
+                cacheInstanceDiscoveryMetadata(host);
             }
-
-            //If region autodetection is enabled and a specific region not already set,
-            // set the application's region to the discovered region so that future requests can skip the IMDS endpoint call
-            if (null == ((AbstractClientApplicationBase) msalRequest.application()).azureRegion()
-                    && ((AbstractClientApplicationBase) msalRequest.application()).autoDetectRegion()
-                    && null != detectedRegion) {
-                ((AbstractClientApplicationBase) msalRequest.application()).azureRegion = detectedRegion;
-            }
-            cacheRegionInstanceMetadata(authorityUrl.getHost(), ((AbstractClientApplicationBase) msalRequest.application()).azureRegion());
-            serviceBundle.getServerSideTelemetry().getCurrentRequest().regionOutcome(
-                    determineRegionOutcome(detectedRegion,
-                            ((AbstractClientApplicationBase) msalRequest.application()).azureRegion(),
-                            ((AbstractClientApplicationBase) msalRequest.application()).autoDetectRegion()));
+            return cache.get(host);
         }
 
-        InstanceDiscoveryMetadataEntry result = cache.get(host);
+        //If a region was set by an app developer or previously found through autodetection, adjust the authority host to use it
+        if (shouldUseRegionalEndpoint(msalRequest) && msalRequest.application().azureRegion() != null) {
+            host = getRegionalizedHost(authorityUrl.getHost(), msalRequest.application().azureRegion());
+        }
 
-        if (result == null) {
-            if(msalRequest.application() instanceof AbstractClientApplicationBase &&
-                    ((AbstractClientApplicationBase) msalRequest.application()).instanceDiscovery()
-                    && !instanceDiscoveryFailed){
-                doInstanceDiscoveryAndCache(authorityUrl, validateAuthority, msalRequest, serviceBundle);
-            } else {
-                // instanceDiscovery flag is set to False. Do not perform instanceDiscovery.
-                return InstanceDiscoveryMetadataEntry.builder().
-                        preferredCache(host).
-                        preferredNetwork(host).
-                        aliases(Collections.singleton(host)).
-                        build();
+        //If there is no cached instance metadata, do instance discovery cache the result
+        if (cache.get(host) == null) {
+            log.debug("No cached instance metadata, will attempt instance discovery.");
+
+            if (shouldUseRegionalEndpoint(msalRequest)) {
+                log.debug("Region API used, will attempt to discover Azure region.");
+
+                //Server side telemetry requires the result from region discovery when any part of the region API is used
+                String detectedRegion = discoverRegion(msalRequest, serviceBundle);
+
+                //If region autodetection is enabled and a specific region was not already set, set the application's
+                // region to the discovered region so that future requests can skip the IMDS endpoint call
+                if (msalRequest.application().azureRegion() == null
+                        && msalRequest.application().autoDetectRegion()
+                        && detectedRegion != null) {
+                    log.debug(String.format("Region autodetection found %s, this region will be used for future calls.", detectedRegion));
+
+                    msalRequest.application().azureRegion = detectedRegion;
+                    host = getRegionalizedHost(authorityUrl.getHost(), msalRequest.application().azureRegion());
+                }
+
+                cacheRegionInstanceMetadata(authorityUrl.getHost(), host);
+                serviceBundle.getServerSideTelemetry().getCurrentRequest().regionOutcome(
+                        determineRegionOutcome(detectedRegion, msalRequest.application().azureRegion(), msalRequest.application().autoDetectRegion()));
             }
+
+            doInstanceDiscoveryAndCache(authorityUrl, validateAuthority, msalRequest, serviceBundle);
         }
 
         return cache.get(host);
@@ -132,7 +135,7 @@ class AadInstanceDiscoveryProvider {
         return aadInstanceDiscoveryResponse;
     }
 
-    static void cacheInstanceDiscoveryMetadata(String host,
+    static void cacheInstanceDiscoveryResponse(String host,
                                                AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse) {
 
         if (aadInstanceDiscoveryResponse != null && aadInstanceDiscoveryResponse.metadata() != null) {
@@ -142,6 +145,11 @@ class AadInstanceDiscoveryProvider {
                 }
             }
         }
+
+        cacheInstanceDiscoveryMetadata(host);
+    }
+
+    static void cacheInstanceDiscoveryMetadata(String host) {
         cache.putIfAbsent(host, InstanceDiscoveryMetadataEntry.builder().
                 preferredCache(host).
                 preferredNetwork(host).
@@ -171,14 +179,13 @@ class AadInstanceDiscoveryProvider {
         return false;
     }
 
-    static void cacheRegionInstanceMetadata(String host, String region) {
+    static void cacheRegionInstanceMetadata(String originalHost, String regionalHost) {
 
         Set<String> aliases = new HashSet<>();
-        aliases.add(host);
-        String regionalHost = getRegionalizedHost(host, region);
+        aliases.add(originalHost);
 
         cache.putIfAbsent(regionalHost, InstanceDiscoveryMetadataEntry.builder().
-                preferredCache(host).
+                preferredCache(originalHost).
                 preferredNetwork(regionalHost).
                 aliases(aliases).
                 build());
@@ -236,12 +243,10 @@ class AadInstanceDiscoveryProvider {
                                                                              MsalRequest msalRequest,
                                                                              ServiceBundle serviceBundle) {
 
-        IHttpResponse httpResponse = null;
-
         String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpoint(authorityUrl) +
                 formInstanceDiscoveryParameters(authorityUrl);
 
-        httpResponse = executeRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
+        IHttpResponse httpResponse = executeRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
 
         AadInstanceDiscoveryResponse response = JsonHelper.convertJsonToObject(httpResponse.body(), AadInstanceDiscoveryResponse.class);
 
@@ -251,7 +256,8 @@ class AadInstanceDiscoveryProvider {
                 throw MsalServiceExceptionFactory.fromHttpResponse(httpResponse);
             }
             // instance discovery failed due to reasons other than an invalid authority, do not perform instance discovery again in this environment.
-            instanceDiscoveryFailed = true;
+            log.debug("Instance discovery failed due to an unknown error, no more instance discovery attempts will be made.");
+            cacheInstanceDiscoveryMetadata(authorityUrl.getHost());
         }
 
         return response;
@@ -302,7 +308,7 @@ class AadInstanceDiscoveryProvider {
 
         //Check if the REGION_NAME environment variable has a value for the region
         if (System.getenv(REGION_NAME) != null) {
-            log.info("Region found in environment variable: " + System.getenv(REGION_NAME));
+            log.info(String.format("Region found in environment variable: %s",System.getenv(REGION_NAME)));
             currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_ENV_VARIABLE.telemetryValue);
 
             return System.getenv(REGION_NAME);
@@ -358,7 +364,7 @@ class AadInstanceDiscoveryProvider {
             }
         }
 
-        cacheInstanceDiscoveryMetadata(authorityUrl.getHost(), aadInstanceDiscoveryResponse);
+        cacheInstanceDiscoveryResponse(authorityUrl.getHost(), aadInstanceDiscoveryResponse);
     }
 
     private static void validate(AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse) {

@@ -23,7 +23,7 @@
         <dependency>
             <groupId>com.microsoft.azure</groupId>
             <artifactId>msal4j</artifactId>
-            <version>1.14.4-beta</version>
+            <version>1.14.3</version>
         </dependency>
         <dependency>
             <groupId>com.nimbusds</groupId>
@@ -75,7 +75,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>31.1-jre</version>
+            <version>32.0.0-jre</version>
         </dependency>
 
     </dependencies>
