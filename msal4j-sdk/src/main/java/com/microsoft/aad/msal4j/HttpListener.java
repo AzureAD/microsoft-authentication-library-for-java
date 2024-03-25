@@ -26,12 +26,9 @@ class HttpListener {
 
     void startListener(int port, HttpHandler httpHandler) {
         try {
-            // since we only allow loopback address, we can use InetAddress.getLoopbackAddress() directly
-            // why? because currently we are creating Socket using InetSocketAddress(port)
-            // which is using wildcard address, so it will attempt to bind to all available network interfaces
-            // that includes private IP like 192.168.x.x, 10.x.x.x, etc.
-            // which in turns, will trigger the firewall prompt
+            //Originally this created a listener on the wildcard address from InetSocketAddress(port), which could cause firewall issues:
             // https://github.com/AzureAD/microsoft-authentication-library-for-java/issues/796
+            //Since only loopback addresses are allowed for the flow that uses this listener, we now just use the loopback address instead
             server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), port), 0);
             server.createContext("/", httpHandler);
             this.port = server.getAddress().getPort();
