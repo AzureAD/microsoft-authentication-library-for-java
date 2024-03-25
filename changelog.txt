@@ -1,3 +1,12 @@
+Version 1.15.0
+=============
+- GA support for Azure managed identity scenarios
+- Support managed identities in Azure Functions, App Service, IMDS (#661)
+- Support MI in Cloud Shell (#713)
+- Support MI in Service Fabric (#729)
+- Support MI in Azure Arc (#730)
+- Adjust loopback address binding in interactive flow (#797)
+
 Version 1.14.3
 =============
 - Hotfix to update oauth2-oidc-sdk dependency (#781)
