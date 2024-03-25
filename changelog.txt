@@ -13,12 +13,22 @@ Version 1.14.1
 - Improve timeout behavior for futures (#756)
 - Reduce verbosity of certain info logs (#756)
 
+Version 1.14.4-beta
+=============
+- Beta support for MSI in Azure Arc (#730)
+- Beta support for MSI in Service Fabric (#729)
+- Fix Cloud Shell parsing issue (#750)
+
 Version 1.14.0
 =============
 - GA release of MSAL Java Brokers package
 - Add support for acquiring bearer and proof-of-possession tokens using WAM as the broker (#590)
 - Default throttling time for password grant requests lowered to 5 seconds (#721)
 - Fix internal docs generation issue (#705)
+
+Version 1.14.2-beta
+=============
+- Add support for Managed Identity (#712)
 
 Version 1.14.1-beta
 =============

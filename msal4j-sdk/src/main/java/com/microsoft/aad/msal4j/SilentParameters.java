@@ -98,7 +98,7 @@ public class SilentParameters implements IAcquireTokenParameters {
      * flow. Those flows will now by default attempt to use cached the cached tokens, so there is
      * no need to call acquireTokenSilently. This overload will be removed in the next major version.
      */
-    @Deprecated
+
     public static SilentParametersBuilder builder(Set<String> scopes) {
         validateNotNull("scopes", scopes);
 

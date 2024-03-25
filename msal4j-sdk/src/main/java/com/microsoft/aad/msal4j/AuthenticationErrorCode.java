@@ -141,4 +141,10 @@ public class AuthenticationErrorCode {
      * Indicates an error related to the MSAL Java Brokers package
      */
     public final static String MSALJAVA_BROKERS_ERROR = "brokers_package_error";
+
+    /**
+     * Indicates that a request to managed identity endpoint failed, see error message for detailed reason and correlation id.
+     * For more information on managed identity see https://aka.ms/msal4j-managed-identity.
+     */
+    public static final String MANAGED_IDENTITY_REQUEST_FAILED = "managed_identity_request_failed";
 }

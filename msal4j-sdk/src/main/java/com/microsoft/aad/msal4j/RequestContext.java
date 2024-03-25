@@ -23,10 +23,10 @@ class RequestContext {
     private String applicationVersion;
     private String authority;
     private IAcquireTokenParameters apiParameters;
-    private IClientApplicationBase clientApplication;
+    private IApplicationBase clientApplication;
     private UserIdentifier userIdentifier;
 
-    public RequestContext(AbstractClientApplicationBase clientApplication,
+    public RequestContext(AbstractApplicationBase clientApplication,
                           PublicApi publicApi,
                           IAcquireTokenParameters apiParameters) {
         this.clientApplication = clientApplication;
@@ -38,14 +38,16 @@ class RequestContext {
                 generateNewCorrelationId() :
                 clientApplication.correlationId();
 
-        this.applicationVersion = clientApplication.applicationVersion();
-        this.applicationName = clientApplication.applicationName();
+        if (clientApplication instanceof AbstractClientApplicationBase) {
+            this.applicationVersion = ((AbstractClientApplicationBase) clientApplication).applicationVersion();
+            this.applicationName = ((AbstractClientApplicationBase) clientApplication).applicationName();
+        }
         this.publicApi = publicApi;
         this.authority = clientApplication.authority();
         this.apiParameters = apiParameters;
     }
 
-    public RequestContext(AbstractClientApplicationBase clientApplication,
+    public RequestContext(AbstractApplicationBase clientApplication,
                           PublicApi publicApi,
                           IAcquireTokenParameters apiParameters,
                           UserIdentifier userIdentifier) {

@@ -71,7 +71,7 @@ class AcquireTokenByClientCredentialSupplier extends AuthenticationResultSupplie
             );
 
             AcquireTokenByAppProviderSupplier supplier =
-                    new AcquireTokenByAppProviderSupplier(this.clientApplication,
+                    new AcquireTokenByAppProviderSupplier((AbstractClientApplicationBase) this.clientApplication,
                             clientCredentialRequest,
                             appTokenProviderParameters);
 

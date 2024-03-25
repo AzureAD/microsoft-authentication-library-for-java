@@ -165,6 +165,7 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
                 new ClientID(clientId()));
         this.broker = builder.broker;
         this.brokerEnabled = builder.brokerEnabled;
+        this.tenant = this.authenticationAuthority.tenant;
     }
 
     @Override

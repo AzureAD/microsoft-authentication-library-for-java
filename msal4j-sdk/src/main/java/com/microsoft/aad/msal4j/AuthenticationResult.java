@@ -91,6 +91,9 @@ final class AuthenticationResult implements IAuthenticationResult {
 
     private final String scopes;
 
+    @Builder.Default
+    private final AuthenticationResultMetadata metadata = new AuthenticationResultMetadata();
+
     @Getter(value = AccessLevel.PACKAGE)
     private final Boolean isPopAuthorization;
 }

@@ -18,7 +18,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
     private Authority requestAuthority;
     private MsalRequest msalRequest;
 
-    AcquireTokenByAuthorizationGrantSupplier(AbstractClientApplicationBase clientApplication,
+    AcquireTokenByAuthorizationGrantSupplier(AbstractApplicationBase clientApplication,
                                              MsalRequest msalRequest,
                                              Authority authority) {
         super(clientApplication, msalRequest);
@@ -92,7 +92,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
                 this.clientApplication.authenticationAuthority.getUserRealmEndpoint(grant.getUsername()),
                 msalRequest.headers().getReadonlyHeaderMap(),
                 msalRequest.requestContext(),
-                this.clientApplication.getServiceBundle());
+                this.clientApplication.serviceBundle());
 
         if (userDiscoveryResponse.isAccountFederated()) {
             WSTrustResponse response = WSTrustRequest.execute(
@@ -101,7 +101,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
                     grant.getPassword().getValue(),
                     userDiscoveryResponse.cloudAudienceUrn(),
                     msalRequest.requestContext(),
-                    this.clientApplication.getServiceBundle(),
+                    this.clientApplication.serviceBundle(),
                     this.clientApplication.logPii());
 
             AuthorizationGrant updatedGrant = getSAMLAuthorizationGrant(response);
@@ -135,7 +135,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
                 userRealmEndpoint,
                 msalRequest.headers().getReadonlyHeaderMap(),
                 msalRequest.requestContext(),
-                this.clientApplication.getServiceBundle());
+                this.clientApplication.serviceBundle());
 
         if (userRealmResponse.isAccountFederated() &&
                 "WSTrust".equalsIgnoreCase(userRealmResponse.federationProtocol())) {
@@ -149,7 +149,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
                     mexURL,
                     cloudAudienceUrn,
                     msalRequest.requestContext(),
-                    this.clientApplication.getServiceBundle(),
+                    this.clientApplication.serviceBundle(),
                     this.clientApplication.logPii());
 
             updatedGrant = getSAMLAuthorizationGrant(wsTrustResponse);

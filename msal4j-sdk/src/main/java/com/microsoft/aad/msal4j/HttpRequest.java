@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
@@ -16,6 +17,7 @@ import java.util.Map;
  */
 @Getter
 @Accessors(fluent = true)
+@EqualsAndHashCode
 public class HttpRequest {
 
     /**

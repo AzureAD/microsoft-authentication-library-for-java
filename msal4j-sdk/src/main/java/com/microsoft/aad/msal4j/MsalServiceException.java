@@ -45,6 +45,8 @@ public class MsalServiceException extends MsalException {
      */
     private Map<String, List<String>> headers;
 
+    private String managedIdentitySource;
+
     @Accessors(fluent = true)
     @Getter(AccessLevel.PACKAGE)
     private String subError;
@@ -53,6 +55,7 @@ public class MsalServiceException extends MsalException {
      * Initializes a new instance of the exception class with a specified error message
      *
      * @param message the error message that explains the reason for the exception
+     * @param error a simplified error code from {@link AuthenticationErrorCode} and used for references in documentation
      */
     public MsalServiceException(final String message, final String error) {
         super(message, error);
@@ -69,7 +72,6 @@ public class MsalServiceException extends MsalException {
             final Map<String, List<String>> httpHeaders) {
 
         super(errorResponse.errorDescription, errorResponse.error());
-
         this.statusCode = errorResponse.statusCode();
         this.statusMessage = errorResponse.statusMessage();
         this.subError = errorResponse.subError();
@@ -77,6 +79,21 @@ public class MsalServiceException extends MsalException {
         this.claims = errorResponse.claims();
         this.headers = Collections.unmodifiableMap(httpHeaders);
     }
+
+    /**
+     * Initializes a new instance of the exception class, with any extra properties for a Managed Identity error
+     *
+     * @param message the error message that explains the reason for the exception
+     * @param managedIdentitySource the Managed Identity service
+     */
+    public MsalServiceException(
+            final String message, final String error,
+            ManagedIdentitySourceType managedIdentitySource) {
+        this(message, error); //Call the more common constructor to set the error message properties
+
+        this.managedIdentitySource = managedIdentitySource.name();
+    }
+
 
     /**
      * Initializes a new instance of the exception class

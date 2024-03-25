@@ -23,6 +23,7 @@ class TokenRequestExecutor {
     Logger log = LoggerFactory.getLogger(TokenRequestExecutor.class);
 
     final Authority requestAuthority;
+    final String tenant;
     private final MsalRequest msalRequest;
     private final ServiceBundle serviceBundle;
 
@@ -30,6 +31,9 @@ class TokenRequestExecutor {
         this.requestAuthority = requestAuthority;
         this.serviceBundle = serviceBundle;
         this.msalRequest = msalRequest;
+        this.tenant = msalRequest.requestContext().apiParameters().tenant() == null ?
+                msalRequest.application().tenant() :
+                msalRequest.requestContext().apiParameters().tenant() ;
     }
 
     AuthenticationResult executeTokenRequest() throws ParseException, IOException {
@@ -55,8 +59,9 @@ class TokenRequestExecutor {
         oauthHttpRequest.setContentType(HTTPContentType.ApplicationURLEncoded.contentType);
 
         final Map<String, List<String>> params = new HashMap<>(msalRequest.msalAuthorizationGrant().toParameters());
-        if (msalRequest.application().clientCapabilities() != null) {
-            params.put("claims", Collections.singletonList(msalRequest.application().clientCapabilities()));
+        if (msalRequest.application() instanceof AbstractClientApplicationBase
+                && ((AbstractClientApplicationBase) msalRequest.application()).clientCapabilities() != null) {
+            params.put("claims", Collections.singletonList(((AbstractClientApplicationBase) msalRequest.application()).clientCapabilities()));
         }
 
         if (msalRequest.msalAuthorizationGrant.getClaims() != null) {
@@ -78,7 +83,8 @@ class TokenRequestExecutor {
 
         oauthHttpRequest.setQuery(URLUtils.serializeParameters(params));
       
-        if (msalRequest.application().clientAuthentication() != null) {
+        if (msalRequest.application() instanceof AbstractClientApplicationBase
+                && ((AbstractClientApplicationBase) msalRequest.application()).clientAuthentication() != null) {
 
             Map<String, List<String>> queryParameters = oauthHttpRequest.getQueryParameters();
             String clientID = msalRequest.application().clientId();
@@ -92,7 +98,7 @@ class TokenRequestExecutor {
                         .createClientAuthFromClientAssertion((ClientAssertion) ((ClientCredentialRequest) msalRequest).parameters.clientCredential())
                         .applyTo(oauthHttpRequest);
             } else {
-                msalRequest.application().clientAuthentication().applyTo(oauthHttpRequest);
+                ((AbstractClientApplicationBase) msalRequest.application()).clientAuthentication().applyTo(oauthHttpRequest);
             }
         }
         return oauthHttpRequest;
@@ -149,6 +155,7 @@ class TokenRequestExecutor {
                     refreshOn(response.getRefreshIn() > 0 ? currTimestampSec + response.getRefreshIn() : 0).
                     accountCacheEntity(accountCacheEntity).
                     scopes(response.getScope()).
+                    metadata(new AuthenticationResultMetadata(TokenSource.IDENTITY_PROVIDER)).
                     build();
 
         } else {

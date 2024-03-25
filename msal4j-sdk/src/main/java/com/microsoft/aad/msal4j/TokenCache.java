@@ -252,7 +252,7 @@ public class TokenCache implements ITokenCache {
         at.environment(environmentAlias);
         at.clientId(tokenRequestExecutor.getMsalRequest().application().clientId());
         at.secret(authenticationResult.accessToken());
-        at.realm(tokenRequestExecutor.requestAuthority.tenant());
+        at.realm(tokenRequestExecutor.tenant);
 
         String scopes = !StringHelper.isBlank(authenticationResult.scopes()) ? authenticationResult.scopes() :
                 tokenRequestExecutor.getMsalRequest().msalAuthorizationGrant().getScopes();
@@ -289,7 +289,7 @@ public class TokenCache implements ITokenCache {
         idToken.environment(environmentAlias);
         idToken.clientId(tokenRequestExecutor.getMsalRequest().application().clientId());
         idToken.secret(authenticationResult.idToken());
-        idToken.realm(tokenRequestExecutor.requestAuthority.tenant());
+        idToken.realm(tokenRequestExecutor.tenant);
 
         if (tokenRequestExecutor.getMsalRequest() instanceof OnBehalfOfRequest) {
             OnBehalfOfRequest onBehalfOfRequest = (OnBehalfOfRequest) tokenRequestExecutor.getMsalRequest();

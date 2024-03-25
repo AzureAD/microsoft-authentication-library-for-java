@@ -13,9 +13,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Interface representing an application for which tokens can be acquired.
  */
-interface IClientApplicationBase {
-
-    String DEFAULT_AUTHORITY = "https://login.microsoftonline.com/common/";
+interface IClientApplicationBase extends IApplicationBase {
 
     /**
      * @return Client ID (Application ID) of the application as registered in the application registration portal
@@ -33,33 +31,6 @@ interface IClientApplicationBase {
      * @return a boolean value which determines whether the authority needs to be verified against a list of known authorities.
      */
     boolean validateAuthority();
-
-    /**
-     * @return Correlation Id which is used for diagnostics purposes, is attached to token service requests
-     * Default value is random UUID
-     */
-    String correlationId();
-
-    /**
-     * @return a boolean value which determines whether Pii (personally identifiable information) will be logged in
-     */
-    boolean logPii();
-
-    /**
-     * @return proxy used by the application for all network communication.
-     */
-    Proxy proxy();
-
-    /**
-     * @return SSLSocketFactory used by the application for all network communication.
-     */
-    SSLSocketFactory sslSocketFactory();
-
-    /**
-     * @return Cache holding access tokens, refresh tokens, id tokens. It is maintained and used silently
-     * if needed when calling {@link IClientApplicationBase#acquireTokenSilently(SilentParameters)}
-     */
-    ITokenCache tokenCache();
 
 //    /**
 //     * @return Telemetry consumer that will receive telemetry events emitted by the library.

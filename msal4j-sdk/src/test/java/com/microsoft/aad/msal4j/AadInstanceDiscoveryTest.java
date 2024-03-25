@@ -63,13 +63,13 @@ class AadInstanceDiscoveryTest {
 
             mockedInstanceDiscoveryProvider.when(() -> AadInstanceDiscoveryProvider.sendInstanceDiscoveryRequest(authority,
                     msalRequest,
-                    app.getServiceBundle())).thenReturn(expectedResponse);
+                    app.serviceBundle())).thenReturn(expectedResponse);
 
             InstanceDiscoveryMetadataEntry entry = AadInstanceDiscoveryProvider.getMetadataEntry(
                     authority,
                     false,
                     msalRequest,
-                    app.getServiceBundle());
+                    app.serviceBundle());
 
             assertValidResponse(entry);
         }
@@ -93,7 +93,7 @@ class AadInstanceDiscoveryTest {
                 authority,
                 false,
                 msalRequest,
-                app.getServiceBundle());
+                app.serviceBundle());
 
         assertValidResponse(entry);
     }
@@ -128,13 +128,13 @@ class AadInstanceDiscoveryTest {
         try (MockedStatic<AadInstanceDiscoveryProvider> mocked = mockStatic(AadInstanceDiscoveryProvider.class, CALLS_REAL_METHODS)) {
 
             mocked.when(() -> AadInstanceDiscoveryProvider.discoverRegion(msalRequest,
-                    app.getServiceBundle())).thenReturn(null);
+                    app.serviceBundle())).thenReturn(null);
 
             InstanceDiscoveryMetadataEntry entry = AadInstanceDiscoveryProvider.getMetadataEntry(
                     authority,
                     false,
                     msalRequest,
-                    app.getServiceBundle());
+                    app.serviceBundle());
 
             assertValidResponse(entry);
         }

@@ -14,7 +14,7 @@ import java.util.TreeSet;
 
 import static com.microsoft.aad.msal4j.Constants.POINT_DELIMITER;
 
-class HttpHelper {
+class HttpHelper implements IHttpHelper {
 
     private static final Logger log = LoggerFactory.getLogger(HttpHelper.class);
     public static final String RETRY_AFTER_HEADER = "Retry-After";
@@ -22,16 +22,17 @@ class HttpHelper {
     public static final int RETRY_DELAY_MS = 1000;
 
     public static final int HTTP_STATUS_200 = 200;
-
     public static final int HTTP_STATUS_400 = 400;
-
     public static final int HTTP_STATUS_429 = 429;
     public static final int HTTP_STATUS_500 = 500;
 
-    private HttpHelper() {
+    private IHttpClient httpClient;
+
+    HttpHelper(IHttpClient httpClient) {
+        this.httpClient = httpClient;
     }
 
-    static IHttpResponse executeHttpRequest(HttpRequest httpRequest,
+    public IHttpResponse executeHttpRequest(HttpRequest httpRequest,
                                             RequestContext requestContext,
                                             ServiceBundle serviceBundle) {
         checkForThrottling(requestContext);
@@ -48,7 +49,6 @@ class HttpHelper {
             addRequestInfoToTelemetry(httpRequest, httpEvent);
 
             try {
-                IHttpClient httpClient = serviceBundle.getHttpClient();
                 httpResponse = executeHttpRequestWithRetries(httpRequest, httpClient);
 
             } catch (Exception e) {
@@ -67,7 +67,45 @@ class HttpHelper {
         return httpResponse;
     }
 
-    private static String getRequestThumbprint(RequestContext requestContext) {
+    //Overloaded version of the more commonly used HTTP executor. It does not use ServiceBundle, allowing an HTTP call to be
+    // made only with more bespoke request-level parameters rather than those from the app-level ServiceBundle
+    IHttpResponse executeHttpRequest(HttpRequest httpRequest,
+                                            RequestContext requestContext,
+                                            TelemetryManager telemetryManager,
+                                            IHttpClient httpClient) {
+        checkForThrottling(requestContext);
+
+        HttpEvent httpEvent = new HttpEvent(); // for tracking http telemetry
+        IHttpResponse httpResponse;
+
+        try (TelemetryHelper telemetryHelper = telemetryManager.createTelemetryHelper(
+                requestContext.telemetryRequestId(),
+                requestContext.clientId(),
+                httpEvent,
+                false)) {
+
+            addRequestInfoToTelemetry(httpRequest, httpEvent);
+
+            try {
+                httpResponse = executeHttpRequestWithRetries(httpRequest, httpClient);
+
+            } catch (Exception e) {
+                httpEvent.setOauthErrorCode(AuthenticationErrorCode.UNKNOWN);
+                throw new MsalClientException(e);
+            }
+
+            addResponseInfoToTelemetry(httpResponse, httpEvent);
+
+            if (httpResponse.headers() != null) {
+                HttpHelper.verifyReturnedCorrelationId(httpRequest, httpResponse);
+            }
+        }
+        processThrottlingInstructions(httpResponse, requestContext);
+
+        return httpResponse;
+    }
+
+    private String getRequestThumbprint(RequestContext requestContext) {
         StringBuilder sb = new StringBuilder();
         sb.append(requestContext.clientId() + POINT_DELIMITER);
         sb.append(requestContext.authority() + POINT_DELIMITER);
@@ -87,12 +125,12 @@ class HttpHelper {
         return StringHelper.createSha256Hash(sb.toString());
     }
 
-    private static boolean isRetryable(IHttpResponse httpResponse) {
+    boolean isRetryable(IHttpResponse httpResponse) {
         return httpResponse.statusCode() >= HTTP_STATUS_500 &&
                 getRetryAfterHeader(httpResponse) == null;
     }
 
-    private static IHttpResponse executeHttpRequestWithRetries(HttpRequest httpRequest, IHttpClient httpClient)
+    IHttpResponse executeHttpRequestWithRetries(HttpRequest httpRequest, IHttpClient httpClient)
             throws Exception {
         IHttpResponse httpResponse = null;
         for (int i = 0; i < RETRY_NUM; i++) {
@@ -102,10 +140,11 @@ class HttpHelper {
             }
             Thread.sleep(RETRY_DELAY_MS);
         }
+
         return httpResponse;
     }
 
-    private static void checkForThrottling(RequestContext requestContext) {
+    private void checkForThrottling(RequestContext requestContext) {
         if (requestContext.clientApplication() instanceof PublicClientApplication &&
                 requestContext.apiParameters() != null) {
             String requestThumbprint = getRequestThumbprint(requestContext);
@@ -118,7 +157,7 @@ class HttpHelper {
         }
     }
 
-    private static void processThrottlingInstructions(IHttpResponse httpResponse, RequestContext requestContext) {
+    private void processThrottlingInstructions(IHttpResponse httpResponse, RequestContext requestContext) {
         if (requestContext.clientApplication() instanceof PublicClientApplication) {
             Long expirationTimestamp = null;
 
@@ -136,7 +175,7 @@ class HttpHelper {
         }
     }
 
-    private static Integer getRetryAfterHeader(IHttpResponse httpResponse) {
+    private Integer getRetryAfterHeader(IHttpResponse httpResponse) {
 
         if (httpResponse.headers() != null) {
             TreeMap<String, List<String>> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -157,7 +196,7 @@ class HttpHelper {
         return null;
     }
 
-    private static void addRequestInfoToTelemetry(final HttpRequest httpRequest, HttpEvent httpEvent) {
+    private void addRequestInfoToTelemetry(final HttpRequest httpRequest, HttpEvent httpEvent) {
         try {
             httpEvent.setHttpPath(httpRequest.url().toURI());
             httpEvent.setHttpMethod(httpRequest.httpMethod().toString());
@@ -174,7 +213,7 @@ class HttpHelper {
         }
     }
 
-    private static void addResponseInfoToTelemetry(IHttpResponse httpResponse, HttpEvent httpEvent) {
+    private void addResponseInfoToTelemetry(IHttpResponse httpResponse, HttpEvent httpEvent) {
 
         httpEvent.setHttpResponseStatus(httpResponse.statusCode());
 
