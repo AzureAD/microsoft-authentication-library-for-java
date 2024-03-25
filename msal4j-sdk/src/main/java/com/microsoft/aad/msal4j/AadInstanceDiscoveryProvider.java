@@ -18,14 +18,14 @@ import java.util.concurrent.*;
 
 class AadInstanceDiscoveryProvider {
 
-    private final static String DEFAULT_TRUSTED_HOST = "login.microsoftonline.com";
-    private final static String AUTHORIZE_ENDPOINT_TEMPLATE = "https://{host}/{tenant}/oauth2/v2.0/authorize";
-    private final static String INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE = "https://{host}:{port}/common/discovery/instance";
-    private final static String INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE = "?api-version=1.1&authorization_endpoint={authorizeEndpoint}";
-    private final static String HOST_TEMPLATE_WITH_REGION = "{region}.login.microsoft.com";
-    private final static String SOVEREIGN_HOST_TEMPLATE_WITH_REGION = "{region}.{host}";
-    private final static String REGION_NAME = "REGION_NAME";
-    private final static int PORT_NOT_SET = -1;
+    private static final String DEFAULT_TRUSTED_HOST = "login.microsoftonline.com";
+    private static final String AUTHORIZE_ENDPOINT_TEMPLATE = "https://{host}/{tenant}/oauth2/v2.0/authorize";
+    private static final String INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE = "https://{host}:{port}/common/discovery/instance";
+    private static final String INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE = "?api-version=1.1&authorization_endpoint={authorizeEndpoint}";
+    private static final String HOST_TEMPLATE_WITH_REGION = "{region}.login.microsoft.com";
+    private static final String SOVEREIGN_HOST_TEMPLATE_WITH_REGION = "{region}.{host}";
+    private static final String REGION_NAME = "REGION_NAME";
+    private static final int PORT_NOT_SET = -1;
 
     // For information of the current api-version refer: https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service#versioning
     private static final String DEFAULT_API_VERSION = "2020-06-01";
@@ -64,8 +64,8 @@ class AadInstanceDiscoveryProvider {
                                                            ServiceBundle serviceBundle) {
         String host = authorityUrl.getHost();
 
-        //If instanceDiscovery flag set to false, cache a basic instance metadata entry to skip future lookups
-        if (!msalRequest.application().instanceDiscovery()) {
+        //If instanceDiscovery flag set to false OR this is a managed identity scenario, cache a basic instance metadata entry to skip this and future lookups
+        if (msalRequest.application() instanceof ManagedIdentityApplication || !((AbstractClientApplicationBase) msalRequest.application()).instanceDiscovery()) {
             if (cache.get(host) == null) {
                 log.debug("Instance discovery set to false, caching a default entry.");
                 cacheInstanceDiscoveryMetadata(host);
@@ -74,8 +74,8 @@ class AadInstanceDiscoveryProvider {
         }
 
         //If a region was set by an app developer or previously found through autodetection, adjust the authority host to use it
-        if (shouldUseRegionalEndpoint(msalRequest) && msalRequest.application().azureRegion() != null) {
-            host = getRegionalizedHost(authorityUrl.getHost(), msalRequest.application().azureRegion());
+        if (shouldUseRegionalEndpoint(msalRequest) && ((AbstractClientApplicationBase) msalRequest.application()).azureRegion() != null) {
+            host = getRegionalizedHost(authorityUrl.getHost(), ((AbstractClientApplicationBase) msalRequest.application()).azureRegion());
         }
 
         //If there is no cached instance metadata, do instance discovery cache the result
@@ -90,18 +90,18 @@ class AadInstanceDiscoveryProvider {
 
                 //If region autodetection is enabled and a specific region was not already set, set the application's
                 // region to the discovered region so that future requests can skip the IMDS endpoint call
-                if (msalRequest.application().azureRegion() == null
-                        && msalRequest.application().autoDetectRegion()
+                if (((AbstractClientApplicationBase) msalRequest.application()).azureRegion() == null
+                        && ((AbstractClientApplicationBase) msalRequest.application()).autoDetectRegion()
                         && detectedRegion != null) {
                     log.debug(String.format("Region autodetection found %s, this region will be used for future calls.", detectedRegion));
 
-                    msalRequest.application().azureRegion = detectedRegion;
-                    host = getRegionalizedHost(authorityUrl.getHost(), msalRequest.application().azureRegion());
+                    ((AbstractClientApplicationBase) msalRequest.application()).azureRegion = detectedRegion;
+                    host = getRegionalizedHost(authorityUrl.getHost(), ((AbstractClientApplicationBase) msalRequest.application()).azureRegion());
                 }
 
                 cacheRegionInstanceMetadata(authorityUrl.getHost(), host);
                 serviceBundle.getServerSideTelemetry().getCurrentRequest().regionOutcome(
-                        determineRegionOutcome(detectedRegion, msalRequest.application().azureRegion(), msalRequest.application().autoDetectRegion()));
+                        determineRegionOutcome(detectedRegion, ((AbstractClientApplicationBase) msalRequest.application()).azureRegion(), ((AbstractClientApplicationBase) msalRequest.application()).autoDetectRegion()));
             }
 
             doInstanceDiscoveryAndCache(authorityUrl, validateAuthority, msalRequest, serviceBundle);
