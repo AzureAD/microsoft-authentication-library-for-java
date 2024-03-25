@@ -551,7 +551,7 @@ class ManagedIdentityTests {
 
         HttpResponse response = new HttpResponse();
         response.statusCode(HttpStatus.SC_UNAUTHORIZED);
-        response.headers().put("WWW-Authenticate", Collections.singletonList("Basic realm=abc=xyz"));
+        response.headers().put("WWW-Authenticate", Collections.singletonList("xyz"));
 
         when(httpClientMock.send(any())).thenReturn(response);
 
