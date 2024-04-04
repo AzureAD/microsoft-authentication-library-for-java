@@ -30,9 +30,6 @@ Add the dependecy to the pom file.
 
 This library follows [Semantic Versioning](http://semver.org/).
 
-You can find the changes for each version under
-[Releases](https://github.com/AzureAD/microsoft-authentication-extensions-for-java/releases).
-
 ## Usage
 
 [![javadoc](https://javadoc.io/badge2/com.microsoft.azure/msal4j-persistence-extension/javadoc.svg)](https://javadoc.io/doc/com.microsoft.azure/msal4j-persistence-extension)
