@@ -8,5 +8,6 @@
 	<modules>
         <module>msal4j-brokers</module>
         <module>msal4j-sdk</module>
+        <module>msal4j-persistence-extension</module>
     </modules>
 </project>
