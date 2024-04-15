@@ -86,7 +86,7 @@ class ManagedIdentityTests {
 
                 headers.put("ContentType", "application/x-www-form-urlencoded");
                 headers.put("Metadata", "true");
-                headers.put("resource", resource);
+                queryParameters.put("resource", Collections.singletonList(resource));
 
                 bodyParameters.put("resource", Collections.singletonList(resource));
                 return new HttpRequest(HttpMethod.POST, computeUri(endpoint, queryParameters), headers, URLUtils.serializeParameters(bodyParameters));

@@ -25,10 +25,12 @@ class CloudShellManagedIdentitySource extends AbstractManagedIdentitySource{
         managedIdentityRequest.headers = new HashMap<>();
         managedIdentityRequest.headers.put("ContentType", "application/x-www-form-urlencoded");
         managedIdentityRequest.headers.put("Metadata", "true");
-        managedIdentityRequest.headers.put("resource", resource);
 
         managedIdentityRequest.bodyParameters = new HashMap<>();
         managedIdentityRequest.bodyParameters.put("resource", Collections.singletonList(resource));
+
+        managedIdentityRequest.queryParameters = new HashMap<>();
+        managedIdentityRequest.queryParameters.put("resource", Collections.singletonList(resource));
     }
 
     private CloudShellManagedIdentitySource(MsalRequest msalRequest, ServiceBundle serviceBundle, URI msiEndpoint)
