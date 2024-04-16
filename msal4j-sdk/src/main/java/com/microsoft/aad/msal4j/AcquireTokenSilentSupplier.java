@@ -136,6 +136,11 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
             return true;
         }
 
+        //If the request contains claims then the token should be refreshed, to ensure that the returned token has the correct claims
+        if (parameters.claims() != null) {
+            return true;
+        }
+
         //Certain long-lived tokens will have a 'refresh on' time that indicates a refresh should be attempted long before the token would expire
         long currTimeStampSec = new Date().getTime() / 1000;
         if (cachedResult.refreshOn() != null && cachedResult.refreshOn() > 0 &&
