@@ -13,6 +13,8 @@ import java.util.Date;
 class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
 
     private SilentRequest silentRequest;
+    private boolean shouldRefresh;
+    private boolean afterRefreshOn;
 
     AcquireTokenSilentSupplier(AbstractApplicationBase clientApplication, SilentRequest silentRequest) {
         super(clientApplication, silentRequest);
@@ -53,28 +55,10 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
                 clientApplication.serviceBundle().getServerSideTelemetry().incrementSilentSuccessfulCount();
             }
 
-            //Determine if the current token needs to be refreshed according to the refresh_in value
-            long currTimeStampSec = new Date().getTime() / 1000;
-            boolean afterRefreshOn = res.refreshOn() != null && res.refreshOn() > 0 &&
-                    res.refreshOn() < currTimeStampSec && res.expiresOn() >= currTimeStampSec;
+            shouldRefresh = shouldRefresh(silentRequest.parameters(), res);
 
-            if (silentRequest.parameters().forceRefresh() || afterRefreshOn || StringHelper.isBlank(res.accessToken())) {
-
-                //As of version 3 of the telemetry schema, there is a field for collecting data about why a token was refreshed,
-                // so here we set the telemetry value based on the cause of the refresh
-                if (silentRequest.parameters().forceRefresh()) {
-                    clientApplication.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
-                            CacheTelemetry.REFRESH_FORCE_REFRESH.telemetryValue);
-                } else if (afterRefreshOn) {
-                    clientApplication.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
-                            CacheTelemetry.REFRESH_REFRESH_IN.telemetryValue);
-                } else if (res.expiresOn() < currTimeStampSec) {
-                    clientApplication.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
-                            CacheTelemetry.REFRESH_ACCESS_TOKEN_EXPIRED.telemetryValue);
-                } else if (StringHelper.isBlank(res.accessToken())) {
-                    clientApplication.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
-                            CacheTelemetry.REFRESH_NO_ACCESS_TOKEN.telemetryValue);
-                }
+            if (shouldRefresh || afterRefreshOn) {
+                setRefreshTelemetry(res);
 
                 if (!StringHelper.isBlank(res.refreshToken())) {
                     //There are certain scenarios where the cached authority may differ from the client app's authority,
@@ -84,29 +68,7 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
                         requestAuthority = Authority.createAuthority(new URL(requestAuthority.authority().replace(requestAuthority.host(),
                                 res.account().environment())));
                     }
-
-                    RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(
-                            RefreshTokenParameters.builder(silentRequest.parameters().scopes(), res.refreshToken()).build(),
-                            silentRequest.application(),
-                            silentRequest.requestContext(),
-                            silentRequest);
-
-                    AcquireTokenByAuthorizationGrantSupplier acquireTokenByAuthorisationGrantSupplier =
-                            new AcquireTokenByAuthorizationGrantSupplier(clientApplication, refreshTokenRequest, requestAuthority);
-
-                    try {
-                        res = acquireTokenByAuthorisationGrantSupplier.execute();
-
-                        res.metadata().tokenSource(TokenSource.IDENTITY_PROVIDER);
-
-                        log.info("Access token refreshed successfully.");
-                    } catch (MsalServiceException ex) {
-                        //If the token refresh attempt threw a MsalServiceException but the refresh attempt was done
-                        // only because of refreshOn, then simply return the existing cached token
-                        if (afterRefreshOn && !(silentRequest.parameters().forceRefresh() || StringHelper.isBlank(res.accessToken()))) {
-                            return res;
-                        } else throw ex;
-                    }
+                    res = makeRefreshRequest(res, requestAuthority);
                 } else {
                     res = null;
                 }
@@ -119,5 +81,70 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
         log.debug("Returning token from cache");
 
         return res;
+    }
+
+    private AuthenticationResult makeRefreshRequest(AuthenticationResult cachedResult,  Authority requestAuthority) throws Exception {
+        RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(
+                RefreshTokenParameters.builder(silentRequest.parameters().scopes(), cachedResult.refreshToken()).build(),
+                silentRequest.application(),
+                silentRequest.requestContext(),
+                silentRequest);
+
+        AcquireTokenByAuthorizationGrantSupplier acquireTokenByAuthorisationGrantSupplier =
+                new AcquireTokenByAuthorizationGrantSupplier(clientApplication, refreshTokenRequest, requestAuthority);
+
+        try {
+            AuthenticationResult refreshedResult = acquireTokenByAuthorisationGrantSupplier.execute();
+
+            refreshedResult.metadata().tokenSource(TokenSource.IDENTITY_PROVIDER);
+
+            log.info("Access token refreshed successfully.");
+            return refreshedResult;
+        } catch (MsalServiceException ex) {
+            //If the token refresh attempt threw a MsalServiceException but the refresh attempt was done
+            // only because of refreshOn, then simply return the existing cached token
+            if (!afterRefreshOn && (silentRequest.parameters().forceRefresh() || StringHelper.isBlank(cachedResult.accessToken()))) {
+                throw ex;
+            }
+            return cachedResult;
+        }
+    }
+
+    private void setRefreshTelemetry(AuthenticationResult cachedResult) {
+        //As of version 3 of the telemetry schema, there is a field for collecting data about why a token was refreshed,
+        // so here we set the telemetry value based on the cause of the refresh
+        if (silentRequest.parameters().forceRefresh()) {
+            clientApplication.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
+                    CacheTelemetry.REFRESH_FORCE_REFRESH.telemetryValue);
+        } else if (afterRefreshOn) {
+            clientApplication.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
+                    CacheTelemetry.REFRESH_REFRESH_IN.telemetryValue);
+        } else if (cachedResult.expiresOn() < new Date().getTime() / 1000) {
+            clientApplication.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
+                    CacheTelemetry.REFRESH_ACCESS_TOKEN_EXPIRED.telemetryValue);
+        } else if (StringHelper.isBlank(cachedResult.accessToken())) {
+            clientApplication.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
+                    CacheTelemetry.REFRESH_NO_ACCESS_TOKEN.telemetryValue);
+        }
+    }
+
+    //Handles any logic to determine if a token should be refreshed, based on the request parameters and the status of cached tokens
+    private boolean shouldRefresh(SilentParameters parameters, AuthenticationResult cachedResult) {
+
+        //If there is a refresh token but no access token, we should use the refresh token to get the access token
+        if (StringHelper.isBlank(cachedResult.accessToken()) && !StringHelper.isBlank(cachedResult.refreshToken())) {
+            return true;
+        }
+
+        //Certain long-lived tokens will have a 'refresh on' time that indicates a refresh should be attempted long before the token would expire
+        long currTimeStampSec = new Date().getTime() / 1000;
+        if (cachedResult.refreshOn() != null && cachedResult.refreshOn() > 0 &&
+                cachedResult.refreshOn() < currTimeStampSec && cachedResult.expiresOn() >= currTimeStampSec){
+            afterRefreshOn = true;
+            return true;
+        }
+
+        //Finally, simply return the value of the request's forceRefresh parameter
+        return parameters.forceRefresh();
     }
 }
