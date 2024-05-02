@@ -49,12 +49,11 @@ abstract class AbstractManagedIdentitySource {
         IHttpResponse response;
 
         try {
-
-            HttpRequest httpRequest = managedIdentityRequest.method.equals(HttpMethod.GET) ?
-                    new HttpRequest(HttpMethod.GET,
+            HttpRequest httpRequest = StringHelper.isNullOrBlank(managedIdentityRequest.getBodyAsString()) ?
+                    new HttpRequest(managedIdentityRequest.method,
                             managedIdentityRequest.computeURI().toString(),
                             managedIdentityRequest.headers) :
-                    new HttpRequest(HttpMethod.POST,
+                    new HttpRequest(managedIdentityRequest.method,
                             managedIdentityRequest.computeURI().toString(),
                             managedIdentityRequest.headers,
                             managedIdentityRequest.getBodyAsString());
