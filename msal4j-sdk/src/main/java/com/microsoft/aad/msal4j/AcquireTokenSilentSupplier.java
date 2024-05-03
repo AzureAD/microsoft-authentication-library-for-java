@@ -131,12 +131,13 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
     //Handles any logic to determine if a token should be refreshed, based on the request parameters and the status of cached tokens
     private boolean shouldRefresh(SilentParameters parameters, AuthenticationResult cachedResult) {
 
-        //If there is a refresh token but no access token, we should use the refresh token to get the access token
-        if (StringHelper.isBlank(cachedResult.accessToken()) && !StringHelper.isBlank(cachedResult.refreshToken())) {
+        //If forceRefresh is true, no reason to check any other option
+        if (parameters.forceRefresh()) {
             return true;
         }
 
         //If the request contains claims then the token should be refreshed, to ensure that the returned token has the correct claims
+        //  Note: these are the types of claims found in (for example) a claims challenge, and do not include client capabilities
         if (parameters.claims() != null) {
             return true;
         }
@@ -149,7 +150,11 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
             return true;
         }
 
-        //Finally, simply return the value of the request's forceRefresh parameter
-        return parameters.forceRefresh();
+        //If there is a refresh token but no access token, we should use the refresh token to get the access token
+        if (StringHelper.isBlank(cachedResult.accessToken()) && !StringHelper.isBlank(cachedResult.refreshToken())) {
+            return true;
+        }
+
+        return false;
     }
 }
