@@ -58,8 +58,6 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
             shouldRefresh = shouldRefresh(silentRequest.parameters(), res);
 
             if (shouldRefresh || afterRefreshOn) {
-                setRefreshTelemetry(res);
-
                 if (!StringHelper.isBlank(res.refreshToken())) {
                     //There are certain scenarios where the cached authority may differ from the client app's authority,
                     // such as when a request is instance aware. Unless overridden by SilentParameters.authorityUrl, the
@@ -110,51 +108,47 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
         }
     }
 
-    private void setRefreshTelemetry(AuthenticationResult cachedResult) {
-        //As of version 3 of the telemetry schema, there is a field for collecting data about why a token was refreshed,
-        // so here we set the telemetry value based on the cause of the refresh
-        if (silentRequest.parameters().forceRefresh()) {
-            clientApplication.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
-                    CacheTelemetry.REFRESH_FORCE_REFRESH.telemetryValue);
-        } else if (afterRefreshOn) {
-            clientApplication.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
-                    CacheTelemetry.REFRESH_REFRESH_IN.telemetryValue);
-        } else if (cachedResult.expiresOn() < new Date().getTime() / 1000) {
-            clientApplication.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
-                    CacheTelemetry.REFRESH_ACCESS_TOKEN_EXPIRED.telemetryValue);
-        } else if (StringHelper.isBlank(cachedResult.accessToken())) {
-            clientApplication.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
-                    CacheTelemetry.REFRESH_NO_ACCESS_TOKEN.telemetryValue);
-        }
-    }
-
     //Handles any logic to determine if a token should be refreshed, based on the request parameters and the status of cached tokens
     private boolean shouldRefresh(SilentParameters parameters, AuthenticationResult cachedResult) {
 
         //If forceRefresh is true, no reason to check any other option
         if (parameters.forceRefresh()) {
+            setCacheTelemetry(CacheTelemetry.REFRESH_FORCE_REFRESH.telemetryValue);
             return true;
         }
 
         //If the request contains claims then the token should be refreshed, to ensure that the returned token has the correct claims
         //  Note: these are the types of claims found in (for example) a claims challenge, and do not include client capabilities
         if (parameters.claims() != null) {
+            setCacheTelemetry(CacheTelemetry.REFRESH_FORCE_REFRESH.telemetryValue);
+            return true;
+        }
+
+        long currTimeStampSec = new Date().getTime() / 1000;
+
+        if (cachedResult.expiresOn() < currTimeStampSec) {
+            setCacheTelemetry(CacheTelemetry.REFRESH_ACCESS_TOKEN_EXPIRED.telemetryValue);
             return true;
         }
 
         //Certain long-lived tokens will have a 'refresh on' time that indicates a refresh should be attempted long before the token would expire
-        long currTimeStampSec = new Date().getTime() / 1000;
         if (cachedResult.refreshOn() != null && cachedResult.refreshOn() > 0 &&
                 cachedResult.refreshOn() < currTimeStampSec && cachedResult.expiresOn() >= currTimeStampSec){
+            setCacheTelemetry(CacheTelemetry.REFRESH_REFRESH_IN.telemetryValue);
             afterRefreshOn = true;
             return true;
         }
 
         //If there is a refresh token but no access token, we should use the refresh token to get the access token
         if (StringHelper.isBlank(cachedResult.accessToken()) && !StringHelper.isBlank(cachedResult.refreshToken())) {
+            setCacheTelemetry(CacheTelemetry.REFRESH_NO_ACCESS_TOKEN.telemetryValue);
             return true;
         }
 
         return false;
+    }
+
+    private void setCacheTelemetry(int cacheInfoValue){
+        clientApplication.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(cacheInfoValue);
     }
 }
