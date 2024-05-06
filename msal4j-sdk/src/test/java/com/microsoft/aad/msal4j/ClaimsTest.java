@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ClaimsTest {
@@ -30,30 +31,25 @@ class ClaimsTest {
         cr.requestClaimInIdToken("sub", new RequestedClaimAdditionalInfo(true, "248289761001", null));
         cr.requestClaimInIdToken("auth_time", new RequestedClaimAdditionalInfo(false, null, null));
 
-        assertEquals(cr.formatAsJSONString(), TestConfiguration.CLAIMS_REQUEST);
+        assertEquals(TestConfiguration.CLAIMS_REQUEST, cr.formatAsJSONString());
     }
 
     @Test
     void testClaimsRequest_MergeWithClientCapabilitiesAndClaimsChallenge() throws URISyntaxException {
 
-        List<String> values = new ArrayList<>();
-        values.add("urn:mace:incommon:iap:silver");
-        values.add("urn:mace:incommon:iap:bronze");
-
         ClaimsRequest cr = new ClaimsRequest();
-        cr.requestClaimInAccessToken("given_name", new RequestedClaimAdditionalInfo(true, null, null));
-        cr.requestClaimInAccessToken("email", null);
-        cr.requestClaimInIdToken("acr", new RequestedClaimAdditionalInfo(false, null, values));
-        cr.requestClaimInIdToken("sub", new RequestedClaimAdditionalInfo(true, "248289761001", null));
-        cr.requestClaimInIdToken("auth_time", new RequestedClaimAdditionalInfo(false, null, null));
+        cr.requestClaimInAccessToken("nbf", new RequestedClaimAdditionalInfo(true, "1701477303", null));
+
+        Set<String> capabilities = new HashSet<>();
+        capabilities.add("cp1");
 
         PublicClientApplication pca = PublicClientApplication.builder(
                 "client_id").
-                clientCapabilities(new HashSet<>(Collections.singletonList("llt"))).
+                clientCapabilities(capabilities).
                 build();
 
         InteractiveRequestParameters parameters = InteractiveRequestParameters.builder(new URI("http://localhost:8080"))
-                .claimsChallenge("{\"id_token\":{\"auth_time\":{\"essential\":true}},\"access_token\":{\"auth_time\":{\"essential\":true},\"xms_cc\":{\"values\":[\"abc\"]}}}")
+                .claimsChallenge(TestConfiguration.CLAIMS_CHALLENGE)
                 .claims(cr)
                 .scopes(Collections.singleton(""))
                 .build();
@@ -65,18 +61,17 @@ class ClaimsTest {
         String mergedClaimsAndChallenge = JsonHelper.mergeJSONString(claimsChallenge, claimsRequest);
         String mergedAll = JsonHelper.mergeJSONString(claimsChallenge, mergedClaimsAndCapabilities);
 
-        assertEquals(clientCapabilities, TestConfiguration.CLIENT_CAPABILITIES);
-        assertEquals(claimsChallenge, TestConfiguration.CLAIMS_CHALLENGE);
-        assertEquals(claimsRequest, TestConfiguration.CLAIMS_REQUEST);
-        assertEquals(mergedClaimsAndCapabilities, TestConfiguration.MERGED_CLAIMS_AND_CAPABILITIES);
-        assertEquals(mergedClaimsAndChallenge, TestConfiguration.MERGED_CLAIMS_AND_CHALLENGE);
-        assertEquals(mergedAll, TestConfiguration.MERGED_CLAIMS_CAPABILITIES_AND_CHALLENGE);
+        assertEquals(TestConfiguration.CLIENT_CAPABILITIES, clientCapabilities);
+        assertEquals(TestConfiguration.CLAIMS_CHALLENGE, claimsChallenge);
+        assertEquals(TestConfiguration.MERGED_CLAIMS_AND_CAPABILITIES, mergedClaimsAndCapabilities);
+        assertEquals(TestConfiguration.MERGED_CLAIMS_AND_CHALLENGE, mergedClaimsAndChallenge);
+        assertEquals(TestConfiguration.MERGED_CLAIMS_CAPABILITIES_AND_CHALLENGE, mergedAll);
     }
 
     @Test
     void testClaimsRequest_StringToClaimsRequest() {
         ClaimsRequest cr = ClaimsRequest.formatAsClaimsRequest(TestConfiguration.CLAIMS_CHALLENGE);
 
-        assertEquals(cr.formatAsJSONString(), TestConfiguration.CLAIMS_CHALLENGE);
+        assertEquals(TestConfiguration.CLAIMS_CHALLENGE, cr.formatAsJSONString());
     }
 }
