@@ -46,7 +46,7 @@ class CloudShellManagedIdentitySource extends AbstractManagedIdentitySource{
 
     static AbstractManagedIdentitySource create(MsalRequest msalRequest, ServiceBundle serviceBundle) {
 
-        IEnvironmentVariables environmentVariables = getEnvironmentVariables((ManagedIdentityParameters) msalRequest.requestContext().apiParameters());
+        IEnvironmentVariables environmentVariables = getEnvironmentVariables();
         String msiEndpoint = environmentVariables.getEnvironmentVariable(Constants.MSI_ENDPOINT);
 
 
