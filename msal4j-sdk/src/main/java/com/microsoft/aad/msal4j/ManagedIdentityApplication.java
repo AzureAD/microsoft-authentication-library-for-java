@@ -3,7 +3,9 @@
 
 package com.microsoft.aad.msal4j;
 
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.Setter;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
@@ -21,6 +23,16 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
 
     @Getter
     static TokenCache sharedTokenCache = new TokenCache();
+
+    @Getter(value = AccessLevel.PUBLIC)
+    static ManagedIdentitySourceType managedIdentitySource = ManagedIdentityClient.getManagedIdentitySource();
+
+    @Getter(value = AccessLevel.PACKAGE)
+    static IEnvironmentVariables environmentVariables;
+
+    static void setEnvironmentVariables(IEnvironmentVariables environmentVariables) {
+        ManagedIdentityApplication.environmentVariables = environmentVariables;
+    }
 
     private ManagedIdentityApplication(Builder builder) {
         super(builder);

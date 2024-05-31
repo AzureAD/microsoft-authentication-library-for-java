@@ -145,9 +145,22 @@ class ManagedIdentityTests {
     }
 
     @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.ManagedIdentityTestDataProvider#createDataGetSource")
+    void managedIdentity_GetManagedIdentitySource(ManagedIdentitySourceType source, String endpoint, ManagedIdentitySourceType expectedSource) {
+        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
+        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+        ManagedIdentityClient.resetManagedIdentitySourceType();
+
+        ManagedIdentitySourceType managedIdentitySourceType = ManagedIdentityClient.getManagedIdentitySource();
+        assertEquals(expectedSource, managedIdentitySourceType);
+    }
+
+    @ParameterizedTest
     @MethodSource("com.microsoft.aad.msal4j.ManagedIdentityTestDataProvider#createData")
     void managedIdentityTest_SystemAssigned_SuccessfulResponse(ManagedIdentitySourceType source, String endpoint, String resource) throws Exception {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
+        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+        ManagedIdentityClient.resetManagedIdentitySourceType();
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
         when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
@@ -162,7 +175,6 @@ class ManagedIdentityTests {
 
         IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(resource)
-                        .environmentVariables(environmentVariables)
                         .build()).get();
 
         assertNotNull(result.accessToken());
@@ -171,7 +183,6 @@ class ManagedIdentityTests {
 
         result = miApp.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(resource)
-                        .environmentVariables(environmentVariables)
                         .build()).get();
 
         assertNotNull(result.accessToken());
@@ -183,6 +194,8 @@ class ManagedIdentityTests {
     @MethodSource("com.microsoft.aad.msal4j.ManagedIdentityTestDataProvider#createDataUserAssigned")
     void managedIdentityTest_UserAssigned_SuccessfulResponse(ManagedIdentitySourceType source, String endpoint, ManagedIdentityId id) throws Exception {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
+        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+        ManagedIdentityClient.resetManagedIdentitySourceType();
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
         when(httpClientMock.send(expectedRequest(source, resource, id))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
@@ -197,7 +210,6 @@ class ManagedIdentityTests {
 
         IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(resource)
-                        .environmentVariables(environmentVariables)
                         .build()).get();
 
         assertNotNull(result.accessToken());
@@ -208,6 +220,8 @@ class ManagedIdentityTests {
     @MethodSource("com.microsoft.aad.msal4j.ManagedIdentityTestDataProvider#createDataUserAssignedNotSupported")
     void managedIdentityTest_UserAssigned_NotSupported(ManagedIdentitySourceType source, String endpoint, ManagedIdentityId id) throws Exception {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
+        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+        ManagedIdentityClient.resetManagedIdentitySourceType();
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
         miApp = ManagedIdentityApplication
@@ -221,7 +235,6 @@ class ManagedIdentityTests {
         try {
             IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
                     ManagedIdentityParameters.builder(resource)
-                            .environmentVariables(environmentVariables)
                             .build()).get();
         } catch (Exception e) {
             assertNotNull(e);
@@ -244,6 +257,8 @@ class ManagedIdentityTests {
         String anotherResource = "https://graph.microsoft.com";
 
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
+        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+        ManagedIdentityClient.resetManagedIdentitySourceType();
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
         when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
@@ -259,14 +274,12 @@ class ManagedIdentityTests {
 
         IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(resource)
-                        .environmentVariables(environmentVariables)
                         .build()).get();
 
         assertNotNull(result.accessToken());
 
         result = miApp.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(anotherResource)
-                        .environmentVariables(environmentVariables)
                         .build()).get();
 
         assertNotNull(result.accessToken());
@@ -278,6 +291,8 @@ class ManagedIdentityTests {
     @MethodSource("com.microsoft.aad.msal4j.ManagedIdentityTestDataProvider#createDataWrongScope")
     void managedIdentityTest_WrongScopes(ManagedIdentitySourceType source, String endpoint, String resource) throws Exception {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
+        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+        ManagedIdentityClient.resetManagedIdentitySourceType();
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
         if (environmentVariables.getEnvironmentVariable("SourceType").equals(ManagedIdentitySourceType.CLOUD_SHELL.toString())) {
@@ -297,7 +312,6 @@ class ManagedIdentityTests {
         try {
             miApp.acquireTokenForManagedIdentity(
                     ManagedIdentityParameters.builder(resource)
-                            .environmentVariables(environmentVariables)
                             .build()).get();
         } catch (Exception exception) {
             assert(exception.getCause() instanceof MsalServiceException);
@@ -316,6 +330,8 @@ class ManagedIdentityTests {
     @MethodSource("com.microsoft.aad.msal4j.ManagedIdentityTestDataProvider#createDataWrongScope")
     void managedIdentityTest_Retry(ManagedIdentitySourceType source, String endpoint, String resource) throws Exception {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
+        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+        ManagedIdentityClient.resetManagedIdentitySourceType();
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
         miApp = ManagedIdentityApplication
@@ -332,7 +348,6 @@ class ManagedIdentityTests {
         try {
             miApp.acquireTokenForManagedIdentity(
                     ManagedIdentityParameters.builder(resource)
-                            .environmentVariables(environmentVariables)
                             .build()).get();
         } catch (Exception exception) {
             assert(exception.getCause() instanceof MsalServiceException);
@@ -349,7 +364,6 @@ class ManagedIdentityTests {
         try {
             miApp.acquireTokenForManagedIdentity(
                     ManagedIdentityParameters.builder(resource)
-                            .environmentVariables(environmentVariables)
                             .build()).get();
         } catch (Exception exception) {
             assert(exception.getCause() instanceof MsalServiceException);
@@ -367,6 +381,8 @@ class ManagedIdentityTests {
     @MethodSource("com.microsoft.aad.msal4j.ManagedIdentityTestDataProvider#createDataError")
     void managedIdentity_RequestFailed_NoPayload(ManagedIdentitySourceType source, String endpoint) throws Exception {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
+        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+        ManagedIdentityClient.resetManagedIdentitySourceType();
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
         when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(500, ""));
@@ -382,7 +398,6 @@ class ManagedIdentityTests {
         try {
             miApp.acquireTokenForManagedIdentity(
                     ManagedIdentityParameters.builder(resource)
-                            .environmentVariables(environmentVariables)
                             .build()).get();
         } catch (Exception exception) {
             assert(exception.getCause() instanceof MsalServiceException);
@@ -401,6 +416,8 @@ class ManagedIdentityTests {
     @MethodSource("com.microsoft.aad.msal4j.ManagedIdentityTestDataProvider#createDataError")
     void managedIdentity_RequestFailed_NullResponse(ManagedIdentitySourceType source, String endpoint) throws Exception {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
+        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+        ManagedIdentityClient.resetManagedIdentitySourceType();
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
         when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(200, ""));
@@ -416,7 +433,6 @@ class ManagedIdentityTests {
         try {
             miApp.acquireTokenForManagedIdentity(
                     ManagedIdentityParameters.builder(resource)
-                            .environmentVariables(environmentVariables)
                             .build()).get();
         } catch (Exception exception) {
             assert(exception.getCause() instanceof MsalServiceException);
@@ -435,6 +451,8 @@ class ManagedIdentityTests {
     @MethodSource("com.microsoft.aad.msal4j.ManagedIdentityTestDataProvider#createDataError")
     void managedIdentity_RequestFailed_UnreachableNetwork(ManagedIdentitySourceType source, String endpoint) throws Exception {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
+        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+        ManagedIdentityClient.resetManagedIdentitySourceType();
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
         when(httpClientMock.send(expectedRequest(source, resource))).thenThrow(new SocketException("A socket operation was attempted to an unreachable network."));
@@ -450,7 +468,6 @@ class ManagedIdentityTests {
         try {
             miApp.acquireTokenForManagedIdentity(
                     ManagedIdentityParameters.builder(resource)
-                            .environmentVariables(environmentVariables)
                             .build()).get();
         } catch (Exception exception) {
             assert(exception.getCause() instanceof MsalServiceException);
@@ -468,6 +485,8 @@ class ManagedIdentityTests {
     @Test
     void azureArcManagedIdentity_MissingAuthHeader() throws Exception {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(ManagedIdentitySourceType.AZURE_ARC, azureArcEndpoint);
+        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+        ManagedIdentityClient.resetManagedIdentitySourceType();
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
         HttpResponse response = new HttpResponse();
@@ -486,7 +505,6 @@ class ManagedIdentityTests {
         try {
             miApp.acquireTokenForManagedIdentity(
                     ManagedIdentityParameters.builder(resource)
-                            .environmentVariables(environmentVariables)
                             .build()).get();
         } catch (Exception exception) {
             assert(exception.getCause() instanceof MsalServiceException);
@@ -506,6 +524,8 @@ class ManagedIdentityTests {
     @MethodSource("com.microsoft.aad.msal4j.ManagedIdentityTestDataProvider#createDataError")
     void managedIdentity_SharedCache(ManagedIdentitySourceType source, String endpoint) throws Exception {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
+        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+        ManagedIdentityClient.resetManagedIdentitySourceType();
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
         when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
@@ -525,14 +545,12 @@ class ManagedIdentityTests {
 
       IAuthenticationResult resultMiApp1 = miApp.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(resource)
-                        .environmentVariables(environmentVariables)
                         .build()).get();
 
         assertNotNull(resultMiApp1.accessToken());
 
         IAuthenticationResult resultMiApp2 = miApp2.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(resource)
-                        .environmentVariables(environmentVariables)
                         .build()).get();
 
         assertNotNull(resultMiApp2.accessToken());
@@ -547,6 +565,8 @@ class ManagedIdentityTests {
     @Test
     void azureArcManagedIdentity_InvalidAuthHeader() throws Exception {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(ManagedIdentitySourceType.AZURE_ARC, azureArcEndpoint);
+        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+        ManagedIdentityClient.resetManagedIdentitySourceType();
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
         HttpResponse response = new HttpResponse();
@@ -566,7 +586,6 @@ class ManagedIdentityTests {
         try {
             miApp.acquireTokenForManagedIdentity(
                     ManagedIdentityParameters.builder(resource)
-                            .environmentVariables(environmentVariables)
                             .build()).get();
         } catch (Exception exception) {
             assert(exception.getCause() instanceof MsalServiceException);
@@ -586,6 +605,8 @@ class ManagedIdentityTests {
     void azureArcManagedIdentityAuthheaderTest() throws Exception {
         Path path = Paths.get(this.getClass().getResource("/msi-azure-arc-secret.txt").toURI());
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(ManagedIdentitySourceType.AZURE_ARC, azureArcEndpoint);
+        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+        ManagedIdentityClient.resetManagedIdentitySourceType();
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
         // Mock 401 response that returns www-authenticate header
@@ -610,7 +631,6 @@ class ManagedIdentityTests {
 
         IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(resource)
-                        .environmentVariables(environmentVariables)
                         .build()).get();
 
         assertNotNull(result.accessToken());

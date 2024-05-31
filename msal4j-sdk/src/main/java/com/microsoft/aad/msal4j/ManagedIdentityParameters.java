@@ -27,8 +27,6 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
     
     boolean forceRefresh;
 
-    IEnvironmentVariables environmentVariables;
-
     @Override
     public Set<String> scopes() {
         return null;
@@ -52,10 +50,6 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
     @Override
     public Map<String, String> extraQueryParameters() {
         return null;
-    }
-
-    void setEnvironmentVariablesConfig(IEnvironmentVariables environmentVariables) {
-        this.environmentVariables = environmentVariables;
     }
 
     private static ManagedIdentityParametersBuilder builder() {

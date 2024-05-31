@@ -27,7 +27,7 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
 
     static AbstractManagedIdentitySource create(MsalRequest msalRequest, ServiceBundle serviceBundle)
     {
-        IEnvironmentVariables environmentVariables = getEnvironmentVariables((ManagedIdentityParameters) msalRequest.requestContext().apiParameters());
+        IEnvironmentVariables environmentVariables = getEnvironmentVariables();
         String identityEndpoint = environmentVariables.getEnvironmentVariable(Constants.IDENTITY_ENDPOINT);
         String imdsEndpoint = environmentVariables.getEnvironmentVariable(Constants.IMDS_ENDPOINT);
 

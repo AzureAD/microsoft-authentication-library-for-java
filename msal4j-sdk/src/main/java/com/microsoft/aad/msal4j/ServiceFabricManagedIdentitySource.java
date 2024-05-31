@@ -95,11 +95,10 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
 
     static AbstractManagedIdentitySource create(MsalRequest msalRequest, ServiceBundle serviceBundle) {
 
-        IEnvironmentVariables environmentVariables = getEnvironmentVariables((ManagedIdentityParameters) msalRequest.requestContext().apiParameters());
+        IEnvironmentVariables environmentVariables = getEnvironmentVariables();
         String identityEndpoint = environmentVariables.getEnvironmentVariable(Constants.IDENTITY_ENDPOINT);
         String identityHeader = environmentVariables.getEnvironmentVariable(Constants.IDENTITY_HEADER);
         String identityServerThumbprint = environmentVariables.getEnvironmentVariable(Constants.IDENTITY_SERVER_THUMBPRINT);
-
 
         if (StringHelper.isNullOrBlank(identityEndpoint) || StringHelper.isNullOrBlank(identityHeader) || StringHelper.isNullOrBlank(identityServerThumbprint))
         {
