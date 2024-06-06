@@ -1,3 +1,8 @@
+Version 1.15.1
+=============
+- Fix to correctly use custom SSLSocketFactory (#821)
+- Add public API to determine the Managed Identity environment (#823)
+
 Version 1.15.0
 =============
 - GA support for Azure managed identity scenarios
