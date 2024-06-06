@@ -24,6 +24,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -602,24 +604,22 @@ class ManagedIdentityTests {
     }
 
     @Test
-    void azureArcManagedIdentityAuthheaderTest() throws Exception {
-        Path path = Paths.get(this.getClass().getResource("/msi-azure-arc-secret.txt").toURI());
+    void azureArcManagedIdentityAuthheaderValidationTest() throws Exception {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(ManagedIdentitySourceType.AZURE_ARC, azureArcEndpoint);
         ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
         ManagedIdentityClient.resetManagedIdentitySourceType();
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        // Mock 401 response that returns www-authenticate header
+        //Both a missing file and an invalid path structure should throw an exception
+        Path validPathWithMissingFile = Paths.get(System.getenv("ProgramData")+ "/AzureConnectedMachineAgent/Tokens/secret.key");
+        Path invalidPathWithRealFile = Paths.get(this.getClass().getResource("/msi-azure-arc-secret.txt").toURI());
+
+        // Mock 401 response that returns WWW-Authenticate header
         HttpResponse response = new HttpResponse();
         response.statusCode(HttpStatus.SC_UNAUTHORIZED);
-        response.headers().put("Www-Authenticate", Collections.singletonList("Basic realm=" + path));
+        response.headers().put("WWW-Authenticate", Collections.singletonList("Basic realm=" + validPathWithMissingFile));
 
         when(httpClientMock.send(expectedRequest(ManagedIdentitySourceType.AZURE_ARC, resource))).thenReturn(response);
-
-        // Mock the response when Authorization header is sent in request
-        HttpRequest expectedRequest = expectedRequest(ManagedIdentitySourceType.AZURE_ARC, resource);
-        expectedRequest.headers().put("Authorization", "Basic secret");
-        when(httpClientMock.send(expectedRequest)).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
 
         miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
@@ -629,10 +629,18 @@ class ManagedIdentityTests {
         // Clear caching to avoid cross test pollution.
         miApp.tokenCache().accessTokens.clear();
 
-        IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
-                ManagedIdentityParameters.builder(resource)
-                        .build()).get();
+        CompletableFuture<IAuthenticationResult> future = miApp.acquireTokenForManagedIdentity(ManagedIdentityParameters.builder(resource).build());
 
-        assertNotNull(result.accessToken());
+        ExecutionException ex = assertThrows(ExecutionException.class, future::get);
+        assertTrue(ex.getCause() instanceof MsalServiceException);
+        assertTrue(ex.getMessage().contains(MsalErrorMessage.MANAGED_IDENTITY_INVALID_FILEPATH));
+
+        response.headers().put("WWW-Authenticate", Collections.singletonList("Basic realm=" + invalidPathWithRealFile));
+
+        future = miApp.acquireTokenForManagedIdentity(ManagedIdentityParameters.builder(resource).build());
+
+        ex = assertThrows(ExecutionException.class, future::get);
+        assertTrue(ex.getCause() instanceof MsalServiceException);
+        assertTrue(ex.getMessage().contains(MsalErrorMessage.MANAGED_IDENTITY_INVALID_FILEPATH));
     }
 }
