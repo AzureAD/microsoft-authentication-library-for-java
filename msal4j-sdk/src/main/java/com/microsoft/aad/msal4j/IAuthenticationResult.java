@@ -48,5 +48,7 @@ public interface IAuthenticationResult extends Serializable {
     /**
      * @return various metadata relating to this authentication result
      */
-    AuthenticationResultMetadata metadata();
+    default AuthenticationResultMetadata metadata() {
+        return new AuthenticationResultMetadata();
+    }
 }
