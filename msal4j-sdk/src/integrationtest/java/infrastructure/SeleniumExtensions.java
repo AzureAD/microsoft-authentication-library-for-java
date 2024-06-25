@@ -76,14 +76,6 @@ public class SeleniumExtensions {
         LOG.info("Loggin in ... Clicking <Next> after username");
         driver.findElement(new By.ById(fields.getAadSignInButtonId())).click();
 
-        if (user.getFederationProvider().equals(FederationProvider.ADFS_2) &&
-                !user.getLabName().equals(LabConstants.ARLINGTON_LAB_NAME)) {
-
-            LOG.info("Loggin in ... ADFS-V2 - Entering the username in ADFSv2 form");
-            driver.findElement(new By.ById(SeleniumConstants.ADFSV2_WEB_USERNAME_INPUT_ID)).
-                    sendKeys(user.getUpn());
-        }
-
         LOG.info("Loggin in ... Entering password");
         By by = new By.ById(fields.getPasswordInputId());
         waitForElementToBeVisibleAndEnable(driver, by).sendKeys(user.getPassword());
