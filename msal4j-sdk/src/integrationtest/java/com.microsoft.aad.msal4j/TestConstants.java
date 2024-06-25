@@ -55,6 +55,7 @@ public class TestConstants {
     public final static String B2C_READ_SCOPE = "https://msidlabb2c.onmicrosoft.com/msidlabb2capi/read";
     public final static String B2C_MICROSOFTLOGIN_AUTHORITY = "https://msidlabb2c.b2clogin.com/tfp/msidlabb2c.onmicrosoft.com/";
     public final static String B2C_MICROSOFTLOGIN_ROPC = B2C_MICROSOFTLOGIN_AUTHORITY + B2C_ROPC_POLICY;
+    public final static String B2C_UPN = "b2clocal@msidlabb2c.onmicrosoft.com";
 
     public final static String LOCALHOST = "http://localhost:";
 

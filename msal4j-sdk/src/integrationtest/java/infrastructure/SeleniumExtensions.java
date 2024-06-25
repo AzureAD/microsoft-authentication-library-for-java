@@ -3,6 +3,7 @@
 
 package infrastructure;
 
+import com.microsoft.aad.msal4j.TestConstants;
 import labapi.FederationProvider;
 import labapi.LabConstants;
 import labapi.User;
@@ -147,7 +148,7 @@ public class SeleniumExtensions {
         driver.findElement(new By.ById(SeleniumConstants.B2C_LOCAL_ACCOUNT_ID)).click();
 
         LOG.info("Loggin in ... Entering username");
-        driver.findElement(new By.ById(SeleniumConstants.B2C_LOCAL_USERNAME_ID)).sendKeys(user.getUpn());
+        driver.findElement(new By.ById(SeleniumConstants.B2C_LOCAL_USERNAME_ID)).sendKeys(TestConstants.B2C_UPN);
 
         LOG.info("Loggin in ... Entering password");
         By by = new By.ById(SeleniumConstants.B2C_LOCAL_PASSWORD_ID);
