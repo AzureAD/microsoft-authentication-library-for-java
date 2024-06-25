@@ -56,7 +56,7 @@ class ClientCredentialsIT {
 
     @Test
     void acquireTokenClientCredentials_ClientAssertion() throws Exception {
-        String clientId = "2afb0add-2f32-4946-ac90-81a02aa4550e";
+        String clientId = TestConstants.MSIDLAB_CLIENT_ID;
 
         ClientAssertion clientAssertion = getClientAssertion(clientId);
 
