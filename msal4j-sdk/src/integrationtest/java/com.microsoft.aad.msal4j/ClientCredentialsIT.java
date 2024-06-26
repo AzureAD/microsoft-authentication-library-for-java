@@ -40,7 +40,7 @@ class ClientCredentialsIT {
 
     @Test
     void acquireTokenClientCredentials_ClientCertificate() throws Exception {
-        String clientId = "2afb0add-2f32-4946-ac90-81a02aa4550e";
+        String clientId = TestConstants.MSIDLAB_CLIENT_ID;
         assertAcquireTokenCommon(clientId, certificate, TestConstants.MICROSOFT_AUTHORITY);
     }
 
@@ -49,14 +49,14 @@ class ClientCredentialsIT {
         AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.AZURE);
         final String clientId = appProvider.getLabVaultAppId();
         final String password = appProvider.getLabVaultPassword();
-        IClientCredential credential = ClientCredentialFactory.createFromSecret(password);
+        IClientCredential credential = CertificateHelper.getClientCertificate();
 
         assertAcquireTokenCommon(clientId, credential, TestConstants.MICROSOFT_AUTHORITY);
     }
 
     @Test
     void acquireTokenClientCredentials_ClientAssertion() throws Exception {
-        String clientId = "2afb0add-2f32-4946-ac90-81a02aa4550e";
+        String clientId = TestConstants.MSIDLAB_CLIENT_ID;
 
         ClientAssertion clientAssertion = getClientAssertion(clientId);
 
@@ -90,7 +90,7 @@ class ClientCredentialsIT {
 
     @Test
     void acquireTokenClientCredentials_Callback() throws Exception {
-        String clientId = "2afb0add-2f32-4946-ac90-81a02aa4550e";
+        String clientId = TestConstants.MSIDLAB_CLIENT_ID;
 
         // Creates a valid client assertion using a callback, and uses it to build the client app and make a request
         Callable<String> callable = () -> {
@@ -116,11 +116,9 @@ class ClientCredentialsIT {
     void acquireTokenClientCredentials_DefaultCacheLookup() throws Exception {
         AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.AZURE);
         final String clientId = appProvider.getLabVaultAppId();
-        final String password = appProvider.getLabVaultPassword();
-        IClientCredential credential = ClientCredentialFactory.createFromSecret(password);
 
         ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
-                clientId, credential).
+                clientId, CertificateHelper.getClientCertificate()).
                 authority(TestConstants.MICROSOFT_AUTHORITY).
                 build();
 
@@ -152,7 +150,7 @@ class ClientCredentialsIT {
 
     @Test
     void acquireTokenClientCredentials_Regional() throws Exception {
-        String clientId = "2afb0add-2f32-4946-ac90-81a02aa4550e";
+        String clientId = TestConstants.MSIDLAB_CLIENT_ID;
 
         assertAcquireTokenCommon_withRegion(clientId, certificate, "westus", TestConstants.REGIONAL_MICROSOFT_AUTHORITY_BASIC_HOST_WESTUS);
     }
