@@ -109,8 +109,6 @@ public class LabUserProvider {
 
         UserQueryParameters query = new UserQueryParameters();
         query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, FederationProvider.CIAM);
-        query.parameters.put(UserQueryParameters.SIGN_IN_AUDIENCE, "azureadmyorg");
-        query.parameters.put(UserQueryParameters.PUBLIC_CLIENT, "no");
 
         return getLabUser(query);
     }

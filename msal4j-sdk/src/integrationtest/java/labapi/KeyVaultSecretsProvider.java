@@ -21,8 +21,8 @@ public class KeyVaultSecretsProvider {
 
     private final SecretClient secretClient;
 
-    private static final String CLIENT_ID = "2afb0add-2f32-4946-ac90-81a02aa4550e";
-    public static String CERTIFICATE_ALIAS = "MsalJavaAutomationRunner";
+    private static final String CLIENT_ID = TestConstants.MSIDLAB_CLIENT_ID;
+    public static String CERTIFICATE_ALIAS = "LabVaultAccessCert";
 
     private static final String WIN_KEYSTORE = "Windows-MY";
     private static final String KEYSTORE_PROVIDER = "SunMSCAPI";
@@ -82,7 +82,7 @@ public class KeyVaultSecretsProvider {
         }
     }
 
-    private IClientCredential getClientCredentialFromKeyStore() {
+    IClientCredential getClientCredentialFromKeyStore() {
         PrivateKey key;
         X509Certificate publicCertificate;
         try {

@@ -19,15 +19,19 @@ import java.util.HashMap;
 
 class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
 
-    private final static Logger LOG = LoggerFactory.getLogger(AzureArcManagedIdentitySource.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AzureArcManagedIdentitySource.class);
     private static final String ARC_API_VERSION = "2019-11-01";
     private static final String AZURE_ARC = "Azure Arc";
+    private static final String WINDOWS_PATH = System.getenv("ProgramData") + "/AzureConnectedMachineAgent/Tokens/";
+    private static final String LINUX_PATH = "/var/opt/azcmagent/tokens/";
+    private static final String FILE_EXTENSION = ".key";
+    private static final int MAX_FILE_SIZE_BYTES = 4096;
 
     private final URI MSI_ENDPOINT;
 
     static AbstractManagedIdentitySource create(MsalRequest msalRequest, ServiceBundle serviceBundle)
     {
-        IEnvironmentVariables environmentVariables = getEnvironmentVariables((ManagedIdentityParameters) msalRequest.requestContext().apiParameters());
+        IEnvironmentVariables environmentVariables = getEnvironmentVariables();
         String identityEndpoint = environmentVariables.getEnvironmentVariable(Constants.IDENTITY_ENDPOINT);
         String imdsEndpoint = environmentVariables.getEnvironmentVariable(Constants.IMDS_ENDPOINT);
 
@@ -91,13 +95,13 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
         LOG.info("[Managed Identity] Response received. Status code: {response.StatusCode}");
 
         if (response.statusCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
-            if(!response.headers().containsKey("Www-Authenticate")) {
+            if(!response.headers().containsKey("WWW-Authenticate")) {
                 LOG.error("[Managed Identity] WWW-Authenticate header is expected but not found.");
                 throw new MsalServiceException(MsalErrorMessage.MANAGED_IDENTITY_NO_CHALLENGE_ERROR, MsalError.MANAGED_IDENTITY_REQUEST_FAILED,
                         ManagedIdentitySourceType.AZURE_ARC);
             }
 
-            String challenge = response.headers().get("Www-Authenticate").get(0);
+            String challenge = response.headers().get("WWW-Authenticate").get(0);
             String[] splitChallenge = challenge.split("=");
 
             if (splitChallenge.length != 2) {
@@ -106,7 +110,15 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
                         ManagedIdentitySourceType.AZURE_ARC);
             }
 
-            Path path = Paths.get(splitChallenge[1]);
+            Path path = Paths.get(splitChallenge[1]).normalize();
+
+            validateFile(path);
+
+            if (!path.toFile().exists()) {
+                LOG.error("[Managed Identity] The WWW-Authenticate header specifies a file that does not exist");
+                throw new MsalServiceException(MsalErrorMessage.MANAGED_IDENTITY_INVALID_FILEPATH, MsalError.MANAGED_IDENTITY_FILE_READ_ERROR,
+                        ManagedIdentitySourceType.AZURE_ARC);
+            }
 
             String authHeaderValue = null;
             try {
@@ -136,5 +148,36 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
         }
 
         return super.handleResponse(parameters, response);
+    }
+
+    private void validateFile(Path path) {
+        String osName = System.getProperty("os.name").toLowerCase();
+        if (!(osName.contains("windows") || osName.contains("linux"))) {
+            LOG.error(String.format("[Managed Identity] Unsupported platform: %s", osName));
+            throw new MsalServiceException(MsalErrorMessage.MANAGED_IDENTITY_PLATFORM_NOT_SUPPORTED, MsalError.MANAGED_IDENTITY_FILE_READ_ERROR,
+                    ManagedIdentitySourceType.AZURE_ARC);
+        }
+
+        if (isValidWindowsPath(path) || isValidLinuxPath(path)) {
+            if (path.toFile().length() > MAX_FILE_SIZE_BYTES) {
+                LOG.error(String.format("[Managed Identity] File is larger than %s bytes.", MAX_FILE_SIZE_BYTES));
+                throw new MsalServiceException(MsalErrorMessage.MANAGED_IDENTITY_INVALID_FILEPATH, MsalError.MANAGED_IDENTITY_FILE_READ_ERROR,
+                        ManagedIdentitySourceType.AZURE_ARC);
+            }
+        } else {
+            LOG.error("[Managed Identity] Invalid filepath.");
+            throw new MsalServiceException(MsalErrorMessage.MANAGED_IDENTITY_INVALID_FILEPATH, MsalError.MANAGED_IDENTITY_FILE_READ_ERROR,
+                    ManagedIdentitySourceType.AZURE_ARC);
+        }
+
+        LOG.error("[Managed Identity] Path passed validation.");
+    }
+
+    private boolean isValidWindowsPath(Path path) {
+        return path.startsWith(WINDOWS_PATH) && path.toString().toLowerCase().endsWith(FILE_EXTENSION);
+    }
+
+    private boolean isValidLinuxPath(Path path) {
+        return path.startsWith(LINUX_PATH) && path.toString().toLowerCase().endsWith(FILE_EXTENSION);
     }
 }

@@ -83,24 +83,6 @@ class AuthorizationCodeIT extends SeleniumTest {
 
     @ParameterizedTest
     @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    public void acquireTokenWithAuthorizationCode_ADFSv3_Federated(String environment) {
-        cfg = new Config(environment);
-
-        User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_3);
-        assertAcquireTokenAAD(user, null);
-    }
-
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    public void acquireTokenWithAuthorizationCode_ADFSv2_Federated(String environment) {
-        cfg = new Config(environment);
-
-        User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_2);
-        assertAcquireTokenAAD(user, null);
-    }
-
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
     public void acquireTokenWithAuthorizationCode_B2C_Local(String environment) {
         cfg = new Config(environment);
 

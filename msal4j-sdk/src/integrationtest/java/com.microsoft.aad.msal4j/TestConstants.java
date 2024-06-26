@@ -9,8 +9,9 @@ import java.util.Set;
 
 public class TestConstants {
     public final static String KEYVAULT_DEFAULT_SCOPE = "https://vault.azure.net/.default";
-    public final static String MSIDLAB_DEFAULT_SCOPE = "https://msidlab.com/.default";
+    public final static String MSIDLAB_DEFAULT_SCOPE = "https://request.msidlab.com/.default";
     public final static String MSIDLAB_VAULT_URL = "https://msidlabs.vault.azure.net/";
+    public final static String MSIDLAB_CLIENT_ID = "f62c5ae3-bf3a-4af5-afa8-a68b800396e9";
     public final static String GRAPH_DEFAULT_SCOPE = "https://graph.windows.net/.default";
     public final static String USER_READ_SCOPE = "user.read";
     public final static String DEFAULT_SCOPE = ".default";
@@ -54,6 +55,7 @@ public class TestConstants {
     public final static String B2C_READ_SCOPE = "https://msidlabb2c.onmicrosoft.com/msidlabb2capi/read";
     public final static String B2C_MICROSOFTLOGIN_AUTHORITY = "https://msidlabb2c.b2clogin.com/tfp/msidlabb2c.onmicrosoft.com/";
     public final static String B2C_MICROSOFTLOGIN_ROPC = B2C_MICROSOFTLOGIN_AUTHORITY + B2C_ROPC_POLICY;
+    public final static String B2C_UPN = "b2clocal@msidlabb2c.onmicrosoft.com";
 
     public final static String LOCALHOST = "http://localhost:";
 

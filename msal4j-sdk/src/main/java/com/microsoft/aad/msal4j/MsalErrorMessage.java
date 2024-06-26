@@ -11,6 +11,10 @@ class MsalErrorMessage {
 
     public static final String MANAGED_IDENTITY_INVALID_CHALLENGE = "[Managed Identity] The WWW-Authenticate header in the response from Azure Arc Managed Identity Endpoint did not match the expected format.";
 
+    public static final String MANAGED_IDENTITY_PLATFORM_NOT_SUPPORTED = "[Managed Identity] This managed identity source is not available on this platform.";
+
+    public static final String MANAGED_IDENTITY_INVALID_FILEPATH = "[Managed Identity] The file on the file path in the WWW-Authenticate header is not secure or could not be found.";
+
     public static final String MANAGED_IDENTITY_USER_ASSIGNED_NOT_CONFIGURABLE_AT_RUNTIME = "[Managed Identity] Service Fabric user assigned managed identity ClientId or ResourceId is not configurable at runtime.";
 
     public static final String MANAGED_IDENTITY_USER_ASSIGNED_NOT_SUPPORTED = "[Managed Identity] User assigned identity is not supported by the %s Managed Identity. To authenticate with the system assigned identity use ManagedIdentityApplication.builder(ManagedIdentityId.systemAssigned()).build().";

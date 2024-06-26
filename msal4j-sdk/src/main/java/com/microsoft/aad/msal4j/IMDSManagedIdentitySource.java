@@ -35,9 +35,7 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
                                      ServiceBundle serviceBundle) {
         super(msalRequest, serviceBundle, ManagedIdentitySourceType.IMDS);
         ManagedIdentityParameters parameters = (ManagedIdentityParameters) msalRequest.requestContext().apiParameters();
-        IEnvironmentVariables environmentVariables = ((ManagedIdentityParameters) msalRequest.requestContext().apiParameters()).environmentVariables == null ?
-                new EnvironmentVariables() :
-                parameters.environmentVariables;
+        IEnvironmentVariables environmentVariables = getEnvironmentVariables();
         if (!StringHelper.isNullOrBlank(environmentVariables.getEnvironmentVariable(Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST))){
             LOG.info(String.format("[Managed Identity] Environment variable AZURE_POD_IDENTITY_AUTHORITY_HOST for IMDS returned endpoint: %s", environmentVariables.getEnvironmentVariable(Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST)));
             try {
