@@ -49,6 +49,6 @@ public interface IAuthenticationResult extends Serializable {
      * @return various metadata relating to this authentication result
      */
     default AuthenticationResultMetadata metadata() {
-        return new AuthenticationResultMetadata();
+        return AuthenticationResultMetadata.builder().build();
     }
 }
