@@ -426,6 +426,100 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
             return self();
         }
 
+        /**
+         * Set logPii - boolean value, which determines
+         * whether Pii (personally identifiable information) will be logged in.
+         * The default value is false.
+         *
+         * @param val a boolean value for logPii
+         * @return instance of the Builder on which method was called
+         */
+        public T logPii(boolean val) {
+            return super.logPii(val);
+        }
+
+        /**
+         * Sets the connect timeout value used in HttpsURLConnection connections made by {@link DefaultHttpClient},
+         * and is not needed if using a custom HTTP client
+         *
+         * @param val timeout value in milliseconds
+         * @return instance of the Builder on which method was called
+         */
+        public T connectTimeoutForDefaultHttpClient(Integer val) {
+            return super.connectTimeoutForDefaultHttpClient(val);
+        }
+
+        /**
+         * Sets the read timeout value used in HttpsURLConnection connections made by {@link DefaultHttpClient},
+         * and is not needed if using a custom HTTP client
+         *
+         * @param val timeout value in milliseconds
+         * @return instance of the Builder on which method was called
+         */
+        public T readTimeoutForDefaultHttpClient(Integer val) {
+            return super.readTimeoutForDefaultHttpClient(val);
+        }
+
+        /**
+         * Sets HTTP client to be used by the client application for all HTTP requests. Allows for fine
+         * grained configuration of HTTP client.
+         *
+         * @param val Implementation of {@link IHttpClient}
+         * @return instance of the Builder on which method was called
+         */
+        public T httpClient(IHttpClient val) {
+            return super.httpClient(val);
+        }
+
+        /**
+         * Sets SSLSocketFactory to be used by the client application for all network communication.
+         * If HTTP client is set on the client application (via ClientApplication.builder().httpClient()),
+         * any configuration of SSL should be done on the HTTP client and not through this method.
+         *
+         * @param val an instance of SSLSocketFactory
+         * @return instance of the Builder on which method was called
+         */
+        public T sslSocketFactory(SSLSocketFactory val) {
+            return super.sslSocketFactory(val);
+        }
+
+        /**
+         * Sets ExecutorService to be used to execute the requests.
+         * Developer is responsible for maintaining the lifecycle of the ExecutorService.
+         *
+         * @param val an instance of ExecutorService
+         * @return instance of the Builder on which method was called
+         */
+        public T executorService(ExecutorService val) {
+            return super.executorService(val);
+        }
+
+        /**
+         * Sets Proxy configuration to be used by the client application (MSAL4J by default uses
+         * {@link javax.net.ssl.HttpsURLConnection}) for all network communication.
+         * If no proxy value is passed in, system defined properties are used. If HTTP client is set on
+         * the client application (via ClientApplication.builder().httpClient()),
+         * proxy configuration should be done on the HTTP client object being passed in,
+         * and not through this method.
+         *
+         * @param val an instance of Proxy
+         * @return instance of the Builder on which method was called
+         */
+        public T proxy(Proxy val) {
+            return super.proxy(val);
+        }
+
+        /**
+         * Set optional correlation id to be used by the API.
+         * If not provided, the API generates a random UUID.
+         *
+         * @param val a string value of correlation id
+         * @return instance of the Builder on which method was called
+         */
+        public T correlationId(String val) {
+            return super.correlationId(val);
+        }
+
         abstract AbstractClientApplicationBase build();
     }
 
