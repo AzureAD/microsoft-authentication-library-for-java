@@ -1,3 +1,7 @@
+Version 1.16.1
+=============
+- Add missing refreshOn metadata (#838)
+
 Version 1.16.0
 =============
 - Fix breaking API changes introduced in v1.15.0 (#828)
