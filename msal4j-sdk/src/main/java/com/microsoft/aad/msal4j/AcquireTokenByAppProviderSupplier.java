@@ -87,6 +87,9 @@ class AcquireTokenByAppProviderSupplier extends AuthenticationResultSupplier {
                 .idToken(null)
                 .expiresOn(tokenProviderResult.getExpiresInSeconds())
                 .refreshOn(tokenProviderResult.getRefreshInSeconds())
+                .metadata(AuthenticationResultMetadata.builder()
+                        .refreshOn(tokenProviderResult.getRefreshInSeconds() > 0 ? tokenProviderResult.getRefreshInSeconds() : 0)
+                        .build())
                 .build();
     }
 }
