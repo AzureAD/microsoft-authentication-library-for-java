@@ -101,7 +101,11 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
         } else if (clientCredential instanceof ClientCertificate) {
             this.clientCertAuthentication = true;
             this.clientCertificate = (ClientCertificate) clientCredential;
-            clientAuthentication = buildValidClientCertificateAuthority();
+            if (Authority.detectAuthorityType(this.authenticationAuthority.canonicalAuthorityUrl()) == AuthorityType.ADFS) {
+                clientAuthentication = buildValidClientCertificateAuthorityLegacySha1();
+            } else  {
+                clientAuthentication = buildValidClientCertificateAuthority();
+            }
         } else if (clientCredential instanceof ClientAssertion) {
             clientAuthentication = createClientAuthFromClientAssertion((ClientAssertion) clientCredential);
         } else {
@@ -127,7 +131,18 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
                 clientId(),
                 clientCertificate,
                 this.authenticationAuthority.selfSignedJwtAudience(),
-                sendX5c);
+                sendX5c,
+                false);
+        return createClientAuthFromClientAssertion(clientAssertion);
+    }
+
+    private ClientAuthentication buildValidClientCertificateAuthorityLegacySha1() {
+        ClientAssertion clientAssertion = JwtHelper.buildJwt(
+                clientId(),
+                clientCertificate,
+                this.authenticationAuthority.selfSignedJwtAudience(),
+                sendX5c,
+                true);
         return createClientAuthFromClientAssertion(clientAssertion);
     }
 

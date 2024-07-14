@@ -56,6 +56,13 @@ final class ClientCertificate implements IClientCertificate {
                 .getHash(publicKeyCertificateChain.get(0).getEncoded()));
     }
 
+    public String publicCertificateHashSha1()
+            throws CertificateEncodingException, NoSuchAlgorithmException {
+
+        return Base64.getEncoder().encodeToString(ClientCertificate
+                .getHashSha1(publicKeyCertificateChain.get(0).getEncoded()));
+    }
+
     public List<String> getEncodedPublicKeyCertificateChain() throws CertificateEncodingException {
         List<String> result = new ArrayList<>();
 
@@ -119,8 +126,14 @@ final class ClientCertificate implements IClientCertificate {
         return new ClientCertificate(key, Arrays.asList(publicKeyCertificate));
     }
 
-    private static byte[] getHash(final byte[] inputBytes) throws NoSuchAlgorithmException {
+    private static byte[] getHashSha1(final byte[] inputBytes) throws NoSuchAlgorithmException {
         final MessageDigest md = MessageDigest.getInstance("SHA-1");
+        md.update(inputBytes);
+        return md.digest();
+    }
+
+    private static byte[] getHash(final byte[] inputBytes) throws NoSuchAlgorithmException {
+        final MessageDigest md = MessageDigest.getInstance("SHA-256");
         md.update(inputBytes);
         return md.digest();
     }
