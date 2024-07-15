@@ -22,7 +22,7 @@ public class KeyVaultSecretsProvider {
     private final SecretClient secretClient;
 
     private static final String CLIENT_ID = TestConstants.MSIDLAB_CLIENT_ID;
-    public static String CERTIFICATE_ALIAS = "LabAuth";
+    public static String CERTIFICATE_ALIAS = "LabAuth.MSIDLab.com";
 
     private static final String WIN_KEYSTORE = "Windows-MY";
     private static final String KEYSTORE_PROVIDER = "SunMSCAPI";
