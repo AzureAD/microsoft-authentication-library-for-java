@@ -49,14 +49,9 @@ abstract class AbstractManagedIdentitySource {
         IHttpResponse response;
 
         try {
-            HttpRequest httpRequest = StringHelper.isNullOrBlank(managedIdentityRequest.getBodyAsString()) ?
-                    new HttpRequest(managedIdentityRequest.method,
+            HttpRequest httpRequest = new HttpRequest(managedIdentityRequest.method,
                             managedIdentityRequest.computeURI().toString(),
-                            managedIdentityRequest.headers) :
-                    new HttpRequest(managedIdentityRequest.method,
-                            managedIdentityRequest.computeURI().toString(),
-                            managedIdentityRequest.headers,
-                            managedIdentityRequest.getBodyAsString());
+                            managedIdentityRequest.headers);
             response = serviceBundle.getHttpHelper().executeHttpRequest(httpRequest, managedIdentityRequest.requestContext(), serviceBundle);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);

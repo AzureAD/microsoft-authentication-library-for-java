@@ -26,9 +26,6 @@ class CloudShellManagedIdentitySource extends AbstractManagedIdentitySource{
         managedIdentityRequest.headers.put("ContentType", "application/x-www-form-urlencoded");
         managedIdentityRequest.headers.put("Metadata", "true");
 
-        managedIdentityRequest.bodyParameters = new HashMap<>();
-        managedIdentityRequest.bodyParameters.put("resource", Collections.singletonList(resource));
-
         managedIdentityRequest.queryParameters = new HashMap<>();
         managedIdentityRequest.queryParameters.put("resource", Collections.singletonList(resource));
     }
