@@ -44,19 +44,9 @@ class UserInformationFields {
 
     private void determineFieldIds() {
         switch (user.getFederationProvider()) {
-            case FederationProvider.ADFS_3:
             case FederationProvider.ADFS_2019:
                 passwordInputId = SeleniumConstants.ADFS2019_PASSWORD_ID;
                 passwordSigInButtonId = SeleniumConstants.ADFS2019_SUBMIT_ID;
-                break;
-            case FederationProvider.ADFS_2:
-                if (LabConstants.ARLINGTON_LAB_NAME.equals(user.getLabName())) {
-                    passwordInputId = SeleniumConstants.ADFSV2_ARLINGTON_WEB_PASSWORD_INPUT_ID;
-                    passwordSigInButtonId = SeleniumConstants.ADFSV2_ARLINGTON_WEB_SUBMIT_BUTTON_ID;
-                } else {
-                    passwordInputId = SeleniumConstants.ADFSV2_WEB_PASSWORD_INPUT_ID;
-                    passwordSigInButtonId = SeleniumConstants.ADFSV2_WEB_SUBMIT_BUTTON_ID;
-                }
                 break;
             case FederationProvider.ADFS_4:
                 passwordInputId = SeleniumConstants.ADFSV4_WEB_PASSWORD_ID;

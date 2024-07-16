@@ -132,7 +132,8 @@ abstract class AbstractManagedIdentitySource {
                 managedIdentityErrorResponse.getError(), managedIdentityErrorResponse.getErrorDescription());
     }
 
-    protected static IEnvironmentVariables getEnvironmentVariables(ManagedIdentityParameters parameters) {
-        return parameters.environmentVariables == null ? new EnvironmentVariables() : parameters.environmentVariables;
+    protected static IEnvironmentVariables getEnvironmentVariables() {
+        return ManagedIdentityApplication.environmentVariables == null ?
+                new EnvironmentVariables() : ManagedIdentityApplication.environmentVariables;
     }
 }

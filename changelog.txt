@@ -1,3 +1,17 @@
+Version 1.16.1
+=============
+- Add missing refreshOn metadata (#838)
+
+Version 1.16.0
+=============
+- Fix breaking API changes introduced in v1.15.0 (#828)
+- Expose refreshOn parameter in AuthenticationResultMetadata (#829)
+
+Version 1.15.1
+=============
+- Fix to correctly use custom SSLSocketFactory (#821)
+- Add public API to determine the Managed Identity environment (#823)
+
 Version 1.15.0
 =============
 - GA support for Azure managed identity scenarios

@@ -4,6 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -16,17 +17,9 @@ import java.io.Serializable;
 @Accessors(fluent = true)
 @Getter
 @Setter(AccessLevel.PACKAGE)
+@Builder
 public class AuthenticationResultMetadata implements Serializable {
 
     private TokenSource tokenSource;
-
-    /**
-     * Sets default metadata values. Used when creating an {@link IAuthenticationResult} before the values are known.
-     */
-    AuthenticationResultMetadata() {
-    }
-
-    AuthenticationResultMetadata(TokenSource tokenSource) {
-        this.tokenSource = tokenSource;
-    }
+    private Long refreshOn;
 }
