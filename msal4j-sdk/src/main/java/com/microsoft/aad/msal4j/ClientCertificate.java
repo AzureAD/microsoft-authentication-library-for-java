@@ -8,8 +8,6 @@ import lombok.experimental.Accessors;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.MessageDigest;
@@ -21,7 +19,6 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.security.interfaces.RSAPrivateKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -53,7 +50,7 @@ final class ClientCertificate implements IClientCertificate {
             throws CertificateEncodingException, NoSuchAlgorithmException {
 
         return Base64.getEncoder().encodeToString(ClientCertificate
-                .getHash(publicKeyCertificateChain.get(0).getEncoded()));
+                .getHashSha256(publicKeyCertificateChain.get(0).getEncoded()));
     }
 
     public String publicCertificateHashSha1()
@@ -132,7 +129,7 @@ final class ClientCertificate implements IClientCertificate {
         return md.digest();
     }
 
-    private static byte[] getHash(final byte[] inputBytes) throws NoSuchAlgorithmException {
+    private static byte[] getHashSha256(final byte[] inputBytes) throws NoSuchAlgorithmException {
         final MessageDigest md = MessageDigest.getInstance("SHA-256");
         md.update(inputBytes);
         return md.digest();

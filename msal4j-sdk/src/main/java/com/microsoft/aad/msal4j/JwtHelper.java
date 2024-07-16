@@ -22,7 +22,7 @@ final class JwtHelper {
 
     static ClientAssertion buildJwt(String clientId, final ClientCertificate credential,
                                     final String jwtAudience, boolean sendX5c,
-                                    boolean useLegacySha1) throws MsalClientException {
+                                    boolean useSha1) throws MsalClientException {
         if (StringHelper.isBlank(clientId)) {
             throw new IllegalArgumentException("clientId is null or empty");
         }
@@ -56,7 +56,8 @@ final class JwtHelper {
                 builder.x509CertChain(certs);
             }
 
-            if (useLegacySha1) {
+            //SHA-256 is preferred, however certain flows still require SHA-1 due to what is supported server-side
+            if (useSha1) {
                 builder.x509CertThumbprint(new Base64URL(credential.publicCertificateHashSha1()));
             } else {
                 builder.x509CertSHA256Thumbprint(new Base64URL(credential.publicCertificateHash()));

@@ -102,7 +102,7 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
             this.clientCertAuthentication = true;
             this.clientCertificate = (ClientCertificate) clientCredential;
             if (Authority.detectAuthorityType(this.authenticationAuthority.canonicalAuthorityUrl()) == AuthorityType.ADFS) {
-                clientAuthentication = buildValidClientCertificateAuthorityLegacySha1();
+                clientAuthentication = buildValidClientCertificateAuthoritySha1();
             } else  {
                 clientAuthentication = buildValidClientCertificateAuthority();
             }
@@ -136,7 +136,9 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
         return createClientAuthFromClientAssertion(clientAssertion);
     }
 
-    private ClientAuthentication buildValidClientCertificateAuthorityLegacySha1() {
+    //The library originally used SHA-1 for thumbprints as other algorithms were not supported server-side,
+    //  and while support for SHA-256 has been added certain flows still only allow SHA-1
+    private ClientAuthentication buildValidClientCertificateAuthoritySha1() {
         ClientAssertion clientAssertion = JwtHelper.buildJwt(
                 clientId(),
                 clientCertificate,
