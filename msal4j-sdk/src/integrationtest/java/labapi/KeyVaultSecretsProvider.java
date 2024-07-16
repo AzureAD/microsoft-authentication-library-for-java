@@ -22,7 +22,7 @@ public class KeyVaultSecretsProvider {
     private final SecretClient secretClient;
 
     private static final String CLIENT_ID = TestConstants.MSIDLAB_CLIENT_ID;
-    public static String CERTIFICATE_ALIAS = "LabVaultAccessCert";
+    public static String CERTIFICATE_ALIAS = "LabAuth.MSIDLab.com";
 
     private static final String WIN_KEYSTORE = "Windows-MY";
     private static final String KEYSTORE_PROVIDER = "SunMSCAPI";
@@ -66,7 +66,7 @@ public class KeyVaultSecretsProvider {
         try {
             ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
                             CLIENT_ID, getClientCredentialFromKeyStore()).
-                    authority(TestConstants.MICROSOFT_AUTHORITY).
+                    authority(TestConstants.MICROSOFT_AUTHORITY).sendX5c(true).
                     build();
             result = cca.acquireToken(ClientCredentialParameters
                             .builder(Collections.singleton(TestConstants.KEYVAULT_DEFAULT_SCOPE))
