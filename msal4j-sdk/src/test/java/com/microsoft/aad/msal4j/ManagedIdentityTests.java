@@ -88,10 +88,11 @@ class ManagedIdentityTests {
 
                 headers.put("ContentType", "application/x-www-form-urlencoded");
                 headers.put("Metadata", "true");
-                headers.put("resource", resource);
 
                 bodyParameters.put("resource", Collections.singletonList(resource));
-                return new HttpRequest(HttpMethod.POST, computeUri(endpoint, queryParameters), headers, URLUtils.serializeParameters(bodyParameters));
+
+                queryParameters.put("resource", Collections.singletonList(resource));
+                return new HttpRequest(HttpMethod.GET, computeUri(endpoint, queryParameters), headers, URLUtils.serializeParameters(bodyParameters));
             }
             case IMDS: {
                 endpoint = IMDS_ENDPOINT;
