@@ -101,7 +101,11 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
         } else if (clientCredential instanceof ClientCertificate) {
             this.clientCertAuthentication = true;
             this.clientCertificate = (ClientCertificate) clientCredential;
-            clientAuthentication = buildValidClientCertificateAuthority();
+            if (Authority.detectAuthorityType(this.authenticationAuthority.canonicalAuthorityUrl()) == AuthorityType.ADFS) {
+                clientAuthentication = buildValidClientCertificateAuthoritySha1();
+            } else  {
+                clientAuthentication = buildValidClientCertificateAuthority();
+            }
         } else if (clientCredential instanceof ClientAssertion) {
             clientAuthentication = createClientAuthFromClientAssertion((ClientAssertion) clientCredential);
         } else {
@@ -127,7 +131,20 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
                 clientId(),
                 clientCertificate,
                 this.authenticationAuthority.selfSignedJwtAudience(),
-                sendX5c);
+                sendX5c,
+                false);
+        return createClientAuthFromClientAssertion(clientAssertion);
+    }
+
+    //The library originally used SHA-1 for thumbprints as other algorithms were not supported server-side,
+    //  and while support for SHA-256 has been added certain flows still only allow SHA-1
+    private ClientAuthentication buildValidClientCertificateAuthoritySha1() {
+        ClientAssertion clientAssertion = JwtHelper.buildJwt(
+                clientId(),
+                clientCertificate,
+                this.authenticationAuthority.selfSignedJwtAudience(),
+                sendX5c,
+                true);
         return createClientAuthFromClientAssertion(clientAssertion);
     }
 
