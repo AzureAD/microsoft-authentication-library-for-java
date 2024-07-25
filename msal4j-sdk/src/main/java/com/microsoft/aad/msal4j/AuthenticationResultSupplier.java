@@ -95,10 +95,17 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
                         msalRequest.requestContext().correlationId(),
                         error);
 
-                clientApplication.log.warn(
-                        LogHelper.createMessage(
-                                String.format("Execution of %s failed: %s", this.getClass(), ex.getMessage()),
-                                msalRequest.headers().getHeaderCorrelationIdValue()));
+                String logMessage = LogHelper.createMessage(
+                        String.format("Execution of %s failed: %s", this.getClass(), ex.getMessage()),
+                        msalRequest.headers().getHeaderCorrelationIdValue());
+                if (ex instanceof MsalClientException) {
+                    MsalClientException exception = (MsalClientException) ex;
+                    if (exception.errorCode() != null && exception.errorCode().equalsIgnoreCase(AuthenticationErrorCode.CACHE_MISS)) {
+                        clientApplication.log.debug(logMessage);
+                    }
+                } else {
+                    clientApplication.log.warn(logMessage);
+                }
 
                 throw new CompletionException(ex);
             }
