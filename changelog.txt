@@ -1,3 +1,9 @@
+Version 1.16.2
+=============
+- Use SHA256 thumbprints in non-ADFS cert flows (#840)
+- Reduce logging level of cache miss messages (#844)
+- Make ManagedIdentitySourceType enum public (#845)
+
 Version 1.16.1
 =============
 - Add missing refreshOn metadata (#838)
