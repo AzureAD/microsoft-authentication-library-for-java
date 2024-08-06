@@ -284,6 +284,24 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
         }
 
         /**
+         * Set a known authority corresponding to a generic OpenIdConnect Identity Provider.
+         * MSAL will append ".well-known/openid-configuration" to the authority to retrieve the OIDC metadata and determine the endpoints.
+         *
+         * @param val a string value of authority
+         * @return instance of the Builder on which method was called
+         */
+        public T oidcAuthority(String val) throws MalformedURLException {
+            authority = Authority.enforceTrailingSlash(val);
+            URL authorityURL = new URL(authority);
+
+            authenticationAuthority = new GenericAuthority(authorityURL);
+
+            Authority.validateAuthority(authenticationAuthority.canonicalAuthorityUrl());
+
+            return self();
+        }
+
+        /**
          * Set a boolean value telling the application if the authority needs to be verified
          * against a list of known authorities. Authority is only validated when:
          * 1 - It is an Azure Active Directory authority (not B2C or ADFS)

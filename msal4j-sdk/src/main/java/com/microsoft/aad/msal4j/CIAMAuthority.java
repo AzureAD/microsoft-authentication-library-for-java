@@ -6,7 +6,7 @@ package com.microsoft.aad.msal4j;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class CIAMAuthority extends Authority{
+public class CIAMAuthority extends Authority {
 
     public static final String CIAM_HOST_SEGMENT = ".ciamlogin.com";
 
@@ -23,20 +23,22 @@ public class CIAMAuthority extends Authority{
     CIAMAuthority(URL authorityUrl) throws MalformedURLException {
         super(transformAuthority(authorityUrl), AuthorityType.CIAM);
         setAuthorityProperties();
-        this.authority = String.format(CIAM_AUTHORITY_FORMAT,host,tenant);
+        this.authority = String.format(CIAM_AUTHORITY_FORMAT, host, tenant);
     }
 
-    /** This method takes a CIAM authority string of format "tenant.ciamlogin.com" or "https://tenant.ciamlogin.com"
-     and converts it into a full authority url with a path segment of format "/tenant.onmicrosoft.com"
+    /**
+     * This method takes a CIAM authority string of format "tenant.ciamlogin.com" or "https://tenant.ciamlogin.com"
+     * and converts it into a full authority url with a path segment of format "/tenant.onmicrosoft.com"
+     *
      * @param originalAuthority authority to be transformed
      * @return full CIAM authority with path
      */
     protected static URL transformAuthority(URL originalAuthority) throws MalformedURLException {
         String host = originalAuthority.getHost() + originalAuthority.getPath();
         String transformedAuthority = originalAuthority.toString();
-        if(originalAuthority.getPath().equals("/")){
+        if (originalAuthority.getPath().equals("/")) {
             int ciamHostIndex = host.indexOf(CIAMAuthority.CIAM_HOST_SEGMENT);
-            String tenant = host.substring(0 , ciamHostIndex);
+            String tenant = host.substring(0, ciamHostIndex);
             transformedAuthority = originalAuthority + tenant + ".onmicrosoft.com/";
         }
         return new URL(transformedAuthority);

@@ -89,6 +89,25 @@ class ClientCredentialsIT {
     }
 
     @Test
+    void acquireTokenClientCredentials_Certificate_CiamCud() throws Exception {
+        String authorityCud = "https://login.msidlabsciam.com/fe362aec-5d43-45d1-b730-9755e60dc3b9/v2.0/";
+        String clientId = "b244c86f-ed88-45bf-abda-6b37aa482c79";
+
+        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
+                        clientId, CertificateHelper.getClientCertificate())
+                .oidcAuthority(authorityCud)
+                .build();
+
+        IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
+                        .builder(Collections.singleton(TestConstants.DEFAULT_SCOPE))
+                        .build())
+                .get();
+
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
+    }
+
+    @Test
     void acquireTokenClientCredentials_Callback() throws Exception {
         String clientId = TestConstants.MSIDLAB_CLIENT_ID;
 

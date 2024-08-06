@@ -13,7 +13,6 @@ import java.net.URL;
 /**
  * Represents Authentication Authority responsible for issuing access tokens.
  */
-
 @Accessors(fluent = true)
 @Getter(AccessLevel.PACKAGE)
 abstract class Authority {
@@ -63,8 +62,10 @@ abstract class Authority {
             createdAuthority = new B2CAuthority(authorityUrl);
         } else if (authorityType == AuthorityType.ADFS) {
             createdAuthority = new ADFSAuthority(authorityUrl);
-        } else if(authorityType == AuthorityType.CIAM){
+        } else if (authorityType == AuthorityType.CIAM) {
             createdAuthority = new CIAMAuthority(authorityUrl);
+        } else if (authorityType == AuthorityType.GENERIC) {
+            createdAuthority = new GenericAuthority(authorityUrl);
         } else {
             throw new IllegalArgumentException("Unsupported Authority Type");
         }
@@ -79,11 +80,11 @@ abstract class Authority {
 
         final String path = authorityUrl.getPath().substring(1);
         if (StringHelper.isBlank(path)) {
-            if(isCiamAuthority(authorityUrl.getHost())){
+            if (isCiamAuthority(authorityUrl.getHost())) {
                 return AuthorityType.CIAM;
+            } else {
+                return AuthorityType.GENERIC;
             }
-            throw new IllegalArgumentException(
-                    "authority Uri should have at least one segment in the path (i.e. https://<host>/<path>/...)");
         }
 
         final String host = authorityUrl.getHost();

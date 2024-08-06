@@ -4,5 +4,5 @@
 package com.microsoft.aad.msal4j;
 
 enum AuthorityType {
-    AAD, ADFS, B2C, CIAM
+    AAD, ADFS, B2C, CIAM, GENERIC
 }
