@@ -113,6 +113,14 @@ public class LabUserProvider {
         return getLabUser(query);
     }
 
+    public User getCiamCudUser() {
+        UserQueryParameters query = new UserQueryParameters();
+        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, FederationProvider.CIAMCUD);
+        query.parameters.put(UserQueryParameters.SIGN_IN_AUDIENCE, "azureadmyorg");
+
+        return getLabUser(query);
+    }
+
     public User getLabUser(UserQueryParameters userQuery) {
         if (userCache.containsKey(userQuery)) {
             return userCache.get(userQuery);
