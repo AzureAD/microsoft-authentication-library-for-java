@@ -242,11 +242,14 @@ class AadInstanceDiscoveryProvider {
      static AadInstanceDiscoveryResponse sendInstanceDiscoveryRequest(URL authorityUrl,
                                                                              MsalRequest msalRequest,
                                                                              ServiceBundle serviceBundle) {
+        IHttpResponse httpResponse;
 
-        String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpoint(authorityUrl) +
-                formInstanceDiscoveryParameters(authorityUrl);
-
-        IHttpResponse httpResponse = executeRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
+        if (msalRequest.application().authenticationAuthority.authorityType == AuthorityType.GENERIC) {
+            httpResponse = executeRequest(authorityUrl.toString(), msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
+        } else {
+            String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpoint(authorityUrl) + formInstanceDiscoveryParameters(authorityUrl);
+            httpResponse = executeRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
+        }
 
         AadInstanceDiscoveryResponse response = JsonHelper.convertJsonToObject(httpResponse.body(), AadInstanceDiscoveryResponse.class);
 
@@ -365,6 +368,22 @@ class AadInstanceDiscoveryProvider {
         }
 
         cacheInstanceDiscoveryResponse(authorityUrl.getHost(), aadInstanceDiscoveryResponse);
+    }
+
+    static AadInstanceDiscoveryResponse doOidcInstanceDiscoveryAndCache(GenericAuthority authority, AbstractClientApplicationBase clientApplication, ServiceBundle serviceBundle) {
+        //This class was originally made under the assumption of only dealing with Azure AD/Entra style endpoints,
+        //  and the expectation that the instance discovery would be done during the first token request.
+        //Newer features, such as CIAM custom authorities, allow any authority that follows OIDC's standard for an
+        //  instance metadata endpoint, and that endpoint contains data we may need before the first token request.
+        //Rather than rewrite method signatures in multiple public and private classes or add a lot of duplicate code,
+        //  as a quick and dirty workaround here we just pretend to be in the middle of a token request
+        RequestContext context = new RequestContext(clientApplication, null, null);
+        MsalRequest msalRequest = new MsalRequest(clientApplication, null, context) {};
+
+        AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse = sendInstanceDiscoveryRequest(authority.canonicalAuthorityUrl, msalRequest, serviceBundle);
+        cacheInstanceDiscoveryResponse(authority.canonicalAuthorityUrl.getHost(), aadInstanceDiscoveryResponse);
+
+        return aadInstanceDiscoveryResponse;
     }
 
     private static void validate(AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse) {

@@ -64,8 +64,6 @@ abstract class Authority {
             createdAuthority = new ADFSAuthority(authorityUrl);
         } else if (authorityType == AuthorityType.CIAM) {
             createdAuthority = new CIAMAuthority(authorityUrl);
-        } else if (authorityType == AuthorityType.GENERIC) {
-            createdAuthority = new GenericAuthority(authorityUrl);
         } else {
             throw new IllegalArgumentException("Unsupported Authority Type");
         }
@@ -82,9 +80,9 @@ abstract class Authority {
         if (StringHelper.isBlank(path)) {
             if (isCiamAuthority(authorityUrl.getHost())) {
                 return AuthorityType.CIAM;
-            } else {
-                return AuthorityType.GENERIC;
             }
+            throw new IllegalArgumentException(
+                    "authority Uri should have at least one segment in the path (i.e. https://<host>/<path>/...)");
         }
 
         final String host = authorityUrl.getHost();

@@ -4,22 +4,17 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import org.slf4j.Logger;
 
 import javax.net.ssl.SSLSocketFactory;
 import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Consumer;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotBlank;
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
@@ -563,10 +558,21 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
                         builder.httpClient)
         );
 
+        //In most cases we will retrieve various auth/token/etc. via instance discovery during a token request,
+        //  the format is well known enough to be stored in the codebase itself, or the instance discovery result is
+        //  provided at app creation so we can cache it and skip discovery.
+        //However, if the authority being set is a generic OIDC authority (rather than Azure AD-style) then we need to perform
+        //  instance discovery when the client app is created, as there are some app-level methods that require the endpoints from
+        //  the instance discovery metadata.
         if (aadAadInstanceDiscoveryResponse != null) {
             AadInstanceDiscoveryProvider.cacheInstanceDiscoveryResponse(
                     authenticationAuthority.host,
                     aadAadInstanceDiscoveryResponse);
+        } else if (authenticationAuthority.authorityType == AuthorityType.GENERIC) {
+            AadInstanceDiscoveryProvider.doOidcInstanceDiscoveryAndCache((GenericAuthority) authenticationAuthority, this, serviceBundle);
+            ((GenericAuthority) authenticationAuthority).setAuthorityProperties(
+                    AadInstanceDiscoveryProvider.doOidcInstanceDiscoveryAndCache(
+                            (GenericAuthority) authenticationAuthority, this, serviceBundle));
         }
     }
 }

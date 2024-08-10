@@ -29,4 +29,13 @@ class AadInstanceDiscoveryResponse {
 
     @JsonProperty("correlation_id")
     private String correlationId;
+
+    @JsonProperty("authorization_endpoint")
+    private String authorizationEndpoint;
+
+    @JsonProperty("token_endpoint")
+    private String tokenEndpoint;
+
+    @JsonProperty("device_authorization_endpoint")
+    private String deviceCodeEndpoint;
 }
