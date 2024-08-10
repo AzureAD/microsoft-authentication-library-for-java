@@ -289,7 +289,7 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
             authority = Authority.enforceTrailingSlash(val);
             URL authorityURL = new URL(authority);
 
-            authenticationAuthority = new GenericAuthority(authorityURL);
+            authenticationAuthority = new OidcAuthority(authorityURL);
 
             Authority.validateAuthority(authenticationAuthority.canonicalAuthorityUrl());
 
@@ -568,11 +568,11 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
             AadInstanceDiscoveryProvider.cacheInstanceDiscoveryResponse(
                     authenticationAuthority.host,
                     aadAadInstanceDiscoveryResponse);
-        } else if (authenticationAuthority.authorityType == AuthorityType.GENERIC) {
-            AadInstanceDiscoveryProvider.doOidcInstanceDiscoveryAndCache((GenericAuthority) authenticationAuthority, this, serviceBundle);
-            ((GenericAuthority) authenticationAuthority).setAuthorityProperties(
+        } else if (authenticationAuthority.authorityType == AuthorityType.OIDC) {
+            AadInstanceDiscoveryProvider.doOidcInstanceDiscoveryAndCache((OidcAuthority) authenticationAuthority, this, serviceBundle);
+            ((OidcAuthority) authenticationAuthority).setAuthorityProperties(
                     AadInstanceDiscoveryProvider.doOidcInstanceDiscoveryAndCache(
-                            (GenericAuthority) authenticationAuthority, this, serviceBundle));
+                            (OidcAuthority) authenticationAuthority, this, serviceBundle));
         }
     }
 }

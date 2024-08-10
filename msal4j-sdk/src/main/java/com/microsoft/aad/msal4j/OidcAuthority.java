@@ -6,13 +6,13 @@ package com.microsoft.aad.msal4j;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class GenericAuthority extends Authority {
+public class OidcAuthority extends Authority {
     //Part of the OpenIdConnect standard, this is appended to the authority to create the endpoint that has OIDC metadata
     static final String WELL_KNOWN_OPENID_CONFIGURATION = ".well-known/openid-configuration";
     private static final String AUTHORITY_FORMAT = "https://%s/%s/";
 
-    GenericAuthority(URL authorityUrl) throws MalformedURLException {
-        super(transformAuthority(authorityUrl), AuthorityType.GENERIC);
+    OidcAuthority(URL authorityUrl) throws MalformedURLException {
+        super(transformAuthority(authorityUrl), AuthorityType.OIDC);
 
         this.authority = String.format(AUTHORITY_FORMAT, host, tenant);
     }

@@ -244,7 +244,7 @@ class AadInstanceDiscoveryProvider {
                                                                              ServiceBundle serviceBundle) {
         IHttpResponse httpResponse;
 
-        if (msalRequest.application().authenticationAuthority.authorityType == AuthorityType.GENERIC) {
+        if (msalRequest.application().authenticationAuthority.authorityType == AuthorityType.OIDC) {
             httpResponse = executeRequest(authorityUrl.toString(), msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
         } else {
             String instanceDiscoveryRequestUrl = getInstanceDiscoveryEndpoint(authorityUrl) + formInstanceDiscoveryParameters(authorityUrl);
@@ -370,7 +370,7 @@ class AadInstanceDiscoveryProvider {
         cacheInstanceDiscoveryResponse(authorityUrl.getHost(), aadInstanceDiscoveryResponse);
     }
 
-    static AadInstanceDiscoveryResponse doOidcInstanceDiscoveryAndCache(GenericAuthority authority, AbstractClientApplicationBase clientApplication, ServiceBundle serviceBundle) {
+    static AadInstanceDiscoveryResponse doOidcInstanceDiscoveryAndCache(OidcAuthority authority, AbstractClientApplicationBase clientApplication, ServiceBundle serviceBundle) {
         //This class was originally made under the assumption of only dealing with Azure AD/Entra style endpoints,
         //  and the expectation that the instance discovery would be done during the first token request.
         //Newer features, such as CIAM custom authorities, allow any authority that follows OIDC's standard for an
