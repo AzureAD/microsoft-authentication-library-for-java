@@ -105,6 +105,22 @@ class HttpHelper implements IHttpHelper {
         return httpResponse;
     }
 
+    IHttpResponse executeHttpRequest(HttpRequest httpRequest) {
+        IHttpResponse httpResponse;
+
+        try {
+            httpResponse = executeHttpRequestWithRetries(httpRequest, httpClient);
+        } catch (Exception e) {
+            throw new MsalClientException(e);
+        }
+
+        if (httpResponse.headers() != null) {
+            HttpHelper.verifyReturnedCorrelationId(httpRequest, httpResponse);
+        }
+
+        return httpResponse;
+    }
+
     private String getRequestThumbprint(RequestContext requestContext) {
         StringBuilder sb = new StringBuilder();
         sb.append(requestContext.clientId() + POINT_DELIMITER);

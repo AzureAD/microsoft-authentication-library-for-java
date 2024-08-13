@@ -558,21 +558,16 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
                         builder.httpClient)
         );
 
-        //In most cases we will retrieve various auth/token/etc. via instance discovery during a token request,
-        //  the format is well known enough to be stored in the codebase itself, or the instance discovery result is
-        //  provided at app creation so we can cache it and skip discovery.
-        //However, if the authority being set is a generic OIDC authority (rather than Azure AD-style) then we need to perform
-        //  instance discovery when the client app is created, as there are some app-level methods that require the endpoints from
-        //  the instance discovery metadata.
         if (aadAadInstanceDiscoveryResponse != null) {
             AadInstanceDiscoveryProvider.cacheInstanceDiscoveryResponse(
                     authenticationAuthority.host,
                     aadAadInstanceDiscoveryResponse);
-        } else if (authenticationAuthority.authorityType == AuthorityType.OIDC) {
-            AadInstanceDiscoveryProvider.doOidcInstanceDiscoveryAndCache((OidcAuthority) authenticationAuthority, this, serviceBundle);
+        }
+
+        if (authenticationAuthority.authorityType == AuthorityType.OIDC) {
             ((OidcAuthority) authenticationAuthority).setAuthorityProperties(
-                    AadInstanceDiscoveryProvider.doOidcInstanceDiscoveryAndCache(
-                            (OidcAuthority) authenticationAuthority, this, serviceBundle));
+                    OidcDiscoveryProvider.performOidcDiscovery(
+                            (OidcAuthority) authenticationAuthority, this));
         }
     }
 }

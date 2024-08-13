@@ -12,19 +12,19 @@ public class OidcAuthority extends Authority {
     private static final String AUTHORITY_FORMAT = "https://%s/%s/";
 
     OidcAuthority(URL authorityUrl) throws MalformedURLException {
-        super(transformAuthority(authorityUrl), AuthorityType.OIDC);
+        super(createOidcDiscoveryUrl(authorityUrl), AuthorityType.OIDC);
 
         this.authority = String.format(AUTHORITY_FORMAT, host, tenant);
     }
 
-    private static URL transformAuthority(URL originalAuthority) throws MalformedURLException {
-        String transformedAuthority = originalAuthority.toString();
-        transformedAuthority += WELL_KNOWN_OPENID_CONFIGURATION;
+    private static URL createOidcDiscoveryUrl(URL originalAuthority) throws MalformedURLException {
+        String authority = originalAuthority.toString();
+        authority += WELL_KNOWN_OPENID_CONFIGURATION;
 
-        return new URL(transformedAuthority);
+        return new URL(authority);
     }
 
-    void setAuthorityProperties(AadInstanceDiscoveryResponse instanceDiscoveryResponse) {
+    void setAuthorityProperties(OidcDiscoveryResponse instanceDiscoveryResponse) {
         this.authorizationEndpoint = instanceDiscoveryResponse.authorizationEndpoint();
         this.tokenEndpoint = instanceDiscoveryResponse.tokenEndpoint();
         this.deviceCodeEndpoint = instanceDiscoveryResponse.deviceCodeEndpoint();
