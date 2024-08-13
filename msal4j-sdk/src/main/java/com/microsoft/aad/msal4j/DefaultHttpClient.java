@@ -90,9 +90,7 @@ class DefaultHttpClient implements IHttpClient {
         connection.setConnectTimeout(connectTimeout);
         connection.setReadTimeout(readTimeout);
 
-        if (connection instanceof HttpURLConnection) {
-            return (HttpURLConnection) connection;
-        } else {
+        if (connection instanceof HttpsURLConnection) {
             HttpsURLConnection httpsConnection = (HttpsURLConnection) connection;
 
             if (sslSocketFactory != null) {
@@ -100,6 +98,8 @@ class DefaultHttpClient implements IHttpClient {
             }
 
             return httpsConnection;
+        } else {
+            return (HttpURLConnection) connection;
         }
     }
 

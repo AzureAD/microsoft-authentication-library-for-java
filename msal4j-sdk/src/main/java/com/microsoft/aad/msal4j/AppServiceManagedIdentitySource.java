@@ -56,7 +56,7 @@ class AppServiceManagedIdentitySource extends AbstractManagedIdentitySource{
 
     static AbstractManagedIdentitySource create(MsalRequest msalRequest, ServiceBundle serviceBundle) {
 
-        IEnvironmentVariables environmentVariables = getEnvironmentVariables((ManagedIdentityParameters) msalRequest.requestContext().apiParameters());
+        IEnvironmentVariables environmentVariables = getEnvironmentVariables();
         String msiSecret = environmentVariables.getEnvironmentVariable(Constants.IDENTITY_HEADER);
         String msiEndpoint = environmentVariables.getEnvironmentVariable(Constants.IDENTITY_ENDPOINT);
 

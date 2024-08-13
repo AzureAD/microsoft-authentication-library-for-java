@@ -49,15 +49,9 @@ abstract class AbstractManagedIdentitySource {
         IHttpResponse response;
 
         try {
-
-            HttpRequest httpRequest = managedIdentityRequest.method.equals(HttpMethod.GET) ?
-                    new HttpRequest(HttpMethod.GET,
+            HttpRequest httpRequest = new HttpRequest(managedIdentityRequest.method,
                             managedIdentityRequest.computeURI().toString(),
-                            managedIdentityRequest.headers) :
-                    new HttpRequest(HttpMethod.POST,
-                            managedIdentityRequest.computeURI().toString(),
-                            managedIdentityRequest.headers,
-                            managedIdentityRequest.getBodyAsString());
+                            managedIdentityRequest.headers);
             response = serviceBundle.getHttpHelper().executeHttpRequest(httpRequest, managedIdentityRequest.requestContext(), serviceBundle);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
@@ -133,7 +127,8 @@ abstract class AbstractManagedIdentitySource {
                 managedIdentityErrorResponse.getError(), managedIdentityErrorResponse.getErrorDescription());
     }
 
-    protected static IEnvironmentVariables getEnvironmentVariables(ManagedIdentityParameters parameters) {
-        return parameters.environmentVariables == null ? new EnvironmentVariables() : parameters.environmentVariables;
+    protected static IEnvironmentVariables getEnvironmentVariables() {
+        return ManagedIdentityApplication.environmentVariables == null ?
+                new EnvironmentVariables() : ManagedIdentityApplication.environmentVariables;
     }
 }

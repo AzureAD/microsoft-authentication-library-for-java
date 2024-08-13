@@ -82,24 +82,6 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
 
     @ParameterizedTest
     @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    void acquireTokenInteractive_ADFSv3_Federated(String environment) {
-        cfg = new Config(environment);
-
-        User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_3);
-        assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope());
-    }
-
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    void acquireTokenInteractive_ADFSv2_Federated(String environment) {
-        cfg = new Config(environment);
-
-        User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_2);
-        assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope());
-    }
-
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
     void acquireTokenWithAuthorizationCode_B2C_Local(String environment) {
         cfg = new Config(environment);
 

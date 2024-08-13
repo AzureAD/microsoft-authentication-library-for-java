@@ -20,15 +20,14 @@ class CloudShellManagedIdentitySource extends AbstractManagedIdentitySource{
     @Override
     public void createManagedIdentityRequest(String resource) {
         managedIdentityRequest.baseEndpoint = msiEndpoint;
-        managedIdentityRequest.method = HttpMethod.POST;
+        managedIdentityRequest.method = HttpMethod.GET;
 
         managedIdentityRequest.headers = new HashMap<>();
         managedIdentityRequest.headers.put("ContentType", "application/x-www-form-urlencoded");
         managedIdentityRequest.headers.put("Metadata", "true");
-        managedIdentityRequest.headers.put("resource", resource);
 
-        managedIdentityRequest.bodyParameters = new HashMap<>();
-        managedIdentityRequest.bodyParameters.put("resource", Collections.singletonList(resource));
+        managedIdentityRequest.queryParameters = new HashMap<>();
+        managedIdentityRequest.queryParameters.put("resource", Collections.singletonList(resource));
     }
 
     private CloudShellManagedIdentitySource(MsalRequest msalRequest, ServiceBundle serviceBundle, URI msiEndpoint)
@@ -46,7 +45,7 @@ class CloudShellManagedIdentitySource extends AbstractManagedIdentitySource{
 
     static AbstractManagedIdentitySource create(MsalRequest msalRequest, ServiceBundle serviceBundle) {
 
-        IEnvironmentVariables environmentVariables = getEnvironmentVariables((ManagedIdentityParameters) msalRequest.requestContext().apiParameters());
+        IEnvironmentVariables environmentVariables = getEnvironmentVariables();
         String msiEndpoint = environmentVariables.getEnvironmentVariable(Constants.MSI_ENDPOINT);
 
 

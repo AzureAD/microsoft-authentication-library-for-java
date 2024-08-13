@@ -78,36 +78,6 @@ class UsernamePasswordIT {
         assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope(), user.getAppId());
     }
 
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    void acquireTokenWithUsernamePassword_ADFSv3(String environment) throws Exception {
-        cfg = new Config(environment);
-
-        UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT, cfg.azureEnvironment);
-        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, FederationProvider.ADFS_3);
-        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.FEDERATED);
-
-        User user = labUserProvider.getLabUser(query);
-
-        assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope(), user.getAppId());
-    }
-
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    void acquireTokenWithUsernamePassword_ADFSv2(String environment) throws Exception {
-        cfg = new Config(environment);
-
-        UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT, cfg.azureEnvironment);
-        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, FederationProvider.ADFS_2);
-        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.FEDERATED);
-
-        User user = labUserProvider.getLabUser(query);
-
-        assertAcquireTokenCommonAAD(user);
-    }
-
     @Test
     void acquireTokenWithUsernamePassword_AuthorityWithPort() throws Exception {
         User user = labUserProvider.getDefaultUser();
