@@ -3,8 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.AccessLevel;
-import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,8 +29,9 @@ class ManagedIdentityClient {
                 !StringHelper.isNullOrBlank(environmentVariables.getEnvironmentVariable(Constants.IDENTITY_HEADER))) {
             if (!StringHelper.isNullOrBlank(environmentVariables.getEnvironmentVariable(Constants.IDENTITY_SERVER_THUMBPRINT))) {
                 managedIdentitySourceType = ManagedIdentitySourceType.SERVICE_FABRIC;
-            } else
-            managedIdentitySourceType = ManagedIdentitySourceType.APP_SERVICE;
+            } else {
+                managedIdentitySourceType = ManagedIdentitySourceType.APP_SERVICE;
+            }
         } else if (!StringHelper.isNullOrBlank(environmentVariables.getEnvironmentVariable(Constants.MSI_ENDPOINT))) {
             managedIdentitySourceType = ManagedIdentitySourceType.CLOUD_SHELL;
         } else if (!StringHelper.isNullOrBlank(environmentVariables.getEnvironmentVariable(Constants.IDENTITY_ENDPOINT)) &&
@@ -54,12 +53,6 @@ class ManagedIdentityClient {
         ManagedIdentityIdType identityIdType = managedIdentityApplication.getManagedIdentityId().getIdType();
         if (!identityIdType.equals(ManagedIdentityIdType.SYSTEM_ASSIGNED)) {
             managedIdentitySource.setUserAssignedManagedIdentity(true);
-            String userAssignedId = managedIdentityApplication.getManagedIdentityId().getUserAssignedId();
-            if (identityIdType.equals(ManagedIdentityIdType.CLIENT_ID)) {
-                managedIdentitySource.setManagedIdentityUserAssignedClientId(userAssignedId);
-            } else if (identityIdType.equals(ManagedIdentityIdType.RESOURCE_ID)) {
-                managedIdentitySource.setManagedIdentityUserAssignedResourceId(userAssignedId);
-            }
         }
     }
 
@@ -70,7 +63,6 @@ class ManagedIdentityClient {
     // This method tries to create managed identity source for different sources, if none is created then defaults to IMDS.
     private static AbstractManagedIdentitySource createManagedIdentitySource(MsalRequest msalRequest,
             ServiceBundle serviceBundle) {
-        AbstractManagedIdentitySource managedIdentitySource;
 
         if (managedIdentitySourceType == null || managedIdentitySourceType == ManagedIdentitySourceType.NONE) {
             managedIdentitySourceType = getManagedIdentitySource();

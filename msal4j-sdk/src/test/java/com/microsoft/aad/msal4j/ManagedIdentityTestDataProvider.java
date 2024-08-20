@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 class ManagedIdentityTestDataProvider {
     private static final String CLIENT_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
     private static final String RESOURCE_ID = "/subscriptions/ffa4aaa2-4444-4444-5555-e3ccedd3d046/resourcegroups/UAMI_group/providers/Microsoft.ManagedIdentityClient/userAssignedIdentities/UAMI";
+    private static final String OBJECT_ID = "593b2662-5af7-4a90-a9cb-5a9de615b82f";
 
     public static Stream<Arguments> createData() {
         return Stream.of(
@@ -43,14 +44,20 @@ class ManagedIdentityTestDataProvider {
                         ManagedIdentityId.userAssignedClientId(CLIENT_ID)),
                 Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTests.appServiceEndpoint,
                         ManagedIdentityId.userAssignedResourceId(RESOURCE_ID)),
+                Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTests.appServiceEndpoint,
+                        ManagedIdentityId.userAssignedObjectId(OBJECT_ID)),
                 Arguments.of(ManagedIdentitySourceType.IMDS, null,
                         ManagedIdentityId.userAssignedClientId(CLIENT_ID)),
                 Arguments.of(ManagedIdentitySourceType.IMDS, null,
                         ManagedIdentityId.userAssignedResourceId(RESOURCE_ID)),
+                Arguments.of(ManagedIdentitySourceType.IMDS, null,
+                        ManagedIdentityId.userAssignedObjectId(OBJECT_ID)),
                 Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTests.serviceFabricEndpoint,
                         ManagedIdentityId.userAssignedResourceId(CLIENT_ID)),
                 Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTests.serviceFabricEndpoint,
-                        ManagedIdentityId.userAssignedResourceId(RESOURCE_ID)));
+                        ManagedIdentityId.userAssignedResourceId(RESOURCE_ID)),
+                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTests.serviceFabricEndpoint,
+                        ManagedIdentityId.userAssignedObjectId(OBJECT_ID)));
     }
 
     public static Stream<Arguments> createDataUserAssignedNotSupported() {

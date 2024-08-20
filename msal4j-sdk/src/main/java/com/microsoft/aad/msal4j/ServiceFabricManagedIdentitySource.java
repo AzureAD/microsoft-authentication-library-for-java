@@ -20,8 +20,6 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
 
     private final URI msiEndpoint;
     private final String identityHeader;
-    private final ManagedIdentityIdType idType;
-    private final String userAssignedId;
 
     //Service Fabric requires a special check for an environment variable containing a certificate thumbprint used for validating requests.
     //No other flow need this and an app developer may not be aware of it, so it was decided that for the Service Fabric flow we will simply override
@@ -41,12 +39,9 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
         managedIdentityRequest.queryParameters.put("resource", Collections.singletonList(resource));
         managedIdentityRequest.queryParameters.put("api-version", Collections.singletonList(SERVICE_FABRIC_MSI_API_VERSION));
 
-        if (idType == ManagedIdentityIdType.CLIENT_ID) {
-            LOG.info("[Managed Identity] Adding user assigned client id to the request for Service Fabric Managed Identity.");
-            managedIdentityRequest.queryParameters.put(Constants.MANAGED_IDENTITY_CLIENT_ID, Collections.singletonList(userAssignedId));
-        } else if (idType == ManagedIdentityIdType.RESOURCE_ID) {
-            LOG.info("[Managed Identity] Adding user assigned resource id to the request for Service Fabric Managed Identity.");
-            managedIdentityRequest.queryParameters.put(Constants.MANAGED_IDENTITY_RESOURCE_ID, Collections.singletonList(userAssignedId));
+        if (this.idType != null && !StringHelper.isNullOrBlank(this.userAssignedId)) {
+            LOG.info("[Managed Identity] Adding user assigned ID to the request for Service Fabric Managed Identity.");
+            managedIdentityRequest.addUserAssignedIdToQuery(this.idType, this.userAssignedId);
         }
     }
 
@@ -55,9 +50,6 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
         super(msalRequest, serviceBundle, ManagedIdentitySourceType.SERVICE_FABRIC);
         this.msiEndpoint = msiEndpoint;
         this.identityHeader = identityHeader;
-
-        this.idType = ((ManagedIdentityApplication) msalRequest.application()).getManagedIdentityId().getIdType();
-        this.userAssignedId = ((ManagedIdentityApplication) msalRequest.application()).getManagedIdentityId().getUserAssignedId();
     }
 
     @Override

@@ -124,6 +124,9 @@ class ManagedIdentityTests {
             case RESOURCE_ID:
                 queryParameters.put("mi_res_id", Collections.singletonList(id.getUserAssignedId()));
                 break;
+            case OBJECT_ID:
+                queryParameters.put("object_id", Collections.singletonList(id.getUserAssignedId()));
+                break;
         }
 
         return new HttpRequest(HttpMethod.GET, computeUri(endpoint, queryParameters), headers);
