@@ -4,22 +4,17 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import org.slf4j.Logger;
 
 import javax.net.ssl.SSLSocketFactory;
 import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Consumer;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotBlank;
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
@@ -280,6 +275,24 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
             authenticationAuthority = new B2CAuthority(authorityURL);
 
             validateAuthority = false;
+            return self();
+        }
+
+        /**
+         * Set a known authority corresponding to a generic OpenIdConnect Identity Provider.
+         * MSAL will append ".well-known/openid-configuration" to the authority to retrieve the OIDC metadata and determine the endpoints.
+         *
+         * @param val a string value of authority
+         * @return instance of the Builder on which method was called
+         */
+        public T oidcAuthority(String val) throws MalformedURLException {
+            authority = Authority.enforceTrailingSlash(val);
+            URL authorityURL = new URL(authority);
+
+            authenticationAuthority = new OidcAuthority(authorityURL);
+
+            Authority.validateAuthority(authenticationAuthority.canonicalAuthorityUrl());
+
             return self();
         }
 
@@ -549,6 +562,12 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
             AadInstanceDiscoveryProvider.cacheInstanceDiscoveryResponse(
                     authenticationAuthority.host,
                     aadAadInstanceDiscoveryResponse);
+        }
+
+        if (authenticationAuthority.authorityType == AuthorityType.OIDC) {
+            ((OidcAuthority) authenticationAuthority).setAuthorityProperties(
+                    OidcDiscoveryProvider.performOidcDiscovery(
+                            (OidcAuthority) authenticationAuthority, this));
         }
     }
 }

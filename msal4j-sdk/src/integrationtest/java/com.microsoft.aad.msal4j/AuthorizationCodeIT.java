@@ -90,6 +90,45 @@ class AuthorizationCodeIT extends SeleniumTest {
         assertAcquireTokenB2C(user);
     }
 
+    @Test
+    public void acquireTokenWithAuthorizationCode_CiamCud() throws Exception {
+        String authorityCud = "https://login.msidlabsciam.com/fe362aec-5d43-45d1-b730-9755e60dc3b9/v2.0/";
+        User user = labUserProvider.getCiamCudUser();
+
+        PublicClientApplication pca = PublicClientApplication.builder(
+                        user.getAppId()).
+                oidcAuthority(authorityCud).
+                build();
+
+        assertEquals("https://login.msidlabsciam.com/fe362aec-5d43-45d1-b730-9755e60dc3b9/v2.0/.well-known/openid-configuration",
+                pca.authenticationAuthority.canonicalAuthorityUrl.toString());
+        assertEquals("https://login.msidlabsciam.com/fe362aec-5d43-45d1-b730-9755e60dc3b9/oauth2/v2.0/authorize",
+                pca.authenticationAuthority.authorizationEndpoint);
+
+        String authCode = acquireAuthorizationCodeAutomated(user, pca, null);
+
+        IAuthenticationResult result = pca.acquireToken(AuthorizationCodeParameters
+                        .builder(authCode,
+                                new URI(TestConstants.LOCALHOST + httpListener.port()))
+                        .scopes(Collections.singleton("user.read"))
+                        .build())
+                .get();
+
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
+        assertNotNull(result.idToken());
+        assertEquals(user.getUpn(), result.account().username());
+
+        IAuthenticationResult resultSilent = pca.acquireTokenSilently(SilentParameters
+                .builder(Collections.singleton("user.read"), result.account())
+                        .build())
+                .get();
+
+        assertNotNull(resultSilent);
+        assertEquals(resultSilent.accessToken(), result.accessToken());
+        assertEquals(resultSilent.account().username(), result.account().username());
+    }
+
     private void assertAcquireTokenADFS2019(User user) {
         PublicClientApplication pca;
         try {
@@ -261,6 +300,8 @@ class AuthorizationCodeIT extends SeleniumTest {
             scope = TestConstants.B2C_LAB_SCOPE;
         } else if (authorityType == AuthorityType.ADFS) {
             scope = TestConstants.ADFS_SCOPE;
+        } else if (authorityType == AuthorityType.OIDC) {
+            scope = TestConstants.USER_READ_SCOPE;
         } else {
             throw new RuntimeException("Authority type not recognized");
         }

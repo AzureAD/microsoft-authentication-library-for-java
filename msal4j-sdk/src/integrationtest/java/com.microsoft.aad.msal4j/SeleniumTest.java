@@ -48,7 +48,7 @@ abstract class SeleniumTest {
             SeleniumExtensions.performADOrCiamLogin(seleniumDriver, user);
         } else if (authorityType == AuthorityType.ADFS) {
             SeleniumExtensions.performADFS2019Login(seleniumDriver, user);
-        } else if (authorityType == AuthorityType.CIAM) {
+        } else if (authorityType == AuthorityType.CIAM || authorityType == AuthorityType.OIDC) {
             SeleniumExtensions.performADOrCiamLogin(seleniumDriver, user);
         }
     }
