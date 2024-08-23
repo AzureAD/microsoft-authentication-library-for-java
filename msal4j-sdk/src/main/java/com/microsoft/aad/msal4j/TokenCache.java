@@ -474,13 +474,11 @@ public class TokenCache implements ITokenCache {
             Set<String> scopes,
             String clientId,
             Set<String> environmentAliases) {
-        long currTimeStampSec = new Date().getTime() / 1000;
 
         return accessTokens.values().stream().filter(
                 accessToken ->
                         accessToken.homeAccountId.equals(account.homeAccountId()) &&
                                 environmentAliases.contains(accessToken.environment) &&
-                                Long.parseLong(accessToken.expiresOn()) > currTimeStampSec + MIN_ACCESS_TOKEN_EXPIRE_IN_SEC &&
                                 accessToken.realm.equals(authority.tenant()) &&
                                 accessToken.clientId.equals(clientId) &&
                                 isMatchingScopes(accessToken, scopes)

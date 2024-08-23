@@ -1,0 +1,48 @@
+{
+  "AccessToken": {
+    "home_account_id-login.windows.net-accesstoken-client_id-realm-scopes": {
+      "home_account_id": "home_account_id",
+      "environment": "login.windows.net",
+      "client_id": "client_id",
+      "secret": "token",
+      "credential_type": "AccessToken",
+      "realm": "realm",
+      "target": "scopes",
+      "cached_at": "9999999999999",
+      "expires_on": "9999999999999",
+      "extended_expires_on": "9999999999999"
+    }
+  },
+  "RefreshToken": {
+    "home_account_id-login.windows.net-refreshtoken-client_id--": {
+      "home_account_id": "home_account_id",
+      "environment": "login.windows.net",
+      "client_id": "client_id",
+      "secret": "token",
+      "credential_type": "RefreshToken"
+    }
+  },
+  "IdToken": {
+    "home_account_id-login.windows.net-idtoken-client_id-realm-": {
+      "home_account_id": "home_account_id",
+      "environment": "login.windows.net",
+      "client_id": "client_id",
+      "secret": "token",
+      "credential_type": "IdToken",
+      "realm": "realm"
+    }
+  },
+  "Account": {
+    "home_account_id-login.windows.net-realm": {
+      "home_account_id": "home_account_id",
+      "environment": "login.windows.net",
+      "realm": "realm",
+      "local_account_id": "local_account_id",
+      "username": "username",
+      "name": "name",
+      "client_info": "client_info",
+      "authority_type": "authority_type"
+    }
+  },
+  "AppMetadata": {}
+}
