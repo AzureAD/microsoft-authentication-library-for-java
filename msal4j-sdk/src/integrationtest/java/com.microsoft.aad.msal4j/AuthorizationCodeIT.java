@@ -95,19 +95,19 @@ class AuthorizationCodeIT extends SeleniumTest {
         String authorityCud = "https://login.msidlabsciam.com/fe362aec-5d43-45d1-b730-9755e60dc3b9/v2.0/";
         User user = labUserProvider.getCiamCudUser();
 
-        ConfidentialClientApplication cca = ConfidentialClientApplication
-                .builder(user.getAppId(), CertificateHelper.getClientCertificate())
-                .oidcAuthority(authorityCud)
-                .build();
+        PublicClientApplication pca = PublicClientApplication.builder(
+                        user.getAppId()).
+                oidcAuthority(authorityCud).
+                build();
 
         assertEquals("https://login.msidlabsciam.com/fe362aec-5d43-45d1-b730-9755e60dc3b9/v2.0/.well-known/openid-configuration",
-                cca.authenticationAuthority.canonicalAuthorityUrl.toString());
+                pca.authenticationAuthority.canonicalAuthorityUrl.toString());
         assertEquals("https://login.msidlabsciam.com/fe362aec-5d43-45d1-b730-9755e60dc3b9/oauth2/v2.0/authorize",
-                cca.authenticationAuthority.authorizationEndpoint);
+                pca.authenticationAuthority.authorizationEndpoint);
 
-        String authCode = acquireAuthorizationCodeAutomated(user, cca, null);
+        String authCode = acquireAuthorizationCodeAutomated(user, pca, null);
 
-        IAuthenticationResult result = cca.acquireToken(AuthorizationCodeParameters
+        IAuthenticationResult result = pca.acquireToken(AuthorizationCodeParameters
                         .builder(authCode,
                                 new URI(TestConstants.LOCALHOST + httpListener.port()))
                         .scopes(Collections.singleton("user.read"))
@@ -119,7 +119,7 @@ class AuthorizationCodeIT extends SeleniumTest {
         assertNotNull(result.idToken());
         assertEquals(user.getUpn(), result.account().username());
 
-        IAuthenticationResult resultSilent = cca.acquireTokenSilently(SilentParameters
+        IAuthenticationResult resultSilent = pca.acquireTokenSilently(SilentParameters
                 .builder(Collections.singleton("user.read"), result.account())
                         .build())
                 .get();
