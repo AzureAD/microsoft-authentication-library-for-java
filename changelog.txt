@@ -1,3 +1,9 @@
+Version 1.17.0
+=============
+- Add object ID option for Managed Identity (#854)
+- Add support for custom authorities (#844)
+- Fix bug where claims did not cause cache to be skipped (#811)
+
 Version 1.16.2
 =============
 - Use SHA256 thumbprints in non-ADFS cert flows (#840)
