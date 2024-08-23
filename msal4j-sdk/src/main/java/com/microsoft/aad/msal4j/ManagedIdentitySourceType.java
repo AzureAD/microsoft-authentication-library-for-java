@@ -3,7 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-enum ManagedIdentitySourceType {
+public enum ManagedIdentitySourceType {
     // Default.
     NONE,
     // The source used to acquire token for managed identity is IMDS.

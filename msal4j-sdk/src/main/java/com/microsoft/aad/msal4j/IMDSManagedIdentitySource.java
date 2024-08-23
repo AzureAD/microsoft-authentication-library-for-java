@@ -34,8 +34,8 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
     public IMDSManagedIdentitySource(MsalRequest msalRequest,
                                      ServiceBundle serviceBundle) {
         super(msalRequest, serviceBundle, ManagedIdentitySourceType.IMDS);
-        ManagedIdentityParameters parameters = (ManagedIdentityParameters) msalRequest.requestContext().apiParameters();
         IEnvironmentVariables environmentVariables = getEnvironmentVariables();
+
         if (!StringHelper.isNullOrBlank(environmentVariables.getEnvironmentVariable(Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST))){
             LOG.info(String.format("[Managed Identity] Environment variable AZURE_POD_IDENTITY_AUTHORITY_HOST for IMDS returned endpoint: %s", environmentVariables.getEnvironmentVariable(Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST)));
             try {
@@ -77,18 +77,9 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
         managedIdentityRequest.queryParameters.put("api-version", Collections.singletonList(IMDS_API_VERSION));
         managedIdentityRequest.queryParameters.put("resource", Collections.singletonList(resource));
 
-        String clientId = getManagedIdentityUserAssignedClientId();
-        String resourceId = getManagedIdentityUserAssignedResourceId();
-        if (!StringHelper.isNullOrBlank(clientId))
-        {
-            LOG.info("[Managed Identity] Adding user assigned client id to the request.");
-            managedIdentityRequest.queryParameters.put(Constants.MANAGED_IDENTITY_CLIENT_ID, Collections.singletonList(clientId));
-        }
-
-        if (!StringHelper.isNullOrBlank(resourceId))
-        {
-            LOG.info("[Managed Identity] Adding user assigned resource id to the request.");
-            managedIdentityRequest.queryParameters.put(Constants.MANAGED_IDENTITY_RESOURCE_ID, Collections.singletonList(resourceId));
+        if (this.idType != null && !StringHelper.isNullOrBlank(this.userAssignedId)) {
+            LOG.info("[Managed Identity] Adding user assigned ID to the request for IMDS Managed Identity.");
+            managedIdentityRequest.addUserAssignedIdToQuery(this.idType, this.userAssignedId);
         }
     }
 

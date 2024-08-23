@@ -193,7 +193,7 @@ class AcquireTokenSilentIT {
     }
 
     @Test
-    public void acquireTokenSilent_ConfidentialClient_acquireTokenSilentDifferentScopeThrowsException()
+    void acquireTokenSilent_ConfidentialClient_acquireTokenSilentDifferentScopeThrowsException()
             throws Exception {
         cfg = new Config(AzureEnvironment.AZURE);
 
@@ -342,6 +342,48 @@ class AcquireTokenSilentIT {
 
         assertResultNotNull(silentResult);
         assertEquals(result.accessToken(), silentResult.accessToken());
+    }
+
+    @Test
+    public void acquireTokenSilent_ClaimsForceRefresh() throws Exception {
+        cfg = new Config(AzureEnvironment.AZURE);
+        User user = labUserProvider.getDefaultUser(AzureEnvironment.AZURE);
+
+        Set<String> scopes = new HashSet<>();
+        PublicClientApplication pca = PublicClientApplication.builder(
+                        user.getAppId()).
+                authority(cfg.organizationsAuthority()).
+                build();
+
+        IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters.
+                        builder(scopes,
+                                user.getUpn(),
+                                user.getPassword().toCharArray())
+                        .build())
+                .get();
+
+        assertResultNotNull(result);
+
+        IAuthenticationResult silentResultWithoutClaims = pca.acquireTokenSilently(SilentParameters.
+                        builder(scopes, result.account())
+                        .build())
+                .get();
+
+        assertResultNotNull(silentResultWithoutClaims);
+        assertEquals(result.accessToken(), silentResultWithoutClaims.accessToken());
+
+        //If claims are added to a silent request, it should trigger the refresh flow and return a new token
+        ClaimsRequest cr = new ClaimsRequest();
+        cr.requestClaimInAccessToken("email", null);
+
+        IAuthenticationResult silentResultWithClaims = pca.acquireTokenSilently(SilentParameters.
+                        builder(scopes, result.account())
+                        .claims(cr)
+                        .build())
+                .get();
+
+        assertResultNotNull(silentResultWithClaims);
+        assertNotEquals(result.accessToken(), silentResultWithClaims.accessToken());
     }
 
     private IConfidentialClientApplication getConfidentialClientApplications() throws Exception {

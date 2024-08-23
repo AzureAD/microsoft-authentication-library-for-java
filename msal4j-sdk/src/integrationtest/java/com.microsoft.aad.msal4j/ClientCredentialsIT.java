@@ -179,7 +179,7 @@ class ClientCredentialsIT {
                 clientId,
                 (ClientCertificate) certificate,
                 "https://login.microsoftonline.com/common/oauth2/v2.0/token",
-                true);
+                true, false);
     }
 
     private void assertAcquireTokenCommon(String clientId, IClientCredential credential, String authority) throws Exception {

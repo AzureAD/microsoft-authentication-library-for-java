@@ -61,4 +61,21 @@ public class ManagedIdentityId {
 
         return new ManagedIdentityId(ManagedIdentityIdType.RESOURCE_ID, resourceId);
     }
+
+    /**
+     * Create an instance of ManagedIdentityId for a user assigned managed identity from an object id.
+     *
+     * @param objectId Object ID of the user assigned managed identity assigned to azure resource.
+     * @return Instance of ManagedIdentityId
+     * @exception NullPointerException Indicates the resourceId param is null or blank
+     */
+    public static ManagedIdentityId userAssignedObjectId(String objectId)
+    {
+        if (StringHelper.isNullOrBlank(objectId))
+        {
+            throw new NullPointerException(objectId);
+        }
+
+        return new ManagedIdentityId(ManagedIdentityIdType.OBJECT_ID, objectId);
+    }
 }

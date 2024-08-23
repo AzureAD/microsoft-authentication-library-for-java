@@ -13,6 +13,7 @@ final class Constants {
 
     public static final String MANAGED_IDENTITY_CLIENT_ID = "client_id";
     public static final String MANAGED_IDENTITY_RESOURCE_ID = "mi_res_id";
+    public static final String MANAGED_IDENTITY_OBJECT_ID = "object_id";
     public static final String MANAGED_IDENTITY_DEFAULT_TENTANT = "managed_identity";
 
     public static final String IDENTITY_ENDPOINT = "IDENTITY_ENDPOINT";

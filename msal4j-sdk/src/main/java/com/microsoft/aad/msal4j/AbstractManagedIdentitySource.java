@@ -15,13 +15,14 @@ import java.net.URISyntaxException;
 //base class for all sources that support managed identity
 abstract class AbstractManagedIdentitySource {
 
-    protected static final String TIMEOUT_ERROR = "[Managed Identity] Authentication unavailable. The request to the managed identity endpoint timed out.";
     private static final Logger LOG = LoggerFactory.getLogger(AbstractManagedIdentitySource.class);
     private static final String MANAGED_IDENTITY_NO_RESPONSE_RECEIVED = "[Managed Identity] Authentication unavailable. No response received from the managed identity endpoint.";
 
     protected final ManagedIdentityRequest managedIdentityRequest;
     protected final ServiceBundle serviceBundle;
     ManagedIdentitySourceType managedIdentitySourceType;
+    ManagedIdentityIdType idType;
+    String userAssignedId;
 
     @Getter
     @Setter
@@ -40,6 +41,8 @@ abstract class AbstractManagedIdentitySource {
         this.managedIdentityRequest = (ManagedIdentityRequest) msalRequest;
         this.managedIdentitySourceType = sourceType;
         this.serviceBundle = serviceBundle;
+        this.idType = ((ManagedIdentityApplication) msalRequest.application()).getManagedIdentityId().getIdType();
+        this.userAssignedId = ((ManagedIdentityApplication) msalRequest.application()).getManagedIdentityId().getUserAssignedId();
     }
 
     public ManagedIdentityResponse getManagedIdentityResponse(
@@ -49,15 +52,9 @@ abstract class AbstractManagedIdentitySource {
         IHttpResponse response;
 
         try {
-
-            HttpRequest httpRequest = managedIdentityRequest.method.equals(HttpMethod.GET) ?
-                    new HttpRequest(HttpMethod.GET,
+            HttpRequest httpRequest = new HttpRequest(managedIdentityRequest.method,
                             managedIdentityRequest.computeURI().toString(),
-                            managedIdentityRequest.headers) :
-                    new HttpRequest(HttpMethod.POST,
-                            managedIdentityRequest.computeURI().toString(),
-                            managedIdentityRequest.headers,
-                            managedIdentityRequest.getBodyAsString());
+                            managedIdentityRequest.headers);
             response = serviceBundle.getHttpHelper().executeHttpRequest(httpRequest, managedIdentityRequest.requestContext(), serviceBundle);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
