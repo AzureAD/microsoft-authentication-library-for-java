@@ -25,7 +25,7 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
     static TokenCache sharedTokenCache = new TokenCache();
 
     @Getter(value = AccessLevel.PUBLIC)
-    static ManagedIdentitySourceType managedIdentitySource = ManagedIdentityClient.getManagedIdentitySource();
+    ManagedIdentitySourceType managedIdentitySource = ManagedIdentityClient.getManagedIdentitySource();
 
     @Getter(value = AccessLevel.PACKAGE)
     static IEnvironmentVariables environmentVariables;
