@@ -44,7 +44,7 @@ class ManagedIdentityTests {
     private static ManagedIdentityApplication miApp;
 
     private String getSuccessfulResponse(String resource) {
-        long expiresOn = Instant.now().plus(1, ChronoUnit.HOURS).getEpochSecond();
+        long expiresOn = (System.currentTimeMillis() / 1000) + (24 * 3600);//A long-lived, 24 hour token
         return "{\"access_token\":\"accesstoken\",\"expires_on\":\"" + expiresOn + "\",\"resource\":\"" + resource + "\",\"token_type\":" +
                 "\"Bearer\",\"client_id\":\"client_id\"}";
     }
@@ -219,6 +219,34 @@ class ManagedIdentityTests {
                         .build()).get();
 
         assertNotNull(result.accessToken());
+        verify(httpClientMock, times(1)).send(any());
+    }
+
+    @Test
+    void managedIdentityTest_RefreshOnHalfOfExpiresOn() throws Exception {
+        //All managed identity flows use the same AcquireTokenByManagedIdentitySupplier where refreshOn is set,
+        //  so any of the MI options should let us verify that it's being set correctly
+        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(ManagedIdentitySourceType.APP_SERVICE, appServiceEndpoint);
+        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+        ManagedIdentityClient.resetManagedIdentitySourceType();
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        when(httpClientMock.send(expectedRequest(ManagedIdentitySourceType.APP_SERVICE, resource))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+
+        miApp = ManagedIdentityApplication
+                .builder(ManagedIdentityId.systemAssigned())
+                .httpClient(httpClientMock)
+                .build();
+
+        AuthenticationResult result = (AuthenticationResult) miApp.acquireTokenForManagedIdentity(
+                ManagedIdentityParameters.builder(resource)
+                        .build()).get();
+
+        long timestampSeconds = (System.currentTimeMillis() / 1000);
+
+        assertNotNull(result.accessToken());
+        assertEquals((result.expiresOn() - timestampSeconds)/2, result.refreshOn() - timestampSeconds);
+
         verify(httpClientMock, times(1)).send(any());
     }
 
