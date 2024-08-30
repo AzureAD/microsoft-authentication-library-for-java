@@ -13,6 +13,8 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
 
     private static final Logger LOG = LoggerFactory.getLogger(AcquireTokenByManagedIdentitySupplier.class);
 
+    private static final int TWO_HOURS = 2*3600;
+
     private ManagedIdentityParameters managedIdentityParameters;
 
     AcquireTokenByManagedIdentitySupplier(ManagedIdentityApplication managedIdentityApplication, MsalRequest msalRequest) {
@@ -93,8 +95,11 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
     }
 
     private AuthenticationResult createFromManagedIdentityResponse(ManagedIdentityResponse managedIdentityResponse) {
-        long expiresOn = Long.valueOf(managedIdentityResponse.expiresOn);
-        long refreshOn = expiresOn > 2 * 3600 ? (expiresOn / 2) : 0L;
+        long expiresOn = Long.parseLong(managedIdentityResponse.expiresOn);
+        long refreshOn = calculateRefreshOn(expiresOn);
+        AuthenticationResultMetadata metadata = AuthenticationResultMetadata.builder()
+                .refreshOn(refreshOn)
+                .build();
 
         return AuthenticationResult.builder()
                 .accessToken(managedIdentityResponse.getAccessToken())
@@ -102,6 +107,15 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
                 .expiresOn(expiresOn)
                 .extExpiresOn(0)
                 .refreshOn(refreshOn)
+                .metadata(metadata)
                 .build();
+    }
+
+    private long calculateRefreshOn(long expiresOn){
+        long timestampSeconds = System.currentTimeMillis() / 1000;
+        long expiresIn = expiresOn - timestampSeconds;
+
+        //The refreshOn value should be half the value of the token lifetime, if the lifetime is greater than two hours
+        return expiresIn > TWO_HOURS ? (expiresIn / 2) + timestampSeconds : 0;
     }
 }
