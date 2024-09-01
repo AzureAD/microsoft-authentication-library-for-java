@@ -1,7 +1,12 @@
+Version 1.17.1
+=============
+- Fix 'refresh on' value calculation in Managed Identity flows (#858)
+- Bump nimbusds-oauth2-oidc-sdk version (#859)
+
 Version 1.17.0
 =============
 - Add object ID option for Managed Identity (#854)
-- Add support for custom authorities (#844)
+- Add support for custom authorities (#851)
 - Fix bug where claims did not cause cache to be skipped (#811)
 
 Version 1.16.2
