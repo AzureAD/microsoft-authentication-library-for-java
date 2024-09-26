@@ -161,7 +161,7 @@ class ManagedIdentityTests {
                 .build();
 
         ManagedIdentitySourceType miClientSourceType = ManagedIdentityClient.getManagedIdentitySource();
-        ManagedIdentitySourceType miAppSourceType = miApp.managedIdentitySource;
+        ManagedIdentitySourceType miAppSourceType = ManagedIdentityApplication.getManagedIdentitySource();
         assertEquals(expectedSource, miClientSourceType);
         assertEquals(expectedSource, miAppSourceType);
     }
