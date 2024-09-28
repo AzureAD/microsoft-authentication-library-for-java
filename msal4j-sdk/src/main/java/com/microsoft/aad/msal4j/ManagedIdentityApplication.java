@@ -5,7 +5,6 @@ package com.microsoft.aad.msal4j;
 
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
@@ -24,7 +23,8 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
     @Getter
     static TokenCache sharedTokenCache = new TokenCache();
 
-    @Getter(value = AccessLevel.PUBLIC)
+    //Deprecated the field in favor of the static getManagedIdentitySource method
+    @Deprecated
     ManagedIdentitySourceType managedIdentitySource = ManagedIdentityClient.getManagedIdentitySource();
 
     @Getter(value = AccessLevel.PACKAGE)
@@ -104,5 +104,14 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
         protected Builder self() {
             return this;
         }
+    }
+
+    /**
+     * Returns a {@link ManagedIdentitySourceType} value, which is based primarily on environment variables set on the system.
+     *
+     * @return ManagedIdentitySourceType enum for source type
+     */
+    public static ManagedIdentitySourceType getManagedIdentitySource() {
+       return ManagedIdentityClient.getManagedIdentitySource();
     }
 }
