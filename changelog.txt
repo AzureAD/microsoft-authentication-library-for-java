@@ -1,3 +1,7 @@
+Version 1.17.2
+=============
+- Make ManagedIdentityApplication.getManagedIdentitySource static (#864)
+
 Version 1.17.1
 =============
 - Fix 'refresh on' value calculation in Managed Identity flows (#858)
