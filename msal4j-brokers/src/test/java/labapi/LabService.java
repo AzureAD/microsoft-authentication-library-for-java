@@ -34,11 +34,9 @@ public class LabService {
         KeyVaultSecretsProvider keyVaultSecretsProvider = new KeyVaultSecretsProvider();
 
         String appID = keyVaultSecretsProvider.getSecret(LabConstants.APP_ID_KEY_VAULT_SECRET);
-        String appSecret =
-                keyVaultSecretsProvider.getSecret(LabConstants.APP_PASSWORD_KEY_VAULT_SECRET);
 
         labApp = ConfidentialClientApplication
-                         .builder(appID, ClientCredentialFactory.createFromSecret(appSecret))
+                         .builder(appID, keyVaultSecretsProvider.getClientCredentialFromKeyStore())
                          .authority(LabConstants.MICROSOFT_AUTHORITY)
                          .build();
     }

@@ -24,8 +24,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class KeyVaultSecretsProvider {
     private final SecretClient secretClient;
 
-    private static final String CLIENT_ID = "2afb0add-2f32-4946-ac90-81a02aa4550e";
-    public static String CERTIFICATE_ALIAS = "MsalJavaAutomationRunner";
+    public final static String CLIENT_ID = "f62c5ae3-bf3a-4af5-afa8-a68b800396e9";
+    public static String CERTIFICATE_ALIAS = "LabAuth.MSIDLab.com";
 
     private static final String WIN_KEYSTORE = "Windows-MY";
     private static final String KEYSTORE_PROVIDER = "SunMSCAPI";
@@ -66,7 +66,7 @@ public class KeyVaultSecretsProvider {
             ConfidentialClientApplication cca =
                     ConfidentialClientApplication
                             .builder(CLIENT_ID, getClientCredentialFromKeyStore())
-                            .authority(LabConstants.MICROSOFT_AUTHORITY)
+                            .authority(LabConstants.MICROSOFT_AUTHORITY).sendX5c(true)
                             .build();
             result = cca.acquireToken(ClientCredentialParameters
                                               .builder(Collections.singleton(
@@ -85,7 +85,7 @@ public class KeyVaultSecretsProvider {
         }
     }
 
-    private IClientCredential getClientCredentialFromKeyStore() {
+    public IClientCredential getClientCredentialFromKeyStore() {
         PrivateKey key;
         X509Certificate publicCertificate;
         try {
