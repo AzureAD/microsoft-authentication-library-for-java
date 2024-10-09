@@ -5,7 +5,7 @@ package labapi;
 
 public class LabConstants {
     public final static String KEYVAULT_DEFAULT_SCOPE = "https://vault.azure.net/.default";
-    public final static String MSIDLAB_DEFAULT_SCOPE = "https://msidlab.com/.default";
+    public final static String MSIDLAB_DEFAULT_SCOPE = "https://request.msidlab.com/.default";
     public final static String MSIDLAB_VAULT_URL = "https://msidlabs.vault.azure.net/";
 
     public final static String MICROSOFT_AUTHORITY =
