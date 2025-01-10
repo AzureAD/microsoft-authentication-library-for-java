@@ -23,7 +23,20 @@ public interface IClientCertificate extends IClientCredential {
     PrivateKey privateKey();
 
     /**
-     * Base64 encoded hash of the the public certificate.
+     * Base64 encoded SHA-256 hash of the public certificate.
+     *
+     * @return base64 encoded string
+     * @throws CertificateEncodingException if an encoding error occurs
+     * @throws NoSuchAlgorithmException     if requested algorithm is not available in the environment
+     */
+    default String publicCertificateHash256() throws CertificateEncodingException, NoSuchAlgorithmException {
+        //Default implementation that returns null, to add backwards compatibility for those implementing this public interface.
+        //If left as null, the library will default to the older publicCertificateHash() method and SHA-1 hashing.
+        return null;
+    }
+
+    /**
+     * Base64 encoded SHA-1 hash of the public certificate.
      *
      * @return base64 encoded string
      * @throws CertificateEncodingException if an encoding error occurs

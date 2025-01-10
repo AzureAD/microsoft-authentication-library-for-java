@@ -7,6 +7,8 @@ import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
+import sun.security.tools.keytool.CertAndKeyGen;
+import sun.security.x509.X500Name;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -14,6 +16,9 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.*;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +33,9 @@ class TestHelper {
             "\"client_id\":\"%s\",\"client_info\":\"%s\"," +
             "\"expires_on\": %d ,\"expires_in\": %d," +
             "\"token_type\":\"Bearer\"}";
+
+    static X509Certificate x509Cert = getX509Cert();
+    static PrivateKey privateKey = getPrivateKey();
 
     static String readResource(Class<?> classInstance, String resource) {
         try {
@@ -96,5 +104,35 @@ class TestHelper {
         httpResponse.addHeaders(headers);
 
         return httpResponse;
+    }
+
+    static void setPrivateKeyAndCert() {
+        try {
+            CertAndKeyGen certGen = new CertAndKeyGen("RSA", "SHA256WithRSA", null);
+            certGen.generate(2048);
+            X509Certificate cert = certGen.getSelfCertificate(
+                    new X500Name(""), 3600);
+
+            x509Cert = cert;
+            privateKey = certGen.getPrivateKey();
+        } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidKeyException | IOException | CertificateException | SignatureException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    static X509Certificate getX509Cert() {
+        if (x509Cert == null) {
+            setPrivateKeyAndCert();
+        }
+
+        return x509Cert;
+    }
+
+    static PrivateKey getPrivateKey() {
+        if (privateKey == null) {
+            setPrivateKeyAndCert();
+        }
+
+        return privateKey;
     }
 }

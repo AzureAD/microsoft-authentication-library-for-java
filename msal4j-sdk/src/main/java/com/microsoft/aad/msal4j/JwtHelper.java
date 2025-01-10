@@ -56,11 +56,12 @@ final class JwtHelper {
                 builder.x509CertChain(certs);
             }
 
-            //SHA-256 is preferred, however certain flows still require SHA-1 due to what is supported server-side
-            if (useSha1) {
-                builder.x509CertThumbprint(new Base64URL(credential.publicCertificateHashSha1()));
+            //SHA-256 is preferred, however certain flows still require SHA-1 due to what is supported server-side. If SHA-256
+            // is not supported or the IClientCredential.publicCertificateHash256() method is not implemented, the library will default to SHA-1.
+            if (useSha1 || credential.publicCertificateHash256() == null) {
+                builder.x509CertThumbprint(new Base64URL(credential.publicCertificateHash()));
             } else {
-                builder.x509CertSHA256Thumbprint(new Base64URL(credential.publicCertificateHash()));
+                builder.x509CertSHA256Thumbprint(new Base64URL(credential.publicCertificateHash256()));
             }
 
             jwt = new SignedJWT(builder.build(), claimsSet);
