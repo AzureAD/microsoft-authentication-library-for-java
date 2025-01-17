@@ -32,7 +32,7 @@ class SilentRequest extends MsalRequest {
 
         if (parameters.forceRefresh()) {
             application.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
-                    CacheTelemetry.REFRESH_FORCE_REFRESH.telemetryValue);
+                    CacheRefreshReason.FORCE_REFRESH);
         }
     }
 }

@@ -67,7 +67,7 @@ class ServerSideTelemetry {
         String currentRequestHeader = SCHEMA_VERSION + SCHEMA_PIPE_DELIMITER +
                 currentRequest.publicApi().getApiId() +
                 SCHEMA_COMMA_DELIMITER +
-                (currentRequest.cacheInfo() == -1 ? "" : currentRequest.cacheInfo()) +
+                currentRequest.cacheInfo().telemetryValue +
                 SCHEMA_COMMA_DELIMITER +
                 currentRequest.regionUsed() +
                 SCHEMA_COMMA_DELIMITER +

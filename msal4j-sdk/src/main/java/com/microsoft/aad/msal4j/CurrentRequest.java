@@ -14,7 +14,7 @@ class CurrentRequest {
     private final PublicApi publicApi;
 
     @Setter
-    private int cacheInfo = -1;
+    private CacheRefreshReason cacheInfo = CacheRefreshReason.NOT_APPLICABLE;
 
     @Setter
     private String regionUsed = StringHelper.EMPTY_STRING;
