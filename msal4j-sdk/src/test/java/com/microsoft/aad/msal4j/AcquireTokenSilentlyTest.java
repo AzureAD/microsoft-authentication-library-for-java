@@ -6,17 +6,18 @@ package com.microsoft.aad.msal4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -114,6 +115,92 @@ class AcquireTokenSilentlyTest {
 
         ExecutionException ex = assertThrows(ExecutionException.class, future::get);
         assertInstanceOf(MsalInteractionRequiredException.class, ex.getCause());
+    }
+
+    @Test
+    void expiredToken_ExpiredTokenInCache() throws Exception {
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        ConfidentialClientApplication cca =
+                ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromSecret("password"))
+                        .authority("https://login.microsoftonline.com/tenant/")
+                        .instanceDiscovery(false)
+                        .validateAuthority(false)
+                        .httpClient(httpClientMock)
+                        .build();
+
+        HashMap<String, String> responseParameters = new HashMap<>();
+        //Acquire a token that expired an hour ago
+        responseParameters.put("access_token", "OriginalToken");
+        responseParameters.put("expires_in", "-3600");
+
+        ClientCredentialParameters clientCredentialParameters = ClientCredentialParameters.builder(Collections.singleton("someScopes")).build();
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(responseParameters)));
+        IAuthenticationResult resultNoAccount = cca.acquireToken(clientCredentialParameters).get();
+
+        //Ensure there is one token in the cache, and that it came from the (mocked) HTTP call
+        assertEquals(1, cca.tokenCache.accessTokens.size());
+        assertEquals("OriginalToken", resultNoAccount.accessToken());
+        assertEquals(TokenSource.IDENTITY_PROVIDER, resultNoAccount.metadata().tokenSource());
+        verify(httpClientMock, times(1)).send(any());
+
+        //Attempt to retrieve a token with the same scopes, which should return the cached token. However, since the cached token
+        //  is expired it should be refreshed by a new HTTP call
+        responseParameters.put("access_token", "RefreshedToken");
+        responseParameters.put("expires_in", "600000");
+
+        clientCredentialParameters = ClientCredentialParameters.builder(Collections.singleton("someScopes")).build();
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(responseParameters)));
+        resultNoAccount = cca.acquireToken(clientCredentialParameters).get();
+
+        //Ensure there is still one token in the cache, however it is the new refreshed token rather than the token from the first mocked call
+        assertEquals(1, cca.tokenCache.accessTokens.size());
+        assertEquals("RefreshedToken", resultNoAccount.accessToken());
+        assertEquals(TokenSource.IDENTITY_PROVIDER, resultNoAccount.metadata().tokenSource());
+        verify(httpClientMock, times(2)).send(any());
+    }
+
+    @Test
+    void expiredToken_RefreshBufferTest() throws Exception {
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        ConfidentialClientApplication cca =
+                ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromSecret("password"))
+                        .authority("https://login.microsoftonline.com/tenant/")
+                        .instanceDiscovery(false)
+                        .validateAuthority(false)
+                        .httpClient(httpClientMock)
+                        .build();
+
+        HashMap<String, String> responseParameters = new HashMap<>();
+        //Acquire a token that expires in 60 seconds, so that it's within the 5-minute refresh buffer but will not expire before test is done
+        responseParameters.put("access_token", "OriginalToken");
+        responseParameters.put("expires_in", "60");
+
+        ClientCredentialParameters clientCredentialParameters = ClientCredentialParameters.builder(Collections.singleton("someScopes")).build();
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(responseParameters)));
+        IAuthenticationResult resultNoAccount = cca.acquireToken(clientCredentialParameters).get();
+
+        //Ensure there is one token in the cache, and that it came from the (mocked) HTTP call
+        assertEquals(1, cca.tokenCache.accessTokens.size());
+        assertEquals("OriginalToken", resultNoAccount.accessToken());
+        assertEquals(TokenSource.IDENTITY_PROVIDER, resultNoAccount.metadata().tokenSource());
+        verify(httpClientMock, times(1)).send(any());
+
+        //Attempt to retrieve a token with the same scopes, which should return the cached token. However, since the cached token
+        //  expires within the 5-minute refresh buffer it should be refreshed by a new HTTP call
+        responseParameters.put("access_token", "RefreshedToken");
+        responseParameters.put("expires_in", "600000");
+
+        clientCredentialParameters = ClientCredentialParameters.builder(Collections.singleton("someScopes")).build();
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(responseParameters)));
+        resultNoAccount = cca.acquireToken(clientCredentialParameters).get();
+
+        //Ensure there is still one token in the cache, however it is the new refreshed token rather than the token from the first mocked call
+        assertEquals(1, cca.tokenCache.accessTokens.size());
+        assertEquals("RefreshedToken", resultNoAccount.accessToken());
+        assertEquals(TokenSource.IDENTITY_PROVIDER, resultNoAccount.metadata().tokenSource());
+        verify(httpClientMock, times(2)).send(any());
     }
 
     String readResource(String resource) {
