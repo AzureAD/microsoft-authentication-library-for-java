@@ -179,12 +179,12 @@ class AcquireTokenSilentlyTest {
 
         ClientCredentialParameters clientCredentialParameters = ClientCredentialParameters.builder(Collections.singleton("someScopes")).build();
         when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(responseParameters)));
-        IAuthenticationResult resultNoAccount = cca.acquireToken(clientCredentialParameters).get();
+        IAuthenticationResult result = cca.acquireToken(clientCredentialParameters).get();
 
         //Ensure there is one token in the cache, and that it came from the (mocked) HTTP call
         assertEquals(1, cca.tokenCache.accessTokens.size());
-        assertEquals("OriginalToken", resultNoAccount.accessToken());
-        assertEquals(TokenSource.IDENTITY_PROVIDER, resultNoAccount.metadata().tokenSource());
+        assertEquals("OriginalToken", result.accessToken());
+        assertEquals(TokenSource.IDENTITY_PROVIDER, result.metadata().tokenSource());
         verify(httpClientMock, times(1)).send(any());
 
         //Attempt to retrieve a token with the same scopes, which should return the cached token. However, since the cached token
@@ -194,12 +194,12 @@ class AcquireTokenSilentlyTest {
 
         clientCredentialParameters = ClientCredentialParameters.builder(Collections.singleton("someScopes")).build();
         when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(responseParameters)));
-        resultNoAccount = cca.acquireToken(clientCredentialParameters).get();
+        result = cca.acquireToken(clientCredentialParameters).get();
 
         //Ensure there is still one token in the cache, however it is the new refreshed token rather than the token from the first mocked call
         assertEquals(1, cca.tokenCache.accessTokens.size());
-        assertEquals("RefreshedToken", resultNoAccount.accessToken());
-        assertEquals(TokenSource.IDENTITY_PROVIDER, resultNoAccount.metadata().tokenSource());
+        assertEquals("RefreshedToken", result.accessToken());
+        assertEquals(TokenSource.IDENTITY_PROVIDER, result.metadata().tokenSource());
         verify(httpClientMock, times(2)).send(any());
     }
 
