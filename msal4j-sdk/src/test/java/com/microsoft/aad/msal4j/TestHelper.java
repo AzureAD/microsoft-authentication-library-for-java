@@ -19,6 +19,7 @@ import java.nio.file.Paths;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +34,17 @@ class TestHelper {
             "\"client_id\":\"%s\",\"client_info\":\"%s\"," +
             "\"expires_on\": %d ,\"expires_in\": %d," +
             "\"token_type\":\"Bearer\"}";
+
+    static final String idTokenFormat = "{\"aud\": \"%s\"," +
+            "\"iss\": \"%s\"," +
+            "\"iat\": 1455833828," + "\"nbf\": 1455833828," + "\"exp\": 1455837728," +
+            "\"ipaddr\": \"131.107.159.117\"," +
+            "\"name\": \"%s\"," +
+            "\"oid\": \"%s\"," +
+            "\"preferred_username\": \"%s\"," +
+            "\"sub\": \"%s\"," +
+            "\"tid\": \"%s\"," +
+            "\"ver\": \"2.0\"}";
 
     static X509Certificate x509Cert = getX509Cert();
     static PrivateKey privateKey = getPrivateKey();
@@ -84,10 +96,10 @@ class TestHelper {
 
         return String.format(successfulResponseFormat,
                 responseValues.getOrDefault("access_token", "access_token"),
-                responseValues.getOrDefault("id_token", "id_token"),
+                responseValues.getOrDefault("id_token", ""),
                 responseValues.getOrDefault("refresh_token", "refresh_token"),
                 responseValues.getOrDefault("client_id", "client_id"),
-                responseValues.getOrDefault("client_info", "client_info"),
+                responseValues.getOrDefault("client_info", "eyJ1aWQiOiI1OTdmODZjZC0xM2YzLTQ0YzAtYmVjZS1hMWU3N2JhNDMyMjgiLCJ1dGlkIjoiZjY0NWFkOTItZTM4ZC00ZDFhLWI1MTAtZDFiMDlhNzRhOGNhIn0"),
                 expiresOn,
                 expiresIn
         );
@@ -104,6 +116,23 @@ class TestHelper {
         httpResponse.addHeaders(headers);
 
         return httpResponse;
+    }
+
+    //Maps various values to the idTokenFormat string
+    static String createIdToken(HashMap<String, String> idTokenValues) {
+        String tokenValues = String.format(idTokenFormat,
+                idTokenValues.getOrDefault("aud", "e854a4a7-6c34-449c-b237-fc7a28093d84"),
+                idTokenValues.getOrDefault("iss", "https://login.microsoftonline.com/6c3d51dd-f0e5-4959-b4ea-a80c4e36fe5e/v2.0/"),
+                idTokenValues.getOrDefault("name", "name"),
+                idTokenValues.getOrDefault("oid", "oid"),
+                idTokenValues.getOrDefault("preferred_username", "preferred_username"),
+                idTokenValues.getOrDefault("sub", "K4_SGGxKqW1SxUAmhg6C1F6VPiFzcx-Qd80ehIEdFus"),
+                idTokenValues.getOrDefault("client_info", "eyJ1aWQiOiI1OTdmODZjZC0xM2YzLTQ0YzAtYmVjZS1hMWU3N2JhNDMyMjgiLCJ1dGlkIjoiZjY0NWFkOTItZTM4ZC00ZDFhLWI1MTAtZDFiMDlhNzRhOGNhIn0")
+        );
+
+        String encodedTokenValues = Base64.getUrlEncoder().encodeToString(tokenValues.getBytes());
+
+        return String.format("someheader.%s.somesignature", encodedTokenValues);
     }
 
     static void setPrivateKeyAndCert() {

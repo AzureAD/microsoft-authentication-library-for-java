@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Getter(AccessLevel.PACKAGE)
@@ -118,9 +119,15 @@ class TokenRequestExecutor {
             }
 
             AccountCacheEntity accountCacheEntity = null;
+            if (!StringHelper.isNullOrBlank(tokens.getIDTokenString())) {
+                String idTokenJson;
+                try {
+                    idTokenJson = new String(Base64.getDecoder().decode(tokens.getIDTokenString().split("\\.")[1]), StandardCharsets.UTF_8);
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    throw new MsalServiceException("Error parsing ID token, missing payload section. Ensure that the ID token is following the JWT format.",
+                            AuthenticationErrorCode.INVALID_JWT);
+                }
 
-            if (tokens.getIDToken() != null) {
-                String idTokenJson = tokens.getIDToken().getParsedParts()[1].decodeToString();
                 IdToken idToken = JsonHelper.convertJsonToObject(idTokenJson, IdToken.class);
 
                 AuthorityType type = msalRequest.application().authenticationAuthority.authorityType;
