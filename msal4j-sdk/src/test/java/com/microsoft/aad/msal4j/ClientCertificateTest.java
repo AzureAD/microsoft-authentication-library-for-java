@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.nimbusds.oauth2.sdk.auth.PrivateKeyJWT;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -10,16 +11,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 import java.math.BigInteger;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
+import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.interfaces.RSAPrivateKey;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ClientCertificateTest {
@@ -43,7 +42,7 @@ class ClientCertificateTest {
     }
 
     @Test
-    void testIClientCertificateInterface_Sha256AndSha1() throws NoSuchAlgorithmException, CertificateException {
+    void testIClientCertificateInterface_Sha1andSha256() throws NoSuchAlgorithmException, CertificateException {
         //See https://github.com/AzureAD/microsoft-authentication-library-for-java/issues/863 for context on this test.
         //Essentially, it aims to test compatibility for customers that implemented IClientCertificate in older versions of the library.
 
@@ -54,6 +53,40 @@ class ClientCertificateTest {
         //... but ClientCredentialFactory has an implemented version, so it should not be null.
         certificate = ClientCredentialFactory.createFromCertificate(TestHelper.getPrivateKey(), TestHelper.getX509Cert());
         assertNotNull(certificate.publicCertificateHash256());
+    }
+
+    @Test
+    void testIClientCertificateInterface_CredentialFactoryUsesSha256() throws Exception {
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        ConfidentialClientApplication cca =
+                ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromCertificate(TestHelper.getPrivateKey(), TestHelper.getX509Cert()))
+                        .authority("https://login.microsoftonline.com/tenant")
+                        .instanceDiscovery(false)
+                        .validateAuthority(false)
+                        .httpClient(httpClientMock)
+                        .build();
+
+        HashMap<String, String> tokenResponseValues = new HashMap<>();
+        tokenResponseValues.put("access_token", "accessTokenSha256");
+
+        when(httpClientMock.send(any(HttpRequest.class))).thenAnswer( parameters -> {
+            HttpRequest request = parameters.getArgument(0);
+            Set<String> headerParams = ((PrivateKeyJWT) cca.clientAuthentication()).getClientAssertion().getHeader().getIncludedParams();
+            if (request.body().contains(((PrivateKeyJWT) cca.clientAuthentication()).getClientAssertion().serialize())
+                    && headerParams.contains("x5t#S256")) {
+
+                return TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(tokenResponseValues));
+            }
+            return null;
+        });
+        
+        ClientCredentialParameters parameters = ClientCredentialParameters.builder(Collections.singleton("scopes")).build();
+
+        IAuthenticationResult result = cca.acquireToken(parameters).get();
+
+        assertNotNull(result);
+        assertEquals("accessTokenSha256", result.accessToken());
     }
 
     class TestClientCredential implements IClientCertificate {
