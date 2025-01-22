@@ -477,7 +477,8 @@ public class TokenCache implements ITokenCache {
 
         return accessTokens.values().stream().filter(
                 accessToken ->
-                        accessToken.homeAccountId.equals(account.homeAccountId()) &&
+                        accessToken.homeAccountId != null &&
+                                accessToken.homeAccountId.equals(account.homeAccountId()) &&
                                 environmentAliases.contains(accessToken.environment) &&
                                 accessToken.realm.equals(authority.tenant()) &&
                                 accessToken.clientId.equals(clientId) &&
@@ -552,6 +553,7 @@ public class TokenCache implements ITokenCache {
 
         return refreshTokens.values().stream().filter(
                 refreshToken ->
+                        refreshToken.homeAccountId != null &&
                         refreshToken.homeAccountId.equals(account.homeAccountId()) &&
                                 environmentAliases.contains(refreshToken.environment) &&
                                 refreshToken.clientId.equals(clientId)
