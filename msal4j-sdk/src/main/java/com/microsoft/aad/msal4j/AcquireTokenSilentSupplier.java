@@ -100,6 +100,7 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
             AuthenticationResult refreshedResult = acquireTokenByAuthorisationGrantSupplier.execute();
 
             refreshedResult.metadata().tokenSource(TokenSource.IDENTITY_PROVIDER);
+            refreshedResult.metadata().cacheRefreshReason(refreshReason);
 
             log.info("Access token refreshed successfully.");
             return refreshedResult;
