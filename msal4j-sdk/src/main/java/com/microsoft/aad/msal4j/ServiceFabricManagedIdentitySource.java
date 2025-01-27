@@ -24,8 +24,8 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
     //Service Fabric requires a special check for an environment variable containing a certificate thumbprint used for validating requests.
     //No other flow need this and an app developer may not be aware of it, so it was decided that for the Service Fabric flow we will simply override
     // any HttpClient that may have been set by the app developer with our own client which performs the validation logic.
-    private final IHttpClient httpClient = new DefaultHttpClientManagedIdentity(null, null, null, null);
-    private final HttpHelper httpHelper = new HttpHelper(httpClient);
+    private static IHttpClient httpClient = new DefaultHttpClientManagedIdentity(null, null, null, null);
+    private static HttpHelper httpHelper = new HttpHelperManagedIdentity(httpClient);
 
     @Override
     public void createManagedIdentityRequest(String resource) {
@@ -117,4 +117,10 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
         }
     }
 
+    //The HttpClient is not normally customizable in this flow, as it requires special behavior for certificate validation.
+    //However, unit tests often need to mock HttpClient and need a way to inject the mocked object into this class.
+    static void setHttpClient(IHttpClient client) {
+        httpClient = client;
+        httpHelper = new HttpHelperManagedIdentity(httpClient);
+    }
 }
