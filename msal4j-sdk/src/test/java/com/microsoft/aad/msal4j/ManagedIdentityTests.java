@@ -71,7 +71,6 @@ class ManagedIdentityTests {
         String endpoint = null;
         Map<String, String> headers = new HashMap<>();
         Map<String, List<String>> queryParameters = new HashMap<>();
-        Map<String, List<String>> bodyParameters = new HashMap<>();
 
         switch (source) {
             case APP_SERVICE: {
@@ -89,10 +88,8 @@ class ManagedIdentityTests {
                 headers.put("ContentType", "application/x-www-form-urlencoded");
                 headers.put("Metadata", "true");
 
-                bodyParameters.put("resource", singletonList(resource));
-
                 queryParameters.put("resource", singletonList(resource));
-                return new HttpRequest(HttpMethod.GET, computeUri(endpoint, queryParameters), headers, URLUtils.serializeParameters(bodyParameters));
+                break;
             }
             case IMDS: {
                 endpoint = IMDS_ENDPOINT;
@@ -110,11 +107,14 @@ class ManagedIdentityTests {
                 headers.put("Metadata", "true");
                 break;
             }
-            case SERVICE_FABRIC:
+            case SERVICE_FABRIC: {
                 endpoint = serviceFabricEndpoint;
                 queryParameters.put("api-version", singletonList("2019-07-01-preview"));
                 queryParameters.put("resource", singletonList(resource));
+
+                headers.put("secret", "secret");
                 break;
+            }
         }
 
         switch (id.getIdType()) {
@@ -172,6 +172,9 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+        if (source == SERVICE_FABRIC) {
+            ServiceFabricManagedIdentitySource.setHttpClient(httpClientMock);
+        }
 
         when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
 
@@ -206,6 +209,9 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+        if (source == SERVICE_FABRIC) {
+            ServiceFabricManagedIdentitySource.setHttpClient(httpClientMock);
+        }
 
         when(httpClientMock.send(expectedRequest(source, resource, id))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
 
@@ -294,6 +300,9 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+        if (source == SERVICE_FABRIC) {
+            ServiceFabricManagedIdentitySource.setHttpClient(httpClientMock);
+        }
 
         when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
         when(httpClientMock.send(expectedRequest(source, anotherResource))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
@@ -327,6 +336,9 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+        if (source == SERVICE_FABRIC) {
+            ServiceFabricManagedIdentitySource.setHttpClient(httpClientMock);
+        }
 
         if (environmentVariables.getEnvironmentVariable("SourceType").equals(ManagedIdentitySourceType.CLOUD_SHELL.toString())) {
             when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(500, getMsiErrorResponseCloudShell()));
@@ -364,7 +376,11 @@ class ManagedIdentityTests {
     void managedIdentityTest_Retry(ManagedIdentitySourceType source, String endpoint, String resource) throws Exception {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
-        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        DefaultHttpClientManagedIdentity httpClientMock = mock(DefaultHttpClientManagedIdentity.class);
+        if (source == SERVICE_FABRIC) {
+            ServiceFabricManagedIdentitySource.setHttpClient(httpClientMock);
+        }
 
         miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
@@ -415,6 +431,9 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+        if (source == SERVICE_FABRIC) {
+            ServiceFabricManagedIdentitySource.setHttpClient(httpClientMock);
+        }
 
         when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(500, ""));
 
@@ -449,7 +468,9 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
-
+        if (source == SERVICE_FABRIC) {
+            ServiceFabricManagedIdentitySource.setHttpClient(httpClientMock);
+        }
         when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(200, ""));
 
         miApp = ManagedIdentityApplication
@@ -483,6 +504,9 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+        if (source == SERVICE_FABRIC) {
+            ServiceFabricManagedIdentitySource.setHttpClient(httpClientMock);
+        }
 
         when(httpClientMock.send(expectedRequest(source, resource))).thenThrow(new SocketException("A socket operation was attempted to an unreachable network."));
 
@@ -517,6 +541,9 @@ class ManagedIdentityTests {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+        if (source == SERVICE_FABRIC) {
+            ServiceFabricManagedIdentitySource.setHttpClient(httpClientMock);
+        }
 
         when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
 
