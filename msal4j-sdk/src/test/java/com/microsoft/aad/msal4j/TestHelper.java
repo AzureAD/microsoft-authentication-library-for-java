@@ -7,8 +7,6 @@ import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
-import sun.security.tools.keytool.CertAndKeyGen;
-import sun.security.x509.X500Name;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -17,7 +15,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.*;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.Collections;
@@ -48,6 +45,11 @@ class TestHelper {
 
     static X509Certificate x509Cert = getX509Cert();
     static PrivateKey privateKey = getPrivateKey();
+
+    public static String CERTIFICATE_ALIAS = "LabAuth.MSIDLab.com";
+    private static final String WIN_KEYSTORE = "Windows-MY";
+    private static final String KEYSTORE_PROVIDER = "SunMSCAPI";
+    private static final String MAC_KEYSTORE = "KeychainStore";
 
     static String readResource(Class<?> classInstance, String resource) {
         try {
@@ -137,15 +139,20 @@ class TestHelper {
 
     static void setPrivateKeyAndCert() {
         try {
-            CertAndKeyGen certGen = new CertAndKeyGen("RSA", "SHA256WithRSA", null);
-            certGen.generate(2048);
-            X509Certificate cert = certGen.getSelfCertificate(
-                    new X500Name(""), 3600);
+            String os = System.getProperty("os.name");
+            KeyStore keystore;
+            if (os.toLowerCase().contains("windows")) {
+                keystore = KeyStore.getInstance(WIN_KEYSTORE, KEYSTORE_PROVIDER);
+            } else {
+                keystore = KeyStore.getInstance(MAC_KEYSTORE);
+            }
 
-            x509Cert = cert;
-            privateKey = certGen.getPrivateKey();
-        } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidKeyException | IOException | CertificateException | SignatureException e) {
-            throw new RuntimeException(e);
+            keystore.load(null, null);
+            privateKey = (PrivateKey) keystore.getKey(CERTIFICATE_ALIAS, null);
+            x509Cert = (X509Certificate) keystore.getCertificate(
+                    CERTIFICATE_ALIAS);
+        } catch (Exception e) {
+            throw new RuntimeException("Error getting certificate from keystore: " + e.getMessage());
         }
     }
 
