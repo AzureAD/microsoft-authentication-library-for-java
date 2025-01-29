@@ -11,7 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -133,63 +132,65 @@ class AcquireTokenSilentlyTest {
 
         HashMap<String, String> responseParameters = new HashMap<>();
 
-        //Acquire a token that expired an hour ago
+        //Acquire a token that expires at the same time it is acquired, so it will expire before the next acquire token call
         responseParameters.put("access_token", "expiredToken");
         responseParameters.put("id_token", TestHelper.createIdToken(new HashMap<>()));
-        responseParameters.put("expires_in", "-3600");
+        responseParameters.put("expires_in", "0");
+        TestHelper.createTokenRequestMock(httpClientMock, TestHelper.getSuccessfulTokenResponse(responseParameters), 200);
 
-        ClientCredentialParameters clientCredentialParameters = ClientCredentialParameters.builder(Collections.singleton("someScopes")).build();
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(responseParameters)));
-        IAuthenticationResult result = cca.acquireToken(clientCredentialParameters).get();
+        OnBehalfOfParameters parameters = OnBehalfOfParameters.builder(Collections.singleton("someScopes"), new UserAssertion(TestHelper.signedAssertion)).build();
+        IAuthenticationResult result = cca.acquireToken(parameters).get();
 
         //There should be one token in the cache, and no refresh behavior should have happened yet
-        assertEquals(1, cca.tokenCache.accessTokens.size());
-        assertEquals("expiredToken", result.accessToken());
-        assertEquals(CacheRefreshReason.NOT_APPLICABLE, result.metadata().cacheRefreshReason());
-        verify(httpClientMock, times(1)).send(any());
+        assertRefreshedToken(result, "expiredToken", CacheRefreshReason.NOT_APPLICABLE, cca.tokenCache.accessTokens.size());
 
         //Attempt to retrieve the cached token, however it is expired and should be refreshed.
         // In this test, it will be replaced with a token that expires in 1 minute
         responseParameters.put("access_token", "nearlyExpiredToken");
         responseParameters.put("expires_in", "60");
+        TestHelper.createTokenRequestMock(httpClientMock, TestHelper.getSuccessfulTokenResponse(responseParameters), 200);
 
         SilentParameters silentParameters = SilentParameters.builder(Collections.singleton("someScopes"), result.account()).build();
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(responseParameters)));
         result = cca.acquireTokenSilently(silentParameters).get();
 
         //Ensure there is still one token in the cache, however it is the new refreshed token rather than the token from the first mocked call
-        assertEquals(1, cca.tokenCache.accessTokens.size());
-        assertEquals("nearlyExpiredToken", result.accessToken());
-        assertEquals(CacheRefreshReason.EXPIRED, result.metadata().cacheRefreshReason());
-        verify(httpClientMock, times(2)).send(any());
+        assertRefreshedToken(result, "nearlyExpiredToken", CacheRefreshReason.EXPIRED, cca.tokenCache.accessTokens.size());
 
         //Attempt to retrieve the cached token, however it is within the 5-minute buffer and should be refreshed.
         // In this test, it will be replaced with a token that expires in 1 hour
         responseParameters.put("access_token", "normalToken");
         responseParameters.put("expires_in", "3600");
+        TestHelper.createTokenRequestMock(httpClientMock, TestHelper.getSuccessfulTokenResponse(responseParameters), 200);
 
         silentParameters = SilentParameters.builder(Collections.singleton("someScopes"), result.account()).build();
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(responseParameters)));
         result = cca.acquireTokenSilently(silentParameters).get();
 
-        //Ensure there is still one token in the cache, however it is the new refreshed token rather than the token from the second mocked call
-        assertEquals(1, cca.tokenCache.accessTokens.size());
-        assertEquals("normalToken", result.accessToken());
-        assertEquals(CacheRefreshReason.EXPIRED, result.metadata().cacheRefreshReason());
-        verify(httpClientMock, times(3)).send(any());
+        assertRefreshedToken(result, "normalToken", CacheRefreshReason.EXPIRED, cca.tokenCache.accessTokens.size());
 
-        //Finally, force the token to be refreshed
+        //Force the token to be refreshed
         responseParameters.put("access_token", "forcedRefreshToken");
+        TestHelper.createTokenRequestMock(httpClientMock, TestHelper.getSuccessfulTokenResponse(responseParameters), 200);
 
         silentParameters = SilentParameters.builder(Collections.singleton("someScopes"), result.account()).forceRefresh(true).build();
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(responseParameters)));
         result = cca.acquireTokenSilently(silentParameters).get();
 
-        //Ensure there is still one token in the cache, however it is the new refreshed token rather than the token from the third mocked call
-        assertEquals(1, cca.tokenCache.accessTokens.size());
-        assertEquals("forcedRefreshToken", result.accessToken());
-        assertEquals(CacheRefreshReason.FORCE_REFRESH, result.metadata().cacheRefreshReason());
-        verify(httpClientMock, times(4)).send(any());
+        assertRefreshedToken(result, "forcedRefreshToken", CacheRefreshReason.FORCE_REFRESH_OR_CLAIMS, cca.tokenCache.accessTokens.size());
+
+        //Finally, force a refresh by setting claims
+        responseParameters.put("access_token", "claimsToken");
+        TestHelper.createTokenRequestMock(httpClientMock, TestHelper.getSuccessfulTokenResponse(responseParameters), 200);
+
+        silentParameters = SilentParameters.builder(Collections.singleton("someScopes"), result.account()).claims(new ClaimsRequest()).forceRefresh(true).build();
+        result = cca.acquireTokenSilently(silentParameters).get();
+
+        assertRefreshedToken(result, "claimsToken", CacheRefreshReason.FORCE_REFRESH_OR_CLAIMS, cca.tokenCache.accessTokens.size());
+    }
+
+    //Asserts that there is one expected token in the cache, and that it was refreshed with the expected reason
+    private void assertRefreshedToken(IAuthenticationResult result, String expectedToken, CacheRefreshReason expectedReason, int cacheSize) {
+        assertEquals(1, cacheSize);
+        assertEquals(expectedToken, result.accessToken());
+        assertEquals(expectedReason, result.metadata().cacheRefreshReason());
     }
 
     String readResource(String resource) {

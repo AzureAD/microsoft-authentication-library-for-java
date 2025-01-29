@@ -12,9 +12,9 @@ public enum CacheRefreshReason {
      */
     NOT_APPLICABLE(0),
     /**
-     * Silent call was made with the force refresh option
+     * Silent call was made with the force refresh option, or claims were set
      */
-    FORCE_REFRESH(1),
+    FORCE_REFRESH_OR_CLAIMS(1),
     /**
      * Access token was missing from the cache, but a valid refresh token was used to retrieve a new access token
      */

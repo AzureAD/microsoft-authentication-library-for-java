@@ -19,6 +19,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.when;
+
 class TestHelper {
 
     //Signed JWT which should be enough to pass the parsing/validation in the library, useful if a unit test needs an
@@ -107,6 +110,16 @@ class TestHelper {
         httpResponse.addHeaders(headers);
 
         return httpResponse;
+    }
+
+    //Sets up a mocked response for HttpClient.send() that will return the expectedResponse the next time a token request is made
+    static void createTokenRequestMock(IHttpClient httpClientMock, String expectedResponse, int statusCode) {
+        try {
+            when(httpClientMock.send(argThat(httpRequest -> httpRequest != null && httpRequest.url().getPath().contains("oauth2/v2.0/token"))))
+                    .thenReturn(TestHelper.expectedResponse(statusCode, expectedResponse));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     //Maps various values to the idTokenFormat string
