@@ -31,7 +31,7 @@ public class AuthenticationResultMetadata implements Serializable {
     private Long refreshOn;
 
     /**
-     * Specifies the reason for refreshing a token, see {@link CacheRefreshReason} for possible values.Will be {@link CacheRefreshReason#NOT_APPLICABLE} if the token was not refreshed
+     * Specifies the reason for refreshing the access token, see {@link CacheRefreshReason} for possible values. Will be {@link CacheRefreshReason#NOT_APPLICABLE} if the token was returned from the cache or if the API used to fetch the token does not attempt to read the cache.
      */
     @Builder.Default
     private CacheRefreshReason cacheRefreshReason = CacheRefreshReason.NOT_APPLICABLE;
