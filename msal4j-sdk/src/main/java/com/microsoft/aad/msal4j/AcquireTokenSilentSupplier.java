@@ -119,7 +119,7 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
 
         //If forceRefresh is true, no reason to check any other option
         if (parameters.forceRefresh()) {
-            setCacheTelemetry(CacheRefreshReason.FORCE_REFRESH_OR_CLAIMS);
+            setCacheTelemetry(CacheRefreshReason.FORCE_REFRESH);
             log.debug("Refreshing access token because forceRefresh parameter is true.");
             return true;
         }
@@ -127,7 +127,7 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
         //If the request contains claims then the token should be refreshed, to ensure that the returned token has the correct claims
         //  Note: these are the types of claims found in (for example) a claims challenge, and do not include client capabilities
         if (parameters.claims() != null) {
-            setCacheTelemetry(CacheRefreshReason.FORCE_REFRESH_OR_CLAIMS);
+            setCacheTelemetry(CacheRefreshReason.CLAIMS);
             log.debug("Refreshing access token because the claims parameter is not null.");
             return true;
         }

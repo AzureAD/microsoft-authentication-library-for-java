@@ -174,16 +174,16 @@ class AcquireTokenSilentlyTest {
         silentParameters = SilentParameters.builder(Collections.singleton("someScopes"), result.account()).forceRefresh(true).build();
         result = cca.acquireTokenSilently(silentParameters).get();
 
-        assertRefreshedToken(result, "forcedRefreshToken", CacheRefreshReason.FORCE_REFRESH_OR_CLAIMS, cca.tokenCache.accessTokens.size());
+        assertRefreshedToken(result, "forcedRefreshToken", CacheRefreshReason.FORCE_REFRESH, cca.tokenCache.accessTokens.size());
 
         //Finally, force a refresh by setting claims
         responseParameters.put("access_token", "claimsToken");
         TestHelper.createTokenRequestMock(httpClientMock, TestHelper.getSuccessfulTokenResponse(responseParameters), 200);
 
-        silentParameters = SilentParameters.builder(Collections.singleton("someScopes"), result.account()).claims(new ClaimsRequest()).forceRefresh(true).build();
+        silentParameters = SilentParameters.builder(Collections.singleton("someScopes"), result.account()).claims(new ClaimsRequest()).build();
         result = cca.acquireTokenSilently(silentParameters).get();
 
-        assertRefreshedToken(result, "claimsToken", CacheRefreshReason.FORCE_REFRESH_OR_CLAIMS, cca.tokenCache.accessTokens.size());
+        assertRefreshedToken(result, "claimsToken", CacheRefreshReason.CLAIMS, cca.tokenCache.accessTokens.size());
     }
 
     //Asserts that there is one expected token in the cache, and that it was refreshed with the expected reason
