@@ -172,14 +172,14 @@ class ServerTelemetryTests {
 
         headers = serverSideTelemetry.getServerTelemetryHeaderMap();
 
-        assertEquals("5|831,,westus,4,4|", headers.get(CURRENT_REQUEST_HEADER_NAME));
+        assertEquals("5|831,0,westus,4,4|", headers.get(CURRENT_REQUEST_HEADER_NAME));
 
         serverSideTelemetry.getCurrentRequest().regionUsed("centralus");
         serverSideTelemetry.getCurrentRequest().regionSource(RegionTelemetry.REGION_SOURCE_ENV_VARIABLE.telemetryValue);
         serverSideTelemetry.getCurrentRequest().regionOutcome(RegionTelemetry.REGION_OUTCOME_DEVELOPER_AUTODETECT_MISMATCH.telemetryValue);
         headers = serverSideTelemetry.getServerTelemetryHeaderMap();
 
-        assertEquals("5|831,,centralus,3,3|", headers.get(CURRENT_REQUEST_HEADER_NAME));
+        assertEquals("5|831,0,centralus,3,3|", headers.get(CURRENT_REQUEST_HEADER_NAME));
 
         PublicClientApplication pca = PublicClientApplication.builder(
                 "client").
@@ -199,7 +199,7 @@ class ServerTelemetryTests {
         } catch (Exception ex) {
             headers = pca.serviceBundle().getServerSideTelemetry().getServerTelemetryHeaderMap();
 
-            assertEquals("5|300,,,0,0|", headers.get(CURRENT_REQUEST_HEADER_NAME));
+            assertEquals("5|300,0,,0,0|", headers.get(CURRENT_REQUEST_HEADER_NAME));
         }
     }
 
