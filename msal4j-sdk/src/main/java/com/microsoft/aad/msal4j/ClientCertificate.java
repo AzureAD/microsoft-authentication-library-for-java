@@ -46,14 +46,15 @@ final class ClientCertificate implements IClientCertificate {
         this.publicKeyCertificateChain = publicKeyCertificateChain;
     }
 
-    public String publicCertificateHash()
+    @Override
+    public String publicCertificateHash256()
             throws CertificateEncodingException, NoSuchAlgorithmException {
 
         return Base64.getEncoder().encodeToString(ClientCertificate
                 .getHashSha256(publicKeyCertificateChain.get(0).getEncoded()));
     }
 
-    public String publicCertificateHashSha1()
+    public String publicCertificateHash()
             throws CertificateEncodingException, NoSuchAlgorithmException {
 
         return Base64.getEncoder().encodeToString(ClientCertificate

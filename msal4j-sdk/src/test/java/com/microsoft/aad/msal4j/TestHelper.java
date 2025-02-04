@@ -7,12 +7,15 @@ import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.*;
+import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,6 +42,14 @@ class TestHelper {
             "\"sub\": \"%s\"," +
             "\"tid\": \"%s\"," +
             "\"ver\": \"2.0\"}";
+
+    static X509Certificate x509Cert = getX509Cert();
+    static PrivateKey privateKey = getPrivateKey();
+
+    public static String CERTIFICATE_ALIAS = "LabAuth.MSIDLab.com";
+    private static final String WIN_KEYSTORE = "Windows-MY";
+    private static final String KEYSTORE_PROVIDER = "SunMSCAPI";
+    private static final String MAC_KEYSTORE = "KeychainStore";
 
     static String readResource(Class<?> classInstance, String resource) {
         try {
@@ -124,5 +135,40 @@ class TestHelper {
         String encodedTokenValues = Base64.getUrlEncoder().encodeToString(tokenValues.getBytes());
 
         return String.format("someheader.%s.somesignature", encodedTokenValues);
+    }
+
+    static void setPrivateKeyAndCert() {
+        try {
+            String os = System.getProperty("os.name");
+            KeyStore keystore;
+            if (os.toLowerCase().contains("windows")) {
+                keystore = KeyStore.getInstance(WIN_KEYSTORE, KEYSTORE_PROVIDER);
+            } else {
+                keystore = KeyStore.getInstance(MAC_KEYSTORE);
+            }
+
+            keystore.load(null, null);
+            privateKey = (PrivateKey) keystore.getKey(CERTIFICATE_ALIAS, null);
+            x509Cert = (X509Certificate) keystore.getCertificate(
+                    CERTIFICATE_ALIAS);
+        } catch (Exception e) {
+            throw new RuntimeException("Error getting certificate from keystore: " + e.getMessage());
+        }
+    }
+
+    static X509Certificate getX509Cert() {
+        if (x509Cert == null) {
+            setPrivateKeyAndCert();
+        }
+
+        return x509Cert;
+    }
+
+    static PrivateKey getPrivateKey() {
+        if (privateKey == null) {
+            setPrivateKeyAndCert();
+        }
+
+        return privateKey;
     }
 }

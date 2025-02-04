@@ -101,11 +101,7 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
         } else if (clientCredential instanceof ClientCertificate) {
             this.clientCertAuthentication = true;
             this.clientCertificate = (ClientCertificate) clientCredential;
-            if (Authority.detectAuthorityType(this.authenticationAuthority.canonicalAuthorityUrl()) == AuthorityType.ADFS) {
-                clientAuthentication = buildValidClientCertificateAuthoritySha1();
-            } else  {
-                clientAuthentication = buildValidClientCertificateAuthority();
-            }
+            clientAuthentication = buildValidClientCertificateAuthority();
         } else if (clientCredential instanceof ClientAssertion) {
             clientAuthentication = createClientAuthFromClientAssertion((ClientAssertion) clientCredential);
         } else {
@@ -119,7 +115,6 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
             final Date currentDateTime = new Date(System.currentTimeMillis());
             final Date expirationTime = ((PrivateKeyJWT) clientAuthentication).getJWTAuthenticationClaimsSet().getExpirationTime();
             if (expirationTime.before(currentDateTime)) {
-                //The asserted private jwt with the client certificate can expire so rebuild it when the
                 clientAuthentication = buildValidClientCertificateAuthority();
             }
         }
@@ -127,24 +122,16 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
     }
 
     private ClientAuthentication buildValidClientCertificateAuthority() {
-        ClientAssertion clientAssertion = JwtHelper.buildJwt(
-                clientId(),
-                clientCertificate,
-                this.authenticationAuthority.selfSignedJwtAudience(),
-                sendX5c,
-                false);
-        return createClientAuthFromClientAssertion(clientAssertion);
-    }
+        //The library originally used SHA-1 for thumbprints as other algorithms were not supported server-side.
+        //When this was written support for SHA-256 had been added, however ADFS scenarios still only allowed SHA-1.
+        boolean useSha1 = Authority.detectAuthorityType(this.authenticationAuthority.canonicalAuthorityUrl()) == AuthorityType.ADFS;
 
-    //The library originally used SHA-1 for thumbprints as other algorithms were not supported server-side,
-    //  and while support for SHA-256 has been added certain flows still only allow SHA-1
-    private ClientAuthentication buildValidClientCertificateAuthoritySha1() {
         ClientAssertion clientAssertion = JwtHelper.buildJwt(
                 clientId(),
                 clientCertificate,
                 this.authenticationAuthority.selfSignedJwtAudience(),
                 sendX5c,
-                true);
+                useSha1);
         return createClientAuthFromClientAssertion(clientAssertion);
     }
 
