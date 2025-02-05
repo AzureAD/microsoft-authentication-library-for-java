@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -157,15 +158,31 @@ class AcquireTokenSilentlyTest {
         assertRefreshedToken(result, "nearlyExpiredToken", CacheRefreshReason.EXPIRED, cca.tokenCache.accessTokens.size());
 
         //Attempt to retrieve the cached token, however it is within the 5-minute buffer and should be refreshed.
-        // In this test, it will be replaced with a token that expires in 1 hour
-        responseParameters.put("access_token", "normalToken");
+        // In this test, it will be replaced with a token that expires in 1 hour but has a refresh_in time of 1 second
+        responseParameters.put("access_token", "refreshInToken");
         responseParameters.put("expires_in", "3600");
+        responseParameters.put("refresh_in", "1");
         TestHelper.createTokenRequestMock(httpClientMock, TestHelper.getSuccessfulTokenResponse(responseParameters), 200);
 
         silentParameters = SilentParameters.builder(Collections.singleton("someScopes"), result.account()).build();
         result = cca.acquireTokenSilently(silentParameters).get();
 
-        assertRefreshedToken(result, "normalToken", CacheRefreshReason.EXPIRED, cca.tokenCache.accessTokens.size());
+        assertRefreshedToken(result, "refreshInToken", CacheRefreshReason.EXPIRED, cca.tokenCache.accessTokens.size());
+
+        //Attempt to retrieve the cached token, however it is within the 5-minute buffer and should be refreshed.
+        // In this test, it will be replaced with a token that expires in 1 hour (and does not have a valid refresh_in time)
+        responseParameters.put("access_token", "normalToken");
+        responseParameters.put("expires_in", "3600");
+        responseParameters.put("refresh_in", "0");
+        TestHelper.createTokenRequestMock(httpClientMock, TestHelper.getSuccessfulTokenResponse(responseParameters), 200);
+
+        //refresh_in values are in seconds, so we must wait to guarantee it is past the proactive refresh time
+        TimeUnit.SECONDS.sleep(2);
+
+        silentParameters = SilentParameters.builder(Collections.singleton("someScopes"), result.account()).build();
+        result = cca.acquireTokenSilently(silentParameters).get();
+
+        assertRefreshedToken(result, "normalToken", CacheRefreshReason.PROACTIVE_REFRESH, cca.tokenCache.accessTokens.size());
 
         //Force the token to be refreshed
         responseParameters.put("access_token", "forcedRefreshToken");

@@ -29,7 +29,7 @@ class TestHelper {
     static String signedAssertion = generateToken();
     private static final String successfulResponseFormat = "{\"access_token\":\"%s\",\"id_token\":\"%s\",\"refresh_token\":\"%s\"," +
             "\"client_id\":\"%s\",\"client_info\":\"%s\"," +
-            "\"expires_on\": %d ,\"expires_in\": %d," +
+            "\"refresh_in\": %d,\"expires_on\": %d,\"expires_in\": %d," +
             "\"token_type\":\"Bearer\"}";
 
     static final String idTokenFormat = "{\"aud\": \"%s\"," +
@@ -87,6 +87,9 @@ class TestHelper {
         long expiresOn = responseValues.containsKey("expires_on")
                 ? Long.parseLong(responseValues.get("expires_0n")) :
                 (System.currentTimeMillis() / 1000) + expiresIn;
+        long refreshIn = responseValues.containsKey("refresh_in")
+                ? Long.parseLong(responseValues.get("refresh_in")) :
+                0;
 
         return String.format(successfulResponseFormat,
                 responseValues.getOrDefault("access_token", "access_token"),
@@ -94,6 +97,7 @@ class TestHelper {
                 responseValues.getOrDefault("refresh_token", "refresh_token"),
                 responseValues.getOrDefault("client_id", "client_id"),
                 responseValues.getOrDefault("client_info", "eyJ1aWQiOiI1OTdmODZjZC0xM2YzLTQ0YzAtYmVjZS1hMWU3N2JhNDMyMjgiLCJ1dGlkIjoiZjY0NWFkOTItZTM4ZC00ZDFhLWI1MTAtZDFiMDlhNzRhOGNhIn0"),
+                refreshIn,
                 expiresOn,
                 expiresIn
         );
