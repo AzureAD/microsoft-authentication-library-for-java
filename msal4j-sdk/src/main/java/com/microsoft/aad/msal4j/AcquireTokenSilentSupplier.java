@@ -57,7 +57,7 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
 
             shouldRefresh = shouldRefresh(silentRequest.parameters(), res);
 
-            if (shouldRefresh || clientApplication.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo() == CacheTelemetry.REFRESH_REFRESH_IN.telemetryValue) {
+            if (shouldRefresh) {
                 if (!StringHelper.isBlank(res.refreshToken())) {
                     //There are certain scenarios where the cached authority may differ from the client app's authority,
                     // such as when a request is instance aware. Unless overridden by SilentParameters.authorityUrl, the
@@ -66,7 +66,8 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
                         requestAuthority = Authority.createAuthority(new URL(requestAuthority.authority().replace(requestAuthority.host(),
                                 res.account().environment())));
                     }
-                    res = makeRefreshRequest(res, requestAuthority);
+
+                    res = makeRefreshRequest(res, requestAuthority, clientApplication.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo());
                 } else {
                     res = null;
                 }
@@ -81,12 +82,16 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
         return res;
     }
 
-    private AuthenticationResult makeRefreshRequest(AuthenticationResult cachedResult,  Authority requestAuthority) throws Exception {
+    private AuthenticationResult makeRefreshRequest(AuthenticationResult cachedResult, Authority requestAuthority, CacheRefreshReason refreshReason) throws Exception {
+
         RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(
                 RefreshTokenParameters.builder(silentRequest.parameters().scopes(), cachedResult.refreshToken()).build(),
                 silentRequest.application(),
                 silentRequest.requestContext(),
                 silentRequest);
+
+        //The ServiceBundle will have a new CurrentRequest object when the RefreshTokenRequest is made, so the telemetry value needs to be set again
+        setCacheTelemetry(refreshReason);
 
         AcquireTokenByAuthorizationGrantSupplier acquireTokenByAuthorisationGrantSupplier =
                 new AcquireTokenByAuthorizationGrantSupplier(clientApplication, refreshTokenRequest, requestAuthority);
@@ -95,13 +100,14 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
             AuthenticationResult refreshedResult = acquireTokenByAuthorisationGrantSupplier.execute();
 
             refreshedResult.metadata().tokenSource(TokenSource.IDENTITY_PROVIDER);
+            refreshedResult.metadata().cacheRefreshReason(refreshReason);
 
             log.info("Access token refreshed successfully.");
             return refreshedResult;
         } catch (MsalServiceException ex) {
             //If the token refresh attempt threw a MsalServiceException but the refresh attempt was done
             // only because of refreshOn, then simply return the existing cached token rather than throw an exception
-            if (clientApplication.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo() == CacheTelemetry.REFRESH_REFRESH_IN.telemetryValue) {
+            if (refreshReason == CacheRefreshReason.PROACTIVE_REFRESH) {
                 return cachedResult;
             }
             throw ex;
@@ -113,16 +119,16 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
 
         //If forceRefresh is true, no reason to check any other option
         if (parameters.forceRefresh()) {
-            setCacheTelemetry(CacheTelemetry.REFRESH_FORCE_REFRESH.telemetryValue);
-            log.debug("Refreshing access token because forceRefresh parameter is true.");
+            setCacheTelemetry(CacheRefreshReason.FORCE_REFRESH);
+            log.debug(String.format("Refreshing access token. Cache refresh reason: %s", CacheRefreshReason.FORCE_REFRESH));
             return true;
         }
 
         //If the request contains claims then the token should be refreshed, to ensure that the returned token has the correct claims
         //  Note: these are the types of claims found in (for example) a claims challenge, and do not include client capabilities
         if (parameters.claims() != null) {
-            setCacheTelemetry(CacheTelemetry.REFRESH_FORCE_REFRESH.telemetryValue);
-            log.debug("Refreshing access token because the claims parameter is not null.");
+            setCacheTelemetry(CacheRefreshReason.CLAIMS);
+            log.debug(String.format("Refreshing access token. Cache refresh reason: %s", CacheRefreshReason.CLAIMS));
             return true;
         }
 
@@ -130,8 +136,8 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
 
         //If the access token is expired or within 5 minutes of becoming expired, refresh it
         if (!StringHelper.isBlank(cachedResult.accessToken()) && cachedResult.expiresOn() < (currTimeStampSec + ACCESS_TOKEN_EXPIRE_BUFFER_IN_SEC)) {
-            setCacheTelemetry(CacheTelemetry.REFRESH_ACCESS_TOKEN_EXPIRED.telemetryValue);
-            log.debug("Refreshing access token because it is expired.");
+            setCacheTelemetry(CacheRefreshReason.EXPIRED);
+            log.debug(String.format("Refreshing access token. Cache refresh reason: %s", CacheRefreshReason.EXPIRED));
             return true;
         }
 
@@ -139,22 +145,22 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
         if (!StringHelper.isBlank(cachedResult.accessToken()) &&
                 cachedResult.refreshOn() != null && cachedResult.refreshOn() > 0 &&
                 cachedResult.refreshOn() < currTimeStampSec && cachedResult.expiresOn() >= (currTimeStampSec + ACCESS_TOKEN_EXPIRE_BUFFER_IN_SEC)){
-            setCacheTelemetry(CacheTelemetry.REFRESH_REFRESH_IN.telemetryValue);
-            log.debug("Attempting to refresh access token because it is after the refreshOn time.");
+            setCacheTelemetry(CacheRefreshReason.PROACTIVE_REFRESH);
+            log.debug(String.format("Refreshing access token. Cache refresh reason: %s", CacheRefreshReason.PROACTIVE_REFRESH));
             return true;
         }
 
         //If there is a refresh token but no access token, we should use the refresh token to get the access token
         if (StringHelper.isBlank(cachedResult.accessToken()) && !StringHelper.isBlank(cachedResult.refreshToken())) {
-            setCacheTelemetry(CacheTelemetry.REFRESH_NO_ACCESS_TOKEN.telemetryValue);
-            log.debug("Refreshing access token because it was missing from the cache.");
+            setCacheTelemetry(CacheRefreshReason.NO_CACHED_ACCESS_TOKEN);
+            log.debug(String.format("Refreshing access token. Cache refresh reason: %s", CacheRefreshReason.NO_CACHED_ACCESS_TOKEN));
             return true;
         }
 
         return false;
     }
 
-    private void setCacheTelemetry(int cacheInfoValue){
+    private void setCacheTelemetry(CacheRefreshReason cacheInfoValue){
         clientApplication.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(cacheInfoValue);
     }
 }

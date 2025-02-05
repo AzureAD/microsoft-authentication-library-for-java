@@ -20,17 +20,17 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class ServerTelemetryTests {
+class ServerTelemetryTests {
 
     private static final String SCHEMA_VERSION = "5";
-    private final static String CURRENT_REQUEST_HEADER_NAME = "x-client-current-telemetry";
-    private final static String LAST_REQUEST_HEADER_NAME = "x-client-last-telemetry";
+    private static final String CURRENT_REQUEST_HEADER_NAME = "x-client-current-telemetry";
+    private static final String LAST_REQUEST_HEADER_NAME = "x-client-last-telemetry";
 
-    private final static String PUBLIC_API_ID = String.valueOf(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE.getApiId());
-    private final static String ERROR = "invalid_grant";
+    private static final String PUBLIC_API_ID = String.valueOf(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE.getApiId());
+    private static final String ERROR = "invalid_grant";
 
     @Test
-    public void serverTelemetryHeaders_correctSchema() {
+    void serverTelemetryHeaders_correctSchema() {
 
         CurrentRequest currentRequest = new CurrentRequest(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE);
 
@@ -46,32 +46,32 @@ public class ServerTelemetryTests {
         List<String> currentRequestHeader = Arrays.asList(headers.get(CURRENT_REQUEST_HEADER_NAME).split("\\|"));
 
         // ["5", "831,"]
-        assertEquals(currentRequestHeader.size(), 2);
-        assertEquals(currentRequestHeader.get(0), SCHEMA_VERSION);
+        assertEquals(2, currentRequestHeader.size());
+        assertEquals(SCHEMA_VERSION, currentRequestHeader.get(0));
 
         // ["831", ""]
         List<String> secondSegment = Arrays.asList(currentRequestHeader.get(1).split(","));
-        assertEquals(secondSegment.get(0), String.valueOf(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE.getApiId()));
-        assertEquals(secondSegment.get(1), "");
+        assertEquals(String.valueOf(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE.getApiId()), secondSegment.get(0));
+        assertEquals("0", secondSegment.get(1));
 
 
         // Previous request test
         List<String> previousRequestHeader = Arrays.asList(headers.get(LAST_REQUEST_HEADER_NAME).split("\\|"));
 
         // ["5","0","831,936732c6-74b9-4783-aad9-fa205eae8763","invalid_grant"]
-        assertEquals(previousRequestHeader.size(), 4);
-        assertEquals(previousRequestHeader.get(0), SCHEMA_VERSION);
-        assertEquals(previousRequestHeader.get(1), "0");
-        assertEquals(previousRequestHeader.get(3), ERROR);
+        assertEquals(4, previousRequestHeader.size());
+        assertEquals(SCHEMA_VERSION, previousRequestHeader.get(0));
+        assertEquals("0", previousRequestHeader.get(1));
+        assertEquals(ERROR, previousRequestHeader.get(3));
 
         List<String> thirdSegment = Arrays.asList(previousRequestHeader.get(2).split(","));
 
-        assertEquals(thirdSegment.get(0), PUBLIC_API_ID);
-        assertEquals(thirdSegment.get(1), correlationId);
+        assertEquals(PUBLIC_API_ID, thirdSegment.get(0));
+        assertEquals(correlationId, thirdSegment.get(1));
     }
 
     @Test
-    public void serverTelemetryHeaders_previewsRequestNull() {
+    void serverTelemetryHeaders_previewsRequestNull() {
 
         ServerSideTelemetry serverSideTelemetry = new ServerSideTelemetry();
         for (int i = 0; i < 3; i++) {
@@ -80,11 +80,11 @@ public class ServerTelemetryTests {
 
         Map<String, String> headers = serverSideTelemetry.getServerTelemetryHeaderMap();
 
-        assertEquals(headers.get(LAST_REQUEST_HEADER_NAME), "5|3|||");
+        assertEquals("5|3|||", headers.get(LAST_REQUEST_HEADER_NAME));
     }
 
     @Test
-    public void serverTelemetryHeader_testMaximumHeaderSize() {
+    void serverTelemetryHeader_testMaximumHeaderSize() {
 
         ServerSideTelemetry serverSideTelemetry = new ServerSideTelemetry();
 
@@ -103,7 +103,7 @@ public class ServerTelemetryTests {
     }
 
     @Test
-    public void serverTelemetryHeaders_multipleThreadsWrite() {
+    void serverTelemetryHeaders_multipleThreadsWrite() {
 
         ServerSideTelemetry serverSideTelemetry = new ServerSideTelemetry();
         ExecutorService executor = Executors.newFixedThreadPool(10);
@@ -128,13 +128,13 @@ public class ServerTelemetryTests {
 
         List<String> previousRequestHeader = Arrays.asList(headers.get(LAST_REQUEST_HEADER_NAME).split("\\|"));
 
-        assertEquals(previousRequestHeader.get(1), "10");
+        assertEquals("10", previousRequestHeader.get(1));
 
         List<String> thirdSegment = Arrays.asList(previousRequestHeader.get(2).split(","));
-        assertEquals(thirdSegment.size(), 12);
+        assertEquals(12, thirdSegment.size());
 
         List<String> fourthSegment = Arrays.asList(previousRequestHeader.get(3).split(","));
-        assertEquals(fourthSegment.size(), 6);
+        assertEquals(6, fourthSegment.size());
 
         assertTrue(headers.get(LAST_REQUEST_HEADER_NAME).getBytes(StandardCharsets.UTF_8).length < 350);
 
@@ -143,20 +143,20 @@ public class ServerTelemetryTests {
 
         previousRequestHeader = Arrays.asList(secondRequest.get(LAST_REQUEST_HEADER_NAME).split("\\|"));
 
-        assertEquals(previousRequestHeader.get(1), "0");
+        assertEquals("0", previousRequestHeader.get(1));
 
         thirdSegment = Arrays.asList(previousRequestHeader.get(2).split(","));
-        assertEquals(thirdSegment.size(), 8);
+        assertEquals(8, thirdSegment.size());
 
         fourthSegment = Arrays.asList(previousRequestHeader.get(3).split(","));
-        assertEquals(fourthSegment.size(), 4);
+        assertEquals(4, fourthSegment.size());
 
         assertTrue(secondRequest.get(LAST_REQUEST_HEADER_NAME).getBytes(StandardCharsets.UTF_8).length < 350);
 
     }
 
     @Test
-    public void serverTelemetryHeaders_testRegionTelemetry() throws Exception {
+    void serverTelemetryHeaders_testRegionTelemetry() throws Exception {
 
         CurrentRequest currentRequest = new CurrentRequest(PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE);
         ServerSideTelemetry serverSideTelemetry = new ServerSideTelemetry();
@@ -164,7 +164,7 @@ public class ServerTelemetryTests {
 
         Map<String, String> headers = serverSideTelemetry.getServerTelemetryHeaderMap();
 
-        assertEquals(headers.get(CURRENT_REQUEST_HEADER_NAME), "5|831,,,0,0|");
+        assertEquals("5|831,0,,0,0|", headers.get(CURRENT_REQUEST_HEADER_NAME));
 
         serverSideTelemetry.getCurrentRequest().regionUsed("westus");
         serverSideTelemetry.getCurrentRequest().regionSource(RegionTelemetry.REGION_SOURCE_IMDS.telemetryValue);
@@ -172,14 +172,14 @@ public class ServerTelemetryTests {
 
         headers = serverSideTelemetry.getServerTelemetryHeaderMap();
 
-        assertEquals(headers.get(CURRENT_REQUEST_HEADER_NAME), "5|831,,westus,4,4|");
+        assertEquals("5|831,0,westus,4,4|", headers.get(CURRENT_REQUEST_HEADER_NAME));
 
         serverSideTelemetry.getCurrentRequest().regionUsed("centralus");
         serverSideTelemetry.getCurrentRequest().regionSource(RegionTelemetry.REGION_SOURCE_ENV_VARIABLE.telemetryValue);
         serverSideTelemetry.getCurrentRequest().regionOutcome(RegionTelemetry.REGION_OUTCOME_DEVELOPER_AUTODETECT_MISMATCH.telemetryValue);
         headers = serverSideTelemetry.getServerTelemetryHeaderMap();
 
-        assertEquals(headers.get(CURRENT_REQUEST_HEADER_NAME), "5|831,,centralus,3,3|");
+        assertEquals("5|831,0,centralus,3,3|", headers.get(CURRENT_REQUEST_HEADER_NAME));
 
         PublicClientApplication pca = PublicClientApplication.builder(
                 "client").
@@ -199,7 +199,7 @@ public class ServerTelemetryTests {
         } catch (Exception ex) {
             headers = pca.serviceBundle().getServerSideTelemetry().getServerTelemetryHeaderMap();
 
-            assertEquals(headers.get(CURRENT_REQUEST_HEADER_NAME), "5|300,,,0,0|");
+            assertEquals("5|300,0,,0,0|", headers.get(CURRENT_REQUEST_HEADER_NAME));
         }
     }
 

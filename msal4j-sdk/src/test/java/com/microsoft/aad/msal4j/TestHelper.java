@@ -22,6 +22,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.when;
+
 class TestHelper {
 
     //Signed JWT which should be enough to pass the parsing/validation in the library, useful if a unit test needs an
@@ -29,7 +32,7 @@ class TestHelper {
     static String signedAssertion = generateToken();
     private static final String successfulResponseFormat = "{\"access_token\":\"%s\",\"id_token\":\"%s\",\"refresh_token\":\"%s\"," +
             "\"client_id\":\"%s\",\"client_info\":\"%s\"," +
-            "\"expires_on\": %d ,\"expires_in\": %d," +
+            "\"refresh_in\": %d,\"expires_on\": %d,\"expires_in\": %d," +
             "\"token_type\":\"Bearer\"}";
 
     static final String idTokenFormat = "{\"aud\": \"%s\"," +
@@ -95,6 +98,9 @@ class TestHelper {
         long expiresOn = responseValues.containsKey("expires_on")
                 ? Long.parseLong(responseValues.get("expires_0n")) :
                 (System.currentTimeMillis() / 1000) + expiresIn;
+        long refreshIn = responseValues.containsKey("refresh_in")
+                ? Long.parseLong(responseValues.get("refresh_in")) :
+                0;
 
         return String.format(successfulResponseFormat,
                 responseValues.getOrDefault("access_token", "access_token"),
@@ -102,6 +108,7 @@ class TestHelper {
                 responseValues.getOrDefault("refresh_token", "refresh_token"),
                 responseValues.getOrDefault("client_id", "client_id"),
                 responseValues.getOrDefault("client_info", "eyJ1aWQiOiI1OTdmODZjZC0xM2YzLTQ0YzAtYmVjZS1hMWU3N2JhNDMyMjgiLCJ1dGlkIjoiZjY0NWFkOTItZTM4ZC00ZDFhLWI1MTAtZDFiMDlhNzRhOGNhIn0"),
+                refreshIn,
                 expiresOn,
                 expiresIn
         );
@@ -118,6 +125,16 @@ class TestHelper {
         httpResponse.addHeaders(headers);
 
         return httpResponse;
+    }
+
+    //Sets up a mocked response for HttpClient.send() that will return the expectedResponse the next time a token request is made
+    static void createTokenRequestMock(IHttpClient httpClientMock, String expectedResponse, int statusCode) {
+        try {
+            when(httpClientMock.send(argThat(httpRequest -> httpRequest != null && httpRequest.url().getPath().contains("oauth2/v2.0/token"))))
+                    .thenReturn(TestHelper.expectedResponse(statusCode, expectedResponse));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     //Maps various values to the idTokenFormat string
