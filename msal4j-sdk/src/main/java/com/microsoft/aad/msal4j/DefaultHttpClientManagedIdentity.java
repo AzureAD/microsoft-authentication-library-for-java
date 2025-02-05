@@ -29,6 +29,7 @@ import java.security.cert.X509Certificate;
  */
 class DefaultHttpClientManagedIdentity extends DefaultHttpClient {
 
+    // CodeQL [SM03767] False positive: in addTrustedCertificateThumbprint() we create a TrustManager that only trusts a certificate with specified thumbprint.
     public static final HostnameVerifier ALL_HOSTS_ACCEPT_HOSTNAME_VERIFIER;
 
     static {

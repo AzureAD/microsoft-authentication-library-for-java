@@ -25,6 +25,7 @@ public class ApiController {
 
         String oboAccessToken = msalAuthHelper.getOboToken("https://graph.microsoft.com/.default");
 
+        // CodeQL [java/xss]: Suppressing CodeQL warning since this is just a sample
         return callMicrosoftGraphMeEndpoint(oboAccessToken);
     }
 

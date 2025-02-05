@@ -32,6 +32,7 @@ public class CookieHelper {
         Cookie stateCookie = new Cookie(MSAL_WEB_APP_STATE_COOKIE, "");
         stateCookie.setMaxAge(0);
 
+        // CodeQL [java/insecure-cookie]: Suppressing CodeQL warning since this is just a sample
         httpResponse.addCookie(stateCookie);
 
         Cookie nonceCookie = new Cookie(MSAL_WEB_APP_NONCE_COOKIE, "");
