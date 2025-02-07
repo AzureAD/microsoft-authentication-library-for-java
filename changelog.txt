@@ -1,3 +1,10 @@
+Version 1.19.0
+=============
+- Fix potential regression caused by certificate hashing changes (#898)
+- Add token refresh reasons AuthenticationResultMetadata (#901)
+- Update build plugins for better compatibility with Java 17+ (#900)
+- Downgrade json-smart dependency to avoid CVE (#905)
+
 Version 1.18.0
 =============
 - Fix WWW-Authenticate formatting in MI scenarios (#885)
