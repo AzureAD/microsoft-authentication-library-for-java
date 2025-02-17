@@ -32,7 +32,7 @@ public class CookieHelper {
         Cookie stateCookie = new Cookie(MSAL_WEB_APP_STATE_COOKIE, "");
         stateCookie.setMaxAge(0);
 
-        // CodeQL [java/insecure-cookie]: Suppressing CodeQL warning since this is just a sample
+        // CodeQL [SM00710]: CodeQL flagged this as the 'secure' flag was not set on this cookie, however this is just a sample to help with manual testing.
         httpResponse.addCookie(stateCookie);
 
         Cookie nonceCookie = new Cookie(MSAL_WEB_APP_NONCE_COOKIE, "");
