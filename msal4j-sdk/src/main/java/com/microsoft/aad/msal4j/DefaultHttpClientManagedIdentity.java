@@ -29,18 +29,14 @@ import java.security.cert.X509Certificate;
  */
 class DefaultHttpClientManagedIdentity extends DefaultHttpClient {
 
-    // CodeQL [SM03767] False positive: in addTrustedCertificateThumbprint() we create a TrustManager that only trusts a certificate with specified thumbprint.
-    public static final HostnameVerifier ALL_HOSTS_ACCEPT_HOSTNAME_VERIFIER;
-
-    static {
-        ALL_HOSTS_ACCEPT_HOSTNAME_VERIFIER = new HostnameVerifier() {
-            @SuppressWarnings("BadHostnameVerifier")
-            @Override
-            public boolean verify(String hostname, SSLSession session) {
-                return true;
-            }
-        };
-    }
+    // CodeQL [SM03767] False positive: in addTrustedCertificateThumbprint() we create a TrustManager that only trusts a certificate with a specific thumbprint.
+    public static final HostnameVerifier ALL_HOSTS_ACCEPT_HOSTNAME_VERIFIER = new HostnameVerifier() {
+        @SuppressWarnings("BadHostnameVerifier")
+        @Override
+        public boolean verify(String hostname, SSLSession session) {
+            return true; // Allow all hostnames, however the TrustManager created later on will only trust a certificate with a specific thumbprint.
+        }
+    };
 
     DefaultHttpClientManagedIdentity(Proxy proxy, SSLSocketFactory sslSocketFactory, Integer connectTimeout, Integer readTimeout) {
         super(proxy, sslSocketFactory, connectTimeout, readTimeout);
@@ -164,5 +160,4 @@ class DefaultHttpClientManagedIdentity extends DefaultHttpClient {
             throw new MsalClientException("NoSuchAlgorithmException when extracting certificate thumbprint: ", e.getMessage());
         }
     }
-
 }
