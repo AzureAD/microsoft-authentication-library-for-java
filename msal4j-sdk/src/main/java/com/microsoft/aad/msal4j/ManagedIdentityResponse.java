@@ -3,42 +3,67 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.azure.json.JsonReader;
+import com.azure.json.JsonSerializable;
+import com.azure.json.JsonToken;
+import com.azure.json.JsonWriter;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+
 @Getter
-class ManagedIdentityResponse {
+class ManagedIdentityResponse implements JsonSerializable<ManagedIdentityResponse> {
 
     private static final Logger LOG = LoggerFactory.getLogger(ManagedIdentityResponse.class);
 
-    @JsonProperty(value = "token_type")
     String tokenType;
-
-    @JsonProperty(value = "access_token")
     String accessToken;
-
-    @JsonProperty(value = "expires_on")
     String expiresOn;
-
     String resource;
-
-    @JsonProperty(value = "client_id")
     String clientId;
 
-    /**
-     * Creates an access token instance.
-     *
-     * @param token the token string.
-     * @param expiresOn the expiration time.
-     */
-    @JsonCreator
-    private ManagedIdentityResponse(
-            @JsonProperty(value = "access_token") String token,
-            @JsonProperty(value = "expires_on") String expiresOn) {
-        this.accessToken = token;
-        this.expiresOn =  expiresOn;
+    public static ManagedIdentityResponse fromJson(JsonReader jsonReader) throws IOException {
+        ManagedIdentityResponse response = new ManagedIdentityResponse();
+        return jsonReader.readObject(reader -> {
+            while (reader.nextToken() != JsonToken.END_OBJECT) {
+                String fieldName = reader.getFieldName();
+                reader.nextToken();
+                switch (fieldName) {
+                    case "token_type":
+                        response.tokenType = reader.getString();
+                        break;
+                    case "access_token":
+                        response.accessToken = reader.getString();
+                        break;
+                    case "expires_on":
+                        response.expiresOn = reader.getString();
+                        break;
+                    case "resource":
+                        response.resource = reader.getString();
+                        break;
+                    case "client_id":
+                        response.clientId = reader.getString();
+                        break;
+                    default:
+                        reader.skipChildren();
+                        break;
+                }
+            }
+            return response;
+        });
+    }
+
+    @Override
+    public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
+        jsonWriter.writeStartObject();
+        jsonWriter.writeStringField("token_type", tokenType);
+        jsonWriter.writeStringField("access_token", accessToken);
+        jsonWriter.writeStringField("expires_on", expiresOn);
+        jsonWriter.writeStringField("resource", resource);
+        jsonWriter.writeStringField("client_id", clientId);
+        jsonWriter.writeEndObject();
+        return jsonWriter;
     }
 }

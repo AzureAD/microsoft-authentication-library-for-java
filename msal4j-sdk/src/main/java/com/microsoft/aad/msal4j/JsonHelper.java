@@ -3,6 +3,9 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.azure.json.JsonProviders;
+import com.azure.json.JsonReader;
+import com.azure.json.JsonSerializable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -33,6 +36,17 @@ class JsonHelper {
             return mapper.readValue(json, tClass);
         } catch (IOException e) {
             throw new MsalClientException(e);
+        }
+    }
+
+    //This method is used to convert a JSON string to an object which implements the JsonSerializable interface from com.azure.json
+    static <T extends JsonSerializable<T>> T convertJsonStringToJsonSerializableObject(String jsonResponse, Class<T> tClass) {
+        try (JsonReader jsonReader = JsonProviders.createReader(jsonResponse)) {
+            return (T) tClass.getDeclaredMethod("fromJson", JsonReader.class).invoke(null, jsonReader);
+        } catch (IOException e) {
+            throw new MsalClientException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
+        } catch (Exception e) {
+            throw new MsalClientException("Error parsing JSON response: " + e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
         }
     }
 

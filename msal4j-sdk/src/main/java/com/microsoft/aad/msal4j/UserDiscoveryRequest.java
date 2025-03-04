@@ -23,7 +23,6 @@ class UserDiscoveryRequest {
             Map<String, String> clientDataHeaders,
             RequestContext requestContext,
             ServiceBundle serviceBundle) {
-
         HashMap<String, String> headers = new HashMap<>(HEADERS);
         headers.putAll(clientDataHeaders);
 
@@ -33,6 +32,7 @@ class UserDiscoveryRequest {
         if (response.statusCode() != HttpHelper.HTTP_STATUS_200) {
             throw MsalServiceExceptionFactory.fromHttpResponse(response);
         }
-        return JsonHelper.convertJsonToObject(response.body(), UserDiscoveryResponse.class);
+
+        return JsonHelper.convertJsonStringToJsonSerializableObject(response.body(), UserDiscoveryResponse.class);
     }
 }

@@ -54,10 +54,7 @@ class AadInstanceDiscoveryTest {
                 new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE, parameters));
 
         URL authority = new URL(app.authority());
-
-        AadInstanceDiscoveryResponse expectedResponse = JsonHelper.convertJsonToObject(
-                instanceDiscoveryValidResponse,
-                AadInstanceDiscoveryResponse.class);
+        AadInstanceDiscoveryResponse expectedResponse= JsonHelper.convertJsonStringToJsonSerializableObject(instanceDiscoveryValidResponse, AadInstanceDiscoveryResponse.class);
 
         try (MockedStatic<AadInstanceDiscoveryProvider> mockedInstanceDiscoveryProvider = mockStatic(AadInstanceDiscoveryProvider.class, CALLS_REAL_METHODS)) {
 

@@ -3,31 +3,25 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.azure.json.JsonReader;
+import com.azure.json.JsonSerializable;
+import com.azure.json.JsonToken;
+import com.azure.json.JsonWriter;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
+import java.io.IOException;
+
 @Accessors(fluent = true)
 @Getter(AccessLevel.PACKAGE)
-class UserDiscoveryResponse {
+class UserDiscoveryResponse implements JsonSerializable<UserDiscoveryResponse> {
 
-    @JsonProperty("ver")
     private float version;
-
-    @JsonProperty("account_type")
     private String accountType;
-
-    @JsonProperty("federation_metadata_url")
     private String federationMetadataUrl;
-
-    @JsonProperty("federation_protocol")
     private String federationProtocol;
-
-    @JsonProperty("federation_active_auth_url")
     private String federationActiveAuthUrl;
-
-    @JsonProperty("cloud_audience_urn")
     private String cloudAudienceUrn;
 
     boolean isAccountFederated() {
@@ -38,5 +32,51 @@ class UserDiscoveryResponse {
     boolean isAccountManaged() {
         return !StringHelper.isBlank(this.accountType)
                 && this.accountType.equalsIgnoreCase("Managed");
+    }
+
+    public static UserDiscoveryResponse fromJson(JsonReader jsonReader) throws IOException {
+        UserDiscoveryResponse response = new UserDiscoveryResponse();
+        return jsonReader.readObject(reader -> {
+            while (reader.nextToken() != JsonToken.END_OBJECT) {
+                String fieldName = reader.getFieldName();
+                reader.nextToken();
+                switch (fieldName) {
+                    case "ver":
+                        response.version = Float.parseFloat(reader.getString());
+                        break;
+                    case "account_type":
+                        response.accountType = reader.getString();
+                        break;
+                    case "federation_metadata_url":
+                        response.federationMetadataUrl = reader.getString();
+                        break;
+                    case "federation_protocol":
+                        response.federationProtocol = reader.getString();
+                        break;
+                    case "federation_active_auth_url":
+                        response.federationActiveAuthUrl = reader.getString();
+                        break;
+                    case "cloud_audience_urn":
+                        response.cloudAudienceUrn = reader.getString();
+                        break;
+                    default:
+                        reader.skipChildren();
+                        break;
+                }
+            }
+            return response;
+        });
+    }
+
+    public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
+        jsonWriter.writeStartObject();
+        jsonWriter.writeFloatField("ver", version);
+        jsonWriter.writeStringField("account_type", accountType);
+        jsonWriter.writeStringField("federation_metadata_url", federationMetadataUrl);
+        jsonWriter.writeStringField("federation_protocol", federationProtocol);
+        jsonWriter.writeStringField("federation_active_auth_url", federationActiveAuthUrl);
+        jsonWriter.writeStringField("cloud_audience_urn", cloudAudienceUrn);
+        jsonWriter.writeEndObject();
+        return jsonWriter;
     }
 }

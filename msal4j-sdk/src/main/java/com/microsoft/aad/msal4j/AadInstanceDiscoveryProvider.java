@@ -120,19 +120,13 @@ class AadInstanceDiscoveryProvider {
 
     static AadInstanceDiscoveryResponse parseInstanceDiscoveryMetadata(String instanceDiscoveryJson) {
 
-        AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse;
         try {
-            aadInstanceDiscoveryResponse = JsonHelper.convertJsonToObject(
-                    instanceDiscoveryJson,
-                    AadInstanceDiscoveryResponse.class);
-
+            return JsonHelper.convertJsonStringToJsonSerializableObject(instanceDiscoveryJson, AadInstanceDiscoveryResponse.class);
         } catch (Exception ex) {
             throw new MsalClientException("Error parsing instance discovery response. Data must be " +
                     "in valid JSON format. For more information, see https://aka.ms/msal4j-instance-discovery",
                     AuthenticationErrorCode.INVALID_INSTANCE_DISCOVERY_METADATA);
         }
-
-        return aadInstanceDiscoveryResponse;
     }
 
     static void cacheInstanceDiscoveryResponse(String host,
@@ -150,13 +144,8 @@ class AadInstanceDiscoveryProvider {
     }
 
     static void cacheInstanceDiscoveryMetadata(String host) {
-        cache.putIfAbsent(host, InstanceDiscoveryMetadataEntry.builder().
-                preferredCache(host).
-                preferredNetwork(host).
-                aliases(Collections.singleton(host)).
-                build());
+        cache.putIfAbsent(host, new InstanceDiscoveryMetadataEntry(host, host, Collections.singleton(host)));
     }
-
 
     private static boolean shouldUseRegionalEndpoint(MsalRequest msalRequest){
         if (((AbstractClientApplicationBase) msalRequest.application()).azureRegion() != null
@@ -184,11 +173,7 @@ class AadInstanceDiscoveryProvider {
         Set<String> aliases = new HashSet<>();
         aliases.add(originalHost);
 
-        cache.putIfAbsent(regionalHost, InstanceDiscoveryMetadataEntry.builder().
-                preferredCache(originalHost).
-                preferredNetwork(regionalHost).
-                aliases(aliases).
-                build());
+        cache.putIfAbsent(regionalHost,  new InstanceDiscoveryMetadataEntry(regionalHost, originalHost, aliases));
     }
 
     private static String getRegionalizedHost(String host, String region) {
@@ -248,10 +233,10 @@ class AadInstanceDiscoveryProvider {
 
         IHttpResponse httpResponse = executeRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
 
-        AadInstanceDiscoveryResponse response = JsonHelper.convertJsonToObject(httpResponse.body(), AadInstanceDiscoveryResponse.class);
+        AadInstanceDiscoveryResponse response = JsonHelper.convertJsonStringToJsonSerializableObject(httpResponse.body(), AadInstanceDiscoveryResponse.class);
 
         if (httpResponse.statusCode() != HttpHelper.HTTP_STATUS_200) {
-            if(httpResponse.statusCode() == HttpHelper.HTTP_STATUS_400 && response.error().equals("invalid_instance")){
+            if (httpResponse.statusCode() == HttpHelper.HTTP_STATUS_400 && response.error().equals("invalid_instance")) {
                 // instance discovery failed due to an invalid authority, throw an exception.
                 throw MsalServiceExceptionFactory.fromHttpResponse(httpResponse);
             }
