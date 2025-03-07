@@ -33,6 +33,6 @@ class UserDiscoveryRequest {
             throw MsalServiceExceptionFactory.fromHttpResponse(response);
         }
 
-        return JsonHelper.convertJsonStringToJsonSerializableObject(response.body(), UserDiscoveryResponse.class);
+        return JsonHelper.convertJsonStringToJsonSerializableObject(response.body(), UserDiscoveryResponse::fromJson);
     }
 }

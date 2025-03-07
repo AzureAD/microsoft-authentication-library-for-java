@@ -101,7 +101,7 @@ abstract class AbstractManagedIdentitySource {
 
     protected ManagedIdentityResponse getSuccessfulResponse(IHttpResponse response) {
 
-        ManagedIdentityResponse managedIdentityResponse = JsonHelper.convertJsonStringToJsonSerializableObject(response.body(), ManagedIdentityResponse.class);
+        ManagedIdentityResponse managedIdentityResponse = JsonHelper.convertJsonStringToJsonSerializableObject(response.body(), ManagedIdentityResponse::fromJson);
 
         if (managedIdentityResponse == null || managedIdentityResponse.getAccessToken() == null
                 || managedIdentityResponse.getAccessToken().isEmpty() || managedIdentityResponse.getExpiresOn() == null

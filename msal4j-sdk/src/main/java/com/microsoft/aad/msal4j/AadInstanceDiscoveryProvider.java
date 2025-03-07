@@ -121,7 +121,7 @@ class AadInstanceDiscoveryProvider {
     static AadInstanceDiscoveryResponse parseInstanceDiscoveryMetadata(String instanceDiscoveryJson) {
 
         try {
-            return JsonHelper.convertJsonStringToJsonSerializableObject(instanceDiscoveryJson, AadInstanceDiscoveryResponse.class);
+            return JsonHelper.convertJsonStringToJsonSerializableObject(instanceDiscoveryJson, AadInstanceDiscoveryResponse::fromJson);
         } catch (Exception ex) {
             throw new MsalClientException("Error parsing instance discovery response. Data must be " +
                     "in valid JSON format. For more information, see https://aka.ms/msal4j-instance-discovery",
@@ -233,7 +233,7 @@ class AadInstanceDiscoveryProvider {
 
         IHttpResponse httpResponse = executeRequest(instanceDiscoveryRequestUrl, msalRequest.headers().getReadonlyHeaderMap(), msalRequest, serviceBundle);
 
-        AadInstanceDiscoveryResponse response = JsonHelper.convertJsonStringToJsonSerializableObject(httpResponse.body(), AadInstanceDiscoveryResponse.class);
+        AadInstanceDiscoveryResponse response = JsonHelper.convertJsonStringToJsonSerializableObject(httpResponse.body(), AadInstanceDiscoveryResponse::fromJson);
 
         if (httpResponse.statusCode() != HttpHelper.HTTP_STATUS_200) {
             if (httpResponse.statusCode() == HttpHelper.HTTP_STATUS_400 && response.error().equals("invalid_instance")) {
