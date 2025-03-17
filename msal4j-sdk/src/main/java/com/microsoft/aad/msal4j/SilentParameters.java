@@ -3,9 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.*;
-import lombok.experimental.Accessors;
-
 import java.net.URI;
 import java.util.HashSet;
 import java.util.Map;
@@ -18,54 +15,37 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
  * {@link PublicClientApplication#acquireTokenSilently(SilentParameters)} or to
  * {@link ConfidentialClientApplication#acquireTokenSilently(SilentParameters)}
  */
-@Builder
-@Accessors(fluent = true)
-@Getter
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class SilentParameters implements IAcquireTokenParameters {
 
-    /**
-     * Scopes application is requesting access to.
-     */
-    @NonNull
     private Set<String> scopes;
 
-    /**
-     * Account for which you are requesting a token for.
-     */
     private IAccount account;
 
-    /**
-     * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims.
-     */
     private ClaimsRequest claims;
 
-    /**
-     * Authority for which the application is requesting tokens from.
-     */
     private String authorityUrl;
 
-    /**
-     * Force MSAL to refresh the tokens in the cache, even if there is a valid access token.
-     */
     private boolean forceRefresh;
 
-    /**
-     * Adds additional headers to the token request
-     */
     private Map<String, String> extraHttpHeaders;
 
-    /**
-     * Adds additional query parameters to the token request
-     */
     private Map<String, String> extraQueryParameters;
 
-    /**
-     * Overrides the tenant value in the authority URL for this request
-     */
     private String tenant;
 
     private PopParameters proofOfPossession;
+
+    private SilentParameters(Set<String> scopes, IAccount account, ClaimsRequest claims, String authorityUrl, boolean forceRefresh, Map<String, String> extraHttpHeaders, Map<String, String> extraQueryParameters, String tenant, PopParameters proofOfPossession) {
+        this.scopes = scopes;
+        this.account = account;
+        this.claims = claims;
+        this.authorityUrl = authorityUrl;
+        this.forceRefresh = forceRefresh;
+        this.extraHttpHeaders = extraHttpHeaders;
+        this.extraQueryParameters = extraQueryParameters;
+        this.tenant = tenant;
+        this.proofOfPossession = proofOfPossession;
+    }
 
     private static SilentParametersBuilder builder() {
 
@@ -90,50 +70,172 @@ public class SilentParameters implements IAcquireTokenParameters {
     }
 
     /**
-     * Builder for SilentParameters
+     * Builder for SilentParameters for scenarios which involve no {@link IAccount}, such as some confidential client flows
+     * or broker flows which support using the default OS account.
      *
      * @param scopes scopes application is requesting access to
-     * @return builder object that can be used to construct SilentParameters
-     * @deprecated This method was used for using cached tokens in client credentials or On-behalf-of
-     * flow. Those flows will now by default attempt to use cached the cached tokens, so there is
-     * no need to call acquireTokenSilently. This overload will be removed in the next major version.
+     * @return builder object that can be used to construct SilentParameters flow.
      */
-
     public static SilentParametersBuilder builder(Set<String> scopes) {
         validateNotNull("scopes", scopes);
 
         return builder().scopes(removeEmptyScope(scopes));
     }
 
-    private static Set<String> removeEmptyScope(Set<String> scopes){
+    private static Set<String> removeEmptyScope(Set<String> scopes) {
         // empty string is not a valid scope, but we currently accept it and can't remove support
         // for it yet as its a breaking change. This will be removed eventually (throwing
         // exception if empty scope is passed in).
         Set<String> updatedScopes = new HashSet<>();
-        for(String scope: scopes){
-            if(!scope.equalsIgnoreCase(StringHelper.EMPTY_STRING)){
+        for (String scope : scopes) {
+            if (!scope.equalsIgnoreCase(StringHelper.EMPTY_STRING)) {
                 updatedScopes.add(scope.trim());
             }
         }
         return updatedScopes;
     }
 
+    public Set<String> scopes() {
+        return this.scopes;
+    }
+
+    public IAccount account() {
+        return this.account;
+    }
+
+    public ClaimsRequest claims() {
+        return this.claims;
+    }
+
+    public String authorityUrl() {
+        return this.authorityUrl;
+    }
+
+    public boolean forceRefresh() {
+        return this.forceRefresh;
+    }
+
+    public Map<String, String> extraHttpHeaders() {
+        return this.extraHttpHeaders;
+    }
+
+    public Map<String, String> extraQueryParameters() {
+        return this.extraQueryParameters;
+    }
+
+    public String tenant() {
+        return this.tenant;
+    }
+
+    public PopParameters proofOfPossession() {
+        return this.proofOfPossession;
+    }
+
     //This Builder class is used to override Lombok's default setter behavior for any fields defined in it
     public static class SilentParametersBuilder {
 
+        private Set<String> scopes;
+        private IAccount account;
+        private ClaimsRequest claims;
+        private String authorityUrl;
+        private boolean forceRefresh;
+        private Map<String, String> extraHttpHeaders;
+        private Map<String, String> extraQueryParameters;
+        private String tenant;
+        private PopParameters proofOfPossession;
+
+        SilentParametersBuilder() {
+        }
+
         /**
          * Sets the PopParameters for this request, allowing the request to retrieve proof-of-possession tokens rather than bearer tokens
-         *
+         * <p>
          * For more information, see {@link PopParameters} and https://aka.ms/msal4j-pop
          *
          * @param httpMethod a valid HTTP method, such as "GET" or "POST"
-         * @param uri URI to associate with the token
-         * @param nonce optional nonce value for the token, can be empty or null
+         * @param uri        URI to associate with the token
+         * @param nonce      optional nonce value for the token, can be empty or null
          */
         public SilentParametersBuilder proofOfPossession(HttpMethod httpMethod, URI uri, String nonce) {
             this.proofOfPossession = new PopParameters(httpMethod, uri, nonce);
 
             return this;
+        }
+
+        /**
+         * Scopes application is requesting access to.
+         * <p>
+         * Cannot be null.
+         */
+        public SilentParametersBuilder scopes(Set<String> scopes) {
+            validateNotNull("scopes", scopes);
+
+            this.scopes = scopes;
+            return this;
+        }
+
+        /**
+         * Account for which you are requesting a token for.
+         */
+        public SilentParametersBuilder account(IAccount account) {
+            this.account = account;
+            return this;
+        }
+
+        /**
+         * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims.
+         */
+        public SilentParametersBuilder claims(ClaimsRequest claims) {
+            this.claims = claims;
+            return this;
+        }
+
+        /**
+         * Authority for which the application is requesting tokens from.
+         */
+        public SilentParametersBuilder authorityUrl(String authorityUrl) {
+            this.authorityUrl = authorityUrl;
+            return this;
+        }
+
+        /**
+         * Force MSAL to refresh the tokens in the cache, even if there is a valid access token.
+         */
+        public SilentParametersBuilder forceRefresh(boolean forceRefresh) {
+            this.forceRefresh = forceRefresh;
+            return this;
+        }
+
+        /**
+         * Adds additional headers to the token request
+         */
+        public SilentParametersBuilder extraHttpHeaders(Map<String, String> extraHttpHeaders) {
+            this.extraHttpHeaders = extraHttpHeaders;
+            return this;
+        }
+
+        /**
+         * Adds additional query parameters to the token request
+         */
+        public SilentParametersBuilder extraQueryParameters(Map<String, String> extraQueryParameters) {
+            this.extraQueryParameters = extraQueryParameters;
+            return this;
+        }
+
+        /**
+         * Overrides the tenant value in the authority URL for this request
+         */
+        public SilentParametersBuilder tenant(String tenant) {
+            this.tenant = tenant;
+            return this;
+        }
+
+        public SilentParameters build() {
+            return new SilentParameters(this.scopes, this.account, this.claims, this.authorityUrl, this.forceRefresh, this.extraHttpHeaders, this.extraQueryParameters, this.tenant, this.proofOfPossession);
+        }
+
+        public String toString() {
+            return "SilentParameters.SilentParametersBuilder(scopes=" + this.scopes + ", account=" + this.account + ", claims=" + this.claims + ", authorityUrl=" + this.authorityUrl + ", forceRefresh=" + this.forceRefresh + ", extraHttpHeaders=" + this.extraHttpHeaders + ", extraQueryParameters=" + this.extraQueryParameters + ", tenant=" + this.tenant + ", proofOfPossession=" + this.proofOfPossession + ")";
         }
     }
 }
