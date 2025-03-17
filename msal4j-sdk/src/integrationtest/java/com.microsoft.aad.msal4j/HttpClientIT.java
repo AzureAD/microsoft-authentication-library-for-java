@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutionException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class HttpClientIT {
@@ -81,6 +82,8 @@ class HttpClientIT {
                         .build())
                 .get());
 
-        assertEquals("com.microsoft.aad.msal4j.MsalClientException: java.net.SocketTimeoutException: Read timed out", ex.getMessage());
+        //The timeout may occur during either the connection attempt (SocketTimeoutException) or the SSL handshake (SSLException)
+        assertTrue(ex.getMessage().equals("com.microsoft.aad.msal4j.MsalClientException: java.net.SocketTimeoutException: Read timed out") ||
+                ex.getMessage().equals("com.microsoft.aad.msal4j.MsalClientException: javax.net.ssl.SSLException: Read timed out"));
     }
 }
