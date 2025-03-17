@@ -12,7 +12,7 @@ class OidcDiscoveryProvider {
 
         IHttpResponse httpResponse = ((HttpHelper)clientApplication.serviceBundle.getHttpHelper()).executeHttpRequest(httpRequest);
 
-        OidcDiscoveryResponse response = JsonHelper.convertJsonToObject(httpResponse.body(), OidcDiscoveryResponse.class);
+        OidcDiscoveryResponse response = JsonHelper.convertJsonStringToJsonSerializableObject(httpResponse.body(), OidcDiscoveryResponse::fromJson);
 
         if (httpResponse.statusCode() != HttpHelper.HTTP_STATUS_200) {
             throw MsalServiceExceptionFactory.fromHttpResponse(httpResponse);
