@@ -25,7 +25,11 @@ import java.util.concurrent.TimeUnit;
 
 public class SeleniumExtensions {
 
-    private final static Logger LOG = LoggerFactory.getLogger(SeleniumExtensions.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SeleniumExtensions.class);
+
+    //These timeout values define how long Selenium will wait for elements to be visible and enabled
+    private static final int DEFAULT_TIMEOUT_IN_SEC = 15;
+    private static final int COMMON_ELEMENT_TIMEOUT_IN_SEC = 5; //Used for most elements in a sign-in flow
 
     private SeleniumExtensions() {
     }
@@ -47,7 +51,7 @@ public class SeleniumExtensions {
 
     public static WebElement waitForElementToBeVisibleAndEnable(WebDriver driver, By by, int timeOutInSeconds) {
         WebDriverWait webDriverWait = new WebDriverWait(driver, timeOutInSeconds);
-        return webDriverWait.until((dr) ->
+        return webDriverWait.until(dr ->
         {
             try {
                 WebElement elementToBeDisplayed = driver.findElement(by);
@@ -56,14 +60,13 @@ public class SeleniumExtensions {
                 }
                 return null;
             } catch (StaleElementReferenceException e) {
+                LOG.info("Stale element waitForElementToBeVisibleAndEnable: " + e.getMessage());
                 return null;
             }
         });
     }
 
     public static WebElement waitForElementToBeVisibleAndEnable(WebDriver driver, By by) {
-        int DEFAULT_TIMEOUT_IN_SEC = 15;
-
         return waitForElementToBeVisibleAndEnable(driver, by, DEFAULT_TIMEOUT_IN_SEC);
     }
 
@@ -90,39 +93,44 @@ public class SeleniumExtensions {
             checkAuthenticationCompletePage(driver);
             return;
         } catch (TimeoutException ex) {
-            LOG.error(ex.getMessage());
+            LOG.error("Timeout Exception while checking authentication complete page: " + ex.getMessage());
         }
 
         LOG.info("Checking optional questions");
 
         try {
             LOG.info("Are you trying to sign in to ... ? checking");
-            waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.ARE_YOU_TRYING_TO_SIGN_IN_TO), 3).
+            waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.ARE_YOU_TRYING_TO_SIGN_IN_TO), COMMON_ELEMENT_TIMEOUT_IN_SEC).
                     click();
             LOG.info("Are you trying to sign in to ... ? click Continue");
 
         } catch (TimeoutException ex) {
-            LOG.error(ex.getMessage());
+            LOG.error("Timeout Exception while checking sign in prompt: " + ex.getMessage());
         }
 
         try {
             LOG.info("Stay signed in? checking");
-            waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.STAY_SIGN_IN_NO_BUTTON_ID), 3).
+            waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.STAY_SIGN_IN_NO_BUTTON_ID), COMMON_ELEMENT_TIMEOUT_IN_SEC).
                     click();
             LOG.info("Stay signed in?  click NO");
         } catch (TimeoutException ex) {
-            LOG.error(ex.getMessage());
+            LOG.error("Timeout Exception while checking stay signed in prompt: " + ex.getMessage());
         }
     }
 
     private static void checkAuthenticationCompletePage(WebDriver driver) {
-        (new WebDriverWait(driver, 5)).until((ExpectedCondition<Boolean>) d -> {
-            boolean condition = false;
+        new WebDriverWait(driver, COMMON_ELEMENT_TIMEOUT_IN_SEC).until((ExpectedCondition<Boolean>) d -> {
             WebElement we = d.findElement(new By.ByTagName("body"));
-            if (we != null && we.getText().contains("Authentication complete")) {
-                condition = true;
+            try {
+                if (we != null && we.getText().contains("Authentication complete"))
+                    //The authentication is complete and the WebDriverWait can end
+                    return true;
+            } catch (StaleElementReferenceException e) {
+                //It is possible for this method to begin executing before the redirect happens, in which case the WebElement
+                // will reference something on the previous page and cause a StaleElementReferenceException
+                return false;
             }
-            return condition;
+            return false;
         });
     }
 
