@@ -7,13 +7,11 @@ import com.azure.json.JsonReader;
 import com.azure.json.JsonSerializable;
 import com.azure.json.JsonToken;
 import com.azure.json.JsonWriter;
-import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-@Getter
 class ManagedIdentityResponse implements JsonSerializable<ManagedIdentityResponse> {
 
     private static final Logger LOG = LoggerFactory.getLogger(ManagedIdentityResponse.class);
@@ -65,5 +63,25 @@ class ManagedIdentityResponse implements JsonSerializable<ManagedIdentityRespons
         jsonWriter.writeStringField("client_id", clientId);
         jsonWriter.writeEndObject();
         return jsonWriter;
+    }
+
+    public String getTokenType() {
+        return this.tokenType;
+    }
+
+    public String getAccessToken() {
+        return this.accessToken;
+    }
+
+    public String getExpiresOn() {
+        return this.expiresOn;
+    }
+
+    public String getResource() {
+        return this.resource;
+    }
+
+    public String getClientId() {
+        return this.clientId;
     }
 }

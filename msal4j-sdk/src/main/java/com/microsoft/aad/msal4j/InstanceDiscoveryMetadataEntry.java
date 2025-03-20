@@ -7,22 +7,25 @@ import com.azure.json.JsonReader;
 import com.azure.json.JsonSerializable;
 import com.azure.json.JsonToken;
 import com.azure.json.JsonWriter;
-import lombok.*;
-import lombok.experimental.Accessors;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
-@Accessors(fluent = true)
-@Getter(AccessLevel.PACKAGE)
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 class InstanceDiscoveryMetadataEntry implements JsonSerializable<InstanceDiscoveryMetadataEntry> {
 
     String preferredNetwork;
     String preferredCache;
     Set<String> aliases;
+
+    public InstanceDiscoveryMetadataEntry(String preferredNetwork, String preferredCache, Set<String> aliases) {
+        this.preferredNetwork = preferredNetwork;
+        this.preferredCache = preferredCache;
+        this.aliases = aliases;
+    }
+
+    public InstanceDiscoveryMetadataEntry() {
+    }
 
     public static InstanceDiscoveryMetadataEntry fromJson(JsonReader jsonReader) throws IOException {
         InstanceDiscoveryMetadataEntry entry = new InstanceDiscoveryMetadataEntry();
@@ -56,5 +59,17 @@ class InstanceDiscoveryMetadataEntry implements JsonSerializable<InstanceDiscove
         jsonWriter.writeArrayField("aliases", aliases, JsonWriter::writeString);
         jsonWriter.writeEndObject();
         return jsonWriter;
+    }
+
+    String preferredNetwork() {
+        return this.preferredNetwork;
+    }
+
+    String preferredCache() {
+        return this.preferredCache;
+    }
+
+    Set<String> aliases() {
+        return this.aliases;
     }
 }

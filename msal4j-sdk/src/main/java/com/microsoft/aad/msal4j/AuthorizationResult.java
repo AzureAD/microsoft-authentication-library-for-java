@@ -3,17 +3,10 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
-
 import java.net.URLDecoder;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Getter
-@Setter
-@Accessors(fluent = true)
 class AuthorizationResult {
 
     private String code;
@@ -22,6 +15,54 @@ class AuthorizationResult {
     private String error;
     private String errorDescription;
     private String environment;
+
+    String code() {
+        return this.code;
+    }
+
+    String state() {
+        return this.state;
+    }
+
+    AuthorizationStatus status() {
+        return this.status;
+    }
+
+    String error() {
+        return this.error;
+    }
+
+    String errorDescription() {
+        return this.errorDescription;
+    }
+
+    String environment() {
+        return this.environment;
+    }
+
+    void code(String code) {
+        this.code = code;
+    }
+
+    void state(String state) {
+        this.state = state;
+    }
+
+    void status(AuthorizationStatus status) {
+        this.status = status;
+    }
+
+    void error(String error) {
+        this.error = error;
+    }
+
+    void errorDescription(String errorDescription) {
+        this.errorDescription = errorDescription;
+    }
+
+    void environment(String environment) {
+        this.environment = environment;
+    }
 
     enum AuthorizationStatus {
         Success,

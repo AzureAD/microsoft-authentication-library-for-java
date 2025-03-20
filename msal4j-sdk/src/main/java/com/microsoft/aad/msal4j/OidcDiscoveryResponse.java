@@ -7,14 +7,9 @@ import com.azure.json.JsonReader;
 import com.azure.json.JsonSerializable;
 import com.azure.json.JsonToken;
 import com.azure.json.JsonWriter;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.experimental.Accessors;
 
 import java.io.IOException;
 
-@Accessors(fluent = true)
-@Getter(AccessLevel.PACKAGE)
 class OidcDiscoveryResponse implements JsonSerializable<OidcDiscoveryResponse> {
 
     private String authorizationEndpoint;
@@ -53,5 +48,17 @@ class OidcDiscoveryResponse implements JsonSerializable<OidcDiscoveryResponse> {
         jsonWriter.writeStringField("device_authorization_endpoint", deviceCodeEndpoint);
         jsonWriter.writeEndObject();
         return jsonWriter;
+    }
+
+    String authorizationEndpoint() {
+        return this.authorizationEndpoint;
+    }
+
+    String tokenEndpoint() {
+        return this.tokenEndpoint;
+    }
+
+    String deviceCodeEndpoint() {
+        return this.deviceCodeEndpoint;
     }
 }

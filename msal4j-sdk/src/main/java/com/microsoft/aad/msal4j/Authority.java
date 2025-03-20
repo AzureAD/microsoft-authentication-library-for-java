@@ -3,18 +3,12 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.experimental.Accessors;
-
 import java.net.MalformedURLException;
 import java.net.URL;
 
 /**
  * Represents Authentication Authority responsible for issuing access tokens.
  */
-@Accessors(fluent = true)
-@Getter(AccessLevel.PACKAGE)
 abstract class Authority {
 
     private static final String ADFS_PATH_SEGMENT = "adfs";
@@ -176,5 +170,41 @@ abstract class Authority {
             authority += "/";
         }
         return authority;
+    }
+
+    String authority() {
+        return this.authority;
+    }
+
+    URL canonicalAuthorityUrl() {
+        return this.canonicalAuthorityUrl;
+    }
+
+    AuthorityType authorityType() {
+        return this.authorityType;
+    }
+
+    String selfSignedJwtAudience() {
+        return this.selfSignedJwtAudience;
+    }
+
+    String host() {
+        return this.host;
+    }
+
+    String tenant() {
+        return this.tenant;
+    }
+
+    boolean isTenantless() {
+        return this.isTenantless;
+    }
+
+    String authorizationEndpoint() {
+        return this.authorizationEndpoint;
+    }
+
+    String tokenEndpoint() {
+        return this.tokenEndpoint;
     }
 }

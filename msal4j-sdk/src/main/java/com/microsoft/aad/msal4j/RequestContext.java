@@ -3,18 +3,10 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
-
 import java.util.UUID;
 
-@Accessors(fluent = true)
-@Getter(AccessLevel.PACKAGE)
 class RequestContext {
 
-    @Setter(AccessLevel.PACKAGE)
     private String telemetryRequestId;
     private String clientId;
     private String correlationId;
@@ -57,5 +49,50 @@ class RequestContext {
 
     private static String generateNewCorrelationId() {
         return UUID.randomUUID().toString();
+    }
+
+    String telemetryRequestId() {
+        return this.telemetryRequestId;
+    }
+
+    String clientId() {
+        return this.clientId;
+    }
+
+    String correlationId() {
+        return this.correlationId;
+    }
+
+    PublicApi publicApi() {
+        return this.publicApi;
+    }
+
+    String applicationName() {
+        return this.applicationName;
+    }
+
+    String applicationVersion() {
+        return this.applicationVersion;
+    }
+
+    String authority() {
+        return this.authority;
+    }
+
+    IAcquireTokenParameters apiParameters() {
+        return this.apiParameters;
+    }
+
+    IApplicationBase clientApplication() {
+        return this.clientApplication;
+    }
+
+    UserIdentifier userIdentifier() {
+        return this.userIdentifier;
+    }
+
+    RequestContext telemetryRequestId(String telemetryRequestId) {
+        this.telemetryRequestId = telemetryRequestId;
+        return this;
     }
 }

@@ -6,8 +6,6 @@ package com.microsoft.aad.msal4j;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
-import lombok.AccessLevel;
-import lombok.Getter;
 
 import java.io.IOException;
 import java.net.URI;
@@ -19,7 +17,6 @@ import java.util.Map;
 
 class OAuthHttpRequest extends HTTPRequest {
 
-    @Getter(AccessLevel.PACKAGE)
     private final Map<String, String> extraHeaderParams;
     private final ServiceBundle serviceBundle;
     private final RequestContext requestContext;
@@ -110,5 +107,9 @@ class OAuthHttpRequest extends HTTPRequest {
             response.setContent(httpResponse.body());
         }
         return response;
+    }
+
+    Map<String, String> getExtraHeaderParams() {
+        return this.extraHeaderParams;
     }
 }

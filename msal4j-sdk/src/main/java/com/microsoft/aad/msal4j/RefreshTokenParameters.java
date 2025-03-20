@@ -3,9 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.*;
-import lombok.experimental.Accessors;
-
 import java.util.Map;
 import java.util.Set;
 
@@ -20,43 +17,23 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
  * RefreshTokenParameters should only be used for migration scenarios (when moving from ADAL to
  * MSAL). To acquire tokens silently, use {@link AbstractClientApplicationBase#acquireTokenSilently(SilentParameters)}
  */
-@Builder
-@Accessors(fluent = true)
-@Getter
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class RefreshTokenParameters implements IAcquireTokenParameters {
 
-    /**
-     * Scopes the application is requesting access to
-     */
-    @NonNull
     private Set<String> scopes;
-
-    /**
-     * Refresh token received from the STS
-     */
-    @NonNull
     private String refreshToken;
-
-    /**
-     * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
-     */
     private ClaimsRequest claims;
-
-    /**
-     * Adds additional headers to the token request
-     */
     private Map<String, String> extraHttpHeaders;
-
-    /**
-     * Adds additional parameters to the token request
-     */
     private Map<String, String> extraQueryParameters;
-
-    /**
-     * Overrides the tenant value in the authority URL for this request
-     */
     private String tenant;
+
+    private RefreshTokenParameters(Set<String> scopes, String refreshToken, ClaimsRequest claims, Map<String, String> extraHttpHeaders, Map<String, String> extraQueryParameters, String tenant) {
+        this.scopes = scopes;
+        this.refreshToken = refreshToken;
+        this.claims = claims;
+        this.extraHttpHeaders = extraHttpHeaders;
+        this.extraQueryParameters = extraQueryParameters;
+        this.tenant = tenant;
+    }
 
     private static RefreshTokenParametersBuilder builder() {
 
@@ -77,5 +54,105 @@ public class RefreshTokenParameters implements IAcquireTokenParameters {
         return builder()
                 .scopes(scopes)
                 .refreshToken(refreshToken);
+    }
+
+    public Set<String> scopes() {
+        return this.scopes;
+    }
+
+    public String refreshToken() {
+        return this.refreshToken;
+    }
+
+    public ClaimsRequest claims() {
+        return this.claims;
+    }
+
+    public Map<String, String> extraHttpHeaders() {
+        return this.extraHttpHeaders;
+    }
+
+    public Map<String, String> extraQueryParameters() {
+        return this.extraQueryParameters;
+    }
+
+    public String tenant() {
+        return this.tenant;
+    }
+
+    public static class RefreshTokenParametersBuilder {
+        private Set<String> scopes;
+        private String refreshToken;
+        private ClaimsRequest claims;
+        private Map<String, String> extraHttpHeaders;
+        private Map<String, String> extraQueryParameters;
+        private String tenant;
+
+        RefreshTokenParametersBuilder() {
+        }
+
+        /**
+         * Scopes the application is requesting access to
+         * <p>
+         * Cannot be null.
+         */
+        public RefreshTokenParametersBuilder scopes(Set<String> scopes) {
+            validateNotNull("scopes", scopes);
+
+            this.scopes = scopes;
+            return this;
+        }
+
+        /**
+         * Refresh token received from the STS
+         * <p>
+         * Cannot be null.
+         */
+        public RefreshTokenParametersBuilder refreshToken(String refreshToken) {
+            validateNotNull("refreshToken", scopes);
+
+            this.refreshToken = refreshToken;
+            return this;
+        }
+
+        /**
+         * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
+         */
+        public RefreshTokenParametersBuilder claims(ClaimsRequest claims) {
+            this.claims = claims;
+            return this;
+        }
+
+        /**
+         * Adds additional headers to the token request
+         */
+        public RefreshTokenParametersBuilder extraHttpHeaders(Map<String, String> extraHttpHeaders) {
+            this.extraHttpHeaders = extraHttpHeaders;
+            return this;
+        }
+
+        /**
+         * Adds additional parameters to the token request
+         */
+        public RefreshTokenParametersBuilder extraQueryParameters(Map<String, String> extraQueryParameters) {
+            this.extraQueryParameters = extraQueryParameters;
+            return this;
+        }
+
+        /**
+         * Overrides the tenant value in the authority URL for this request
+         */
+        public RefreshTokenParametersBuilder tenant(String tenant) {
+            this.tenant = tenant;
+            return this;
+        }
+
+        public RefreshTokenParameters build() {
+            return new RefreshTokenParameters(this.scopes, this.refreshToken, this.claims, this.extraHttpHeaders, this.extraQueryParameters, this.tenant);
+        }
+
+        public String toString() {
+            return "RefreshTokenParameters.RefreshTokenParametersBuilder(scopes=" + this.scopes + ", refreshToken=" + this.refreshToken + ", claims=" + this.claims + ", extraHttpHeaders=" + this.extraHttpHeaders + ", extraQueryParameters=" + this.extraQueryParameters + ", tenant=" + this.tenant + ")";
+        }
     }
 }

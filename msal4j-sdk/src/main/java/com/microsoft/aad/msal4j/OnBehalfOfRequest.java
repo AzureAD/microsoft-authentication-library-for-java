@@ -6,8 +6,6 @@ package com.microsoft.aad.msal4j;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.AuthorizationGrant;
 import com.nimbusds.oauth2.sdk.JWTBearerGrant;
-import lombok.Getter;
-import lombok.experimental.Accessors;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,8 +14,6 @@ import java.util.Map;
 
 import static com.microsoft.aad.msal4j.AbstractMsalAuthorizationGrant.SCOPES_DELIMITER;
 
-@Accessors(fluent = true)
-@Getter
 class OnBehalfOfRequest extends MsalRequest {
 
     OnBehalfOfParameters parameters;
@@ -45,5 +41,9 @@ class OnBehalfOfRequest extends MsalRequest {
         }
 
         return new OAuthAuthorizationGrant(jWTBearerGrant, String.join(SCOPES_DELIMITER, parameters.scopes()), params);
+    }
+
+    OnBehalfOfParameters parameters() {
+        return this.parameters;
     }
 }

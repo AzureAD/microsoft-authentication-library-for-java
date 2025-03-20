@@ -3,15 +3,15 @@
 
 package com.microsoft.aad.msal4j;
 
-
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URL;
 import java.util.Date;
 
-@Slf4j
 class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
 
+    private static final Logger log = LoggerFactory.getLogger(AcquireTokenSilentSupplier.class);
     private SilentRequest silentRequest;
     protected static final int ACCESS_TOKEN_EXPIRE_BUFFER_IN_SEC = 5 * 60;
 

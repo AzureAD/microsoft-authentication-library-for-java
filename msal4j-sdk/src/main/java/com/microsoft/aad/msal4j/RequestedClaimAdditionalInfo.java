@@ -3,11 +3,8 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
@@ -16,9 +13,6 @@ import java.util.List;
  *
  * @see <a href="https://openid.net/specs/openid-connect-core-1_0-final.html#ClaimsParameter">https://openid.net/specs/openid-connect-core-1_0-final.html#ClaimsParameter</a>
  */
-@Getter
-@Setter
-@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RequestedClaimAdditionalInfo {
 
@@ -31,4 +25,34 @@ public class RequestedClaimAdditionalInfo {
 
     @JsonProperty("values")
     List<String> values;
+
+    public RequestedClaimAdditionalInfo(boolean essential, String value, List<String> values) {
+        this.essential = essential;
+        this.value = value;
+        this.values = values;
+    }
+
+    public boolean isEssential() {
+        return this.essential;
+    }
+
+    public String getValue() {
+        return this.value;
+    }
+
+    public List<String> getValues() {
+        return this.values;
+    }
+
+    public void setEssential(boolean essential) {
+        this.essential = essential;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
+    }
+
+    public void setValues(List<String> values) {
+        this.values = values;
+    }
 }

@@ -9,12 +9,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.Getter;
-import lombok.Setter;
 
-import java.util.Iterator;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -24,10 +22,7 @@ import java.util.List;
  */
 public class ClaimsRequest {
 
-    @Getter
-    @Setter
     List<RequestedClaim> idTokenRequestedClaims = new ArrayList<>();
-
     List<RequestedClaim> userInfoRequestedClaims = new ArrayList<>();
     List<RequestedClaim> accessTokenRequestedClaims = new ArrayList<>();
 
@@ -146,5 +141,13 @@ public class ClaimsRequest {
                 if (group.equals("access_token")) cr.requestClaimInAccessToken(claim, claimInfo);
             }
         }
+    }
+
+    public List<RequestedClaim> getIdTokenRequestedClaims() {
+        return this.idTokenRequestedClaims;
+    }
+
+    public void setIdTokenRequestedClaims(List<RequestedClaim> idTokenRequestedClaims) {
+        this.idTokenRequestedClaims = idTokenRequestedClaims;
     }
 }

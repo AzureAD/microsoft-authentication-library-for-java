@@ -4,8 +4,6 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
-import lombok.Getter;
-import lombok.experimental.Accessors;
 
 import javax.net.ssl.SSLSocketFactory;
 import java.net.MalformedURLException;
@@ -25,46 +23,16 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
  */
 public abstract class AbstractClientApplicationBase extends AbstractApplicationBase implements IClientApplicationBase {
 
-    @Accessors(fluent = true)
-    @Getter
     private String clientId;
-
-    @Accessors(fluent = true)
-    @Getter
     private String authority;
-
-    @Accessors(fluent = true)
-    @Getter
     private boolean validateAuthority;
-
-    @Accessors(fluent = true)
-    @Getter
     private String applicationName;
-
-    @Accessors(fluent = true)
-    @Getter
     private String applicationVersion;
-
-    @Accessors(fluent = true)
-    @Getter
     private AadInstanceDiscoveryResponse aadAadInstanceDiscoveryResponse;
-
     protected abstract ClientAuthentication clientAuthentication();
-
-    @Accessors(fluent = true)
-    @Getter
     private String clientCapabilities;
-
-    @Accessors(fluent = true)
-    @Getter
     private boolean autoDetectRegion;
-
-    @Accessors(fluent = true)
-    @Getter
     protected String azureRegion;
-
-    @Accessors(fluent = true)
-    @Getter
     private boolean instanceDiscovery;
 
     @Override
@@ -187,6 +155,49 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
                 parameters.requestParameters());
     }
 
+    @Override
+    public String clientId() {
+        return this.clientId;
+    }
+
+    @Override
+    public String authority() {
+        return this.authority;
+    }
+
+    @Override
+    public boolean validateAuthority() {
+        return this.validateAuthority;
+    }
+
+    public String applicationName() {
+        return this.applicationName;
+    }
+
+    public String applicationVersion() {
+        return this.applicationVersion;
+    }
+
+    public AadInstanceDiscoveryResponse aadAadInstanceDiscoveryResponse() {
+        return this.aadAadInstanceDiscoveryResponse;
+    }
+
+    public String clientCapabilities() {
+        return this.clientCapabilities;
+    }
+
+    public boolean autoDetectRegion() {
+        return this.autoDetectRegion;
+    }
+
+    public String azureRegion() {
+        return this.azureRegion;
+    }
+
+    public boolean instanceDiscovery() {
+        return this.instanceDiscovery;
+    }
+
     public abstract static class Builder<T extends Builder<T>> extends AbstractApplicationBase.Builder<T> {
         // Required parameters
         private String clientId;
@@ -253,11 +264,11 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
 
         /**
          * Set URL of the authenticating B2C authority from which MSAL will acquire tokens
-         *
+         * <p>
          * Valid B2C authorities should look like: https://&lt;something.b2clogin.com/&lt;tenant&gt;/&lt;policy&gt;
-         *
+         * <p>
          * MSAL Java also supports a legacy B2C authority format, which looks like: https://&lt;host&gt;/tfp/&lt;tenant&gt;/&lt;policy&gt;
-         *
+         * <p>
          * However, MSAL Java will eventually stop supporting the legacy format. See here for information on how to migrate to the new format: https://aka.ms/msal4j-b2c
          *
          * @param val a boolean value for validateAuthority
@@ -393,10 +404,10 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
          * Indicates that the library should attempt to discover the Azure region the application is running in when
          * fetching the instance discovery metadata. Regions can only be detected when running in an Azure environment,
          * such as an Azure VM or other service, or if the environment has environment variable named REGION_NAME configured.
-         *
+         * <p>
          * Although you can enable both autodetection here and a specific region with {@link AbstractClientApplicationBase#azureRegion} at the same time,
          * the region set with {@link AbstractClientApplicationBase#azureRegion} will take priority if there is a mismatch.
-         *
+         * <p>
          * See here for more information about supported scenarios: https://aka.ms/msal4j-azure-regions
          *
          * @param val boolean (default is false)
@@ -410,13 +421,13 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
         /**
          * Set the region that the library will use to format authorities in token requests. If given a valid Azure region,
          * the library will attempt to make token requests at a regional ESTS-R endpoint rather than the global ESTS endpoint.
-         *
+         * <p>
          * Regions must be valid Azure regions and their short names should be used, such as 'westus' for the West US Azure region,
          * 'centralus' for the Central US Azure region, etc.
-         *
+         * <p>
          * Although you can set a specific region here and enable autodetection with {@link AbstractClientApplicationBase#autoDetectRegion} at the same time
          * the specific region set here will take priority over the autodetected region if there is a mismatch.
-         *
+         * <p>
          * See here for more information about supported scenarios: https://aka.ms/msal4j-azure-regions
          *
          * @param val String region name
@@ -427,13 +438,15 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
             return self();
         }
 
-        /** Historically, MSAL would connect to a central endpoint located at
-            ``https://login.microsoftonline.com`` to acquire some metadata, especially when using an unfamiliar authority.
-        This behavior is known as Instance Discovery.
-        This parameter defaults to true, which enables the Instance Discovery.
-        If you do not know some authorities beforehand,
-        yet still want MSAL to accept any authority that you will provide,
-        you can use a ``False`` to unconditionally disable Instance Discovery. */
+        /**
+         * Historically, MSAL would connect to a central endpoint located at
+         * ``https://login.microsoftonline.com`` to acquire some metadata, especially when using an unfamiliar authority.
+         * This behavior is known as Instance Discovery.
+         * This parameter defaults to true, which enables the Instance Discovery.
+         * If you do not know some authorities beforehand,
+         * yet still want MSAL to accept any authority that you will provide,
+         * you can use a ``False`` to unconditionally disable Instance Discovery.
+         */
         public T instanceDiscovery(boolean val) {
             isInstanceDiscoveryEnabled = val;
             return self();

@@ -5,14 +5,11 @@ package com.microsoft.aad.msal4j;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.nimbusds.jose.util.StandardCharset;
-import lombok.AccessLevel;
-import lombok.Getter;
 
 import java.util.Base64;
 
 import static com.microsoft.aad.msal4j.Constants.POINT_DELIMITER;
 
-@Getter(AccessLevel.PACKAGE)
 class ClientInfo {
 
     @JsonProperty("uid")
@@ -33,5 +30,13 @@ class ClientInfo {
 
     String toAccountIdentifier() {
         return uniqueIdentifier + POINT_DELIMITER + uniqueTenantIdentifier;
+    }
+
+    String getUniqueIdentifier() {
+        return this.uniqueIdentifier;
+    }
+
+    String getUniqueTenantIdentifier() {
+        return this.uniqueTenantIdentifier;
     }
 }

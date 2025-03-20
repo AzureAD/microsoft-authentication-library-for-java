@@ -3,27 +3,41 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
-
 import java.util.Map;
 
 /**
  * Representation of a single tenant profile
  */
-@Accessors(fluent = true)
-@Getter
-@Setter
-@AllArgsConstructor
 class TenantProfile implements ITenantProfile {
 
     Map<String, ?> idTokenClaims;
 
     String environment;
 
+    public TenantProfile(Map<String, ?> idTokenClaims, String environment) {
+        this.idTokenClaims = idTokenClaims;
+        this.environment = environment;
+    }
+
     public Map<String, ?> getClaims() {
         return idTokenClaims;
+    }
+
+    public Map<String, ?> idTokenClaims() {
+        return this.idTokenClaims;
+    }
+
+    public String environment() {
+        return this.environment;
+    }
+
+    public TenantProfile idTokenClaims(Map<String, ?> idTokenClaims) {
+        this.idTokenClaims = idTokenClaims;
+        return this;
+    }
+
+    public TenantProfile environment(String environment) {
+        this.environment = environment;
+        return this;
     }
 }
