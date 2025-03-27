@@ -3,10 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.experimental.Accessors;
-
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
@@ -17,19 +13,14 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
-@Accessors(fluent = true)
 class InteractiveRequest extends MsalRequest {
 
-    @Getter(AccessLevel.PACKAGE)
     private AtomicReference<CompletableFuture<IAuthenticationResult>> futureReference;
 
-    @Getter(AccessLevel.PACKAGE)
     private InteractiveRequestParameters interactiveRequestParameters;
 
-    @Getter(AccessLevel.PACKAGE)
     private String verifier;
 
-    @Getter(AccessLevel.PACKAGE)
     private String state;
 
     private PublicClientApplication publicClientApplication;
@@ -119,5 +110,21 @@ class InteractiveRequest extends MsalRequest {
         builder.codeChallenge(StringHelper.createBase64EncodedSha256Hash(verifier))
                 .codeChallengeMethod("S256")
                 .state(state);
+    }
+
+    AtomicReference<CompletableFuture<IAuthenticationResult>> futureReference() {
+        return this.futureReference;
+    }
+
+    InteractiveRequestParameters interactiveRequestParameters() {
+        return this.interactiveRequestParameters;
+    }
+
+    String verifier() {
+        return this.verifier;
+    }
+
+    String state() {
+        return this.state;
     }
 }

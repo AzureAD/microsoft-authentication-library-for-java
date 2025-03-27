@@ -3,8 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.AccessLevel;
-import lombok.Getter;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
@@ -17,17 +15,13 @@ import java.util.concurrent.CompletableFuture;
  */
 public class ManagedIdentityApplication extends AbstractApplicationBase implements IManagedIdentityApplication {
 
-    @Getter
     private final ManagedIdentityId managedIdentityId;
-
-    @Getter
     static TokenCache sharedTokenCache = new TokenCache();
 
     //Deprecated the field in favor of the static getManagedIdentitySource method
     @Deprecated
     ManagedIdentitySourceType managedIdentitySource = ManagedIdentityClient.getManagedIdentitySource();
 
-    @Getter(value = AccessLevel.PACKAGE)
     static IEnvironmentVariables environmentVariables;
 
     static void setEnvironmentVariables(IEnvironmentVariables environmentVariables) {
@@ -51,6 +45,17 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
         this.tenant = Constants.MANAGED_IDENTITY_DEFAULT_TENTANT;
     }
 
+    public static TokenCache getSharedTokenCache() {
+        return ManagedIdentityApplication.sharedTokenCache;
+    }
+
+    static IEnvironmentVariables getEnvironmentVariables() {
+        return ManagedIdentityApplication.environmentVariables;
+    }
+
+    public ManagedIdentityId getManagedIdentityId() {
+        return this.managedIdentityId;
+    }
     @Override
     public CompletableFuture<IAuthenticationResult> acquireTokenForManagedIdentity(ManagedIdentityParameters managedIdentityParameters)
             throws Exception {

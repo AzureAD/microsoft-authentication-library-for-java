@@ -1,19 +1,11 @@
 package com.microsoft.aad.msal4j;
 
-import lombok.Getter;
-import lombok.experimental.Accessors;
-
 /**
  * Exception type thrown when service returns throttling instruction:
  * Retry-After header, 429 or 5xx statuses.
  */
-@Accessors(fluent = true)
-@Getter
 public class MsalThrottlingException extends MsalServiceException {
 
-    /**
-     * how long to wait before repeating request
-     */
     private long retryInMs;
 
     /**
@@ -26,5 +18,12 @@ public class MsalThrottlingException extends MsalServiceException {
                 AuthenticationErrorCode.THROTTLED_REQUEST);
 
         this.retryInMs = retryInMs;
+    }
+
+    /**
+     * how long to wait before repeating request
+     */
+    public long retryInMs() {
+        return this.retryInMs;
     }
 }

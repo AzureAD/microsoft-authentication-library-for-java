@@ -3,8 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.Getter;
-import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,16 +22,10 @@ abstract class AbstractManagedIdentitySource {
     ManagedIdentityIdType idType;
     String userAssignedId;
 
-    @Getter
-    @Setter
     private boolean isUserAssignedManagedIdentity;
 
-    @Getter
-    @Setter
     private String managedIdentityUserAssignedClientId;
 
-    @Getter
-    @Setter
     private String managedIdentityUserAssignedResourceId;
 
     public AbstractManagedIdentitySource(MsalRequest msalRequest, ServiceBundle serviceBundle,
@@ -132,5 +124,29 @@ abstract class AbstractManagedIdentitySource {
     protected static IEnvironmentVariables getEnvironmentVariables() {
         return ManagedIdentityApplication.environmentVariables == null ?
                 new EnvironmentVariables() : ManagedIdentityApplication.environmentVariables;
+    }
+
+    public boolean isUserAssignedManagedIdentity() {
+        return this.isUserAssignedManagedIdentity;
+    }
+
+    public String getManagedIdentityUserAssignedClientId() {
+        return this.managedIdentityUserAssignedClientId;
+    }
+
+    public String getManagedIdentityUserAssignedResourceId() {
+        return this.managedIdentityUserAssignedResourceId;
+    }
+
+    public void setUserAssignedManagedIdentity(boolean isUserAssignedManagedIdentity) {
+        this.isUserAssignedManagedIdentity = isUserAssignedManagedIdentity;
+    }
+
+    public void setManagedIdentityUserAssignedClientId(String managedIdentityUserAssignedClientId) {
+        this.managedIdentityUserAssignedClientId = managedIdentityUserAssignedClientId;
+    }
+
+    public void setManagedIdentityUserAssignedResourceId(String managedIdentityUserAssignedResourceId) {
+        this.managedIdentityUserAssignedResourceId = managedIdentityUserAssignedResourceId;
     }
 }

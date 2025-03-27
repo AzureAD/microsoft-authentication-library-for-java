@@ -3,9 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.*;
-import lombok.experimental.Accessors;
-
 import java.util.Map;
 import java.util.Set;
 
@@ -18,43 +15,23 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
  * <p>
  * For more details, see https://aka.ms/msal4j-iwa
  */
-@Builder
-@Accessors(fluent = true)
-@Getter
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class IntegratedWindowsAuthenticationParameters implements IAcquireTokenParameters {
 
-    /**
-     * Scopes that the application is requesting access to
-     */
-    @NonNull
     private Set<String> scopes;
-
-    /**
-     * Identifier of user account for which to acquire tokens for
-     */
-    @NonNull
     private String username;
-
-    /**
-     * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
-     */
     private ClaimsRequest claims;
-
-    /**
-     * Adds additional headers to the token request
-     */
     private Map<String, String> extraHttpHeaders;
-
-    /**
-     * Adds additional parameters to the token request
-     */
     private Map<String, String> extraQueryParameters;
-
-    /**
-     * Overrides the tenant value in the authority URL for this request
-     */
     private String tenant;
+
+    private IntegratedWindowsAuthenticationParameters(Set<String> scopes, String username, ClaimsRequest claims, Map<String, String> extraHttpHeaders, Map<String, String> extraQueryParameters, String tenant) {
+        this.scopes = scopes;
+        this.username = username;
+        this.claims = claims;
+        this.extraHttpHeaders = extraHttpHeaders;
+        this.extraQueryParameters = extraQueryParameters;
+        this.tenant = tenant;
+    }
 
     private static IntegratedWindowsAuthenticationParametersBuilder builder() {
 
@@ -77,5 +54,101 @@ public class IntegratedWindowsAuthenticationParameters implements IAcquireTokenP
         return builder()
                 .scopes(scopes)
                 .username(username);
+    }
+
+    public Set<String> scopes() {
+        return this.scopes;
+    }
+
+    public String username() {
+        return this.username;
+    }
+
+    public ClaimsRequest claims() {
+        return this.claims;
+    }
+
+    public Map<String, String> extraHttpHeaders() {
+        return this.extraHttpHeaders;
+    }
+
+    public Map<String, String> extraQueryParameters() {
+        return this.extraQueryParameters;
+    }
+
+    public String tenant() {
+        return this.tenant;
+    }
+
+    public static class IntegratedWindowsAuthenticationParametersBuilder {
+        private Set<String> scopes;
+        private String username;
+        private ClaimsRequest claims;
+        private Map<String, String> extraHttpHeaders;
+        private Map<String, String> extraQueryParameters;
+        private String tenant;
+
+        IntegratedWindowsAuthenticationParametersBuilder() {
+        }
+
+        /**
+         * Scopes that the application is requesting access to
+         */
+        public IntegratedWindowsAuthenticationParametersBuilder scopes(Set<String> scopes) {
+            validateNotNull("scopes", scopes);
+
+            this.scopes = scopes;
+            return this;
+        }
+
+        /**
+         * Identifier of user account for which to acquire tokens for
+         */
+        public IntegratedWindowsAuthenticationParametersBuilder username(String username) {
+            validateNotNull("username", username);
+
+            this.username = username;
+            return this;
+        }
+
+        /**
+         * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
+         */
+        public IntegratedWindowsAuthenticationParametersBuilder claims(ClaimsRequest claims) {
+            this.claims = claims;
+            return this;
+        }
+
+        /**
+         * Adds additional headers to the token request
+         */
+        public IntegratedWindowsAuthenticationParametersBuilder extraHttpHeaders(Map<String, String> extraHttpHeaders) {
+            this.extraHttpHeaders = extraHttpHeaders;
+            return this;
+        }
+
+        /**
+         * Adds additional parameters to the token request
+         */
+        public IntegratedWindowsAuthenticationParametersBuilder extraQueryParameters(Map<String, String> extraQueryParameters) {
+            this.extraQueryParameters = extraQueryParameters;
+            return this;
+        }
+
+        /**
+         * Overrides the tenant value in the authority URL for this request
+         */
+        public IntegratedWindowsAuthenticationParametersBuilder tenant(String tenant) {
+            this.tenant = tenant;
+            return this;
+        }
+
+        public IntegratedWindowsAuthenticationParameters build() {
+            return new IntegratedWindowsAuthenticationParameters(this.scopes, this.username, this.claims, this.extraHttpHeaders, this.extraQueryParameters, this.tenant);
+        }
+
+        public String toString() {
+            return "IntegratedWindowsAuthenticationParameters.IntegratedWindowsAuthenticationParametersBuilder(scopes=" + this.scopes + ", username=" + this.username + ", claims=" + this.claims + ", extraHttpHeaders=" + this.extraHttpHeaders + ", extraQueryParameters=" + this.extraQueryParameters + ", tenant=" + this.tenant + ")";
+        }
     }
 }

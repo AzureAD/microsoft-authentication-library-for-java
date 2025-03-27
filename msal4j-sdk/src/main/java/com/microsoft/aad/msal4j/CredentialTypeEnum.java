@@ -3,14 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.experimental.Accessors;
-
-@Accessors(fluent = true)
-@Getter
-@AllArgsConstructor
 enum CredentialTypeEnum {
 
     ACCESS_TOKEN("AccessToken"),
@@ -18,4 +10,12 @@ enum CredentialTypeEnum {
     ID_TOKEN("IdToken");
 
     private final String value;
+
+    CredentialTypeEnum(String value) {
+        this.value = value;
+    }
+
+    String value() {
+        return this.value;
+    }
 }

@@ -3,10 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.experimental.Accessors;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -14,41 +10,14 @@ import java.util.Map;
 /**
  * Exception type thrown when service returns an error response or other networking errors occur.
  */
-@Accessors(fluent = true)
-@Getter
 public class MsalServiceException extends MsalException {
 
-    /**
-     * Status code returned from http layer
-     */
     private Integer statusCode;
-
-    /**
-     * Status message returned from the http layer
-     */
     private String statusMessage;
-
-    /**
-     * An ID that can be used to piece up a single authentication flow.
-     */
     private String correlationId;
-
-    /**
-     * Claims included in the claims challenge
-     */
     private String claims;
-
-    /**
-     * Contains the http headers from the server response that indicated an error.
-     * When the server returns a 429 Too Many Requests error, a Retry-After should be set.
-     * It is important to read and respect the time specified in the Retry-After header
-     */
     private Map<String, List<String>> headers;
-
     private String managedIdentitySource;
-
-    @Accessors(fluent = true)
-    @Getter(AccessLevel.PACKAGE)
     private String subError;
 
     /**
@@ -104,5 +73,50 @@ public class MsalServiceException extends MsalException {
         super(discoveryResponse.errorDescription(), discoveryResponse.error());
 
         this.correlationId = discoveryResponse.correlationId();
+    }
+
+    /**
+     * Status code returned from http layer
+     */
+    public Integer statusCode() {
+        return this.statusCode;
+    }
+
+    /**
+     * Status message returned from the http layer
+     */
+    public String statusMessage() {
+        return this.statusMessage;
+    }
+
+    /**
+     * An ID that can be used to piece up a single authentication flow.
+     */
+    public String correlationId() {
+        return this.correlationId;
+    }
+
+    /**
+     * Claims included in the claims challenge
+     */
+    public String claims() {
+        return this.claims;
+    }
+
+    /**
+     * Contains the http headers from the server response that indicated an error.
+     * When the server returns a 429 Too Many Requests error, a Retry-After should be set.
+     * It is important to read and respect the time specified in the Retry-After header
+     */
+    public Map<String, List<String>> headers() {
+        return this.headers;
+    }
+
+    public String managedIdentitySource() {
+        return this.managedIdentitySource;
+    }
+
+    String subError() {
+        return this.subError;
     }
 }

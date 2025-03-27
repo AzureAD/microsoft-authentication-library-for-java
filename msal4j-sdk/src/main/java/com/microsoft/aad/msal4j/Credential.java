@@ -4,13 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
 
-@Accessors(fluent = true)
-@Getter
-@Setter
 class Credential {
 
     @JsonProperty("home_account_id")
@@ -27,4 +21,44 @@ class Credential {
 
     @JsonProperty("user_assertion_hash")
     protected String userAssertionHash;
+
+    String homeAccountId() {
+        return this.homeAccountId;
+    }
+
+    String environment() {
+        return this.environment;
+    }
+
+    String clientId() {
+        return this.clientId;
+    }
+
+    String secret() {
+        return this.secret;
+    }
+
+    String userAssertionHash() {
+        return this.userAssertionHash;
+    }
+
+    void homeAccountId(String homeAccountId) {
+        this.homeAccountId = homeAccountId;
+    }
+
+    void environment(String environment) {
+        this.environment = environment;
+    }
+
+    void clientId(String clientId) {
+        this.clientId = clientId;
+    }
+
+    void secret(String secret) {
+        this.secret = secret;
+    }
+
+    void userAssertionHash(String userAssertionHash) {
+        this.userAssertionHash = userAssertionHash;
+    }
 }

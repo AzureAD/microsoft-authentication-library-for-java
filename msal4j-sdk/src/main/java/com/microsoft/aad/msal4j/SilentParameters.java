@@ -131,7 +131,6 @@ public class SilentParameters implements IAcquireTokenParameters {
         return this.proofOfPossession;
     }
 
-    //This Builder class is used to override Lombok's default setter behavior for any fields defined in it
     public static class SilentParametersBuilder {
 
         private Set<String> scopes;

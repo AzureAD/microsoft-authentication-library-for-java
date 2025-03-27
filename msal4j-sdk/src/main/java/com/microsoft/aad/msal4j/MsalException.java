@@ -3,9 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.Getter;
-import lombok.experimental.Accessors;
-
 /**
  * Base exception type thrown when an error occurs during token acquisition.
  */
@@ -16,8 +13,6 @@ public class MsalException extends RuntimeException {
     /**
      * Authentication error code
      */
-    @Accessors(fluent = true)
-    @Getter
     private String errorCode;
 
     /**
@@ -37,5 +32,9 @@ public class MsalException extends RuntimeException {
     public MsalException(final String message, String errorCode) {
         super(message);
         this.errorCode = errorCode;
+    }
+
+    public String errorCode() {
+        return this.errorCode;
     }
 }

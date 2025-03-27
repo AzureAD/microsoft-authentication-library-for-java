@@ -4,64 +4,101 @@
 package com.microsoft.aad.msal4j;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
 
 /**
  * Response returned from the STS device code endpoint containing information necessary for
  * device code flow
  */
-@Accessors(fluent = true)
-@Getter
 public final class DeviceCode {
+
+    @JsonProperty("user_code")
+    private String userCode;
+
+    @JsonProperty("device_code")
+    private String deviceCode;
+
+    @JsonProperty("verification_uri")
+    private String verificationUri;
+
+    @JsonProperty("expires_in")
+    private long expiresIn;
+
+    @JsonProperty("interval")
+    private long interval;
+
+    @JsonProperty("message")
+    private String message;
+
+    private transient String correlationId = null;
+    private transient String clientId = null;
+    private transient String scopes = null;
 
     /**
      * code which user needs to provide when authenticating at the verification URI
      */
-    @JsonProperty("user_code")
-    private String userCode;
+    public String userCode() {
+        return this.userCode;
+    }
 
     /**
      * code which should be included in the request for the access token
      */
-    @JsonProperty("device_code")
-    private String deviceCode;
+    public String deviceCode() {
+        return this.deviceCode;
+    }
 
     /**
      * URI where user can authenticate
      */
-    @JsonProperty("verification_uri")
-    private String verificationUri;
+    public String verificationUri() {
+        return this.verificationUri;
+    }
 
     /**
      * expiration time of device code in seconds.
      */
-    @JsonProperty("expires_in")
-    private long expiresIn;
+    public long expiresIn() {
+        return this.expiresIn;
+    }
 
     /**
      * interval at which the STS should be polled at
      */
-    @JsonProperty("interval")
-    private long interval;
+    public long interval() {
+        return this.interval;
+    }
 
     /**
      * message which should be displayed to the user.
      */
-    @JsonProperty("message")
-    private String message;
+    public String message() {
+        return this.message;
+    }
 
-    @Getter(AccessLevel.PROTECTED)
-    @Setter(AccessLevel.PROTECTED)
-    private transient String correlationId = null;
+    protected String correlationId() {
+        return this.correlationId;
+    }
 
-    @Getter(AccessLevel.PROTECTED)
-    @Setter(AccessLevel.PROTECTED)
-    private transient String clientId = null;
+    protected String clientId() {
+        return this.clientId;
+    }
 
-    @Getter(AccessLevel.PROTECTED)
-    @Setter(AccessLevel.PROTECTED)
-    private transient String scopes = null;
+    protected String scopes() {
+        return this.scopes;
+    }
+
+    protected DeviceCode correlationId(String correlationId) {
+        this.correlationId = correlationId;
+        return this;
+    }
+
+    protected DeviceCode clientId(String clientId) {
+        this.clientId = clientId;
+        return this;
+    }
+
+    protected DeviceCode scopes(String scopes) {
+        this.scopes = scopes;
+        return this;
+    }
 }

@@ -4,9 +4,6 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.util.URLUtils;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.experimental.Accessors;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,8 +12,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
-@Accessors(fluent = true)
-@Getter(AccessLevel.PACKAGE)
 class DeviceCodeFlowRequest extends MsalRequest {
 
     private AtomicReference<CompletableFuture<IAuthenticationResult>> futureReference;
@@ -98,5 +93,17 @@ class DeviceCodeFlowRequest extends MsalRequest {
         result.scopes(scopesStr);
 
         return result;
+    }
+
+    AtomicReference<CompletableFuture<IAuthenticationResult>> futureReference() {
+        return this.futureReference;
+    }
+
+    DeviceCodeFlowParameters parameters() {
+        return this.parameters;
+    }
+
+    String scopesStr() {
+        return this.scopesStr;
     }
 }

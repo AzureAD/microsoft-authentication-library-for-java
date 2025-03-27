@@ -3,16 +3,11 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.*;
-import lombok.experimental.Accessors;
-
 import java.net.URI;
 import java.util.Map;
 import java.util.Set;
 
-import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotBlank;
-import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotEmpty;
-import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
+import static com.microsoft.aad.msal4j.ParameterValidationUtils.*;
 
 /**
  * Object containing parameters for Username/Password flow. Can be used as parameter to
@@ -20,51 +15,27 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
  * <p>
  * For more details, see https://aka.ms/msal4j-username-password
  */
-@Builder
-@Accessors(fluent = true)
-@Getter
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserNamePasswordParameters implements IAcquireTokenParameters {
 
-    /**
-     * Scopes application is requesting access to
-     */
-    @NonNull
     private Set<String> scopes;
-
-    /**
-     * Username of the account
-     */
-    @NonNull
     private String username;
-
-    /**
-     * Char array containing credentials for the username
-     */
-    @NonNull
     private char[] password;
-
-    /**
-     * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
-     */
     private ClaimsRequest claims;
-
-    /**
-     * Adds additional headers to the token request
-     */
     private Map<String, String> extraHttpHeaders;
-
-    /**
-     * Adds additional query parameters to the token request
-     */
     private Map<String, String> extraQueryParameters;
-
-    /**
-     * Overrides the tenant value in the authority URL for this request
-     */
     private String tenant;
-
     private PopParameters proofOfPossession;
+
+    private UserNamePasswordParameters(Set<String> scopes, String username, char[] password, ClaimsRequest claims, Map<String, String> extraHttpHeaders, Map<String, String> extraQueryParameters, String tenant, PopParameters proofOfPossession) {
+        this.scopes = scopes;
+        this.username = username;
+        this.password = password;
+        this.claims = claims;
+        this.extraHttpHeaders = extraHttpHeaders;
+        this.extraQueryParameters = extraQueryParameters;
+        this.tenant = tenant;
+        this.proofOfPossession = proofOfPossession;
+    }
 
     public char[] password() {
         return password.clone();
@@ -96,8 +67,53 @@ public class UserNamePasswordParameters implements IAcquireTokenParameters {
                 .password(password);
     }
 
+    public Set<String> scopes() {
+        return this.scopes;
+    }
+
+    public String username() {
+        return this.username;
+    }
+
+    public ClaimsRequest claims() {
+        return this.claims;
+    }
+
+    public Map<String, String> extraHttpHeaders() {
+        return this.extraHttpHeaders;
+    }
+
+    public Map<String, String> extraQueryParameters() {
+        return this.extraQueryParameters;
+    }
+
+    public String tenant() {
+        return this.tenant;
+    }
+
+    public PopParameters proofOfPossession() {
+        return this.proofOfPossession;
+    }
+
     public static class UserNamePasswordParametersBuilder {
+        private Set<String> scopes;
+        private String username;
+        private char[] password;
+        private ClaimsRequest claims;
+        private Map<String, String> extraHttpHeaders;
+        private Map<String, String> extraQueryParameters;
+        private String tenant;
+        private PopParameters proofOfPossession;
+
+        UserNamePasswordParametersBuilder() {
+        }
+
+        /**
+         * Char array containing credentials for the username
+         */
         public UserNamePasswordParametersBuilder password(char[] password) {
+            validateNotNull("password", password);
+
             this.password = password.clone();
             return this;
         }
@@ -115,6 +131,70 @@ public class UserNamePasswordParameters implements IAcquireTokenParameters {
             this.proofOfPossession = new PopParameters(httpMethod, uri, nonce);
 
             return this;
+        }
+
+        /**
+         * Scopes application is requesting access to
+         * <p>
+         * Cannot be null.
+         */
+        public UserNamePasswordParametersBuilder scopes(Set<String> scopes) {
+            validateNotNull("scopes", scopes);
+
+            this.scopes = scopes;
+            return this;
+        }
+
+        /**
+         * Username of the account
+         * <p>
+         * Cannot be null.
+         */
+        public UserNamePasswordParametersBuilder username(String username) {
+            validateNotNull("username", username);
+
+            this.username = username;
+            return this;
+        }
+
+        /**
+         * Claims to be requested through the OIDC claims request parameter, allowing requests for standard and custom claims
+         */
+        public UserNamePasswordParametersBuilder claims(ClaimsRequest claims) {
+            this.claims = claims;
+            return this;
+        }
+
+        /**
+         * Adds additional headers to the token request
+         */
+        public UserNamePasswordParametersBuilder extraHttpHeaders(Map<String, String> extraHttpHeaders) {
+            this.extraHttpHeaders = extraHttpHeaders;
+            return this;
+        }
+
+        /**
+         * Adds additional query parameters to the token request
+         */
+        public UserNamePasswordParametersBuilder extraQueryParameters(Map<String, String> extraQueryParameters) {
+            this.extraQueryParameters = extraQueryParameters;
+            return this;
+        }
+
+        /**
+         * Overrides the tenant value in the authority URL for this request
+         */
+        public UserNamePasswordParametersBuilder tenant(String tenant) {
+            this.tenant = tenant;
+            return this;
+        }
+
+        public UserNamePasswordParameters build() {
+            return new UserNamePasswordParameters(this.scopes, this.username, this.password, this.claims, this.extraHttpHeaders, this.extraQueryParameters, this.tenant, this.proofOfPossession);
+        }
+
+        public String toString() {
+            return "UserNamePasswordParameters.UserNamePasswordParametersBuilder(scopes=" + this.scopes + ", username=" + this.username + ", password=" + java.util.Arrays.toString(this.password) + ", claims=" + this.claims + ", extraHttpHeaders=" + this.extraHttpHeaders + ", extraQueryParameters=" + this.extraQueryParameters + ", tenant=" + this.tenant + ", proofOfPossession=" + this.proofOfPossession + ")";
         }
     }
 }

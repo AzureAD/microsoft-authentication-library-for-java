@@ -3,16 +3,10 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.experimental.Accessors;
-
 /**
  * Used for populating the X-AnchorMailbox header, which is used in the cached credential service
  * (CCS) routing
  */
-@Getter(AccessLevel.PACKAGE)
-@Accessors(fluent = true)
 public class UserIdentifier {
 
     // Format is "userObjectId@userTenantId"
@@ -44,5 +38,13 @@ public class UserIdentifier {
 
         userIdentifier.oid = String.format(OID_HEADER_FORMAT, homeAccountIdParts[0], homeAccountIdParts[1]);
         return userIdentifier;
+    }
+
+    String upn() {
+        return this.upn;
+    }
+
+    String oid() {
+        return this.oid;
     }
 }

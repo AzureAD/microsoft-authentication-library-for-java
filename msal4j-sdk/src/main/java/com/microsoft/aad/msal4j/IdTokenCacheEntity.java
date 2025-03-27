@@ -4,16 +4,10 @@
 package com.microsoft.aad.msal4j;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Accessors(fluent = true)
-@Getter
-@Setter
 class IdTokenCacheEntity extends Credential {
 
     @JsonProperty("credential_type")
@@ -35,5 +29,21 @@ class IdTokenCacheEntity extends Credential {
         keyParts.add("");
 
         return String.join(Constants.CACHE_KEY_SEPARATOR, keyParts).toLowerCase();
+    }
+
+    String credentialType() {
+        return this.credentialType;
+    }
+
+    String realm() {
+        return this.realm;
+    }
+
+    void credentialType(String credentialType) {
+        this.credentialType = credentialType;
+    }
+
+    void realm(String realm) {
+        this.realm = realm;
     }
 }

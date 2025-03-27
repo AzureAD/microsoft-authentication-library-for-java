@@ -3,21 +3,11 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
-
 import java.io.Serializable;
 
 /**
  * Contains metadata and additional context for the contents of an AuthenticationResult
  */
-@Accessors(fluent = true)
-@Getter
-@Setter(AccessLevel.PACKAGE)
-@Builder
 public class AuthenticationResultMetadata implements Serializable {
 
     /**
@@ -33,6 +23,71 @@ public class AuthenticationResultMetadata implements Serializable {
     /**
      * Specifies the reason for refreshing the access token, see {@link CacheRefreshReason} for possible values. Will be {@link CacheRefreshReason#NOT_APPLICABLE} if the token was returned from the cache or if the API used to fetch the token does not attempt to read the cache.
      */
-    @Builder.Default
     private CacheRefreshReason cacheRefreshReason = CacheRefreshReason.NOT_APPLICABLE;
+
+    AuthenticationResultMetadata(TokenSource tokenSource, Long refreshOn, CacheRefreshReason cacheRefreshReason) {
+        this.tokenSource = tokenSource;
+        this.refreshOn = refreshOn;
+        this.cacheRefreshReason = cacheRefreshReason == null ? CacheRefreshReason.NOT_APPLICABLE : cacheRefreshReason;
+    }
+
+    public static AuthenticationResultMetadataBuilder builder() {
+        return new AuthenticationResultMetadataBuilder();
+    }
+
+    public TokenSource tokenSource() {
+        return this.tokenSource;
+    }
+
+    public Long refreshOn() {
+        return this.refreshOn;
+    }
+
+    public CacheRefreshReason cacheRefreshReason() {
+        return this.cacheRefreshReason;
+    }
+
+    void tokenSource(TokenSource tokenSource) {
+        this.tokenSource = tokenSource;
+    }
+
+    void refreshOn(Long refreshOn) {
+        this.refreshOn = refreshOn;
+    }
+
+    void cacheRefreshReason(CacheRefreshReason cacheRefreshReason) {
+        this.cacheRefreshReason = cacheRefreshReason;
+    }
+
+    public static class AuthenticationResultMetadataBuilder {
+        private TokenSource tokenSource;
+        private Long refreshOn;
+        private CacheRefreshReason cacheRefreshReason;
+
+        AuthenticationResultMetadataBuilder() {
+        }
+
+        public AuthenticationResultMetadataBuilder tokenSource(TokenSource tokenSource) {
+            this.tokenSource = tokenSource;
+            return this;
+        }
+
+        public AuthenticationResultMetadataBuilder refreshOn(Long refreshOn) {
+            this.refreshOn = refreshOn;
+            return this;
+        }
+
+        public AuthenticationResultMetadataBuilder cacheRefreshReason(CacheRefreshReason cacheRefreshReason) {
+            this.cacheRefreshReason = cacheRefreshReason;
+            return this;
+        }
+
+        public AuthenticationResultMetadata build() {
+            return new AuthenticationResultMetadata(this.tokenSource, this.refreshOn, cacheRefreshReason);
+        }
+
+        public String toString() {
+            return "AuthenticationResultMetadata.AuthenticationResultMetadataBuilder(tokenSource=" + this.tokenSource + ", refreshOn=" + this.refreshOn + ", cacheRefreshReason$value=" + this.cacheRefreshReason + ")";
+        }
+    }
 }
