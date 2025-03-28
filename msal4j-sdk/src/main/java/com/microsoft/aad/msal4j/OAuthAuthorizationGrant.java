@@ -3,7 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -15,15 +14,25 @@ class OAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
 
     private final Map<String, List<String>> params = new LinkedHashMap<>();
 
-    OAuthAuthorizationGrant(Map<String, List<String>> params, Set<String> scopesSet, ClaimsRequest claims) {
-        this(params, scopesSet != null ? String.join(" ", scopesSet) : null, claims);
-    }
+    /**
+     * Constructor to create an OAuthAuthorizationGrant
+     *
+     * @param params parameters relevant for the specific authorization grant type
+     * @param scopes additional scopes which will be added to a default set of common scopes
+     * @param claims optional claims
+     */
+    OAuthAuthorizationGrant(Map<String, List<String>> params, Set<String> scopes, ClaimsRequest claims) {
+        this.scopes = new HashSet<>(AbstractMsalAuthorizationGrant.COMMON_SCOPES);
 
-    OAuthAuthorizationGrant(Map<String, List<String>> params, String scopes, ClaimsRequest claims) {
-        this(params);
+        if (scopes != null) {
+            this.scopes.addAll(scopes);
+        }
 
-        this.scopes = addCommonScopes(scopes);
-        this.params.put(SCOPE_PARAM_NAME, Collections.singletonList(this.scopes));
+        this.params.put(SCOPE_PARAM_NAME, Collections.singletonList(String.join(" ", this.scopes)));
+
+        if (params != null) {
+            this.params.putAll(params);
+        }
 
         if (claims != null) {
             this.claims = claims;
@@ -31,36 +40,15 @@ class OAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
         }
     }
 
-    OAuthAuthorizationGrant(Map<String, List<String>> params) {
-        if (params != null) {
-            this.params.putAll(params);
-        }
-    }
-
+    /**
+     * Returns an unmodifiable version of the parameters map, and adds the client_info parameter
+     */
     @Override
     public Map<String, List<String>> toParameters() {
         final Map<String, List<String>> outParams = new LinkedHashMap<>(params);
 
         outParams.put("client_info", Collections.singletonList("1"));
 
-        if (claims != null) {
-            outParams.put("claims", Collections.singletonList(claims.formatAsJSONString()));
-        }
-
         return Collections.unmodifiableMap(outParams);
-    }
-
-    Map<String, List<String>> getParameters() {
-        return params;
-    }
-
-    String addCommonScopes(String scopes) {
-        Set<String> allScopes = new HashSet<>(
-                Arrays.asList(COMMON_SCOPES_PARAM.split(SCOPES_DELIMITER)));
-
-        if (!StringHelper.isBlank(scopes)) {
-            allScopes.addAll(Arrays.asList(scopes.split(SCOPES_DELIMITER)));
-        }
-        return String.join(SCOPES_DELIMITER, allScopes);
     }
 }

@@ -22,4 +22,5 @@ class GrantConstants {
     static final String SAML_1_1_BEARER = "urn:ietf:params:oauth:grant-type:saml1_1-bearer";
     static final String JWT_BEARER = "urn:ietf:params:oauth:grant-type:jwt-bearer";
     static final String REFRESH_TOKEN = "refresh_token";
+    static final String DEVICE_CODE = "device_code";
 }

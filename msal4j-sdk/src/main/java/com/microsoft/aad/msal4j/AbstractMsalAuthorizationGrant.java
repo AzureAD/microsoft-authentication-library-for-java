@@ -3,8 +3,12 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Abstract class for an MSAL grant.
@@ -25,13 +29,12 @@ abstract class AbstractMsalAuthorizationGrant {
     static final String SCOPE_PROFILE = "profile";
     static final String SCOPE_OFFLINE_ACCESS = "offline_access";
 
-    static final String COMMON_SCOPES_PARAM = SCOPE_OPEN_ID + SCOPES_DELIMITER +
-            SCOPE_PROFILE + SCOPES_DELIMITER +
-            SCOPE_OFFLINE_ACCESS;
+    static final Set<String> COMMON_SCOPES = Stream.of(SCOPE_OPEN_ID, SCOPE_PROFILE, SCOPE_OFFLINE_ACCESS)
+            .collect(Collectors.toCollection(HashSet::new));
 
-    String scopes;
+    Set<String> scopes;
 
-    String getScopes() {
+    Set<String> getScopes() {
         return scopes;
     }
 

@@ -77,7 +77,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
     private OAuthAuthorizationGrant processPasswordGrant(
             OAuthAuthorizationGrant authGrant) throws Exception {
 
-        if (!(authGrant.getParameters().get(GrantConstants.GRANT_TYPE_PARAMETER).get(0).equals(GrantConstants.PASSWORD))) {
+        if (!(authGrant.toParameters().get(GrantConstants.GRANT_TYPE_PARAMETER).get(0).equals(GrantConstants.PASSWORD))) {
             return authGrant;
         }
 
@@ -86,7 +86,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
         }
 
         UserDiscoveryResponse userDiscoveryResponse = UserDiscoveryRequest.execute(
-                this.clientApplication.authenticationAuthority.getUserRealmEndpoint(authGrant.getParameters().get("username").get(0)),
+                this.clientApplication.authenticationAuthority.getUserRealmEndpoint(authGrant.toParameters().get("username").get(0)),
                 msalRequest.headers().getReadonlyHeaderMap(),
                 msalRequest.requestContext(),
                 this.clientApplication.serviceBundle());
@@ -94,17 +94,17 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
         if (userDiscoveryResponse.isAccountFederated()) {
             WSTrustResponse response = WSTrustRequest.execute(
                     userDiscoveryResponse.federationMetadataUrl(),
-                    authGrant.getParameters().get(GrantConstants.USERNAME_PARAMETER).get(0),
-                    authGrant.getParameters().get(GrantConstants.PASSWORD_PARAMETER).get(0),
+                    authGrant.toParameters().get(GrantConstants.USERNAME_PARAMETER).get(0),
+                    authGrant.toParameters().get(GrantConstants.PASSWORD_PARAMETER).get(0),
                     userDiscoveryResponse.cloudAudienceUrn(),
                     msalRequest.requestContext(),
                     this.clientApplication.serviceBundle(),
                     this.clientApplication.logPii());
 
             Map<String, List<String>> params = getSAMLAuthGrantParameters(response);
-            params.putAll(authGrant.getParameters());
+            params.putAll(authGrant.toParameters());
 
-            authGrant = new OAuthAuthorizationGrant(params);
+            authGrant = new OAuthAuthorizationGrant(params, null, null);
         }
         return authGrant;
     }

@@ -3,17 +3,13 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.jwt.SignedJWT;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
-import java.text.ParseException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.microsoft.aad.msal4j.AbstractMsalAuthorizationGrant.SCOPES_DELIMITER;
 
 @Accessors(fluent = true)
 @Getter
@@ -32,18 +28,13 @@ class OnBehalfOfRequest extends MsalRequest {
         Map<String, List<String>> params = new LinkedHashMap<>();
 
         params.put(GrantConstants.GRANT_TYPE_PARAMETER, Collections.singletonList(GrantConstants.JWT_BEARER));
+        params.put(GrantConstants.ASSERTION_PARAMETER, Collections.singletonList(parameters.userAssertion().getAssertion()));
         params.put("requested_token_use", Collections.singletonList("on_behalf_of"));
 
         if (parameters.claims() != null) {
             params.put("claims", Collections.singletonList(parameters.claims().formatAsJSONString()));
         }
 
-        try {
-            params.put(GrantConstants.ASSERTION_PARAMETER, Collections.singletonList(SignedJWT.parse(parameters.userAssertion().getAssertion()).getParsedString()));
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
-
-        return new OAuthAuthorizationGrant(params, String.join(SCOPES_DELIMITER, parameters.scopes()), null);
+        return new OAuthAuthorizationGrant(params, parameters.scopes(), null);
     }
 }
