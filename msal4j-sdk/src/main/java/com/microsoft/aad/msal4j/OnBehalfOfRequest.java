@@ -3,17 +3,10 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.oauth2.sdk.AuthorizationGrant;
-import com.nimbusds.oauth2.sdk.JWTBearerGrant;
-
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.microsoft.aad.msal4j.AbstractMsalAuthorizationGrant.SCOPES_DELIMITER;
-
 class OnBehalfOfRequest extends MsalRequest {
 
     OnBehalfOfParameters parameters;
