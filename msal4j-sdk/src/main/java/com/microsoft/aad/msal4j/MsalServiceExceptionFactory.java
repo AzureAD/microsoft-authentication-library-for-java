@@ -26,6 +26,12 @@ class MsalServiceExceptionFactory {
                 responseBody,
                 ErrorResponse.class);
 
+        if (errorResponse.error() != null &&
+                errorResponse.error().equalsIgnoreCase(AuthenticationErrorCode.INVALID_GRANT) && isInteractionRequired(errorResponse.subError)) {
+            return new MsalInteractionRequiredException(errorResponse, response.headers());
+        }
+
+
         if (!StringHelper.isBlank(errorResponse.error()) && !StringHelper.isBlank(errorResponse.errorDescription)) {
 
             errorResponse.statusCode(response.statusCode());

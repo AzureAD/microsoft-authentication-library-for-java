@@ -4,7 +4,6 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
 import net.minidev.json.JSONObject;
 import org.json.JSONException;
@@ -154,12 +153,12 @@ class CacheFormatTests {
         TokenRequestExecutor request = spy(new TokenRequestExecutor(
                 new AADAuthority(new URL(AUTHORIZE_REQUEST_URL)), msalRequest, serviceBundle));
         OAuthHttpRequest msalOAuthHttpRequest = mock(OAuthHttpRequest.class);
-        HTTPResponse httpResponse = mock(HTTPResponse.class);
+        HttpResponse httpResponse = mock(HttpResponse.class);
 
         doReturn(msalOAuthHttpRequest).when(request).createOauthHttpRequest();
         doReturn(httpResponse).when(msalOAuthHttpRequest).send();
-        doReturn(200).when(httpResponse).getStatusCode();
-        doReturn(JSONObjectUtils.parse(tokenResponse)).when(httpResponse).getContentAsJSONObject();
+        doReturn(200).when(httpResponse).statusCode();
+        doReturn(JSONObjectUtils.parse(tokenResponse)).when(httpResponse).getBodyAsJson();
 
         final AuthenticationResult result = request.executeTokenRequest();
 
