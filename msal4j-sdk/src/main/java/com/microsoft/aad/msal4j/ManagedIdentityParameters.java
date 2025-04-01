@@ -4,7 +4,6 @@
 package com.microsoft.aad.msal4j;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -30,7 +29,7 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
 
     @Override
     public ClaimsRequest claims() {
-        return (claims != null) ? ClaimsRequest.fromJsonString(claims) : null;
+        return (claims != null) ? ClaimsRequest.formatAsClaimsRequest(claims) : null;
     }
 
     @Override

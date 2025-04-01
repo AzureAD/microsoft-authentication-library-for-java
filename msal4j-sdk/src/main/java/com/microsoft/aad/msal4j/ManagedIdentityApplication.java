@@ -5,9 +5,7 @@ package com.microsoft.aad.msal4j;
 
 import org.slf4j.LoggerFactory;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 /**

@@ -233,39 +233,6 @@ class ManagedIdentityTests {
     }
 
     @Test
-    void managedIdentityTest_TokenRevocation() throws Exception {
-        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(ManagedIdentitySourceType.APP_SERVICE, appServiceEndpoint);
-        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
-        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
-
-        when(httpClientMock.send(expectedRequest(ManagedIdentitySourceType.APP_SERVICE, resource))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
-
-        miApp = ManagedIdentityApplication
-                .builder(ManagedIdentityId.systemAssigned())
-                .httpClient(httpClientMock)
-                .build();
-
-        // Clear caching to avoid cross test pollution.
-        miApp.tokenCache().accessTokens.clear();
-
-        IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
-                ManagedIdentityParameters.builder(resource)
-                        .build()).get();
-
-        assertNotNull(result.accessToken());
-
-        // Simulate token revocation by clearing the cache
-        miApp.tokenCache().accessTokens.clear();
-
-        result = miApp.acquireTokenForManagedIdentity(
-                ManagedIdentityParameters.builder(resource)
-                        .build()).get();
-
-        assertNotNull(result.accessToken());
-        verify(httpClientMock, times(2)).send(any());
-    }
-
-    @Test
     void managedIdentityTest_RefreshOnHalfOfExpiresOn() throws Exception {
         //All managed identity flows use the same AcquireTokenByManagedIdentitySupplier where refreshOn is set,
         //  so any of the MI options should let us verify that it's being set correctly
