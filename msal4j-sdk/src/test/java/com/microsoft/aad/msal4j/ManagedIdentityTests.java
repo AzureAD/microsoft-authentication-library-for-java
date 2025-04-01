@@ -28,6 +28,7 @@ import static com.microsoft.aad.msal4j.MsalErrorMessage.*;
 import static java.util.Collections.*;
 import static org.apache.http.HttpStatus.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -229,6 +230,39 @@ class ManagedIdentityTests {
 
         assertNotNull(result.accessToken());
         verify(httpClientMock, times(1)).send(any());
+    }
+
+    @Test
+    void managedIdentityTest_TokenRevocation() throws Exception {
+        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(ManagedIdentitySourceType.APP_SERVICE, appServiceEndpoint);
+        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        when(httpClientMock.send(expectedRequest(ManagedIdentitySourceType.APP_SERVICE, resource))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+
+        miApp = ManagedIdentityApplication
+                .builder(ManagedIdentityId.systemAssigned())
+                .httpClient(httpClientMock)
+                .build();
+
+        // Clear caching to avoid cross test pollution.
+        miApp.tokenCache().accessTokens.clear();
+
+        IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
+                ManagedIdentityParameters.builder(resource)
+                        .build()).get();
+
+        assertNotNull(result.accessToken());
+
+        // Simulate token revocation by clearing the cache
+        miApp.tokenCache().accessTokens.clear();
+
+        result = miApp.acquireTokenForManagedIdentity(
+                ManagedIdentityParameters.builder(resource)
+                        .build()).get();
+
+        assertNotNull(result.accessToken());
+        verify(httpClientMock, times(2)).send(any());
     }
 
     @Test
@@ -576,6 +610,38 @@ class ManagedIdentityTests {
         // so calling acquireTokenForManagedIdentity with the same parameters in two different ManagedIdentityApplications
         // should return the same token
         assertEquals(resultMiApp1.accessToken(), resultMiApp2.accessToken());
+        verify(httpClientMock, times(1)).send(any());
+    }
+
+    // managedIdentityTest_WithClaims: Tests that acquiring a token with claims works correctly
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.ManagedIdentityTestDataProvider#createDataError")
+    void managedIdentityTest_WithClaims(ManagedIdentitySourceType source, String endpoint) throws Exception {
+        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
+        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+        if (source == SERVICE_FABRIC) {
+            ServiceFabricManagedIdentitySource.setHttpClient(httpClientMock);
+        }
+
+        when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+
+        miApp = ManagedIdentityApplication
+                .builder(ManagedIdentityId.systemAssigned())
+                .clientCapabilities(singletonList("cp1"))
+                .httpClient(httpClientMock)
+                .build();
+
+        // Clear caching to avoid cross test pollution.
+        miApp.tokenCache().accessTokens.clear();
+
+        String claimsJson = "{\"default\":\"claim\"}";
+        IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
+            ManagedIdentityParameters.builder(resource)
+                .claims(claimsJson)
+                .build()).get();
+
+        assertNotNull(result.accessToken());
         verify(httpClientMock, times(1)).send(any());
     }
 

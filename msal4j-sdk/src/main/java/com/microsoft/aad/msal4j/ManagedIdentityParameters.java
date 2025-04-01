@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -14,10 +15,12 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
 
     String resource;
     boolean forceRefresh;
+    String claims;
 
-    private ManagedIdentityParameters(String resource, boolean forceRefresh) {
+    private ManagedIdentityParameters(String resource, boolean forceRefresh, String claims) {
         this.resource = resource;
         this.forceRefresh = forceRefresh;
+        this.claims = claims;
     }
 
     @Override
@@ -27,7 +30,7 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
 
     @Override
     public ClaimsRequest claims() {
-        return null;
+        return (claims != null) ? ClaimsRequest.fromJsonString(claims) : null;
     }
 
     @Override
@@ -69,6 +72,7 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
     public static class ManagedIdentityParametersBuilder {
         private String resource;
         private boolean forceRefresh;
+        private String claims;
 
         ManagedIdentityParametersBuilder() {
         }
@@ -83,8 +87,13 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
             return this;
         }
 
+        public ManagedIdentityParametersBuilder claims(String claims) {
+            this.claims = claims;
+            return this;
+        }
+
         public ManagedIdentityParameters build() {
-            return new ManagedIdentityParameters(this.resource, this.forceRefresh);
+            return new ManagedIdentityParameters(this.resource, this.forceRefresh, this.claims);
         }
 
         public String toString() {

@@ -5,6 +5,9 @@ package com.microsoft.aad.msal4j;
 
 import org.slf4j.LoggerFactory;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -56,6 +59,7 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
     public ManagedIdentityId getManagedIdentityId() {
         return this.managedIdentityId;
     }
+    
     @Override
     public CompletableFuture<IAuthenticationResult> acquireTokenForManagedIdentity(ManagedIdentityParameters managedIdentityParameters)
             throws Exception {
@@ -86,6 +90,7 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
 
         private String resource;
         private ManagedIdentityId managedIdentityId;
+        private List<String> clientCapabilities;
 
         private Builder(ManagedIdentityId managedIdentityId) {
             super(managedIdentityId.getIdType() == ManagedIdentityIdType.SYSTEM_ASSIGNED ?
@@ -99,9 +104,21 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
             return self();
         }
 
+        /**
+         * Sets client capabilities for the application.
+         * 
+         * @param clientCapabilities List of client capabilities to be requested
+         * @return instance of Builder of ManagedIdentityApplication
+         */
+        public Builder clientCapabilities(List<String> clientCapabilities) {
+            if (clientCapabilities != null) {
+                this.clientCapabilities = clientCapabilities;
+            }
+            return self();
+        }
+
         @Override
         public ManagedIdentityApplication build() {
-
             return new ManagedIdentityApplication(this);
         }
 
