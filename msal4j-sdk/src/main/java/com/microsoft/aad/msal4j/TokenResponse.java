@@ -10,11 +10,8 @@ import com.nimbusds.oauth2.sdk.token.RefreshToken;
 import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
 import com.nimbusds.openid.connect.sdk.OIDCTokenResponse;
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens;
-import lombok.AccessLevel;
-import lombok.Getter;
 import net.minidev.json.JSONObject;
 
-@Getter(AccessLevel.PACKAGE)
 class TokenResponse extends OIDCTokenResponse {
 
     private String scope;
@@ -107,5 +104,29 @@ class TokenResponse extends OIDCTokenResponse {
         } catch (Exception e) {
             throw new MsalClientException(e);
         }
+    }
+
+    String getScope() {
+        return this.scope;
+    }
+
+    String getClientInfo() {
+        return this.clientInfo;
+    }
+
+    long getExpiresIn() {
+        return this.expiresIn;
+    }
+
+    long getExtExpiresIn() {
+        return this.extExpiresIn;
+    }
+
+    String getFoci() {
+        return this.foci;
+    }
+
+    long getRefreshIn() {
+        return this.refreshIn;
     }
 }

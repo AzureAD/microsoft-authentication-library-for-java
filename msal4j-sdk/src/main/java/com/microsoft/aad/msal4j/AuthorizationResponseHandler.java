@@ -6,8 +6,6 @@ package com.microsoft.aad.msal4j;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import lombok.Getter;
-import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,8 +16,6 @@ import java.io.OutputStream;
 import java.util.concurrent.BlockingQueue;
 import java.util.stream.Collectors;
 
-@Getter
-@Accessors(fluent = true)
 class AuthorizationResponseHandler implements HttpHandler {
 
     private final static Logger LOG = LoggerFactory.getLogger(AuthorizationResponseHandler.class);
@@ -120,5 +116,13 @@ class AuthorizationResponseHandler implements HttpHandler {
             return DEFAULT_FAILURE_MESSAGE;
         }
         return systemBrowserOptions().htmlMessageError();
+    }
+
+    BlockingQueue<AuthorizationResult> authorizationResultQueue() {
+        return this.authorizationResultQueue;
+    }
+
+    SystemBrowserOptions systemBrowserOptions() {
+        return this.systemBrowserOptions;
     }
 }

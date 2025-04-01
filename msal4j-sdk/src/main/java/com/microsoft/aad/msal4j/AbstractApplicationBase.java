@@ -3,18 +3,13 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 
 import javax.net.ssl.SSLSocketFactory;
-import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
@@ -30,63 +25,22 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
 
     protected Logger log;
     protected Authority authenticationAuthority;
-
-    @Accessors(fluent = true)
-    @Getter
     private String correlationId;
-
-    @Accessors(fluent = true)
-    @Getter
     private boolean logPii;
-
-    @Accessors(fluent = true)
-    @Getter
     private Proxy proxy;
-
-    @Accessors(fluent = true)
-    @Getter
     private SSLSocketFactory sslSocketFactory;
-
-    @Accessors(fluent = true)
-    @Getter
     private IHttpClient httpClient;
-
-    @Accessors(fluent = true)
-    @Getter
     private Integer connectTimeoutForDefaultHttpClient;
-
-    @Accessors(fluent = true)
-    @Getter
     private Integer readTimeoutForDefaultHttpClient;
-
-    @Accessors(fluent = true)
-    @Getter(AccessLevel.PACKAGE)
     String tenant;
 
     //The following fields are set in only some applications and/or set internally by the library. To avoid excessive
     // type casting throughout the library they are defined here as package-private, but will not be part of this class's Builder
-    @Accessors(fluent = true)
-    @Getter(AccessLevel.PACKAGE)
     private boolean validateAuthority;
-
-    @Accessors(fluent = true)
-    @Getter(AccessLevel.PACKAGE)
     private String clientId;
-
-    @Accessors(fluent = true)
-    @Getter(AccessLevel.PACKAGE)
     private String authority;
-
-    @Accessors(fluent = true)
-    @Getter(AccessLevel.PACKAGE)
     ServiceBundle serviceBundle;
-
-    @Accessors(fluent = true)
-    @Getter(AccessLevel.PACKAGE)
     Consumer<List<HashMap<String, String>>> telemetryConsumer;
-
-    @Accessors(fluent = true)
-    @Getter(AccessLevel.PACKAGE)
     protected TokenCache tokenCache;
 
     CompletableFuture<IAuthenticationResult> executeRequest(
@@ -166,6 +120,62 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
                     msalRequest, null);
         }
         return supplier;
+    }
+
+    public String correlationId() {
+        return this.correlationId;
+    }
+
+    public boolean logPii() {
+        return this.logPii;
+    }
+
+    public Proxy proxy() {
+        return this.proxy;
+    }
+
+    public SSLSocketFactory sslSocketFactory() {
+        return this.sslSocketFactory;
+    }
+
+    public IHttpClient httpClient() {
+        return this.httpClient;
+    }
+
+    public Integer connectTimeoutForDefaultHttpClient() {
+        return this.connectTimeoutForDefaultHttpClient;
+    }
+
+    public Integer readTimeoutForDefaultHttpClient() {
+        return this.readTimeoutForDefaultHttpClient;
+    }
+
+    String tenant() {
+        return this.tenant;
+    }
+
+    boolean validateAuthority() {
+        return this.validateAuthority;
+    }
+
+    String clientId() {
+        return this.clientId;
+    }
+
+    String authority() {
+        return this.authority;
+    }
+
+    ServiceBundle serviceBundle() {
+        return this.serviceBundle;
+    }
+
+    Consumer<List<HashMap<String, String>>> telemetryConsumer() {
+        return this.telemetryConsumer;
+    }
+
+    TokenCache tokenCache() {
+        return this.tokenCache;
     }
 
     public abstract static class Builder<T extends Builder<T>> {

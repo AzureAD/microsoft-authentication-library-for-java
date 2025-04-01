@@ -4,9 +4,6 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.util.URLUtils;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,16 +11,14 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
+import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
+
 /**
  * Parameters for {@link AbstractClientApplicationBase#getAuthorizationRequestUrl(AuthorizationRequestUrlParameters)}
  */
-@Accessors(fluent = true)
-@Getter
 public class AuthorizationRequestUrlParameters {
 
-    @NonNull
     private String redirectUri;
-    @NonNull
     private Set<String> scopes;
     private String codeChallenge;
     private String codeChallengeMethod;
@@ -192,6 +187,66 @@ public class AuthorizationRequestUrlParameters {
         return authorizationRequestUrl;
     }
 
+    public String redirectUri() {
+        return this.redirectUri;
+    }
+
+    public Set<String> scopes() {
+        return this.scopes;
+    }
+
+    public String codeChallenge() {
+        return this.codeChallenge;
+    }
+
+    public String codeChallengeMethod() {
+        return this.codeChallengeMethod;
+    }
+
+    public String state() {
+        return this.state;
+    }
+
+    public String nonce() {
+        return this.nonce;
+    }
+
+    public ResponseMode responseMode() {
+        return this.responseMode;
+    }
+
+    public String loginHint() {
+        return this.loginHint;
+    }
+
+    public String domainHint() {
+        return this.domainHint;
+    }
+
+    public Prompt prompt() {
+        return this.prompt;
+    }
+
+    public String correlationId() {
+        return this.correlationId;
+    }
+
+    public boolean instanceAware() {
+        return this.instanceAware;
+    }
+
+    public Map<String, String> extraQueryParameters() {
+        return this.extraQueryParameters;
+    }
+
+    public Map<String, List<String>> requestParameters() {
+        return this.requestParameters;
+    }
+
+    public Logger log() {
+        return this.log;
+    }
+
     public static class Builder {
 
         private String redirectUri;
@@ -225,6 +280,8 @@ public class AuthorizationRequestUrlParameters {
          * must exactly match one of the redirect URIs registered in the Azure portal.
          */
         public Builder redirectUri(String val) {
+            validateNotNull("redirectUri", val);
+
             this.redirectUri = val;
             return self();
         }
@@ -233,6 +290,8 @@ public class AuthorizationRequestUrlParameters {
          * Scopes which the application is requesting access to and the user will consent to.
          */
         public Builder scopes(Set<String> val) {
+            validateNotNull("scopes", val);
+
             this.scopes = val;
             return self();
         }

@@ -3,14 +3,8 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.experimental.Accessors;
-
 import java.net.URL;
 
-@Accessors(fluent = true)
-@Getter(AccessLevel.PACKAGE)
 class B2CAuthority extends Authority {
 
     private final static String AUTHORIZATION_ENDPOINT = "/oauth2/v2.0/authorize";
@@ -66,5 +60,9 @@ class B2CAuthority extends Authority {
         this.authorizationEndpoint = String.format(B2C_AUTHORIZATION_ENDPOINT_FORMAT, host, tenant, policy);
         this.tokenEndpoint = String.format(B2C_TOKEN_ENDPOINT_FORMAT, host, tenant, policy);
         this.selfSignedJwtAudience = this.tokenEndpoint;
+    }
+
+    String policy() {
+        return this.policy;
     }
 }

@@ -3,29 +3,51 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
-
-@Getter
-@Accessors(fluent = true)
 class CurrentRequest {
 
     private final PublicApi publicApi;
-
-    @Setter
     private CacheRefreshReason cacheInfo = CacheRefreshReason.NOT_APPLICABLE;
-
-    @Setter
     private String regionUsed = StringHelper.EMPTY_STRING;
-
-    @Setter
     private int regionSource = 0;
-
-    @Setter
     private int regionOutcome = 0;
 
     CurrentRequest(PublicApi publicApi) {
         this.publicApi = publicApi;
+    }
+
+    PublicApi publicApi() {
+        return this.publicApi;
+    }
+
+    CacheRefreshReason cacheInfo() {
+        return this.cacheInfo;
+    }
+
+    String regionUsed() {
+        return this.regionUsed;
+    }
+
+    int regionSource() {
+        return this.regionSource;
+    }
+
+    int regionOutcome() {
+        return this.regionOutcome;
+    }
+
+    void cacheInfo(CacheRefreshReason cacheInfo) {
+        this.cacheInfo = cacheInfo;
+    }
+
+    void regionUsed(String regionUsed) {
+        this.regionUsed = regionUsed;
+    }
+
+    void regionSource(int regionSource) {
+        this.regionSource = regionSource;
+    }
+
+    void regionOutcome(int regionOutcome) {
+        this.regionOutcome = regionOutcome;
     }
 }

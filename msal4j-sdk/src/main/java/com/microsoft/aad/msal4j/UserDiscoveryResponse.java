@@ -7,14 +7,9 @@ import com.azure.json.JsonReader;
 import com.azure.json.JsonSerializable;
 import com.azure.json.JsonToken;
 import com.azure.json.JsonWriter;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.experimental.Accessors;
 
 import java.io.IOException;
 
-@Accessors(fluent = true)
-@Getter(AccessLevel.PACKAGE)
 class UserDiscoveryResponse implements JsonSerializable<UserDiscoveryResponse> {
 
     private float version;
@@ -78,5 +73,29 @@ class UserDiscoveryResponse implements JsonSerializable<UserDiscoveryResponse> {
         jsonWriter.writeStringField("cloud_audience_urn", cloudAudienceUrn);
         jsonWriter.writeEndObject();
         return jsonWriter;
+    }
+
+    float version() {
+        return this.version;
+    }
+
+    String accountType() {
+        return this.accountType;
+    }
+
+    String federationMetadataUrl() {
+        return this.federationMetadataUrl;
+    }
+
+    String federationProtocol() {
+        return this.federationProtocol;
+    }
+
+    String federationActiveAuthUrl() {
+        return this.federationActiveAuthUrl;
+    }
+
+    String cloudAudienceUrn() {
+        return this.cloudAudienceUrn;
     }
 }

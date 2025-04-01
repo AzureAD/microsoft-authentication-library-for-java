@@ -3,12 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.experimental.Accessors;
-
-@Accessors(fluent = true)
-@Getter(AccessLevel.PACKAGE)
 enum WSTrustVersion {
 
     WSTRUST13(
@@ -22,5 +16,13 @@ enum WSTrustVersion {
     WSTrustVersion(String tokenType, String responseSecurityToken) {
         this.responseTokenTypePath = tokenType;
         this.responseSecurityTokenPath = responseSecurityToken;
+    }
+
+    String responseTokenTypePath() {
+        return this.responseTokenTypePath;
+    }
+
+    String responseSecurityTokenPath() {
+        return this.responseSecurityTokenPath;
     }
 }

@@ -9,8 +9,6 @@ import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import com.nimbusds.oauth2.sdk.util.URLUtils;
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens;
-import lombok.AccessLevel;
-import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +17,6 @@ import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-@Getter(AccessLevel.PACKAGE)
 class TokenRequestExecutor {
     Logger log = LoggerFactory.getLogger(TokenRequestExecutor.class);
 
@@ -178,5 +175,25 @@ class TokenRequestExecutor {
             throw MsalServiceExceptionFactory.fromHttpResponse(oauthHttpResponse);
         }
         return result;
+    }
+
+    Logger getLog() {
+        return this.log;
+    }
+
+    Authority getRequestAuthority() {
+        return this.requestAuthority;
+    }
+
+    String getTenant() {
+        return this.tenant;
+    }
+
+    MsalRequest getMsalRequest() {
+        return this.msalRequest;
+    }
+
+    ServiceBundle getServiceBundle() {
+        return this.serviceBundle;
     }
 }

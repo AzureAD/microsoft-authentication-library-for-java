@@ -3,16 +3,17 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.Getter;
-import lombok.experimental.Accessors;
+import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.oauth2.sdk.AuthorizationGrant;
+import com.nimbusds.oauth2.sdk.JWTBearerGrant;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@Accessors(fluent = true)
-@Getter
+import static com.microsoft.aad.msal4j.AbstractMsalAuthorizationGrant.SCOPES_DELIMITER;
+
 class OnBehalfOfRequest extends MsalRequest {
 
     OnBehalfOfParameters parameters;
@@ -36,5 +37,9 @@ class OnBehalfOfRequest extends MsalRequest {
         }
 
         return new OAuthAuthorizationGrant(params, parameters.scopes(), null);
+    }
+
+    OnBehalfOfParameters parameters() {
+        return this.parameters;
     }
 }

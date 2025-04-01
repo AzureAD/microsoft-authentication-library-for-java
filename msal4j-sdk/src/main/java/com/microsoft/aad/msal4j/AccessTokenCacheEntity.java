@@ -4,16 +4,10 @@
 package com.microsoft.aad.msal4j;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Accessors(fluent = true)
-@Getter
-@Setter
 class AccessTokenCacheEntity extends Credential {
 
     @JsonProperty("credential_type")
@@ -48,5 +42,61 @@ class AccessTokenCacheEntity extends Credential {
         keyParts.add(target);
 
         return String.join(Constants.CACHE_KEY_SEPARATOR, keyParts).toLowerCase();
+    }
+
+    String credentialType() {
+        return this.credentialType;
+    }
+
+    String realm() {
+        return this.realm;
+    }
+
+    String target() {
+        return this.target;
+    }
+
+    String cachedAt() {
+        return this.cachedAt;
+    }
+
+    String expiresOn() {
+        return this.expiresOn;
+    }
+
+    String extExpiresOn() {
+        return this.extExpiresOn;
+    }
+
+    String refreshOn() {
+        return this.refreshOn;
+    }
+
+    void credentialType(String credentialType) {
+        this.credentialType = credentialType;
+    }
+
+    void realm(String realm) {
+        this.realm = realm;
+    }
+
+    void target(String target) {
+        this.target = target;
+    }
+
+    void cachedAt(String cachedAt) {
+        this.cachedAt = cachedAt;
+    }
+
+    void expiresOn(String expiresOn) {
+        this.expiresOn = expiresOn;
+    }
+
+    void extExpiresOn(String extExpiresOn) {
+        this.extExpiresOn = extExpiresOn;
+    }
+
+    void refreshOn(String refreshOn) {
+        this.refreshOn = refreshOn;
     }
 }

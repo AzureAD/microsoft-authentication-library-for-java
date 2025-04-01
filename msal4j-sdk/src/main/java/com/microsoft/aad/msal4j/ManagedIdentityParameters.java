@@ -3,12 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.experimental.Accessors;
-
 import java.util.Map;
 import java.util.Set;
 
@@ -16,16 +10,15 @@ import java.util.Set;
  * Object containing parameters for managed identity flow. Can be used as parameter to
  * {@link ManagedIdentityApplication#acquireTokenForManagedIdentity(ManagedIdentityParameters)}
  */
-@Builder
-@Accessors(fluent = true)
-@Getter
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ManagedIdentityParameters implements IAcquireTokenParameters {
 
-    @Getter
     String resource;
-    
     boolean forceRefresh;
+
+    private ManagedIdentityParameters(String resource, boolean forceRefresh) {
+        this.resource = resource;
+        this.forceRefresh = forceRefresh;
+    }
 
     @Override
     public Set<String> scopes() {
@@ -63,5 +56,39 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
      */
     public static ManagedIdentityParametersBuilder builder(String resource) {
         return builder().resource(resource);
+    }
+
+    public boolean forceRefresh() {
+        return this.forceRefresh;
+    }
+
+    public String resource() {
+        return this.resource;
+    }
+
+    public static class ManagedIdentityParametersBuilder {
+        private String resource;
+        private boolean forceRefresh;
+
+        ManagedIdentityParametersBuilder() {
+        }
+
+        public ManagedIdentityParametersBuilder resource(String resource) {
+            this.resource = resource;
+            return this;
+        }
+
+        public ManagedIdentityParametersBuilder forceRefresh(boolean forceRefresh) {
+            this.forceRefresh = forceRefresh;
+            return this;
+        }
+
+        public ManagedIdentityParameters build() {
+            return new ManagedIdentityParameters(this.resource, this.forceRefresh);
+        }
+
+        public String toString() {
+            return "ManagedIdentityParameters.ManagedIdentityParametersBuilder(resource=" + this.resource + ", forceRefresh=" + this.forceRefresh + ")";
+        }
     }
 }

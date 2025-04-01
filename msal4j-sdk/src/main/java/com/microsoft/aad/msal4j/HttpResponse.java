@@ -3,10 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -15,14 +11,11 @@ import java.util.Map;
 /**
  * HTTP response
  */
-@Accessors(fluent = true)
-@Getter
 public class HttpResponse implements IHttpResponse {
 
     /**
      * HTTP response status code
      */
-    @Setter
     private int statusCode;
 
     /**
@@ -33,7 +26,6 @@ public class HttpResponse implements IHttpResponse {
     /**
      * HTTP response body
      */
-    @Setter
     private String body;
 
     /**
@@ -60,5 +52,27 @@ public class HttpResponse implements IHttpResponse {
         } else {
             headers.remove(name);
         }
+    }
+
+    public int statusCode() {
+        return this.statusCode;
+    }
+
+    public Map<String, List<String>> headers() {
+        return this.headers;
+    }
+
+    public String body() {
+        return this.body;
+    }
+
+    public HttpResponse statusCode(int statusCode) {
+        this.statusCode = statusCode;
+        return this;
+    }
+
+    public HttpResponse body(String body) {
+        this.body = body;
+        return this;
     }
 }

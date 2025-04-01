@@ -4,9 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
 
-@Getter
 public class ManagedIdentityErrorResponse {
 
     @JsonProperty("message")
@@ -29,12 +27,35 @@ public class ManagedIdentityErrorResponse {
     @JsonProperty("error_description")
     private String errorDescription;
 
-    @Getter
+    public String getMessage() {
+        return this.message;
+    }
+
+    public String getCorrelationId() {
+        return this.correlationId;
+    }
+
+    public String getError() {
+        return this.error;
+    }
+
+    public String getErrorDescription() {
+        return this.errorDescription;
+    }
+
     private static class ErrorField {
         @JsonProperty("code")
         private String code;
 
         @JsonProperty("message")
         private String message;
+
+       String getCode() {
+            return this.code;
+        }
+
+        String getMessage() {
+            return this.message;
+        }
     }
 }

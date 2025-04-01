@@ -3,14 +3,9 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.Getter;
-import lombok.experimental.Accessors;
-
 import java.net.MalformedURLException;
 import java.net.URL;
 
-@Accessors(fluent = true)
-@Getter
 class SilentRequest extends MsalRequest {
 
     private SilentParameters parameters;
@@ -34,5 +29,17 @@ class SilentRequest extends MsalRequest {
             application.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo(
                     CacheRefreshReason.FORCE_REFRESH);
         }
+    }
+
+    SilentParameters parameters() {
+        return this.parameters;
+    }
+
+    IUserAssertion assertion() {
+        return this.assertion;
+    }
+
+    Authority requestAuthority() {
+        return this.requestAuthority;
     }
 }

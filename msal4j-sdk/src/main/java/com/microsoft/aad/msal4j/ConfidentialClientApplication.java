@@ -6,15 +6,9 @@ package com.microsoft.aad.msal4j;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.auth.*;
 import com.nimbusds.oauth2.sdk.id.ClientID;
-import lombok.Getter;
-import lombok.experimental.Accessors;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -39,8 +33,6 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
      useful to applications in general because the token provider must implement all authentication logic. */
     public Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> appTokenProvider;
 
-    @Accessors(fluent = true)
-    @Getter
     private boolean sendX5c;
 
     @Override
@@ -168,6 +160,10 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
     public static Builder builder(String clientId, IClientCredential clientCredential) {
 
         return new Builder(clientId, clientCredential);
+    }
+
+    public boolean sendX5c() {
+        return this.sendX5c;
     }
 
     public static class Builder extends AbstractClientApplicationBase.Builder<Builder> {

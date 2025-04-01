@@ -7,15 +7,10 @@ import com.azure.json.JsonReader;
 import com.azure.json.JsonSerializable;
 import com.azure.json.JsonToken;
 import com.azure.json.JsonWriter;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.experimental.Accessors;
 
 import java.io.IOException;
 import java.util.List;
 
-@Accessors(fluent = true)
-@Getter(AccessLevel.PACKAGE)
 class AadInstanceDiscoveryResponse implements JsonSerializable<AadInstanceDiscoveryResponse> {
 
     private String tenantDiscoveryEndpoint;
@@ -69,5 +64,29 @@ class AadInstanceDiscoveryResponse implements JsonSerializable<AadInstanceDiscov
         jsonWriter.writeStringField("correlation_id", correlationId);
         jsonWriter.writeEndObject();
         return jsonWriter;
+    }
+
+    String tenantDiscoveryEndpoint() {
+        return this.tenantDiscoveryEndpoint;
+    }
+
+    List<InstanceDiscoveryMetadataEntry> metadata() {
+        return this.metadata;
+    }
+
+    String errorDescription() {
+        return this.errorDescription;
+    }
+
+    List<Long> errorCodes() {
+        return this.errorCodes;
+    }
+
+    String error() {
+        return this.error;
+    }
+
+    String correlationId() {
+        return this.correlationId;
     }
 }

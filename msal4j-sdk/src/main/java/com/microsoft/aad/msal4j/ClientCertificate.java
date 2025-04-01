@@ -3,34 +3,19 @@
 
 package com.microsoft.aad.msal4j;
 
-import lombok.Getter;
-import lombok.experimental.Accessors;
-
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.PrivateKey;
-import java.security.UnrecoverableKeyException;
+import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 
 final class ClientCertificate implements IClientCertificate {
 
     public static final String DEFAULT_PKCS12_PASSWORD = "";
 
-    @Accessors(fluent = true)
-    @Getter
     private final PrivateKey privateKey;
 
     private final List<X509Certificate> publicKeyCertificateChain;
@@ -134,5 +119,9 @@ final class ClientCertificate implements IClientCertificate {
         final MessageDigest md = MessageDigest.getInstance("SHA-256");
         md.update(inputBytes);
         return md.digest();
+    }
+
+    public PrivateKey privateKey() {
+        return this.privateKey;
     }
 }

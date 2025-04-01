@@ -4,16 +4,9 @@
 package com.microsoft.aad.msal4j;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
-
 import java.util.ArrayList;
 import java.util.List;
 
-@Accessors(fluent = true)
-@Getter
-@Setter
 class AppMetadataCacheEntity {
 
     public static final String APP_METADATA_CACHE_ENTITY_ID = "appmetadata";
@@ -35,5 +28,29 @@ class AppMetadataCacheEntity {
         keyParts.add(clientId);
 
         return String.join(Constants.CACHE_KEY_SEPARATOR, keyParts).toLowerCase();
+    }
+
+    String clientId() {
+        return this.clientId;
+    }
+
+    String environment() {
+        return this.environment;
+    }
+
+    String familyId() {
+        return this.familyId;
+    }
+
+    void clientId(String clientId) {
+        this.clientId = clientId;
+    }
+
+    void environment(String environment) {
+        this.environment = environment;
+    }
+
+    void familyId(String familyId) {
+        this.familyId = familyId;
     }
 }
