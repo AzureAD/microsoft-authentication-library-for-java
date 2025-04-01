@@ -3,6 +3,8 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.azure.json.JsonProviders;
+import com.azure.json.JsonReader;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.RSAKey;
@@ -187,5 +189,14 @@ class TestHelper {
         }
 
         return privateKey;
+    }
+
+    static Map<String, String> convertJsonToMap(String jsonString) {
+        try (JsonReader reader = JsonProviders.createReader(jsonString)) {
+            reader.nextToken();
+            return reader.readMap(JsonReader::getString);
+        } catch (IOException e) {
+            throw new MsalClientException("Could not parse JSON from HttpResponse body: " + e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
+        }
     }
 }

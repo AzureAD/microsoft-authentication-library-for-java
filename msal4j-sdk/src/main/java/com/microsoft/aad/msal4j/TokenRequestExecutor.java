@@ -6,7 +6,6 @@ package com.microsoft.aad.msal4j;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.SerializeException;
 import com.nimbusds.oauth2.sdk.util.URLUtils;
-import com.nimbusds.openid.connect.sdk.token.OIDCTokens;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,17 +120,11 @@ class TokenRequestExecutor {
         if (oauthHttpResponse.statusCode() == HttpHelper.HTTP_STATUS_200) {
             final TokenResponse response = TokenResponse.parseHttpResponse(oauthHttpResponse);
 
-            OIDCTokens tokens = response.getOIDCTokens();
-            String refreshToken = null;
-            if (tokens.getRefreshToken() != null) {
-                refreshToken = tokens.getRefreshToken().getValue();
-            }
-
             AccountCacheEntity accountCacheEntity = null;
-            if (!StringHelper.isNullOrBlank(tokens.getIDTokenString())) {
+            if (!StringHelper.isNullOrBlank(response.idToken())) {
                 String idTokenJson;
                 try {
-                    idTokenJson = new String(Base64.getDecoder().decode(tokens.getIDTokenString().split("\\.")[1]), StandardCharsets.UTF_8);
+                    idTokenJson = new String(Base64.getDecoder().decode(response.idToken().split("\\.")[1]), StandardCharsets.UTF_8);
                 } catch (ArrayIndexOutOfBoundsException e) {
                     throw new MsalServiceException("Error parsing ID token, missing payload section. Ensure that the ID token is following the JWT format.",
                             AuthenticationErrorCode.INVALID_JWT);
@@ -161,10 +154,10 @@ class TokenRequestExecutor {
             long currTimestampSec = new Date().getTime() / 1000;
 
             result = AuthenticationResult.builder().
-                    accessToken(tokens.getAccessToken().getValue()).
-                    refreshToken(refreshToken).
+                    accessToken(response.accessToken()).
+                    refreshToken(response.refreshToken()).
                     familyId(response.getFoci()).
-                    idToken(tokens.getIDTokenString()).
+                    idToken(response.idToken()).
                     environment(requestAuthority.host()).
                     expiresOn(currTimestampSec + response.getExpiresIn()).
                     extExpiresOn(response.getExtExpiresIn() > 0 ? currTimestampSec + response.getExtExpiresIn() : 0).
