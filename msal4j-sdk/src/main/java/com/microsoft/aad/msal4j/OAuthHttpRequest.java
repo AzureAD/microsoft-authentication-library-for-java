@@ -4,7 +4,6 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 
 import java.io.IOException;
@@ -15,32 +14,35 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class OAuthHttpRequest extends HTTPRequest {
+class OAuthHttpRequest {
 
+    final HttpMethod method;
+    final URL url;
+    String query;
     private final Map<String, String> extraHeaderParams;
     private final ServiceBundle serviceBundle;
     private final RequestContext requestContext;
 
-    OAuthHttpRequest(final Method method,
+    OAuthHttpRequest(final HttpMethod method,
                      final URL url,
                      final Map<String, String> extraHeaderParams,
                      RequestContext requestContext,
                      final ServiceBundle serviceBundle) {
-        super(method, url);
+        this.method = method;
+        this.url = url;
         this.extraHeaderParams = extraHeaderParams;
         this.requestContext = requestContext;
         this.serviceBundle = serviceBundle;
     }
 
-    @Override
     public HTTPResponse send() throws IOException {
 
         Map<String, String> httpHeaders = configureHttpHeaders();
         HttpRequest httpRequest = new HttpRequest(
                 HttpMethod.POST,
-                this.getURL().toString(),
+                this.url.toString(),
                 httpHeaders,
-                this.getQuery());
+                this.query);
 
         IHttpResponse httpResponse = serviceBundle.getHttpHelper().executeHttpRequest(
                 httpRequest,
@@ -54,10 +56,6 @@ class OAuthHttpRequest extends HTTPRequest {
 
         Map<String, String> httpHeaders = new HashMap<>(extraHeaderParams);
         httpHeaders.put("Content-Type", HTTPContentType.ApplicationURLEncoded.contentType);
-
-        if (this.getAuthorization() != null) {
-            httpHeaders.put("Authorization", this.getAuthorization());
-        }
 
         Map<String, String> telemetryHeaders =
                 serviceBundle.getServerSideTelemetry().getServerTelemetryHeaderMap();
@@ -107,6 +105,10 @@ class OAuthHttpRequest extends HTTPRequest {
             response.setContent(httpResponse.body());
         }
         return response;
+    }
+
+    void setQuery(String query) {
+        this.query = query;
     }
 
     Map<String, String> getExtraHeaderParams() {

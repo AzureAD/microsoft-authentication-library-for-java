@@ -3,8 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
-
 import javax.net.ssl.SSLSocketFactory;
 import java.net.MalformedURLException;
 import java.net.Proxy;
@@ -29,7 +27,6 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
     private String applicationName;
     private String applicationVersion;
     private AadInstanceDiscoveryResponse aadAadInstanceDiscoveryResponse;
-    protected abstract ClientAuthentication clientAuthentication();
     private String clientCapabilities;
     private boolean autoDetectRegion;
     protected String azureRegion;

@@ -72,10 +72,7 @@ class ClientCertificateTest {
 
         when(httpClientMock.send(any(HttpRequest.class))).thenAnswer( parameters -> {
             HttpRequest request = parameters.getArgument(0);
-            Set<String> headerParams = ((PrivateKeyJWT) cca.clientAuthentication()).getClientAssertion().getHeader().getIncludedParams();
-            if (request.body().contains(((PrivateKeyJWT) cca.clientAuthentication()).getClientAssertion().serialize())
-                    && headerParams.contains("x5t#S256")) {
-
+            if (request.body().contains(cca.assertion)) {
                 return TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(tokenResponseValues));
             }
             return null;
