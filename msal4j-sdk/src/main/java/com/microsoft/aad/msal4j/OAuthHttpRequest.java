@@ -3,9 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.oauth2.sdk.http.HTTPResponse;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -35,7 +32,7 @@ class OAuthHttpRequest {
         this.serviceBundle = serviceBundle;
     }
 
-    public HTTPResponse send() throws IOException {
+    public HttpResponse send() throws IOException {
 
         Map<String, String> httpHeaders = configureHttpHeaders();
         HttpRequest httpRequest = new HttpRequest(
@@ -64,28 +61,24 @@ class OAuthHttpRequest {
         return httpHeaders;
     }
 
-    private HTTPResponse createOauthHttpResponseFromHttpResponse(IHttpResponse httpResponse)
+    private HttpResponse createOauthHttpResponseFromHttpResponse(IHttpResponse httpResponse)
             throws IOException {
 
-        final HTTPResponse response = new HTTPResponse(httpResponse.statusCode());
+        final HttpResponse response = new HttpResponse();
+        response.statusCode(httpResponse.statusCode());
 
         final String location = HttpUtils.headerValue(httpResponse.headers(), "Location");
         if (!StringHelper.isBlank(location)) {
             try {
-                response.setLocation(new URI(location));
+                response.addHeader("Location", new URI(location).toString());
             } catch (URISyntaxException e) {
                 throw new IOException("Invalid location URI " + location, e);
             }
         }
 
-        try {
-            String contentType = HttpUtils.headerValue(httpResponse.headers(), "Content-Type");
-            if (!StringHelper.isBlank(contentType)) {
-                response.setContentType(contentType);
-            }
-        } catch (final ParseException e) {
-            throw new IOException("Couldn't parse Content-Type header: "
-                    + e.getMessage(), e);
+        String contentType = HttpUtils.headerValue(httpResponse.headers(), "Content-Type");
+        if (!StringHelper.isBlank(contentType)) {
+            response.addHeader("Content-Type", contentType);
         }
 
         Map<String, List<String>> headers = httpResponse.headers();
@@ -95,14 +88,14 @@ class OAuthHttpRequest {
                 continue;
             }
 
-            String headerValue = response.getHeaderValue(header.getKey());
-            if (headerValue == null || StringHelper.isBlank(headerValue)) {
-                response.setHeader(header.getKey(), header.getValue().toArray(new String[0]));
+            List<String> headerValue = response.getHeader((header.getKey()));
+            if (headerValue == null) {
+                response.addHeader(header.getKey(), header.getValue().toArray(new String[0]));
             }
         }
 
         if (!StringHelper.isBlank(httpResponse.body())) {
-            response.setContent(httpResponse.body());
+            response.body(httpResponse.body());
         }
         return response;
     }

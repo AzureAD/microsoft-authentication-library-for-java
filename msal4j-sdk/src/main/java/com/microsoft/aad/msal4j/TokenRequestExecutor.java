@@ -5,7 +5,6 @@ package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.SerializeException;
-import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import com.nimbusds.oauth2.sdk.util.URLUtils;
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens;
 import org.slf4j.Logger;
@@ -37,7 +36,7 @@ class TokenRequestExecutor {
 
         log.debug("Sending token request to: {}", requestAuthority.canonicalAuthorityUrl());
         OAuthHttpRequest oAuthHttpRequest = createOauthHttpRequest();
-        HTTPResponse oauthHttpResponse = oAuthHttpRequest.send();
+        HttpResponse oauthHttpResponse = oAuthHttpRequest.send();
         return createAuthenticationResultFromOauthHttpResponse(oauthHttpResponse);
     }
 
@@ -116,10 +115,10 @@ class TokenRequestExecutor {
     }
 
     private AuthenticationResult createAuthenticationResultFromOauthHttpResponse(
-            HTTPResponse oauthHttpResponse) throws ParseException {
+            HttpResponse oauthHttpResponse) throws ParseException {
         AuthenticationResult result;
 
-        if (oauthHttpResponse.getStatusCode() == HTTPResponse.SC_OK) {
+        if (oauthHttpResponse.statusCode() == HttpHelper.HTTP_STATUS_200) {
             final TokenResponse response = TokenResponse.parseHttpResponse(oauthHttpResponse);
 
             OIDCTokens tokens = response.getOIDCTokens();
@@ -180,7 +179,7 @@ class TokenRequestExecutor {
 
         } else {
             // http codes indicating that STS did not log request
-            if (oauthHttpResponse.getStatusCode() == HttpHelper.HTTP_STATUS_429 || oauthHttpResponse.getStatusCode() >= HttpHelper.HTTP_STATUS_500) {
+            if (oauthHttpResponse.statusCode() == HttpHelper.HTTP_STATUS_429 || oauthHttpResponse.statusCode() >= HttpHelper.HTTP_STATUS_500) {
                 serviceBundle.getServerSideTelemetry().previousRequests.putAll(
                         serviceBundle.getServerSideTelemetry().previousRequestInProgress);
             }

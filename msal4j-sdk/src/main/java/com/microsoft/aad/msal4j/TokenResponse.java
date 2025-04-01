@@ -4,7 +4,6 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.RefreshToken;
 import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
@@ -33,11 +32,13 @@ class TokenResponse extends OIDCTokenResponse {
         this.foci = foci;
     }
 
-    static TokenResponse parseHttpResponse(final HTTPResponse httpResponse) throws ParseException {
+    static TokenResponse parseHttpResponse(final HttpResponse httpResponse) throws ParseException {
 
-        httpResponse.ensureStatusCode(HTTPResponse.SC_OK);
+        if (httpResponse.statusCode() != HttpHelper.HTTP_STATUS_200) {
+            throw MsalServiceExceptionFactory.fromHttpResponse(httpResponse);
+        }
 
-        final JSONObject jsonObject = httpResponse.getContentAsJSONObject();
+        final JSONObject jsonObject = httpResponse.getBodyAsJson();
 
         return parseJsonObject(jsonObject);
     }

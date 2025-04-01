@@ -3,6 +3,10 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
+import net.minidev.json.JSONObject;
+import com.nimbusds.oauth2.sdk.ParseException;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -46,11 +50,23 @@ public class HttpResponse implements IHttpResponse {
         }
     }
 
-    private void addHeader(final String name, final String... values) {
+    void addHeader(final String name, final String... values) {
         if (values != null && values.length > 0) {
             headers.put(name, Arrays.asList(values));
         } else {
             headers.remove(name);
+        }
+    }
+
+    List<String> getHeader(String key) {
+        return headers.get(key);
+    }
+
+    JSONObject getBodyAsJson() {
+        try {
+            return JSONObjectUtils.parse(this.body());
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
         }
     }
 
