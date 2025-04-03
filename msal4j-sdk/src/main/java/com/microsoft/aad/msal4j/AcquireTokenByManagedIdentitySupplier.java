@@ -37,6 +37,8 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
                 clientApplication.serviceBundle()
         );
 
+        CacheRefreshReason cacheRefreshReason = CacheRefreshReason.NOT_APPLICABLE;
+
         if (!managedIdentityParameters.forceRefresh) {
             LOG.debug("ForceRefresh set to false. Attempting cache lookup");
 
@@ -63,11 +65,25 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
                         this.clientApplication,
                         silentRequest);
 
-                return supplier.execute();
+                AuthenticationResult result = supplier.execute();
+                cacheRefreshReason = SilentRequestHelper.NeedsRefresh(
+                        parameters,
+                        result,
+                        LOG);
+
+                // If the token does not need a refresh, return the cached token
+                // Else refresh the token if it is either expired, proactively refreshable, or if the claims are passed.
+                if (cacheRefreshReason == CacheRefreshReason.NOT_APPLICABLE) {
+                    LOG.debug("Returning token from cache");
+                    result.metadata().tokenSource(TokenSource.CACHE);
+                    return result;
+                } else {
+                    LOG.debug(String.format("Refreshing access token. Cache refresh reason: %s", cacheRefreshReason));
+                }
             } catch (MsalClientException ex) {
                 if (ex.errorCode().equals(AuthenticationErrorCode.CACHE_MISS)) {
                     LOG.debug(String.format("Cache lookup failed: %s", ex.getMessage()));
-                    return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor);
+                    return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor, cacheRefreshReason);
                 } else {
                     LOG.error(String.format("Error occurred while cache lookup: %s", ex.getMessage()));
                     throw ex;
@@ -75,11 +91,11 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
             }
         }
 
-        LOG.info("Skipped looking for an Access Token in the cache because forceRefresh or Claims were set. ");
-        return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor);
+        LOG.info("Skipped looking for an Access Token in the cache because forceRefresh was set. Or the token in the cache needs refresh");
+        return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor, cacheRefreshReason);
     }
 
-    private AuthenticationResult fetchNewAccessTokenAndSaveToCache(TokenRequestExecutor tokenRequestExecutor) {
+    private AuthenticationResult fetchNewAccessTokenAndSaveToCache(TokenRequestExecutor tokenRequestExecutor, CacheRefreshReason cacheRefreshReason) throws Exception {
 
         ManagedIdentityClient managedIdentityClient = new ManagedIdentityClient(msalRequest, tokenRequestExecutor.getServiceBundle());
 
@@ -91,7 +107,10 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
 
         AuthenticationResult authenticationResult = createFromManagedIdentityResponse(managedIdentityResponse);
         clientApplication.tokenCache.saveTokens(tokenRequestExecutor, authenticationResult, clientApplication.authenticationAuthority.host);
-        return authenticationResult;
+        AuthenticationResult result = authenticationResult;
+        result.metadata().tokenSource(TokenSource.IDENTITY_PROVIDER);
+        result.metadata().cacheRefreshReason(cacheRefreshReason);
+        return result;
     }
 
     private AuthenticationResult createFromManagedIdentityResponse(ManagedIdentityResponse managedIdentityResponse) {

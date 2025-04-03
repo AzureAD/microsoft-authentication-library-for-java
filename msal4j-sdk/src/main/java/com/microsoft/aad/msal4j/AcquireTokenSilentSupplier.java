@@ -43,34 +43,34 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
                     requestAuthority,
                     silentRequest.parameters().scopes(),
                     clientApplication.clientId());
-        }
 
-        if (res == null) {
-            throw new MsalClientException(AuthenticationErrorMessage.NO_TOKEN_IN_CACHE, AuthenticationErrorCode.CACHE_MISS);
-        }
+            if (res == null) {
+                throw new MsalClientException(AuthenticationErrorMessage.NO_TOKEN_IN_CACHE, AuthenticationErrorCode.CACHE_MISS);
+            }
 
-        //Some cached tokens were found, but this metadata will be overwritten if token needs to be refreshed
-        res.metadata().tokenSource(TokenSource.CACHE);
+            //Some cached tokens were found, but this metadata will be overwritten if token needs to be refreshed
+            res.metadata().tokenSource(TokenSource.CACHE);
 
-        if (!StringHelper.isBlank(res.accessToken())) {
-            clientApplication.serviceBundle().getServerSideTelemetry().incrementSilentSuccessfulCount();
-        }
+            if (!StringHelper.isBlank(res.accessToken())) {
+                clientApplication.serviceBundle().getServerSideTelemetry().incrementSilentSuccessfulCount();
+            }
 
-        shouldRefresh = shouldRefresh(silentRequest.parameters(), res);
+            shouldRefresh = shouldRefresh(silentRequest.parameters(), res);
 
-        if (shouldRefresh) {
-            if (!StringHelper.isBlank(res.refreshToken())) {
-                //There are certain scenarios where the cached authority may differ from the client app's authority,
-                // such as when a request is instance aware. Unless overridden by SilentParameters.authorityUrl, the
-                // cached authority should be used in the token refresh request
-                if (silentRequest.parameters().authorityUrl() == null && !res.account().environment().equals(requestAuthority.host)) {
-                    requestAuthority = Authority.createAuthority(new URL(requestAuthority.authority().replace(requestAuthority.host(),
-                            res.account().environment())));
+            if (shouldRefresh) {
+                if (!StringHelper.isBlank(res.refreshToken())) {
+                    //There are certain scenarios where the cached authority may differ from the client app's authority,
+                    // such as when a request is instance aware. Unless overridden by SilentParameters.authorityUrl, the
+                    // cached authority should be used in the token refresh request
+                    if (silentRequest.parameters().authorityUrl() == null && !res.account().environment().equals(requestAuthority.host)) {
+                        requestAuthority = Authority.createAuthority(new URL(requestAuthority.authority().replace(requestAuthority.host(),
+                                res.account().environment())));
+                    }
+
+                    res = makeRefreshRequest(res, requestAuthority, clientApplication.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo());
+                } else {
+                    res = null;
                 }
-
-                res = makeRefreshRequest(res, requestAuthority, clientApplication.serviceBundle().getServerSideTelemetry().getCurrentRequest().cacheInfo());
-            } else {
-                res = null;
             }
         }
 
