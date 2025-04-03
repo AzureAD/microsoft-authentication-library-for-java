@@ -13,7 +13,7 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
 
     private static final Logger LOG = LoggerFactory.getLogger(AcquireTokenByManagedIdentitySupplier.class);
 
-    private static final int TWO_HOURS = 2*3600;
+    private static final int TWO_HOURS = 2 * 3600;
 
     private ManagedIdentityParameters managedIdentityParameters;
 
@@ -39,60 +39,61 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
 
         CacheRefreshReason cacheRefreshReason = CacheRefreshReason.NOT_APPLICABLE;
 
-        if (!managedIdentityParameters.forceRefresh) {
-            LOG.debug("ForceRefresh set to false. Attempting cache lookup");
-
-            try {
-                Set<String> scopes = new HashSet<>();
-                scopes.add(this.managedIdentityParameters.resource);
-                SilentParameters parameters = SilentParameters
-                        .builder(scopes)
-                        .tenant(managedIdentityParameters.tenant())
-                        .build();
-
-                RequestContext context = new RequestContext(
-                        this.clientApplication,
-                        PublicApi.ACQUIRE_TOKEN_SILENTLY,
-                        parameters);
-
-                SilentRequest silentRequest = new SilentRequest(
-                        parameters,
-                        this.clientApplication,
-                        context,
-                        null);
-
-                AcquireTokenSilentSupplier supplier = new AcquireTokenSilentSupplier(
-                        this.clientApplication,
-                        silentRequest);
-
-                AuthenticationResult result = supplier.execute();
-                cacheRefreshReason = SilentRequestHelper.NeedsRefresh(
-                        parameters,
-                        result,
-                        LOG);
-
-                // If the token does not need a refresh, return the cached token
-                // Else refresh the token if it is either expired, proactively refreshable, or if the claims are passed.
-                if (cacheRefreshReason == CacheRefreshReason.NOT_APPLICABLE) {
-                    LOG.debug("Returning token from cache");
-                    result.metadata().tokenSource(TokenSource.CACHE);
-                    return result;
-                } else {
-                    LOG.debug(String.format("Refreshing access token. Cache refresh reason: %s", cacheRefreshReason));
-                }
-            } catch (MsalClientException ex) {
-                if (ex.errorCode().equals(AuthenticationErrorCode.CACHE_MISS)) {
-                    LOG.debug(String.format("Cache lookup failed: %s", ex.getMessage()));
-                    return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor, cacheRefreshReason);
-                } else {
-                    LOG.error(String.format("Error occurred while cache lookup: %s", ex.getMessage()));
-                    throw ex;
-                }
-            }
+        if (managedIdentityParameters.forceRefresh) {
+            LOG.debug("ForceRefresh set to true. Skipping cache lookup and attempting to acquire new token");
+            return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor, CacheRefreshReason.FORCE_REFRESH);
         }
 
-        LOG.info("Skipped looking for an Access Token in the cache because forceRefresh was set. Or the token in the cache needs refresh");
-        return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor, cacheRefreshReason);
+
+        LOG.debug("ForceRefresh set to false. Attempting cache lookup");
+        try {
+            Set<String> scopes = new HashSet<>();
+            scopes.add(this.managedIdentityParameters.resource);
+            SilentParameters parameters = SilentParameters
+                    .builder(scopes)
+                    .tenant(managedIdentityParameters.tenant())
+                    .build();
+
+            RequestContext context = new RequestContext(
+                    this.clientApplication,
+                    PublicApi.ACQUIRE_TOKEN_SILENTLY,
+                    parameters);
+
+            SilentRequest silentRequest = new SilentRequest(
+                    parameters,
+                    this.clientApplication,
+                    context,
+                    null);
+
+            AcquireTokenSilentSupplier supplier = new AcquireTokenSilentSupplier(
+                    this.clientApplication,
+                    silentRequest);
+
+            AuthenticationResult result = supplier.execute();
+            cacheRefreshReason = SilentRequestHelper.getCacheRefreshReasonIfApplicable(
+                    parameters,
+                    result,
+                    LOG);
+
+            // If the token does not need a refresh, return the cached token
+            // Else refresh the token if it is either expired, proactively refreshable, or if the claims are passed.
+            if (cacheRefreshReason == CacheRefreshReason.NOT_APPLICABLE) {
+                LOG.debug("Returning token from cache");
+                result.metadata().tokenSource(TokenSource.CACHE);
+                return result;
+            } else {
+                LOG.debug(String.format("Refreshing access token. Cache refresh reason: %s", cacheRefreshReason));
+                return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor, cacheRefreshReason);
+            }
+        } catch (MsalClientException ex) {
+            if (ex.errorCode().equals(AuthenticationErrorCode.CACHE_MISS)) {
+                LOG.debug(String.format("Cache lookup failed: %s", ex.getMessage()));
+                return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor, cacheRefreshReason);
+            } else {
+                LOG.error(String.format("Error occurred while cache lookup: %s", ex.getMessage()));
+                throw ex;
+            }
+        }
     }
 
     private AuthenticationResult fetchNewAccessTokenAndSaveToCache(TokenRequestExecutor tokenRequestExecutor, CacheRefreshReason cacheRefreshReason) throws Exception {
@@ -131,7 +132,7 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
                 .build();
     }
 
-    private long calculateRefreshOn(long expiresOn){
+    private long calculateRefreshOn(long expiresOn) {
         long timestampSeconds = System.currentTimeMillis() / 1000;
         long expiresIn = expiresOn - timestampSeconds;
 
