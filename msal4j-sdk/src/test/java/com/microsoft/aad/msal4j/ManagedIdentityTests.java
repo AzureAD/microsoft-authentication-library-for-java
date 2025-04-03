@@ -191,15 +191,14 @@ class ManagedIdentityTests {
                         .build()).get();
 
         assertNotNull(result.accessToken());
-
-        String accessToken = result.accessToken();
+        assertEquals(TokenSource.IDENTITY_PROVIDER, result.metadata().tokenSource());
 
         result = miApp.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(resource)
                         .build()).get();
 
         assertNotNull(result.accessToken());
-        assertEquals(accessToken, result.accessToken());
+        assertEquals(TokenSource.CACHE, result.metadata().tokenSource());
         verify(httpClientMock, times(1)).send(any());
     }
 
@@ -228,6 +227,7 @@ class ManagedIdentityTests {
                         .build()).get();
 
         assertNotNull(result.accessToken());
+        assertEquals(TokenSource.IDENTITY_PROVIDER, result.metadata().tokenSource());
         verify(httpClientMock, times(1)).send(any());
     }
 
@@ -253,6 +253,7 @@ class ManagedIdentityTests {
         long timestampSeconds = (System.currentTimeMillis() / 1000);
 
         assertNotNull(result.accessToken());
+        assertEquals(TokenSource.IDENTITY_PROVIDER, result.metadata().tokenSource());
         assertEquals((result.expiresOn() - timestampSeconds)/2, result.refreshOn() - timestampSeconds);
 
         verify(httpClientMock, times(1)).send(any());
@@ -320,12 +321,14 @@ class ManagedIdentityTests {
                         .build()).get();
 
         assertNotNull(result.accessToken());
+        assertEquals(TokenSource.IDENTITY_PROVIDER, result.metadata().tokenSource());
 
         result = miApp.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(anotherResource)
                         .build()).get();
 
         assertNotNull(result.accessToken());
+        assertEquals(TokenSource.IDENTITY_PROVIDER, result.metadata().tokenSource());
         verify(httpClientMock, times(2)).send(any());
         // TODO: Assert token source to check the token source is IDP and not Cache.
     }
@@ -565,12 +568,14 @@ class ManagedIdentityTests {
                         .build()).get();
 
         assertNotNull(resultMiApp1.accessToken());
+        assertEquals(TokenSource.IDENTITY_PROVIDER, resultMiApp1.metadata().tokenSource());
 
         IAuthenticationResult resultMiApp2 = miApp2.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(resource)
                         .build()).get();
 
         assertNotNull(resultMiApp2.accessToken());
+        assertEquals(TokenSource.CACHE, resultMiApp2.metadata().tokenSource());
 
         //acquireTokenForManagedIdentity does a cache lookup by default, and all ManagedIdentityApplication's share a cache,
         // so calling acquireTokenForManagedIdentity with the same parameters in two different ManagedIdentityApplications

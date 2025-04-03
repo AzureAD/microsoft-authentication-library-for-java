@@ -98,6 +98,7 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
         long expiresOn = Long.parseLong(managedIdentityResponse.expiresOn);
         long refreshOn = calculateRefreshOn(expiresOn);
         AuthenticationResultMetadata metadata = AuthenticationResultMetadata.builder()
+                .tokenSource(TokenSource.IDENTITY_PROVIDER)
                 .refreshOn(refreshOn)
                 .build();
 
