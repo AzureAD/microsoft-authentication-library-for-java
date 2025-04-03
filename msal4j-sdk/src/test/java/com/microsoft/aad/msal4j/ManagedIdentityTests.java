@@ -330,7 +330,6 @@ class ManagedIdentityTests {
         assertNotNull(result.accessToken());
         assertEquals(TokenSource.IDENTITY_PROVIDER, result.metadata().tokenSource());
         verify(httpClientMock, times(2)).send(any());
-        // TODO: Assert token source to check the token source is IDP and not Cache.
     }
 
     @ParameterizedTest
