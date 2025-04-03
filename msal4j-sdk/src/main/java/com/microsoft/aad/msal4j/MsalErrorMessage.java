@@ -26,4 +26,8 @@ class MsalErrorMessage {
     public static final String IDENTITY_UNAVAILABLE_ERROR = "[Managed Identity] Authentication unavailable. The requested identity has not been assigned to this resource.";
 
     public static final String GATEWAY_ERROR = "[Managed Identity] Authentication unavailable. The request failed due to a gateway error.";
+
+    public static final String MANAGED_IDENTITY_RESPONSE_SUCCESSFUL_PARSE_FAILURE = "[Managed Identity] MSI returned 200 OK, but the response could not be parsed: %s";
+
+    public static final String MANAGED_IDENTITY_RESPONSE_FAILED_PARSE_FAILURE = "[Managed Identity] MSI did not return 200 OK, and the response could not be parsed: %s";
 }
