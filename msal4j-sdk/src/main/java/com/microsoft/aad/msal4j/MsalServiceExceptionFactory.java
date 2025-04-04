@@ -3,8 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.http.HTTPResponse;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -12,37 +10,6 @@ import java.util.Set;
 class MsalServiceExceptionFactory {
 
     private MsalServiceExceptionFactory() {
-    }
-
-    static MsalServiceException fromHttpResponse(HTTPResponse httpResponse) {
-
-        String responseContent = httpResponse.getContent();
-        if (responseContent == null || StringHelper.isBlank(responseContent)) {
-            return new MsalServiceException(
-                    String.format(
-                            "Unknown Service Exception. Service returned status code %s",
-                            httpResponse.getStatusCode()),
-                    AuthenticationErrorCode.UNKNOWN);
-        }
-
-        ErrorResponse errorResponse = JsonHelper.convertJsonToObject(
-                responseContent,
-                ErrorResponse.class);
-
-        errorResponse.statusCode(httpResponse.getStatusCode());
-        errorResponse.statusMessage(httpResponse.getStatusMessage());
-
-        if (errorResponse.error() != null &&
-                errorResponse.error().equalsIgnoreCase(AuthenticationErrorCode.INVALID_GRANT)) {
-
-            if (isInteractionRequired(errorResponse.subError)) {
-                return new MsalInteractionRequiredException(errorResponse, httpResponse.getHeaderMap());
-            }
-        }
-
-        return new MsalServiceException(
-                errorResponse,
-                httpResponse.getHeaderMap());
     }
 
     static MsalServiceException fromHttpResponse(IHttpResponse response) {
@@ -58,6 +25,12 @@ class MsalServiceExceptionFactory {
         ErrorResponse errorResponse = JsonHelper.convertJsonToObject(
                 responseBody,
                 ErrorResponse.class);
+
+        if (errorResponse.error() != null &&
+                errorResponse.error().equalsIgnoreCase(AuthenticationErrorCode.INVALID_GRANT) && isInteractionRequired(errorResponse.subError)) {
+            return new MsalInteractionRequiredException(errorResponse, response.headers());
+        }
+
 
         if (!StringHelper.isBlank(errorResponse.error()) && !StringHelper.isBlank(errorResponse.errorDescription)) {
 

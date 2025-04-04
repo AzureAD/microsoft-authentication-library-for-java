@@ -3,6 +3,10 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.azure.json.JsonProviders;
+import com.azure.json.JsonReader;
+
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -46,12 +50,20 @@ public class HttpResponse implements IHttpResponse {
         }
     }
 
-    private void addHeader(final String name, final String... values) {
+    void addHeader(final String name, final String... values) {
         if (values != null && values.length > 0) {
             headers.put(name, Arrays.asList(values));
         } else {
             headers.remove(name);
         }
+    }
+
+    List<String> getHeader(String key) {
+        return headers.get(key);
+    }
+
+    Map<String, String> getBodyAsMap() {
+        return JsonHelper.convertJsonToMap(this.body);
     }
 
     public int statusCode() {

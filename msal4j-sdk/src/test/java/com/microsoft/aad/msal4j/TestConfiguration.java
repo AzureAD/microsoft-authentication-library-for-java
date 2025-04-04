@@ -43,7 +43,7 @@ public final class TestConfiguration {
 
     public final static String AAD_PREFERRED_NETWORK_ENV_ALIAS = "login.microsoftonline.com";
 
-    public final static String TOKEN_ENDPOINT_OK_RESPONSE = "{\"access_token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6I"
+    public final static String TOKEN_ENDPOINT_OK_RESPONSE_ID_AND_ACCESS = "{\"access_token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6I"
             + "k5HVEZ2ZEstZnl0aEV1THdqcHdBSk9NOW4tQSJ9.eyJhdWQiOiJiN2E2NzFkOC1hNDA4LTQyZmYtODZlMC1hYWY0NDdmZDE3YzQiLCJpc3MiOiJod"
             + "HRwczovL3N0cy53aW5kb3dzLm5ldC8zMGJhYTY2Ni04ZGY4LTQ4ZTctOTdlNi03N2NmZDA5OTU5NjMvIiwiaWF0IjoxMzkzODQ0NTA0LCJuYmYiOj"
             + "EzOTM4NDQ1MDQsImV4cCI6MTM5Mzg0ODQwNCwidmVyIjoiMS4wIiwidGlkIjoiMzBiYWE2NjYtOGRmOC00OGU3LTk3ZTYtNzdjZmQwOTk1OTYzIiwi"
@@ -64,6 +64,21 @@ public final class TestConfiguration {
             "VAxNEJSUFdybjQiLA0KICAidGlkIjogImY2NDVhZDkyLWUzOGQtNGQxYS1iNTEwLWQxYjA5YTc0YThjYSIsDQogICJ1dGkiOiAiNm5jaVgwMlNNa2k5azc" +
             "zLUYxc1pBQSIsDQogICJ2ZXIiOiAiMi4wIg0KfQ==.e30=\", \"client_info\": \"eyJ1a" +
             "WQiOiI5ZjQ4ODBkOC04MGJhLTRjNDAtOTdiYy1mN2EyM2M3MDMwODQiLCJ1dGlkIjoiZjY0NWFkOTItZTM4ZC00ZDFhLWI1MTAtZDFiMDlhNzRhOGNhIn0\"" +
+            "}";
+
+    public final static String TOKEN_ENDPOINT_OK_RESPONSE_ACCESS_ONLY = "{\"token_type\":\"Bearer\",\"expires_in\":3600," +
+            "\"access_token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6Ik5HVEZ2ZEstZnl0aEV1THdqcHdBSk9NOW4tQSJ9" +
+            ".eyJhdWQiOiJiN2E2NzFkOC1hNDA4LTQyZmYtODZlMC1hYWY0NDdmZDE3YzQiLCJpc3MiOiJodRwczovL3N0cy53aW5kb3dzLm5ldC8" +
+            "zMGJhYTY2Ni04ZGY4LTQ4ZTctOTdlNi03N2NmZDA5OTU5NjMvIiwiaWF0IjoxMzkzODQ0NTA0LCJuYmYiOjEzOTM4NDQ1MDQsImV4cC" +
+            "I6MTM5Mzg0ODQwNCwidmVyIjoiMS4wIiwidGlkIjoiMzBiYWE2NjYtOGRmOC00OGU3LTk3ZTYtNzdjZmQwOTk1OTYzIiwib2lkIjoiN" +
+            "GY4NTk5ODktYTJmZi00MTFlLTkwNDgtYzMyMjI0N2FjNjJjIiwidXBuIjoiYWRtaW5AYWFsdGVzdHMub25taWNyb3NvZnQuY29tIiwi" +
+            "dW5pcXVlX25hbWUiOiJhZG1pbkBhYWx0ZXN0cy5vbm1pY3Jvc29mdC5jb20iLCJzdWIiOiJqQ0ttUENWWEFzblN1MVBQUzRWblo4c2V" +
+            "ONTR3U3F0cW1RkpGbW14SEF3IiwiZmFtaWx5X25hbWUiOiJBZG1pbiIsImdpdmVuX25hbWUiOiJBREFMVGVzdHMiLCJhcHBpZCI6Ijk" +
+            "wODNjY2I4LThhNDYtNDNlNy04NDM5LTFkNjk2ZGY5ODRhZSIsImFwcGlkYWNyIjoiMSIsInNjcCI6InVzZXJfaW1wZXJzb25hdGlvbi" +
+            "IsImFjciI6IjEifQ.lUfDlkLdNGuAGUukgTnS_uWeSFXljbhId1l9PDrr7AwOSbOzogLvO14TaU294T6HeOQ8e0dUAvxEAMvsK_800A" +
+            "-AGNvbHK363xDjgmu464ye3CQvwq73GoHkzuxILCJKo0DUj0_XsCpQ4TdkPepuhzaGc-zYsfMU1POuIOB87pzW7e_VDpCdxcN1fuk-7" +
+            "CECPQb8nrO0L8Du8y-TZDdTSe-i_A0Alv48Zll-6tDY9cxfAR0UyYKl_Kf45kuHAphCWwPsjUxv4rGHhgXZPRlKFq7bkXP2Es4ixCQz" +
+            "b3bVLLrtQaZjkQ1yn37ngJro8NR63EbHHjHTA9lRmf8KIQ\"" +
             "}";
 
     public final static String HTTP_ERROR_RESPONSE = "{\"error\":\"invalid_request\",\"error_description\":\"AADSTS90011: Request "
