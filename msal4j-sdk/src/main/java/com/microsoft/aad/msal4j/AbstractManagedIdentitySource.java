@@ -97,7 +97,7 @@ abstract class AbstractManagedIdentitySource {
         try {
             managedIdentityResponse = JsonHelper.convertJsonStringToJsonSerializableObject(response.body(), ManagedIdentityResponse::fromJson);
         } catch (MsalJsonParsingException e) {
-            throw new MsalJsonParsingException(String.format(MsalErrorMessage.MANAGED_IDENTITY_RESPONSE_SUCCESSFUL_PARSE_FAILURE, e.getMessage()), MsalError.MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE, managedIdentitySourceType);
+            throw new MsalJsonParsingException(String.format(MsalErrorMessage.MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE, response.statusCode(), e.getMessage()), MsalError.MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE, managedIdentitySourceType);
         }
 
         if (managedIdentityResponse == null || managedIdentityResponse.getAccessToken() == null
@@ -115,7 +115,7 @@ abstract class AbstractManagedIdentitySource {
         try {
             managedIdentityErrorResponse = JsonHelper.convertJsonToObject(response.body(), ManagedIdentityErrorResponse.class);
         } catch (MsalJsonParsingException e) {
-            throw new MsalJsonParsingException(String.format(MsalErrorMessage.MANAGED_IDENTITY_RESPONSE_FAILED_PARSE_FAILURE, e.getMessage()), MsalError.MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE, managedIdentitySourceType);
+            throw new MsalJsonParsingException(String.format(MsalErrorMessage.MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE, response.statusCode(), e.getMessage()), MsalError.MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE, managedIdentitySourceType);
         }
 
         if (managedIdentityErrorResponse == null) {
