@@ -3,10 +3,10 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
-import net.minidev.json.JSONObject;
-import com.nimbusds.oauth2.sdk.ParseException;
+import com.azure.json.JsonProviders;
+import com.azure.json.JsonReader;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -62,12 +62,8 @@ public class HttpResponse implements IHttpResponse {
         return headers.get(key);
     }
 
-    JSONObject getBodyAsJson() {
-        try {
-            return JSONObjectUtils.parse(this.body());
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
+    Map<String, String> getBodyAsMap() {
+        return JsonHelper.convertJsonToMap(this.body);
     }
 
     public int statusCode() {

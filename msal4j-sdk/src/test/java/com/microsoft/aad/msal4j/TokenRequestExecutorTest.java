@@ -5,7 +5,6 @@ package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.SerializeException;
-import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -235,7 +234,7 @@ class TokenRequestExecutorTest {
 
         doReturn(msalOAuthHttpRequest).when(request).createOauthHttpRequest();
         doReturn(httpResponse).when(msalOAuthHttpRequest).send();
-        doReturn(JSONObjectUtils.parse(TestConfiguration.TOKEN_ENDPOINT_OK_RESPONSE)).when(httpResponse).getBodyAsJson();
+        doReturn(JsonHelper.convertJsonToMap(TestConfiguration.TOKEN_ENDPOINT_OK_RESPONSE_ID_AND_ACCESS)).when(httpResponse).getBodyAsMap();
 
         doReturn(200).when(httpResponse).statusCode();
 

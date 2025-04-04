@@ -89,7 +89,7 @@ class UIRequiredCacheTest {
         IHttpClient httpClientMock = mock(IHttpClient.class);
 
         HttpResponse httpResponse =
-                getHttpResponse(HTTPResponse.SC_OK, TestConfiguration.TOKEN_ENDPOINT_OK_RESPONSE);
+                getHttpResponse(HTTPResponse.SC_OK, TestConfiguration.TOKEN_ENDPOINT_OK_RESPONSE_ID_AND_ACCESS);
         lenient().doReturn(httpResponse).when(httpClientMock).send(any());
 
         httpResponse = getHttpResponse(HTTPResponse.SC_UNAUTHORIZED,
