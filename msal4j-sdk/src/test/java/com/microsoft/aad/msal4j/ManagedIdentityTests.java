@@ -236,7 +236,7 @@ class ManagedIdentityTests {
 
             MsalJsonParsingException miException = (MsalJsonParsingException) exception.getCause();
             assertEquals(source.name(), miException.managedIdentitySource());
-            assertEquals(MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE, miException.errorCode());
+            assertEquals(MsalError.MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE, miException.errorCode());
         }
     }
 
@@ -494,7 +494,7 @@ class ManagedIdentityTests {
 
             MsalServiceException miException = (MsalServiceException) exception.getCause();
             assertEquals(source.name(), miException.managedIdentitySource());
-            assertEquals(MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE, miException.errorCode());
+            assertEquals(MsalError.MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE, miException.errorCode());
             return;
         }
 
