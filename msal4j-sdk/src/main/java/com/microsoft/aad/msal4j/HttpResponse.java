@@ -63,12 +63,7 @@ public class HttpResponse implements IHttpResponse {
     }
 
     Map<String, String> getBodyAsMap() {
-        try (JsonReader reader = JsonProviders.createReader(this.body)) {
-            reader.nextToken();
-            return reader.readMap(JsonReader::getString);
-        } catch (IOException e) {
-            throw new MsalClientException("Could not parse JSON from HttpResponse body: " + e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
-        }
+        return JsonHelper.convertJsonToMap(this.body);
     }
 
     public int statusCode() {

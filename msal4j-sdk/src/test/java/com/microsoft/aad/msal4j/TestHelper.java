@@ -190,13 +190,4 @@ class TestHelper {
 
         return privateKey;
     }
-
-    static Map<String, String> convertJsonToMap(String jsonString) {
-        try (JsonReader reader = JsonProviders.createReader(jsonString)) {
-            reader.nextToken();
-            return reader.readMap(JsonReader::getString);
-        } catch (IOException e) {
-            throw new MsalClientException("Could not parse JSON from HttpResponse body: " + e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
-        }
-    }
 }

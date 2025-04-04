@@ -234,7 +234,7 @@ class TokenRequestExecutorTest {
 
         doReturn(msalOAuthHttpRequest).when(request).createOauthHttpRequest();
         doReturn(httpResponse).when(msalOAuthHttpRequest).send();
-        doReturn(TestHelper.convertJsonToMap(TestConfiguration.TOKEN_ENDPOINT_OK_RESPONSE)).when(httpResponse).getBodyAsMap();
+        doReturn(JsonHelper.convertJsonToMap(TestConfiguration.TOKEN_ENDPOINT_OK_RESPONSE_ID_AND_ACCESS)).when(httpResponse).getBodyAsMap();
 
         doReturn(200).when(httpResponse).statusCode();
 
