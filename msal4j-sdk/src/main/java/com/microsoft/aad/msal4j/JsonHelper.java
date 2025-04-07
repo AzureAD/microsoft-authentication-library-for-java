@@ -35,8 +35,8 @@ class JsonHelper {
     static <T> T convertJsonToObject(final String json, final Class<T> tClass) {
         try {
             return mapper.readValue(json, tClass);
-        } catch (IOException e) {
-            throw new MsalClientException(e);
+        } catch (Exception e) {
+            throw new MsalJsonParsingException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
         }
     }
 
@@ -44,10 +44,8 @@ class JsonHelper {
     static <T extends JsonSerializable<T>> T convertJsonStringToJsonSerializableObject(String jsonResponse, ReadValueCallback<JsonReader, T> readFunction) {
         try (JsonReader jsonReader = JsonProviders.createReader(jsonResponse)) {
             return readFunction.read(jsonReader);
-        } catch (IOException e) {
-            throw new MsalClientException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
         } catch (Exception e) {
-            throw new MsalClientException("Error parsing JSON response: " + e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
+            throw new MsalJsonParsingException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
         }
     }
 

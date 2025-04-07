@@ -49,6 +49,10 @@ class ManagedIdentityTests {
                 "\"Bearer\",\"client_id\":\"client_id\"}";
     }
 
+    private String getSuccessfulResponseWithInvalidJson() {
+        return "missing starting bracket \"access_token\":\"accesstoken\",\"token_type\":" + "\"Bearer\",\"client_id\":\"a bunch of problems}";
+    }
+
     private String getMsiErrorResponse() {
         return "{\"statusCode\":\"500\",\"message\":\"An unexpected error occured while fetching the AAD Token.\",\"correlationId\":\"7d0c9763-ff1d-4842-a3f3-6d49e64f4513\"}";
     }
@@ -200,6 +204,40 @@ class ManagedIdentityTests {
         assertNotNull(result.accessToken());
         assertEquals(TokenSource.CACHE, result.metadata().tokenSource());
         verify(httpClientMock, times(1)).send(any());
+    }
+
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.ManagedIdentityTestDataProvider#createData")
+    void managedIdentityTest_SuccessfulResponse_WithInvalidJson(ManagedIdentitySourceType source, String endpoint, String resource) throws Exception {
+        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
+        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+        if (source == SERVICE_FABRIC) {
+            ServiceFabricManagedIdentitySource.setHttpClient(httpClientMock);
+        }
+
+        when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(200, getSuccessfulResponseWithInvalidJson()));
+
+        miApp = ManagedIdentityApplication
+                .builder(ManagedIdentityId.systemAssigned())
+                .httpClient(httpClientMock)
+                .build();
+
+        // Clear caching to avoid cross test pollution.
+        miApp.tokenCache().accessTokens.clear();
+
+        try {
+            miApp.acquireTokenForManagedIdentity(
+                    ManagedIdentityParameters.builder(resource)
+                            .build()).get();
+            fail("MsalServiceException is expected but not thrown.");
+        } catch (ExecutionException exception) {
+            assert(exception.getCause() instanceof MsalJsonParsingException);
+
+            MsalJsonParsingException miException = (MsalJsonParsingException) exception.getCause();
+            assertEquals(source.name(), miException.managedIdentitySource());
+            assertEquals(MsalError.MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE, miException.errorCode());
+        }
     }
 
     @ParameterizedTest
@@ -456,7 +494,7 @@ class ManagedIdentityTests {
 
             MsalServiceException miException = (MsalServiceException) exception.getCause();
             assertEquals(source.name(), miException.managedIdentitySource());
-            assertEquals(AuthenticationErrorCode.MANAGED_IDENTITY_REQUEST_FAILED, miException.errorCode());
+            assertEquals(MsalError.MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE, miException.errorCode());
             return;
         }
 
