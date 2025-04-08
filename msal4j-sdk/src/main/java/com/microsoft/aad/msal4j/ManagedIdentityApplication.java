@@ -103,15 +103,16 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
         }
 
         /**
-         * Sets client capabilities for the application.
+         * Informs the token issuer that the application is able to perform complex authentication actions.
+         * For example, "cp1" means that the application is able to perform conditional access evaluation,
+         * because the application has been setup to parse WWW-Authenticate headers associated with a 401 response from the protected APIs,
+         * and to retry the request with claims API.
          * 
-         * @param clientCapabilities List of client capabilities to be requested
-         * @return instance of Builder of ManagedIdentityApplication
+         * @param clientCapabilities a list of capabilities (e.g., ["cp1"]) recognized by the token service.
+         * @return instance of Builder of ManagedIdentityApplication.
          */
         public Builder clientCapabilities(List<String> clientCapabilities) {
-            if (clientCapabilities != null) {
-                this.clientCapabilities = clientCapabilities;
-            }
+            this.clientCapabilities = clientCapabilities;
             return self();
         }
 

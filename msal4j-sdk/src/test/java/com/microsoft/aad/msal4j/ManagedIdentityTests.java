@@ -4,6 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.util.URLUtils;
+import labapi.App;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -11,11 +12,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.SocketException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,56 +81,51 @@ class ManagedIdentityTests {
         Map<String, List<String>> queryParameters = new HashMap<>();
 
         switch (source) {
-            case APP_SERVICE: {
+            case APP_SERVICE:
                 endpoint = appServiceEndpoint;
-
-                queryParameters.put("api-version", singletonList("2019-08-01"));
-                queryParameters.put("resource", singletonList(resource));
-
+                queryParameters.put("api-version", Collections.singletonList("2019-08-01"));
+                queryParameters.put("resource", Collections.singletonList(resource));
                 headers.put("X-IDENTITY-HEADER", "secret");
                 break;
-            }
-            case CLOUD_SHELL: {
+            case CLOUD_SHELL:
                 endpoint = cloudShellEndpoint;
-
                 headers.put("ContentType", "application/x-www-form-urlencoded");
                 headers.put("Metadata", "true");
-
-                queryParameters.put("resource", singletonList(resource));
+                queryParameters.put("resource", Collections.singletonList(resource));
                 break;
-            }
-            case IMDS: {
+            case IMDS:
                 endpoint = IMDS_ENDPOINT;
-                queryParameters.put("api-version", singletonList("2018-02-01"));
-                queryParameters.put("resource", singletonList(resource));
+                queryParameters.put("api-version", Collections.singletonList("2018-02-01"));
+                queryParameters.put("resource", Collections.singletonList(resource));
                 headers.put("Metadata", "true");
                 break;
-            }
-            case AZURE_ARC: {
+            case AZURE_ARC:
                 endpoint = azureArcEndpoint;
-
-                queryParameters.put("api-version", singletonList("2019-11-01"));
-                queryParameters.put("resource", singletonList(resource));
-
+                queryParameters.put("api-version", Collections.singletonList("2019-11-01"));
+                queryParameters.put("resource", Collections.singletonList(resource));
                 headers.put("Metadata", "true");
                 break;
-            }
-            case SERVICE_FABRIC: {
+            case SERVICE_FABRIC:
                 endpoint = serviceFabricEndpoint;
-                queryParameters.put("api-version", singletonList("2019-07-01-preview"));
-                queryParameters.put("resource", singletonList(resource));
-
+                queryParameters.put("api-version", Collections.singletonList("2019-07-01-preview"));
+                queryParameters.put("resource", Collections.singletonList(resource));
                 headers.put("secret", "secret");
                 break;
-            }
+            case NONE:
+            case DEFAULT_TO_IMDS:
+                endpoint = IMDS_ENDPOINT;
+                queryParameters.put("api-version", Collections.singletonList("2018-02-01"));
+                queryParameters.put("resource", Collections.singletonList(resource));
+                headers.put("Metadata", "true");
+                break;
         }
 
         switch (id.getIdType()) {
             case CLIENT_ID:
-                queryParameters.put("client_id", singletonList(id.getUserAssignedId()));
+                queryParameters.put("client_id", Collections.singletonList(id.getUserAssignedId()));
                 break;
             case RESOURCE_ID:
-                queryParameters.put("mi_res_id", singletonList(id.getUserAssignedId()));
+                queryParameters.put("mi_res_id", Collections.singletonList(id.getUserAssignedId()));
                 break;
             case OBJECT_ID:
                 queryParameters.put("object_id", singletonList(id.getUserAssignedId()));
@@ -314,9 +312,10 @@ class ManagedIdentityTests {
         miApp.tokenCache().accessTokens.clear();
 
         try {
-            IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
+            miApp.acquireTokenForManagedIdentity(
                     ManagedIdentityParameters.builder(resource)
                             .build()).get();
+            fail("MsalServiceException is expected but not thrown.");
         } catch (Exception e) {
             assertNotNull(e);
             assertNotNull(e.getCause());
@@ -325,10 +324,7 @@ class ManagedIdentityTests {
             MsalServiceException msalMsiException = (MsalServiceException) e.getCause();
             assertEquals(source.name(), msalMsiException.managedIdentitySource());
             assertEquals(MsalError.USER_ASSIGNED_MANAGED_IDENTITY_NOT_SUPPORTED, msalMsiException.errorCode());
-            return;
         }
-
-        fail("MsalServiceException is expected but not thrown.");
     }
 
     @ParameterizedTest
@@ -637,6 +633,56 @@ class ManagedIdentityTests {
 
         miApp = ManagedIdentityApplication
                 .builder(ManagedIdentityId.systemAssigned())
+                .httpClient(httpClientMock)
+                .build();
+
+        // Clear caching to avoid cross test pollution.
+        miApp.tokenCache().accessTokens.clear();
+
+        String claimsJson = "{\"default\":\"claim\"}";
+
+        // First call, get the token from the identity provider.
+        IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
+            ManagedIdentityParameters.builder(resource)
+                .build()).get();
+
+        assertNotNull(result.accessToken());
+        assertEquals(TokenSource.IDENTITY_PROVIDER, result.metadata().tokenSource());
+
+        // Second call, get the token from the cache without passing the claims.
+        result = miApp.acquireTokenForManagedIdentity(
+                ManagedIdentityParameters.builder(resource)
+                        .build()).get();
+
+        assertNotNull(result.accessToken());
+        assertEquals(TokenSource.CACHE, result.metadata().tokenSource());
+
+        // Third call, when claims are passed bypass the cache.
+        result = miApp.acquireTokenForManagedIdentity(
+                ManagedIdentityParameters.builder(resource)
+                        .claims(claimsJson)
+                        .build()).get();
+
+        assertNotNull(result.accessToken());
+        assertEquals(TokenSource.IDENTITY_PROVIDER, result.metadata().tokenSource());
+
+        verify(httpClientMock, times(2)).send(any());
+    }
+
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.ManagedIdentityTestDataProvider#createDataError")
+    void managedIdentity_ClaimsAndCapabilities(ManagedIdentitySourceType source, String endpoint) throws Exception {
+        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
+        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+        if (source == SERVICE_FABRIC) {
+            ServiceFabricManagedIdentitySource.setHttpClient(httpClientMock);
+        }
+
+        when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+
+        miApp = ManagedIdentityApplication
+                .builder(ManagedIdentityId.systemAssigned())
                 .clientCapabilities(singletonList("cp1"))
                 .httpClient(httpClientMock)
                 .build();
@@ -645,13 +691,58 @@ class ManagedIdentityTests {
         miApp.tokenCache().accessTokens.clear();
 
         String claimsJson = "{\"default\":\"claim\"}";
+        // First call, get the token from the identity provider.
         IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
-            ManagedIdentityParameters.builder(resource)
-                .claims(claimsJson)
-                .build()).get();
+                ManagedIdentityParameters.builder(resource)
+                        .build()).get();
 
         assertNotNull(result.accessToken());
-        verify(httpClientMock, times(1)).send(any());
+        assertEquals(TokenSource.IDENTITY_PROVIDER, result.metadata().tokenSource());
+
+        // Second call, get the token from the cache without passing the claims.
+        result = miApp.acquireTokenForManagedIdentity(
+                ManagedIdentityParameters.builder(resource)
+                        .build()).get();
+
+        assertNotNull(result.accessToken());
+        assertEquals(TokenSource.CACHE, result.metadata().tokenSource());
+
+        // Third call, when claims are passed bypass the cache.
+        result = miApp.acquireTokenForManagedIdentity(
+                ManagedIdentityParameters.builder(resource)
+                        .claims(claimsJson)
+                        .build()).get();
+
+        assertNotNull(result.accessToken());
+        assertEquals(TokenSource.IDENTITY_PROVIDER, result.metadata().tokenSource());
+
+        verify(httpClientMock, times(2)).send(any());
+    }
+
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.ManagedIdentityTestDataProvider#createInvalidClaimsData")
+    void managedIdentity_InvalidClaims(String claimsJson) throws Exception {
+        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(APP_SERVICE, appServiceEndpoint);
+        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        miApp = ManagedIdentityApplication
+                .builder(ManagedIdentityId.systemAssigned())
+                .httpClient(httpClientMock)
+                .build();
+
+        CompletableFuture<IAuthenticationResult> future = miApp.acquireTokenForManagedIdentity(
+                ManagedIdentityParameters.builder(resource)
+                        .claims(claimsJson)
+                        .build());
+
+        ExecutionException ex = assertThrows(ExecutionException.class, future::get);
+        assertInstanceOf(MsalClientException.class, ex.getCause());
+        MsalClientException msalException = (MsalClientException) ex.getCause();
+        assertEquals(AuthenticationErrorCode.INVALID_JSON, msalException.errorCode());
+
+        // Verify no HTTP requests were made for invalid claims
+        verify(httpClientMock, never()).send(any());
     }
 
     @Nested

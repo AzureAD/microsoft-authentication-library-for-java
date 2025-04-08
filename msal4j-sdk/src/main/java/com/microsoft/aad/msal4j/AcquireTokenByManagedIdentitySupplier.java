@@ -52,6 +52,7 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
             SilentParameters parameters = SilentParameters
                     .builder(scopes)
                     .tenant(managedIdentityParameters.tenant())
+                    .claims(managedIdentityParameters.claims())
                     .build();
 
             RequestContext context = new RequestContext(

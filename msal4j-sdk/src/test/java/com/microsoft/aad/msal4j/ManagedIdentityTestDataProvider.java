@@ -114,4 +114,12 @@ class ManagedIdentityTestDataProvider {
                 Arguments.of(ManagedIdentitySourceType.IMDS, "", ManagedIdentitySourceType.DEFAULT_TO_IMDS),
                 Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTests.serviceFabricEndpoint, ManagedIdentitySourceType.SERVICE_FABRIC));
     }
+
+    public static Stream<Arguments> createInvalidClaimsData() {
+        return Stream.of(
+                Arguments.of("invalid json format"),
+                Arguments.of("{\"access_token\": }"),
+                Arguments.of("")
+        );
+    }
 }
