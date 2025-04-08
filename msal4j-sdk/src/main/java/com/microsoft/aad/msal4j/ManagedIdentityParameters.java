@@ -30,8 +30,7 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
     @Override
     public ClaimsRequest claims() {
         if (claims == null || claims.isEmpty()) {
-            throw new MsalClientException("Claims cannot be null or empty",
-                                         AuthenticationErrorCode.INVALID_JSON);
+            return null;
         }
 
         try {
@@ -108,6 +107,8 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
          * @return this builder instance
          */
         public ManagedIdentityParametersBuilder claims(String claims) {
+            ParameterValidationUtils.validateNotBlank("claims", claims);
+
             this.claims = claims;
             return this;
         }

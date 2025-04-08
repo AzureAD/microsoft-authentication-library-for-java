@@ -118,8 +118,7 @@ class ManagedIdentityTestDataProvider {
     public static Stream<Arguments> createInvalidClaimsData() {
         return Stream.of(
                 Arguments.of("invalid json format"),
-                Arguments.of("{\"access_token\": }"),
-                Arguments.of("")
+                Arguments.of("{\"access_token\": }")
         );
     }
 }

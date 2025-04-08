@@ -738,8 +738,42 @@ class ManagedIdentityTests {
 
         ExecutionException ex = assertThrows(ExecutionException.class, future::get);
         assertInstanceOf(MsalClientException.class, ex.getCause());
+
         MsalClientException msalException = (MsalClientException) ex.getCause();
         assertEquals(AuthenticationErrorCode.INVALID_JSON, msalException.errorCode());
+
+        // Verify no HTTP requests were made for invalid claims
+        verify(httpClientMock, never()).send(any());
+    }
+
+    @Test
+    void managedIdentityTest_WithEmptyClaims() throws Exception {
+        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(APP_SERVICE, appServiceEndpoint);
+        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        miApp = ManagedIdentityApplication
+                .builder(ManagedIdentityId.systemAssigned())
+                .httpClient(httpClientMock)
+                .build();
+
+        try {
+            miApp.acquireTokenForManagedIdentity(
+                    ManagedIdentityParameters.builder(resource)
+                            .claims("")
+                            .build());
+        } catch (Exception exception) {
+            assert(exception instanceof IllegalArgumentException);
+        }
+
+        try {
+            miApp.acquireTokenForManagedIdentity(
+                    ManagedIdentityParameters.builder(resource)
+                            .claims(null)
+                            .build());
+        } catch (Exception exception) {
+            assert(exception instanceof IllegalArgumentException);
+        }
 
         // Verify no HTTP requests were made for invalid claims
         verify(httpClientMock, never()).send(any());
