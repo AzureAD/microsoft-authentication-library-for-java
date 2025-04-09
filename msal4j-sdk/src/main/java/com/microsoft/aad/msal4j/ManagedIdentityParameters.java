@@ -14,10 +14,12 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
 
     String resource;
     boolean forceRefresh;
+    String claims;
 
-    private ManagedIdentityParameters(String resource, boolean forceRefresh) {
+    private ManagedIdentityParameters(String resource, boolean forceRefresh, String claims) {
         this.resource = resource;
         this.forceRefresh = forceRefresh;
+        this.claims = claims;
     }
 
     @Override
@@ -27,7 +29,17 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
 
     @Override
     public ClaimsRequest claims() {
-        return null;
+        if (claims == null || claims.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return ClaimsRequest.formatAsClaimsRequest(claims);
+        } catch (Exception ex) {
+            // Log the exception if the claims JSON is invalid
+            throw new MsalClientException("Failed to parse claims JSON: " + ex.getMessage(),
+                                         AuthenticationErrorCode.INVALID_JSON);
+        }
     }
 
     @Override
@@ -69,6 +81,7 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
     public static class ManagedIdentityParametersBuilder {
         private String resource;
         private boolean forceRefresh;
+        private String claims;
 
         ManagedIdentityParametersBuilder() {
         }
@@ -83,8 +96,25 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
             return this;
         }
 
+        /**
+         * Instructs the SDK to bypass any token caches and to request new tokens with an additional claims challenge.
+         * The claims challenge string is opaque to applications and should not be parsed.
+         * The claims challenge string is issued either by the STS as part of an error response or by the resource,
+         * as part of an HTTP 401 response, in the WWW-Authenticate header.
+         * For more details see https://learn.microsoft.com/entra/identity-platform/app-resilience-continuous-access-evaluation?tabs=dotnet
+         *
+         * @param claims a valid JSON string representing additional claims
+         * @return this builder instance
+         */
+        public ManagedIdentityParametersBuilder claims(String claims) {
+            ParameterValidationUtils.validateNotBlank("claims", claims);
+
+            this.claims = claims;
+            return this;
+        }
+
         public ManagedIdentityParameters build() {
-            return new ManagedIdentityParameters(this.resource, this.forceRefresh);
+            return new ManagedIdentityParameters(this.resource, this.forceRefresh, this.claims);
         }
 
         public String toString() {
