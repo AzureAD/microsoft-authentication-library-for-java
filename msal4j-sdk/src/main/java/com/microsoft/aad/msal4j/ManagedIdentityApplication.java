@@ -5,6 +5,7 @@ package com.microsoft.aad.msal4j;
 
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -56,6 +57,7 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
     public ManagedIdentityId getManagedIdentityId() {
         return this.managedIdentityId;
     }
+    
     @Override
     public CompletableFuture<IAuthenticationResult> acquireTokenForManagedIdentity(ManagedIdentityParameters managedIdentityParameters)
             throws Exception {
@@ -86,6 +88,7 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
 
         private String resource;
         private ManagedIdentityId managedIdentityId;
+        private List<String> clientCapabilities;
 
         private Builder(ManagedIdentityId managedIdentityId) {
             super(managedIdentityId.getIdType() == ManagedIdentityIdType.SYSTEM_ASSIGNED ?
@@ -99,9 +102,22 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
             return self();
         }
 
+        /**
+         * Informs the token issuer that the application is able to perform complex authentication actions.
+         * For example, "cp1" means that the application is able to perform conditional access evaluation,
+         * because the application has been setup to parse WWW-Authenticate headers associated with a 401 response from the protected APIs,
+         * and to retry the request with claims API.
+         * 
+         * @param clientCapabilities a list of capabilities (e.g., ["cp1"]) recognized by the token service.
+         * @return instance of Builder of ManagedIdentityApplication.
+         */
+        public Builder clientCapabilities(List<String> clientCapabilities) {
+            this.clientCapabilities = clientCapabilities;
+            return self();
+        }
+
         @Override
         public ManagedIdentityApplication build() {
-
             return new ManagedIdentityApplication(this);
         }
 
