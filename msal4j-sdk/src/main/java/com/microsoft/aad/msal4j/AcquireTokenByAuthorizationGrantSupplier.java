@@ -104,7 +104,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
             Map<String, List<String>> params = getSAMLAuthGrantParameters(response);
             params.putAll(authGrant.toParameters());
 
-            authGrant = new OAuthAuthorizationGrant(params, null, null);
+            authGrant = new OAuthAuthorizationGrant(params, null);
         }
         return authGrant;
     }

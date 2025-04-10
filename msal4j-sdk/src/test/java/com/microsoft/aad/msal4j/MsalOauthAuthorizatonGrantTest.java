@@ -22,7 +22,7 @@ class MsalOauthAuthorizatonGrantTest {
         Map<String, List<String>> params = new LinkedHashMap<>();
         params.put(GrantConstants.GRANT_TYPE_PARAMETER, Collections.singletonList("SomeGrantType"));
 
-        final OAuthAuthorizationGrant grant = new OAuthAuthorizationGrant(params, null, null);
+        final OAuthAuthorizationGrant grant = new OAuthAuthorizationGrant(params, null);
 
         assertNotNull(grant);
         assertNotNull(grant.toParameters());

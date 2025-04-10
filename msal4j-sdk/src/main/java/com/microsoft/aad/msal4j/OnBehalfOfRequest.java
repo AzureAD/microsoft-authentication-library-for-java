@@ -29,7 +29,7 @@ class OnBehalfOfRequest extends MsalRequest {
             params.put("claims", Collections.singletonList(parameters.claims().formatAsJSONString()));
         }
 
-        return new OAuthAuthorizationGrant(params, parameters.scopes(), null);
+        return new OAuthAuthorizationGrant(params, parameters.scopes());
     }
 
     OnBehalfOfParameters parameters() {
