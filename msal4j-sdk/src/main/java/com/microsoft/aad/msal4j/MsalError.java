@@ -34,4 +34,6 @@ public class MsalError {
     public static final String MANAGED_IDENTITY_UNREACHABLE_NETWORK = "managed_identity_unreachable_network";
 
     public static final String MANAGED_IDENTITY_FILE_READ_ERROR = "managed_identity_file_read_error";
+
+    public static final String MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE = "managed_identity_response_parse_failure";
 }
