@@ -4,7 +4,6 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
 import net.minidev.json.JSONObject;
 import org.json.JSONException;
@@ -154,12 +153,12 @@ class CacheFormatTests {
         TokenRequestExecutor request = spy(new TokenRequestExecutor(
                 new AADAuthority(new URL(AUTHORIZE_REQUEST_URL)), msalRequest, serviceBundle));
         OAuthHttpRequest msalOAuthHttpRequest = mock(OAuthHttpRequest.class);
-        HTTPResponse httpResponse = mock(HTTPResponse.class);
+        HttpResponse httpResponse = mock(HttpResponse.class);
 
         doReturn(msalOAuthHttpRequest).when(request).createOauthHttpRequest();
         doReturn(httpResponse).when(msalOAuthHttpRequest).send();
-        doReturn(200).when(httpResponse).getStatusCode();
-        doReturn(JSONObjectUtils.parse(tokenResponse)).when(httpResponse).getContentAsJSONObject();
+        doReturn(200).when(httpResponse).statusCode();
+        doReturn(JsonHelper.convertJsonToMap((tokenResponse))).when(httpResponse).getBodyAsMap();
 
         final AuthenticationResult result = request.executeTokenRequest();
 
@@ -187,12 +186,22 @@ class CacheFormatTests {
         String valueExpected = readResource(folder + AT_CACHE_ENTITY);
 
         JSONObject tokenResponseJsonObj = JSONObjectUtils.parse(tokenResponse);
-        long expireIn = TokenResponse.getLongValue(tokenResponseJsonObj, "expires_in");
+        long expireIn = getLongValue(tokenResponseJsonObj, "expires_in");
 
-        long extExpireIn = TokenResponse.getLongValue(tokenResponseJsonObj, "ext_expires_in");
+        long extExpireIn = getLongValue(tokenResponseJsonObj, "ext_expires_in");
 
         JSONAssert.assertEquals(valueExpected, valueActual,
                 new DynamicTimestampsComparator(JSONCompareMode.STRICT, expireIn, extExpireIn));
+    }
+
+    static Long getLongValue(JSONObject jsonObject, String key) throws ParseException {
+        Object value = jsonObject.get(key);
+
+        if (value instanceof Long) {
+            return JSONObjectUtils.getLong(jsonObject, key);
+        } else {
+            return Long.parseLong(JSONObjectUtils.getString(jsonObject, key));
+        }
     }
 
     private void validateRefreshTokenCacheEntity(String folder, TokenCache tokenCache)

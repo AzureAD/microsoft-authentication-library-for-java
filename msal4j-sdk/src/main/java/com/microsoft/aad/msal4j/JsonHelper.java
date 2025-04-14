@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 class JsonHelper {
@@ -46,6 +47,16 @@ class JsonHelper {
             return readFunction.read(jsonReader);
         } catch (Exception e) {
             throw new MsalJsonParsingException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
+        }
+    }
+
+    //Converts a JSON string to a Map<String, String>
+    static Map<String, String> convertJsonToMap(String jsonString) {
+        try (JsonReader reader = JsonProviders.createReader(jsonString)) {
+            reader.nextToken();
+            return reader.readMap(JsonReader::getString);
+        } catch (IOException e) {
+            throw new MsalClientException("Could not parse JSON from HttpResponse body: " + e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
         }
     }
 

@@ -3,12 +3,8 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.oauth2.sdk.auth.*;
-import com.nimbusds.oauth2.sdk.id.ClientID;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -23,10 +19,9 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
  */
 public class ConfidentialClientApplication extends AbstractClientApplicationBase implements IConfidentialClientApplication {
 
-    private ClientAuthentication clientAuthentication;
-
-    private boolean clientCertAuthentication = false;
     private ClientCertificate clientCertificate;
+    String assertion;
+    String secret;
 
     /** AppTokenProvider creates a Credential from a function that provides access tokens. The function
      must be concurrency safe. This is intended only to allow the Azure SDK to cache MSI tokens. It isn't
@@ -87,65 +82,31 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
         validateNotNull("clientCredential", clientCredential);
 
         if (clientCredential instanceof ClientSecret) {
-            clientAuthentication = new ClientSecretPost(
-                    new ClientID(clientId()),
-                    new Secret(((ClientSecret) clientCredential).clientSecret()));
+            this.secret = ((ClientSecret) clientCredential).clientSecret();
         } else if (clientCredential instanceof ClientCertificate) {
-            this.clientCertAuthentication = true;
             this.clientCertificate = (ClientCertificate) clientCredential;
-            clientAuthentication = buildValidClientCertificateAuthority();
+            this.assertion = getAssertionString(clientCredential);
         } else if (clientCredential instanceof ClientAssertion) {
-            clientAuthentication = createClientAuthFromClientAssertion((ClientAssertion) clientCredential);
+            this.assertion = getAssertionString(clientCredential);
         } else {
             throw new IllegalArgumentException("Unsupported client credential");
         }
     }
 
-    @Override
-    protected ClientAuthentication clientAuthentication() {
-        if (clientCertAuthentication) {
-            final Date currentDateTime = new Date(System.currentTimeMillis());
-            final Date expirationTime = ((PrivateKeyJWT) clientAuthentication).getJWTAuthenticationClaimsSet().getExpirationTime();
-            if (expirationTime.before(currentDateTime)) {
-                clientAuthentication = buildValidClientCertificateAuthority();
-            }
-        }
-        return clientAuthentication;
-    }
+    String getAssertionString(IClientCredential clientCredential) {
+        if (clientCredential instanceof ClientCertificate) {
+            boolean useSha1 = Authority.detectAuthorityType(this.authenticationAuthority.canonicalAuthorityUrl()) == AuthorityType.ADFS;
 
-    private ClientAuthentication buildValidClientCertificateAuthority() {
-        //The library originally used SHA-1 for thumbprints as other algorithms were not supported server-side.
-        //When this was written support for SHA-256 had been added, however ADFS scenarios still only allowed SHA-1.
-        boolean useSha1 = Authority.detectAuthorityType(this.authenticationAuthority.canonicalAuthorityUrl()) == AuthorityType.ADFS;
-
-        ClientAssertion clientAssertion = JwtHelper.buildJwt(
-                clientId(),
-                clientCertificate,
-                this.authenticationAuthority.selfSignedJwtAudience(),
-                sendX5c,
-                useSha1);
-        return createClientAuthFromClientAssertion(clientAssertion);
-    }
-
-    protected ClientAuthentication createClientAuthFromClientAssertion(
-            final ClientAssertion clientAssertion) {
-        final Map<String, List<String>> map = new HashMap<>();
-        try {
-
-            map.put("client_assertion_type", Collections.singletonList(ClientAssertion.assertionType));
-            map.put("client_assertion", Collections.singletonList(clientAssertion.assertion()));
-            return PrivateKeyJWT.parse(map);
-        } catch (final ParseException e) {
-            //This library is not supposed to validate Issuer and subject values.
-            //The next lines of code ensures that exception is not thrown.
-            if (e.getMessage().contains("Issuer and subject in client JWT assertion must designate the same client identifier")) {
-                return new CustomJWTAuthentication(
-                        ClientAuthenticationMethod.PRIVATE_KEY_JWT,
-                        clientAssertion,
-                        new ClientID(clientId())
-                );
-            }
-            throw new MsalClientException(e);
+            return JwtHelper.buildJwt(
+                    clientId(),
+                    clientCertificate,
+                    this.authenticationAuthority.selfSignedJwtAudience(),
+                    sendX5c,
+                    useSha1).assertion();
+        } else if (clientCredential instanceof ClientAssertion) {
+            return ((ClientAssertion) clientCredential).assertion();
+        } else {
+            throw new IllegalArgumentException("Unsupported client credential");
         }
     }
 
