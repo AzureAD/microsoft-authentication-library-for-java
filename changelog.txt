@@ -1,5 +1,9 @@
 Version 1.20.0
 =============
+- Fix Base64URL decoding bug (#938)
+
+Version 1.20.0
+=============
 - Replace some usage of jackson-databind with azure-json (#918)
 - Remove Lombok code generation from most classes (#919, #925)
 - Remove some usage of nimbusds-oauth2-oidc-sdk (#927, #928)
