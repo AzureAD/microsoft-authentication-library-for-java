@@ -37,21 +37,35 @@ class OAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
         }
     }
 
-        /**
-         * Constructor to create an OAuthAuthorizationGrant
-         *
-         * @param params parameters relevant for the specific authorization grant type
-         * @param scopes additional scopes which will be added to a default set of common scopes
-         * @param claims optional claims
-         */
-        OAuthAuthorizationGrant(Map<String, List<String>> params, Set<String> scopes, ClaimsRequest claims) {
-            this(params, scopes);
+    /**
+     * Constructor to create an OAuthAuthorizationGrant
+     *
+     * @param params parameters relevant for the specific authorization grant type
+     * @param scopes additional scopes which will be added to a default set of common scopes
+     * @param claims optional claims
+     */
+    OAuthAuthorizationGrant(Map<String, List<String>> params, Set<String> scopes, ClaimsRequest claims) {
+        this(params, scopes);
 
-            if (claims != null) {
-                this.claims = claims;
-                this.params.put("claims", Collections.singletonList(claims.formatAsJSONString()));
-            }
+        if (claims != null) {
+            this.claims = claims;
+            this.params.put("claims", Collections.singletonList(claims.formatAsJSONString()));
         }
+    }
+
+    void addAndReplaceParams(Map<String, List<String>> params) {
+        if (params != null) {
+            //putAll() will overwrite existing values if the key already exists in the map
+            this.params.putAll(params);
+        }
+    }
+
+    String getParamValue(String paramKey) {
+        if (this.params.containsKey(paramKey)) {
+            return this.params.get(paramKey).get(0);
+        }
+        return null;
+    }
 
     /**
      * Returns an unmodifiable version of the parameters map

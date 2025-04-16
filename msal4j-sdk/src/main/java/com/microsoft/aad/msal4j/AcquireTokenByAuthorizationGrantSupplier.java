@@ -39,8 +39,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
         }
 
         if (authGrant instanceof OAuthAuthorizationGrant) {
-            msalRequest.msalAuthorizationGrant =
-                    processPasswordGrant((OAuthAuthorizationGrant) authGrant);
+            processPasswordGrant((OAuthAuthorizationGrant) authGrant);
         }
 
         if (authGrant instanceof IntegratedWindowsAuthorizationGrant) {
@@ -74,19 +73,16 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
                 clientApplication instanceof PublicClientApplication;
     }
 
-    private OAuthAuthorizationGrant processPasswordGrant(
-            OAuthAuthorizationGrant authGrant) throws Exception {
+    private void processPasswordGrant(OAuthAuthorizationGrant authGrant) throws Exception {
 
-        if (!(authGrant.toParameters().get(GrantConstants.GRANT_TYPE_PARAMETER).get(0).equals(GrantConstants.PASSWORD))) {
-            return authGrant;
-        }
-
-        if (msalRequest.application().authenticationAuthority.authorityType != AuthorityType.AAD) {
-            return authGrant;
+        //Additional processing is only needed if it's a password grant with a non-AAD authority
+        if (!(authGrant.getParamValue(GrantConstants.GRANT_TYPE_PARAMETER).equals(GrantConstants.PASSWORD))
+                || msalRequest.application().authenticationAuthority.authorityType != AuthorityType.AAD) {
+            return;
         }
 
         UserDiscoveryResponse userDiscoveryResponse = UserDiscoveryRequest.execute(
-                this.clientApplication.authenticationAuthority.getUserRealmEndpoint(authGrant.toParameters().get("username").get(0)),
+                this.clientApplication.authenticationAuthority.getUserRealmEndpoint(authGrant.getParamValue(GrantConstants.USERNAME_PARAMETER)),
                 msalRequest.headers().getReadonlyHeaderMap(),
                 msalRequest.requestContext(),
                 this.clientApplication.serviceBundle());
@@ -94,19 +90,15 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
         if (userDiscoveryResponse.isAccountFederated()) {
             WSTrustResponse response = WSTrustRequest.execute(
                     userDiscoveryResponse.federationMetadataUrl(),
-                    authGrant.toParameters().get(GrantConstants.USERNAME_PARAMETER).get(0),
-                    authGrant.toParameters().get(GrantConstants.PASSWORD_PARAMETER).get(0),
+                    authGrant.getParamValue(GrantConstants.USERNAME_PARAMETER),
+                    authGrant.getParamValue(GrantConstants.PASSWORD_PARAMETER),
                     userDiscoveryResponse.cloudAudienceUrn(),
                     msalRequest.requestContext(),
                     this.clientApplication.serviceBundle(),
                     this.clientApplication.logPii());
 
-            Map<String, List<String>> params = getSAMLAuthGrantParameters(response);
-            params.putAll(authGrant.toParameters());
-
-            authGrant = new OAuthAuthorizationGrant(params, null);
+            authGrant.addAndReplaceParams(getSAMLAuthGrantParameters(response));
         }
-        return authGrant;
     }
 
     private Map<String, List<String>> getSAMLAuthGrantParameters(WSTrustResponse response) {
