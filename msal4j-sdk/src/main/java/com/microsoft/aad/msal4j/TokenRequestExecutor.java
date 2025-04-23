@@ -31,7 +31,7 @@ class TokenRequestExecutor {
                 msalRequest.requestContext().apiParameters().tenant() ;
     }
 
-    AuthenticationResult executeTokenRequest() throws ParseException, IOException {
+    AuthenticationResult executeTokenRequest() throws IOException {
 
         log.debug("Sending token request to: {}", requestAuthority.canonicalAuthorityUrl());
         OAuthHttpRequest oAuthHttpRequest = createOauthHttpRequest();
@@ -39,10 +39,11 @@ class TokenRequestExecutor {
         return createAuthenticationResultFromOauthHttpResponse(oauthHttpResponse);
     }
 
-    OAuthHttpRequest createOauthHttpRequest() throws SerializeException, MalformedURLException {
+    OAuthHttpRequest createOauthHttpRequest() throws MalformedURLException {
 
         if (requestAuthority.tokenEndpointUrl() == null) {
-            throw new SerializeException("The endpoint URI is not specified");
+            throw new MsalClientException("The endpoint URI is not specified",
+                    AuthenticationErrorCode.INVALID_ENDPOINT_URI);
         }
 
         final OAuthHttpRequest oauthHttpRequest = new OAuthHttpRequest(
@@ -113,8 +114,7 @@ class TokenRequestExecutor {
         queryParameters.put("client_assertion_type", Collections.singletonList("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"));
     }
 
-    private AuthenticationResult createAuthenticationResultFromOauthHttpResponse(
-            HttpResponse oauthHttpResponse) throws ParseException {
+    private AuthenticationResult createAuthenticationResultFromOauthHttpResponse(HttpResponse oauthHttpResponse) {
         AuthenticationResult result;
 
         if (oauthHttpResponse.statusCode() == HttpHelper.HTTP_STATUS_200) {

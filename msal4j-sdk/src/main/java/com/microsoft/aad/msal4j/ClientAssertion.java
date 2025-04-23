@@ -3,7 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.auth.JWTAuthentication;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.experimental.Accessors;
@@ -13,7 +12,7 @@ import lombok.experimental.Accessors;
 @EqualsAndHashCode
 final class ClientAssertion implements IClientAssertion {
 
-    static final String assertionType = JWTAuthentication.CLIENT_ASSERTION_TYPE;
+    static final String ASSERTION_TYPE = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
     private final String assertion;
 
     ClientAssertion(final String assertion) {

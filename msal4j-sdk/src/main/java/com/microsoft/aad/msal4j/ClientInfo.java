@@ -4,8 +4,8 @@
 package com.microsoft.aad.msal4j;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.nimbusds.jose.util.StandardCharset;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 import static com.microsoft.aad.msal4j.Constants.POINT_DELIMITER;
@@ -23,9 +23,9 @@ class ClientInfo {
             return null;
         }
 
-        byte[] decodedInput = Base64.getUrlDecoder().decode(clientInfoJsonBase64Encoded.getBytes(StandardCharset.UTF_8));
+        byte[] decodedInput = Base64.getUrlDecoder().decode(clientInfoJsonBase64Encoded.getBytes(StandardCharsets.UTF_8));
 
-        return JsonHelper.convertJsonToObject(new String(decodedInput, StandardCharset.UTF_8), ClientInfo.class);
+        return JsonHelper.convertJsonToObject(new String(decodedInput, StandardCharsets.UTF_8), ClientInfo.class);
     }
 
     String toAccountIdentifier() {

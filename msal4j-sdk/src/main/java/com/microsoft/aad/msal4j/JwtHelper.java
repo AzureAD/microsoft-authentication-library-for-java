@@ -3,76 +3,85 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.nio.charset.StandardCharsets;
+import java.security.Signature;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
+import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.JWSHeader.Builder;
-import com.nimbusds.jose.crypto.RSASSASigner;
-import com.nimbusds.jose.util.Base64;
-import com.nimbusds.jose.util.Base64URL;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.SignedJWT;
 
 final class JwtHelper {
 
     static ClientAssertion buildJwt(String clientId, final ClientCertificate credential,
                                     final String jwtAudience, boolean sendX5c,
                                     boolean useSha1) throws MsalClientException {
-        if (StringHelper.isBlank(clientId)) {
-            throw new IllegalArgumentException("clientId is null or empty");
-        }
 
-        if (credential == null) {
-            throw new IllegalArgumentException("credential is null");
-        }
+        ParameterValidationUtils.validateNotBlank("clientId", clientId);
+        ParameterValidationUtils.validateNotNull("credential", clientId);
 
-        final long time = System.currentTimeMillis();
-
-        final JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-                .audience(Collections.singletonList(jwtAudience))
-                .issuer(clientId)
-                .jwtID(UUID.randomUUID().toString())
-                .notBeforeTime(new Date(time))
-                .expirationTime(new Date(time
-                        + Constants.AAD_JWT_TOKEN_LIFETIME_SECONDS
-                        * 1000))
-                .subject(clientId)
-                .build();
-
-        SignedJWT jwt;
         try {
-            JWSHeader.Builder builder = new Builder(JWSAlgorithm.RS256);
+            final long time = System.currentTimeMillis();
+
+            // Build header
+            Map<String, Object> header = new HashMap<>();
+            header.put("alg", "RS256");
+            header.put("typ", "JWT");
 
             if (sendX5c) {
-                List<Base64> certs = new ArrayList<>();
+                List<String> certs = new ArrayList<>();
                 for (String cert : credential.getEncodedPublicKeyCertificateChain()) {
-                    certs.add(new Base64(cert));
+                    certs.add(cert);
                 }
-                builder.x509CertChain(certs);
+                header.put("x5c", certs);
             }
 
             //SHA-256 is preferred, however certain flows still require SHA-1 due to what is supported server-side. If SHA-256
             // is not supported or the IClientCredential.publicCertificateHash256() method is not implemented, the library will default to SHA-1.
             String hash256 = credential.publicCertificateHash256();
             if (useSha1 || hash256 == null) {
-                builder.x509CertThumbprint(new Base64URL(credential.publicCertificateHash()));
+                header.put("x5t", credential.publicCertificateHash());
             } else {
-                builder.x509CertSHA256Thumbprint(new Base64URL(hash256));
+                header.put("x5t#S256", hash256);
             }
 
-            jwt = new SignedJWT(builder.build(), claimsSet);
-            final RSASSASigner signer = new RSASSASigner(credential.privateKey());
+            // Build payload
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("aud", jwtAudience);
+            payload.put("iss", clientId);
+            payload.put("jti", UUID.randomUUID().toString());
+            payload.put("nbf", time / 1000);
+            payload.put("exp", time / 1000 + Constants.AAD_JWT_TOKEN_LIFETIME_SECONDS);
+            payload.put("sub", clientId);
 
-            jwt.sign(signer);
+            // Concatenate header and payload
+            String jsonHeader = JsonHelper.mapper.writeValueAsString(header);
+            String jsonPayload = JsonHelper.mapper.writeValueAsString(payload);
+
+            String encodedHeader = base64UrlEncode(jsonHeader.getBytes(StandardCharsets.UTF_8));
+            String encodedPayload = base64UrlEncode(jsonPayload.getBytes(StandardCharsets.UTF_8));
+
+            // Create signature
+            String dataToSign = encodedHeader + "." + encodedPayload;
+
+            Signature sig = Signature.getInstance("SHA256withRSA");
+            sig.initSign(credential.privateKey());
+            sig.update(dataToSign.getBytes(StandardCharsets.UTF_8));
+            byte[] signatureBytes = sig.sign();
+
+            String encodedSignature = base64UrlEncode(signatureBytes);
+
+            // Build the JWT
+            String jwt = dataToSign + "." + encodedSignature;
+
+            return new ClientAssertion(jwt);
         } catch (final Exception e) {
             throw new MsalClientException(e);
         }
+    }
 
-        return new ClientAssertion(jwt.serialize());
+    private static String base64UrlEncode(byte[] data) {
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(data);
     }
 }
