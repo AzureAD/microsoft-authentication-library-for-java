@@ -15,11 +15,12 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
     String resource;
     boolean forceRefresh;
     String claims;
-
-    private ManagedIdentityParameters(String resource, boolean forceRefresh, String claims) {
+    private String tokenToRevoke;    
+    private ManagedIdentityParameters(String resource, boolean forceRefresh, String claims, String tokenToRevoke) {
         this.resource = resource;
         this.forceRefresh = forceRefresh;
         this.claims = claims;
+        this.tokenToRevoke = tokenToRevoke;
     }
 
     @Override
@@ -78,10 +79,19 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
         return this.resource;
     }
 
+    /**
+     * Gets the token to be revoked in supported Managed Identity environments.
+     * @return the token to be revoked
+     */
+    public String getTokenToRevoke() {
+        return this.tokenToRevoke;
+    }
+
     public static class ManagedIdentityParametersBuilder {
         private String resource;
         private boolean forceRefresh;
         private String claims;
+        private String tokenToRevoke;
 
         ManagedIdentityParametersBuilder() {
         }
@@ -112,9 +122,23 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
             this.claims = claims;
             return this;
         }
+        
+        /**
+         * Specifies a token to be revoked in supported Managed Identity environments (App Service, Service Fabric).
+         * The token will be converted to a SHA256 hash for revocation to avoid transmitting the original token.
+         * 
+         * @param tokenToRevoke The access token to revoke
+         * @return this builder instance
+         */
+        public ManagedIdentityParametersBuilder tokenToRevoke(String tokenToRevoke) {
+            ParameterValidationUtils.validateNotBlank("tokenToRevoke", tokenToRevoke);
+            
+            this.tokenToRevoke = tokenToRevoke;
+            return this;
+        }
 
         public ManagedIdentityParameters build() {
-            return new ManagedIdentityParameters(this.resource, this.forceRefresh, this.claims);
+            return new ManagedIdentityParameters(this.resource, this.forceRefresh, this.claims, this.tokenToRevoke);
         }
 
         public String toString() {

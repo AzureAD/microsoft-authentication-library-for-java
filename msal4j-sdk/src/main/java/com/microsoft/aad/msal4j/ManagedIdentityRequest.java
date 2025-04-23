@@ -12,6 +12,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,6 +32,36 @@ class ManagedIdentityRequest extends MsalRequest {
 
     public ManagedIdentityRequest(ManagedIdentityApplication managedIdentityApplication, RequestContext requestContext) {
         super(managedIdentityApplication, requestContext);
+        
+        // Check if the environment supports token revocation
+        ManagedIdentitySourceType sourceType = ManagedIdentityClient.getManagedIdentitySource();
+        boolean supportsTokenRevocation = false;
+        
+        for (ManagedIdentitySourceType type : Constants.TOKEN_REVOCATION_SUPPORTED_ENVIRONMENTS) {
+            if (type == sourceType) {
+                supportsTokenRevocation = true;
+                break;
+            }
+        }
+        
+        // If client capabilities include CP1 (token revocation) and the source type supports it,
+        // add the token revocation parameter to query parameters
+        if (supportsTokenRevocation && 
+            managedIdentityApplication.getClientCapabilities() != null &&
+            managedIdentityApplication.getClientCapabilities().contains(Constants.CLIENT_CAPABILITY_CP1)) {
+            
+            if (requestContext.apiParameters() instanceof ManagedIdentityParameters) {
+                ManagedIdentityParameters parameters = (ManagedIdentityParameters) requestContext.apiParameters();
+                if (parameters.getTokenToRevoke() != null && !parameters.getTokenToRevoke().isEmpty()) {
+                    LOG.info("[Managed Identity] Adding token revocation parameter to request");
+                    if (queryParameters == null) {
+                        queryParameters = new HashMap<>();
+                    }
+                    String tokenHash = TokenRevocationUtil.convertTokenToSHA256HashString(parameters.getTokenToRevoke());
+                    queryParameters.put(Constants.TOKEN_REVOCATION_REQUEST_PARAM, Collections.singletonList(tokenHash));
+                }
+            }
+        }
     }
 
     public String getBodyAsString() {

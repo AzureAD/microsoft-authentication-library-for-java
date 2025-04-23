@@ -147,4 +147,10 @@ public class AuthenticationErrorCode {
      * For more information on managed identity see https://aka.ms/msal4j-managed-identity.
      */
     public static final String MANAGED_IDENTITY_REQUEST_FAILED = "managed_identity_request_failed";
+
+    /**
+     * Indicates a cryptographic operation error occurred, such as when generating hash values
+     * or performing other cryptographic functions.
+     */
+    public static final String CRYPTO_ERROR = "crypto_error";
 }
