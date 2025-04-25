@@ -19,13 +19,13 @@ class MsalOauthAuthorizatonGrantTest {
 
     @Test
     void testToParameters() {
-        Map<String, List<String>> params = new LinkedHashMap<>();
-        params.put(GrantConstants.GRANT_TYPE_PARAMETER, Collections.singletonList("SomeGrantType"));
+        Map<String, String> params = new LinkedHashMap<>();
+        params.put(GrantConstants.GRANT_TYPE_PARAMETER, "SomeGrantType");
 
         final OAuthAuthorizationGrant grant = new OAuthAuthorizationGrant(params, null);
 
         assertNotNull(grant);
         assertNotNull(grant.toParameters());
-        assertEquals("SomeGrantType", grant.toParameters().get(GrantConstants.GRANT_TYPE_PARAMETER).get(0));
+        assertEquals("SomeGrantType", grant.toParameters().get(GrantConstants.GRANT_TYPE_PARAMETER));
     }
 }

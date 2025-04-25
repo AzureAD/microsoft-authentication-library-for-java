@@ -17,11 +17,11 @@ class UserNamePasswordRequest extends MsalRequest {
     }
 
     private static OAuthAuthorizationGrant createAuthenticationGrant(UserNamePasswordParameters parameters) {
-        Map<String, List<String>> params = new LinkedHashMap<>();
+        Map<String, String> params = new LinkedHashMap<>();
 
-        params.put(GrantConstants.GRANT_TYPE_PARAMETER, Collections.singletonList(GrantConstants.PASSWORD));
-        params.put(GrantConstants.USERNAME_PARAMETER, Collections.singletonList(parameters.username()));
-        params.put(GrantConstants.PASSWORD_PARAMETER, Collections.singletonList(new String(parameters.password())));
+        params.put(GrantConstants.GRANT_TYPE_PARAMETER, GrantConstants.PASSWORD);
+        params.put(GrantConstants.USERNAME_PARAMETER, parameters.username());
+        params.put(GrantConstants.PASSWORD_PARAMETER, new String(parameters.password()));
 
         return new OAuthAuthorizationGrant(params, parameters.scopes(), parameters.claims());
     }

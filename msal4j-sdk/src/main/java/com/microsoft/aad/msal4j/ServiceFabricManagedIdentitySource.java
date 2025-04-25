@@ -36,8 +36,8 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
         managedIdentityRequest.headers.put("secret", identityHeader);
 
         managedIdentityRequest.queryParameters = new HashMap<>();
-        managedIdentityRequest.queryParameters.put("resource", Collections.singletonList(resource));
-        managedIdentityRequest.queryParameters.put("api-version", Collections.singletonList(SERVICE_FABRIC_MSI_API_VERSION));
+        managedIdentityRequest.queryParameters.put("resource", resource);
+        managedIdentityRequest.queryParameters.put("api-version", SERVICE_FABRIC_MSI_API_VERSION);
 
         if (this.idType != null && !StringHelper.isNullOrBlank(this.userAssignedId)) {
             LOG.info("[Managed Identity] Adding user assigned ID to the request for Service Fabric Managed Identity.");

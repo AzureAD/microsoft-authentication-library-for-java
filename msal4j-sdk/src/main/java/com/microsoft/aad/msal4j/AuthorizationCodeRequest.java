@@ -17,17 +17,17 @@ class AuthorizationCodeRequest extends MsalRequest {
     }
 
     private static AbstractMsalAuthorizationGrant createMsalGrant(AuthorizationCodeParameters parameters) {
-        Map<String, List<String>> params = new LinkedHashMap<>();
+        Map<String, String> params = new LinkedHashMap<>();
 
-        params.put(GrantConstants.GRANT_TYPE_PARAMETER, Collections.singletonList(GrantConstants.AUTHORIZATION_CODE));
-        params.put("code", Collections.singletonList(parameters.authorizationCode()));
+        params.put(GrantConstants.GRANT_TYPE_PARAMETER, GrantConstants.AUTHORIZATION_CODE);
+        params.put("code", parameters.authorizationCode());
 
         if (parameters.redirectUri() != null) {
-            params.put("redirect_uri", Collections.singletonList(parameters.redirectUri().toString()));
+            params.put("redirect_uri", parameters.redirectUri().toString());
         }
 
         if (parameters.codeVerifier() != null) {
-            params.put("code_verifier", Collections.singletonList(parameters.codeVerifier()));
+            params.put("code_verifier", parameters.codeVerifier());
         }
 
         return new OAuthAuthorizationGrant(params, parameters.scopes(), parameters.claims());

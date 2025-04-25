@@ -3,8 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.jose.util.Base64URL;
-
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -75,7 +73,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
 
     private void processPasswordGrant(OAuthAuthorizationGrant authGrant) throws Exception {
 
-        //Additional processing is only needed if it's a password grant with a non-AAD authority
+        //Additional processing is only needed if it's a password grant with an AAD authority
         if (!(authGrant.getParamValue(GrantConstants.GRANT_TYPE_PARAMETER).equals(GrantConstants.PASSWORD))
                 || msalRequest.application().authenticationAuthority.authorityType != AuthorityType.AAD) {
             return;
@@ -101,24 +99,22 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
         }
     }
 
-    private Map<String, List<String>> getSAMLAuthGrantParameters(WSTrustResponse response) {
-        Map<String, List<String>> params = new LinkedHashMap<>();
+    private Map<String, String> getSAMLAuthGrantParameters(WSTrustResponse response) {
+        Map<String, String> params = new LinkedHashMap<>();
 
         if (response.isTokenSaml2()) {
-            params.put(GrantConstants.GRANT_TYPE_PARAMETER, Collections.singletonList(GrantConstants.SAML_2_BEARER));
+            params.put(GrantConstants.GRANT_TYPE_PARAMETER, GrantConstants.SAML_2_BEARER);
         } else {
-            params.put(GrantConstants.GRANT_TYPE_PARAMETER, Collections.singletonList(GrantConstants.SAML_1_1_BEARER));
+            params.put(GrantConstants.GRANT_TYPE_PARAMETER, GrantConstants.SAML_1_1_BEARER);
         }
 
-        params.put(GrantConstants.ASSERTION_PARAMETER, Collections.singletonList(new Base64URL(
-                Base64.getEncoder().encodeToString(response.getToken()
-                        .getBytes(StandardCharsets.UTF_8))).toString()));
+        params.put(GrantConstants.ASSERTION_PARAMETER, Base64.getUrlEncoder().encodeToString(response.getToken().getBytes(StandardCharsets.UTF_8)));
 
         return params;
     }
 
-    private Map<String, List<String>> getAuthorizationGrantIntegrated(String userName) throws Exception {
-        Map<String, List<String>> params;
+    private Map<String, String> getAuthorizationGrantIntegrated(String userName) throws Exception {
+        Map<String, String> params;
 
         String userRealmEndpoint = this.clientApplication.authenticationAuthority.
                 getUserRealmEndpoint(URLEncoder.encode(userName, StandardCharsets.UTF_8.name()));
