@@ -5,6 +5,7 @@ package com.microsoft.aad.msal4j;
 
 import org.junit.jupiter.api.Test;
 
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateEncodingException;
 import java.util.*;
@@ -146,5 +147,44 @@ class HelperAndUtilityTests {
 
         // Verify the correct certificate hash method was called
         verify(clientCertificateMock).publicCertificateHash();
+    }
+
+    @Test
+    void JsonHelper_createIdTokenFromEncodedTokenString_Base64URLCharacters() {
+        HashMap<String, String> tokenParameters = new HashMap<>();
+        tokenParameters.put("preferred_username", "~nameWith~specialChars");
+        String encodedIDToken = TestHelper.createIdToken(tokenParameters);
+
+        try {
+            //TestHelper.createIdToken() should use Base64URL encoding, so first we prove that the encoded token cannot be decoded with Base64 decoder
+            Base64.getDecoder().decode(encodedIDToken);
+
+            fail("IllegalArgumentException was expected but not thrown.");
+        } catch (IllegalArgumentException e) {
+            //Encoded token should have some "-" characters in it
+            assertTrue(e.getMessage().contains("Illegal base64 character 2e"));
+        }
+
+        // Act
+        IdToken idToken = JsonHelper.createIdTokenFromEncodedTokenString(encodedIDToken);
+
+        // Assert
+        assertNotNull(idToken);
+        assertEquals("~nameWith~specialChars", idToken.preferredUsername);
+    }
+
+    @Test
+    void JsonHelper_createIdTokenFromEncodedTokenString_InvalidJsonInToken() {
+        // Arrange
+        String invalidPayload = "{not-valid-json}";
+        String encodedPayload = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(invalidPayload.getBytes(StandardCharsets.UTF_8));
+        String invalidToken = "header." + encodedPayload + ".signature";
+
+        // Act & Assert
+        MsalJsonParsingException exception = assertThrows(MsalJsonParsingException.class,
+                () -> JsonHelper.createIdTokenFromEncodedTokenString(invalidToken));
+
+        assertEquals(AuthenticationErrorCode.INVALID_JSON, exception.errorCode());
     }
 }

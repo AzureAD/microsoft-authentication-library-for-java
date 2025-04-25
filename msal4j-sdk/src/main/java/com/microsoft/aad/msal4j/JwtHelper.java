@@ -30,10 +30,7 @@ final class JwtHelper {
             header.put("typ", "JWT");
 
             if (sendX5c) {
-                List<String> certs = new ArrayList<>();
-                for (String cert : credential.getEncodedPublicKeyCertificateChain()) {
-                    certs.add(cert);
-                }
+                List<String> certs = new ArrayList<>(credential.getEncodedPublicKeyCertificateChain());
                 header.put("x5c", certs);
             }
 

@@ -4,8 +4,6 @@
 package com.microsoft.aad.msal4j;
 
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -67,17 +65,10 @@ public interface IBroker {
             if (idToken != null) {
                 builder.idToken(idToken);
                 if (accountId != null) {
-                    String idTokenJson;
-
-                    try {
-                        idTokenJson = new String(Base64.getDecoder().decode(idToken.split("\\.")[1]), StandardCharsets.UTF_8);
-                    } catch (ArrayIndexOutOfBoundsException e) {
-                        throw new MsalServiceException("Error parsing ID token, missing payload section. Ensure that the ID token is following the JWT format.",
-                                AuthenticationErrorCode.INVALID_JWT);
-                    }
+                    IdToken idTokenObj = JsonHelper.createIdTokenFromEncodedTokenString(idToken);
 
                     builder.accountCacheEntity(AccountCacheEntity.create(clientInfo,
-                            Authority.createAuthority(new URL(authority)), JsonHelper.convertJsonToObject(idTokenJson, IdToken.class), null));
+                            Authority.createAuthority(new URL(authority)), idTokenObj, null));
                 }
             }
             if (accessToken != null) {

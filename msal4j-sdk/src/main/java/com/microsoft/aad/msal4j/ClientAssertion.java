@@ -12,7 +12,7 @@ import lombok.experimental.Accessors;
 @EqualsAndHashCode
 final class ClientAssertion implements IClientAssertion {
 
-    static final String ASSERTION_TYPE = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
+    static final String ASSERTION_TYPE_JWT_BEARER = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
     private final String assertion;
 
     ClientAssertion(final String assertion) {
