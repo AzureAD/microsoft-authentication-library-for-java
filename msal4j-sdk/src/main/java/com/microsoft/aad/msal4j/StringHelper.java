@@ -125,7 +125,7 @@ final class StringHelper {
     }
 
     //Much of the library once used Map<String, List<String>> for query parameters due to reliance on a specific dependency.
-    // Although Map<String, String> is now used internally, some public APIs still return Map<String, List<String>>
+    // Although Map<String, String> is now used internally, some public APIs in AuthorizationRequestUrlParameters still return Map<String, List<String>>
     static Map<String, List<String>> convertToMultiValueMap(Map<String, String> singleValueMap) {
         Map<String, List<String>> multiValueMap = new HashMap<>();
 
