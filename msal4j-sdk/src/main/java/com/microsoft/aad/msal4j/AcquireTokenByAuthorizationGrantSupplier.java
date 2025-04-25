@@ -73,7 +73,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
 
     private void processPasswordGrant(OAuthAuthorizationGrant authGrant) throws Exception {
 
-        //Additional processing is only needed if it's a password grant with a non-AAD authority
+        //Additional processing is only needed if it's a password grant with an AAD authority
         if (!(authGrant.getParamValue(GrantConstants.GRANT_TYPE_PARAMETER).equals(GrantConstants.PASSWORD))
                 || msalRequest.application().authenticationAuthority.authorityType != AuthorityType.AAD) {
             return;

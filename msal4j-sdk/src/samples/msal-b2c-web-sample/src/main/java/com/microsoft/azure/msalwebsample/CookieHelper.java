@@ -31,6 +31,7 @@ public class CookieHelper {
 
         Cookie stateCookie = new Cookie(MSAL_WEB_APP_STATE_COOKIE, "");
         stateCookie.setMaxAge(0);
+        stateCookie.setSecure(true);
 
         httpResponse.addCookie(stateCookie);
 
