@@ -3,12 +3,9 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.util.URLUtils;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
@@ -55,28 +52,28 @@ class DeviceCodeFlowRequest extends MsalRequest {
     }
 
     void createAuthenticationGrant(DeviceCode deviceCode) {
-        final Map<String, List<String>> params = new LinkedHashMap<>();
+        final Map<String, String> params = new LinkedHashMap<>();
 
-        params.put(GrantConstants.GRANT_TYPE_PARAMETER, Collections.singletonList(GrantConstants.DEVICE_CODE));
-        params.put("device_code", Collections.singletonList(deviceCode.deviceCode()));
+        params.put(GrantConstants.GRANT_TYPE_PARAMETER, GrantConstants.DEVICE_CODE);
+        params.put("device_code", deviceCode.deviceCode());
 
         if (parameters.claims() != null) {
-            params.put("claims", Collections.singletonList(parameters.claims().formatAsJSONString()));
+            params.put("claims", parameters.claims().formatAsJSONString());
         }
 
         msalAuthorizationGrant = new OAuthAuthorizationGrant(params, Collections.singleton(deviceCode.scopes()), parameters.claims());
     }
 
     private String createQueryParams(String clientId) {
-        Map<String, List<String>> queryParameters = new HashMap<>();
-        queryParameters.put("client_id", Collections.singletonList(clientId));
+        Map<String, String> queryParameters = new HashMap<>();
+        queryParameters.put("client_id", clientId);
 
         String scopesParam = String.join(AbstractMsalAuthorizationGrant.SCOPES_DELIMITER, AbstractMsalAuthorizationGrant.COMMON_SCOPES) +
                 AbstractMsalAuthorizationGrant.SCOPES_DELIMITER + scopesStr;
 
-        queryParameters.put("scope", Collections.singletonList(scopesParam));
+        queryParameters.put("scope", scopesParam);
 
-        return URLUtils.serializeParameters(queryParameters);
+        return StringHelper.serializeQueryParameters(queryParameters);
     }
 
     private Map<String, String> appendToHeaders(Map<String, String> clientDataHeaders) {

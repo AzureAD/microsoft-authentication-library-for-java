@@ -33,10 +33,10 @@ class RefreshTokenRequest extends MsalRequest {
     }
 
     private static AbstractMsalAuthorizationGrant createAuthenticationGrant(RefreshTokenParameters parameters) {
-        Map<String, List<String>> params = new LinkedHashMap<>();
+        Map<String, String> params = new LinkedHashMap<>();
 
-        params.put(GrantConstants.GRANT_TYPE_PARAMETER, Collections.singletonList(GrantConstants.REFRESH_TOKEN));
-        params.put("refresh_token", Collections.singletonList(parameters.refreshToken()));
+        params.put(GrantConstants.GRANT_TYPE_PARAMETER, GrantConstants.REFRESH_TOKEN);
+        params.put("refresh_token", parameters.refreshToken());
 
         return new OAuthAuthorizationGrant(params, parameters.scopes(), parameters.claims());
     }

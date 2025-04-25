@@ -19,14 +19,14 @@ class OnBehalfOfRequest extends MsalRequest {
     }
 
     private static OAuthAuthorizationGrant createAuthenticationGrant(OnBehalfOfParameters parameters) {
-        Map<String, List<String>> params = new LinkedHashMap<>();
+        Map<String, String> params = new LinkedHashMap<>();
 
-        params.put(GrantConstants.GRANT_TYPE_PARAMETER, Collections.singletonList(GrantConstants.JWT_BEARER));
-        params.put(GrantConstants.ASSERTION_PARAMETER, Collections.singletonList(parameters.userAssertion().getAssertion()));
-        params.put("requested_token_use", Collections.singletonList("on_behalf_of"));
+        params.put(GrantConstants.GRANT_TYPE_PARAMETER, GrantConstants.JWT_BEARER);
+        params.put(GrantConstants.ASSERTION_PARAMETER, parameters.userAssertion().getAssertion());
+        params.put("requested_token_use", "on_behalf_of");
 
         if (parameters.claims() != null) {
-            params.put("claims", Collections.singletonList(parameters.claims().formatAsJSONString()));
+            params.put("claims", parameters.claims().formatAsJSONString());
         }
 
         return new OAuthAuthorizationGrant(params, parameters.scopes());

@@ -18,7 +18,7 @@ class IntegratedWindowsAuthorizationGrant extends AbstractMsalAuthorizationGrant
     }
 
     @Override
-    Map<String, List<String>> toParameters() {
+    Map<String, String> toParameters() {
         return null;
     }
 

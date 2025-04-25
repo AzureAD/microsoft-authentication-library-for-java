@@ -20,7 +20,7 @@ abstract class AbstractMsalAuthorizationGrant {
      *
      * @return A map contains the HTTP parameters
      */
-    abstract Map<String, List<String>> toParameters();
+    abstract Map<String, String> toParameters();
 
     static final String SCOPE_PARAM_NAME = "scope";
     static final String SCOPES_DELIMITER = " ";

@@ -28,9 +28,9 @@ class ClientCredentialRequest extends MsalRequest {
     }
 
     private static OAuthAuthorizationGrant createMsalGrant(ClientCredentialParameters parameters) {
-        Map<String, List<String>> params = new LinkedHashMap<>();
+        Map<String, String> params = new LinkedHashMap<>();
 
-        params.put(GrantConstants.GRANT_TYPE_PARAMETER, Collections.singletonList(GrantConstants.CLIENT_CREDENTIALS));
+        params.put(GrantConstants.GRANT_TYPE_PARAMETER, GrantConstants.CLIENT_CREDENTIALS);
 
         return new OAuthAuthorizationGrant(params, parameters.scopes(), parameters.claims());
     }

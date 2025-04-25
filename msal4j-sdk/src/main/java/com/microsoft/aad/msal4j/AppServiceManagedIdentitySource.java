@@ -31,8 +31,8 @@ class AppServiceManagedIdentitySource extends AbstractManagedIdentitySource{
         managedIdentityRequest.headers.put(SECRET_HEADER_NAME, identityHeader);
 
         managedIdentityRequest.queryParameters = new HashMap<>();
-        managedIdentityRequest.queryParameters.put("api-version", Collections.singletonList(APP_SERVICE_MSI_API_VERSION));
-        managedIdentityRequest.queryParameters.put("resource", Collections.singletonList(resource));
+        managedIdentityRequest.queryParameters.put("api-version", APP_SERVICE_MSI_API_VERSION);
+        managedIdentityRequest.queryParameters.put("resource", resource);
 
         if (this.idType != null && !StringHelper.isNullOrBlank(this.userAssignedId)) {
             LOG.info("[Managed Identity] Adding user assigned ID to the request for App Service Managed Identity.");
