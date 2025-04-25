@@ -124,6 +124,7 @@ class TokenRequestExecutor {
             if (!StringHelper.isNullOrBlank(response.idToken())) {
                 String idTokenJson;
                 try {
+                    idTokenJson = new String(Base64.getUrlDecoder().decode(tokens.getIDTokenString().split("\\.")[1]), StandardCharsets.UTF_8);
                     idTokenJson = new String(Base64.getDecoder().decode(response.idToken().split("\\.")[1]), StandardCharsets.UTF_8);
                 } catch (ArrayIndexOutOfBoundsException e) {
                     throw new MsalServiceException("Error parsing ID token, missing payload section. Ensure that the ID token is following the JWT format.",

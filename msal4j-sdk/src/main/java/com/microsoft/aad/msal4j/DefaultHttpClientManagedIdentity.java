@@ -29,7 +29,6 @@ import java.security.cert.X509Certificate;
  */
 class DefaultHttpClientManagedIdentity extends DefaultHttpClient {
 
-    // CodeQL [SM03767] False positive: in addTrustedCertificateThumbprint() we create a TrustManager that only trusts a certificate with a specific thumbprint.
     public static final HostnameVerifier ALL_HOSTS_ACCEPT_HOSTNAME_VERIFIER = new HostnameVerifier() {
         @SuppressWarnings("BadHostnameVerifier")
         @Override
@@ -85,6 +84,8 @@ class DefaultHttpClientManagedIdentity extends DefaultHttpClient {
                                                        String certificateThumbprint) {
         //We expect the connection to work against a specific server side certificate only, so it's safe to disable the
         // host name verification.
+
+        // CodeQL [SM03767] False positive: the TrustManager created later on will only trust a certificate with a specific thumbprint.
         if (httpsUrlConnection.getHostnameVerifier() != ALL_HOSTS_ACCEPT_HOSTNAME_VERIFIER) {
             httpsUrlConnection.setHostnameVerifier(ALL_HOSTS_ACCEPT_HOSTNAME_VERIFIER);
         }
