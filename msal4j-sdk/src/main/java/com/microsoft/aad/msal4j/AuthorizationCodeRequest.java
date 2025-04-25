@@ -3,10 +3,10 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.AuthorizationCode;
-import com.nimbusds.oauth2.sdk.AuthorizationCodeGrant;
-import com.nimbusds.oauth2.sdk.AuthorizationGrant;
-import com.nimbusds.oauth2.sdk.pkce.CodeVerifier;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 class AuthorizationCodeRequest extends MsalRequest {
 
@@ -17,19 +17,19 @@ class AuthorizationCodeRequest extends MsalRequest {
     }
 
     private static AbstractMsalAuthorizationGrant createMsalGrant(AuthorizationCodeParameters parameters) {
+        Map<String, List<String>> params = new LinkedHashMap<>();
 
-        AuthorizationGrant authorizationGrant;
-        if (parameters.codeVerifier() != null) {
-            authorizationGrant = new AuthorizationCodeGrant(
-                    new AuthorizationCode(parameters.authorizationCode()),
-                    parameters.redirectUri(),
-                    new CodeVerifier(parameters.codeVerifier()));
+        params.put(GrantConstants.GRANT_TYPE_PARAMETER, Collections.singletonList(GrantConstants.AUTHORIZATION_CODE));
+        params.put("code", Collections.singletonList(parameters.authorizationCode()));
 
-        } else {
-            authorizationGrant = new AuthorizationCodeGrant(
-                    new AuthorizationCode(parameters.authorizationCode()), parameters.redirectUri());
+        if (parameters.redirectUri() != null) {
+            params.put("redirect_uri", Collections.singletonList(parameters.redirectUri().toString()));
         }
 
-        return new OAuthAuthorizationGrant(authorizationGrant, parameters.scopes(), parameters.claims());
+        if (parameters.codeVerifier() != null) {
+            params.put("code_verifier", Collections.singletonList(parameters.codeVerifier()));
+        }
+
+        return new OAuthAuthorizationGrant(params, parameters.scopes(), parameters.claims());
     }
 }

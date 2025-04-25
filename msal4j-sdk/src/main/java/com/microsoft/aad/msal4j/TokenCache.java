@@ -255,7 +255,7 @@ public class TokenCache implements ITokenCache {
         at.realm(tokenRequestExecutor.tenant);
 
         String scopes = !StringHelper.isBlank(authenticationResult.scopes()) ? authenticationResult.scopes() :
-                tokenRequestExecutor.getMsalRequest().msalAuthorizationGrant().getScopes();
+                String.join(" ", tokenRequestExecutor.getMsalRequest().msalAuthorizationGrant().getScopes());
 
         at.target(scopes);
 

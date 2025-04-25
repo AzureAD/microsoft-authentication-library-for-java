@@ -4,14 +4,14 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.jose.util.Base64URL;
-import com.nimbusds.oauth2.sdk.AuthorizationGrant;
-import com.nimbusds.oauth2.sdk.ResourceOwnerPasswordCredentialsGrant;
-import com.nimbusds.oauth2.sdk.SAML2BearerGrant;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSupplier {
 
@@ -39,8 +39,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
         }
 
         if (authGrant instanceof OAuthAuthorizationGrant) {
-            msalRequest.msalAuthorizationGrant =
-                    processPasswordGrant((OAuthAuthorizationGrant) authGrant);
+            processPasswordGrant((OAuthAuthorizationGrant) authGrant);
         }
 
         if (authGrant instanceof IntegratedWindowsAuthorizationGrant) {
@@ -74,22 +73,16 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
                 clientApplication instanceof PublicClientApplication;
     }
 
-    private OAuthAuthorizationGrant processPasswordGrant(
-            OAuthAuthorizationGrant authGrant) throws Exception {
+    private void processPasswordGrant(OAuthAuthorizationGrant authGrant) throws Exception {
 
-        if (!(authGrant.getAuthorizationGrant() instanceof ResourceOwnerPasswordCredentialsGrant)) {
-            return authGrant;
+        //Additional processing is only needed if it's a password grant with an AAD authority
+        if (!(authGrant.getParamValue(GrantConstants.GRANT_TYPE_PARAMETER).equals(GrantConstants.PASSWORD))
+                || msalRequest.application().authenticationAuthority.authorityType != AuthorityType.AAD) {
+            return;
         }
-
-        if (msalRequest.application().authenticationAuthority.authorityType != AuthorityType.AAD) {
-            return authGrant;
-        }
-
-        ResourceOwnerPasswordCredentialsGrant grant =
-                (ResourceOwnerPasswordCredentialsGrant) authGrant.getAuthorizationGrant();
 
         UserDiscoveryResponse userDiscoveryResponse = UserDiscoveryRequest.execute(
-                this.clientApplication.authenticationAuthority.getUserRealmEndpoint(grant.getUsername()),
+                this.clientApplication.authenticationAuthority.getUserRealmEndpoint(authGrant.getParamValue(GrantConstants.USERNAME_PARAMETER)),
                 msalRequest.headers().getReadonlyHeaderMap(),
                 msalRequest.requestContext(),
                 this.clientApplication.serviceBundle());
@@ -97,35 +90,35 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
         if (userDiscoveryResponse.isAccountFederated()) {
             WSTrustResponse response = WSTrustRequest.execute(
                     userDiscoveryResponse.federationMetadataUrl(),
-                    grant.getUsername(),
-                    grant.getPassword().getValue(),
+                    authGrant.getParamValue(GrantConstants.USERNAME_PARAMETER),
+                    authGrant.getParamValue(GrantConstants.PASSWORD_PARAMETER),
                     userDiscoveryResponse.cloudAudienceUrn(),
                     msalRequest.requestContext(),
                     this.clientApplication.serviceBundle(),
                     this.clientApplication.logPii());
 
-            AuthorizationGrant updatedGrant = getSAMLAuthorizationGrant(response);
-
-            authGrant = new OAuthAuthorizationGrant(updatedGrant, authGrant.getParameters());
+            authGrant.addAndReplaceParams(getSAMLAuthGrantParameters(response));
         }
-        return authGrant;
     }
 
-    private AuthorizationGrant getSAMLAuthorizationGrant(WSTrustResponse response) throws UnsupportedEncodingException {
-        AuthorizationGrant updatedGrant;
+    private Map<String, List<String>> getSAMLAuthGrantParameters(WSTrustResponse response) {
+        Map<String, List<String>> params = new LinkedHashMap<>();
+
         if (response.isTokenSaml2()) {
-            updatedGrant = new SAML2BearerGrant(new Base64URL(
-                    Base64.getEncoder().encodeToString(response.getToken().getBytes(StandardCharsets.UTF_8))));
+            params.put(GrantConstants.GRANT_TYPE_PARAMETER, Collections.singletonList(GrantConstants.SAML_2_BEARER));
         } else {
-            updatedGrant = new SAML11BearerGrant(new Base64URL(
-                    Base64.getEncoder().encodeToString(response.getToken()
-                            .getBytes(StandardCharsets.UTF_8))));
+            params.put(GrantConstants.GRANT_TYPE_PARAMETER, Collections.singletonList(GrantConstants.SAML_1_1_BEARER));
         }
-        return updatedGrant;
+
+        params.put(GrantConstants.ASSERTION_PARAMETER, Collections.singletonList(new Base64URL(
+                Base64.getEncoder().encodeToString(response.getToken()
+                        .getBytes(StandardCharsets.UTF_8))).toString()));
+
+        return params;
     }
 
-    private AuthorizationGrant getAuthorizationGrantIntegrated(String userName) throws Exception {
-        AuthorizationGrant updatedGrant;
+    private Map<String, List<String>> getAuthorizationGrantIntegrated(String userName) throws Exception {
+        Map<String, List<String>> params;
 
         String userRealmEndpoint = this.clientApplication.authenticationAuthority.
                 getUserRealmEndpoint(URLEncoder.encode(userName, StandardCharsets.UTF_8.name()));
@@ -152,7 +145,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
                     this.clientApplication.serviceBundle(),
                     this.clientApplication.logPii());
 
-            updatedGrant = getSAMLAuthorizationGrant(wsTrustResponse);
+            params = getSAMLAuthGrantParameters(wsTrustResponse);
         } else if (userRealmResponse.isAccountManaged()) {
             throw new MsalClientException(
                     "Password is required for managed user",
@@ -163,6 +156,6 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
                     AuthenticationErrorCode.USER_REALM_DISCOVERY_FAILED);
         }
 
-        return updatedGrant;
+        return params;
     }
 }

@@ -3,17 +3,10 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.oauth2.sdk.AuthorizationGrant;
-import com.nimbusds.oauth2.sdk.JWTBearerGrant;
-
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.microsoft.aad.msal4j.AbstractMsalAuthorizationGrant.SCOPES_DELIMITER;
-
 class OnBehalfOfRequest extends MsalRequest {
 
     OnBehalfOfParameters parameters;
@@ -26,21 +19,17 @@ class OnBehalfOfRequest extends MsalRequest {
     }
 
     private static OAuthAuthorizationGrant createAuthenticationGrant(OnBehalfOfParameters parameters) {
+        Map<String, List<String>> params = new LinkedHashMap<>();
 
-        AuthorizationGrant jWTBearerGrant;
-        try {
-            jWTBearerGrant = new JWTBearerGrant(SignedJWT.parse(parameters.userAssertion().getAssertion()));
-        } catch (Exception e) {
-            throw new MsalClientException(e);
-        }
-
-        Map<String, List<String>> params = new HashMap<>();
+        params.put(GrantConstants.GRANT_TYPE_PARAMETER, Collections.singletonList(GrantConstants.JWT_BEARER));
+        params.put(GrantConstants.ASSERTION_PARAMETER, Collections.singletonList(parameters.userAssertion().getAssertion()));
         params.put("requested_token_use", Collections.singletonList("on_behalf_of"));
+
         if (parameters.claims() != null) {
             params.put("claims", Collections.singletonList(parameters.claims().formatAsJSONString()));
         }
 
-        return new OAuthAuthorizationGrant(jWTBearerGrant, String.join(SCOPES_DELIMITER, parameters.scopes()), params);
+        return new OAuthAuthorizationGrant(params, parameters.scopes());
     }
 
     OnBehalfOfParameters parameters() {

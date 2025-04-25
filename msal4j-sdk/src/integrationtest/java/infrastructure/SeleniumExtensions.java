@@ -40,7 +40,7 @@ public class SeleniumExtensions {
         //No visual rendering, remove to see browser window when debugging
         options.addArguments("--headless");
         //Add to avoid issues if your real browser's history/cookies are affecting tests, should not be needed in ADO pipelines
-        //options.addArguments("--incognito");
+        options.addArguments("--incognito");
 
         System.setProperty("webdriver.chrome.driver", "C:/Windows/chromedriver.exe");
         ChromeDriver driver = new ChromeDriver(options);

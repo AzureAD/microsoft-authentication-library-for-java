@@ -61,9 +61,7 @@ public class AuthorizationRequestUrlParameters {
         requestParameters.put("redirect_uri", Collections.singletonList(this.redirectUri));
         this.scopes = builder.scopes;
 
-        String[] commonScopes = AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM.split(" ");
-
-        Set<String> scopesParam = new LinkedHashSet<>(Arrays.asList(commonScopes));
+        Set<String> scopesParam = new LinkedHashSet<>(AbstractMsalAuthorizationGrant.COMMON_SCOPES);
 
         scopesParam.addAll(builder.scopes);
 

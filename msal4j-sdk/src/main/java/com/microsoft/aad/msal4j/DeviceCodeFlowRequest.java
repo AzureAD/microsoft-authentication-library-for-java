@@ -7,6 +7,7 @@ import com.nimbusds.oauth2.sdk.util.URLUtils;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -54,14 +55,23 @@ class DeviceCodeFlowRequest extends MsalRequest {
     }
 
     void createAuthenticationGrant(DeviceCode deviceCode) {
-        msalAuthorizationGrant = new DeviceCodeAuthorizationGrant(deviceCode, deviceCode.scopes(), parameters.claims());
+        final Map<String, List<String>> params = new LinkedHashMap<>();
+
+        params.put(GrantConstants.GRANT_TYPE_PARAMETER, Collections.singletonList(GrantConstants.DEVICE_CODE));
+        params.put("device_code", Collections.singletonList(deviceCode.deviceCode()));
+
+        if (parameters.claims() != null) {
+            params.put("claims", Collections.singletonList(parameters.claims().formatAsJSONString()));
+        }
+
+        msalAuthorizationGrant = new OAuthAuthorizationGrant(params, Collections.singleton(deviceCode.scopes()), parameters.claims());
     }
 
     private String createQueryParams(String clientId) {
         Map<String, List<String>> queryParameters = new HashMap<>();
         queryParameters.put("client_id", Collections.singletonList(clientId));
 
-        String scopesParam = AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM +
+        String scopesParam = String.join(AbstractMsalAuthorizationGrant.SCOPES_DELIMITER, AbstractMsalAuthorizationGrant.COMMON_SCOPES) +
                 AbstractMsalAuthorizationGrant.SCOPES_DELIMITER + scopesStr;
 
         queryParameters.put("scope", Collections.singletonList(scopesParam));

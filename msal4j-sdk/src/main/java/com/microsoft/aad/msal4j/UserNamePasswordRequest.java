@@ -3,8 +3,10 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.ResourceOwnerPasswordCredentialsGrant;
-import com.nimbusds.oauth2.sdk.auth.Secret;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 class UserNamePasswordRequest extends MsalRequest {
 
@@ -14,13 +16,13 @@ class UserNamePasswordRequest extends MsalRequest {
         super(application, createAuthenticationGrant(parameters), requestContext);
     }
 
-    private static OAuthAuthorizationGrant createAuthenticationGrant(
-            UserNamePasswordParameters parameters) {
+    private static OAuthAuthorizationGrant createAuthenticationGrant(UserNamePasswordParameters parameters) {
+        Map<String, List<String>> params = new LinkedHashMap<>();
 
-        ResourceOwnerPasswordCredentialsGrant resourceOwnerPasswordCredentialsGrant =
-                new ResourceOwnerPasswordCredentialsGrant(parameters.username(),
-                        new Secret(new String(parameters.password())));
+        params.put(GrantConstants.GRANT_TYPE_PARAMETER, Collections.singletonList(GrantConstants.PASSWORD));
+        params.put(GrantConstants.USERNAME_PARAMETER, Collections.singletonList(parameters.username()));
+        params.put(GrantConstants.PASSWORD_PARAMETER, Collections.singletonList(new String(parameters.password())));
 
-        return new OAuthAuthorizationGrant(resourceOwnerPasswordCredentialsGrant, parameters.scopes(), parameters.claims());
+        return new OAuthAuthorizationGrant(params, parameters.scopes(), parameters.claims());
     }
 }

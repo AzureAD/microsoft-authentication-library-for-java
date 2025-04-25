@@ -3,9 +3,10 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.RefreshTokenGrant;
-import com.nimbusds.oauth2.sdk.token.RefreshToken;
-
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -31,11 +32,13 @@ class RefreshTokenRequest extends MsalRequest {
         this.parentSilentRequest = silentRequest;
     }
 
-    private static AbstractMsalAuthorizationGrant createAuthenticationGrant(
-            RefreshTokenParameters parameters) {
+    private static AbstractMsalAuthorizationGrant createAuthenticationGrant(RefreshTokenParameters parameters) {
+        Map<String, List<String>> params = new LinkedHashMap<>();
 
-        RefreshTokenGrant refreshTokenGrant = new RefreshTokenGrant(new RefreshToken(parameters.refreshToken()));
-        return new OAuthAuthorizationGrant(refreshTokenGrant, parameters.scopes(), parameters.claims());
+        params.put(GrantConstants.GRANT_TYPE_PARAMETER, Collections.singletonList(GrantConstants.REFRESH_TOKEN));
+        params.put("refresh_token", Collections.singletonList(parameters.refreshToken()));
+
+        return new OAuthAuthorizationGrant(params, parameters.scopes(), parameters.claims());
     }
 
     String getFullThumbprint() {

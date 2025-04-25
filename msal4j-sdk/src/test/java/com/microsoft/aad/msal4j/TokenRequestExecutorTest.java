@@ -25,8 +25,10 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.concurrent.ExecutionException;
 
 @ExtendWith(MockitoExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -290,5 +292,45 @@ class TokenRequestExecutorTest {
         doReturn(402).when(httpResponse).statusCode();
 
         assertThrows(MsalException.class, request::executeTokenRequest);
+    }
+
+    @Test
+    void testBase64UrlEncoding() throws MalformedURLException, ExecutionException, InterruptedException {
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+        ConfidentialClientApplication cca =
+                ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromSecret("password"))
+                        .authority("https://login.microsoftonline.com/tenant/")
+                        .instanceDiscovery(false)
+                        .validateAuthority(false)
+                        .httpClient(httpClientMock)
+                        .build();
+
+        //ID token payloads are parsed to get certain info to create Account and AccountCacheEntity objects, and the library must decode them using a Base64URL decoder.
+        HashMap<String, String> tokenParameters = new HashMap<>();
+        tokenParameters.put("preferred_username", "~nameWith~specialChars");
+        String encodedIDToken = TestHelper.createIdToken(tokenParameters);
+        try {
+            //TestHelper.createIdToken() should use Base64URL encoding, so first we prove that the encoded token it produces cannot be decoded with Base64 decoder
+            Base64.getDecoder().decode(encodedIDToken.split("\\.")[1]);
+
+            fail("IllegalArgumentException was expected but not thrown.");
+        } catch (IllegalArgumentException e) {
+            //Encoded token should have some "-" characters in it
+            assertTrue(e.getMessage().contains("Illegal base64 character 2d"));
+        }
+
+        //Now, send that encoded token through the library's token request flow, which will decode it using a Base64URL decoder
+        HashMap<String, String> responseParameters = new HashMap<>();
+        responseParameters.put("id_token", encodedIDToken);
+        responseParameters.put("access_token", "token");
+        TestHelper.createTokenRequestMock(httpClientMock, TestHelper.getSuccessfulTokenResponse(responseParameters), 200);
+
+        OnBehalfOfParameters parameters = OnBehalfOfParameters.builder(Collections.singleton("someScopes"), new UserAssertion(TestHelper.signedAssertion)).build();
+        IAuthenticationResult result = cca.acquireToken(parameters).get();
+
+        //Ensure that the name was successfully parsed out of the encoded ID token
+        assertNotNull(result.idToken());
+        assertNotNull(result.account());
+        assertEquals("~nameWith~specialChars", result.account().username());
     }
 }
