@@ -3,8 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.oauth2.sdk.SerializeException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -36,7 +34,7 @@ class TokenRequestExecutorTest {
 
     @Test
     void executeOAuthRequest_SCBadRequestErrorInvalidGrant_InteractionRequiredException()
-            throws SerializeException, ParseException, MsalException,
+            throws MsalException,
             IOException, URISyntaxException {
 
         TokenRequestExecutor request = createMockedTokenRequest();
@@ -73,7 +71,7 @@ class TokenRequestExecutorTest {
 
     @Test
     void executeOAuthRequest_SCBadRequestErrorInvalidGrant_SubErrorFilteredServiceExceptionThrown()
-            throws SerializeException, ParseException, MsalException,
+            throws MsalException,
             IOException, URISyntaxException {
 
         TokenRequestExecutor request = createMockedTokenRequest();
@@ -108,7 +106,7 @@ class TokenRequestExecutorTest {
         }
     }
 
-    private TokenRequestExecutor createMockedTokenRequest() throws URISyntaxException, MalformedURLException {
+    private TokenRequestExecutor createMockedTokenRequest() throws MalformedURLException {
         PublicClientApplication app = PublicClientApplication.builder("id")
                 .correlationId("corr_id").build();
 
@@ -154,7 +152,7 @@ class TokenRequestExecutorTest {
 
     @Test
     void testToOAuthRequestNonEmptyCorrelationId()
-            throws MalformedURLException, SerializeException, URISyntaxException, ParseException {
+            throws MalformedURLException, URISyntaxException {
 
         PublicClientApplication app = PublicClientApplication.builder("id").correlationId("corr-id").build();
 
@@ -181,9 +179,7 @@ class TokenRequestExecutorTest {
     }
 
     @Test
-    void testToOAuthRequestNullCorrelationId_NullClientAuth()
-            throws MalformedURLException, SerializeException,
-            URISyntaxException {
+    void testToOAuthRequestNullCorrelationId_NullClientAuth() throws MalformedURLException, URISyntaxException {
 
         PublicClientApplication app = PublicClientApplication.builder("id").correlationId("corr-id").build();
 
@@ -207,8 +203,7 @@ class TokenRequestExecutorTest {
     }
 
     @Test
-    void testExecuteOAuth_Success() throws SerializeException, ParseException, MsalException,
-            IOException, URISyntaxException {
+    void testExecuteOAuth_Success() throws MsalException, IOException, URISyntaxException {
 
         PublicClientApplication app = PublicClientApplication.builder("id").correlationId("corr-id").build();
 
@@ -251,8 +246,7 @@ class TokenRequestExecutorTest {
     }
 
     @Test
-    void testExecuteOAuth_Failure() throws SerializeException,
-            ParseException, MsalException, IOException, URISyntaxException {
+    void testExecuteOAuth_Failure() throws MsalException, IOException, URISyntaxException {
 
         PublicClientApplication app = PublicClientApplication.builder("id").correlationId("corr-id").build();
 

@@ -3,17 +3,11 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.azure.json.JsonProviders;
-import com.azure.json.JsonReader;
-import com.nimbusds.jose.*;
-import com.nimbusds.jose.crypto.RSASSASigner;
-import com.nimbusds.jose.jwk.RSAKey;
-import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.*;
@@ -76,18 +70,29 @@ class TestHelper {
 
     static String generateToken() {
         try {
-            RSAKey rsaJWK = new RSAKeyGenerator(2048)
-                    .keyID("kid")
-                    .generate();
-            JWSObject jwsObject = new JWSObject(
-                    new JWSHeader.Builder(JWSAlgorithm.RS256).keyID(rsaJWK.getKeyID()).build(),
-                    new Payload("payload"));
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+            keyGen.initialize(2048);
+            KeyPair keyPair = keyGen.generateKeyPair();
 
-            jwsObject.sign(new RSASSASigner(rsaJWK));
+            String header = "{\"alg\":\"RS256\",\"typ\":\"JWT\",\"kid\":\"kid\"}";
+            String encodedHeader = Base64.getUrlEncoder().withoutPadding()
+                    .encodeToString(header.getBytes(StandardCharsets.UTF_8));
 
-            return jwsObject.serialize();
-        } catch (JOSEException e) {
-            throw new RuntimeException(e);
+            String payload = "payload";
+            String encodedPayload = Base64.getUrlEncoder().withoutPadding()
+                    .encodeToString(payload.getBytes(StandardCharsets.UTF_8));
+
+            String dataToSign = encodedHeader + "." + encodedPayload;
+            Signature signature = Signature.getInstance("SHA256withRSA");
+            signature.initSign(keyPair.getPrivate());
+            signature.update(dataToSign.getBytes(StandardCharsets.UTF_8));
+            byte[] signatureBytes = signature.sign();
+            String encodedSignature = Base64.getUrlEncoder().withoutPadding()
+                    .encodeToString(signatureBytes);
+
+            return encodedHeader + "." + encodedPayload + "." + encodedSignature;
+        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+            throw new RuntimeException("Error generating token: " + e.getMessage(), e);
         }
     }
 

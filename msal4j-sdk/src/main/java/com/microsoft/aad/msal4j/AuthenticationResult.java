@@ -3,15 +3,12 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.jwt.JWTParser;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
-import java.io.Serializable;
-import java.text.ParseException;
 import java.util.Date;
 
 @Accessors(fluent = true)
@@ -45,14 +42,8 @@ final class AuthenticationResult implements IAuthenticationResult {
         if (StringHelper.isBlank(idToken)) {
             return null;
         }
-        try {
-            String idTokenJson = JWTParser.parse(idToken).getParsedParts()[1].decodeToString();
 
-            return JsonHelper.convertJsonToObject(idTokenJson, IdToken.class);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        return null;
+        return JsonHelper.createIdTokenFromEncodedTokenString(idToken);
     }
 
     @Getter(value = AccessLevel.PACKAGE)
@@ -76,12 +67,7 @@ final class AuthenticationResult implements IAuthenticationResult {
             return null;
         }
 
-        try {
-            return new TenantProfile(JWTParser.parse(idToken).getJWTClaimsSet().getClaims(),
-                    getAccount().environment());
-        } catch (ParseException e) {
-            throw new MsalClientException("Cached JWT could not be parsed: " + e.getMessage(), AuthenticationErrorCode.INVALID_JWT);
-        }
+        return new TenantProfile(JsonHelper.parseJsonToMap(JsonHelper.getTokenPayloadClaims(idToken)), getAccount().environment());
     }
 
     private String environment;
