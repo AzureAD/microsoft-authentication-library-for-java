@@ -57,7 +57,7 @@ class ManagedIdentityRequest extends MsalRequest {
                     if (queryParameters == null) {
                         queryParameters = new HashMap<>();
                     }
-                    String tokenHash = TokenRevocationUtil.convertTokenToSHA256HashString(parameters.getTokenToRevoke());
+                    String tokenHash = StringHelper.createSha256HashHexString(parameters.getTokenToRevoke());
                     queryParameters.put(Constants.TOKEN_REVOCATION_REQUEST_PARAM, Collections.singletonList(tokenHash));
                 }
             }

@@ -4,22 +4,16 @@
 package com.microsoft.aad.msal4j;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeEach;
 import static org.junit.jupiter.api.Assertions.*;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 public class TokenRevocationTest {
 
     private static final String TEST_TOKEN = "test_token";
     private static final String EXPECTED_TOKEN_HASH = "cc0af97287543b65da2c7e1476426021826cab166f1e063ed012b855ff819656";
     private static final String TEST_RESOURCE = "https://management.azure.com";
-    
-    @Test
+      @Test
     public void testConvertTokenToSHA256Hash() {
-        String hash = TokenRevocationUtil.convertTokenToSHA256HashString(TEST_TOKEN);
+        String hash = StringHelper.createSha256HashHexString(TEST_TOKEN);
         assertEquals(EXPECTED_TOKEN_HASH, hash);
     }
     
@@ -27,12 +21,12 @@ public class TokenRevocationTest {
     public void testTokenToRevokeValidation() {
         // Should throw exception when null
         assertThrows(IllegalArgumentException.class, () -> {
-            TokenRevocationUtil.convertTokenToSHA256HashString(null);
+            StringHelper.createSha256HashHexString(null);
         });
         
         // Should throw exception when empty
         assertThrows(IllegalArgumentException.class, () -> {
-            TokenRevocationUtil.convertTokenToSHA256HashString("");
+            StringHelper.createSha256HashHexString("");
         });
     }
     

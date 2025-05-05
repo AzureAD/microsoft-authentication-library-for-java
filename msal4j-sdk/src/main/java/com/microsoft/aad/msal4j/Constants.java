@@ -30,7 +30,6 @@ final class Constants {
     
     // Only Service Fabric and App Service managed identity environments support token revocation
     public static final ManagedIdentitySourceType[] TOKEN_REVOCATION_SUPPORTED_ENVIRONMENTS = {
-            ManagedIdentitySourceType.APP_SERVICE,
             ManagedIdentitySourceType.SERVICE_FABRIC
     };
 
