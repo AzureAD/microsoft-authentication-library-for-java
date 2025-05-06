@@ -83,6 +83,12 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
                 result.metadata().tokenSource(TokenSource.CACHE);
                 return result;
             } else {
+                if (cacheRefreshReason == CacheRefreshReason.CLAIMS) {
+                    LOG.debug("Claims are passed, creating token hash and refreshing the token");
+                    managedIdentityParameters.revokedTokenHash = StringHelper.createSha256HashHexString(result.accessToken());
+                    return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor, CacheRefreshReason.CLAIMS);
+                }
+
                 LOG.debug(String.format("Refreshing access token. Cache refresh reason: %s", cacheRefreshReason));
                 return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor, cacheRefreshReason);
             }

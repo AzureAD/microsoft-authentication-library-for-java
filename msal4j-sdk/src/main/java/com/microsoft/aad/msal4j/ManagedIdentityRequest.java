@@ -32,36 +32,6 @@ class ManagedIdentityRequest extends MsalRequest {
 
     public ManagedIdentityRequest(ManagedIdentityApplication managedIdentityApplication, RequestContext requestContext) {
         super(managedIdentityApplication, requestContext);
-        
-        // Check if the environment supports token revocation
-        ManagedIdentitySourceType sourceType = ManagedIdentityClient.getManagedIdentitySource();
-        boolean supportsTokenRevocation = false;
-        
-        for (ManagedIdentitySourceType type : Constants.TOKEN_REVOCATION_SUPPORTED_ENVIRONMENTS) {
-            if (type == sourceType) {
-                supportsTokenRevocation = true;
-                break;
-            }
-        }
-        
-        // If client capabilities include CP1 (token revocation) and the source type supports it,
-        // add the token revocation parameter to query parameters
-        if (supportsTokenRevocation && 
-            managedIdentityApplication.getClientCapabilities() != null &&
-            managedIdentityApplication.getClientCapabilities().contains(Constants.CLIENT_CAPABILITY_CP1)) {
-            
-            if (requestContext.apiParameters() instanceof ManagedIdentityParameters) {
-                ManagedIdentityParameters parameters = (ManagedIdentityParameters) requestContext.apiParameters();
-                if (parameters.getTokenToRevoke() != null && !parameters.getTokenToRevoke().isEmpty()) {
-                    LOG.info("[Managed Identity] Adding token revocation parameter to request");
-                    if (queryParameters == null) {
-                        queryParameters = new HashMap<>();
-                    }
-                    String tokenHash = StringHelper.createSha256HashHexString(parameters.getTokenToRevoke());
-                    queryParameters.put(Constants.TOKEN_REVOCATION_REQUEST_PARAM, Collections.singletonList(tokenHash));
-                }
-            }
-        }
     }
 
     public String getBodyAsString() {
@@ -104,6 +74,37 @@ class ManagedIdentityRequest extends MsalRequest {
                 LOG.info("[Managed Identity] Adding user assigned object id to the request.");
                 queryParameters.put(Constants.MANAGED_IDENTITY_OBJECT_ID, Collections.singletonList(userAssignedId));
                 break;
+        }
+    }
+
+    void addTokenRevocationParametersToQuery(ManagedIdentityParameters parameters) {
+        // Check if the environment supports token revocation
+        ManagedIdentitySourceType sourceType = ManagedIdentityClient.getManagedIdentitySource();
+        boolean supportsTokenRevocation = Constants.TOKEN_REVOCATION_SUPPORTED_ENVIRONMENTS
+                .contains(sourceType);
+
+        // If token revocation is supported, pass the client capabilities and token revocation parameters
+        if (supportsTokenRevocation) {
+            ManagedIdentityApplication managedIdentityApplication =
+                    (ManagedIdentityApplication) this.application();
+
+            // Pass capabilities if present.
+            if (managedIdentityApplication.getClientCapabilities() != null &&
+                    !managedIdentityApplication.getClientCapabilities().isEmpty()) {
+                // Add client capabilities as a comma separated string for all the values in client capabilities
+                String clientCapabilities = String.join(",", managedIdentityApplication.getClientCapabilities());
+
+                queryParameters.put(Constants.CLIENT_CAPABILITY_REQUEST_PARAM, Collections.singletonList(clientCapabilities.toString()));
+            }
+
+            // Pass the token revocation parameter if the claims are present and there is a token to revoke
+            if (!StringHelper.isNullOrBlank(parameters.claims) && !StringHelper.isNullOrBlank(parameters.revokedTokenHash())) {
+                LOG.info("[Managed Identity] Adding token revocation parameter to request");
+                if (queryParameters == null) {
+                    queryParameters = new HashMap<>();
+                }
+                queryParameters.put(Constants.TOKEN_HASH_CLAIM, Collections.singletonList(parameters.revokedTokenHash()));
+            }
         }
     }
 }

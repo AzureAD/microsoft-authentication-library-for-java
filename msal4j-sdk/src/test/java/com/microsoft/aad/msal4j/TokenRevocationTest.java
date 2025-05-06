@@ -33,26 +33,11 @@ public class TokenRevocationTest {
     @Test
     public void testManagedIdentityParametersBuilder() {
         ManagedIdentityParameters params = ManagedIdentityParameters.builder(TEST_RESOURCE)
-                .tokenToRevoke(TEST_TOKEN)
                 .build();
-        
+
+        params.revokedTokenHash = StringHelper.createSha256HashHexString(TEST_TOKEN);
+
         assertEquals(TEST_RESOURCE, params.resource());
-        assertEquals(TEST_TOKEN, params.getTokenToRevoke());
-    }
-    
-    @Test
-    public void testManagedIdentityParametersBuilderValidation() {
-        // Should throw exception when tokenToRevoke is null or empty
-        assertThrows(IllegalArgumentException.class, () -> {
-            ManagedIdentityParameters.builder(TEST_RESOURCE)
-                .tokenToRevoke(null)
-                .build();
-        });
-        
-        assertThrows(IllegalArgumentException.class, () -> {
-            ManagedIdentityParameters.builder(TEST_RESOURCE)
-                .tokenToRevoke("")
-                .build();
-        });
+        assertEquals(EXPECTED_TOKEN_HASH, params.revokedTokenHash());
     }
 }

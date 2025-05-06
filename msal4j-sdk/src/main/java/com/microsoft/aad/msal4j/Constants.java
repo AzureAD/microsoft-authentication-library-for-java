@@ -3,6 +3,9 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.util.HashSet;
+import java.util.Set;
+
 final class Constants {
 
     static final String CACHE_KEY_SEPARATOR = "-";
@@ -24,13 +27,12 @@ final class Constants {
     public static final String IDENTITY_SERVER_THUMBPRINT = "IDENTITY_SERVER_THUMBPRINT";
 
     // Constants for token revocation and client capabilities
-    public static final String CLIENT_CAPABILITY_CP1 = "cp1";
-    public static final String TOKEN_REVOCATION_REQUEST_PARAM = "x-ms-revoke-token";
-    public static final String TOKEN_HASH_CLAIM = "x-ms-token-hash";
+    public static final String TOKEN_HASH_CLAIM = "token_sha256_to_refresh";
+    public static final String CLIENT_CAPABILITY_REQUEST_PARAM = "xms_cc";
     
     // Only Service Fabric and App Service managed identity environments support token revocation
-    public static final ManagedIdentitySourceType[] TOKEN_REVOCATION_SUPPORTED_ENVIRONMENTS = {
-            ManagedIdentitySourceType.SERVICE_FABRIC
-    };
+    public static final Set<ManagedIdentitySourceType> TOKEN_REVOCATION_SUPPORTED_ENVIRONMENTS = new HashSet<ManagedIdentitySourceType>() {{
+        add(ManagedIdentitySourceType.SERVICE_FABRIC);
+    }};
 
 }
