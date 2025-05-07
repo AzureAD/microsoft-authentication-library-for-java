@@ -26,6 +26,38 @@ class TestHelper {
     //Signed JWT which should be enough to pass the parsing/validation in the library, useful if a unit test needs an
     // assertion but that is not the focus of the test
     static String signedAssertion = generateToken();
+
+    // Realistic token header
+    static final String TOKEN_HEADER = "{\"alg\":\"PS256\",\"typ\":\"JWT\"}";
+
+    // Realistic JWT payload, containing strings, numbers, timestamps, arrays, nested JSON objects, and nulls
+    static final String TOKEN_PAYLOAD = "{\n" +
+            "\"aud\": \"e854a4a7-6c34-449c-b237-fc7a28093d84\",\n" +
+            "\"iss\": \"https://login.microsoftonline.com/6c3d51dd-f0e5-4959-b4ea-a80c4e36fe5e/v2.0/\",\n" +
+            "\"name\": \"John Doe\",\n" +
+            "\"oid\": \"00000000-0000-0000-66f3-3332eca7ea81\",\n" +
+            "\"preferred_username\": \"john.doe@example.com\",\n" +
+            "\"sub\": \"K4_SGGxKqW1SxUAmhg6C1F6VPiFzcx-Qd80ehIEdFus\",\n" +
+            "\"tid\": \"6c3d51dd-f0e5-4959-b4ea-a80c4e36fe5e\",\n" +
+            "\"ver\": \"2.0\",\n" +
+            "\"exp\": 1735689600,\n" +
+            "\"iat\": 1516239022,\n" +
+            "\"nbf\": 1516239022,\n" +
+            "\"email\": null,\n" +
+            "\"groups\": [\"admin\", \"user\", null],\n" +
+            "\"roles\": [],\n" +
+            "\"amr\": [\"pwd\", \"mfa\"],\n" +
+            "\"nonce\": \"12345\",\n" +
+            "\"auth_time\": 1516239022,\n" +
+            "\"given_name\": \"John\",\n" +
+            "\"family_name\": \"Doe\",\n" +
+            "\"at_hash\": \"jT3s9ygOQRtifgrpJgGz_w\",\n" +
+            "\"extension_data\": {\"department\": \"Engineering\", \"manager\": null, \"employeeId\": 12345}\n" +
+            "}";
+
+    // Base64URL encoded ID token, has a junk signature but is otherwise realistic and parsable
+    static final String ENCODED_JWT = createEncodedJwt(TOKEN_HEADER, TOKEN_PAYLOAD);
+
     private static final String successfulResponseFormat = "{\"access_token\":\"%s\",\"id_token\":\"%s\",\"refresh_token\":\"%s\"," +
             "\"client_id\":\"%s\",\"client_info\":\"%s\"," +
             "\"refresh_in\": %d,\"expires_on\": %d,\"expires_in\": %d," +
@@ -94,6 +126,14 @@ class TestHelper {
         } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
             throw new RuntimeException("Error generating token: " + e.getMessage(), e);
         }
+    }
+
+    private static String createEncodedJwt(String headerJson, String payloadJson) {
+        String encodedHeader = Base64.getUrlEncoder().withoutPadding().encodeToString(headerJson.getBytes());
+        String encodedPayload = Base64.getUrlEncoder().withoutPadding().encodeToString(payloadJson.getBytes());
+        String signature = "signature"; // Simple signature for testing purposes
+
+        return encodedHeader + "." + encodedPayload + "." + signature;
     }
 
     //Maps various values to the successfulResponseFormat string to create a valid token response

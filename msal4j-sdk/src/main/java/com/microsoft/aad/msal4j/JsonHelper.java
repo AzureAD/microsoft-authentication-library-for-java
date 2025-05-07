@@ -82,10 +82,35 @@ class JsonHelper {
 
         while (jsonReader.nextToken() != JsonToken.END_OBJECT) {
             String fieldName = jsonReader.getFieldName();
-            object.put(fieldName, parseValue(jsonReader));
+            Object value = parseValue(jsonReader);
+            object.put(fieldName, handleSpecialFields(fieldName, value));
         }
 
         return object;
+    }
+
+    //Due to the old usage of com.nimbusds for JWT parsing, customers may be relying on certain fields being treated as specific types.
+    // This method handles those special cases to help ensure backwards compatibility.
+    private static Object handleSpecialFields(String fieldName, Object value) {
+        //nimbus always treated the "aud" field as an ArrayList, even when it was a single string
+        if ("aud".equals(fieldName) && value instanceof String) {
+            ArrayList<String> list = new ArrayList<>();
+            list.add((String) value);
+            return list;
+        }
+
+        //nimbus converted certain unix timestamps to Date objects
+        if (isTimestampField(fieldName) && value instanceof Number) {
+            // Convert seconds to milliseconds for Date constructor
+            return new Date(((Number) value).longValue() * 1000);
+        }
+
+        return value;
+    }
+
+    private static boolean isTimestampField(String fieldName) {
+        return "exp".equals(fieldName) || "iat".equals(fieldName) ||
+                "nbf".equals(fieldName);
     }
 
     private static Object parseValue(JsonReader jsonReader) throws IOException {
