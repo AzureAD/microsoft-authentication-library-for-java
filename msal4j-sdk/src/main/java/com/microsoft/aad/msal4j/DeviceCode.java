@@ -23,9 +23,9 @@ public final class DeviceCode implements JsonSerializable<DeviceCode> {
     private long interval;
     private String message;
 
-    private transient String correlationId = null;
-    private transient String clientId = null;
-    private transient String scopes = null;
+    private String correlationId = null;
+    private String clientId = null;
+    private String scopes = null;
 
     public static DeviceCode fromJson(JsonReader jsonReader) throws IOException {
         DeviceCode deviceCode = new DeviceCode();

@@ -23,7 +23,7 @@ public class TokenCache implements ITokenCache {
 
     protected static final int MIN_ACCESS_TOKEN_EXPIRE_IN_SEC = 5 * 60;
 
-    transient private ReadWriteLock lock = new ReentrantReadWriteLock();
+    private ReadWriteLock lock = new ReentrantReadWriteLock();
 
     /**
      * Constructor for token cache
@@ -47,9 +47,9 @@ public class TokenCache implements ITokenCache {
     Map<String, AccountCacheEntity> accounts = new LinkedHashMap<>();
     Map<String, AppMetadataCacheEntity> appMetadata = new LinkedHashMap<>();
 
-    transient ITokenCacheAccessAspect tokenCacheAccessAspect;
+    ITokenCacheAccessAspect tokenCacheAccessAspect;
 
-    private transient String serializedCachedSnapshot;
+    private String serializedCachedSnapshot;
 
     @Override
     public void deserialize(String data) {
