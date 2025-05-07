@@ -15,10 +15,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 class JsonHelper {
     static ObjectMapper mapper;
@@ -39,6 +37,18 @@ class JsonHelper {
         } catch (Exception e) {
             throw new MsalJsonParsingException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
         }
+    }
+
+    static IdToken createIdTokenFromEncodedTokenString(String token) {
+        String idTokenJson;
+        try {
+            idTokenJson = new String(Base64.getUrlDecoder().decode(token.split("\\.")[1]), StandardCharsets.UTF_8);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new MsalClientException("Error parsing ID token, missing payload section.",
+                    AuthenticationErrorCode.INVALID_JWT);
+        }
+
+        return JsonHelper.convertJsonToObject(idTokenJson, IdToken.class);
     }
 
     //This method is used to convert a JSON string to an object which implements the JsonSerializable interface from com.azure.json

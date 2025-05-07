@@ -3,14 +3,11 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.oauth2.sdk.SerializeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 class TokenRequestExecutor {
@@ -30,7 +27,7 @@ class TokenRequestExecutor {
                 msalRequest.requestContext().apiParameters().tenant() ;
     }
 
-    AuthenticationResult executeTokenRequest() throws ParseException, IOException {
+    AuthenticationResult executeTokenRequest() throws IOException {
 
         log.debug("Sending token request to: {}", requestAuthority.canonicalAuthorityUrl());
         OAuthHttpRequest oAuthHttpRequest = createOauthHttpRequest();
@@ -38,10 +35,11 @@ class TokenRequestExecutor {
         return createAuthenticationResultFromOauthHttpResponse(oauthHttpResponse);
     }
 
-    OAuthHttpRequest createOauthHttpRequest() throws SerializeException, MalformedURLException {
+    OAuthHttpRequest createOauthHttpRequest() throws MalformedURLException {
 
         if (requestAuthority.tokenEndpointUrl() == null) {
-            throw new SerializeException("The endpoint URI is not specified");
+            throw new MsalClientException("The endpoint URI is not specified",
+                    AuthenticationErrorCode.INVALID_ENDPOINT_URI);
         }
 
         final OAuthHttpRequest oauthHttpRequest = new OAuthHttpRequest(
@@ -109,11 +107,10 @@ class TokenRequestExecutor {
 
     private void addJWTBearerAssertionParams(Map<String, String> queryParameters, String assertion) {
         queryParameters.put("client_assertion", assertion);
-        queryParameters.put("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+        queryParameters.put("client_assertion_type", ClientAssertion.ASSERTION_TYPE_JWT_BEARER);
     }
 
-    private AuthenticationResult createAuthenticationResultFromOauthHttpResponse(
-            HttpResponse oauthHttpResponse) throws ParseException {
+    private AuthenticationResult createAuthenticationResultFromOauthHttpResponse(HttpResponse oauthHttpResponse) {
         AuthenticationResult result;
 
         if (oauthHttpResponse.statusCode() == HttpHelper.HTTP_STATUS_200) {
@@ -121,15 +118,7 @@ class TokenRequestExecutor {
 
             AccountCacheEntity accountCacheEntity = null;
             if (!StringHelper.isNullOrBlank(response.idToken())) {
-                String idTokenJson;
-                try {
-                    idTokenJson = new String(Base64.getUrlDecoder().decode(response.idToken().split("\\.")[1]), StandardCharsets.UTF_8);
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    throw new MsalServiceException("Error parsing ID token, missing payload section. Ensure that the ID token is following the JWT format.",
-                            AuthenticationErrorCode.INVALID_JWT);
-                }
-
-                IdToken idToken = JsonHelper.convertJsonToObject(idTokenJson, IdToken.class);
+                IdToken idToken = JsonHelper.createIdTokenFromEncodedTokenString(response.idToken());
 
                 AuthorityType type = msalRequest.application().authenticationAuthority.authorityType;
                 if (!StringHelper.isBlank(response.getClientInfo())) {
