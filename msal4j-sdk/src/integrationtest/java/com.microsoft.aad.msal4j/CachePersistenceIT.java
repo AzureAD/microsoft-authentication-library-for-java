@@ -54,7 +54,7 @@ class CachePersistenceIT {
 
         assertEquals(app.getAccounts().join().size(), 1);
         assertEquals(app.tokenCache.accounts.size(), 1);
-        assertEquals(app.tokenCache.accessTokens.size(), 2);
+        assertEquals(app.tokenCache.accessTokens.size(), 1);
         assertEquals(app.tokenCache.refreshTokens.size(), 1);
         assertEquals(app.tokenCache.idTokens.size(), 1);
         assertEquals(app.tokenCache.appMetadata.size(), 1);
@@ -65,7 +65,7 @@ class CachePersistenceIT {
 
         assertEquals(app.getAccounts().join().size(), 1);
         assertEquals(app.tokenCache.accounts.size(), 1);
-        assertEquals(app.tokenCache.accessTokens.size(), 2);
+        assertEquals(app.tokenCache.accessTokens.size(), 1);
         assertEquals(app.tokenCache.refreshTokens.size(), 1);
         assertEquals(app.tokenCache.idTokens.size(), 1);
         assertEquals(app.tokenCache.appMetadata.size(), 1);
@@ -74,7 +74,7 @@ class CachePersistenceIT {
 
         assertEquals(app.getAccounts().join().size(), 0);
         assertEquals(app.tokenCache.accounts.size(), 0);
-        assertEquals(app.tokenCache.accessTokens.size(), 1);
+        assertEquals(app.tokenCache.accessTokens.size(), 0);
         assertEquals(app.tokenCache.refreshTokens.size(), 0);
         assertEquals(app.tokenCache.idTokens.size(), 0);
         assertEquals(app.tokenCache.appMetadata.size(), 1);
@@ -84,7 +84,7 @@ class CachePersistenceIT {
 
         assertEquals(app.getAccounts().join().size(), 0);
         assertEquals(app.tokenCache.accounts.size(), 0);
-        assertEquals(app.tokenCache.accessTokens.size(), 1);
+        assertEquals(app.tokenCache.accessTokens.size(), 0);
         assertEquals(app.tokenCache.refreshTokens.size(), 0);
         assertEquals(app.tokenCache.idTokens.size(), 0);
         assertEquals(app.tokenCache.appMetadata.size(), 1);

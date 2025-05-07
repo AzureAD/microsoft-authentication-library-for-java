@@ -97,7 +97,7 @@ public final class TestConfiguration {
     public final static String CLAIMS_REQUEST = "{\"id_token\":{\"acr\":{\"values\":[\"urn:mace:incommon:iap:silver\",\"urn:mace:incommon:iap:bronze\"]},\"sub\":{\"essential\":true,\"value\":\"248289761001\"},\"auth_time\":{}},\"access_token\":{\"given_name\":{\"essential\":true},\"email\":null}}";
     public final static String CLAIMS_CHALLENGE = "{\"access_token\":{\"nbf\":{\"essential\":true,\"value\":\"1701477303\"}}}";
     public final static String CLIENT_CAPABILITIES = "{\"access_token\":{\"xms_cc\":{\"values\":[\"cp1\"]}}}";
-    public final static String MERGED_CLAIMS_AND_CAPABILITIES = "{\"access_token\":{\"nbf\":{\"essential\":true,\"value\":\"1701477303\"},\"xms_cc\":{\"values\":[\"cp1\"]}}}";
-    public final static String MERGED_CLAIMS_AND_CHALLENGE = "{\"access_token\":{\"nbf\":{\"essential\":true,\"value\":\"1701477303\"}}}";
-    public final static String MERGED_CLAIMS_CAPABILITIES_AND_CHALLENGE = "{\"access_token\":{\"nbf\":{\"essential\":true,\"value\":\"1701477303\"},\"xms_cc\":{\"values\":[\"cp1\"]}}}";
+    public final static String MERGED_CLAIMS_AND_CAPABILITIES = "{\"access_token\":{\"nbf\":{\"value\":\"1701477303\",\"essential\":true},\"xms_cc\":{\"values\":[\"cp1\"]}}}";
+    public final static String MERGED_CLAIMS_AND_CHALLENGE = "{\"access_token\":{\"nbf\":{\"value\":\"1701477303\",\"essential\":true}}}";
+    public final static String MERGED_CLAIMS_CAPABILITIES_AND_CHALLENGE = "{\"access_token\":{\"nbf\":{\"value\":\"1701477303\",\"essential\":true},\"xms_cc\":{\"values\":[\"cp1\"]}}}";
 }

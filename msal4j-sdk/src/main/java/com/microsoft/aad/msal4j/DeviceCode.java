@@ -3,35 +3,81 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.azure.json.JsonReader;
+import com.azure.json.JsonSerializable;
+import com.azure.json.JsonToken;
+import com.azure.json.JsonWriter;
+
+import java.io.IOException;
 
 /**
  * Response returned from the STS device code endpoint containing information necessary for
  * device code flow
  */
-public final class DeviceCode {
+public final class DeviceCode implements JsonSerializable<DeviceCode> {
 
-    @JsonProperty("user_code")
     private String userCode;
-
-    @JsonProperty("device_code")
     private String deviceCode;
-
-    @JsonProperty("verification_uri")
     private String verificationUri;
-
-    @JsonProperty("expires_in")
     private long expiresIn;
-
-    @JsonProperty("interval")
     private long interval;
-
-    @JsonProperty("message")
     private String message;
 
     private transient String correlationId = null;
     private transient String clientId = null;
     private transient String scopes = null;
+
+    public static DeviceCode fromJson(JsonReader jsonReader) throws IOException {
+        DeviceCode deviceCode = new DeviceCode();
+
+        return jsonReader.readObject(reader -> {
+            while (reader.nextToken() != JsonToken.END_OBJECT) {
+                String fieldName = reader.getFieldName();
+                reader.nextToken();
+
+                switch (fieldName) {
+                    case "user_code":
+                        deviceCode.userCode = reader.getString();
+                        break;
+                    case "device_code":
+                        deviceCode.deviceCode = reader.getString();
+                        break;
+                    case "verification_uri":
+                        deviceCode.verificationUri = reader.getString();
+                        break;
+                    case "expires_in":
+                        deviceCode.expiresIn = reader.getLong();
+                        break;
+                    case "interval":
+                        deviceCode.interval = reader.getLong();
+                        break;
+                    case "message":
+                        deviceCode.message = reader.getString();
+                        break;
+                    default:
+                        reader.skipChildren();
+                        break;
+                }
+            }
+            return deviceCode;
+        });
+    }
+
+    @Override
+    public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
+        jsonWriter.writeStartObject();
+
+        jsonWriter.writeStringField("user_code", userCode);
+        jsonWriter.writeStringField("device_code", deviceCode);
+        jsonWriter.writeStringField("verification_uri", verificationUri);
+        jsonWriter.writeNumberField("expires_in", expiresIn);
+        jsonWriter.writeNumberField("interval", interval);
+        jsonWriter.writeStringField("message", message);
+
+        jsonWriter.writeEndObject();
+
+        return jsonWriter;
+    }
 
     /**
      * code which user needs to provide when authenticating at the verification URI

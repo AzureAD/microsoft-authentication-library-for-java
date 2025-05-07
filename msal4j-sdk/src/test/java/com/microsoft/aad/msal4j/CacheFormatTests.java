@@ -182,7 +182,7 @@ class CacheFormatTests {
         String keyExpected = readResource(folder + AT_CACHE_ENTITY_KEY);
         assertEquals(keyActual, keyExpected);
 
-        String valueActual = JsonHelper.mapper.writeValueAsString(tokenCache.accessTokens.get(keyActual));
+        String valueActual = JsonHelper.convertJsonSerializableObjectToString(tokenCache.accessTokens.get(keyActual));
         String valueExpected = readResource(folder + AT_CACHE_ENTITY);
 
         JSONObject tokenResponseJsonObj = JSONObjectUtils.parse(tokenResponse);
@@ -213,7 +213,7 @@ class CacheFormatTests {
         String keyExpected = readResource(folder + RT_CACHE_ENTITY_KEY);
         assertEquals(actualKey, keyExpected);
 
-        String actualValue = JsonHelper.mapper.writeValueAsString(tokenCache.refreshTokens.get(actualKey));
+        String actualValue = JsonHelper.convertJsonSerializableObjectToString(tokenCache.refreshTokens.get(actualKey));
         String valueExpected = readResource(folder + RT_CACHE_ENTITY);
         JSONAssert.assertEquals(valueExpected, actualValue, JSONCompareMode.STRICT);
     }
@@ -249,7 +249,7 @@ class CacheFormatTests {
         String keyExpected = readResource(folder + ID_TOKEN_CACHE_ENTITY_KEY);
         assertEquals(actualKey, keyExpected);
 
-        String actualValue = JsonHelper.mapper.writeValueAsString(tokenCache.idTokens.get(actualKey));
+        String actualValue = JsonHelper.convertJsonSerializableObjectToString(tokenCache.idTokens.get(actualKey));
         String valueExpected = readResource(folder + ID_TOKEN_CACHE_ENTITY);
         JSONAssert.assertEquals(valueExpected, actualValue,
                 new IdTokenComparator(JSONCompareMode.STRICT, folder));
@@ -264,7 +264,7 @@ class CacheFormatTests {
         String keyExpected = readResource(folder + ACCOUNT_CACHE_ENTITY_KEY);
         assertEquals(actualKey, keyExpected);
 
-        String actualValue = JsonHelper.mapper.writeValueAsString(tokenCache.accounts.get(actualKey));
+        String actualValue = JsonHelper.convertJsonSerializableObjectToString(tokenCache.accounts.get(actualKey));
         String valueExpected = readResource(folder + ACCOUNT_CACHE_ENTITY);
 
         JSONAssert.assertEquals(valueExpected, actualValue, JSONCompareMode.STRICT);
@@ -283,7 +283,7 @@ class CacheFormatTests {
         String keyExpected = readResource(folder + APP_METADATA_ENTITY_KEY);
         assertEquals(actualKey, keyExpected);
 
-        String actualValue = JsonHelper.mapper.writeValueAsString(tokenCache.appMetadata.get(actualKey));
+        String actualValue = JsonHelper.convertJsonSerializableObjectToString(tokenCache.appMetadata.get(actualKey));
         String valueExpected = readResource(folder + APP_METADATA_CACHE_ENTITY);
 
         JSONAssert.assertEquals(valueExpected, actualValue, JSONCompareMode.STRICT);

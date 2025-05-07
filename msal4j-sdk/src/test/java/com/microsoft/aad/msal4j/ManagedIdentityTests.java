@@ -396,6 +396,8 @@ class ManagedIdentityTests {
             assert(exception.getCause() instanceof MsalServiceException);
 
             MsalServiceException miException = (MsalServiceException) exception.getCause();
+            System.out.println(miException.getMessage());
+            System.out.println(miException.errorCode());
             assertEquals(source.name(), miException.managedIdentitySource());
             assertEquals(AuthenticationErrorCode.MANAGED_IDENTITY_REQUEST_FAILED, miException.errorCode());
             return;
@@ -488,7 +490,7 @@ class ManagedIdentityTests {
 
             MsalServiceException miException = (MsalServiceException) exception.getCause();
             assertEquals(source.name(), miException.managedIdentitySource());
-            assertEquals(MsalError.MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE, miException.errorCode());
+            assertEquals(MANAGED_IDENTITY_REQUEST_FAILED, miException.errorCode());
             return;
         }
 

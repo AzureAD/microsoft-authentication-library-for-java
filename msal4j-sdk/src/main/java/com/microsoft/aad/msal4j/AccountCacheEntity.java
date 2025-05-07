@@ -3,51 +3,101 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.azure.json.JsonReader;
+import com.azure.json.JsonSerializable;
+import com.azure.json.JsonToken;
+import com.azure.json.JsonWriter;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-class AccountCacheEntity implements Serializable {
+class AccountCacheEntity implements JsonSerializable<AccountCacheEntity>, Serializable {
 
     static final String MSSTS_ACCOUNT_TYPE = "MSSTS";
     static final String ADFS_ACCOUNT_TYPE = "ADFS";
 
-    @JsonProperty("home_account_id")
     protected String homeAccountId;
-
-    @JsonProperty("environment")
     protected String environment;
-
-    @JsonProperty("realm")
     protected String realm;
-
-    @JsonProperty("local_account_id")
     protected String localAccountId;
-
-    @JsonProperty("username")
     protected String username;
-
-    @JsonProperty("name")
     protected String name;
-
-    @JsonProperty("client_info")
     protected String clientInfoStr;
-
-    @JsonProperty("user_assertion_hash")
     protected String userAssertionHash;
+    protected String authorityType;
+
+    static AccountCacheEntity fromJson(JsonReader jsonReader) throws IOException {
+        AccountCacheEntity entity = new AccountCacheEntity();
+
+        return jsonReader.readObject(reader -> {
+            while (reader.nextToken() != JsonToken.END_OBJECT) {
+                String fieldName = reader.getFieldName();
+                reader.nextToken();
+
+                switch (fieldName) {
+                    case "home_account_id":
+                        entity.homeAccountId = reader.getString();
+                        break;
+                    case "environment":
+                        entity.environment = reader.getString();
+                        break;
+                    case "realm":
+                        entity.realm = reader.getString();
+                        break;
+                    case "local_account_id":
+                        entity.localAccountId = reader.getString();
+                        break;
+                    case "username":
+                        entity.username = reader.getString();
+                        break;
+                    case "name":
+                        entity.name = reader.getString();
+                        break;
+                    case "client_info":
+                        entity.clientInfoStr = reader.getString();
+                        break;
+                    case "user_assertion_hash":
+                        entity.userAssertionHash = reader.getString();
+                        break;
+                    case "authority_type":
+                        entity.authorityType = reader.getString();
+                        break;
+                    default:
+                        reader.skipChildren();
+                        break;
+                }
+            }
+            return entity;
+        });
+    }
+
+    @Override
+    public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
+        jsonWriter.writeStartObject();
+
+        jsonWriter.writeStringField("home_account_id", homeAccountId);
+        jsonWriter.writeStringField("environment", environment);
+        jsonWriter.writeStringField("realm", realm);
+        jsonWriter.writeStringField("local_account_id", localAccountId);
+        jsonWriter.writeStringField("username", username);
+        jsonWriter.writeStringField("name", name);
+        jsonWriter.writeStringField("client_info", clientInfoStr);
+        jsonWriter.writeStringField("user_assertion_hash", userAssertionHash);
+        jsonWriter.writeStringField("authority_type", authorityType);
+
+        jsonWriter.writeEndObject();
+
+        return jsonWriter;
+    }
 
     ClientInfo clientInfo() {
         return ClientInfo.createFromJson(clientInfoStr);
     }
 
-    @JsonProperty("authority_type")
-    protected String authorityType;
-
     String getKey() {
-
         List<String> keyParts = new ArrayList<>();
 
         keyParts.add(homeAccountId);
@@ -58,7 +108,6 @@ class AccountCacheEntity implements Serializable {
     }
 
     static AccountCacheEntity create(String clientInfoStr, Authority requestAuthority, IdToken idToken, String policy) {
-
         AccountCacheEntity account = new AccountCacheEntity();
         account.authorityType(MSSTS_ACCOUNT_TYPE);
         account.clientInfoStr = clientInfoStr;
@@ -80,7 +129,6 @@ class AccountCacheEntity implements Serializable {
     }
 
     static AccountCacheEntity createADFSAccount(Authority requestAuthority, IdToken idToken) {
-
         AccountCacheEntity account = new AccountCacheEntity();
         account.authorityType(ADFS_ACCOUNT_TYPE);
         account.homeAccountId(idToken.subject);
@@ -173,8 +221,6 @@ class AccountCacheEntity implements Serializable {
         this.authorityType = authorityType;
     }
 
-    //These methods are based on those generated by Lombok's @EqualsAndHashCode annotation.
-    //They have the same functionality as the generated methods, but were refactored for readability.
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

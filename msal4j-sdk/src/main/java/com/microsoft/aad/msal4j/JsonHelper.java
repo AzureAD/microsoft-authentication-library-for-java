@@ -7,41 +7,22 @@ import com.azure.json.JsonProviders;
 import com.azure.json.JsonReader;
 import com.azure.json.JsonSerializable;
 import com.azure.json.JsonToken;
+import com.azure.json.JsonWriter;
 import com.azure.json.ReadValueCallback;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.JsonNode;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 class JsonHelper {
-    static ObjectMapper mapper;
-
-    static {
-        mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, true);
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-    }
 
     private JsonHelper() {
     }
 
-    static <T> T convertJsonToObject(final String json, final Class<T> tClass) {
-        try {
-            return mapper.readValue(json, tClass);
-        } catch (Exception e) {
-            throw new MsalJsonParsingException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
-        }
-    }
-
     static IdToken createIdTokenFromEncodedTokenString(String token) {
-        return JsonHelper.convertJsonToObject(getTokenPayloadClaims(token), IdToken.class);
+        return convertJsonStringToJsonSerializableObject(getTokenPayloadClaims(token), IdToken::fromJson);
     }
 
     static String getTokenPayloadClaims(String token) {
@@ -53,7 +34,6 @@ class JsonHelper {
         }
     }
 
-    //Converts a generic JSON string to a Map<String, Object> with relevant types
     static Map<String, Object> parseJsonToMap(String jsonString) {
         if (StringHelper.isBlank(jsonString)) {
             return new HashMap<>();
@@ -92,29 +72,23 @@ class JsonHelper {
         JsonToken token = jsonReader.currentToken();
 
         switch (token) {
-            case STRING:
-                return jsonReader.getString();
+            case STRING: return jsonReader.getString();
             case NUMBER:
                 try {
                     return jsonReader.getLong();
                 } catch (ArithmeticException e) {
                     return jsonReader.getDouble();
                 }
-            case BOOLEAN:
-                return jsonReader.getBoolean();
-            case NULL:
-                return null;
-            case START_ARRAY:
-                return parseJsonArray(jsonReader);
-            case START_OBJECT:
-                return parseJsonObject(jsonReader);
+            case BOOLEAN: return jsonReader.getBoolean();
+            case NULL: return null;
+            case START_ARRAY: return parseJsonArray(jsonReader);
+            case START_OBJECT: return parseJsonObject(jsonReader);
             default:
                 jsonReader.skipChildren();
                 return null;
         }
     }
 
-    //This method is used to convert a JSON string to an object which implements the JsonSerializable interface from com.azure.json
     static <T extends JsonSerializable<T>> T convertJsonStringToJsonSerializableObject(String jsonResponse, ReadValueCallback<JsonReader, T> readFunction) {
         try (JsonReader jsonReader = JsonProviders.createReader(jsonResponse)) {
             return readFunction.read(jsonReader);
@@ -123,90 +97,102 @@ class JsonHelper {
         }
     }
 
-    //Converts a JSON string to a Map<String, String>
+    static <T extends JsonSerializable<T>> String convertJsonSerializableObjectToString(T jsonSerializable) {
+        try {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            JsonWriter jsonWriter = JsonProviders.createWriter(outputStream);
+
+            jsonSerializable.toJson(jsonWriter);
+            jsonWriter.flush();
+
+            return outputStream.toString(StandardCharsets.UTF_8.name());
+        } catch (Exception e) {
+            throw new MsalClientException("Error serializing object to JSON: " + e.getMessage(),
+                    AuthenticationErrorCode.INVALID_JSON);
+        }
+    }
+
     static Map<String, String> convertJsonToMap(String jsonString) {
         try (JsonReader reader = JsonProviders.createReader(jsonString)) {
             reader.nextToken();
             return reader.readMap(JsonReader::getString);
         } catch (IOException e) {
-            throw new MsalClientException("Could not parse JSON from HttpResponse body: " + e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
+            throw new MsalClientException("Could not parse JSON from HttpResponse body: " + e.getMessage(),
+                    AuthenticationErrorCode.INVALID_JSON);
         }
     }
 
-    /**
-     * Throws exception if given String does not follow JSON syntax
-     */
     static void validateJsonFormat(String jsonString) {
-        try {
-            mapper.readTree(jsonString);
+        try (JsonReader reader = JsonProviders.createReader(jsonString)) {
+            while (reader.nextToken() != JsonToken.END_DOCUMENT) {
+                reader.skipChildren();
+            }
         } catch (IOException e) {
             throw new MsalClientException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
         }
     }
 
-    /**
-     * Take a set of Strings and return a String representing a JSON object of the format:
-     *  {
-     *    "access_token": {
-     *      "xms_cc": {
-     *        "values": [ clientCapabilities ]
-     *      }
-     *    }
-     *  }
-     */
     public static String formCapabilitiesJson(Set<String> clientCapabilities) {
-        if (clientCapabilities != null && !clientCapabilities.isEmpty()) {
-            ClaimsRequest cr = new ClaimsRequest();
-            RequestedClaimAdditionalInfo capabilitiesValues = new RequestedClaimAdditionalInfo(false, null, new ArrayList<>(clientCapabilities));
-            cr.requestClaimInAccessToken("xms_cc", capabilitiesValues);
-
-            return cr.formatAsJSONString();
-        } else {
+        if (clientCapabilities == null || clientCapabilities.isEmpty()) {
             return null;
         }
+
+        ClaimsRequest cr = new ClaimsRequest();
+        RequestedClaimAdditionalInfo capabilitiesValues = new RequestedClaimAdditionalInfo(
+                false, null, new ArrayList<>(clientCapabilities));
+        cr.requestClaimInAccessToken("xms_cc", capabilitiesValues);
+
+        return cr.formatAsJSONString();
     }
 
-    /**
-     * Merges given JSON strings into one Jackson JSONNode object, which is returned as a String
-     */
     static String mergeJSONString(String mainJsonString, String addJsonString) {
-        JsonNode mainJson;
-        JsonNode addJson;
-
         try {
-            mainJson = mapper.readTree(mainJsonString);
-            addJson = mapper.readTree(addJsonString);
+            Map<String, Object> mainMap = parseJsonToMap(mainJsonString);
+            Map<String, Object> addMap = parseJsonToMap(addJsonString);
+
+            mergeJsonMaps(mainMap, addMap);
+
+            return writeJsonMap(mainMap);
         } catch (IOException e) {
             throw new MsalClientException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
         }
-
-        mergeJSONNode(mainJson, addJson);
-
-        return mainJson.toString();
     }
 
-    /**
-     * Merges given Jackson JsonNode object into another JsonNode
-     */
-    static void mergeJSONNode(JsonNode mainNode, JsonNode addNode) {
-        if (addNode == null) {
+    @SuppressWarnings("unchecked")
+    private static void mergeJsonMaps(Map<String, Object> mainMap, Map<String, Object> addMap) {
+        if (addMap == null) {
             return;
         }
 
-        Iterator<String> fieldNames = addNode.fieldNames();
-        while (fieldNames.hasNext()) {
+        for (Map.Entry<String, Object> entry : addMap.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
 
-            String fieldName = fieldNames.next();
-            JsonNode jsonNode = mainNode.get(fieldName);
-
-            if (jsonNode != null && jsonNode.isObject()) {
-                mergeJSONNode(jsonNode, addNode.get(fieldName));
+            if (mainMap.containsKey(key) && mainMap.get(key) instanceof Map && value instanceof Map) {
+                mergeJsonMaps((Map<String, Object>) mainMap.get(key), (Map<String, Object>) value);
             } else {
-                if (mainNode instanceof ObjectNode) {
-                    JsonNode value = addNode.get(fieldName);
-                    ((ObjectNode) mainNode).put(fieldName, value);
-                }
+                mainMap.put(key, value);
             }
+        }
+    }
+
+    static String writeJsonMap(Map<String, Object> map) throws IOException {
+        StringWriter stringWriter = new StringWriter();
+        try (JsonWriter jsonWriter = JsonProviders.createWriter(stringWriter)) {
+
+            jsonWriter.writeStartObject();
+
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                jsonWriter.writeUntypedField(entry.getKey(), entry.getValue());
+            }
+
+            jsonWriter.writeEndObject();
+            jsonWriter.flush();
+
+            return stringWriter.toString();
+        } catch (Exception e) {
+            throw new MsalClientException("Error writing JSON map to string: " + e.getMessage(),
+                    AuthenticationErrorCode.INVALID_JSON);
         }
     }
 }
