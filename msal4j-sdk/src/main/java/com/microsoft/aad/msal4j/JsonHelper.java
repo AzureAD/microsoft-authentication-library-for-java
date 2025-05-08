@@ -9,6 +9,8 @@ import com.azure.json.JsonSerializable;
 import com.azure.json.JsonToken;
 import com.azure.json.JsonWriter;
 import com.azure.json.ReadValueCallback;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -17,17 +19,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 class JsonHelper {
+    private static final Logger LOG = LoggerFactory.getLogger(JsonHelper.class);
 
     private JsonHelper() {
-    }
-
-    static <T> T convertJsonToObject(final String json, final Class<T> tClass) {
-        try {
-            return mapper.readValue(json, tClass);
-        } catch (Exception e) {
-            LOG.error(String.format("Error converting JSON string into %s: %s", tClass, e.getMessage()));
-            throw new MsalJsonParsingException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
-        }
     }
 
     static IdToken createIdTokenFromEncodedTokenString(String token) {

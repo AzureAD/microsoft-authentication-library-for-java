@@ -638,8 +638,6 @@ class ManagedIdentityTests {
         // Clear caching to avoid cross test pollution.
         miApp.tokenCache().accessTokens.clear();
 
-        String claimsJson = "{\"default\":\"claim\"}";
-
         // First call, get the token from the identity provider.
         IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
             ManagedIdentityParameters.builder(resource)
@@ -659,7 +657,7 @@ class ManagedIdentityTests {
         // Third call, when claims are passed bypass the cache.
         result = miApp.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(resource)
-                        .claims(claimsJson)
+                        .claims(TestConfiguration.CLAIMS_REQUEST)
                         .build()).get();
 
         assertNotNull(result.accessToken());
@@ -689,7 +687,6 @@ class ManagedIdentityTests {
         // Clear caching to avoid cross test pollution.
         miApp.tokenCache().accessTokens.clear();
 
-        String claimsJson = "{\"default\":\"claim\"}";
         // First call, get the token from the identity provider.
         IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(resource)
@@ -709,7 +706,7 @@ class ManagedIdentityTests {
         // Third call, when claims are passed bypass the cache.
         result = miApp.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(resource)
-                        .claims(claimsJson)
+                        .claims(TestConfiguration.CLAIMS_REQUEST)
                         .build()).get();
 
         assertNotNull(result.accessToken());
