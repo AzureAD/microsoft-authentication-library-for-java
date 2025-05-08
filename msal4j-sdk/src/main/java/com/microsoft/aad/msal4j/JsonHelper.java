@@ -21,6 +21,15 @@ class JsonHelper {
     private JsonHelper() {
     }
 
+    static <T> T convertJsonToObject(final String json, final Class<T> tClass) {
+        try {
+            return mapper.readValue(json, tClass);
+        } catch (Exception e) {
+            LOG.error(String.format("Error converting JSON string into %s: %s", tClass, e.getMessage()));
+            throw new MsalJsonParsingException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
+        }
+    }
+
     static IdToken createIdTokenFromEncodedTokenString(String token) {
         return convertJsonStringToJsonSerializableObject(getTokenPayloadClaims(token), IdToken::fromJson);
     }
@@ -29,11 +38,13 @@ class JsonHelper {
         try {
             return new String(Base64.getUrlDecoder().decode(token.split("\\.")[1]), StandardCharsets.UTF_8);
         } catch (ArrayIndexOutOfBoundsException e) {
+            LOG.error("Error parsing ID token, missing payload section.");
             throw new MsalClientException("Error parsing ID token, missing payload section.",
                     AuthenticationErrorCode.INVALID_JWT);
         }
     }
 
+    //Converts a generic JSON string to a Map<String, Object> with relevant types
     static Map<String, Object> parseJsonToMap(String jsonString) {
         if (StringHelper.isBlank(jsonString)) {
             return new HashMap<>();
@@ -43,18 +54,9 @@ class JsonHelper {
             jsonReader.nextToken();
             return parseJsonObject(jsonReader);
         } catch (IOException e) {
+            LOG.error("JSON parsing error when attempting to convert JSON into a Map.");
             throw new MsalJsonParsingException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
         }
-    }
-
-    private static List<Object> parseJsonArray(JsonReader jsonReader) throws IOException {
-        List<Object> array = new ArrayList<>();
-
-        while (jsonReader.nextToken() != JsonToken.END_ARRAY) {
-            array.add(parseValue(jsonReader));
-        }
-
-        return array;
     }
 
     private static Map<String, Object> parseJsonObject(JsonReader jsonReader) throws IOException {
@@ -62,10 +64,35 @@ class JsonHelper {
 
         while (jsonReader.nextToken() != JsonToken.END_OBJECT) {
             String fieldName = jsonReader.getFieldName();
-            object.put(fieldName, parseValue(jsonReader));
+            Object value = parseValue(jsonReader);
+            object.put(fieldName, handleSpecialFields(fieldName, value));
         }
 
         return object;
+    }
+
+    //Due to the old usage of com.nimbusds for JWT parsing, customers may be relying on certain fields being treated as specific types.
+    // This method handles those special cases to help ensure backwards compatibility.
+    private static Object handleSpecialFields(String fieldName, Object value) {
+        //nimbus always treated the "aud" field as an ArrayList, even when it was a single string
+        if ("aud".equals(fieldName) && value instanceof String) {
+            ArrayList<String> list = new ArrayList<>();
+            list.add((String) value);
+            return list;
+        }
+
+        //nimbus converted certain unix timestamps to Date objects
+        if (isTimestampField(fieldName) && value instanceof Number) {
+            // Convert seconds to milliseconds for Date constructor
+            return new Date(((Number) value).longValue() * 1000);
+        }
+
+        return value;
+    }
+
+    private static boolean isTimestampField(String fieldName) {
+        return "exp".equals(fieldName) || "iat".equals(fieldName) ||
+                "nbf".equals(fieldName);
     }
 
     private static Object parseValue(JsonReader jsonReader) throws IOException {
@@ -79,10 +106,14 @@ class JsonHelper {
                 } catch (ArithmeticException e) {
                     return jsonReader.getDouble();
                 }
-            case BOOLEAN: return jsonReader.getBoolean();
-            case NULL: return null;
-            case START_ARRAY: return parseJsonArray(jsonReader);
-            case START_OBJECT: return parseJsonObject(jsonReader);
+            case BOOLEAN:
+                return jsonReader.getBoolean();
+            case NULL:
+                return null;
+            case START_ARRAY:
+                return jsonReader.readArray(JsonReader::readUntyped);
+            case START_OBJECT:
+                return parseJsonObject(jsonReader);
             default:
                 jsonReader.skipChildren();
                 return null;
