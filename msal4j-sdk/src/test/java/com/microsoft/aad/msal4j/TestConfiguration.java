@@ -11,11 +11,9 @@ public final class TestConfiguration {
             + "/" + AAD_TENANT_NAME + "/";
     public final static String AAD_CLIENT_ID = "9083ccb8-8a46-43e7-8439-1d696df984ae";
     public final static String AAD_CLIENT_DUMMYSECRET = "client_dummysecret";
-    public final static String AAD_RESOURCE_ID = "b7a671d8-a408-42ff-86e0-aaf447fd17c4";
     public final static String AAD_MEX_RESPONSE_FILE = "/mex-response.xml";
     public final static String AAD_MEX_RESPONSE_FILE_INTEGRATED = "/mex-response-integrated.xml";
     public final static String AAD_MEX_2005_RESPONSE_FILE = "/mex-2005-response.xml";
-    public final static String AAD_TOKEN_ERROR_FILE = "/token-error.xml";
     public final static String AAD_TOKEN_SUCCESS_FILE = "/token.xml";
     public final static String AAD_DEFAULT_REDIRECT_URI = "https://non_existing_uri.windows.com/";
     public final static String AAD_COMMON_AUTHORITY = "https://login.microsoftonline.com/common/";
@@ -23,8 +21,6 @@ public final class TestConfiguration {
     public final static String ADFS_HOST_NAME = "fs.ade2eadfs30.com";
     public final static String ADFS_TENANT_ENDPOINT = "https://"
             + ADFS_HOST_NAME + "/adfs/";
-    public final static String AAD_UNKNOWN_TENANT_ENDPOINT = "https://lgn.windows.net/"
-            + AAD_TENANT_NAME + "/";
 
     public final static String B2C_HOST_NAME = "msidlabb2c.b2clogin.com";
     public final static String B2C_SIGN_IN_POLICY = "B2C_1_SignInPolicy";
@@ -35,13 +31,6 @@ public final class TestConfiguration {
             "/msidlabb2c.onmicrosoft.com";
     public final static String B2C_AUTHORITY_CUSTOM_PORT = "https://login.microsoftonline.in:444/tfp/tenant/policy";
     public final static String B2C_AUTHORITY_CUSTOM_PORT_TAIL_SLASH = "https://login.microsoftonline.in:444/tfp/tenant/policy/";
-
-    public static String INSTANCE_DISCOVERY_RESPONSE = "{" +
-            "\"tenant_discovery_endpoint\":\"https://login.microsoftonline.com/organizations/v2.0/.well-known/openid-appConfiguration\"," +
-            "\"api-version\":\"1.1\"," +
-            "\"metadata\":[{\"preferred_network\":\"login.microsoftonline.com\",\"preferred_cache\":\"login.windows.net\",\"aliases\":[\"login.microsoftonline.com\",\"login.windows.net\",\"login.microsoft.com\",\"sts.windows.net\"]},{\"preferred_network\":\"login.partner.microsoftonline.cn\",\"preferred_cache\":\"login.partner.microsoftonline.cn\",\"aliases\":[\"login.partner.microsoftonline.cn\",\"login.chinacloudapi.cn\"]},{\"preferred_network\":\"login.microsoftonline.de\",\"preferred_cache\":\"login.microsoftonline.de\",\"aliases\":[\"login.microsoftonline.de\"]},{\"preferred_network\":\"login.microsoftonline.us\",\"preferred_cache\":\"login.microsoftonline.us\",\"aliases\":[\"login.microsoftonline.us\",\"login.usgovcloudapi.net\"]},{\"preferred_network\":\"login-us.microsoftonline.com\",\"preferred_cache\":\"login-us.microsoftonline.com\",\"aliases\":[\"login-us.microsoftonline.com\"]}]}";
-
-    public final static String AAD_PREFERRED_NETWORK_ENV_ALIAS = "login.microsoftonline.com";
 
     public final static String TOKEN_ENDPOINT_OK_RESPONSE_ID_AND_ACCESS = "{\"access_token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6I"
             + "k5HVEZ2ZEstZnl0aEV1THdqcHdBSk9NOW4tQSJ9.eyJhdWQiOiJiN2E2NzFkOC1hNDA4LTQyZmYtODZlMC1hYWY0NDdmZDE3YzQiLCJpc3MiOiJod"

@@ -21,14 +21,6 @@ public class SeleniumConstants {
     final static String ADFS2019_PASSWORD_ID = "passwordInput";
     final static String ADFS2019_SUBMIT_ID = "submitButton";
 
-    // ADFSv2 fields
-    final static String ADFSV2_WEB_USERNAME_INPUT_ID = "ContentPlaceHolder1_UsernameTextBox";
-    final static String ADFSV2_WEB_PASSWORD_INPUT_ID = "ContentPlaceHolder1_PasswordTextBox";
-    final static String ADFSV2_ARLINGTON_WEB_PASSWORD_INPUT_ID = "passwordInput";
-    final static String ADFSV2_WEB_SUBMIT_BUTTON_ID = "ContentPlaceHolder1_SubmitButton";
-    final static String ADFSV2_ARLINGTON_WEB_SUBMIT_BUTTON_ID = "submitButton";
-
-
     //B2C Facebook
     final static String FACEBOOK_ACCOUNT_ID = "FacebookExchange";
     final static String FACEBOOK_USERNAME_ID = "email";

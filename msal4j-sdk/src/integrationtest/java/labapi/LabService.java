@@ -3,8 +3,7 @@
 
 package labapi;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.azure.json.*;
 import com.microsoft.aad.msal4j.*;
 
 import java.io.IOException;
@@ -17,17 +16,6 @@ import java.util.concurrent.ExecutionException;
 public class LabService {
 
     static ConfidentialClientApplication labApp;
-
-    static ObjectMapper mapper = new ObjectMapper()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
-    static <T> T convertJsonToObject(final String json, final Class<T> clazz) {
-        try {
-            return mapper.readValue(json, clazz);
-        } catch (IOException e) {
-            throw new RuntimeException("JSON processing error: " + e.getMessage(), e);
-        }
-    }
 
     static void initLabApp() throws MalformedURLException {
         KeyVaultSecretsProvider keyVaultSecretsProvider = new KeyVaultSecretsProvider();
@@ -56,7 +44,7 @@ public class LabService {
             String result = HttpClientHelper.sendRequestToLab(
                     LabConstants.LAB_USER_ENDPOINT, queryMap, getLabAccessToken());
 
-            User[] users = convertJsonToObject(result, User[].class);
+            User[] users = parseUserArray(result);
             User user = users[0];
             if (user.getUserType().equals("Guest")) {
                 String secretId = user.getHomeDomain().split("\\.")[0];
@@ -64,11 +52,7 @@ public class LabService {
             } else {
                 user.setPassword(getSecret(user.getLabName()));
             }
-            if (query.parameters.containsKey(UserQueryParameters.FEDERATION_PROVIDER)) {
-                user.setFederationProvider(query.parameters.get(UserQueryParameters.FEDERATION_PROVIDER));
-            } else {
-                user.setFederationProvider(FederationProvider.NONE);
-            }
+            user.setFederationProvider(query.parameters.getOrDefault(UserQueryParameters.FEDERATION_PROVIDER, FederationProvider.NONE));
             return user;
         } catch (Exception ex) {
             throw new RuntimeException("Error getting user from lab: " + ex.getMessage());
@@ -79,7 +63,7 @@ public class LabService {
         try {
             String result = HttpClientHelper.sendRequestToLab(
                     LabConstants.LAB_APP_ENDPOINT, appId, getLabAccessToken());
-            App[] apps = convertJsonToObject(result, App[].class);
+            App[] apps = parseAppArray(result);
             return apps[0];
         } catch (Exception ex) {
             throw new RuntimeException("Error getting app from lab: " + ex.getMessage());
@@ -91,7 +75,7 @@ public class LabService {
         try {
             result = HttpClientHelper.sendRequestToLab(
                     LabConstants.LAB_LAB_ENDPOINT, labId, getLabAccessToken());
-            Lab[] labs = convertJsonToObject(result, Lab[].class);
+            Lab[] labs = parseLabArray(result);
             return labs[0];
         } catch (Exception ex) {
             throw new RuntimeException("Error getting lab from lab: " + ex.getMessage());
@@ -106,9 +90,46 @@ public class LabService {
             result = HttpClientHelper.sendRequestToLab(
                     LabConstants.LAB_USER_SECRET_ENDPOINT, queryMap, getLabAccessToken());
 
-            return convertJsonToObject(result, UserSecret.class).value;
+            UserSecret userSecret = parseUserSecret(result);
+            return userSecret.value;
         } catch (Exception ex) {
             throw new RuntimeException("Error getting user secret from lab: " + ex.getMessage());
+        }
+    }
+
+    // Helper methods for parsing JSON responses into specific objects
+    private static User[] parseUserArray(String json) {
+        try (JsonReader reader = JsonProviders.createReader(json)) {
+            reader.nextToken();
+            return reader.readArray(User::fromJson).toArray(new User[0]);
+        } catch (IOException e) {
+            throw new RuntimeException("Error parsing User array: " + e.getMessage(), e);
+        }
+    }
+
+    private static App[] parseAppArray(String json) {
+        try (JsonReader reader = JsonProviders.createReader(json)) {
+            reader.nextToken();
+            return reader.readArray(App::fromJson).toArray(new App[0]);
+        } catch (IOException e) {
+            throw new RuntimeException("Error parsing App array: " + e.getMessage(), e);
+        }
+    }
+
+    private static Lab[] parseLabArray(String json) {
+        try (JsonReader reader = JsonProviders.createReader(json)) {
+            reader.nextToken();
+            return reader.readArray(Lab::fromJson).toArray(new Lab[0]);
+        } catch (IOException e) {
+            throw new RuntimeException("Error parsing Lab array: " + e.getMessage(), e);
+        }
+    }
+
+    private static UserSecret parseUserSecret(String json) {
+        try (JsonReader reader = JsonProviders.createReader(json)) {
+            return UserSecret.fromJson(reader);
+        } catch (IOException e) {
+            throw new RuntimeException("Error parsing UserSecret: " + e.getMessage(), e);
         }
     }
 }

@@ -3,9 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
-import net.minidev.json.JSONObject;
 import org.json.JSONException;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
@@ -76,7 +73,7 @@ class CacheFormatTests {
                         Paths.get(getClass().getResource(resource).toURI())));
     }
 
-    boolean doesResourceExist(String resource) throws IOException, URISyntaxException {
+    boolean doesResourceExist(String resource) {
         return getClass().getResource(resource) != null;
     }
 
@@ -113,21 +110,21 @@ class CacheFormatTests {
     }
 
     @Test
-    void AADTokenCacheEntitiesFormatTest() throws JSONException, IOException, ParseException, URISyntaxException {
+    void AADTokenCacheEntitiesFormatTest() throws JSONException, IOException, URISyntaxException {
         tokenCacheEntitiesFormatTest("/AAD_cache_data");
     }
 
     @Test
-    void MSATokenCacheEntitiesFormatTest() throws JSONException, IOException, ParseException, URISyntaxException {
+    void MSATokenCacheEntitiesFormatTest() throws JSONException, IOException, URISyntaxException {
         tokenCacheEntitiesFormatTest("/MSA_cache_data");
     }
 
     @Test
-    void FociTokenCacheEntitiesFormatTest() throws JSONException, IOException, ParseException, URISyntaxException {
+    void FociTokenCacheEntitiesFormatTest() throws JSONException, IOException, URISyntaxException {
         tokenCacheEntitiesFormatTest("/Foci_cache_data");
     }
 
-    public void tokenCacheEntitiesFormatTest(String folder) throws URISyntaxException, IOException, ParseException, JSONException {
+    public void tokenCacheEntitiesFormatTest(String folder) throws URISyntaxException, IOException, JSONException {
         String CLIENT_ID = "b6c69a37-df96-4db0-9088-2ab96e1d8215";
         String AUTHORIZE_REQUEST_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize";
 
@@ -158,7 +155,7 @@ class CacheFormatTests {
         doReturn(msalOAuthHttpRequest).when(request).createOauthHttpRequest();
         doReturn(httpResponse).when(msalOAuthHttpRequest).send();
         doReturn(200).when(httpResponse).statusCode();
-        doReturn(JsonHelper.convertJsonToMap((tokenResponse))).when(httpResponse).getBodyAsMap();
+        doReturn(JsonHelper.convertJsonToMap(tokenResponse)).when(httpResponse).getBodyAsMap();
 
         final AuthenticationResult result = request.executeTokenRequest();
 
@@ -174,9 +171,9 @@ class CacheFormatTests {
     }
 
     private void validateAccessTokenCacheEntity(String folder, String tokenResponse, TokenCache tokenCache)
-            throws IOException, URISyntaxException, ParseException, JSONException {
+            throws IOException, URISyntaxException, JSONException {
 
-        assertEquals(tokenCache.accessTokens.size(), 1);
+        assertEquals(1, tokenCache.accessTokens.size());
 
         String keyActual = tokenCache.accessTokens.keySet().stream().findFirst().get();
         String keyExpected = readResource(folder + AT_CACHE_ENTITY_KEY);
@@ -185,29 +182,16 @@ class CacheFormatTests {
         String valueActual = JsonHelper.convertJsonSerializableObjectToString(tokenCache.accessTokens.get(keyActual));
         String valueExpected = readResource(folder + AT_CACHE_ENTITY);
 
-        JSONObject tokenResponseJsonObj = JSONObjectUtils.parse(tokenResponse);
-        long expireIn = getLongValue(tokenResponseJsonObj, "expires_in");
-
-        long extExpireIn = getLongValue(tokenResponseJsonObj, "ext_expires_in");
+        Map<String, String> tokenResponseMap = JsonHelper.convertJsonToMap(tokenResponse);
 
         JSONAssert.assertEquals(valueExpected, valueActual,
-                new DynamicTimestampsComparator(JSONCompareMode.STRICT, expireIn, extExpireIn));
-    }
-
-    static Long getLongValue(JSONObject jsonObject, String key) throws ParseException {
-        Object value = jsonObject.get(key);
-
-        if (value instanceof Long) {
-            return JSONObjectUtils.getLong(jsonObject, key);
-        } else {
-            return Long.parseLong(JSONObjectUtils.getString(jsonObject, key));
-        }
+                new DynamicTimestampsComparator(JSONCompareMode.STRICT, Long.parseLong(tokenResponseMap.get("expires_in")), Long.parseLong(tokenResponseMap.get("ext_expires_in"))));
     }
 
     private void validateRefreshTokenCacheEntity(String folder, TokenCache tokenCache)
             throws IOException, URISyntaxException, JSONException {
 
-        assertEquals(tokenCache.refreshTokens.size(), 1);
+        assertEquals(1, tokenCache.refreshTokens.size());
 
         String actualKey = tokenCache.refreshTokens.keySet().stream().findFirst().get();
         String keyExpected = readResource(folder + RT_CACHE_ENTITY_KEY);
@@ -243,7 +227,7 @@ class CacheFormatTests {
     private void validateIdTokenCacheEntity(String folder, TokenCache tokenCache)
             throws IOException, URISyntaxException, JSONException {
 
-        assertEquals(tokenCache.idTokens.size(), 1);
+        assertEquals(1, tokenCache.idTokens.size());
 
         String actualKey = tokenCache.idTokens.keySet().stream().findFirst().get();
         String keyExpected = readResource(folder + ID_TOKEN_CACHE_ENTITY_KEY);
@@ -258,7 +242,7 @@ class CacheFormatTests {
     private void validateAccountCacheEntity(String folder, TokenCache tokenCache)
             throws IOException, URISyntaxException, JSONException {
 
-        assertEquals(tokenCache.accounts.size(), 1);
+        assertEquals(1, tokenCache.accounts.size());
 
         String actualKey = tokenCache.accounts.keySet().stream().findFirst().get();
         String keyExpected = readResource(folder + ACCOUNT_CACHE_ENTITY_KEY);
@@ -277,7 +261,7 @@ class CacheFormatTests {
             return;
         }
 
-        assertEquals(tokenCache.appMetadata.size(), 1);
+        assertEquals(1, tokenCache.appMetadata.size());
 
         String actualKey = tokenCache.appMetadata.keySet().stream().findFirst().get();
         String keyExpected = readResource(folder + APP_METADATA_ENTITY_KEY);

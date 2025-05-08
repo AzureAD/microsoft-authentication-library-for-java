@@ -85,8 +85,6 @@ class AuthorizationRequestUrlParametersTest {
 
     @Test
     void testBuilder_conflictingParameters() {
-        PublicClientApplication app = PublicClientApplication.builder("client_id").build();
-
         String redirectUri = "http://localhost:8080";
         Set<String> scope = Collections.singleton("scope");
 

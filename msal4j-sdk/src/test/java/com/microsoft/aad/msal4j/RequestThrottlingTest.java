@@ -54,10 +54,6 @@ class RequestThrottlingTest {
                 .build();
     }
 
-    private AuthorizationCodeParameters getAcquireTokenApiParameters() throws URISyntaxException {
-        return getAcquireTokenApiParameters("default-scope");
-    }
-
     private PublicClientApplication getPublicClientApp() throws Exception {
         return getPublicClientApp(null);
     }

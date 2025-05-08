@@ -4,7 +4,6 @@
 package labapi;
 
 public class UserType {
-    public static final String CLOUD = "cloud";
     public static final String FEDERATED = "federated";
     public static final String ON_PREM = "onprem";
     public static final String GUEST = "guest";

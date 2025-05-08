@@ -34,10 +34,6 @@ class UIRequiredCacheTest {
                 .build();
     }
 
-    private RefreshTokenParameters getAcquireTokenApiParameters() {
-        return getAcquireTokenApiParameters("default-scope");
-    }
-
     private PublicClientApplication getPublicClientApp() throws Exception {
         return getPublicClientApp(null);
     }
