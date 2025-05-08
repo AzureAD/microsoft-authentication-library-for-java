@@ -3,16 +3,19 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.azure.json.JsonProviders;
+import com.azure.json.JsonWriter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ClaimsTest {
@@ -73,5 +76,97 @@ class ClaimsTest {
         ClaimsRequest cr = ClaimsRequest.formatAsClaimsRequest(TestConfiguration.CLAIMS_CHALLENGE);
 
         assertEquals(TestConfiguration.CLAIMS_CHALLENGE, cr.formatAsJSONString());
+    }
+
+    @Test
+    void testClaimsRequest_SerializationWithNullAdditionalInfo() {
+        // Setup a claims request with null additional info
+        ClaimsRequest request = new ClaimsRequest();
+        request.requestClaimInIdToken("email", null);
+
+        // Convert to JSON string
+        String jsonString = request.formatAsJSONString();
+
+        // Verify the output format
+        assertNotNull(jsonString);
+        assertEquals("{\"id_token\":{\"email\":null}}", jsonString);
+    }
+
+    @Test
+    void testClaimsRequest_RoundTrip() {
+        // Create original request with various claims
+        ClaimsRequest originalRequest = new ClaimsRequest();
+        originalRequest.requestClaimInIdToken("email", new RequestedClaimAdditionalInfo(true, null, null));
+        originalRequest.requestClaimInUserInfo("name", new RequestedClaimAdditionalInfo(false, "John", null));
+
+        List<String> groups = Arrays.asList("admin", "user");
+        originalRequest.requestClaimInAccessToken("groups", new RequestedClaimAdditionalInfo(false, null, groups));
+
+        // Convert to JSON string
+        String jsonString = originalRequest.formatAsJSONString();
+
+        // Parse back to a ClaimsRequest
+        ClaimsRequest parsedRequest = ClaimsRequest.formatAsClaimsRequest(jsonString);
+
+        // Verify the claims were preserved
+        assertEquals(1, parsedRequest.getIdTokenRequestedClaims().size());
+        assertEquals("email", parsedRequest.getIdTokenRequestedClaims().get(0).name);
+        assertTrue(parsedRequest.getIdTokenRequestedClaims().get(0).getRequestedClaimAdditionalInfo().isEssential());
+
+        // Check userinfo claims
+        List<RequestedClaim> userInfoClaims = parsedRequest.userInfoRequestedClaims;
+        assertEquals(1, userInfoClaims.size());
+        assertEquals("name", userInfoClaims.get(0).name);
+        assertEquals("John", userInfoClaims.get(0).getRequestedClaimAdditionalInfo().getValue());
+
+        // Check access token claims
+        List<RequestedClaim> accessTokenClaims = parsedRequest.accessTokenRequestedClaims;
+        assertEquals(1, accessTokenClaims.size());
+        assertEquals("groups", accessTokenClaims.get(0).name);
+        assertEquals(2, accessTokenClaims.get(0).getRequestedClaimAdditionalInfo().getValues().size());
+        assertTrue(accessTokenClaims.get(0).getRequestedClaimAdditionalInfo().getValues().contains("admin"));
+    }
+
+    @Test
+    void testRequestedClaimAdditionalInfo_Serialization() {
+        RequestedClaimAdditionalInfo info1 = new RequestedClaimAdditionalInfo(true, null, null);
+        String json1 = serializeAdditionalInfo(info1);
+        assertTrue(json1.contains("\"essential\":true"));
+        assertFalse(json1.contains("\"value\""));
+        assertFalse(json1.contains("\"values\""));
+
+        RequestedClaimAdditionalInfo info2 = new RequestedClaimAdditionalInfo(false, "test", null);
+        String json2 = serializeAdditionalInfo(info2);
+        assertFalse(json2.contains("\"essential\""));
+        assertTrue(json2.contains("\"value\":\"test\""));
+
+        List<String> valuesList = Arrays.asList("one", "two");
+        RequestedClaimAdditionalInfo info3 = new RequestedClaimAdditionalInfo(false, null, valuesList);
+        String json3 = serializeAdditionalInfo(info3);
+        assertTrue(json3.contains("\"values\":[\"one\",\"two\"]"));
+    }
+
+    @Test
+    void testInvalidJsonHandling() {
+        try {
+            ClaimsRequest.formatAsClaimsRequest("{invalid json}");
+            fail("Should have thrown MsalClientException");
+        } catch (MsalClientException e) {
+            assertTrue(e.getMessage().contains("Could not convert string to ClaimsRequest"));
+            assertEquals(AuthenticationErrorCode.INVALID_JSON, e.errorCode());
+        }
+    }
+
+    // Helper method to serialize RequestedClaimAdditionalInfo for testing
+    private String serializeAdditionalInfo(RequestedClaimAdditionalInfo info) {
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+             JsonWriter jsonWriter = JsonProviders.createWriter(outputStream)) {
+
+            info.toJson(jsonWriter);
+            jsonWriter.flush();
+            return outputStream.toString(StandardCharsets.UTF_8.name());
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to serialize", e);
+        }
     }
 }
