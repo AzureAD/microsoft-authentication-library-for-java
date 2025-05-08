@@ -138,6 +138,10 @@ public class ClaimsRequest implements JsonSerializable<ClaimsRequest> {
         }
 
         jsonReader.nextToken();
+        if (jsonReader.currentToken() == JsonToken.NULL) {
+            return;
+        }
+
         if (jsonReader.currentToken() != JsonToken.START_OBJECT) {
             throw new IllegalStateException("Expected start of object but was " + jsonReader.currentToken());
         }
