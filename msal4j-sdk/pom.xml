@@ -37,6 +37,7 @@
             <groupId>com.nimbusds</groupId>
             <artifactId>oauth2-oidc-sdk</artifactId>
             <version>11.23</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>net.minidev</groupId>
@@ -58,7 +59,7 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.36</version>
-            <scope>provided</scope>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.azure</groupId>
