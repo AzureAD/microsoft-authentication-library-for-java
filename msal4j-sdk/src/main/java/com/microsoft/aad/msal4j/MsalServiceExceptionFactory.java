@@ -22,9 +22,7 @@ class MsalServiceExceptionFactory {
                     AuthenticationErrorCode.UNKNOWN);
         }
 
-        ErrorResponse errorResponse = JsonHelper.convertJsonToObject(
-                responseBody,
-                ErrorResponse.class);
+        ErrorResponse errorResponse = JsonHelper.convertJsonStringToJsonSerializableObject(responseBody, ErrorResponse::fromJson);
 
         if (errorResponse.error() != null &&
                 errorResponse.error().equalsIgnoreCase(AuthenticationErrorCode.INVALID_GRANT) && isInteractionRequired(errorResponse.subError)) {

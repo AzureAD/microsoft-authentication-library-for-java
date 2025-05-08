@@ -396,6 +396,8 @@ class ManagedIdentityTests {
             assert(exception.getCause() instanceof MsalServiceException);
 
             MsalServiceException miException = (MsalServiceException) exception.getCause();
+            System.out.println(miException.getMessage());
+            System.out.println(miException.errorCode());
             assertEquals(source.name(), miException.managedIdentitySource());
             assertEquals(AuthenticationErrorCode.MANAGED_IDENTITY_REQUEST_FAILED, miException.errorCode());
             return;
@@ -488,7 +490,7 @@ class ManagedIdentityTests {
 
             MsalServiceException miException = (MsalServiceException) exception.getCause();
             assertEquals(source.name(), miException.managedIdentitySource());
-            assertEquals(MsalError.MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE, miException.errorCode());
+            assertEquals(MANAGED_IDENTITY_REQUEST_FAILED, miException.errorCode());
             return;
         }
 
@@ -636,8 +638,6 @@ class ManagedIdentityTests {
         // Clear caching to avoid cross test pollution.
         miApp.tokenCache().accessTokens.clear();
 
-        String claimsJson = "{\"default\":\"claim\"}";
-
         // First call, get the token from the identity provider.
         IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
             ManagedIdentityParameters.builder(resource)
@@ -657,7 +657,7 @@ class ManagedIdentityTests {
         // Third call, when claims are passed bypass the cache.
         result = miApp.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(resource)
-                        .claims(claimsJson)
+                        .claims(TestConfiguration.CLAIMS_REQUEST)
                         .build()).get();
 
         assertNotNull(result.accessToken());
@@ -687,7 +687,6 @@ class ManagedIdentityTests {
         // Clear caching to avoid cross test pollution.
         miApp.tokenCache().accessTokens.clear();
 
-        String claimsJson = "{\"default\":\"claim\"}";
         // First call, get the token from the identity provider.
         IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(resource)
@@ -707,7 +706,7 @@ class ManagedIdentityTests {
         // Third call, when claims are passed bypass the cache.
         result = miApp.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(resource)
-                        .claims(claimsJson)
+                        .claims(TestConfiguration.CLAIMS_REQUEST)
                         .build()).get();
 
         assertNotNull(result.accessToken());
