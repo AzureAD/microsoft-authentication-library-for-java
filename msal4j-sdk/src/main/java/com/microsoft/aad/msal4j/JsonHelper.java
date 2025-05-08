@@ -14,12 +14,16 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 class JsonHelper {
+    private static final Logger LOG = LoggerFactory.getLogger(JsonHelper.class);
+
     static ObjectMapper mapper;
 
     static {
@@ -36,6 +40,7 @@ class JsonHelper {
         try {
             return mapper.readValue(json, tClass);
         } catch (Exception e) {
+            LOG.error(String.format("Error converting JSON string into %s: %s", tClass, e.getMessage()));
             throw new MsalJsonParsingException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
         }
     }
@@ -48,6 +53,7 @@ class JsonHelper {
         try {
             return new String(Base64.getUrlDecoder().decode(token.split("\\.")[1]), StandardCharsets.UTF_8);
         } catch (ArrayIndexOutOfBoundsException e) {
+            LOG.error("Error parsing ID token, missing payload section.");
             throw new MsalClientException("Error parsing ID token, missing payload section.",
                     AuthenticationErrorCode.INVALID_JWT);
         }
@@ -63,18 +69,9 @@ class JsonHelper {
             jsonReader.nextToken();
             return parseJsonObject(jsonReader);
         } catch (IOException e) {
+            LOG.error("JSON parsing error when attempting to convert JSON into a Map.");
             throw new MsalJsonParsingException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
         }
-    }
-
-    private static List<Object> parseJsonArray(JsonReader jsonReader) throws IOException {
-        List<Object> array = new ArrayList<>();
-
-        while (jsonReader.nextToken() != JsonToken.END_ARRAY) {
-            array.add(parseValue(jsonReader));
-        }
-
-        return array;
     }
 
     private static Map<String, Object> parseJsonObject(JsonReader jsonReader) throws IOException {
@@ -130,7 +127,7 @@ class JsonHelper {
             case NULL:
                 return null;
             case START_ARRAY:
-                return parseJsonArray(jsonReader);
+                return jsonReader.readArray(JsonReader::readUntyped);
             case START_OBJECT:
                 return parseJsonObject(jsonReader);
             default:
