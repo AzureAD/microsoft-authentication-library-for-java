@@ -687,6 +687,46 @@ class ManagedIdentityTests {
 
     @ParameterizedTest
     @MethodSource("com.microsoft.aad.msal4j.ManagedIdentityTestDataProvider#createDataError")
+    void managedIdentityTest_WithCapabilitiesOnly(ManagedIdentitySourceType source, String endpoint) throws Exception {
+        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
+        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+        if (source == SERVICE_FABRIC) {
+            ServiceFabricManagedIdentitySource.setHttpClient(httpClientMock);
+        }
+
+        when(httpClientMock.send(expectedRequest(source, resource, false, true, null))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+
+        miApp = ManagedIdentityApplication
+                .builder(ManagedIdentityId.systemAssigned())
+                .httpClient(httpClientMock)
+                .clientCapabilities(singletonList("cp1"))
+                .build();
+
+        // Clear caching to avoid cross test pollution.
+        miApp.tokenCache().accessTokens.clear();
+
+        // First call, get the token from the identity provider.
+        IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
+                ManagedIdentityParameters.builder(resource)
+                        .build()).get();
+
+        assertNotNull(result.accessToken());
+        assertEquals(TokenSource.IDENTITY_PROVIDER, result.metadata().tokenSource());
+
+        // Second call, get the token from the cache without passing the claims.
+        result = miApp.acquireTokenForManagedIdentity(
+                ManagedIdentityParameters.builder(resource)
+                        .build()).get();
+
+        assertNotNull(result.accessToken());
+        assertEquals(TokenSource.CACHE, result.metadata().tokenSource());
+
+        verify(httpClientMock, times(2)).send(any());
+    }
+
+    @ParameterizedTest
+    @MethodSource("com.microsoft.aad.msal4j.ManagedIdentityTestDataProvider#createDataError")
     void managedIdentity_ClaimsAndCapabilities(ManagedIdentitySourceType source, String endpoint) throws Exception {
         IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
         ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
