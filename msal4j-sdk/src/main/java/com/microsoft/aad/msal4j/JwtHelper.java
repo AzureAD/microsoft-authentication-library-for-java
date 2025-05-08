@@ -53,8 +53,8 @@ final class JwtHelper {
             payload.put("sub", clientId);
 
             // Concatenate header and payload
-            String jsonHeader = JsonHelper.mapper.writeValueAsString(header);
-            String jsonPayload = JsonHelper.mapper.writeValueAsString(payload);
+            String jsonHeader = JsonHelper.writeJsonMap(header);
+            String jsonPayload = JsonHelper.writeJsonMap(payload);
 
             String encodedHeader = base64UrlEncode(jsonHeader.getBytes(StandardCharsets.UTF_8));
             String encodedPayload = base64UrlEncode(jsonPayload.getBytes(StandardCharsets.UTF_8));

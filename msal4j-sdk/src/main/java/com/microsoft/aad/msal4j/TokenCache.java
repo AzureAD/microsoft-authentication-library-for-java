@@ -3,11 +3,11 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.azure.json.*;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -23,7 +23,7 @@ public class TokenCache implements ITokenCache {
 
     protected static final int MIN_ACCESS_TOKEN_EXPIRE_IN_SEC = 5 * 60;
 
-    transient private ReadWriteLock lock = new ReentrantReadWriteLock();
+    private ReadWriteLock lock = new ReentrantReadWriteLock();
 
     /**
      * Constructor for token cache
@@ -41,24 +41,15 @@ public class TokenCache implements ITokenCache {
     public TokenCache() {
     }
 
-    @JsonProperty("AccessToken")
     Map<String, AccessTokenCacheEntity> accessTokens = new LinkedHashMap<>();
-
-    @JsonProperty("RefreshToken")
     Map<String, RefreshTokenCacheEntity> refreshTokens = new LinkedHashMap<>();
-
-    @JsonProperty("IdToken")
     Map<String, IdTokenCacheEntity> idTokens = new LinkedHashMap<>();
-
-    @JsonProperty("Account")
     Map<String, AccountCacheEntity> accounts = new LinkedHashMap<>();
-
-    @JsonProperty("AppMetadata")
     Map<String, AppMetadataCacheEntity> appMetadata = new LinkedHashMap<>();
 
-    transient ITokenCacheAccessAspect tokenCacheAccessAspect;
+    ITokenCacheAccessAspect tokenCacheAccessAspect;
 
-    private transient String serializedCachedSnapshot;
+    private String serializedCachedSnapshot;
 
     @Override
     public void deserialize(String data) {
@@ -67,70 +58,64 @@ public class TokenCache implements ITokenCache {
         }
         serializedCachedSnapshot = data;
 
-        TokenCache deserializedCache = JsonHelper.convertJsonToObject(data, TokenCache.class);
+        try {
+            JsonReader jsonReader = JsonProviders.createReader(data);
+            deserializeFromJson(jsonReader);
+        } catch (IOException e) {
+            throw new MsalClientException(e);
+        }
+    }
 
+    private void deserializeFromJson(JsonReader jsonReader) throws IOException {
         lock.writeLock().lock();
         try {
-            this.accounts = deserializedCache.accounts;
-            this.accessTokens = deserializedCache.accessTokens;
-            this.refreshTokens = deserializedCache.refreshTokens;
-            this.idTokens = deserializedCache.idTokens;
-            this.appMetadata = deserializedCache.appMetadata;
+            jsonReader.readObject(reader -> {
+                while (reader.nextToken() != JsonToken.END_OBJECT) {
+                    String fieldName = reader.getFieldName();
+                    reader.nextToken();
+
+                    switch (fieldName) {
+                        case "AccessToken":
+                            deserializeCollection(reader, accessTokens, AccessTokenCacheEntity::fromJson);
+                            break;
+                        case "RefreshToken":
+                            deserializeCollection(reader, refreshTokens, RefreshTokenCacheEntity::fromJson);
+                            break;
+                        case "IdToken":
+                            deserializeCollection(reader, idTokens, IdTokenCacheEntity::fromJson);
+                            break;
+                        case "Account":
+                            deserializeCollection(reader, accounts, AccountCacheEntity::fromJson);
+                            break;
+                        case "AppMetadata":
+                            deserializeCollection(reader, appMetadata, AppMetadataCacheEntity::fromJson);
+                            break;
+                        default:
+                            reader.skipChildren();
+                            break;
+                    }
+                }
+                return null;
+            });
         } finally {
             lock.writeLock().unlock();
         }
     }
 
-    private static void mergeJsonObjects(JsonNode old, JsonNode update) {
-        mergeRemovals(old, update);
-        mergeUpdates(old, update);
-    }
+    private <T> void deserializeCollection(
+            JsonReader reader,
+            Map<String, T> targetCollection,
+            ReadValueCallback<JsonReader, T> deserializer) throws IOException {
 
-    private static void mergeUpdates(JsonNode old, JsonNode update) {
-        Iterator<String> fieldNames = update.fieldNames();
-        while (fieldNames.hasNext()) {
-            String uKey = fieldNames.next();
-            JsonNode uValue = update.get(uKey);
-
-            // add new property
-            if (!old.has(uKey)) {
-                if (!uValue.isNull() &&
-                        !(uValue.isObject() && uValue.size() == 0)) {
-                    ((ObjectNode) old).set(uKey, uValue);
-                }
+        reader.readObject(entityReader -> {
+            while (entityReader.nextToken() != JsonToken.END_OBJECT) {
+                String key = entityReader.getFieldName();
+                entityReader.nextToken();
+                T entity = deserializer.read(entityReader);
+                targetCollection.put(key, entity);
             }
-            // merge old and new property
-            else {
-                JsonNode oValue = old.get(uKey);
-                if (uValue.isObject()) {
-                    mergeUpdates(oValue, uValue);
-                } else {
-                    ((ObjectNode) old).set(uKey, uValue);
-                }
-            }
-        }
-    }
-
-    private static void mergeRemovals(JsonNode old, JsonNode update) {
-        Set<String> msalEntities =
-                new HashSet<>(Arrays.asList("Account", "AccessToken", "RefreshToken", "IdToken", "AppMetadata"));
-
-        for (String msalEntity : msalEntities) {
-            JsonNode oldEntries = old.get(msalEntity);
-            JsonNode newEntries = update.get(msalEntity);
-            if (oldEntries != null) {
-                Iterator<Map.Entry<String, JsonNode>> iterator = oldEntries.fields();
-
-                while (iterator.hasNext()) {
-                    Map.Entry<String, JsonNode> oEntry = iterator.next();
-
-                    String key = oEntry.getKey();
-                    if (newEntries == null || !newEntries.has(key)) {
-                        iterator.remove();
-                    }
-                }
-            }
-        }
+            return null;
+        });
     }
 
     @Override
@@ -138,19 +123,87 @@ public class TokenCache implements ITokenCache {
         lock.readLock().lock();
         try {
             if (!StringHelper.isBlank(serializedCachedSnapshot)) {
-                JsonNode cache = JsonHelper.mapper.readTree(serializedCachedSnapshot);
-                JsonNode update = JsonHelper.mapper.valueToTree(this);
-
-                mergeJsonObjects(cache, update);
-
-                return JsonHelper.mapper.writeValueAsString(cache);
+                String updatedCache = mergeWithExistingCache();
+                if (updatedCache != null) {
+                    return updatedCache;
+                }
             }
-            return JsonHelper.mapper.writeValueAsString(this);
-        } catch (IOException e) {
-            throw new MsalClientException(e);
+            return serializeToJson();
         } finally {
             lock.readLock().unlock();
         }
+    }
+
+    private String serializeToJson() {
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+             JsonWriter jsonWriter = JsonProviders.createWriter(outputStream)) {
+
+            jsonWriter.writeStartObject();
+
+            // Write all collections
+            writeCollection(jsonWriter, "AccessToken", accessTokens);
+            writeCollection(jsonWriter, "RefreshToken", refreshTokens);
+            writeCollection(jsonWriter, "IdToken", idTokens);
+            writeCollection(jsonWriter, "Account", accounts);
+            writeCollection(jsonWriter, "AppMetadata", appMetadata);
+
+            jsonWriter.writeEndObject();
+            jsonWriter.flush();
+
+            return outputStream.toString(StandardCharsets.UTF_8.name());
+        } catch (IOException e) {
+            throw new MsalClientException(e);
+        }
+    }
+
+    private <T> void writeCollection(
+            JsonWriter jsonWriter,
+            String collectionName,
+            Map<String, T> collection) throws IOException {
+
+        jsonWriter.writeFieldName(collectionName);
+
+        jsonWriter.writeStartObject();
+
+        for (Map.Entry<String, T> entry : collection.entrySet()) {
+            jsonWriter.writeFieldName(entry.getKey());
+            if (entry.getValue() instanceof JsonSerializable) {
+                ((JsonSerializable<?>) entry.getValue()).toJson(jsonWriter);
+            }
+        }
+
+        jsonWriter.writeEndObject();
+    }
+
+    private String mergeWithExistingCache() {
+        try {
+            // Parse existing cache snapshot
+            TokenCache updatedCache = new TokenCache();
+            updatedCache.deserialize(serializedCachedSnapshot);
+
+            // Merge current in-memory cache with the snapshot
+            mergeCache(updatedCache);
+
+            // Serialize merged cache
+            return updatedCache.serializeToJson();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void mergeCache(TokenCache targetCache) {
+        targetCache.accessTokens.putAll(accessTokens);
+        targetCache.refreshTokens.putAll(refreshTokens);
+        targetCache.idTokens.putAll(idTokens);
+        targetCache.accounts.putAll(accounts);
+        targetCache.appMetadata.putAll(appMetadata);
+
+        // Handle removals by removing keys that are not in the current cache
+        targetCache.accessTokens.keySet().retainAll(accessTokens.keySet());
+        targetCache.refreshTokens.keySet().retainAll(refreshTokens.keySet());
+        targetCache.idTokens.keySet().retainAll(idTokens.keySet());
+        targetCache.accounts.keySet().retainAll(accounts.keySet());
+        targetCache.appMetadata.keySet().retainAll(appMetadata.keySet());
     }
 
     private class CacheAspect implements AutoCloseable {

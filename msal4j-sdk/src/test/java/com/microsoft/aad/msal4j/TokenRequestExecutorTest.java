@@ -273,16 +273,8 @@ class TokenRequestExecutorTest {
 
         doReturn(msalOAuthHttpRequest).when(request).createOauthHttpRequest();
         doReturn(httpResponse).when(msalOAuthHttpRequest).send();
-        lenient().doReturn(402).when(httpResponse).statusCode();
-        doReturn(new HashMap<>()).when(httpResponse).headers();
         doReturn(TestConfiguration.HTTP_ERROR_RESPONSE).when(httpResponse).body();
 
-        final ErrorResponse errorResponse = mock(ErrorResponse.class);
-
-        lenient().doReturn("invalid_request").when(errorResponse).error();
-        lenient().doReturn(null).when(httpResponse).getHeader("User-Agent");
-        lenient().doReturn(null).when(httpResponse).getHeader("x-ms-request-id");
-        lenient().doReturn(null).when(httpResponse).getHeader("x-ms-clitelem");
         doReturn(402).when(httpResponse).statusCode();
 
         assertThrows(MsalException.class, request::executeTokenRequest);

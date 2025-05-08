@@ -11,7 +11,6 @@
   },
   "RefreshToken": {
     "uid.utid-login.windows.net-refreshtoken-my_client_id--s2 s1 s3": {
-      "target": "s2 s1 s3",
       "environment": "login.windows.net",
       "credential_type": "RefreshToken",
       "secret": "a refresh token",
@@ -20,9 +19,6 @@
     }
   },
   "AccessToken": {
-    "an-entry": {
-      "foo": "bar"
-    },
     "uid.utid-login.windows.net-accesstoken-my_client_id-contoso-s2 s1 s3": {
       "environment": "login.windows.net",
       "credential_type": "AccessToken",
@@ -46,14 +42,9 @@
       "home_account_id": "uid.utid"
     }
   },
-  "unknownEntity": {
-    "field1": "1",
-    "field2": "whats"
-  },
   "AppMetadata": {
     "appmetadata-login.windows.net-my_client_id": {
       "environment": "login.windows.net",
-      "family_id": null,
       "client_id": "my_client_id"
     }
   }

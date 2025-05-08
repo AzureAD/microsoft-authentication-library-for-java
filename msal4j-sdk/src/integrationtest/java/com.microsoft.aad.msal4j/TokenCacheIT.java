@@ -163,7 +163,7 @@ class TokenCacheIT {
         // RemoveAccount should remove both cache entities
         pca2.removeAccount(account).join();
 
-        assertEquals(pca.getAccounts().join().size(), 0);
+        assertEquals(0, pca2.getAccounts().join().size());
 
         //clean up file
         TestHelper.deleteFileContent(
