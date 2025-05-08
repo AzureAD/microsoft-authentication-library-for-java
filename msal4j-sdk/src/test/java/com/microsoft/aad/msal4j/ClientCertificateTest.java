@@ -3,7 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.auth.PrivateKeyJWT;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 

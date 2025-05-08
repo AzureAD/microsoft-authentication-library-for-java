@@ -6,10 +6,8 @@ package com.microsoft.aad.msal4j;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.nimbusds.jwt.JWTParser;
 
 import java.io.IOException;
-import java.text.ParseException;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -331,7 +329,7 @@ public class TokenCache implements ITokenCache {
 
                     ITenantProfile profile = null;
                     if (idToken != null) {
-                        Map<String, ?> idTokenClaims = JWTParser.parse(idToken.secret()).getJWTClaimsSet().getClaims();
+                        Map<String, ?> idTokenClaims = JsonHelper.parseJsonToMap(JsonHelper.getTokenPayloadClaims(idToken.secret));
                         profile = new TenantProfile(idTokenClaims, accCached.environment());
                     }
 
@@ -352,8 +350,6 @@ public class TokenCache implements ITokenCache {
                 }
 
                 return new HashSet<>(rootAccounts.values());
-            } catch (ParseException e) {
-                throw new MsalClientException("Cached JWT could not be parsed: " + e.getMessage(), AuthenticationErrorCode.INVALID_JWT);
             } finally {
                 lock.readLock().unlock();
             }

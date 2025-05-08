@@ -23,6 +23,7 @@ class HttpHelper implements IHttpHelper {
 
     public static final int HTTP_STATUS_200 = 200;
     public static final int HTTP_STATUS_400 = 400;
+    public static final int HTTP_STATUS_401 = 401;
     public static final int HTTP_STATUS_429 = 429;
     public static final int HTTP_STATUS_500 = 500;
 

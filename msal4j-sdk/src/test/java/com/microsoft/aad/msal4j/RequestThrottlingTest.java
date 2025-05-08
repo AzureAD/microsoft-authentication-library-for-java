@@ -3,7 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -97,7 +96,7 @@ class RequestThrottlingTest {
 
         switch (responseType) {
             case RETRY_AFTER_HEADER:
-                httpResponse.statusCode(HTTPResponse.SC_OK);
+                httpResponse.statusCode(HttpHelper.HTTP_STATUS_200);
                 httpResponse.body(TestConfiguration.TOKEN_ENDPOINT_OK_RESPONSE_ID_AND_ACCESS);
 
                 headers.put("Retry-After", Arrays.asList(THROTTLE_IN_SEC.toString()));
