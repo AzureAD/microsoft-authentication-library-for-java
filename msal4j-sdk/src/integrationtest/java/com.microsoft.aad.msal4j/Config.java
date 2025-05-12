@@ -5,11 +5,7 @@ package com.microsoft.aad.msal4j;
 
 import labapi.AppCredentialProvider;
 import labapi.AzureEnvironment;
-import lombok.Getter;
-import lombok.experimental.Accessors;
 
-@Accessors(fluent = true)
-@Getter()
 public class Config {
     private String organizationsAuthority;
     private String tenantSpecificAuthority;
@@ -43,5 +39,25 @@ public class Config {
             default:
                 throw new UnsupportedOperationException("Azure Environment - " + azureEnvironment + " unsupported");
         }
+    }
+
+    public String organizationsAuthority() {
+        return this.organizationsAuthority;
+    }
+
+    public String tenantSpecificAuthority() {
+        return this.tenantSpecificAuthority;
+    }
+
+    public String commonAuthority() {
+        return this.commonAuthority;
+    }
+
+    public String graphDefaultScope() {
+        return this.graphDefaultScope;
+    }
+
+    public String tenant() {
+        return this.tenant;
     }
 }

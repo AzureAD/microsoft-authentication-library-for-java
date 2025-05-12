@@ -3,26 +3,74 @@
 
 package labapi;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
+import com.azure.json.JsonReader;
+import com.azure.json.JsonSerializable;
+import com.azure.json.JsonToken;
+import com.azure.json.JsonWriter;
 
-@Getter
-public class Lab {
-    @JsonProperty("labName")
-    String labName;
+import java.io.IOException;
 
-    @JsonProperty("domain")
-    String domain;
+public class Lab implements JsonSerializable<Lab> {
+    private String labName;
+    private String domain;
+    private String tenantId;
+    private String federationProvider;
+    private String azureEnvironment;
+    private String authority;
 
-    @JsonProperty("tenantId")
-    String tenantId;
+    static Lab fromJson(JsonReader jsonReader) throws IOException {
+        Lab lab = new Lab();
 
-    @JsonProperty("federationProvider")
-    String federationProvider;
+        return jsonReader.readObject(reader -> {
+            while (reader.nextToken() != JsonToken.END_OBJECT) {
+                String fieldName = reader.getFieldName();
+                reader.nextToken();
 
-    @JsonProperty("azureEnvironment")
-    String azureEnvironment;
+                switch (fieldName) {
+                    case "labName":
+                        lab.labName = reader.getString();
+                        break;
+                    case "domain":
+                        lab.domain = reader.getString();
+                        break;
+                    case "tenantId":
+                        lab.tenantId = reader.getString();
+                        break;
+                    case "federationProvider":
+                        lab.federationProvider = reader.getString();
+                        break;
+                    case "azureEnvironment":
+                        lab.azureEnvironment = reader.getString();
+                        break;
+                    case "authority":
+                        lab.authority = reader.getString();
+                        break;
+                    default:
+                        reader.skipChildren();
+                        break;
+                }
+            }
+            return lab;
+        });
+    }
 
-    @JsonProperty("authority")
-    String authority;
+    @Override
+    public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
+        jsonWriter.writeStartObject();
+
+        jsonWriter.writeStringField("labName", labName);
+        jsonWriter.writeStringField("domain", domain);
+        jsonWriter.writeStringField("tenantId", tenantId);
+        jsonWriter.writeStringField("federationProvider", federationProvider);
+        jsonWriter.writeStringField("azureEnvironment", azureEnvironment);
+        jsonWriter.writeStringField("authority", authority);
+
+        jsonWriter.writeEndObject();
+
+        return jsonWriter;
+    }
+
+    public String getTenantId() {
+        return this.tenantId;
+    }
 }

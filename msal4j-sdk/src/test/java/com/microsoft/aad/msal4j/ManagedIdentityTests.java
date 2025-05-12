@@ -3,8 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.util.URLUtils;
-import labapi.App;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -12,7 +10,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.SocketException;
@@ -78,69 +75,69 @@ class ManagedIdentityTests {
             ManagedIdentityId id) {
         String endpoint = null;
         Map<String, String> headers = new HashMap<>();
-        Map<String, List<String>> queryParameters = new HashMap<>();
+        Map<String, String> queryParameters = new HashMap<>();
 
         switch (source) {
             case APP_SERVICE:
                 endpoint = appServiceEndpoint;
-                queryParameters.put("api-version", Collections.singletonList("2019-08-01"));
-                queryParameters.put("resource", Collections.singletonList(resource));
+                queryParameters.put("api-version", "2019-08-01");
+                queryParameters.put("resource", resource);
                 headers.put("X-IDENTITY-HEADER", "secret");
                 break;
             case CLOUD_SHELL:
                 endpoint = cloudShellEndpoint;
                 headers.put("ContentType", "application/x-www-form-urlencoded");
                 headers.put("Metadata", "true");
-                queryParameters.put("resource", Collections.singletonList(resource));
+                queryParameters.put("resource", resource);
                 break;
             case IMDS:
                 endpoint = IMDS_ENDPOINT;
-                queryParameters.put("api-version", Collections.singletonList("2018-02-01"));
-                queryParameters.put("resource", Collections.singletonList(resource));
+                queryParameters.put("api-version", "2018-02-01");
+                queryParameters.put("resource", resource);
                 headers.put("Metadata", "true");
                 break;
             case AZURE_ARC:
                 endpoint = azureArcEndpoint;
-                queryParameters.put("api-version", Collections.singletonList("2019-11-01"));
-                queryParameters.put("resource", Collections.singletonList(resource));
+                queryParameters.put("api-version", "2019-11-01");
+                queryParameters.put("resource", resource);
                 headers.put("Metadata", "true");
                 break;
             case SERVICE_FABRIC:
                 endpoint = serviceFabricEndpoint;
-                queryParameters.put("api-version", Collections.singletonList("2019-07-01-preview"));
-                queryParameters.put("resource", Collections.singletonList(resource));
+                queryParameters.put("api-version", "2019-07-01-preview");
+                queryParameters.put("resource", resource);
                 headers.put("secret", "secret");
                 break;
             case NONE:
             case DEFAULT_TO_IMDS:
                 endpoint = IMDS_ENDPOINT;
-                queryParameters.put("api-version", Collections.singletonList("2018-02-01"));
-                queryParameters.put("resource", Collections.singletonList(resource));
+                queryParameters.put("api-version", "2018-02-01");
+                queryParameters.put("resource", resource);
                 headers.put("Metadata", "true");
                 break;
         }
 
         switch (id.getIdType()) {
             case CLIENT_ID:
-                queryParameters.put("client_id", Collections.singletonList(id.getUserAssignedId()));
+                queryParameters.put("client_id", id.getUserAssignedId());
                 break;
             case RESOURCE_ID:
-                queryParameters.put("mi_res_id", Collections.singletonList(id.getUserAssignedId()));
+                queryParameters.put("mi_res_id", id.getUserAssignedId());
                 break;
             case OBJECT_ID:
-                queryParameters.put("object_id", singletonList(id.getUserAssignedId()));
+                queryParameters.put("object_id", id.getUserAssignedId());
                 break;
         }
 
         return new HttpRequest(HttpMethod.GET, computeUri(endpoint, queryParameters), headers);
     }
 
-    private String computeUri(String endpoint, Map<String, List<String>> queryParameters) {
+    private String computeUri(String endpoint, Map<String, String> queryParameters) {
         if (queryParameters.isEmpty()) {
             return endpoint;
         }
 
-        String queryString = URLUtils.serializeParameters(queryParameters);
+        String queryString = StringHelper.serializeQueryParameters(queryParameters);
 
         return endpoint + "?" + queryString;
     }
@@ -399,6 +396,8 @@ class ManagedIdentityTests {
             assert(exception.getCause() instanceof MsalServiceException);
 
             MsalServiceException miException = (MsalServiceException) exception.getCause();
+            System.out.println(miException.getMessage());
+            System.out.println(miException.errorCode());
             assertEquals(source.name(), miException.managedIdentitySource());
             assertEquals(AuthenticationErrorCode.MANAGED_IDENTITY_REQUEST_FAILED, miException.errorCode());
             return;
@@ -491,7 +490,7 @@ class ManagedIdentityTests {
 
             MsalServiceException miException = (MsalServiceException) exception.getCause();
             assertEquals(source.name(), miException.managedIdentitySource());
-            assertEquals(MsalError.MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE, miException.errorCode());
+            assertEquals(MANAGED_IDENTITY_REQUEST_FAILED, miException.errorCode());
             return;
         }
 
@@ -639,8 +638,6 @@ class ManagedIdentityTests {
         // Clear caching to avoid cross test pollution.
         miApp.tokenCache().accessTokens.clear();
 
-        String claimsJson = "{\"default\":\"claim\"}";
-
         // First call, get the token from the identity provider.
         IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
             ManagedIdentityParameters.builder(resource)
@@ -660,7 +657,7 @@ class ManagedIdentityTests {
         // Third call, when claims are passed bypass the cache.
         result = miApp.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(resource)
-                        .claims(claimsJson)
+                        .claims(TestConfiguration.CLAIMS_REQUEST)
                         .build()).get();
 
         assertNotNull(result.accessToken());
@@ -690,7 +687,6 @@ class ManagedIdentityTests {
         // Clear caching to avoid cross test pollution.
         miApp.tokenCache().accessTokens.clear();
 
-        String claimsJson = "{\"default\":\"claim\"}";
         // First call, get the token from the identity provider.
         IAuthenticationResult result = miApp.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(resource)
@@ -710,7 +706,7 @@ class ManagedIdentityTests {
         // Third call, when claims are passed bypass the cache.
         result = miApp.acquireTokenForManagedIdentity(
                 ManagedIdentityParameters.builder(resource)
-                        .claims(claimsJson)
+                        .claims(TestConfiguration.CLAIMS_REQUEST)
                         .build()).get();
 
         assertNotNull(result.accessToken());

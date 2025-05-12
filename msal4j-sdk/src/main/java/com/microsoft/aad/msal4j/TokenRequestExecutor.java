@@ -3,18 +3,11 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.oauth2.sdk.SerializeException;
-import com.nimbusds.oauth2.sdk.http.HTTPRequest;
-import com.nimbusds.oauth2.sdk.http.HTTPResponse;
-import com.nimbusds.oauth2.sdk.util.URLUtils;
-import com.nimbusds.openid.connect.sdk.token.OIDCTokens;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 class TokenRequestExecutor {
@@ -34,40 +27,40 @@ class TokenRequestExecutor {
                 msalRequest.requestContext().apiParameters().tenant() ;
     }
 
-    AuthenticationResult executeTokenRequest() throws ParseException, IOException {
+    AuthenticationResult executeTokenRequest() throws IOException {
 
         log.debug("Sending token request to: {}", requestAuthority.canonicalAuthorityUrl());
         OAuthHttpRequest oAuthHttpRequest = createOauthHttpRequest();
-        HTTPResponse oauthHttpResponse = oAuthHttpRequest.send();
+        HttpResponse oauthHttpResponse = oAuthHttpRequest.send();
         return createAuthenticationResultFromOauthHttpResponse(oauthHttpResponse);
     }
 
-    OAuthHttpRequest createOauthHttpRequest() throws SerializeException, MalformedURLException, ParseException {
+    OAuthHttpRequest createOauthHttpRequest() throws MalformedURLException {
 
         if (requestAuthority.tokenEndpointUrl() == null) {
-            throw new SerializeException("The endpoint URI is not specified");
+            throw new MsalClientException("The endpoint URI is not specified",
+                    AuthenticationErrorCode.INVALID_ENDPOINT_URI);
         }
 
         final OAuthHttpRequest oauthHttpRequest = new OAuthHttpRequest(
-                HTTPRequest.Method.POST,
+                HttpMethod.POST,
                 requestAuthority.tokenEndpointUrl(),
                 msalRequest.headers().getReadonlyHeaderMap(),
                 msalRequest.requestContext(),
                 this.serviceBundle);
-        oauthHttpRequest.setContentType(HTTPContentType.ApplicationURLEncoded.contentType);
 
-        final Map<String, List<String>> params = new HashMap<>(msalRequest.msalAuthorizationGrant().toParameters());
+        final Map<String, String> params = new HashMap<>(msalRequest.msalAuthorizationGrant().toParameters());
         if (msalRequest.application() instanceof AbstractClientApplicationBase
                 && ((AbstractClientApplicationBase) msalRequest.application()).clientCapabilities() != null) {
-            params.put("claims", Collections.singletonList(((AbstractClientApplicationBase) msalRequest.application()).clientCapabilities()));
+            params.put("claims", ((AbstractClientApplicationBase) msalRequest.application()).clientCapabilities());
         }
 
         if (msalRequest.msalAuthorizationGrant.getClaims() != null) {
             String claimsRequest = msalRequest.msalAuthorizationGrant.getClaims().formatAsJSONString();
             if (params.get("claims") != null) {
-                claimsRequest = JsonHelper.mergeJSONString(params.get("claims").get(0), claimsRequest);
+                claimsRequest = JsonHelper.mergeJSONString(params.get("claims"), claimsRequest);
             }
-            params.put("claims", Collections.singletonList(claimsRequest));
+            params.put("claims", claimsRequest);
         }
 
         if(msalRequest.requestContext().apiParameters().extraQueryParameters() != null ){
@@ -75,57 +68,57 @@ class TokenRequestExecutor {
                     if(params.containsKey(key)){
                        log.warn("A query parameter {} has been provided with values multiple times.", key);
                     }
-                    params.put(key, Collections.singletonList(msalRequest.requestContext().apiParameters().extraQueryParameters().get(key)));
+                    params.put(key, msalRequest.requestContext().apiParameters().extraQueryParameters().get(key));
             }
         }
 
-        oauthHttpRequest.setQuery(URLUtils.serializeParameters(params));
-      
-        if (msalRequest.application() instanceof AbstractClientApplicationBase
-                && ((AbstractClientApplicationBase) msalRequest.application()).clientAuthentication() != null) {
+        oauthHttpRequest.setQuery(StringHelper.serializeQueryParameters(params));
 
-            Map<String, List<String>> queryParameters = oauthHttpRequest.getQueryParameters();
-            String clientID = msalRequest.application().clientId();
-            queryParameters.put("client_id", Arrays.asList(clientID));
-            oauthHttpRequest.setQuery(URLUtils.serializeParameters(queryParameters));
-
-            // If the client application has a client assertion to apply to the request, check if a new client assertion
-            //  was supplied as a request parameter. If so, use the request's assertion instead of the application's
-            if (msalRequest instanceof ClientCredentialRequest && ((ClientCredentialRequest) msalRequest).parameters.clientCredential() != null) {
-                ((ConfidentialClientApplication) msalRequest.application())
-                        .createClientAuthFromClientAssertion((ClientAssertion) ((ClientCredentialRequest) msalRequest).parameters.clientCredential())
-                        .applyTo(oauthHttpRequest);
-            } else {
-                ((AbstractClientApplicationBase) msalRequest.application()).clientAuthentication().applyTo(oauthHttpRequest);
-            }
+        //Certain query parameters are required by Public and Confidential client applications, but not Managed Identity
+        if (msalRequest.application() instanceof AbstractClientApplicationBase) {
+            addQueryParameters(oauthHttpRequest);
         }
         return oauthHttpRequest;
     }
 
-    private AuthenticationResult createAuthenticationResultFromOauthHttpResponse(
-            HTTPResponse oauthHttpResponse) throws ParseException {
+    private void addQueryParameters(OAuthHttpRequest oauthHttpRequest) {
+        Map<String, String> queryParameters = StringHelper.parseQueryParameters(oauthHttpRequest.query);
+        String clientID = msalRequest.application().clientId();
+        queryParameters.put("client_id", clientID);
+
+        // If the client application has a client assertion to apply to the request, check if a new client assertion
+        //  was supplied as a request parameter. If so, use the request's assertion instead of the application's
+        if (msalRequest.application() instanceof ConfidentialClientApplication) {
+            if (msalRequest instanceof ClientCredentialRequest && ((ClientCredentialRequest) msalRequest).parameters.clientCredential() != null) {
+                IClientCredential credential = ((ClientCredentialRequest) msalRequest).parameters.clientCredential();
+                addJWTBearerAssertionParams(queryParameters, ((ConfidentialClientApplication) msalRequest.application()).getAssertionString(credential));
+            } else {
+                if (((ConfidentialClientApplication) msalRequest.application()).assertion != null) {
+                    addJWTBearerAssertionParams(queryParameters, ((ConfidentialClientApplication) msalRequest.application()).assertion);
+                } else if (((ConfidentialClientApplication) msalRequest.application()).secret != null) {
+                    // Client secrets have a different parameter than bearer assertions
+                    queryParameters.put("client_secret", ((ConfidentialClientApplication) msalRequest.application()).secret);
+                }
+            }
+        }
+
+        oauthHttpRequest.setQuery(StringHelper.serializeQueryParameters(queryParameters));
+    }
+
+    private void addJWTBearerAssertionParams(Map<String, String> queryParameters, String assertion) {
+        queryParameters.put("client_assertion", assertion);
+        queryParameters.put("client_assertion_type", ClientAssertion.ASSERTION_TYPE_JWT_BEARER);
+    }
+
+    private AuthenticationResult createAuthenticationResultFromOauthHttpResponse(HttpResponse oauthHttpResponse) {
         AuthenticationResult result;
 
-        if (oauthHttpResponse.getStatusCode() == HTTPResponse.SC_OK) {
+        if (oauthHttpResponse.statusCode() == HttpHelper.HTTP_STATUS_200) {
             final TokenResponse response = TokenResponse.parseHttpResponse(oauthHttpResponse);
 
-            OIDCTokens tokens = response.getOIDCTokens();
-            String refreshToken = null;
-            if (tokens.getRefreshToken() != null) {
-                refreshToken = tokens.getRefreshToken().getValue();
-            }
-
             AccountCacheEntity accountCacheEntity = null;
-            if (!StringHelper.isNullOrBlank(tokens.getIDTokenString())) {
-                String idTokenJson;
-                try {
-                    idTokenJson = new String(Base64.getUrlDecoder().decode(tokens.getIDTokenString().split("\\.")[1]), StandardCharsets.UTF_8);
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    throw new MsalServiceException("Error parsing ID token, missing payload section. Ensure that the ID token is following the JWT format.",
-                            AuthenticationErrorCode.INVALID_JWT);
-                }
-
-                IdToken idToken = JsonHelper.convertJsonToObject(idTokenJson, IdToken.class);
+            if (!StringHelper.isNullOrBlank(response.idToken())) {
+                IdToken idToken = JsonHelper.createIdTokenFromEncodedTokenString(response.idToken());
 
                 AuthorityType type = msalRequest.application().authenticationAuthority.authorityType;
                 if (!StringHelper.isBlank(response.getClientInfo())) {
@@ -149,10 +142,10 @@ class TokenRequestExecutor {
             long currTimestampSec = new Date().getTime() / 1000;
 
             result = AuthenticationResult.builder().
-                    accessToken(tokens.getAccessToken().getValue()).
-                    refreshToken(refreshToken).
+                    accessToken(response.accessToken()).
+                    refreshToken(response.refreshToken()).
                     familyId(response.getFoci()).
-                    idToken(tokens.getIDTokenString()).
+                    idToken(response.idToken()).
                     environment(requestAuthority.host()).
                     expiresOn(currTimestampSec + response.getExpiresIn()).
                     extExpiresOn(response.getExtExpiresIn() > 0 ? currTimestampSec + response.getExtExpiresIn() : 0).
@@ -167,7 +160,7 @@ class TokenRequestExecutor {
 
         } else {
             // http codes indicating that STS did not log request
-            if (oauthHttpResponse.getStatusCode() == HttpHelper.HTTP_STATUS_429 || oauthHttpResponse.getStatusCode() >= HttpHelper.HTTP_STATUS_500) {
+            if (oauthHttpResponse.statusCode() == HttpHelper.HTTP_STATUS_429 || oauthHttpResponse.statusCode() >= HttpHelper.HTTP_STATUS_500) {
                 serviceBundle.getServerSideTelemetry().previousRequests.putAll(
                         serviceBundle.getServerSideTelemetry().previousRequestInProgress);
             }

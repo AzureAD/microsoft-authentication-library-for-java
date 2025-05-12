@@ -3,7 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.util.URLUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +35,7 @@ public class AuthorizationRequestUrlParameters {
 
     Map<String, String> extraQueryParameters;
 
-    Map<String, List<String>> requestParameters = new HashMap<>();
+    Map<String, String> requestParameters = new HashMap<>();
 
     Logger log = LoggerFactory.getLogger(AuthorizationRequestUrlParameters.class);
 
@@ -58,12 +57,10 @@ public class AuthorizationRequestUrlParameters {
     private AuthorizationRequestUrlParameters(Builder builder) {
         //required parameters
         this.redirectUri = builder.redirectUri;
-        requestParameters.put("redirect_uri", Collections.singletonList(this.redirectUri));
+        requestParameters.put("redirect_uri", this.redirectUri);
         this.scopes = builder.scopes;
 
-        String[] commonScopes = AbstractMsalAuthorizationGrant.COMMON_SCOPES_PARAM.split(" ");
-
-        Set<String> scopesParam = new LinkedHashSet<>(Arrays.asList(commonScopes));
+        Set<String> scopesParam = new LinkedHashSet<>(AbstractMsalAuthorizationGrant.COMMON_SCOPES);
 
         scopesParam.addAll(builder.scopes);
 
@@ -72,86 +69,86 @@ public class AuthorizationRequestUrlParameters {
         }
 
         this.scopes = scopesParam;
-        requestParameters.put("scope", Collections.singletonList(String.join(" ", scopesParam)));
-        requestParameters.put("response_type", Collections.singletonList("code"));
+        requestParameters.put("scope", String.join(" ", scopesParam));
+        requestParameters.put("response_type", "code");
 
         // Optional parameters
         if (builder.claims != null) {
             String claimsParam = String.join(" ", builder.claims);
-            requestParameters.put("claims", Collections.singletonList(claimsParam));
+            requestParameters.put("claims", claimsParam);
         }
 
         if (builder.claimsChallenge != null && builder.claimsChallenge.trim().length() > 0) {
             JsonHelper.validateJsonFormat(builder.claimsChallenge);
-            requestParameters.put("claims", Collections.singletonList(builder.claimsChallenge));
+            requestParameters.put("claims", builder.claimsChallenge);
         }
 
         if (builder.claimsRequest != null) {
             String claimsRequest = builder.claimsRequest.formatAsJSONString();
             //If there are other claims (such as part of a claims challenge), merge them with this claims request.
             if (requestParameters.get("claims") != null) {
-                claimsRequest = JsonHelper.mergeJSONString(claimsRequest, requestParameters.get("claims").get(0));
+                claimsRequest = JsonHelper.mergeJSONString(claimsRequest, requestParameters.get("claims"));
             }
-            requestParameters.put("claims", Collections.singletonList(claimsRequest));
+            requestParameters.put("claims", claimsRequest);
         }
 
         if (builder.codeChallenge != null) {
             this.codeChallenge = builder.codeChallenge;
-            requestParameters.put("code_challenge", Collections.singletonList(builder.codeChallenge));
+            requestParameters.put("code_challenge", builder.codeChallenge);
         }
 
         if (builder.codeChallengeMethod != null) {
             this.codeChallengeMethod = builder.codeChallengeMethod;
-            requestParameters.put("code_challenge_method", Collections.singletonList(builder.codeChallengeMethod));
+            requestParameters.put("code_challenge_method", builder.codeChallengeMethod);
         }
 
         if (builder.state != null) {
             this.state = builder.state;
-            requestParameters.put("state", Collections.singletonList(builder.state));
+            requestParameters.put("state", builder.state);
         }
 
         if (builder.nonce != null) {
             this.nonce = builder.nonce;
-            requestParameters.put("nonce", Collections.singletonList(builder.nonce));
+            requestParameters.put("nonce", builder.nonce);
         }
 
         if (builder.responseMode != null) {
             this.responseMode = builder.responseMode;
-            requestParameters.put("response_mode", Collections.singletonList(
-                    builder.responseMode.toString()));
+            requestParameters.put("response_mode",
+                    builder.responseMode.toString());
         } else {
             this.responseMode = ResponseMode.FORM_POST;
-            requestParameters.put("response_mode", Collections.singletonList(
-                    ResponseMode.FORM_POST.toString()));
+            requestParameters.put("response_mode",
+                    ResponseMode.FORM_POST.toString());
         }
 
         if (builder.loginHint != null) {
             this.loginHint = loginHint();
-            requestParameters.put("login_hint", Collections.singletonList(builder.loginHint));
+            requestParameters.put("login_hint", builder.loginHint);
 
             // For CCS routing
-            requestParameters.put(HttpHeaders.X_ANCHOR_MAILBOX, Collections.singletonList(
-                    String.format(HttpHeaders.X_ANCHOR_MAILBOX_UPN_FORMAT, builder.loginHint)));
+            requestParameters.put(HttpHeaders.X_ANCHOR_MAILBOX,
+                    String.format(HttpHeaders.X_ANCHOR_MAILBOX_UPN_FORMAT, builder.loginHint));
         }
 
         if (builder.domainHint != null) {
             this.domainHint = domainHint();
-            requestParameters.put("domain_hint", Collections.singletonList(builder.domainHint));
+            requestParameters.put("domain_hint", builder.domainHint);
         }
 
         if (builder.prompt != null) {
             this.prompt = builder.prompt;
-            requestParameters.put("prompt", Collections.singletonList(builder.prompt.toString()));
+            requestParameters.put("prompt", builder.prompt.toString());
         }
 
         if (builder.correlationId != null) {
             this.correlationId = builder.correlationId;
-            requestParameters.put("correlation_id", Collections.singletonList(builder.correlationId));
+            requestParameters.put("correlation_id", builder.correlationId);
         }
 
         if (builder.instanceAware) {
             this.instanceAware = builder.instanceAware;
-            requestParameters.put("instance_aware", Collections.singletonList(String.valueOf(instanceAware)));
+            requestParameters.put("instance_aware", String.valueOf(instanceAware));
         }
 
         if(null != builder.extraQueryParameters && !builder.extraQueryParameters.isEmpty()){
@@ -162,13 +159,13 @@ public class AuthorizationRequestUrlParameters {
                 if(requestParameters.containsKey(key)){
                     log.warn("A query parameter {} has been provided with values multiple times.", key);
                 }
-                requestParameters.put(key, Collections.singletonList(value));
+                requestParameters.put(key, value);
             }
         }
     }
 
     URL createAuthorizationURL(Authority authority,
-                               Map<String, List<String>> requestParameters) {
+                               Map<String, String> requestParameters) {
         URL authorizationRequestUrl;
         try {
             String authorizationCodeEndpoint;
@@ -180,7 +177,7 @@ public class AuthorizationRequestUrlParameters {
             }
 
             String uriString = authorizationCodeEndpoint + "?" +
-                    URLUtils.serializeParameters(requestParameters);
+                    StringHelper.serializeQueryParameters(requestParameters);
 
             authorizationRequestUrl = new URL(uriString);
         } catch (MalformedURLException ex) {
@@ -242,7 +239,7 @@ public class AuthorizationRequestUrlParameters {
     }
 
     public Map<String, List<String>> requestParameters() {
-        return this.requestParameters;
+        return StringHelper.convertToMultiValueMap(this.requestParameters);
     }
 
     public Logger log() {

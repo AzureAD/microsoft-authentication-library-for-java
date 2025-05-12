@@ -3,9 +3,13 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.azure.json.JsonReader;
+import com.azure.json.JsonSerializable;
+import com.azure.json.JsonToken;
+import com.azure.json.JsonWriter;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -13,23 +17,74 @@ import java.util.List;
  *
  * @see <a href="https://openid.net/specs/openid-connect-core-1_0-final.html#ClaimsParameter">https://openid.net/specs/openid-connect-core-1_0-final.html#ClaimsParameter</a>
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class RequestedClaimAdditionalInfo {
+public class RequestedClaimAdditionalInfo implements JsonSerializable<RequestedClaimAdditionalInfo> {
 
-    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
-    @JsonProperty("essential")
-    boolean essential;
-
-    @JsonProperty("value")
-    String value;
-
-    @JsonProperty("values")
-    List<String> values;
+    private boolean essential;
+    private String value;
+    private List<String> values;
 
     public RequestedClaimAdditionalInfo(boolean essential, String value, List<String> values) {
         this.essential = essential;
         this.value = value;
         this.values = values;
+    }
+
+    public RequestedClaimAdditionalInfo fromJson(JsonReader jsonReader) throws IOException {
+        if (jsonReader.currentToken() != JsonToken.START_OBJECT) {
+            jsonReader.nextToken();
+            if (jsonReader.currentToken() != JsonToken.START_OBJECT) {
+                throw new IllegalStateException("Expected start of object but was " + jsonReader.currentToken());
+            }
+        }
+
+        while (jsonReader.nextToken() != JsonToken.END_OBJECT) {
+            String fieldName = jsonReader.getFieldName();
+            jsonReader.nextToken();
+
+            switch (fieldName) {
+                case "essential":
+                    essential = jsonReader.getBoolean();
+                    break;
+                case "value":
+                    value = jsonReader.getString();
+                    break;
+                case "values":
+                    values = new ArrayList<>();
+                    while (jsonReader.nextToken() != JsonToken.END_ARRAY) {
+                        values.add(jsonReader.getString());
+                    }
+                    break;
+                default:
+                    jsonReader.skipChildren();
+                    break;
+            }
+        }
+
+        return this;
+    }
+
+    @Override
+    public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
+        jsonWriter.writeStartObject();
+
+        if (essential) {
+            jsonWriter.writeBooleanField("essential", essential);
+        }
+
+        if (value != null) {
+            jsonWriter.writeStringField("value", value);
+        }
+
+        if (values != null && !values.isEmpty()) {
+            jsonWriter.writeStartArray("values");
+            for (String val : values) {
+                jsonWriter.writeString(val);
+            }
+            jsonWriter.writeEndArray();
+        }
+
+        jsonWriter.writeEndObject();
+        return jsonWriter;
     }
 
     public boolean isEssential() {
