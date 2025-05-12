@@ -16,6 +16,7 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
     boolean forceRefresh;
     String claims;
     String revokedTokenHash;
+    
     private ManagedIdentityParameters(String resource, boolean forceRefresh, String claims) {
         this.resource = resource;
         this.forceRefresh = forceRefresh;
