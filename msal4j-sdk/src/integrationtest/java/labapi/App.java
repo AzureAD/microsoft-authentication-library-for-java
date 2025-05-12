@@ -3,30 +3,85 @@
 
 package labapi;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
+import com.azure.json.JsonReader;
+import com.azure.json.JsonSerializable;
+import com.azure.json.JsonToken;
+import com.azure.json.JsonWriter;
 
-@Getter
-public class App {
+import java.io.IOException;
 
-    @JsonProperty("appType")
-    String appType;
+public class App implements JsonSerializable<App> {
 
-    @JsonProperty("appName")
-    String appName;
+    private String appType;
+    private String appName;
+    private String appId;
+    private String redirectUri;
+    private String authority;
+    private String labName;
+    private String clientSecret;
 
-    @JsonProperty("appId")
-    String appId;
+    static App fromJson(JsonReader jsonReader) throws IOException {
+        App app = new App();
 
-    @JsonProperty("redirectUri")
-    String redirectUri;
+        return jsonReader.readObject(reader -> {
+            while (reader.nextToken() != JsonToken.END_OBJECT) {
+                String fieldName = reader.getFieldName();
+                reader.nextToken();
 
-    @JsonProperty("authority")
-    String authority;
+                switch (fieldName) {
+                    case "appType":
+                        app.appType = reader.getString();
+                        break;
+                    case "appName":
+                        app.appName = reader.getString();
+                        break;
+                    case "appId":
+                        app.appId = reader.getString();
+                        break;
+                    case "redirectUri":
+                        app.redirectUri = reader.getString();
+                        break;
+                    case "authority":
+                        app.authority = reader.getString();
+                        break;
+                    case "labName":
+                        app.labName = reader.getString();
+                        break;
+                    case "clientSecret":
+                        app.clientSecret = reader.getString();
+                        break;
+                    default:
+                        reader.skipChildren();
+                        break;
+                }
+            }
+            return app;
+        });
+    }
 
-    @JsonProperty("labName")
-    String labName;
+    @Override
+    public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
+        jsonWriter.writeStartObject();
 
-    @JsonProperty("clientSecret")
-    String clientSecret;
+        jsonWriter.writeStringField("appType", appType);
+        jsonWriter.writeStringField("appName", appName);
+        jsonWriter.writeStringField("appId", appId);
+        jsonWriter.writeStringField("redirectUri", redirectUri);
+        jsonWriter.writeStringField("authority", authority);
+        jsonWriter.writeStringField("labName", labName);
+        jsonWriter.writeStringField("clientSecret", clientSecret);
+
+        jsonWriter.writeEndObject();
+
+        return jsonWriter;
+    }
+
+    public String getAuthority() {
+        return authority;
+    }
+
+    public String getClientSecret() {
+        return clientSecret;
+    }
+
 }
