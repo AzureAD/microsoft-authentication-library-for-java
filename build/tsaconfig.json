@@ -1,0 +1,14 @@
+{
+  "codebaseName": "MSAL4J",
+  "notificationAliases": [
+    "idauthsdkjava@microsoft.com"
+  ],
+  "instanceUrl": "https://identitydivision.visualstudio.com",
+  "projectName": "IDDP",
+  "areaPath": "IDDP\\DevEx-Client-SDK\\Java",
+  "iterationPath": "IDDP\\Unscheduled",
+  "tools": [
+    "credscan",
+    "policheck"
+  ]
+}
