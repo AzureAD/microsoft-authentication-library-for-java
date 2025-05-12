@@ -3,13 +3,10 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
-
 import javax.net.ssl.SSLSocketFactory;
 import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
-import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -29,7 +26,6 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
     private String applicationName;
     private String applicationVersion;
     private AadInstanceDiscoveryResponse aadAadInstanceDiscoveryResponse;
-    protected abstract ClientAuthentication clientAuthentication();
     private String clientCapabilities;
     private boolean autoDetectRegion;
     protected String azureRegion;
@@ -137,22 +133,22 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
 
         validateNotNull("parameters", parameters);
 
-        parameters.requestParameters.put("client_id", Collections.singletonList(this.clientId));
+        parameters.requestParameters.put("client_id", this.clientId);
 
         //If the client application has any client capabilities set, they must be merged into the claims parameter
         if (this.clientCapabilities != null) {
             if (parameters.requestParameters.containsKey("claims")) {
-                String claims = String.valueOf(parameters.requestParameters.get("claims").get(0));
+                String claims = String.valueOf(parameters.requestParameters.get("claims"));
                 String mergedClaimsCapabilities = JsonHelper.mergeJSONString(claims, this.clientCapabilities);
-                parameters.requestParameters.put("claims", Collections.singletonList(mergedClaimsCapabilities));
+                parameters.requestParameters.put("claims", mergedClaimsCapabilities);
             } else {
-                parameters.requestParameters.put("claims", Collections.singletonList(this.clientCapabilities));
+                parameters.requestParameters.put("claims", this.clientCapabilities);
             }
         }
 
         return parameters.createAuthorizationURL(
                 this.authenticationAuthority,
-                parameters.requestParameters());
+                parameters.requestParameters);
     }
 
     @Override

@@ -13,12 +13,12 @@ class IntegratedWindowsAuthorizationGrant extends AbstractMsalAuthorizationGrant
 
     IntegratedWindowsAuthorizationGrant(Set<String> scopes, String userName, ClaimsRequest claims) {
         this.userName = userName;
-        this.scopes = String.join(" ", scopes);
+        this.scopes = scopes;
         this.claims = claims;
     }
 
     @Override
-    Map<String, List<String>> toParameters() {
+    Map<String, String> toParameters() {
         return null;
     }
 

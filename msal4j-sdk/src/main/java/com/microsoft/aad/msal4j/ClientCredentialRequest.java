@@ -3,8 +3,10 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.ClientCredentialsGrant;
-
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -18,14 +20,6 @@ class ClientCredentialRequest extends MsalRequest {
 
     ClientCredentialRequest(ClientCredentialParameters parameters,
                             ConfidentialClientApplication application,
-                            RequestContext requestContext) {
-        super(application, createMsalGrant(parameters), requestContext);
-        this.parameters = parameters;
-        appTokenProvider = null;
-    }
-
-    ClientCredentialRequest(ClientCredentialParameters parameters,
-                            ConfidentialClientApplication application,
                             RequestContext requestContext,
                             Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> appTokenProvider) {
         super(application, createMsalGrant(parameters), requestContext);
@@ -34,6 +28,10 @@ class ClientCredentialRequest extends MsalRequest {
     }
 
     private static OAuthAuthorizationGrant createMsalGrant(ClientCredentialParameters parameters) {
-        return new OAuthAuthorizationGrant(new ClientCredentialsGrant(), parameters.scopes(), parameters.claims());
+        Map<String, String> params = new LinkedHashMap<>();
+
+        params.put(GrantConstants.GRANT_TYPE_PARAMETER, GrantConstants.CLIENT_CREDENTIALS);
+
+        return new OAuthAuthorizationGrant(params, parameters.scopes(), parameters.claims());
     }
 }

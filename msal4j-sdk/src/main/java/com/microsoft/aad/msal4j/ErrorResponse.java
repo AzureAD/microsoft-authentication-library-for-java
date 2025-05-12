@@ -3,36 +3,97 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.azure.json.JsonReader;
+import com.azure.json.JsonSerializable;
+import com.azure.json.JsonToken;
+import com.azure.json.JsonWriter;
 
-class ErrorResponse {
+import java.io.IOException;
+
+class ErrorResponse implements JsonSerializable<ErrorResponse> {
 
     private Integer statusCode;
     private String statusMessage;
-
-    @JsonProperty("error")
     protected String error;
-
-    @JsonProperty("error_description")
     protected String errorDescription;
-
-    @JsonProperty("error_codes")
     protected long[] errorCodes;
-
-    @JsonProperty("suberror")
     protected String subError;
-
-    @JsonProperty("trace_id")
     protected String traceId;
-
-    @JsonProperty("timestamp")
     protected String timestamp;
-
-    @JsonProperty("correlation_id")
     protected String correlation_id;
-
-    @JsonProperty("claims")
     private String claims;
+
+    static ErrorResponse fromJson(JsonReader jsonReader) throws IOException {
+        ErrorResponse entity = new ErrorResponse();
+        return jsonReader.readObject(reader -> {
+            while (reader.nextToken() != JsonToken.END_OBJECT) {
+                String fieldName = reader.getFieldName();
+                reader.nextToken();
+                switch (fieldName) {
+                    case "error":
+                        entity.error = reader.getString();
+                        break;
+                    case "error_description":
+                        entity.errorDescription = reader.getString();
+                        break;
+                    case "error_codes":
+                        entity.errorCodes = reader.readArray(JsonReader::getLong).stream().mapToLong(Long::longValue).toArray();
+                        break;
+                    case "suberror":
+                        entity.subError = reader.getString();
+                        break;
+                    case "trace_id":
+                        entity.traceId = reader.getString();
+                        break;
+                    case "timestamp":
+                        entity.timestamp = reader.getString();
+                        break;
+                    case "correlation_id":
+                        entity.correlation_id = reader.getString();
+                        break;
+                    case "claims":
+                        entity.claims = reader.getString();
+                        break;
+                    default:
+                        reader.skipChildren();
+                        break;
+                }
+            }
+            return entity;
+        });
+    }
+
+    @Override
+    public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
+        jsonWriter.writeStartObject();
+
+        jsonWriter.writeStartObject();
+
+        jsonWriter.writeNumberField("statusCode", statusCode);
+        jsonWriter.writeStringField("statusMessage", statusMessage);
+        jsonWriter.writeStringField("error", error);
+        jsonWriter.writeStringField("error_description", errorDescription);
+
+        if (errorCodes != null) {
+            jsonWriter.writeStartArray("error_codes");
+            for (long code : errorCodes) {
+                jsonWriter.writeNumber(code);
+            }
+            jsonWriter.writeEndArray();
+        } else {
+            jsonWriter.writeNullField("error_codes");
+        }
+
+        jsonWriter.writeStringField("suberror", subError);
+        jsonWriter.writeStringField("trace_id", traceId);
+        jsonWriter.writeStringField("timestamp", timestamp);
+        jsonWriter.writeStringField("correlation_id", correlation_id);
+        jsonWriter.writeStringField("claims", claims);
+
+        jsonWriter.writeEndObject();
+
+        return jsonWriter;
+    }
 
     Integer statusCode() {
         return this.statusCode;

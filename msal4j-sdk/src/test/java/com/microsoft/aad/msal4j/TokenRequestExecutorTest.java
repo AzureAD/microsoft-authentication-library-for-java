@@ -3,10 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.oauth2.sdk.SerializeException;
-import com.nimbusds.oauth2.sdk.http.HTTPResponse;
-import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -38,14 +34,15 @@ class TokenRequestExecutorTest {
 
     @Test
     void executeOAuthRequest_SCBadRequestErrorInvalidGrant_InteractionRequiredException()
-            throws SerializeException, ParseException, MsalException,
+            throws MsalException,
             IOException, URISyntaxException {
 
         TokenRequestExecutor request = createMockedTokenRequest();
 
         OAuthHttpRequest msalOAuthHttpRequest = mock(OAuthHttpRequest.class);
 
-        HTTPResponse httpResponse = new HTTPResponse(HTTPResponse.SC_BAD_REQUEST);
+        HttpResponse httpResponse = new HttpResponse();
+        httpResponse.statusCode(HttpHelper.HTTP_STATUS_400);
 
         String claims = "{\\\"access_token\\\":{\\\"polids\\\":{\\\"essential\\\":true,\\\"values\\\":[\\\"5ce770ea-8690-4747-aa73-c5b3cd509cd4\\\"]}}}";
 
@@ -57,8 +54,8 @@ class TokenRequestExecutorTest {
                 "\"correlation_id\":\"3a...95a\"," +
                 "\"suberror\":\"basic_action\"," +
                 "\"claims\":\"" + claims + "\"}";
-        httpResponse.setContent(content);
-        httpResponse.setContentType(HTTPContentType.ApplicationJSON.contentType);
+        httpResponse.body(content);
+        httpResponse.addHeader("Content-Type", HTTPContentType.ApplicationJSON.contentType);
 
         doReturn(msalOAuthHttpRequest).when(request).createOauthHttpRequest();
         doReturn(httpResponse).when(msalOAuthHttpRequest).send();
@@ -74,14 +71,15 @@ class TokenRequestExecutorTest {
 
     @Test
     void executeOAuthRequest_SCBadRequestErrorInvalidGrant_SubErrorFilteredServiceExceptionThrown()
-            throws SerializeException, ParseException, MsalException,
+            throws MsalException,
             IOException, URISyntaxException {
 
         TokenRequestExecutor request = createMockedTokenRequest();
 
         OAuthHttpRequest msalOAuthHttpRequest = mock(OAuthHttpRequest.class);
 
-        HTTPResponse httpResponse = new HTTPResponse(HTTPResponse.SC_BAD_REQUEST);
+        HttpResponse httpResponse = new HttpResponse();
+        httpResponse.statusCode(HttpHelper.HTTP_STATUS_400);
 
         String claims = "{\\\"access_token\\\":{\\\"polids\\\":{\\\"essential\\\":true,\\\"values\\\":[\\\"5ce770ea-8690-4747-aa73-c5b3cd509cd4\\\"]}}}";
 
@@ -93,8 +91,8 @@ class TokenRequestExecutorTest {
                 "\"correlation_id\":\"3a...95a\"," +
                 "\"suberror\":\"client_mismatch\"," +
                 "\"claims\":\"" + claims + "\"}";
-        httpResponse.setContent(content);
-        httpResponse.setContentType(HTTPContentType.ApplicationJSON.contentType);
+        httpResponse.body(content);
+        httpResponse.addHeader("Content-Type", HTTPContentType.ApplicationJSON.contentType);
 
         doReturn(msalOAuthHttpRequest).when(request).createOauthHttpRequest();
         doReturn(httpResponse).when(msalOAuthHttpRequest).send();
@@ -108,7 +106,7 @@ class TokenRequestExecutorTest {
         }
     }
 
-    private TokenRequestExecutor createMockedTokenRequest() throws URISyntaxException, MalformedURLException {
+    private TokenRequestExecutor createMockedTokenRequest() throws MalformedURLException {
         PublicClientApplication app = PublicClientApplication.builder("id")
                 .correlationId("corr_id").build();
 
@@ -154,7 +152,7 @@ class TokenRequestExecutorTest {
 
     @Test
     void testToOAuthRequestNonEmptyCorrelationId()
-            throws MalformedURLException, SerializeException, URISyntaxException, ParseException {
+            throws MalformedURLException, URISyntaxException {
 
         PublicClientApplication app = PublicClientApplication.builder("id").correlationId("corr-id").build();
 
@@ -181,9 +179,7 @@ class TokenRequestExecutorTest {
     }
 
     @Test
-    void testToOAuthRequestNullCorrelationId_NullClientAuth()
-            throws MalformedURLException, SerializeException,
-            URISyntaxException, ParseException {
+    void testToOAuthRequestNullCorrelationId_NullClientAuth() throws MalformedURLException, URISyntaxException {
 
         PublicClientApplication app = PublicClientApplication.builder("id").correlationId("corr-id").build();
 
@@ -207,8 +203,7 @@ class TokenRequestExecutorTest {
     }
 
     @Test
-    void testExecuteOAuth_Success() throws SerializeException, ParseException, MsalException,
-            IOException, URISyntaxException {
+    void testExecuteOAuth_Success() throws MsalException, IOException, URISyntaxException {
 
         PublicClientApplication app = PublicClientApplication.builder("id").correlationId("corr-id").build();
 
@@ -232,15 +227,13 @@ class TokenRequestExecutorTest {
 
         final OAuthHttpRequest msalOAuthHttpRequest = mock(OAuthHttpRequest.class);
 
-        final HTTPResponse httpResponse = mock(HTTPResponse.class);
+        final HttpResponse httpResponse = mock(HttpResponse.class);
 
         doReturn(msalOAuthHttpRequest).when(request).createOauthHttpRequest();
         doReturn(httpResponse).when(msalOAuthHttpRequest).send();
-        doReturn(JSONObjectUtils.parse(TestConfiguration.TOKEN_ENDPOINT_OK_RESPONSE)).when(httpResponse).getContentAsJSONObject();
+        doReturn(JsonHelper.convertJsonToMap(TestConfiguration.TOKEN_ENDPOINT_OK_RESPONSE_ID_AND_ACCESS)).when(httpResponse).getBodyAsMap();
 
-        httpResponse.ensureStatusCode(200);
-
-        doReturn(200).when(httpResponse).getStatusCode();
+        doReturn(200).when(httpResponse).statusCode();
 
         final AuthenticationResult result = request.executeTokenRequest();
 
@@ -253,8 +246,7 @@ class TokenRequestExecutorTest {
     }
 
     @Test
-    void testExecuteOAuth_Failure() throws SerializeException,
-            ParseException, MsalException, IOException, URISyntaxException {
+    void testExecuteOAuth_Failure() throws MsalException, IOException, URISyntaxException {
 
         PublicClientApplication app = PublicClientApplication.builder("id").correlationId("corr-id").build();
 
@@ -277,22 +269,13 @@ class TokenRequestExecutorTest {
                 new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)), acr, serviceBundle));
         final OAuthHttpRequest msalOAuthHttpRequest = mock(OAuthHttpRequest.class);
 
-        final HTTPResponse httpResponse = mock(HTTPResponse.class);
+        final HttpResponse httpResponse = mock(HttpResponse.class);
 
         doReturn(msalOAuthHttpRequest).when(request).createOauthHttpRequest();
         doReturn(httpResponse).when(msalOAuthHttpRequest).send();
-        lenient().doReturn(402).when(httpResponse).getStatusCode();
-        doReturn("403 Forbidden").when(httpResponse).getStatusMessage();
-        doReturn(new HashMap<>()).when(httpResponse).getHeaderMap();
-        doReturn(TestConfiguration.HTTP_ERROR_RESPONSE).when(httpResponse).getContent();
+        doReturn(TestConfiguration.HTTP_ERROR_RESPONSE).when(httpResponse).body();
 
-        final ErrorResponse errorResponse = mock(ErrorResponse.class);
-
-        lenient().doReturn("invalid_request").when(errorResponse).error();
-        lenient().doReturn(null).when(httpResponse).getHeaderValue("User-Agent");
-        lenient().doReturn(null).when(httpResponse).getHeaderValue("x-ms-request-id");
-        lenient().doReturn(null).when(httpResponse).getHeaderValue("x-ms-clitelem");
-        doReturn(402).when(httpResponse).getStatusCode();
+        doReturn(402).when(httpResponse).statusCode();
 
         assertThrows(MsalException.class, request::executeTokenRequest);
     }

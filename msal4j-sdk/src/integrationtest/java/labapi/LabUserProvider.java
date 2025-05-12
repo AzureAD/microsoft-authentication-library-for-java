@@ -14,12 +14,10 @@ public class LabUserProvider {
 
     private static LabUserProvider instance;
 
-    private final KeyVaultSecretsProvider keyVaultSecretsProvider;
     private final LabService labService;
     private Map<UserQueryParameters, User> userCache;
 
     private LabUserProvider() {
-        keyVaultSecretsProvider = new KeyVaultSecretsProvider();
         labService = new LabService();
         userCache = new HashMap<>();
     }

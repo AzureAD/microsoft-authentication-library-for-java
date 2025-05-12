@@ -85,8 +85,6 @@ class AuthorizationRequestUrlParametersTest {
 
     @Test
     void testBuilder_conflictingParameters() {
-        PublicClientApplication app = PublicClientApplication.builder("client_id").build();
-
         String redirectUri = "http://localhost:8080";
         Set<String> scope = Collections.singleton("scope");
 
@@ -153,7 +151,7 @@ class AuthorizationRequestUrlParametersTest {
         assertEquals(queryParameters.get("correlation_id"), "corr_id");
         assertEquals(queryParameters.get("login_hint"), "hint");
         assertEquals(queryParameters.get("domain_hint"), "domain_hint");
-        assertEquals(queryParameters.get("claims"), "{\"id_token\":{\"auth_time\":{\"essential\":true}},\"access_token\":{\"auth_time\":{\"essential\":true},\"xms_cc\":{\"values\":[\"llt\",\"ssm\"]}}}");
+        assertEquals(queryParameters.get("claims"), "{\"access_token\":{\"auth_time\":{\"essential\":true},\"xms_cc\":{\"values\":[\"llt\",\"ssm\"]}},\"id_token\":{\"auth_time\":{\"essential\":true}}}");
 
         // CCS routing
         assertEquals(queryParameters.get(HttpHeaders.X_ANCHOR_MAILBOX), String.format(HttpHeaders.X_ANCHOR_MAILBOX_UPN_FORMAT, "hint"));

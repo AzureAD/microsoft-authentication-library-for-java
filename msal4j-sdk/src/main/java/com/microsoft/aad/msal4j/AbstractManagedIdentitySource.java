@@ -113,7 +113,7 @@ abstract class AbstractManagedIdentitySource {
 
         ManagedIdentityErrorResponse managedIdentityErrorResponse;
         try {
-            managedIdentityErrorResponse = JsonHelper.convertJsonToObject(response.body(), ManagedIdentityErrorResponse.class);
+            managedIdentityErrorResponse = JsonHelper.convertJsonStringToJsonSerializableObject(response.body(), ManagedIdentityErrorResponse::fromJson);
         } catch (MsalJsonParsingException e) {
             throw new MsalJsonParsingException(String.format(MsalErrorMessage.MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE, response.statusCode(), e.getMessage()), MsalError.MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE, managedIdentitySourceType);
         }
