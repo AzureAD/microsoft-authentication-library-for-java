@@ -1,4 +1,10 @@
-Version 1.20.1
+Version 1.30.0-beta
+=============
+- Replace org.projectlombok dependencies with implementations of generated code (#946)
+- Replace com.nimbusds dependencies with implementations of OAuth behavior (#926, #927, #928, #941, #945)
+- Replace com.fasterxml.jackson with com.azure.json for JSON behavior (#947, #948)
+
+ 1.20.1
 =============
 - Fix Base64URL decoding bug (#938)
 
