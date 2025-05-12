@@ -30,7 +30,7 @@ final class Constants {
     public static final String TOKEN_HASH_CLAIM = "token_sha256_to_refresh";
     public static final String CLIENT_CAPABILITY_REQUEST_PARAM = "xms_cc";
     
-    // Only Service Fabric and App Service managed identity environments support token revocation
+    // Only Service Fabric managed identity environments support token revocation
     public static final Set<ManagedIdentitySourceType> TOKEN_REVOCATION_SUPPORTED_ENVIRONMENTS = new HashSet<ManagedIdentitySourceType>() {{
         add(ManagedIdentitySourceType.SERVICE_FABRIC);
     }};

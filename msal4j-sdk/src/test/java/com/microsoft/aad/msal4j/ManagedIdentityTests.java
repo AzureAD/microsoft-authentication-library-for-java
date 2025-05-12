@@ -722,7 +722,7 @@ class ManagedIdentityTests {
         assertNotNull(result.accessToken());
         assertEquals(TokenSource.CACHE, result.metadata().tokenSource());
 
-        verify(httpClientMock, times(2)).send(any());
+        verify(httpClientMock, times(1)).send(any());
     }
 
     @ParameterizedTest

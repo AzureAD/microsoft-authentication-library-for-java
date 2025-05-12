@@ -49,7 +49,7 @@ final class StringHelper {
      * @return The SHA-256 hash of the string as a lowercase hex string
      * @throws MsalClientException If the SHA-256 algorithm is not available
      */
-    public static String createSha256HashHexString(String stringToHash) {
+    static String createSha256HashHexString(String stringToHash) {
         if (stringToHash == null || stringToHash.isEmpty()) {
             throw new IllegalArgumentException("String to hash cannot be null or empty");
         }
@@ -74,7 +74,7 @@ final class StringHelper {
         }
     }
 
-    public static boolean isNullOrBlank(final String str) {
+    static boolean isNullOrBlank(final String str) {
         return str == null || str.trim().length() == 0;
     }
 }
