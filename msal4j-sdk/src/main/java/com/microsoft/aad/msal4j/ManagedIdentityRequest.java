@@ -12,6 +12,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -73,6 +74,37 @@ class ManagedIdentityRequest extends MsalRequest {
                 LOG.info("[Managed Identity] Adding user assigned object id to the request.");
                 queryParameters.put(Constants.MANAGED_IDENTITY_OBJECT_ID, Collections.singletonList(userAssignedId));
                 break;
+        }
+    }
+
+    void addTokenRevocationParametersToQuery(ManagedIdentityParameters parameters) {
+        // Check if the environment supports token revocation
+        ManagedIdentitySourceType sourceType = ManagedIdentityClient.getManagedIdentitySource();
+        boolean supportsTokenRevocation = Constants.TOKEN_REVOCATION_SUPPORTED_ENVIRONMENTS
+                .contains(sourceType);
+
+        // If token revocation is supported, pass the client capabilities and token revocation parameters
+        if (supportsTokenRevocation) {
+            ManagedIdentityApplication managedIdentityApplication =
+                    (ManagedIdentityApplication) this.application();
+
+            // Pass capabilities if present.
+            if (managedIdentityApplication.getClientCapabilities() != null &&
+                    !managedIdentityApplication.getClientCapabilities().isEmpty()) {
+                // Add client capabilities as a comma separated string for all the values in client capabilities
+                String clientCapabilities = String.join(",", managedIdentityApplication.getClientCapabilities());
+
+                queryParameters.put(Constants.CLIENT_CAPABILITY_REQUEST_PARAM, Collections.singletonList(clientCapabilities.toString()));
+            }
+
+            // Pass the token revocation parameter if the claims are present and there is a token to revoke
+            if (!StringHelper.isNullOrBlank(parameters.claims) && !StringHelper.isNullOrBlank(parameters.revokedTokenHash())) {
+                LOG.info("[Managed Identity] Adding token revocation parameter to request");
+                if (queryParameters == null) {
+                    queryParameters = new HashMap<>();
+                }
+                queryParameters.put(Constants.TOKEN_HASH_CLAIM, Collections.singletonList(parameters.revokedTokenHash()));
+            }
         }
     }
 }

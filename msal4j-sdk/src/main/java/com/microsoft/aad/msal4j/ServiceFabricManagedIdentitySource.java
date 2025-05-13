@@ -57,6 +57,7 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
             ManagedIdentityParameters parameters) {
 
         createManagedIdentityRequest(parameters.resource);
+        managedIdentityRequest.addTokenRevocationParametersToQuery(parameters);
         IHttpResponse response;
 
         try {
