@@ -6,11 +6,15 @@ package com.microsoft.aad.msal4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+
 /**
  * Class to initialize a managed identity and identify the service.
  */
 class ManagedIdentityClient {
     private static final Logger LOG = LoggerFactory.getLogger(ManagedIdentityClient.class);
+    private static final String WINDOWS_HIMDS_FILEPATH  = "%Programfiles%\\AzureConnectedMachineAgent\\himds.exe";
+    private static final String LINUX_HIMDS_FILEPATH = "/opt/azcmagent/bin/himds";
 
     static ManagedIdentitySourceType getManagedIdentitySource() {
         IEnvironmentVariables environmentVariables = AbstractManagedIdentitySource.getEnvironmentVariables();
@@ -24,8 +28,7 @@ class ManagedIdentityClient {
             }
         } else if (!StringHelper.isNullOrBlank(environmentVariables.getEnvironmentVariable(Constants.MSI_ENDPOINT))) {
             return ManagedIdentitySourceType.CLOUD_SHELL;
-        } else if (!StringHelper.isNullOrBlank(environmentVariables.getEnvironmentVariable(Constants.IDENTITY_ENDPOINT)) &&
-                !StringHelper.isNullOrBlank(environmentVariables.getEnvironmentVariable(Constants.IMDS_ENDPOINT))) {
+        } else if (validateAzureArcEnvironment(environmentVariables)) {
             return ManagedIdentitySourceType.AZURE_ARC;
         } else {
             return ManagedIdentitySourceType.DEFAULT_TO_IMDS;
@@ -64,5 +67,34 @@ class ManagedIdentityClient {
             default:
                 return new IMDSManagedIdentitySource(msalRequest, serviceBundle);
         }
+    }
+
+    static boolean validateAzureArcEnvironment(IEnvironmentVariables environmentVariables) {
+        if (!StringHelper.isNullOrBlank(environmentVariables.getEnvironmentVariable(Constants.IDENTITY_ENDPOINT)) &&
+                !StringHelper.isNullOrBlank(environmentVariables.getEnvironmentVariable(Constants.IMDS_ENDPOINT))) {
+            LOG.debug("[Managed Identity] Azure Arc managed identity is available through environment variables.");
+            return true;
+        }
+
+        String osName = System.getProperty("os.name").toLowerCase();
+
+        if (osName.contains("windows")) {
+            File windowsFile = new File(WINDOWS_HIMDS_FILEPATH);
+            if (windowsFile.exists()) {
+                LOG.debug("[Managed Identity] Azure Arc managed identity is available through file detection.");
+                return true;
+            }
+        } else if (osName.contains("linux")) {
+            File linuxFile = new File(LINUX_HIMDS_FILEPATH);
+            if (linuxFile.exists()) {
+                LOG.debug("[Managed Identity] Azure Arc managed identity is available through file detection.");
+                return true;
+            }
+        } else {
+            LOG.warn("[Managed Identity] Azure Arc managed identity cannot be configured on a platform other than Windows and Linux.");
+        }
+
+        LOG.debug("[Managed Identity] Azure Arc managed identity is not available.");
+        return false;
     }
 }

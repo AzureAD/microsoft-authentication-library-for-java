@@ -26,6 +26,7 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
     private static final String FILE_EXTENSION = ".key";
     private static final int MAX_FILE_SIZE_BYTES = 4096;
     private static final String WWW_AUTHENTICATE_HEADER = "WWW-Authenticate";
+    private static final String FALLBACK_IDENTITY_ENDPOINT = "http://127.0.0.1:40342/metadata/identity/oauth2/token";
 
     private final URI MSI_ENDPOINT;
 
@@ -33,6 +34,12 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
     {
         IEnvironmentVariables environmentVariables = getEnvironmentVariables();
         String identityEndpoint = environmentVariables.getEnvironmentVariable(Constants.IDENTITY_ENDPOINT);
+
+        if (StringHelper.isNullOrBlank(identityEndpoint)) {
+            LOG.info("[Managed Identity] Azure Arc was detected through file based detection but the environment variables were not found. Defaulting to known azure arc endpoint.");
+            identityEndpoint = FALLBACK_IDENTITY_ENDPOINT;
+        }
+
         String imdsEndpoint = environmentVariables.getEnvironmentVariable(Constants.IMDS_ENDPOINT);
 
         URI validatedUri = validateAndGetUri(identityEndpoint, imdsEndpoint);
