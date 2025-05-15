@@ -68,7 +68,13 @@ class ManagedIdentityRequest extends MsalRequest {
                 break;
             case RESOURCE_ID:
                 LOG.info("[Managed Identity] Adding user assigned resource id to the request.");
-                queryParameters.put(Constants.MANAGED_IDENTITY_RESOURCE_ID, Collections.singletonList(userAssignedId));
+                if (ManagedIdentityClient.getManagedIdentitySource() == ManagedIdentitySourceType.IMDS) {
+                    // IMDS seems to accept both mi_res_id and msi_res_id but their API only documents msi_res_id,
+                    // and using mi_res_id leads to issues in some scenarios that use the IMDS code path.
+                    queryParameters.put(Constants.MANAGED_IDENTITY_RESOURCE_ID_IMDS, Collections.singletonList(userAssignedId));
+                } else {
+                    queryParameters.put(Constants.MANAGED_IDENTITY_RESOURCE_ID, Collections.singletonList(userAssignedId));
+                }
                 break;
             case OBJECT_ID:
                 LOG.info("[Managed Identity] Adding user assigned object id to the request.");

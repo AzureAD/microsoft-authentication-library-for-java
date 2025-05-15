@@ -138,7 +138,11 @@ class ManagedIdentityTests {
                 queryParameters.put("client_id", Collections.singletonList(id.getUserAssignedId()));
                 break;
             case RESOURCE_ID:
-                queryParameters.put("mi_res_id", Collections.singletonList(id.getUserAssignedId()));
+                if (ManagedIdentityClient.getManagedIdentitySource() == ManagedIdentitySourceType.IMDS) {
+                    queryParameters.put(Constants.MANAGED_IDENTITY_RESOURCE_ID_IMDS, Collections.singletonList(id.getUserAssignedId()));
+                } else {
+                    queryParameters.put(Constants.MANAGED_IDENTITY_RESOURCE_ID, Collections.singletonList(id.getUserAssignedId()));
+                }
                 break;
             case OBJECT_ID:
                 queryParameters.put("object_id", singletonList(id.getUserAssignedId()));
