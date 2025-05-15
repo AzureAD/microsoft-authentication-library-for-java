@@ -38,7 +38,7 @@ class DateTimeTests {
     @ParameterizedTest
     @ValueSource(strings = {
             "2025-05-15T12:34:56Z",              // Basic UTC format
-            "2025-05-15T12:34:56.1234",          // With milliseconds
+            "2025-05-15T12:34:56.1234Z",          // With milliseconds
             "2025-05-15T12:34:56.123456789Z"     // With nanoseconds
     })
     void testValidIso8601Formats(String timestamp) {
