@@ -37,23 +37,6 @@ import static org.mockito.Mockito.*;
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class ManagedIdentityTests {
 
-    static final String resource = "https://management.azure.com";
-    static final String resourceDefaultSuffix = "https://management.azure.com/.default";
-    static final String appServiceEndpoint = "http://127.0.0.1:41564/msi/token";
-    static final String IMDS_ENDPOINT = "http://169.254.169.254/metadata/identity/oauth2/token";
-    static final String azureArcEndpoint = "http://localhost:40342/metadata/identity/oauth2/token";
-    static final String cloudShellEndpoint = "http://localhost:40342/metadata/identity/oauth2/token";
-    static final String serviceFabricEndpoint = "http://localhost:40342/metadata/identity/oauth2/token";
-    private static ManagedIdentityApplication miApp;
-
-    static final String SUCCESSFUL_RESPONSE_INVALID_JSON = "missing starting bracket \"access_token\":\"accesstoken\",\"token_type\":" + "\"Bearer\",\"client_id\":\"a bunch of problems}";
-    //Realistic error response that should trigger a retry
-    static final String MSI_ERROR_RESPONSE_500 = "{\"statusCode\":\"500\",\"message\":\"An unexpected error occured while fetching the AAD Token.\",\"correlationId\":\"7d0c9763-ff1d-4842-a3f3-6d49e64f4513\"}";
-    //Cloud Shell error responses follow a different style, the error info is in a second JSON
-    static final String CLOUDSHELL_ERROR_RESPONSE = "{\"error\":{\"code\":\"AudienceNotSupported\",\"message\":\"Audience user.read is not a supported MSI token audience.\"}}";
-    //Response with an error code that should not trigger a retry
-    static final String MSI_ERROR_RESPONSE_NORETRY = "{\"statusCode\":\"123\",\"message\":\"Not one of the retryable error responses\",\"correlationId\":\"7d0c9763-ff1d-4842-a3f3-6d49e64f4513\"}";
-
     private String getSuccessfulResponse(String resource) {
         long expiresOn = (System.currentTimeMillis() / 1000) + (24 * 3600);//A long-lived, 24 hour token
         return "{\"access_token\":\"accesstoken\",\"expires_on\":\"" + expiresOn + "\",\"resource\":\"" + resource + "\",\"token_type\":" +
@@ -114,22 +97,22 @@ class ManagedIdentityTests {
             case APP_SERVICE:
                 queryParameters.put("api-version", singletonList("2019-08-01"));
                 headers.put("X-IDENTITY-HEADER", "secret");
-                return appServiceEndpoint;
+                return ManagedIdentityTestConstants.APP_SERVICE_ENDPOINT;
 
             case CLOUD_SHELL:
                 headers.put("ContentType", "application/x-www-form-urlencoded");
                 headers.put("Metadata", "true");
-                return cloudShellEndpoint;
+                return ManagedIdentityTestConstants.CLOUDSHELL_ENDPOINT;
 
             case AZURE_ARC:
                 queryParameters.put("api-version", singletonList("2019-11-01"));
                 headers.put("Metadata", "true");
-                return azureArcEndpoint;
+                return ManagedIdentityTestConstants.AZURE_ARC_ENDPOINT;
 
             case SERVICE_FABRIC:
                 queryParameters.put("api-version", singletonList("2019-07-01-preview"));
                 headers.put("secret", "secret");
-                return serviceFabricEndpoint;
+                return ManagedIdentityTestConstants.SERVICE_FABRIC_ENDPOINT;
 
             case IMDS:
             case NONE:
@@ -137,7 +120,7 @@ class ManagedIdentityTests {
             default:
                 queryParameters.put("api-version", singletonList("2018-02-01"));
                 headers.put("Metadata", "true");
-                return IMDS_ENDPOINT;
+                return ManagedIdentityTestConstants.IMDS_ENDPOINT;
         }
     }
 
@@ -279,9 +262,10 @@ class ManagedIdentityTests {
         void managedIdentityTest_UserAssigned_SuccessfulResponse(ManagedIdentitySourceType source, String endpoint, ManagedIdentityId id) throws Exception {
             setUpCommonTest(source, endpoint, id);
 
-            when(httpClientMock.send(expectedRequest(source, resource, id))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+            when(httpClientMock.send(expectedRequest(source, ManagedIdentityTestConstants.RESOURCE, id)))
+                    .thenReturn(expectedResponse(200, getSuccessfulResponse(ManagedIdentityTestConstants.RESOURCE)));
 
-            IAuthenticationResult result = acquireTokenCommon(resource).get();
+            IAuthenticationResult result = acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE).get();
 
             assertTokenFromIdentityProvider(result);
             verify(httpClientMock, times(1)).send(any());
@@ -292,19 +276,19 @@ class ManagedIdentityTests {
         void managedIdentity_SharedCache(ManagedIdentitySourceType source, String endpoint) throws Exception {
             setUpCommonTest(source, endpoint, ManagedIdentityId.systemAssigned());
 
-            when(httpClientMock.send(any())).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+            when(httpClientMock.send(any())).thenReturn(expectedResponse(200, getSuccessfulResponse(ManagedIdentityTestConstants.RESOURCE)));
 
             ManagedIdentityApplication miApp2 = ManagedIdentityApplication
                     .builder(ManagedIdentityId.systemAssigned())
                     .httpClient(httpClientMock)
                     .build();
 
-            IAuthenticationResult resultMiApp1 = acquireTokenCommon(resource).get();
+            IAuthenticationResult resultMiApp1 = acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE).get();
 
             assertTokenFromIdentityProvider(resultMiApp1);
 
             IAuthenticationResult resultMiApp2 = miApp2.acquireTokenForManagedIdentity(
-                    ManagedIdentityParameters.builder(resource)
+                    ManagedIdentityParameters.builder(ManagedIdentityTestConstants.RESOURCE)
                             .build()).get();
 
             assertTokenFromCache(resultMiApp2);
@@ -321,13 +305,13 @@ class ManagedIdentityTests {
         void managedIdentityTest_DifferentScopes_RequestsNewToken(ManagedIdentitySourceType source, String endpoint) throws Exception {
             setUpCommonTest(source, endpoint, ManagedIdentityId.systemAssigned());
 
-            when(httpClientMock.send(any())).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+            when(httpClientMock.send(any())).thenReturn(expectedResponse(200, getSuccessfulResponse(ManagedIdentityTestConstants.RESOURCE)));
 
             String anotherResource = "https://graph.microsoft.com";
 
-            when(httpClientMock.send(expectedRequest(source, anotherResource))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+            when(httpClientMock.send(expectedRequest(source, anotherResource))).thenReturn(expectedResponse(200, getSuccessfulResponse(ManagedIdentityTestConstants.RESOURCE)));
 
-            IAuthenticationResult result = acquireTokenCommon(resource).get();
+            IAuthenticationResult result = acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE).get();
 
             assertTokenFromIdentityProvider(result);
 
@@ -347,26 +331,27 @@ class ManagedIdentityTests {
         void managedIdentityTest_WithClaims(ManagedIdentitySourceType source, String endpoint) throws Exception {
             setUpCommonTest(source, endpoint, ManagedIdentityId.systemAssigned());
 
-            when(httpClientMock.send(any())).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+            when(httpClientMock.send(any())).thenReturn(expectedResponse(200, getSuccessfulResponse(ManagedIdentityTestConstants.RESOURCE)));
 
             String claimsJson = "{\"default\":\"claim\"}";
 
             // First call, get the token from the identity provider.
-            IAuthenticationResult result = acquireTokenCommon(resource).get();
+            IAuthenticationResult result = acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE).get();
 
             assertTokenFromIdentityProvider(result);
 
             // Second call, get the token from the cache without passing the claims.
-            result = acquireTokenCommon(resource).get();
+            result = acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE).get();
 
             assertTokenFromCache(result);
 
             String expectedTokenHash = StringHelper.createSha256HashHexString(result.accessToken());
-            when(httpClientMock.send(expectedRequest(source, resource, true, false, expectedTokenHash))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+            when(httpClientMock.send(expectedRequest(source, ManagedIdentityTestConstants.RESOURCE, true, false, expectedTokenHash)))
+                    .thenReturn(expectedResponse(200, getSuccessfulResponse(ManagedIdentityTestConstants.RESOURCE)));
 
             // Third call, when claims are passed bypass the cache.
             result = miApp.acquireTokenForManagedIdentity(
-                    ManagedIdentityParameters.builder(resource)
+                    ManagedIdentityParameters.builder(ManagedIdentityTestConstants.RESOURCE)
                             .claims(claimsJson)
                             .build()).get();
 
@@ -381,7 +366,8 @@ class ManagedIdentityTests {
             initEnvironmentVariables(source, endpoint);
             initHttpClientMock(source);
 
-            when(httpClientMock.send(expectedRequest(source, resource, false, true, null))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+            when(httpClientMock.send(expectedRequest(source, ManagedIdentityTestConstants.RESOURCE, false, true, null)))
+                    .thenReturn(expectedResponse(200, getSuccessfulResponse(ManagedIdentityTestConstants.RESOURCE)));
 
             miApp = ManagedIdentityApplication
                     .builder(ManagedIdentityId.systemAssigned())
@@ -392,12 +378,12 @@ class ManagedIdentityTests {
             miApp.tokenCache.accessTokens.clear();
 
             // First call, get the token from the identity provider.
-            IAuthenticationResult result = acquireTokenCommon(resource).get();
+            IAuthenticationResult result = acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE).get();
 
             assertTokenFromIdentityProvider(result);
 
             // Second call, get the token from the cache without passing the claims.
-            result = acquireTokenCommon(resource).get();
+            result = acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE).get();
 
             assertTokenFromCache(result);
 
@@ -409,7 +395,8 @@ class ManagedIdentityTests {
         void managedIdentity_ClaimsAndCapabilities(ManagedIdentitySourceType source, String endpoint) throws Exception {
             setUpCommonTest(source, endpoint, ManagedIdentityId.systemAssigned());
 
-            when(httpClientMock.send(expectedRequest(source, resource, false, true, null))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+            when(httpClientMock.send(expectedRequest(source, ManagedIdentityTestConstants.RESOURCE, false, true, null)))
+                    .thenReturn(expectedResponse(200, getSuccessfulResponse(ManagedIdentityTestConstants.RESOURCE)));
 
             miApp = ManagedIdentityApplication
                     .builder(ManagedIdentityId.systemAssigned())
@@ -419,21 +406,22 @@ class ManagedIdentityTests {
 
             String claimsJson = "{\"default\":\"claim\"}";
             // First call, get the token from the identity provider.
-            IAuthenticationResult result = acquireTokenCommon(resource).get();
+            IAuthenticationResult result = acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE).get();
 
             assertTokenFromIdentityProvider(result);
 
             // Second call, get the token from the cache without passing the claims.
-            result = acquireTokenCommon(resource).get();
+            result = acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE).get();
 
             assertTokenFromCache(result);
 
             String expectedTokenHash = StringHelper.createSha256HashHexString(result.accessToken());
-            when(httpClientMock.send(expectedRequest(source, resource, true, true, expectedTokenHash))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+            when(httpClientMock.send(expectedRequest(source, ManagedIdentityTestConstants.RESOURCE, true, true, expectedTokenHash)))
+                    .thenReturn(expectedResponse(200, getSuccessfulResponse(ManagedIdentityTestConstants.RESOURCE)));
 
             // Third call, when claims are passed bypass the cache.
             result = miApp.acquireTokenForManagedIdentity(
-                    ManagedIdentityParameters.builder(resource)
+                    ManagedIdentityParameters.builder(ManagedIdentityTestConstants.RESOURCE)
                             .claims(claimsJson)
                             .build()).get();
 
@@ -455,11 +443,11 @@ class ManagedIdentityTests {
         void managedIdentityTest_RefreshOnHalfOfExpiresOn() throws Exception {
             //All managed identity flows use the same AcquireTokenByManagedIdentitySupplier where refreshOn is set,
             //  so any of the MI options should let us verify that it's being set correctly
-            setUpCommonTest(APP_SERVICE, appServiceEndpoint, ManagedIdentityId.systemAssigned());
+            setUpCommonTest(APP_SERVICE, ManagedIdentityTestConstants.APP_SERVICE_ENDPOINT, ManagedIdentityId.systemAssigned());
 
-            when(httpClientMock.send(expectedRequest(APP_SERVICE, resource))).thenReturn(expectedResponse(200, getSuccessfulResponse(resource)));
+            when(httpClientMock.send(expectedRequest(APP_SERVICE, ManagedIdentityTestConstants.RESOURCE))).thenReturn(expectedResponse(200, getSuccessfulResponse(ManagedIdentityTestConstants.RESOURCE)));
 
-            AuthenticationResult result = (AuthenticationResult) acquireTokenCommon(resource).get();
+            AuthenticationResult result = (AuthenticationResult) acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE).get();
 
             long timestampSeconds = (System.currentTimeMillis() / 1000);
             long expectedRefreshIn = result.refreshOn() - timestampSeconds;
@@ -481,7 +469,7 @@ class ManagedIdentityTests {
         void managedIdentityTest_SuccessfulResponse_WithInvalidJson(ManagedIdentitySourceType source, String endpoint, String resource) throws Exception {
             setUpCommonTest(source, endpoint, ManagedIdentityId.systemAssigned());
 
-            when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(200, SUCCESSFUL_RESPONSE_INVALID_JSON));
+            when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(200, ManagedIdentityTestConstants.SUCCESSFUL_RESPONSE_INVALID_JSON));
 
             assertMsalServiceException(acquireTokenCommon(resource), source, MsalError.MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE);
         }
@@ -491,7 +479,7 @@ class ManagedIdentityTests {
         void managedIdentityTest_UserAssigned_NotSupported(ManagedIdentitySourceType source, String endpoint, ManagedIdentityId id) throws Exception {
             setUpCommonTest(source, endpoint, id);
 
-            assertMsalServiceException(acquireTokenCommon(resource), source, MsalError.USER_ASSIGNED_MANAGED_IDENTITY_NOT_SUPPORTED);
+            assertMsalServiceException(acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE), source, MsalError.USER_ASSIGNED_MANAGED_IDENTITY_NOT_SUPPORTED);
         }
 
         @ParameterizedTest
@@ -500,9 +488,9 @@ class ManagedIdentityTests {
             setUpCommonTest(source, endpoint, ManagedIdentityId.systemAssigned());
 
             if (environmentVariables.getEnvironmentVariable("SourceType").equals(CLOUD_SHELL.toString())) {
-                when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(500, CLOUDSHELL_ERROR_RESPONSE));
+                when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(500, ManagedIdentityTestConstants.CLOUDSHELL_ERROR_RESPONSE));
             } else {
-                when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(500, MSI_ERROR_RESPONSE_500));
+                when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(500, ManagedIdentityTestConstants.MSI_ERROR_RESPONSE_500));
             }
 
             assertMsalServiceException(acquireTokenCommon(resource), source, MsalError.MANAGED_IDENTITY_REQUEST_FAILED);
@@ -525,7 +513,7 @@ class ManagedIdentityTests {
                     .build();
 
             //Several specific 4xx and 5xx errors, such as 500, should trigger MSAL's retry logic
-            when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(500, MSI_ERROR_RESPONSE_500));
+            when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(500, ManagedIdentityTestConstants.MSI_ERROR_RESPONSE_500));
 
             try {
                 acquireTokenCommon(resource).get();
@@ -539,7 +527,7 @@ class ManagedIdentityTests {
 
             clearInvocations(httpClientMock);
             //Status codes that aren't on the list, such as 123, should not cause a retry
-            when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(123, MSI_ERROR_RESPONSE_NORETRY));
+            when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(123, ManagedIdentityTestConstants.MSI_ERROR_RESPONSE_NORETRY));
 
             try {
                 acquireTokenCommon(resource).get();
@@ -560,9 +548,9 @@ class ManagedIdentityTests {
         void managedIdentity_RequestFailed_NoPayload(ManagedIdentitySourceType source, String endpoint) throws Exception {
             setUpCommonTest(source, endpoint, ManagedIdentityId.systemAssigned());
 
-            when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(500, ""));
+            when(httpClientMock.send(expectedRequest(source, ManagedIdentityTestConstants.RESOURCE))).thenReturn(expectedResponse(500, ""));
 
-            assertMsalServiceException(acquireTokenCommon(resource), source, MsalError.MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE);
+            assertMsalServiceException(acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE), source, MsalError.MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE);
         }
 
         @ParameterizedTest
@@ -570,9 +558,9 @@ class ManagedIdentityTests {
         void managedIdentity_RequestFailed_NullResponse(ManagedIdentitySourceType source, String endpoint) throws Exception {
             setUpCommonTest(source, endpoint, ManagedIdentityId.systemAssigned());
 
-            when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(200, ""));
+            when(httpClientMock.send(expectedRequest(source, ManagedIdentityTestConstants.RESOURCE))).thenReturn(expectedResponse(200, ""));
 
-            assertMsalServiceException(acquireTokenCommon(resource), source, MsalError.MANAGED_IDENTITY_REQUEST_FAILED);
+            assertMsalServiceException(acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE), source, MsalError.MANAGED_IDENTITY_REQUEST_FAILED);
 
             verify(httpClientMock, times(1)).send(any());
         }
@@ -582,9 +570,9 @@ class ManagedIdentityTests {
         void managedIdentity_RequestFailed_UnreachableNetwork(ManagedIdentitySourceType source, String endpoint) throws Exception {
             setUpCommonTest(source, endpoint, ManagedIdentityId.systemAssigned());
 
-            when(httpClientMock.send(expectedRequest(source, resource))).thenThrow(new SocketException("A socket operation was attempted to an unreachable network."));
+            when(httpClientMock.send(expectedRequest(source, ManagedIdentityTestConstants.RESOURCE))).thenThrow(new SocketException("A socket operation was attempted to an unreachable network."));
 
-            assertMsalServiceException(acquireTokenCommon(resource), source, MsalError.MANAGED_IDENTITY_UNREACHABLE_NETWORK);
+            assertMsalServiceException(acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE), source, MsalError.MANAGED_IDENTITY_UNREACHABLE_NETWORK);
 
             verify(httpClientMock, times(1)).send(any());
         }
@@ -592,10 +580,10 @@ class ManagedIdentityTests {
         @ParameterizedTest
         @MethodSource("com.microsoft.aad.msal4j.ManagedIdentityTestDataProvider#createInvalidClaimsData")
         void managedIdentity_InvalidClaims(String claimsJson) throws Exception {
-            setUpCommonTest(APP_SERVICE, appServiceEndpoint, ManagedIdentityId.systemAssigned());
+            setUpCommonTest(APP_SERVICE, ManagedIdentityTestConstants.APP_SERVICE_ENDPOINT, ManagedIdentityId.systemAssigned());
 
             CompletableFuture<IAuthenticationResult> future = miApp.acquireTokenForManagedIdentity(
-                    ManagedIdentityParameters.builder(resource)
+                    ManagedIdentityParameters.builder(ManagedIdentityTestConstants.RESOURCE)
                             .claims(claimsJson)
                             .build());
 
@@ -607,11 +595,11 @@ class ManagedIdentityTests {
 
         @Test
         void managedIdentityTest_WithEmptyClaims() throws Exception {
-            setUpCommonTest(APP_SERVICE, appServiceEndpoint, ManagedIdentityId.systemAssigned());
+            setUpCommonTest(APP_SERVICE, ManagedIdentityTestConstants.APP_SERVICE_ENDPOINT, ManagedIdentityId.systemAssigned());
 
             try {
                 miApp.acquireTokenForManagedIdentity(
-                        ManagedIdentityParameters.builder(resource)
+                        ManagedIdentityParameters.builder(ManagedIdentityTestConstants.RESOURCE)
                                 .claims("")
                                 .build());
             } catch (Exception exception) {
@@ -620,7 +608,7 @@ class ManagedIdentityTests {
 
             try {
                 miApp.acquireTokenForManagedIdentity(
-                        ManagedIdentityParameters.builder(resource)
+                        ManagedIdentityParameters.builder(ManagedIdentityTestConstants.RESOURCE)
                                 .claims(null)
                                 .build());
             } catch (Exception exception) {
@@ -678,19 +666,19 @@ class ManagedIdentityTests {
         }
 
         private void mockHttpResponse(Map<String, ? extends List<String>> responseHeaders) throws Exception {
-            setUpCommonTest(AZURE_ARC, azureArcEndpoint, ManagedIdentityId.systemAssigned());
+            setUpCommonTest(AZURE_ARC, ManagedIdentityTestConstants.AZURE_ARC_ENDPOINT, ManagedIdentityId.systemAssigned());
 
             HttpResponse response = new HttpResponse();
             response.statusCode(SC_UNAUTHORIZED);
             response.headers().putAll(responseHeaders);
 
             when(httpClientMock.send(
-                    expectedRequest(AZURE_ARC, resource))).thenReturn(
+                    expectedRequest(AZURE_ARC, ManagedIdentityTestConstants.RESOURCE))).thenReturn(
                     response);
         }
 
         private void assertMsalServiceException(String errorCode, String message) throws Exception {
-            CompletableFuture<IAuthenticationResult> future = acquireTokenCommon(resource);
+            CompletableFuture<IAuthenticationResult> future = acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE);
 
             ExecutionException ex = assertThrows(ExecutionException.class, future::get);
             assertInstanceOf(MsalServiceException.class, ex.getCause());
