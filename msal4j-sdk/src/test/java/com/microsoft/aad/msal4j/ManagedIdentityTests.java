@@ -469,7 +469,7 @@ class ManagedIdentityTests {
         void managedIdentityTest_SuccessfulResponse_WithInvalidJson(ManagedIdentitySourceType source, String endpoint, String resource) throws Exception {
             setUpCommonTest(source, endpoint, ManagedIdentityId.systemAssigned());
 
-            when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(200, ManagedIdentityTestConstants.SUCCESSFUL_RESPONSE_INVALID_JSON));
+            when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(200, ManagedIdentityTestConstants.RESPONSE_MALFORMED_JSON));
 
             assertMsalServiceException(acquireTokenCommon(resource), source, MsalError.MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE);
         }
