@@ -153,4 +153,6 @@ public class AuthenticationErrorCode {
      * or performing other cryptographic functions.
      */
     public static final String CRYPTO_ERROR = "crypto_error";
+
+    public static final String INVALID_TIMESTAMP_FORMAT = "invalid_timestamp_format";
 }
