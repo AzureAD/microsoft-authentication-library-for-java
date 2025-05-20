@@ -4,7 +4,6 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.util.URLUtils;
-import labapi.App;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -12,12 +11,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.SocketException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -49,6 +50,12 @@ class ManagedIdentityTests {
 
     private String getSuccessfulResponse(String resource) {
         long expiresOn = (System.currentTimeMillis() / 1000) + (24 * 3600);//A long-lived, 24 hour token
+        return "{\"access_token\":\"accesstoken\",\"expires_on\":\"" + expiresOn + "\",\"resource\":\"" + resource + "\",\"token_type\":" +
+                "\"Bearer\",\"client_id\":\"client_id\"}";
+    }
+
+    private String getSuccessfulResponseWithISOExpiresOn(String resource) {
+        String expiresOn = DateTimeFormatter.ISO_INSTANT.format(Instant.now().plus(24, ChronoUnit.HOURS));//A long-lived, 24 hour token
         return "{\"access_token\":\"accesstoken\",\"expires_on\":\"" + expiresOn + "\",\"resource\":\"" + resource + "\",\"token_type\":" +
                 "\"Bearer\",\"client_id\":\"client_id\"}";
     }
@@ -309,6 +316,39 @@ class ManagedIdentityTests {
         assertNotNull(result.accessToken());
         assertEquals(TokenSource.IDENTITY_PROVIDER, result.metadata().tokenSource());
         assertEquals((result.expiresOn() - timestampSeconds)/2, result.refreshOn() - timestampSeconds);
+
+        verify(httpClientMock, times(1)).send(any());
+    }
+
+    @Test
+    void managedIdentityTest_ISOExpiresOn() throws Exception {
+        //All managed identity flows use the same AcquireTokenByManagedIdentitySupplier where refreshOn is set,
+        //  so any of the MI options should let us verify that it's being set correctly
+        IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(ManagedIdentitySourceType.APP_SERVICE, appServiceEndpoint);
+        ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        when(httpClientMock.send(expectedRequest(ManagedIdentitySourceType.APP_SERVICE, resource))).thenReturn(expectedResponse(200, getSuccessfulResponseWithISOExpiresOn(resource)));
+
+        miApp = ManagedIdentityApplication
+                .builder(ManagedIdentityId.systemAssigned())
+                .httpClient(httpClientMock)
+                .build();
+
+        // Clear caching to avoid cross test pollution.
+        miApp.tokenCache().accessTokens.clear();
+
+        AuthenticationResult result = (AuthenticationResult) miApp.acquireTokenForManagedIdentity(
+                ManagedIdentityParameters.builder(resource)
+                        .build()).get();
+
+        // Calculate what the expected expiration time should be
+        long expectedExpiresOn = System.currentTimeMillis() / 1000 + (24 * 3600); // 24 hours from now, used in getSuccessfulResponseWithISOExpiresOn
+
+        assertNotNull(result.accessToken());
+        assertEquals(TokenSource.IDENTITY_PROVIDER, result.metadata().tokenSource());
+        //Allow a few seconds of difference to account for execution time
+        assertTrue((result.expiresOn() - expectedExpiresOn) <= 5);
 
         verify(httpClientMock, times(1)).send(any());
     }
