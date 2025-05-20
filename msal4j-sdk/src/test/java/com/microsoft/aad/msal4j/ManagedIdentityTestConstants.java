@@ -21,7 +21,7 @@ class ManagedIdentityTestConstants {
     static final String SERVICE_FABRIC_ENDPOINT = "http://localhost:40342/metadata/identity/oauth2/token";
 
     // Example responses
-    static final String SUCCESSFUL_RESPONSE_INVALID_JSON = "missing starting bracket \"access_token\":\"accesstoken\",\"token_type\":" + "\"Bearer\",\"client_id\":\"a bunch of problems}";
+    static final String RESPONSE_MALFORMED_JSON = "missing starting bracket \"access_token\":\"accesstoken\",\"token_type\":" + "\"Bearer\",\"client_id\":\"a bunch of problems}";
     static final String MSI_ERROR_RESPONSE_500 = "{\"statusCode\":\"500\",\"message\":\"An unexpected error occured while fetching the AAD Token.\",\"correlationId\":\"7d0c9763-ff1d-4842-a3f3-6d49e64f4513\"}";
     static final String CLOUDSHELL_ERROR_RESPONSE = "{\"error\":{\"code\":\"AudienceNotSupported\",\"message\":\"Audience user.read is not a supported MSI token audience.\"}}";
     static final String MSI_ERROR_RESPONSE_NORETRY = "{\"statusCode\":\"123\",\"message\":\"Not one of the retryable error responses\",\"correlationId\":\"7d0c9763-ff1d-4842-a3f3-6d49e64f4513\"}";
