@@ -13,8 +13,8 @@ import java.io.File;
  */
 class ManagedIdentityClient {
     private static final Logger LOG = LoggerFactory.getLogger(ManagedIdentityClient.class);
-    private static final String WINDOWS_HIMDS_FILEPATH  = "%Programfiles%\\AzureConnectedMachineAgent\\himds.exe";
-    private static final String LINUX_HIMDS_FILEPATH = "/opt/azcmagent/bin/himds";
+    private static String WINDOWS_HIMDS_FILEPATH  = "%Programfiles%\\AzureConnectedMachineAgent\\himds.exe";
+    private static String LINUX_HIMDS_FILEPATH = "/opt/azcmagent/bin/himds";
 
     static ManagedIdentitySourceType getManagedIdentitySource() {
         IEnvironmentVariables environmentVariables = AbstractManagedIdentitySource.getEnvironmentVariables();
@@ -47,6 +47,10 @@ class ManagedIdentityClient {
         }
     }
 
+    ManagedIdentityClient(){
+        // Default constructor for testing
+    }
+
     ManagedIdentityResponse getManagedIdentityResponse(ManagedIdentityParameters parameters) {
         return managedIdentitySource.getManagedIdentityResponse(parameters);
     }
@@ -72,7 +76,7 @@ class ManagedIdentityClient {
     static boolean validateAzureArcEnvironment(IEnvironmentVariables environmentVariables) {
         if (!StringHelper.isNullOrBlank(environmentVariables.getEnvironmentVariable(Constants.IDENTITY_ENDPOINT)) &&
                 !StringHelper.isNullOrBlank(environmentVariables.getEnvironmentVariable(Constants.IMDS_ENDPOINT))) {
-            LOG.debug("[Managed Identity] Azure Arc managed identity is available through environment variables.");
+            LOG.info("[Managed Identity] Azure Arc managed identity is available through environment variables.");
             return true;
         }
 
@@ -81,20 +85,31 @@ class ManagedIdentityClient {
         if (osName.contains("windows")) {
             File windowsFile = new File(WINDOWS_HIMDS_FILEPATH);
             if (windowsFile.exists()) {
-                LOG.debug("[Managed Identity] Azure Arc managed identity is available through file detection.");
+                LOG.info("[Managed Identity] Azure Arc managed identity is available through file detection.");
                 return true;
             }
         } else if (osName.contains("linux")) {
             File linuxFile = new File(LINUX_HIMDS_FILEPATH);
             if (linuxFile.exists()) {
-                LOG.debug("[Managed Identity] Azure Arc managed identity is available through file detection.");
+                LOG.info("[Managed Identity] Azure Arc managed identity is available through file detection.");
                 return true;
             }
         } else {
             LOG.warn("[Managed Identity] Azure Arc managed identity cannot be configured on a platform other than Windows and Linux.");
         }
 
-        LOG.debug("[Managed Identity] Azure Arc managed identity is not available.");
+        LOG.info("[Managed Identity] Azure Arc managed identity is not available.");
         return false;
+    }
+
+    //These set methods should be used solely for automated testing.
+    //  -The file paths are not normally customizable in this flow, as they should exist in an Azure Arc environment.
+    //  -However, unit tests need some way to adjust them as part of mocking the environment and creating temporary files.
+    void setWindowsFilePath(String filePath) {
+        WINDOWS_HIMDS_FILEPATH = filePath;
+    }
+
+    void setLinuxFilePath(String filePath) {
+        LINUX_HIMDS_FILEPATH = filePath;
     }
 }

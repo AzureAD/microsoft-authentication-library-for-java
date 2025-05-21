@@ -44,4 +44,8 @@ public class EnvironmentVariablesHelper implements IEnvironmentVariables {
     public String getEnvironmentVariable(String envVariable) {
         return mockedEnvironmentVariables.get(envVariable);
     }
+
+    void setEnvironmentVariable(String key, String value) {
+        mockedEnvironmentVariables.put(key, value);
+    }
 }

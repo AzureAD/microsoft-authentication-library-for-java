@@ -4,15 +4,19 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.util.URLUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.SocketException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -32,6 +36,7 @@ import static com.microsoft.aad.msal4j.MsalErrorMessage.*;
 import static java.util.Collections.*;
 import static org.apache.http.HttpStatus.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -959,6 +964,129 @@ class ManagedIdentityTests {
                     msalException.managedIdentitySource());
             assertEquals(errorCode, msalException.errorCode());
             assertTrue(ex.getMessage().contains(message));
+        }
+    }
+
+
+    @Nested
+    class OSTests {
+
+        @TempDir
+        Path tempDir;
+
+        private ManagedIdentityClient client = new ManagedIdentityClient();
+        private EnvironmentVariablesHelper envVars;
+
+        @BeforeEach
+        void setUp() {
+            envVars = new EnvironmentVariablesHelper(AZURE_ARC, azureArcEndpoint);
+            ManagedIdentityApplication.setEnvironmentVariables(envVars);
+        }
+
+        @Test
+        void validateAzureArc_WithCorrectEnvironmentVariables() {
+            // Set environment variables for Azure Arc
+            envVars.setEnvironmentVariable(Constants.IDENTITY_ENDPOINT, "https://example.com");
+            envVars.setEnvironmentVariable(Constants.IMDS_ENDPOINT, "https://example2.com");
+
+            // Test validation
+            boolean result = ManagedIdentityClient.validateAzureArcEnvironment(envVars);
+
+            assertTrue(result, "Azure Arc should be validated with correct environment variables");
+        }
+
+        @Test
+        void validateAzureArc_WithMissingEnvironmentVariables() {
+            // Only set one environment variable
+            envVars.setEnvironmentVariable(Constants.IDENTITY_ENDPOINT, "https://example.com");
+            envVars.setEnvironmentVariable(Constants.IMDS_ENDPOINT, null);
+
+            boolean result = ManagedIdentityClient.validateAzureArcEnvironment(envVars);
+
+            assertFalse(result, "Azure Arc validation should fail with missing environment variables");
+        }
+
+        @Test
+        void validateAzureArc_WindowsFileExists() throws IOException {
+            // Determine OS and skip if not Windows
+            String osName = System.getProperty("os.name").toLowerCase();
+            assumeTrue(osName.contains("windows"), "Test only runs on Windows");
+
+            // Create temp file to simulate Azure Arc file on Windows
+            File windowsFile = tempDir.resolve("himds.key").toFile();
+            assertTrue(windowsFile.createNewFile(), "Failed to create test file");
+
+            // Set custom file path for testing
+            client.setWindowsFilePath(windowsFile.getAbsolutePath());
+
+            boolean result = ManagedIdentityClient.validateAzureArcEnvironment(envVars);
+
+            assertTrue(result, "Azure Arc should be validated when Windows file exists");
+        }
+
+        @Test
+        void validateAzureArc_LinuxFileExists() throws IOException {
+            // Determine OS and skip if not Linux
+            String osName = System.getProperty("os.name").toLowerCase();
+            assumeTrue(osName.contains("linux"), "Test only runs on Linux");
+
+            // Create temp file to simulate Azure Arc file on Linux
+            File linuxFile = tempDir.resolve("himds.sock").toFile();
+            assertTrue(linuxFile.createNewFile(), "Failed to create test file");
+
+            // Set custom file path for testing
+            client.setLinuxFilePath(linuxFile.getAbsolutePath());
+
+            boolean result = ManagedIdentityClient.validateAzureArcEnvironment(envVars);
+
+            assertTrue(result, "Azure Arc should be validated when Linux file exists");
+        }
+
+        @Test
+        void validateAzureArc_FilesNotExist() {
+            envVars.setEnvironmentVariable(Constants.IMDS_ENDPOINT, null);
+
+            // Set non-existent file paths
+            client.setWindowsFilePath(tempDir.resolve("nonexistent-himds.key").toString());
+            client.setLinuxFilePath(tempDir.resolve("nonexistent-himds.sock").toString());
+
+            boolean result = ManagedIdentityClient.validateAzureArcEnvironment(envVars);
+
+            assertFalse(result, "Azure Arc validation should fail when files don't exist");
+        }
+
+        @Test
+        void validateAzureArc_CrossPlatformTest() throws IOException {
+            // This test creates both Windows and Linux files to test the method
+            // independent of platform in unit tests
+            envVars.setEnvironmentVariable(Constants.IMDS_ENDPOINT, null);
+            // Create both temp files
+            File windowsFile = tempDir.resolve("himds.key").toFile();
+            File linuxFile = tempDir.resolve("himds.sock").toFile();
+
+            // Set custom file paths for testing
+            client.setWindowsFilePath(windowsFile.getAbsolutePath());
+            client.setLinuxFilePath(linuxFile.getAbsolutePath());
+
+            // Test with no files
+            boolean noFilesResult = ManagedIdentityClient.validateAzureArcEnvironment(envVars);
+            assertFalse(noFilesResult, "Validation should fail when no files exist");
+
+            // Create Windows file
+            assertTrue(windowsFile.createNewFile(), "Failed to create Windows test file");
+
+            // The result depends on OS - but at least one path should be checked
+            boolean windowsFileResult = ManagedIdentityClient.validateAzureArcEnvironment(envVars);
+
+            // Create Linux file
+            assertTrue(linuxFile.createNewFile(), "Failed to create Linux test file");
+
+            // Now with both files existing, the result should depend on OS
+            boolean bothFilesResult = ManagedIdentityClient.validateAzureArcEnvironment(envVars);
+
+            // At least one of the tests with files should pass
+            assertTrue(windowsFileResult || bothFilesResult,
+                    "At least one validation should succeed when test files exist");
         }
     }
 }
