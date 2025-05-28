@@ -13,6 +13,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.URI;
 import java.util.concurrent.BlockingQueue;
 import java.util.stream.Collectors;
 
@@ -30,17 +31,20 @@ class AuthorizationResponseHandler implements HttpHandler {
 
     private BlockingQueue<AuthorizationResult> authorizationResultQueue;
     private SystemBrowserOptions systemBrowserOptions;
+    private URI redirectUri;
 
     AuthorizationResponseHandler(BlockingQueue<AuthorizationResult> authorizationResultQueue,
-                                 SystemBrowserOptions systemBrowserOptions) {
+                                 SystemBrowserOptions systemBrowserOptions, URI redirectUri) {
         this.authorizationResultQueue = authorizationResultQueue;
         this.systemBrowserOptions = systemBrowserOptions;
+        this.redirectUri = redirectUri;
     }
 
     @Override
     public void handle(HttpExchange httpExchange) throws IOException {
         try {
-            if (!httpExchange.getRequestURI().getPath().equalsIgnoreCase("/")) {
+            String expectedPath = redirectUri.getPath().isEmpty() ? "/" : redirectUri.getPath();
+            if (!httpExchange.getRequestURI().getPath().equalsIgnoreCase(expectedPath)) {
                 httpExchange.sendResponseHeaders(200, 0);
                 return;
             }

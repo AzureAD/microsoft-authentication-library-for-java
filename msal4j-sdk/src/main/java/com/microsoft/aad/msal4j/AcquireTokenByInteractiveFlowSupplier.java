@@ -59,7 +59,8 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
             AuthorizationResponseHandler authorizationResponseHandler =
                     new AuthorizationResponseHandler(
                             authorizationResultQueue,
-                            systemBrowserOptions);
+                            systemBrowserOptions,
+                            interactiveRequest.interactiveRequestParameters().redirectUri());
 
             startHttpListener(authorizationResponseHandler);
 
