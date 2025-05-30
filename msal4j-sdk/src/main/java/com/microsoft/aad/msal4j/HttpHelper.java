@@ -18,8 +18,6 @@ class HttpHelper implements IHttpHelper {
 
     private static final Logger log = LoggerFactory.getLogger(HttpHelper.class);
     public static final String RETRY_AFTER_HEADER = "Retry-After";
-    public static final int RETRY_NUM = 2;
-    public static final int RETRY_DELAY_MS = 1000;
 
     public static final int HTTP_STATUS_200 = 200;
     public static final int HTTP_STATUS_400 = 400;
@@ -27,9 +25,11 @@ class HttpHelper implements IHttpHelper {
     public static final int HTTP_STATUS_500 = 500;
 
     private IHttpClient httpClient;
+    private IRetryPolicy retryPolicy;
 
-    HttpHelper(IHttpClient httpClient) {
+    HttpHelper(IHttpClient httpClient, IRetryPolicy retryPolicy) {
         this.httpClient = httpClient;
+        this.retryPolicy = retryPolicy != null ? retryPolicy : new DefaultRetryPolicy();
     }
 
     public IHttpResponse executeHttpRequest(HttpRequest httpRequest,
@@ -141,20 +141,19 @@ class HttpHelper implements IHttpHelper {
         return StringHelper.createSha256Hash(sb.toString());
     }
 
-    boolean isRetryable(IHttpResponse httpResponse) {
-        return httpResponse.statusCode() >= HTTP_STATUS_500 &&
-                getRetryAfterHeader(httpResponse) == null;
-    }
-
     IHttpResponse executeHttpRequestWithRetries(HttpRequest httpRequest, IHttpClient httpClient)
             throws Exception {
-        IHttpResponse httpResponse = null;
-        for (int i = 0; i < RETRY_NUM; i++) {
+        IHttpResponse httpResponse = httpClient.send(httpRequest);
+
+        int retryCount = 0;
+        int maxRetries = retryPolicy.getMaxRetryCount(httpResponse);
+
+        while (retryPolicy.isRetryable(httpResponse) && retryCount < maxRetries) {
+            Thread.sleep(retryPolicy.getRetryDelayMs(httpResponse));
+
+            retryCount++;
+
             httpResponse = httpClient.send(httpRequest);
-            if (!isRetryable(httpResponse)) {
-                break;
-            }
-            Thread.sleep(RETRY_DELAY_MS);
         }
 
         return httpResponse;
@@ -191,7 +190,7 @@ class HttpHelper implements IHttpHelper {
         }
     }
 
-    private Integer getRetryAfterHeader(IHttpResponse httpResponse) {
+    static Integer getRetryAfterHeader(IHttpResponse httpResponse) {
 
         if (httpResponse.headers() != null) {
             TreeMap<String, List<String>> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -278,5 +277,9 @@ class HttpHelper implements IHttpHelper {
 
             log.info(msg);
         }
+    }
+
+    void setRetryPolicy(IRetryPolicy retryPolicy) {
+        this.retryPolicy = retryPolicy;
     }
 }

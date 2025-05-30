@@ -123,7 +123,7 @@ class TokenRequestExecutorTest {
         ServiceBundle serviceBundle = new ServiceBundle(
                 null,
                 new TelemetryManager(null, false),
-                new HttpHelper(new DefaultHttpClient(null, null, null, null)));
+                new HttpHelper(new DefaultHttpClient(null, null, null, null), new DefaultRetryPolicy()));
 
         return spy(new TokenRequestExecutor(
                 new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)), refreshTokenRequest, serviceBundle));

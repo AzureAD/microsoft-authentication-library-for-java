@@ -568,7 +568,8 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
                 new TelemetryManager(telemetryConsumer, builder.onlySendFailureTelemetry),
                 new HttpHelper(builder.httpClient == null ?
                         new DefaultHttpClient(builder.proxy, builder.sslSocketFactory, builder.connectTimeoutForDefaultHttpClient, builder.readTimeoutForDefaultHttpClient) :
-                        builder.httpClient)
+                        builder.httpClient,
+                        new DefaultRetryPolicy())
         );
 
         if (aadAadInstanceDiscoveryResponse != null) {

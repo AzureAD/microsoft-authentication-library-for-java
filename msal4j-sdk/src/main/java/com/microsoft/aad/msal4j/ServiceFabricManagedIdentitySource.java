@@ -25,7 +25,7 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
     //No other flow need this and an app developer may not be aware of it, so it was decided that for the Service Fabric flow we will simply override
     // any HttpClient that may have been set by the app developer with our own client which performs the validation logic.
     private static IHttpClient httpClient = new DefaultHttpClientManagedIdentity(null, null, null, null);
-    private static HttpHelper httpHelper = new HttpHelperManagedIdentity(httpClient);
+    private static HttpHelper httpHelper = new HttpHelper(httpClient, new ManagedIdentityRetryPolicy());
 
     @Override
     public void createManagedIdentityRequest(String resource) {
@@ -122,6 +122,6 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
     //However, unit tests often need to mock HttpClient and need a way to inject the mocked object into this class.
     static void setHttpClient(IHttpClient client) {
         httpClient = client;
-        httpHelper = new HttpHelperManagedIdentity(httpClient);
+        httpHelper = new HttpHelper(httpClient, new ManagedIdentityRetryPolicy());
     }
 }

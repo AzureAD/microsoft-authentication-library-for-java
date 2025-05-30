@@ -4,6 +4,8 @@
 package com.microsoft.aad.msal4j;
 
 import com.nimbusds.oauth2.sdk.util.URLUtils;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -39,6 +41,20 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class ManagedIdentityTests {
+
+    @BeforeAll
+    static void setupRetryPolicies() {
+        // Set retry delays to 1ms for faster test execution
+        ManagedIdentityRetryPolicy.setRetryDelayMs(1);
+        IMDSRetryPolicy.setRetryDelayMs(1);
+    }
+
+    @AfterAll
+    static void resetRetryPolicies() {
+        // Reset retry delays to default values
+        ManagedIdentityRetryPolicy.resetToDefaults();
+        IMDSRetryPolicy.resetToDefaults();
+    }
 
     private String getSuccessfulResponse(String resource) {
         long expiresOn = (System.currentTimeMillis() / 1000) + (24 * 3600);//A long-lived, 24 hour token
@@ -567,6 +583,47 @@ class ManagedIdentityTests {
 
                 //Because there was no retry, there should only be one invocation of HttpClient's send method
                 verify(httpClientMock, times(1)).send(any());
+
+                return;
+            }
+
+            fail("MsalServiceException is expected but not thrown.");
+        }
+
+        @Test
+        void managedIdentityTest_IMDSRetry() throws Exception {
+            IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(IMDS, ManagedIdentityTestConstants.IMDS_ENDPOINT);
+            ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+
+            DefaultHttpClientManagedIdentity httpClientMock = mock(DefaultHttpClientManagedIdentity.class);
+
+            miApp = ManagedIdentityApplication
+                    .builder(ManagedIdentityId.systemAssigned())
+                    .httpClient(httpClientMock)
+                    .build();
+
+            // IMDS has different retry logic for certain status codes, such as 410
+            when(httpClientMock.send(expectedRequest(IMDS, ManagedIdentityTestConstants.RESOURCE))).thenReturn(expectedResponse(410, ManagedIdentityTestConstants.MSI_ERROR_RESPONSE_500));
+
+            try {
+                acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE).get();
+            } catch (Exception exception) {
+                assert(exception.getCause() instanceof MsalServiceException);
+
+                //A 410 status code should trigger the linear retry policy, with a total of 8 attempts (1 original + 7 retries)
+                verify(httpClientMock, times(8)).send(any());
+            }
+
+            clearInvocations(httpClientMock);
+            when(httpClientMock.send(expectedRequest(IMDS, ManagedIdentityTestConstants.RESOURCE))).thenReturn(expectedResponse(500, ManagedIdentityTestConstants.MSI_ERROR_RESPONSE_500));
+
+            try {
+                acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE).get();
+            } catch (Exception exception) {
+                assert(exception.getCause() instanceof MsalServiceException);
+
+                //A 500 status code should trigger the exponential retry policy, with a total of 4 attempts (1 original + 3 retries)
+                verify(httpClientMock, times(4)).send(any());
 
                 return;
             }
