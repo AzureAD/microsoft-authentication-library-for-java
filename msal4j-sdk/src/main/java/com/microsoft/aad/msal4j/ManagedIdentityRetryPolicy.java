@@ -14,12 +14,12 @@ class ManagedIdentityRetryPolicy implements IRetryPolicy {
     public boolean isRetryable(IHttpResponse httpResponse) {
         int statusCode = httpResponse.statusCode();
 
-        return statusCode == 404 || // Not Found
-                statusCode == 408 || // Request Timeout
-                statusCode == 429 || // Too Many Requests
-                statusCode == 500 || // Internal Server Error
-                statusCode == 503 || // Service Unavailable
-                statusCode == 504;   // Gateway Timeout
+        return statusCode == HttpStatus.NOT_FOUND.getCode() ||
+                statusCode == HttpStatus.REQUEST_TIMEOUT.getCode() ||
+                statusCode == HttpStatus.TOO_MANY_REQUESTS.getCode() ||
+                statusCode == HttpStatus.INTERNAL_SERVER_ERROR.getCode() ||
+                statusCode == HttpStatus.SERVICE_UNAVAILABLE.getCode() ||
+                statusCode == HttpStatus.GATEWAY_TIMEOUT.getCode();
     }
 
     @Override

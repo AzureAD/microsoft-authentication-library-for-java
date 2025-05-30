@@ -12,8 +12,7 @@ class DefaultRetryPolicy implements IRetryPolicy {
 
     @Override
     public boolean isRetryable(IHttpResponse httpResponse) {
-        return httpResponse.statusCode() >= 500 &&
-                httpResponse.statusCode() < 600 &&
+        return HttpStatus.isServerError(httpResponse.statusCode()) &&
                 HttpHelper.getRetryAfterHeader(httpResponse) == null;
     }
 

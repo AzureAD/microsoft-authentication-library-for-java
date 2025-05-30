@@ -18,11 +18,11 @@ class IMDSRetryPolicy extends ManagedIdentityRetryPolicy {
         currentRetryCount++;
         lastStatusCode = httpResponse.statusCode();
 
-        return (lastStatusCode >= 500 && lastStatusCode < 600) ||
-                lastStatusCode == 404 || // Not Found
-                lastStatusCode == 408 || // Request Timeout
-                lastStatusCode == 410 || // Gone
-                lastStatusCode == 429;   // Too Many Requests
+        return HttpStatus.isServerError(lastStatusCode) ||
+                lastStatusCode == HttpStatus.NOT_FOUND.getCode() ||
+                lastStatusCode == HttpStatus.REQUEST_TIMEOUT.getCode() ||
+                lastStatusCode == HttpStatus.GONE.getCode() ||
+                lastStatusCode == HttpStatus.TOO_MANY_REQUESTS.getCode();
     }
 
     @Override
