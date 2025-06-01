@@ -6,38 +6,97 @@ package com.microsoft.aad.msal4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.io.IOException;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
+import java.util.*;
 
 import static com.microsoft.aad.msal4j.Constants.POINT_DELIMITER;
 
+/**
+ * Helper class for handling HTTP requests and responses with retry and throttling logic.
+ */
 class HttpHelper implements IHttpHelper {
 
     private static final Logger log = LoggerFactory.getLogger(HttpHelper.class);
-    public static final String RETRY_AFTER_HEADER = "Retry-After";
-    public static final int RETRY_NUM = 2;
-    public static final int RETRY_DELAY_MS = 1000;
 
+    /**
+     * Header name for specifying retry-after duration.
+     */
+    public static final String RETRY_AFTER_HEADER = "Retry-After";
+
+    /**
+     * Set of exception types that are considered acceptable for retry.
+     */
+    private static final HashSet<Class<? extends Exception>> ACCEPTABLE_EXCEPTIONS = new HashSet<>();
+
+    /**
+     * Number of retry attempts for HTTP requests.
+     */
+    private static final int RETRY_NUM = 2;
+
+    /**
+     * Delay in milliseconds between retry attempts.
+     */
+    private static final int RETRY_DELAY_MS = 1000;
+
+    static {
+        ACCEPTABLE_EXCEPTIONS.add(ConnectException.class);
+        ACCEPTABLE_EXCEPTIONS.add(SocketTimeoutException.class);
+        ACCEPTABLE_EXCEPTIONS.add(IOException.class);
+    }
+
+    /**
+     * RetryableCall instance for executing HTTP requests with retry logic.
+     */
+    private static final RetryableCall<IHttpResponse> RETRYABLE_CALL =
+            new RetryableCall<>(ACCEPTABLE_EXCEPTIONS, RETRY_NUM, RETRY_DELAY_MS);
+
+    /**
+     * HTTP status code for OK.
+     */
     public static final int HTTP_STATUS_200 = 200;
+
+    /**
+     * HTTP status code for Bad Request.
+     */
     public static final int HTTP_STATUS_400 = 400;
+
+    /**
+     * HTTP status code for Too Many Requests.
+     */
     public static final int HTTP_STATUS_429 = 429;
+
+    /**
+     * HTTP status code for Internal Server Error.
+     */
     public static final int HTTP_STATUS_500 = 500;
 
     private IHttpClient httpClient;
 
+    /**
+     * Constructs an instance of HttpHelper with the specified HTTP client.
+     *
+     * @param httpClient The HTTP client to use for sending requests.
+     */
     HttpHelper(IHttpClient httpClient) {
         this.httpClient = httpClient;
     }
 
+    /**
+     * Executes an HTTP request with retry and telemetry logic.
+     *
+     * @param httpRequest   The HTTP request to execute.
+     * @param requestContext The context of the request, including telemetry and client information.
+     * @param serviceBundle  The service bundle containing application-level configurations.
+     * @return The HTTP response received from the server.
+     */
     public IHttpResponse executeHttpRequest(HttpRequest httpRequest,
                                             RequestContext requestContext,
                                             ServiceBundle serviceBundle) {
         checkForThrottling(requestContext);
 
-        HttpEvent httpEvent = new HttpEvent(); // for tracking http telemetry
+        HttpEvent httpEvent = new HttpEvent(); // for tracking HTTP telemetry
         IHttpResponse httpResponse;
 
         try (TelemetryHelper telemetryHelper = serviceBundle.getTelemetryManager().createTelemetryHelper(
@@ -67,15 +126,22 @@ class HttpHelper implements IHttpHelper {
         return httpResponse;
     }
 
-    //Overloaded version of the more commonly used HTTP executor. It does not use ServiceBundle, allowing an HTTP call to be
-    // made only with more bespoke request-level parameters rather than those from the app-level ServiceBundle
+    /**
+     * Overloaded version of the HTTP executor that does not use ServiceBundle.
+     *
+     * @param httpRequest    The HTTP request to execute.
+     * @param requestContext The context of the request, including telemetry and client information.
+     * @param telemetryManager The telemetry manager for tracking request telemetry.
+     * @param httpClient     The HTTP client to use for sending requests.
+     * @return The HTTP response received from the server.
+     */
     IHttpResponse executeHttpRequest(HttpRequest httpRequest,
-                                            RequestContext requestContext,
-                                            TelemetryManager telemetryManager,
-                                            IHttpClient httpClient) {
+                                     RequestContext requestContext,
+                                     TelemetryManager telemetryManager,
+                                     IHttpClient httpClient) {
         checkForThrottling(requestContext);
 
-        HttpEvent httpEvent = new HttpEvent(); // for tracking http telemetry
+        HttpEvent httpEvent = new HttpEvent(); // for tracking HTTP telemetry
         IHttpResponse httpResponse;
 
         try (TelemetryHelper telemetryHelper = telemetryManager.createTelemetryHelper(
@@ -105,6 +171,12 @@ class HttpHelper implements IHttpHelper {
         return httpResponse;
     }
 
+    /**
+     * Executes an HTTP request without additional context or telemetry.
+     *
+     * @param httpRequest The HTTP request to execute.
+     * @return The HTTP response received from the server.
+     */
     IHttpResponse executeHttpRequest(HttpRequest httpRequest) {
         IHttpResponse httpResponse;
 
@@ -121,6 +193,12 @@ class HttpHelper implements IHttpHelper {
         return httpResponse;
     }
 
+    /**
+     * Generates a unique request thumbprint for throttling purposes.
+     *
+     * @param requestContext The context of the request.
+     * @return A SHA-256 hash representing the request thumbprint.
+     */
     private String getRequestThumbprint(RequestContext requestContext) {
         StringBuilder sb = new StringBuilder();
         sb.append(requestContext.clientId() + POINT_DELIMITER);
@@ -141,16 +219,30 @@ class HttpHelper implements IHttpHelper {
         return StringHelper.createSha256Hash(sb.toString());
     }
 
+    /**
+     * Determines if the HTTP response is retryable based on its status code.
+     *
+     * @param httpResponse The HTTP response to evaluate.
+     * @return True if the response is retryable, false otherwise.
+     */
     boolean isRetryable(IHttpResponse httpResponse) {
         return httpResponse.statusCode() >= HTTP_STATUS_500 &&
                 getRetryAfterHeader(httpResponse) == null;
     }
 
+    /**
+     * Executes an HTTP request with retry logic.
+     *
+     * @param httpRequest The HTTP request to execute.
+     * @param httpClient  The HTTP client to use for sending requests.
+     * @return The HTTP response received from the server.
+     * @throws Exception If the request fails after all retry attempts.
+     */
     IHttpResponse executeHttpRequestWithRetries(HttpRequest httpRequest, IHttpClient httpClient)
             throws Exception {
         IHttpResponse httpResponse = null;
         for (int i = 0; i < RETRY_NUM; i++) {
-            httpResponse = httpClient.send(httpRequest);
+            httpResponse = RETRYABLE_CALL.callWithRetry(() -> httpClient.send(httpRequest));
             if (!isRetryable(httpResponse)) {
                 break;
             }
@@ -160,6 +252,11 @@ class HttpHelper implements IHttpHelper {
         return httpResponse;
     }
 
+    /**
+     * Checks if the request is throttled and throws an exception if necessary.
+     *
+     * @param requestContext The context of the request.
+     */
     private void checkForThrottling(RequestContext requestContext) {
         if (requestContext.clientApplication() instanceof PublicClientApplication &&
                 requestContext.apiParameters() != null) {
@@ -173,6 +270,12 @@ class HttpHelper implements IHttpHelper {
         }
     }
 
+    /**
+     * Processes throttling instructions based on the HTTP response.
+     *
+     * @param httpResponse   The HTTP response received.
+     * @param requestContext The context of the request.
+     */
     private void processThrottlingInstructions(IHttpResponse httpResponse, RequestContext requestContext) {
         if (requestContext.clientApplication() instanceof PublicClientApplication) {
             Long expirationTimestamp = null;
@@ -191,6 +294,12 @@ class HttpHelper implements IHttpHelper {
         }
     }
 
+    /**
+     * Retrieves the Retry-After header value from the HTTP response.
+     *
+     * @param httpResponse The HTTP response to evaluate.
+     * @return The Retry-After value in seconds, or null if not present or invalid.
+     */
     private Integer getRetryAfterHeader(IHttpResponse httpResponse) {
 
         if (httpResponse.headers() != null) {
@@ -212,6 +321,12 @@ class HttpHelper implements IHttpHelper {
         return null;
     }
 
+    /**
+     * Adds request information to the telemetry event.
+     *
+     * @param httpRequest The HTTP request being executed.
+     * @param httpEvent   The telemetry event to update.
+     */
     private void addRequestInfoToTelemetry(final HttpRequest httpRequest, HttpEvent httpEvent) {
         try {
             httpEvent.setHttpPath(httpRequest.url().toURI());
@@ -229,6 +344,12 @@ class HttpHelper implements IHttpHelper {
         }
     }
 
+    /**
+     * Adds response information to the telemetry event.
+     *
+     * @param httpResponse The HTTP response received.
+     * @param httpEvent    The telemetry event to update.
+     */
     private void addResponseInfoToTelemetry(IHttpResponse httpResponse, HttpEvent httpEvent) {
 
         httpEvent.setHttpResponseStatus(httpResponse.statusCode());
@@ -256,6 +377,12 @@ class HttpHelper implements IHttpHelper {
         }
     }
 
+    /**
+     * Verifies that the correlation ID returned in the HTTP response matches the one sent in the request.
+     *
+     * @param httpRequest  The HTTP request sent.
+     * @param httpResponse The HTTP response received.
+     */
     private static void verifyReturnedCorrelationId(final HttpRequest httpRequest,
                                                     IHttpResponse httpResponse) {
 
