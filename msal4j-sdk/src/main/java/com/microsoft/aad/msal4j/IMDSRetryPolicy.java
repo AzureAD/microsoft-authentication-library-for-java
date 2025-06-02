@@ -3,6 +3,11 @@
 
 package com.microsoft.aad.msal4j;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 //IMDS uses a different try policy than other MI flows, see https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/blob/main/docs/imds_retry_based_on_errors.md
 class IMDSRetryPolicy extends ManagedIdentityRetryPolicy {
     private static final int LINEAR_RETRY_NUM = 7;
@@ -12,17 +17,22 @@ class IMDSRetryPolicy extends ManagedIdentityRetryPolicy {
 
     private int currentRetryCount;
     private int lastStatusCode;
-    
+
+    private static final Set<Integer> RETRYABLE_STATUS_CODES = Collections.unmodifiableSet(
+            new HashSet<>(Arrays.asList(
+                    HttpStatus.NOT_FOUND.getCode(),
+                    HttpStatus.REQUEST_TIMEOUT.getCode(),
+                    HttpStatus.GONE.getCode(),
+                    HttpStatus.TOO_MANY_REQUESTS.getCode()
+            ))
+    );
+
     @Override
     public boolean isRetryable(IHttpResponse httpResponse) {
         currentRetryCount++;
         lastStatusCode = httpResponse.statusCode();
 
-        return HttpStatus.isServerError(lastStatusCode) ||
-                lastStatusCode == HttpStatus.NOT_FOUND.getCode() ||
-                lastStatusCode == HttpStatus.REQUEST_TIMEOUT.getCode() ||
-                lastStatusCode == HttpStatus.GONE.getCode() ||
-                lastStatusCode == HttpStatus.TOO_MANY_REQUESTS.getCode();
+        return HttpStatus.isServerError(lastStatusCode) || RETRYABLE_STATUS_CODES.contains(lastStatusCode);
     }
 
     @Override
