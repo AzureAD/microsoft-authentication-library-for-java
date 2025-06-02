@@ -1,32 +1,32 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.microsoft.azure</groupId>
-	<artifactId>msal4j</artifactId>
-	<version>1.20.1</version>
-	<packaging>jar</packaging>
-	<name>msal4j</name>
-	<description>
-    Microsoft Authentication Library for Java gives you the ability to obtain tokens from Azure AD v2 (work and school
-		accounts, MSA) and Azure AD B2C, gaining access to Microsoft Cloud API and any other API secured by Microsoft
-		identities
-  </description>
-	<url>https://github.com/AzureAD/microsoft-authentication-library-for-java</url>
-	<developers>
-		<developer>
-			<id>msopentech</id>
-			<name>Microsoft Open Technologies, Inc.</name>
-		</developer>
-	</developers>
-	<licenses>
-		<license>
-			<name>MIT License</name>
-		</license>
-	</licenses>
-	<inceptionYear>2013</inceptionYear>
-	<scm>
-		<url>https://github.com/AzureAD/microsoft-authentication-library-for-java</url>
-	</scm>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.microsoft.azure</groupId>
+    <artifactId>msal4j</artifactId>
+    <version>1.20.1</version>
+    <packaging>jar</packaging>
+    <name>msal4j</name>
+    <description>
+        Microsoft Authentication Library for Java gives you the ability to obtain tokens from Microsoft Entra (work and
+        school accounts, MSA) and Azure AD B2C, gaining access to Microsoft Cloud API and any other API secured by Microsoft
+        identities
+    </description>
+    <url>https://github.com/AzureAD/microsoft-authentication-library-for-java</url>
+    <developers>
+        <developer>
+            <id>msopentech</id>
+            <name>Microsoft Open Technologies, Inc.</name>
+        </developer>
+    </developers>
+    <licenses>
+        <license>
+            <name>MIT License</name>
+        </license>
+    </licenses>
+    <inceptionYear>2013</inceptionYear>
+    <scm>
+        <url>https://github.com/AzureAD/microsoft-authentication-library-for-java</url>
+    </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -73,39 +73,33 @@
 
         <!-- test dependencies -->
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-text</artifactId>
-            <version>1.10.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>5.9.2</version>
+            <version>5.13.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-params</artifactId>
-            <version>5.8.1</version>
+            <version>5.13.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.9.2</version>
+            <version>5.13.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-inline</artifactId>
-            <version>4.7.0</version>
+            <version>4.11.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
-            <version>4.7.0</version>
+            <version>4.11.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -114,23 +108,16 @@
             <version>1.14.5</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>org.skyscreamer</groupId>
             <artifactId>jsonassert</artifactId>
-            <version>1.5.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.13</version>
+            <version>1.5.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.azure</groupId>
             <artifactId>azure-security-keyvault-secrets</artifactId>
-            <version>4.3.5</version>
+            <version>4.9.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -140,15 +127,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>32.1.1-jre</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.3.12</version>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>1.13.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -205,7 +186,9 @@
                 <executions>
                     <execution>
                         <id>check</id>
-                        <goals><goal>check</goal></goals>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
@@ -233,7 +216,6 @@
                     <addOutputDirectory>false</addOutputDirectory>
                 </configuration>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -256,7 +238,6 @@
                     <argLine>@{argLine} -noverify</argLine>
                 </configuration>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -362,6 +343,10 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.1.2</version>
             </plugin>
         </plugins>
     </build>
