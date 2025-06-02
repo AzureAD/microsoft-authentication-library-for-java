@@ -21,10 +21,7 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -629,6 +626,103 @@ class ManagedIdentityTests {
             }
 
             fail("MsalServiceException is expected but not thrown.");
+        }
+
+        @Test
+        void managedIdentityTest_RetrySucceedsAfterFailure() throws Exception {
+            IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(IMDS, ManagedIdentityTestConstants.IMDS_ENDPOINT);
+            ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+
+            DefaultHttpClientManagedIdentity httpClientMock = mock(DefaultHttpClientManagedIdentity.class);
+
+            miApp = ManagedIdentityApplication
+                    .builder(ManagedIdentityId.systemAssigned())
+                    .httpClient(httpClientMock)
+                    .build();
+
+            // First call returns 500, subsequent calls return 200
+            when(httpClientMock.send(expectedRequest(IMDS, ManagedIdentityTestConstants.RESOURCE)))
+                    .thenReturn(expectedResponse(500, ManagedIdentityTestConstants.MSI_ERROR_RESPONSE_500))
+                    .thenReturn(expectedResponse(200, getSuccessfulResponse(ManagedIdentityTestConstants.RESOURCE)));
+
+            IAuthenticationResult result = acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE).get();
+
+            assertTokenFromIdentityProvider(result);
+            assertNotNull(result.accessToken());
+
+            // Verify that the client was called exactly twice (first attempt + one retry)
+            verify(httpClientMock, times(2)).send(any());
+        }
+
+        @Test
+        void managedIdentityTest_NonRetryableError() throws Exception {
+            IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(IMDS, ManagedIdentityTestConstants.IMDS_ENDPOINT);
+            ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+
+            DefaultHttpClientManagedIdentity httpClientMock = mock(DefaultHttpClientManagedIdentity.class);
+
+            miApp = ManagedIdentityApplication
+                    .builder(ManagedIdentityId.systemAssigned())
+                    .httpClient(httpClientMock)
+                    .build();
+
+            // Use a status code that doesn't trigger retries (499)
+            when(httpClientMock.send(expectedRequest(IMDS, ManagedIdentityTestConstants.RESOURCE)))
+                    .thenReturn(expectedResponse(499, ManagedIdentityTestConstants.MSI_ERROR_RESPONSE_NORETRY));
+
+            CompletableFuture<IAuthenticationResult> future = acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE);
+
+            // Verify that an exception is thrown
+            ExecutionException ex = assertThrows(ExecutionException.class, future::get);
+            assertInstanceOf(MsalServiceException.class, ex.getCause());
+
+            MsalServiceException msalException = (MsalServiceException) ex.getCause();
+            assertEquals(MsalError.MANAGED_IDENTITY_REQUEST_FAILED, msalException.errorCode());
+
+            // Verify the client was called exactly once (no retries attempted)
+            verify(httpClientMock, times(1)).send(any());
+        }
+
+        @Test
+        void managedIdentityTest_RetriesARePerRequest() throws Exception {
+            IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(IMDS, ManagedIdentityTestConstants.IMDS_ENDPOINT);
+            ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+
+            DefaultHttpClientManagedIdentity httpClientMock = mock(DefaultHttpClientManagedIdentity.class);
+
+            miApp = ManagedIdentityApplication
+                    .builder(ManagedIdentityId.systemAssigned())
+                    .httpClient(httpClientMock)
+                    .build();
+
+            // First call returns 500, subsequent calls return 200
+            when(httpClientMock.send(expectedRequest(IMDS, ManagedIdentityTestConstants.RESOURCE)))
+                    .thenReturn(expectedResponse(500, ManagedIdentityTestConstants.MSI_ERROR_RESPONSE_500))
+                    .thenReturn(expectedResponse(200, getSuccessfulResponse(ManagedIdentityTestConstants.RESOURCE)));
+
+            IAuthenticationResult result = acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE).get();
+
+            assertTokenFromIdentityProvider(result);
+            assertNotNull(result.accessToken());
+
+            // Verify that the client was called exactly twice (first attempt + one retry)
+            verify(httpClientMock, times(2)).send(any());
+
+            //All calls return 500
+            when(httpClientMock.send(expectedRequest(IMDS, "otherResource")))
+                    .thenReturn(expectedResponse(500, ManagedIdentityTestConstants.MSI_ERROR_RESPONSE_500));
+
+            CompletableFuture<IAuthenticationResult> future = acquireTokenCommon("otherResource");
+
+            // Verify that an exception is thrown
+            ExecutionException ex = assertThrows(ExecutionException.class, future::get);
+            assertInstanceOf(MsalServiceException.class, ex.getCause());
+
+            MsalServiceException msalException = (MsalServiceException) ex.getCause();
+            assertEquals(MsalError.MANAGED_IDENTITY_REQUEST_FAILED, msalException.errorCode());
+
+            // Verify that the client was called four more times (new first attempt + three new retries)
+            verify(httpClientMock, times(6)).send(any());
         }
 
         @ParameterizedTest
