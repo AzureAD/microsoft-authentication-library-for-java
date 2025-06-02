@@ -30,6 +30,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <skip.unit.tests>false</skip.unit.tests>
+        <skip.integration.tests>false</skip.integration.tests>
     </properties>
 
     <dependencies>
@@ -236,6 +238,7 @@
                 <version>3.5.2</version>
                 <configuration>
                     <argLine>@{argLine} -noverify</argLine>
+                    <skipTests>${skip.unit.tests}</skipTests>
                 </configuration>
             </plugin>
             <plugin>
@@ -312,6 +315,9 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <skipTests>${skip.integration.tests}</skipTests>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>biz.aQute.bnd</groupId>
