@@ -600,7 +600,7 @@ class ManagedIdentityTests {
                     .build();
 
             // IMDS has different retry logic for certain status codes, such as 410
-            when(httpClientMock.send(expectedRequest(IMDS, ManagedIdentityTestConstants.RESOURCE))).thenReturn(expectedResponse(410, ManagedIdentityTestConstants.MSI_ERROR_RESPONSE_500));
+            when(httpClientMock.send(expectedRequest(IMDS, ManagedIdentityTestConstants.RESOURCE))).thenReturn(expectedResponse(HttpStatus.GONE.getCode(), ManagedIdentityTestConstants.MSI_ERROR_RESPONSE_500));
 
             try {
                 acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE).get();
@@ -612,7 +612,7 @@ class ManagedIdentityTests {
             }
 
             clearInvocations(httpClientMock);
-            when(httpClientMock.send(expectedRequest(IMDS, ManagedIdentityTestConstants.RESOURCE))).thenReturn(expectedResponse(500, ManagedIdentityTestConstants.MSI_ERROR_RESPONSE_500));
+            when(httpClientMock.send(expectedRequest(IMDS, ManagedIdentityTestConstants.RESOURCE))).thenReturn(expectedResponse(HttpStatus.INTERNAL_SERVER_ERROR.getCode(), ManagedIdentityTestConstants.MSI_ERROR_RESPONSE_500));
 
             try {
                 acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE).get();
@@ -642,8 +642,8 @@ class ManagedIdentityTests {
 
             // First call returns 500, subsequent calls return 200
             when(httpClientMock.send(expectedRequest(IMDS, ManagedIdentityTestConstants.RESOURCE)))
-                    .thenReturn(expectedResponse(500, ManagedIdentityTestConstants.MSI_ERROR_RESPONSE_500))
-                    .thenReturn(expectedResponse(200, getSuccessfulResponse(ManagedIdentityTestConstants.RESOURCE)));
+                    .thenReturn(expectedResponse(HttpStatus.INTERNAL_SERVER_ERROR.getCode(), ManagedIdentityTestConstants.MSI_ERROR_RESPONSE_500))
+                    .thenReturn(expectedResponse(HttpStatus.OK.getCode(), getSuccessfulResponse(ManagedIdentityTestConstants.RESOURCE)));
 
             IAuthenticationResult result = acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE).get();
 
@@ -697,8 +697,8 @@ class ManagedIdentityTests {
 
             // First call returns 500, subsequent calls return 200
             when(httpClientMock.send(expectedRequest(IMDS, ManagedIdentityTestConstants.RESOURCE)))
-                    .thenReturn(expectedResponse(500, ManagedIdentityTestConstants.MSI_ERROR_RESPONSE_500))
-                    .thenReturn(expectedResponse(200, getSuccessfulResponse(ManagedIdentityTestConstants.RESOURCE)));
+                    .thenReturn(expectedResponse(HttpStatus.INTERNAL_SERVER_ERROR.getCode(), ManagedIdentityTestConstants.MSI_ERROR_RESPONSE_500))
+                    .thenReturn(expectedResponse(HttpStatus.OK.getCode(), getSuccessfulResponse(ManagedIdentityTestConstants.RESOURCE)));
 
             IAuthenticationResult result = acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE).get();
 
@@ -710,7 +710,7 @@ class ManagedIdentityTests {
 
             //All calls return 500
             when(httpClientMock.send(expectedRequest(IMDS, "otherResource")))
-                    .thenReturn(expectedResponse(500, ManagedIdentityTestConstants.MSI_ERROR_RESPONSE_500));
+                    .thenReturn(expectedResponse(HttpStatus.INTERNAL_SERVER_ERROR.getCode(), ManagedIdentityTestConstants.MSI_ERROR_RESPONSE_500));
 
             CompletableFuture<IAuthenticationResult> future = acquireTokenCommon("otherResource");
 

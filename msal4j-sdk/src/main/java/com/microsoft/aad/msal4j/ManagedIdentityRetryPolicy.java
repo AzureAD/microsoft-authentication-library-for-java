@@ -13,7 +13,9 @@ import java.util.Set;
  */
 class ManagedIdentityRetryPolicy implements IRetryPolicy {
     private static final int RETRY_NUM = 3;
-    private static int RETRY_DELAY_MS = 1000;
+    private static final int RETRY_DELAY_MS = 1000;
+
+    private static int currentRetryDelayMs = RETRY_DELAY_MS;
 
     private static final Set<Integer> RETRYABLE_STATUS_CODES = Collections.unmodifiableSet(
             new HashSet<>(Arrays.asList(
@@ -38,15 +40,15 @@ class ManagedIdentityRetryPolicy implements IRetryPolicy {
 
     @Override
     public int getRetryDelayMs(IHttpResponse httpResponse) {
-        return RETRY_DELAY_MS;
+        return currentRetryDelayMs;
     }
 
     //Package-private methods to allow much quicker testing. The delay values should be treated as constants in any non-test scenario.
     static void setRetryDelayMs(int retryDelayMs) {
-        RETRY_DELAY_MS = retryDelayMs;
+        currentRetryDelayMs = retryDelayMs;
     }
 
     static void resetToDefaults() {
-        RETRY_DELAY_MS = 1000;
+        currentRetryDelayMs = RETRY_DELAY_MS;
     }
 }
