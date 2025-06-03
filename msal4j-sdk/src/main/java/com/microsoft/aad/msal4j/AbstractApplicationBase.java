@@ -32,6 +32,7 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
     private IHttpClient httpClient;
     private Integer connectTimeoutForDefaultHttpClient;
     private Integer readTimeoutForDefaultHttpClient;
+    private boolean disableInternalRetries;
     String tenant;
 
     //The following fields are set in only some applications and/or set internally by the library. To avoid excessive
@@ -150,6 +151,10 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
         return this.readTimeoutForDefaultHttpClient;
     }
 
+    boolean retriesDisabled() {
+        return this.disableInternalRetries;
+    }
+
     String tenant() {
         return this.tenant;
     }
@@ -190,6 +195,7 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
         Boolean onlySendFailureTelemetry = false;
         Integer connectTimeoutForDefaultHttpClient;
         Integer readTimeoutForDefaultHttpClient;
+        boolean disableInternalRetries;
         private String clientId;
         private Authority authenticationAuthority = createDefaultAADAuthority();
 
@@ -319,6 +325,17 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
             return self();
         }
 
+        /**
+         * Disables the library's internal retry logic for HTTP requests. Used alongside
+         *
+         * @param val timeout value in milliseconds
+         * @return instance of the Builder on which method was called
+         */
+        public T disableInternalRetries(boolean val) {
+            disableInternalRetries = val;
+            return self();
+        }
+
         T telemetryConsumer(Consumer<List<HashMap<String, String>>> val) {
             validateNotNull("telemetryConsumer", val);
 
@@ -356,5 +373,16 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
         readTimeoutForDefaultHttpClient = builder.readTimeoutForDefaultHttpClient;
         authenticationAuthority = builder.authenticationAuthority;
         clientId = builder.clientId;
+        disableInternalRetries = builder.disableInternalRetries;
+
+        if (builder.httpClient == null) {
+            httpClient = new DefaultHttpClient(
+                    builder.proxy,
+                    builder.sslSocketFactory,
+                    builder.connectTimeoutForDefaultHttpClient,
+                    builder.readTimeoutForDefaultHttpClient);
+        } else {
+            httpClient = builder.httpClient;
+        }
     }
 }

@@ -37,10 +37,7 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
         super.serviceBundle = new ServiceBundle(
                 builder.executorService,
                 new TelemetryManager(telemetryConsumer, builder.onlySendFailureTelemetry),
-                new HttpHelper(builder.httpClient == null ?
-                        new DefaultHttpClient(builder.proxy, builder.sslSocketFactory, builder.connectTimeoutForDefaultHttpClient, builder.readTimeoutForDefaultHttpClient) :
-                        builder.httpClient,
-                        new ManagedIdentityRetryPolicy())
+                new HttpHelper(this, new ManagedIdentityRetryPolicy())
         );
         log = LoggerFactory.getLogger(ManagedIdentityApplication.class);
 
