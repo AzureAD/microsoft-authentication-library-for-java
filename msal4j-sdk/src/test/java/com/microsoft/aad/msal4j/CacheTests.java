@@ -35,7 +35,7 @@ class CacheTests {
         responseParameters.put("access_token", "accessTokenNoAccount");
 
         ClientCredentialParameters clientCredentialParameters = ClientCredentialParameters.builder(Collections.singleton("someScopes")).build();
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(responseParameters)));
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(HttpStatus.HTTP_OK, TestHelper.getSuccessfulTokenResponse(responseParameters)));
         IAuthenticationResult resultNoAccount = cca.acquireToken(clientCredentialParameters).get();
 
         //Ensure there is one token in the cache, and the result had no account
@@ -47,7 +47,7 @@ class CacheTests {
         responseParameters.put("access_token", "accessTokenWithAccount");
         responseParameters.put("id_token", TestHelper.createIdToken(new HashMap<>()));
 
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(responseParameters)));
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(HttpStatus.HTTP_OK, TestHelper.getSuccessfulTokenResponse(responseParameters)));
         OnBehalfOfParameters onBehalfOfParametersarameters = OnBehalfOfParameters.builder(Collections.singleton("someOtherScopes"), new UserAssertion(TestHelper.signedAssertion)).build();
         IAuthenticationResult resultWithAccount = cca.acquireToken(onBehalfOfParametersarameters).get();
 

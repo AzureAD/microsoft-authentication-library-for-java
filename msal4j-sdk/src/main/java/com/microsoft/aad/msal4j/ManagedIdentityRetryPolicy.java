@@ -19,12 +19,12 @@ class ManagedIdentityRetryPolicy implements IRetryPolicy {
 
     private static final Set<Integer> RETRYABLE_STATUS_CODES = Collections.unmodifiableSet(
             new HashSet<>(Arrays.asList(
-                    HttpStatus.NOT_FOUND.getCode(),
-                    HttpStatus.REQUEST_TIMEOUT.getCode(),
-                    HttpStatus.TOO_MANY_REQUESTS.getCode(),
-                    HttpStatus.INTERNAL_SERVER_ERROR.getCode(),
-                    HttpStatus.SERVICE_UNAVAILABLE.getCode(),
-                    HttpStatus.GATEWAY_TIMEOUT.getCode()
+                    HttpStatus.HTTP_NOT_FOUND,
+                    HttpStatus.HTTP_REQUEST_TIMEOUT,
+                    HttpStatus.HTTP_TOO_MANY_REQUESTS,
+                    HttpStatus.HTTP_INTERNAL_ERROR,
+                    HttpStatus.HTTP_UNAVAILABLE,
+                    HttpStatus.HTTP_GATEWAY_TIMEOUT
             ))
     );
 

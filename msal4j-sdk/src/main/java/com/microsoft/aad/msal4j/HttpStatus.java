@@ -3,35 +3,26 @@
 
 package com.microsoft.aad.msal4j;
 
-enum HttpStatus {
-    OK(200, "OK"),
-    FOUND(302, "Found"),
-    BAD_REQUEST(400, "Bad Request"),
-    NOT_FOUND(404, "Not Found"),
-    REQUEST_TIMEOUT(408, "Request Timeout"),
-    GONE(410, "Gone"),
-    TOO_MANY_REQUESTS(429, "Too Many Requests"),
-    INTERNAL_SERVER_ERROR(500, "Internal Server Error"),
-    SERVICE_UNAVAILABLE(503, "Service Unavailable"),
-    GATEWAY_TIMEOUT(504, "Gateway Timeout");
+class HttpStatus {
 
-    private final int code;
-    private final String description;
+    static final int HTTP_OK = 200;
+    static final int HTTP_FOUND = 302;
+    static final int HTTP_BAD_REQUEST = 400;
+    static final int HTTP_UNAUTHORIZED = 401;
+    static final int HTTP_NOT_FOUND = 404;
+    static final int HTTP_REQUEST_TIMEOUT = 408;
+    static final int HTTP_GONE = 410;
+    static final int HTTP_TOO_MANY_REQUESTS = 429;
+    static final int HTTP_INTERNAL_ERROR = 500;
+    static final int HTTP_UNAVAILABLE = 503;
+    static final int HTTP_GATEWAY_TIMEOUT = 504;
 
-    HttpStatus(int code, String description) {
-        this.code = code;
-        this.description = description;
-    }
-
-    int getCode() {
-        return code;
-    }
-
-    String getDescription() {
-        return description;
-    }
-
-    //All 5xx errors
+    /**
+     * Determines if the status code represents a server error (5xx).
+     *
+     * @param code The HTTP status code
+     * @return true if the status code is between 500 and 599, inclusive
+     */
     static boolean isServerError(int code) {
         return code >= 500 && code < 600;
     }
