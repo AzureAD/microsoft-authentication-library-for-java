@@ -103,20 +103,20 @@ class RequestThrottlingTest {
                 headers.put("Retry-After", Arrays.asList(THROTTLE_IN_SEC.toString()));
                 break;
             case STATUS_CODE_429:
-                httpResponse.statusCode(429);
+                httpResponse.statusCode(HttpStatus.HTTP_TOO_MANY_REQUESTS);
                 httpResponse.body(TestConfiguration.TOKEN_ENDPOINT_INVALID_GRANT_ERROR_RESPONSE);
                 break;
             case STATUS_CODE_429_RETRY_AFTER_HEADER:
-                httpResponse.statusCode(429);
+                httpResponse.statusCode(HttpStatus.HTTP_TOO_MANY_REQUESTS);
                 httpResponse.body(TestConfiguration.TOKEN_ENDPOINT_INVALID_GRANT_ERROR_RESPONSE);
                 headers.put("Retry-After", Arrays.asList(THROTTLE_IN_SEC.toString()));
                 break;
             case STATUS_CODE_500:
-                httpResponse.statusCode(500);
+                httpResponse.statusCode(HttpStatus.HTTP_INTERNAL_ERROR);
                 httpResponse.body(TestConfiguration.TOKEN_ENDPOINT_INVALID_GRANT_ERROR_RESPONSE);
                 break;
             case STATUS_CODE_500_RETRY_AFTER_HEADER:
-                httpResponse.statusCode(500);
+                httpResponse.statusCode(HttpStatus.HTTP_INTERNAL_ERROR);
                 httpResponse.body(TestConfiguration.TOKEN_ENDPOINT_INVALID_GRANT_ERROR_RESPONSE);
                 headers.put("Retry-After", Arrays.asList(THROTTLE_IN_SEC.toString()));
                 break;

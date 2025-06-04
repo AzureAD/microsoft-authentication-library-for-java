@@ -59,7 +59,7 @@ class WSTrustRequest {
         HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, url);
         IHttpResponse mexResponse = serviceBundle.getHttpHelper().executeHttpRequest(httpRequest, requestContext, serviceBundle);
 
-        if (mexResponse.statusCode() != HttpHelper.HTTP_STATUS_200 || StringHelper.isBlank(mexResponse.body())) {
+        if (mexResponse.statusCode() != HttpStatus.HTTP_OK || StringHelper.isBlank(mexResponse.body())) {
             throw MsalServiceExceptionFactory.fromHttpResponse(mexResponse);
         }
 

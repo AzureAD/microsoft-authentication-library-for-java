@@ -23,10 +23,10 @@ class IMDSRetryPolicy extends ManagedIdentityRetryPolicy {
 
     private static final Set<Integer> RETRYABLE_STATUS_CODES = Collections.unmodifiableSet(
             new HashSet<>(Arrays.asList(
-                    HttpStatus.NOT_FOUND.getCode(),
-                    HttpStatus.REQUEST_TIMEOUT.getCode(),
-                    HttpStatus.GONE.getCode(),
-                    HttpStatus.TOO_MANY_REQUESTS.getCode()
+                    HttpStatus.HTTP_NOT_FOUND,
+                    HttpStatus.HTTP_REQUEST_TIMEOUT,
+                    HttpStatus.HTTP_GONE,
+                    HttpStatus.HTTP_TOO_MANY_REQUESTS
             ))
     );
 
@@ -40,13 +40,13 @@ class IMDSRetryPolicy extends ManagedIdentityRetryPolicy {
 
     @Override
     public int getMaxRetryCount(IHttpResponse httpResponse) {
-        return (httpResponse.statusCode() == HttpStatus.GONE.getCode()) ? LINEAR_RETRY_NUM : EXPONENTIAL_RETRY_NUM;
+        return (httpResponse.statusCode() == HttpStatus.HTTP_GONE) ? LINEAR_RETRY_NUM : EXPONENTIAL_RETRY_NUM;
     }
 
     @Override
     public int getRetryDelayMs(IHttpResponse httpResponse) {
         // Use exponential backoff for non-410 status codes
-        if (lastStatusCode == HttpStatus.GONE.getCode()) {
+        if (lastStatusCode == HttpStatus.HTTP_GONE) {
             return currentLinearRetryDelayMs;
         } else {
             return (int) (Math.pow(2, currentRetryCount) * exponentialLinearRetryDelayMs);

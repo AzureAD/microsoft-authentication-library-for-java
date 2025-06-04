@@ -19,11 +19,6 @@ class HttpHelper implements IHttpHelper {
     private static final Logger log = LoggerFactory.getLogger(HttpHelper.class);
     public static final String RETRY_AFTER_HEADER = "Retry-After";
 
-    public static final int HTTP_STATUS_200 = 200;
-    public static final int HTTP_STATUS_400 = 400;
-    public static final int HTTP_STATUS_429 = 429;
-    public static final int HTTP_STATUS_500 = 500;
-
     private IHttpClient httpClient;
     private IRetryPolicy retryPolicy;
 
@@ -179,8 +174,8 @@ class HttpHelper implements IHttpHelper {
             Integer retryAfterHeaderVal = getRetryAfterHeader(httpResponse);
             if (retryAfterHeaderVal != null) {
                 expirationTimestamp = System.currentTimeMillis() + retryAfterHeaderVal * 1000;
-            } else if (httpResponse.statusCode() == HTTP_STATUS_429 ||
-                    (httpResponse.statusCode() >= HTTP_STATUS_500)) {
+            } else if (httpResponse.statusCode() == HttpStatus.HTTP_TOO_MANY_REQUESTS ||
+                    (httpResponse.statusCode() >= HttpStatus.HTTP_INTERNAL_ERROR)) {
 
                 expirationTimestamp = System.currentTimeMillis() + ThrottlingCache.DEFAULT_THROTTLING_TIME_SEC * 1000;
             }
