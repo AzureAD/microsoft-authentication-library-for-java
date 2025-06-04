@@ -326,13 +326,14 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
         }
 
         /**
-         * Disables the library's internal retry logic for HTTP requests. Used alongside
+         * The library has a number of policies for retrying HTTP calls in different scenarios.
+         * <p>
+         * This will disable all internal retry behavior, allowing customized retry behavior via your own implementation of {@link IHttpClient}
          *
-         * @param val timeout value in milliseconds
          * @return instance of the Builder on which method was called
          */
-        public T disableInternalRetries(boolean val) {
-            disableInternalRetries = val;
+        public T disableInternalRetries() {
+            disableInternalRetries = true;
             return self();
         }
 

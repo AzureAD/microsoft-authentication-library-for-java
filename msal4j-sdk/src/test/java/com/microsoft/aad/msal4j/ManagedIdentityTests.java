@@ -601,7 +601,7 @@ class ManagedIdentityTests {
             miApp = ManagedIdentityApplication
                     .builder(ManagedIdentityId.systemAssigned())
                     .httpClient(httpClientMock)
-                    .disableInternalRetries(true)
+                    .disableInternalRetries()
                     .build();
 
             //Several specific 4xx and 5xx errors, such as 500, should trigger MSAL's retry logic
