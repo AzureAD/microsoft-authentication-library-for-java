@@ -167,7 +167,7 @@ class TokenRequestExecutor {
 
         } else {
             // http codes indicating that STS did not log request
-            if (oauthHttpResponse.getStatusCode() == HttpHelper.HTTP_STATUS_429 || oauthHttpResponse.getStatusCode() >= HttpHelper.HTTP_STATUS_500) {
+            if (oauthHttpResponse.getStatusCode() == HttpStatus.HTTP_TOO_MANY_REQUESTS || oauthHttpResponse.getStatusCode() >= HttpStatus.HTTP_INTERNAL_ERROR) {
                 serviceBundle.getServerSideTelemetry().previousRequests.putAll(
                         serviceBundle.getServerSideTelemetry().previousRequestInProgress);
             }

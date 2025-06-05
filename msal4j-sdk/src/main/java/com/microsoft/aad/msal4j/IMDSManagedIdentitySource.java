@@ -36,6 +36,12 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
         super(msalRequest, serviceBundle, ManagedIdentitySourceType.IMDS);
         IEnvironmentVariables environmentVariables = getEnvironmentVariables();
 
+        //IMDS uses a different retry policy than the default used in other MI flows
+        IHttpHelper httpHelper = serviceBundle.getHttpHelper();
+        if (httpHelper instanceof HttpHelper) {
+            ((HttpHelper) httpHelper).setRetryPolicy(new IMDSRetryPolicy());
+        }
+
         if (!StringHelper.isNullOrBlank(environmentVariables.getEnvironmentVariable(Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST))){
             LOG.info(String.format("[Managed Identity] Environment variable AZURE_POD_IDENTITY_AUTHORITY_HOST for IMDS returned endpoint: %s", environmentVariables.getEnvironmentVariable(Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST)));
             try {
