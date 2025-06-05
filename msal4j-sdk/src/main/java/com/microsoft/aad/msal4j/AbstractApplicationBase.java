@@ -32,7 +32,7 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
     private IHttpClient httpClient;
     private Integer connectTimeoutForDefaultHttpClient;
     private Integer readTimeoutForDefaultHttpClient;
-    private boolean disableInternalRetries;
+    private boolean retryDisabled;
     String tenant;
 
     //The following fields are set in only some applications and/or set internally by the library. To avoid excessive
@@ -151,8 +151,8 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
         return this.readTimeoutForDefaultHttpClient;
     }
 
-    boolean retriesDisabled() {
-        return this.disableInternalRetries;
+    boolean isRetryDisabled() {
+        return this.retryDisabled;
     }
 
     String tenant() {
@@ -374,7 +374,7 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
         readTimeoutForDefaultHttpClient = builder.readTimeoutForDefaultHttpClient;
         authenticationAuthority = builder.authenticationAuthority;
         clientId = builder.clientId;
-        disableInternalRetries = builder.disableInternalRetries;
+        retryDisabled = builder.disableInternalRetries;
 
         if (builder.httpClient == null) {
             httpClient = new DefaultHttpClient(

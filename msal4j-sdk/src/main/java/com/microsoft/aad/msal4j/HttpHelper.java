@@ -26,7 +26,7 @@ class HttpHelper implements IHttpHelper {
 
     private IHttpClient httpClient;
     private IRetryPolicy retryPolicy;
-    private boolean retriesDisabled;
+    private boolean retryDisabled;
 
     HttpHelper(IHttpClient httpClient, IRetryPolicy retryPolicy) {
         this.httpClient = httpClient;
@@ -35,7 +35,7 @@ class HttpHelper implements IHttpHelper {
 
     HttpHelper(AbstractApplicationBase application, IRetryPolicy retryPolicy) {
         this.httpClient = application.httpClient();
-        this.retriesDisabled = application.retriesDisabled();
+        this.retryDisabled = application.isRetryDisabled();
         this.retryPolicy = retryPolicy != null ? retryPolicy : new DefaultRetryPolicy();
     }
 
@@ -152,7 +152,7 @@ class HttpHelper implements IHttpHelper {
             throws Exception {
         IHttpResponse httpResponse = httpClient.send(httpRequest);
 
-        if (retriesDisabled) {
+        if (retryDisabled) {
             return httpResponse;
         }
 
