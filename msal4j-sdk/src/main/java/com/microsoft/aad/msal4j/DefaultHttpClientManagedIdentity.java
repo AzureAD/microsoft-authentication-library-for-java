@@ -87,7 +87,7 @@ class DefaultHttpClientManagedIdentity extends DefaultHttpClient {
 
         // CodeQL [SM03767] False positive: the TrustManager created later on will only trust a certificate with a specific thumbprint.
         if (httpsUrlConnection.getHostnameVerifier() != ALL_HOSTS_ACCEPT_HOSTNAME_VERIFIER) {
-            httpsUrlConnection.setHostnameVerifier(ALL_HOSTS_ACCEPT_HOSTNAME_VERIFIER);
+            httpsUrlConnection.setHostnameVerifier(ALL_HOSTS_ACCEPT_HOSTNAME_VERIFIER); // CodeQL [SM03767] We expect the connection to work against a specific server side certificate only, so it's safe to disable the host name verification.
         }
 
         // Create a Trust manager that trusts only certificate with specified thumbprint.
