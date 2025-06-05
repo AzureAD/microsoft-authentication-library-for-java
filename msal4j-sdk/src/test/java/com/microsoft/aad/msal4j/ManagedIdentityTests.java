@@ -586,6 +586,40 @@ class ManagedIdentityTests {
             fail("MsalServiceException is expected but not thrown.");
         }
 
+        @ParameterizedTest
+        @MethodSource("com.microsoft.aad.msal4j.ManagedIdentityTestDataProvider#createDataWrongScope")
+        void managedIdentityTest_RetriesDisabled(ManagedIdentitySourceType source, String endpoint, String resource) throws Exception {
+            IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(source, endpoint);
+            ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+
+            DefaultHttpClientManagedIdentity httpClientMock = mock(DefaultHttpClientManagedIdentity.class);
+            if (source == SERVICE_FABRIC) {
+                ServiceFabricManagedIdentitySource.setHttpClient(httpClientMock);
+            }
+
+            miApp = ManagedIdentityApplication
+                    .builder(ManagedIdentityId.systemAssigned())
+                    .httpClient(httpClientMock)
+                    .disableInternalRetries()
+                    .build();
+
+            //Several specific 4xx and 5xx errors, such as 500, should trigger MSAL's retry logic
+            when(httpClientMock.send(expectedRequest(source, resource))).thenReturn(expectedResponse(500, ManagedIdentityTestConstants.MSI_ERROR_RESPONSE_500));
+
+            try {
+                acquireTokenCommon(resource).get();
+            } catch (Exception exception) {
+                assert(exception.getCause() instanceof MsalServiceException);
+
+                //But because retries are disabled at the app level, there should be no retries for any source except Service Fabric, which uses its own HttpClient
+                if (source == SERVICE_FABRIC) {
+                    verify(httpClientMock, times(4)).send(any());
+                } else {
+                    verify(httpClientMock, times(1)).send(any());
+                }
+            }
+        }
+
         @Test
         void managedIdentityTest_IMDSRetry() throws Exception {
             IEnvironmentVariables environmentVariables = new EnvironmentVariablesHelper(IMDS, ManagedIdentityTestConstants.IMDS_ENDPOINT);
