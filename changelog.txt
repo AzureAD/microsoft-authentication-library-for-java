@@ -1,3 +1,11 @@
+Version 1.21.0
+=============
+- Add support for claims and client capabilities in Managed Identity scenarios (#929, #943)
+- Improve retry logic for HTTP requests, and add API to disable retries (#960, #963, #964)
+- Support multiple date formats in Managed identity scenarios (#956)
+- Fix query parameter issue in IMDS scenarios (#954)
+- Update dependencies used in tests to avoid CVE warnings (#962)
+
 Version 1.20.1
 =============
 - Fix Base64URL decoding bug (#938)
