@@ -1,6 +1,6 @@
 Version 1.21.0
 =============
-- Add support for claims and client capabilities in Service Fabric scenarios (#929, #943)
+- Add support for claims, client capabilities, and token revocation in Service Fabric scenarios (#929, #943)
 - Improve retry logic for HTTP requests, and add API to disable retries (#960, #963, #964)
 - Support multiple date formats in Managed identity scenarios (#956)
 - Fix query parameter issue in IMDS scenarios (#954)
