@@ -2,7 +2,13 @@ package com.microsoft.aad.msal4j;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,6 +16,8 @@ import com.microsoft.aad.msal4j.Shortcuts.TestConfig;
 import com.microsoft.aad.msal4j.Shortcuts.TestObject;
 import com.microsoft.aad.msal4j.Shortcuts.TestStep;
 import com.microsoft.aad.msal4j.Shortcuts.TestAction;
+
+import javax.net.ssl.HttpsURLConnection;
 
 //TODO: Too specific for the test case used in this proof-of-concept, should be able to reuse the regular JsonHelper class
 class RunnerJsonHelper {
@@ -99,6 +107,79 @@ class RunnerJsonHelper {
             }
 
             return assertions;
+        }
+    }
+
+    /**
+     * Fetches test case URLs from an endpoint containing JSON with a "testcases" array.
+     *
+     * @param endpointUrl The URL to fetch test cases from
+     * @return List of test case URLs
+     */
+    static List<String> getTestCaseUrlsFromEndpoint(String endpointUrl) throws IOException {
+        List<String> testCaseUrls = new ArrayList<>();
+
+        URL url = new URL(endpointUrl);
+        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("Content-Type", "application/json");
+
+        int responseCode = connection.getResponseCode();
+        if (responseCode == HttpsURLConnection.HTTP_OK) {
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(connection.getInputStream()))) {
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode rootNode = mapper.readTree(response.toString());
+
+                if (rootNode.has("testcases") && rootNode.get("testcases").isArray()) {
+                    JsonNode testcasesNode = rootNode.get("testcases");
+                    for (JsonNode testcase : testcasesNode) {
+                        testCaseUrls.add(testcase.asText());
+                    }
+                } else {
+                    throw new IllegalStateException("JSON response does not contain a 'testcases' array");
+                }
+            }
+        } else {
+            throw new IOException("HTTP request failed with status code: " + responseCode);
+        }
+
+        return testCaseUrls;
+    }
+
+    /**
+     * Fetches JSON content from a URL
+     *
+     * @param jsonUrl The URL to fetch JSON content from
+     * @return The JSON content parsed as a JsonNode
+     */
+    static JsonNode fetchJsonContent(String jsonUrl) throws IOException {
+        URL url = new URL(jsonUrl);
+        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("Content-Type", "application/json");
+
+        int responseCode = connection.getResponseCode();
+        if (responseCode == HttpsURLConnection.HTTP_OK) {
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(connection.getInputStream()))) {
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+
+                ObjectMapper mapper = new ObjectMapper();
+                return mapper.readTree(response.toString());
+            }
+        } else {
+            throw new IOException("Failed to fetch JSON content. HTTP status: " + responseCode);
         }
     }
 }

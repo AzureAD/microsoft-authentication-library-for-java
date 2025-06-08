@@ -2,12 +2,11 @@ package com.microsoft.aad.msal4j;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.microsoft.aad.msal4j.ManagedIdentitySourceType.SERVICE_FABRIC;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.microsoft.aad.msal4j.Shortcuts.TestConfig;
@@ -31,7 +30,7 @@ public class RunnerHelper {
             if ("ManagedIdentityClient".equals(appObject.getType())) {
                 ManagedIdentityId identityId = createManagedIdentityId(appObject);
                 List<String> capabilities = extractClientCapabilities(appObject);
-                IEnvironmentVariables envVars = createEnvironmentVariables(config);
+                IEnvironmentVariables envVars = setEnvironmentVariables(config);
                 // TODO: other application properties
 
                 ManagedIdentityApplication app = ManagedIdentityApplication.builder(identityId)
@@ -53,21 +52,19 @@ public class RunnerHelper {
      */
     static IAuthenticationResult executeAction(ManagedIdentityApplication app, TestAction action) throws Exception {
         if (action.getMethodName().equals("AcquireTokenForManagedIdentity")) {
-            LOG.info(String.format("Executing action: %s", action.getMethodName()));
-
+            LOG.info(String.format("===Executing action: %s", action.getMethodName()));
             ManagedIdentityParameters params = buildManagedIdentityParameters(action);
-
             IAuthenticationResult result = app.acquireTokenForManagedIdentity(params).get();
 
-            LOG.info("Action result:");
-            LOG.info(String.format("Access Token: %s", result.accessToken()));
-            LOG.info(String.format("ID Token    : %s", result.idToken()));
-            LOG.info(String.format("Account     : %s", result.account()));
-            LOG.info(String.format("Token Source: %s", result.metadata().tokenSource()));
+            LOG.info("---Action result");
+            LOG.info(String.format("-Access Token: %s", result.accessToken()));
+            LOG.info(String.format("-ID Token    : %s", result.idToken()));
+            LOG.info(String.format("-Account     : %s", result.account()));
+            LOG.info(String.format("-Token Source: %s", result.metadata().tokenSource()));
 
             return result;
         } else {
-            //TODO: other token calls and apps
+            //TODO: other token calls and confidential/public client apps
             throw new UnsupportedOperationException("Unsupported action: " + action.getMethodName());
         }
     }
@@ -80,10 +77,10 @@ public class RunnerHelper {
         assertions.forEach((key, value) -> {
             switch (key) {
                 case "token_source":
-                    LOG.info("Validating token source");
+                    LOG.info("===Validating token source");
                     validateTokenSource(value.asText(), result);
                     break;
-                //TODO: other assertions
+                //TODO: other assertions, such as exceptions checks, token content, etc.
                 default:
                     // Optional: Handle unknown assertion types
                     break;
@@ -95,13 +92,23 @@ public class RunnerHelper {
      * Create managed identity ID from test object
      */
     static ManagedIdentityId createManagedIdentityId(TestObject appObject) {
-        String idType = appObject.getProperty("managed_identity").get("ManagedIdentityIdType").asText();
+        JsonNode managedIdentityNode = appObject.getProperty("managed_identity");
+        String idType = managedIdentityNode.get("ManagedIdentityIdType").asText();
 
-        if ("SystemAssigned".equals(idType)) {
-            return ManagedIdentityId.systemAssigned();
-        } else {
-            // TODO: handle user assertions
-            return null;
+        switch (idType) {
+            case "SystemAssigned":
+                return ManagedIdentityId.systemAssigned();
+            case "ClientId":
+                String clientId = managedIdentityNode.get("Id").asText();
+                return ManagedIdentityId.userAssignedClientId(clientId);
+            case "ObjectId":
+                String objectId = managedIdentityNode.get("Id").asText();
+                return ManagedIdentityId.userAssignedObjectId(objectId);
+            case "ResourceId":
+                String resourceId = managedIdentityNode.get("Id").asText();
+                return ManagedIdentityId.userAssignedResourceId(resourceId);
+            default:
+                throw new IllegalArgumentException("Unsupported ManagedIdentityIdType: " + idType);
         }
     }
 
@@ -116,16 +123,29 @@ public class RunnerHelper {
             capabilitiesNode.forEach(node -> capabilities.add(node.asText()));
         }
 
-        LOG.info(String.format("Extracted client capabilities: %s", capabilities));
+        LOG.info(String.format("---Extracted client capabilities: %s", capabilities));
 
         return capabilities;
     }
 
-    //TODO: Re-used from other Managed Identity tests, specific to this proof-of-concept but should be more generic
-    static IEnvironmentVariables createEnvironmentVariables(TestConfig config) {
-        return new EnvironmentVariablesHelper(
-                SERVICE_FABRIC,
-                config.getEnvironmentVariable("IDENTITY_ENDPOINT"));
+    /**
+     * Creates provider for mocked environment variables using the test configuration.
+     *
+     * @param config The test configuration containing the environment variables
+     * @return An IEnvironmentVariables implementation with the configured variables
+     */
+    static IEnvironmentVariables setEnvironmentVariables(TestConfig config) {
+        // Get all environment variables from the config
+        final Map<String, String> envVars = config.getAllEnvironmentVariables();
+
+        LOG.info(String.format("---Configured environment variables: %s", envVars.keySet()));
+
+        return new IEnvironmentVariables() {
+            @Override
+            public String getEnvironmentVariable(String envVariable) {
+                return envVars.get(envVariable);
+            }
+        };
     }
 
     /**
@@ -141,7 +161,8 @@ public class RunnerHelper {
 
         // Add optional claims challenge
         if (action.hasParameter("claims_challenge")) {
-            builder.claims(action.getParameter("claims_challenge").asText());
+            String validatedClaimsChallenge = Shortcuts.validateAndGetClaimsChallenge(action);
+            builder.claims(validatedClaimsChallenge);
         }
 
         //TODO: other parameters
@@ -155,9 +176,42 @@ public class RunnerHelper {
     static void validateTokenSource(String expectedSource, IAuthenticationResult result) {
         TokenSource expected = "identity_provider".equals(expectedSource) ?
                 TokenSource.IDENTITY_PROVIDER : TokenSource.CACHE;
-        LOG.info(String.format("Expected token source: %s", expected));
-        LOG.info(String.format("Actual token source  : %s", result.metadata().tokenSource()));
+        LOG.info(String.format("---Expected token source: %s", expected));
+        LOG.info(String.format("---Actual token source  : %s", result.metadata().tokenSource()));
 
         assertEquals(expected, result.metadata().tokenSource());
+    }
+
+    /**
+     * Complete workflow to get all test case configs
+     *
+     * @param indexEndpoint The URL of the index containing test case URLs
+     * @return Map of test case names to their JSON configurations
+     */
+    static Map<String, JsonNode> getAllTestCaseConfigs(String indexEndpoint) throws IOException {
+        // Get list of SML test case URLs
+        List<String> smlUrls = RunnerJsonHelper.getTestCaseUrlsFromEndpoint(indexEndpoint);
+
+        // Convert SML URLs to JSON URLs
+        List<String> jsonUrls = Shortcuts.convertSmlUrlsToJsonUrls(smlUrls);
+
+        // Fetch content for each JSON URL
+        Map<String, JsonNode> testCaseConfigs = new HashMap<>();
+        for (String jsonUrl : jsonUrls) {
+            String testCaseName = extractTestCaseName(jsonUrl);
+            JsonNode config = RunnerJsonHelper.fetchJsonContent(jsonUrl);
+            testCaseConfigs.put(testCaseName, config);
+        }
+
+        return testCaseConfigs;
+    }
+
+    /**
+     * Extract test case name from URL
+     */
+    private static String extractTestCaseName(String url) {
+        String[] parts = url.split("/");
+        String fileName = parts[parts.length - 1];
+        return fileName.substring(0, fileName.lastIndexOf('.'));
     }
 }
