@@ -136,7 +136,7 @@ class DefaultHttpClientManagedIdentity extends DefaultHttpClient {
     private static String extractCertificateThumbprint(Certificate certificate) {
         try {
             StringBuilder thumbprint = new StringBuilder();
-            MessageDigest messageDigest = MessageDigest.getInstance("SHA-1");
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-1"); // CodeQL [SM05136] We cannot control what the server uses, and must continue to use SHA-1
 
             byte[] encodedCertificate;
 
