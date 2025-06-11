@@ -76,7 +76,7 @@ class ClientCertificateTest {
             if (request.body().contains(((PrivateKeyJWT) cca.clientAuthentication()).getClientAssertion().serialize())
                     && headerParams.contains("x5t#S256")) {
 
-                return TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(tokenResponseValues));
+                return TestHelper.expectedResponse(HttpStatus.HTTP_OK, TestHelper.getSuccessfulTokenResponse(tokenResponseValues));
             }
             return null;
         });

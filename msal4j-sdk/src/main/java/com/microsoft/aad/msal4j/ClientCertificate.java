@@ -110,7 +110,7 @@ final class ClientCertificate implements IClientCertificate {
     }
 
     private static byte[] getHashSha1(final byte[] inputBytes) throws NoSuchAlgorithmException {
-        final MessageDigest md = MessageDigest.getInstance("SHA-1");
+        final MessageDigest md = MessageDigest.getInstance("SHA-1"); // CodeQL [SM05136] ADFS scenarios require SHA-1 hashing, and we cannot remove our use until ADFS does.
         md.update(inputBytes);
         return md.digest();
     }

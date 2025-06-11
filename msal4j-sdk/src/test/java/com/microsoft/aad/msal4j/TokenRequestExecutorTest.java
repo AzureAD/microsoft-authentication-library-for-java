@@ -123,7 +123,7 @@ class TokenRequestExecutorTest {
         ServiceBundle serviceBundle = new ServiceBundle(
                 null,
                 new TelemetryManager(null, false),
-                new HttpHelper(new DefaultHttpClient(null, null, null, null)));
+                new HttpHelper(new DefaultHttpClient(null, null, null, null), new DefaultRetryPolicy()));
 
         return spy(new TokenRequestExecutor(
                 new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)), refreshTokenRequest, serviceBundle));
@@ -238,9 +238,9 @@ class TokenRequestExecutorTest {
         doReturn(httpResponse).when(msalOAuthHttpRequest).send();
         doReturn(JSONObjectUtils.parse(TestConfiguration.TOKEN_ENDPOINT_OK_RESPONSE)).when(httpResponse).getContentAsJSONObject();
 
-        httpResponse.ensureStatusCode(200);
+        httpResponse.ensureStatusCode(HttpStatus.HTTP_OK);
 
-        doReturn(200).when(httpResponse).getStatusCode();
+        doReturn(HttpStatus.HTTP_OK).when(httpResponse).getStatusCode();
 
         final AuthenticationResult result = request.executeTokenRequest();
 
@@ -326,7 +326,7 @@ class TokenRequestExecutorTest {
         HashMap<String, String> responseParameters = new HashMap<>();
         responseParameters.put("id_token", encodedIDToken);
         responseParameters.put("access_token", "token");
-        TestHelper.createTokenRequestMock(httpClientMock, TestHelper.getSuccessfulTokenResponse(responseParameters), 200);
+        TestHelper.createTokenRequestMock(httpClientMock, TestHelper.getSuccessfulTokenResponse(responseParameters), HttpStatus.HTTP_OK);
 
         OnBehalfOfParameters parameters = OnBehalfOfParameters.builder(Collections.singleton("someScopes"), new UserAssertion(TestHelper.signedAssertion)).build();
         IAuthenticationResult result = cca.acquireToken(parameters).get();
