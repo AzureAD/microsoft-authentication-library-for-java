@@ -15,6 +15,7 @@ class OidcDiscoveryResponse implements JsonSerializable<OidcDiscoveryResponse> {
     private String authorizationEndpoint;
     private String tokenEndpoint;
     private String deviceCodeEndpoint;
+    private String issuer;
 
     public static OidcDiscoveryResponse fromJson(JsonReader jsonReader) throws IOException {
         OidcDiscoveryResponse response = new OidcDiscoveryResponse();
@@ -31,6 +32,9 @@ class OidcDiscoveryResponse implements JsonSerializable<OidcDiscoveryResponse> {
                         break;
                     case "device_authorization_endpoint":
                         response.deviceCodeEndpoint = reader.getString();
+                        break;
+                    case "issuer":
+                        response.issuer = reader.getString();
                         break;
                     default:
                         reader.skipChildren();
@@ -60,5 +64,9 @@ class OidcDiscoveryResponse implements JsonSerializable<OidcDiscoveryResponse> {
 
     String deviceCodeEndpoint() {
         return this.deviceCodeEndpoint;
+    }
+
+    String issuer() {
+        return this.issuer;
     }
 }

@@ -579,6 +579,10 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
             ((OidcAuthority) authenticationAuthority).setAuthorityProperties(
                     OidcDiscoveryProvider.performOidcDiscovery(
                             (OidcAuthority) authenticationAuthority, this));
+
+            if (!((OidcAuthority) authenticationAuthority).isIssuerValid()) {
+                throw new MsalClientException(String.format("Invalid issuer from OIDC discovery: %s", ((OidcAuthority) authenticationAuthority).issuerFromOidcDiscovery), "issuer_validation");
+            }
         }
     }
 }
