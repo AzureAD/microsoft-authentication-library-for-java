@@ -52,6 +52,11 @@ class ManagedIdentityTests {
         IMDSRetryPolicy.resetToDefaults();
     }
 
+    @AfterAll
+    static void resetServiceFabricHttpClient() {
+        ServiceFabricManagedIdentitySource.resetHttpClient();
+    }
+
     private String getSuccessfulResponse(String resource) {
         long expiresOn = (System.currentTimeMillis() / 1000) + (24 * 3600);//A long-lived, 24 hour token
         return "{\"access_token\":\"accesstoken\",\"expires_on\":\"" + expiresOn + "\",\"resource\":\"" + resource + "\",\"token_type\":" +
