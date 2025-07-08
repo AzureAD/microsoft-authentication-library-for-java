@@ -8,11 +8,11 @@ import java.net.URL;
 
 public class OidcAuthority extends Authority {
     //Part of the OpenIdConnect standard, this is appended to the authority to create the endpoint that has OIDC metadata
-    static final String WELL_KNOWN_OPENID_CONFIGURATION = ".well-known/openid-configuration";
+    private static final String WELL_KNOWN_OPENID_CONFIGURATION = ".well-known/openid-configuration";
     private static final String AUTHORITY_FORMAT = "https://%s/%s/";
     private static final String CIAM_AUTHORITY_FORMAT = "https://%s.ciamlogin.com/%s";
 
-    String issuerFromOidcDiscovery;
+    private String issuerFromOidcDiscovery;
 
     OidcAuthority(URL authorityUrl) throws MalformedURLException {
         super(createOidcDiscoveryUrl(authorityUrl), AuthorityType.OIDC);
@@ -33,6 +33,16 @@ public class OidcAuthority extends Authority {
         this.deviceCodeEndpoint = instanceDiscoveryResponse.deviceCodeEndpoint();
         this.selfSignedJwtAudience = this.tokenEndpoint;
         this.issuerFromOidcDiscovery = instanceDiscoveryResponse.issuer();
+
+        validateIssuer();
+    }
+
+    private void validateIssuer() {
+        if (!isIssuerValid()) {
+            throw new MsalClientException(
+                    String.format("Invalid issuer from OIDC discovery. Issuer %s does not match authority %s, or is in an unexpected format", issuerFromOidcDiscovery, canonicalAuthorityUrl),
+                    "issuer_validation");
+        }
     }
 
     /**
@@ -42,7 +52,7 @@ public class OidcAuthority extends Authority {
      *
      * @return true if the issuer is valid, false otherwise
      */
-    boolean isIssuerValid() {
+    private boolean isIssuerValid() {
         if (issuerFromOidcDiscovery == null) {
             return false;
         }
