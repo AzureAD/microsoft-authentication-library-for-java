@@ -575,8 +575,10 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
                     aadAadInstanceDiscoveryResponse);
         }
 
-        ((OidcAuthority) authenticationAuthority).setAuthorityProperties(
-                OidcDiscoveryProvider.performOidcDiscovery(
-                        (OidcAuthority) authenticationAuthority, this));
+        if (authenticationAuthority.authorityType == AuthorityType.OIDC) {
+            ((OidcAuthority) authenticationAuthority).setAuthorityProperties(
+                    OidcDiscoveryProvider.performOidcDiscovery(
+                            (OidcAuthority) authenticationAuthority, this));
+        }
     }
 }
