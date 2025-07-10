@@ -124,4 +124,9 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
         httpClient = client;
         httpHelper = new HttpHelper(httpClient, new ManagedIdentityRetryPolicy());
     }
+
+    static void resetHttpClient() {
+        httpClient = new DefaultHttpClientManagedIdentity(null, null, null, null);
+        httpHelper = new HttpHelper(httpClient, new ManagedIdentityRetryPolicy());
+    }
 }
