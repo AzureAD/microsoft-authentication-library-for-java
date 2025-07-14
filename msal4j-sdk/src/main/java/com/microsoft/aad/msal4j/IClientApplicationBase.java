@@ -11,31 +11,39 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Interface representing an application for which tokens can be acquired.
+ * Interface representing a client application that can acquire tokens from the Microsoft identity platform.
+ * This interface serves as the base for both public client applications (desktop/mobile apps) and
+ * confidential client applications (web apps/APIs), defining common functionality for token acquisition.
+ * <p>
+ * Client applications are registered in the Microsoft identity platform and have their own identity,
+ * represented by an application ID (client ID).
  */
 interface IClientApplicationBase extends IApplicationBase {
 
     /**
+     * Gets the client ID (application ID) for this application.
+     *
      * @return Client ID (Application ID) of the application as registered in the application registration portal
      * (portal.azure.com) and as passed in the constructor of the application
      */
     String clientId();
 
     /**
+     * Gets the authority URL for this application.
+     *
      * @return URL of the authority, or security token service (STS) from which MSAL will acquire security tokens.
      * Default value is {@link IClientApplicationBase#DEFAULT_AUTHORITY}
      */
     String authority();
 
     /**
-     * @return a boolean value which determines whether the authority needs to be verified against a list of known authorities.
+     * Gets whether the authority URL should be validated against a list of known authorities.
+     *
+     * @return A boolean value which determines whether the authority needs to be verified against a list of known authorities.
+     * When true, MSAL will validate the authority against a list of well-known authorities. Set to false only for
+     * development/testing with custom authority URLs.
      */
     boolean validateAuthority();
-
-//    /**
-//     * @return Telemetry consumer that will receive telemetry events emitted by the library.
-//     */
-//     java.util.function.Consumer<java.util.List<java.util.HashMap<String, String>>> telemetryConsumer();
 
     /**
      * Computes the URL of the authorization request letting the user sign-in and consent to the
@@ -43,19 +51,25 @@ interface IClientApplicationBase extends IApplicationBase {
      * application object.
      * <p>
      * Once the user successfully authenticates, the response should contain an authorization code,
-     * which can then be passed in to{@link AbstractClientApplicationBase#acquireToken(AuthorizationCodeParameters)}
-     * to be exchanged for a token
+     * which can then be passed in to {@link AbstractClientApplicationBase#acquireToken(AuthorizationCodeParameters)}
+     * to be exchanged for a token.
      *
-     * @param parameters {@link AuthorizationRequestUrlParameters}
-     * @return url of the authorization endpoint where the user can sign-in and consent to the application.
+     * @param parameters {@link AuthorizationRequestUrlParameters} containing the details needed to create the authorization URL,
+     *                   such as scopes, response type, and redirect URI
+     * @return URL of the authorization endpoint where the user can sign-in and consent to the application
      */
     URL getAuthorizationRequestUrl(AuthorizationRequestUrlParameters parameters);
 
     /**
      * Acquires security token from the authority using an authorization code previously received.
+     * <p>
+     * This is typically used as the second step in an authorization code flow, after the user has
+     * authenticated and provided consent at the authorization endpoint, resulting in an authorization code.
      *
-     * @param parameters {@link AuthorizationCodeParameters}
-     * @return A {@link CompletableFuture} object representing the {@link IAuthenticationResult} of the call.
+     * @param parameters {@link AuthorizationCodeParameters} containing the authorization code and other information
+     *                   required to exchange the code for tokens
+     * @return A {@link CompletableFuture} object representing the {@link IAuthenticationResult} of the call,
+     *         which contains the requested tokens and account information
      */
     CompletableFuture<IAuthenticationResult> acquireToken(AuthorizationCodeParameters parameters);
 

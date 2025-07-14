@@ -20,7 +20,13 @@ public interface ITenantProfile extends Serializable {
     Map<String, ?> getClaims();
 
     /**
-     * @return tenant environment
+     * Gets the environment where this tenant is hosted.
+     * <p>
+     * The environment value typically represents the hostname of the authentication service,
+     * such as "login.microsoftonline.com" for the public cloud or other domain names for
+     * sovereign clouds.
+     *
+     * @return The environment for this tenant profile
      */
     String environment();
 
