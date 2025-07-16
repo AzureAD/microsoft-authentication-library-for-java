@@ -1,3 +1,8 @@
+Version 1.22.0
+=============
+- Validate issuer from OIDC endpoint when using the oidcAuthority() API (#970)
+- Bump oauth2-oidc-sdk dependency to avoid CVE-2025-53864 (#975)
+
 Version 1.21.0
 =============
 - Add support for claims, client capabilities, and token revocation in Service Fabric scenarios (#929, #943)
