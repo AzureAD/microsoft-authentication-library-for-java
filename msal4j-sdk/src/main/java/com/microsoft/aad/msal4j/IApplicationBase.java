@@ -9,38 +9,48 @@ import java.net.Proxy;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Interface representing an application for which tokens can be acquired.
+ * Base interface representing a client application that can acquire tokens from the Microsoft identity platform.
+ * Defines common functionality across different application types (public client, confidential client,
+ * and managed identity applications).
  */
 interface IApplicationBase {
 
     String DEFAULT_AUTHORITY = "https://login.microsoftonline.com/common/";
 
     /**
-     * @return a boolean value which determines whether Pii (personally identifiable information) will be logged in
+     * Gets whether personally identifiable information (PII) is included in log messages.
+     *
+     * @return A boolean value which determines whether PII (personally identifiable information) will be included in log messages.
+     * When true, PII will be logged; when false, PII will be masked or omitted from logs.
      */
     boolean logPii();
 
     /**
-     * @return Correlation ID which is used for diagnostics purposes, is attached to token service requests
-     * Default value is random UUID
+     * Gets the correlation ID used for tracing requests through the authentication system.
+     *
+     * @return Correlation ID which is used for diagnostics purposes and is attached to token service requests.
+     * The default value is a random UUID.
      */
     String correlationId();
 
     /**
-     * Sets HTTP client to be used by the client application for all HTTP requests. Allows for fine-grained
-     * configuration of HTTP client.
-
-     * @return instance of IHttpClient used by the application
+     * Gets the HTTP client used by the application for all HTTP requests.
+     *
+     * @return Instance of IHttpClient used by the application for network communication with the Microsoft identity platform.
      */
     IHttpClient httpClient();
 
     /**
-     * @return proxy used by the application for all network communication.
+     * Gets the proxy configuration used by the application for network communication.
+     *
+     * @return Proxy used by the application for all network communication. Returns null if no proxy is configured.
      */
     Proxy proxy();
 
     /**
-     * @return SSLSocketFactory used by the application for all network communication.
+     * Gets the SSL socket factory used by the application for secure network communication.
+     *
+     * @return SSLSocketFactory used by the application for all secure network communication. Returns null if no custom SSL socket factory is configured.
      */
     SSLSocketFactory sslSocketFactory();
 }
