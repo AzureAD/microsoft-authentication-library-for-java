@@ -83,10 +83,10 @@ class UIRequiredCacheTest {
             throws Exception {
         IHttpClient httpClientMock = mock(IHttpClient.class);
 
-        HttpResponse httpResponse = getHttpResponse(HttpHelper.HTTP_STATUS_200, TestConfiguration.TOKEN_ENDPOINT_OK_RESPONSE_ID_AND_ACCESS);
+        HttpResponse httpResponse = getHttpResponse(HttpStatus.HTTP_OK, TestConfiguration.TOKEN_ENDPOINT_OK_RESPONSE_ID_AND_ACCESS);
         lenient().doReturn(httpResponse).when(httpClientMock).send(any());
 
-        httpResponse = getHttpResponse(HttpHelper.HTTP_STATUS_401, TestConfiguration.TOKEN_ENDPOINT_INVALID_GRANT_ERROR_RESPONSE);
+        httpResponse = getHttpResponse(HttpStatus.HTTP_UNAUTHORIZED, TestConfiguration.TOKEN_ENDPOINT_INVALID_GRANT_ERROR_RESPONSE);
         lenient().doReturn(httpResponse).when(httpClientMock).send(any());
 
         PublicClientApplication app = getPublicClientApp(httpClientMock);

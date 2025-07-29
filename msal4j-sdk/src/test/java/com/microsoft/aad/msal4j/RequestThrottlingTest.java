@@ -92,7 +92,7 @@ class RequestThrottlingTest {
 
         switch (responseType) {
             case RETRY_AFTER_HEADER:
-                httpResponse.statusCode(HttpHelper.HTTP_STATUS_200);
+                httpResponse.statusCode(HttpStatus.HTTP_OK);
                 httpResponse.body(TestConfiguration.TOKEN_ENDPOINT_OK_RESPONSE_ID_AND_ACCESS);
 
                 headers.put("Retry-After", Arrays.asList(THROTTLE_IN_SEC.toString()));

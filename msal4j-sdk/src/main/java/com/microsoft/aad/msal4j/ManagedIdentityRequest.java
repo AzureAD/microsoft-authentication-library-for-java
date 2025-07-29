@@ -98,7 +98,7 @@ class ManagedIdentityRequest extends MsalRequest {
                 // Add client capabilities as a comma separated string for all the values in client capabilities
                 String clientCapabilities = String.join(",", managedIdentityApplication.getClientCapabilities());
 
-                queryParameters.put(Constants.CLIENT_CAPABILITY_REQUEST_PARAM, Collections.singletonList(clientCapabilities.toString()));
+                queryParameters.put(Constants.CLIENT_CAPABILITY_REQUEST_PARAM, clientCapabilities.toString());
             }
 
             // Pass the token revocation parameter if the claims are present and there is a token to revoke
@@ -107,7 +107,7 @@ class ManagedIdentityRequest extends MsalRequest {
                 if (queryParameters == null) {
                     queryParameters = new HashMap<>();
                 }
-                queryParameters.put(Constants.TOKEN_HASH_CLAIM, Collections.singletonList(parameters.revokedTokenHash()));
+                queryParameters.put(Constants.TOKEN_HASH_CLAIM, parameters.revokedTokenHash());
             }
         }
     }

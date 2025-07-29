@@ -42,7 +42,7 @@ class TokenRequestExecutorTest {
         OAuthHttpRequest msalOAuthHttpRequest = mock(OAuthHttpRequest.class);
 
         HttpResponse httpResponse = new HttpResponse();
-        httpResponse.statusCode(HttpHelper.HTTP_STATUS_400);
+        httpResponse.statusCode(HttpStatus.HTTP_BAD_REQUEST);
 
         String claims = "{\\\"access_token\\\":{\\\"polids\\\":{\\\"essential\\\":true,\\\"values\\\":[\\\"5ce770ea-8690-4747-aa73-c5b3cd509cd4\\\"]}}}";
 
@@ -79,7 +79,7 @@ class TokenRequestExecutorTest {
         OAuthHttpRequest msalOAuthHttpRequest = mock(OAuthHttpRequest.class);
 
         HttpResponse httpResponse = new HttpResponse();
-        httpResponse.statusCode(HttpHelper.HTTP_STATUS_400);
+        httpResponse.statusCode(HttpStatus.HTTP_BAD_REQUEST);
 
         String claims = "{\\\"access_token\\\":{\\\"polids\\\":{\\\"essential\\\":true,\\\"values\\\":[\\\"5ce770ea-8690-4747-aa73-c5b3cd509cd4\\\"]}}}";
 
@@ -233,9 +233,7 @@ class TokenRequestExecutorTest {
         doReturn(httpResponse).when(msalOAuthHttpRequest).send();
         doReturn(JsonHelper.convertJsonToMap(TestConfiguration.TOKEN_ENDPOINT_OK_RESPONSE_ID_AND_ACCESS)).when(httpResponse).getBodyAsMap();
 
-        httpResponse.ensureStatusCode(HttpStatus.HTTP_OK);
-
-        doReturn(HttpStatus.HTTP_OK).when(httpResponse).getStatusCode();
+        doReturn(HttpStatus.HTTP_OK).when(httpResponse).statusCode();
 
         final AuthenticationResult result = request.executeTokenRequest();
 

@@ -79,6 +79,7 @@ final class StringHelper {
 
     static boolean isNullOrBlank(final String str) {
         return str == null || str.trim().isEmpty();
+    }
 
     //Converts a map of parameters into a URL query string
     static String serializeQueryParameters(Map<String, String> params) {

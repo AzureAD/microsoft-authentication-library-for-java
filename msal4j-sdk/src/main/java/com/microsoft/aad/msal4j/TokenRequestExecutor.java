@@ -113,7 +113,7 @@ class TokenRequestExecutor {
     private AuthenticationResult createAuthenticationResultFromOauthHttpResponse(HttpResponse oauthHttpResponse) {
         AuthenticationResult result;
 
-        if (oauthHttpResponse.statusCode() == HttpHelper.HTTP_STATUS_200) {
+        if (oauthHttpResponse.statusCode() == HttpStatus.HTTP_OK) {
             final TokenResponse response = TokenResponse.parseHttpResponse(oauthHttpResponse);
 
             AccountCacheEntity accountCacheEntity = null;
@@ -160,7 +160,7 @@ class TokenRequestExecutor {
 
         } else {
             // http codes indicating that STS did not log request
-            if (oauthHttpResponse.getStatusCode() == HttpStatus.HTTP_TOO_MANY_REQUESTS || oauthHttpResponse.getStatusCode() >= HttpStatus.HTTP_INTERNAL_ERROR) {
+            if (oauthHttpResponse.statusCode() == HttpStatus.HTTP_TOO_MANY_REQUESTS || oauthHttpResponse.statusCode() >= HttpStatus.HTTP_INTERNAL_ERROR) {
                 serviceBundle.getServerSideTelemetry().previousRequests.putAll(
                         serviceBundle.getServerSideTelemetry().previousRequestInProgress);
             }
