@@ -137,7 +137,7 @@ class AcquireTokenSilentlyTest {
         responseParameters.put("access_token", "expiredToken");
         responseParameters.put("id_token", TestHelper.createIdToken(new HashMap<>()));
         responseParameters.put("expires_in", "0");
-        TestHelper.createTokenRequestMock(httpClientMock, TestHelper.getSuccessfulTokenResponse(responseParameters), 200);
+        TestHelper.createTokenRequestMock(httpClientMock, TestHelper.getSuccessfulTokenResponse(responseParameters), HttpStatus.HTTP_OK);
 
         OnBehalfOfParameters parameters = OnBehalfOfParameters.builder(Collections.singleton("someScopes"), new UserAssertion(TestHelper.signedAssertion)).build();
         IAuthenticationResult result = cca.acquireToken(parameters).get();
@@ -149,7 +149,7 @@ class AcquireTokenSilentlyTest {
         // In this test, it will be replaced with a token that expires in 1 minute
         responseParameters.put("access_token", "nearlyExpiredToken");
         responseParameters.put("expires_in", "60");
-        TestHelper.createTokenRequestMock(httpClientMock, TestHelper.getSuccessfulTokenResponse(responseParameters), 200);
+        TestHelper.createTokenRequestMock(httpClientMock, TestHelper.getSuccessfulTokenResponse(responseParameters), HttpStatus.HTTP_OK);
 
         SilentParameters silentParameters = SilentParameters.builder(Collections.singleton("someScopes"), result.account()).build();
         result = cca.acquireTokenSilently(silentParameters).get();
@@ -162,7 +162,7 @@ class AcquireTokenSilentlyTest {
         responseParameters.put("access_token", "refreshInToken");
         responseParameters.put("expires_in", "3600");
         responseParameters.put("refresh_in", "1");
-        TestHelper.createTokenRequestMock(httpClientMock, TestHelper.getSuccessfulTokenResponse(responseParameters), 200);
+        TestHelper.createTokenRequestMock(httpClientMock, TestHelper.getSuccessfulTokenResponse(responseParameters), HttpStatus.HTTP_OK);
 
         silentParameters = SilentParameters.builder(Collections.singleton("someScopes"), result.account()).build();
         result = cca.acquireTokenSilently(silentParameters).get();
@@ -174,7 +174,7 @@ class AcquireTokenSilentlyTest {
         responseParameters.put("access_token", "normalToken");
         responseParameters.put("expires_in", "3600");
         responseParameters.put("refresh_in", "0");
-        TestHelper.createTokenRequestMock(httpClientMock, TestHelper.getSuccessfulTokenResponse(responseParameters), 200);
+        TestHelper.createTokenRequestMock(httpClientMock, TestHelper.getSuccessfulTokenResponse(responseParameters), HttpStatus.HTTP_OK);
 
         //refresh_in values are in seconds, so we must wait to guarantee it is past the proactive refresh time
         TimeUnit.SECONDS.sleep(2);
@@ -186,7 +186,7 @@ class AcquireTokenSilentlyTest {
 
         //Force the token to be refreshed
         responseParameters.put("access_token", "forcedRefreshToken");
-        TestHelper.createTokenRequestMock(httpClientMock, TestHelper.getSuccessfulTokenResponse(responseParameters), 200);
+        TestHelper.createTokenRequestMock(httpClientMock, TestHelper.getSuccessfulTokenResponse(responseParameters), HttpStatus.HTTP_OK);
 
         silentParameters = SilentParameters.builder(Collections.singleton("someScopes"), result.account()).forceRefresh(true).build();
         result = cca.acquireTokenSilently(silentParameters).get();
@@ -195,7 +195,7 @@ class AcquireTokenSilentlyTest {
 
         //Finally, force a refresh by setting claims
         responseParameters.put("access_token", "claimsToken");
-        TestHelper.createTokenRequestMock(httpClientMock, TestHelper.getSuccessfulTokenResponse(responseParameters), 200);
+        TestHelper.createTokenRequestMock(httpClientMock, TestHelper.getSuccessfulTokenResponse(responseParameters), HttpStatus.HTTP_OK);
 
         silentParameters = SilentParameters.builder(Collections.singleton("someScopes"), result.account()).claims(new ClaimsRequest()).build();
         result = cca.acquireTokenSilently(silentParameters).get();

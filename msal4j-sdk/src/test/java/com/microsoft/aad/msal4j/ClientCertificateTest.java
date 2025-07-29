@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.nimbusds.oauth2.sdk.auth.PrivateKeyJWT;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -71,7 +72,10 @@ class ClientCertificateTest {
 
         when(httpClientMock.send(any(HttpRequest.class))).thenAnswer( parameters -> {
             HttpRequest request = parameters.getArgument(0);
-            if (request.body().contains(cca.assertion)) {
+            Set<String> headerParams = ((PrivateKeyJWT) cca.clientAuthentication()).getClientAssertion().getHeader().getIncludedParams();
+//TODO
+            if (request.body().contains(cca.assertion)
+                    && headerParams.contains("x5t#S256")) {
                 return TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(tokenResponseValues));
             }
             return null;

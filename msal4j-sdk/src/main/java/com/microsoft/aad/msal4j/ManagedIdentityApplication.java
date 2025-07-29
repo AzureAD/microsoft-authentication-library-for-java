@@ -17,6 +17,7 @@ import java.util.concurrent.CompletableFuture;
 public class ManagedIdentityApplication extends AbstractApplicationBase implements IManagedIdentityApplication {
 
     private final ManagedIdentityId managedIdentityId;
+    private List<String> clientCapabilities;
     static TokenCache sharedTokenCache = new TokenCache();
 
     //Deprecated the field in favor of the static getManagedIdentitySource method
@@ -36,14 +37,13 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
         super.serviceBundle = new ServiceBundle(
                 builder.executorService,
                 new TelemetryManager(telemetryConsumer, builder.onlySendFailureTelemetry),
-                new HttpHelperManagedIdentity(builder.httpClient == null ?
-                        new DefaultHttpClient(builder.proxy, builder.sslSocketFactory, builder.connectTimeoutForDefaultHttpClient, builder.readTimeoutForDefaultHttpClient) :
-                        builder.httpClient)
+                new HttpHelper(this, new ManagedIdentityRetryPolicy())
         );
         log = LoggerFactory.getLogger(ManagedIdentityApplication.class);
 
         this.managedIdentityId = builder.managedIdentityId;
         this.tenant = Constants.MANAGED_IDENTITY_DEFAULT_TENTANT;
+        this.clientCapabilities = builder.clientCapabilities;
     }
 
     public static TokenCache getSharedTokenCache() {
@@ -57,6 +57,8 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
     public ManagedIdentityId getManagedIdentityId() {
         return this.managedIdentityId;
     }
+
+    public List<String> getClientCapabilities() { return this.clientCapabilities; }
     
     @Override
     public CompletableFuture<IAuthenticationResult> acquireTokenForManagedIdentity(ManagedIdentityParameters managedIdentityParameters)
@@ -105,7 +107,7 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
         /**
          * Informs the token issuer that the application is able to perform complex authentication actions.
          * For example, "cp1" means that the application is able to perform conditional access evaluation,
-         * because the application has been setup to parse WWW-Authenticate headers associated with a 401 response from the protected APIs,
+         * because the application has been set up to parse WWW-Authenticate headers associated with a 401 response from the protected APIs,
          * and to retry the request with claims API.
          * 
          * @param clientCapabilities a list of capabilities (e.g., ["cp1"]) recognized by the token service.

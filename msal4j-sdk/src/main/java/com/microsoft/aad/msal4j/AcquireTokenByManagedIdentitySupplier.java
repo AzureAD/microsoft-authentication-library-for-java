@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -83,6 +84,12 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
                 result.metadata().tokenSource(TokenSource.CACHE);
                 return result;
             } else {
+                if (cacheRefreshReason == CacheRefreshReason.CLAIMS) {
+                    LOG.debug("Claims are passed, creating token hash and refreshing the token");
+                    managedIdentityParameters.revokedTokenHash = StringHelper.createSha256HashHexString(result.accessToken());
+                    return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor, CacheRefreshReason.CLAIMS);
+                }
+
                 LOG.debug(String.format("Refreshing access token. Cache refresh reason: %s", cacheRefreshReason));
                 return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor, cacheRefreshReason);
             }
@@ -109,14 +116,13 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
 
         AuthenticationResult authenticationResult = createFromManagedIdentityResponse(managedIdentityResponse);
         clientApplication.tokenCache.saveTokens(tokenRequestExecutor, authenticationResult, clientApplication.authenticationAuthority.host);
-        AuthenticationResult result = authenticationResult;
-        result.metadata().tokenSource(TokenSource.IDENTITY_PROVIDER);
-        result.metadata().cacheRefreshReason(cacheRefreshReason);
-        return result;
+        authenticationResult.metadata().tokenSource(TokenSource.IDENTITY_PROVIDER);
+        authenticationResult.metadata().cacheRefreshReason(cacheRefreshReason);
+        return authenticationResult;
     }
 
     private AuthenticationResult createFromManagedIdentityResponse(ManagedIdentityResponse managedIdentityResponse) {
-        long expiresOn = Long.parseLong(managedIdentityResponse.expiresOn);
+        long expiresOn = getExpiresOnFromManagedIdentityTimestamp(managedIdentityResponse.expiresOn);
         long refreshOn = calculateRefreshOn(expiresOn);
         AuthenticationResultMetadata metadata = AuthenticationResultMetadata.builder()
                 .tokenSource(TokenSource.IDENTITY_PROVIDER)
@@ -131,6 +137,31 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
                 .refreshOn(refreshOn)
                 .metadata(metadata)
                 .build();
+    }
+
+    static long getExpiresOnFromManagedIdentityTimestamp(String dateTimeStamp) {
+        if (dateTimeStamp == null || dateTimeStamp.isEmpty()) {
+            return 0;
+        }
+
+        // Try parsing as Unix timestamp (seconds since epoch)
+        try {
+            return Long.parseLong(dateTimeStamp);
+        } catch (NumberFormatException e) {
+            // Not a number
+        }
+
+        // Try parsing as ISO 8601
+        try {
+            return Instant.parse(dateTimeStamp).getEpochSecond();
+        } catch (Exception e) {
+            // Not ISO 8601
+        }
+
+        throw new MsalClientException(
+                String.format("Failed to parse timestamp '%s'. Expected Unix epoch seconds or ISO 8601 format.",
+                        dateTimeStamp),
+                AuthenticationErrorCode.INVALID_TIMESTAMP_FORMAT);
     }
 
     private long calculateRefreshOn(long expiresOn) {

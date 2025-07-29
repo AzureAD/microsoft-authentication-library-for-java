@@ -71,7 +71,7 @@ class UIRequiredCacheTest {
             throws Exception {
         IHttpClient httpClientMock = mock(IHttpClient.class);
 
-        HttpResponse httpResponse = getHttpResponse(400,
+        HttpResponse httpResponse = getHttpResponse(HttpStatus.HTTP_BAD_REQUEST,
                 TestConfiguration.TOKEN_ENDPOINT_INVALID_GRANT_ERROR_RESPONSE);
 
         doReturn(httpResponse).when(httpClientMock).send(any());

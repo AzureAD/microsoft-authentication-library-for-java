@@ -154,7 +154,7 @@ class CacheFormatTests {
 
         doReturn(msalOAuthHttpRequest).when(request).createOauthHttpRequest();
         doReturn(httpResponse).when(msalOAuthHttpRequest).send();
-        doReturn(200).when(httpResponse).statusCode();
+        doReturn(HttpStatus.HTTP_OK).when(httpResponse).statusCode();
         doReturn(JsonHelper.convertJsonToMap(tokenResponse)).when(httpResponse).getBodyAsMap();
 
         final AuthenticationResult result = request.executeTokenRequest();

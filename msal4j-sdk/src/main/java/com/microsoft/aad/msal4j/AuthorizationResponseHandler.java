@@ -41,7 +41,7 @@ class AuthorizationResponseHandler implements HttpHandler {
     public void handle(HttpExchange httpExchange) throws IOException {
         try {
             if (!httpExchange.getRequestURI().getPath().equalsIgnoreCase("/")) {
-                httpExchange.sendResponseHeaders(200, 0);
+                httpExchange.sendResponseHeaders(HttpStatus.HTTP_OK, 0);
                 return;
             }
             String responseBody = new BufferedReader(new InputStreamReader(
@@ -92,13 +92,13 @@ class AuthorizationResponseHandler implements HttpHandler {
     private void send302Response(HttpExchange httpExchange, String redirectUri) throws IOException {
         Headers responseHeaders = httpExchange.getResponseHeaders();
         responseHeaders.set("Location", redirectUri);
-        httpExchange.sendResponseHeaders(302, 0);
+        httpExchange.sendResponseHeaders(HttpStatus.HTTP_FOUND, 0);
     }
 
     private void send200Response(HttpExchange httpExchange, String response) throws IOException {
         byte[] responseBytes = response.getBytes("UTF-8");
         httpExchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
-        httpExchange.sendResponseHeaders(200, responseBytes.length);
+        httpExchange.sendResponseHeaders(HttpStatus.HTTP_OK, responseBytes.length);
         OutputStream os = httpExchange.getResponseBody();
         os.write(responseBytes);
         os.close();

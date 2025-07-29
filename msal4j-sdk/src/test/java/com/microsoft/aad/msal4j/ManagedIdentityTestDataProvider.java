@@ -8,114 +8,111 @@ import org.junit.jupiter.params.provider.Arguments;
 import java.util.stream.Stream;
 
 class ManagedIdentityTestDataProvider {
-    private static final String CLIENT_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
-    private static final String RESOURCE_ID = "/subscriptions/ffa4aaa2-4444-4444-5555-e3ccedd3d046/resourcegroups/UAMI_group/providers/Microsoft.ManagedIdentityClient/userAssignedIdentities/UAMI";
-    private static final String OBJECT_ID = "593b2662-5af7-4a90-a9cb-5a9de615b82f";
 
-    public static Stream<Arguments> createData() {
+    static Stream<Arguments> createData() {
         return Stream.of(
-                Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTests.appServiceEndpoint,
-                        ManagedIdentityTests.resource),
-                Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTests.appServiceEndpoint,
-                        ManagedIdentityTests.resourceDefaultSuffix),
-                Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTests.cloudShellEndpoint,
-                        ManagedIdentityTests.resource),
-                Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTests.cloudShellEndpoint,
-                        ManagedIdentityTests.resourceDefaultSuffix),
-                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTests.azureArcEndpoint,
-                        ManagedIdentityTests.resource),
-                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTests.azureArcEndpoint,
-                        ManagedIdentityTests.resourceDefaultSuffix),
-                Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTests.IMDS_ENDPOINT,
-                        ManagedIdentityTests.resource),
-                Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTests.IMDS_ENDPOINT,
-                        ManagedIdentityTests.resourceDefaultSuffix),
+                Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTestConstants.APP_SERVICE_ENDPOINT,
+                        ManagedIdentityTestConstants.RESOURCE),
+                Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTestConstants.APP_SERVICE_ENDPOINT,
+                        ManagedIdentityTestConstants.RESOURCE_DEFAULT_SUFFIX),
+                Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTestConstants.CLOUDSHELL_ENDPOINT,
+                        ManagedIdentityTestConstants.RESOURCE),
+                Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTestConstants.CLOUDSHELL_ENDPOINT,
+                        ManagedIdentityTestConstants.RESOURCE_DEFAULT_SUFFIX),
+                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTestConstants.AZURE_ARC_ENDPOINT,
+                        ManagedIdentityTestConstants.RESOURCE),
+                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTestConstants.AZURE_ARC_ENDPOINT,
+                        ManagedIdentityTestConstants.RESOURCE_DEFAULT_SUFFIX),
+                Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTestConstants.IMDS_ENDPOINT,
+                        ManagedIdentityTestConstants.RESOURCE),
+                Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTestConstants.IMDS_ENDPOINT,
+                        ManagedIdentityTestConstants.RESOURCE_DEFAULT_SUFFIX),
                 Arguments.of(ManagedIdentitySourceType.IMDS, null,
-                        ManagedIdentityTests.resource),
-                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTests.serviceFabricEndpoint,
-                        ManagedIdentityTests.resource),
-                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTests.serviceFabricEndpoint,
-                        ManagedIdentityTests.resourceDefaultSuffix));
+                        ManagedIdentityTestConstants.RESOURCE),
+                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTestConstants.SERVICE_FABRIC_ENDPOINT,
+                        ManagedIdentityTestConstants.RESOURCE),
+                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTestConstants.SERVICE_FABRIC_ENDPOINT,
+                        ManagedIdentityTestConstants.RESOURCE_DEFAULT_SUFFIX));
     }
 
-    public static Stream<Arguments> createDataUserAssigned() {
+    static Stream<Arguments> createDataUserAssigned() {
         return Stream.of(
-                Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTests.appServiceEndpoint,
-                        ManagedIdentityId.userAssignedClientId(CLIENT_ID)),
-                Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTests.appServiceEndpoint,
-                        ManagedIdentityId.userAssignedResourceId(RESOURCE_ID)),
-                Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTests.appServiceEndpoint,
-                        ManagedIdentityId.userAssignedObjectId(OBJECT_ID)),
+                Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTestConstants.APP_SERVICE_ENDPOINT,
+                        ManagedIdentityId.userAssignedClientId(ManagedIdentityTestConstants.CLIENT_ID)),
+                Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTestConstants.APP_SERVICE_ENDPOINT,
+                        ManagedIdentityId.userAssignedResourceId(ManagedIdentityTestConstants.RESOURCE_ID)),
+                Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTestConstants.APP_SERVICE_ENDPOINT,
+                        ManagedIdentityId.userAssignedObjectId(ManagedIdentityTestConstants.OBJECT_ID)),
                 Arguments.of(ManagedIdentitySourceType.IMDS, null,
-                        ManagedIdentityId.userAssignedClientId(CLIENT_ID)),
+                        ManagedIdentityId.userAssignedClientId(ManagedIdentityTestConstants.CLIENT_ID)),
                 Arguments.of(ManagedIdentitySourceType.IMDS, null,
-                        ManagedIdentityId.userAssignedResourceId(RESOURCE_ID)),
+                        ManagedIdentityId.userAssignedResourceId(ManagedIdentityTestConstants.RESOURCE_ID)),
                 Arguments.of(ManagedIdentitySourceType.IMDS, null,
-                        ManagedIdentityId.userAssignedObjectId(OBJECT_ID)),
-                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTests.serviceFabricEndpoint,
-                        ManagedIdentityId.userAssignedResourceId(CLIENT_ID)),
-                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTests.serviceFabricEndpoint,
-                        ManagedIdentityId.userAssignedResourceId(RESOURCE_ID)),
-                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTests.serviceFabricEndpoint,
-                        ManagedIdentityId.userAssignedObjectId(OBJECT_ID)));
+                        ManagedIdentityId.userAssignedObjectId(ManagedIdentityTestConstants.OBJECT_ID)),
+                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTestConstants.SERVICE_FABRIC_ENDPOINT,
+                        ManagedIdentityId.userAssignedResourceId(ManagedIdentityTestConstants.CLIENT_ID)),
+                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTestConstants.SERVICE_FABRIC_ENDPOINT,
+                        ManagedIdentityId.userAssignedResourceId(ManagedIdentityTestConstants.RESOURCE_ID)),
+                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTestConstants.SERVICE_FABRIC_ENDPOINT,
+                        ManagedIdentityId.userAssignedObjectId(ManagedIdentityTestConstants.OBJECT_ID)));
     }
 
-    public static Stream<Arguments> createDataUserAssignedNotSupported() {
+    static Stream<Arguments> createDataUserAssignedNotSupported() {
         return Stream.of(
-                Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTests.cloudShellEndpoint,
-                        ManagedIdentityId.userAssignedClientId(CLIENT_ID)),
-                Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTests.cloudShellEndpoint,
-                        ManagedIdentityId.userAssignedResourceId(RESOURCE_ID)),
-                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTests.azureArcEndpoint,
-                        ManagedIdentityId.userAssignedClientId(CLIENT_ID)),
-                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTests.azureArcEndpoint,
-                        ManagedIdentityId.userAssignedResourceId(RESOURCE_ID)));
+                Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTestConstants.CLOUDSHELL_ENDPOINT,
+                        ManagedIdentityId.userAssignedClientId(ManagedIdentityTestConstants.CLIENT_ID)),
+                Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTestConstants.CLOUDSHELL_ENDPOINT,
+                        ManagedIdentityId.userAssignedResourceId(ManagedIdentityTestConstants.RESOURCE_ID)),
+                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTestConstants.AZURE_ARC_ENDPOINT,
+                        ManagedIdentityId.userAssignedClientId(ManagedIdentityTestConstants.CLIENT_ID)),
+                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTestConstants.AZURE_ARC_ENDPOINT,
+                        ManagedIdentityId.userAssignedResourceId(ManagedIdentityTestConstants.RESOURCE_ID)));
     }
 
-    public static Stream<Arguments> createDataWrongScope() {
+    static Stream<Arguments> createDataWrongScope() {
         return Stream.of(
-                Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTests.appServiceEndpoint,
+                Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTestConstants.APP_SERVICE_ENDPOINT,
                         "user.read"),
-                Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTests.appServiceEndpoint,
+                Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTestConstants.APP_SERVICE_ENDPOINT,
                         "https://management.core.windows.net//user_impersonation"),
-                Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTests.cloudShellEndpoint,
+                Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTestConstants.CLOUDSHELL_ENDPOINT,
                         "user.read"),
-                Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTests.cloudShellEndpoint,
+                Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTestConstants.CLOUDSHELL_ENDPOINT,
                         "https://management.core.windows.net//user_impersonation"),
-                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTests.azureArcEndpoint,
+                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTestConstants.AZURE_ARC_ENDPOINT,
                         "user.read"),
-                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTests.azureArcEndpoint,
+                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTestConstants.AZURE_ARC_ENDPOINT,
                         "https://management.core.windows.net//user_impersonation"),
-                Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTests.IMDS_ENDPOINT,
+                Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTestConstants.IMDS_ENDPOINT,
                         "user.read"),
-                Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTests.IMDS_ENDPOINT,
+                Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTestConstants.IMDS_ENDPOINT,
                         "https://management.core.windows.net//user_impersonation"),
-                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTests.serviceFabricEndpoint,
+                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTestConstants.SERVICE_FABRIC_ENDPOINT,
                         "user.read"),
-                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTests.serviceFabricEndpoint,
+                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTestConstants.SERVICE_FABRIC_ENDPOINT,
                         "https://management.core.windows.net//user_impersonation"));
     }
 
-    public static Stream<Arguments> createDataError() {
+    static Stream<Arguments> createDataError() {
         return Stream.of(
-                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTests.azureArcEndpoint),
-                Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTests.appServiceEndpoint),
-                Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTests.cloudShellEndpoint),
-                Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTests.IMDS_ENDPOINT),
-                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTests.serviceFabricEndpoint));
+                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTestConstants.AZURE_ARC_ENDPOINT),
+                Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTestConstants.APP_SERVICE_ENDPOINT),
+                Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTestConstants.CLOUDSHELL_ENDPOINT),
+                Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTestConstants.IMDS_ENDPOINT),
+                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTestConstants.SERVICE_FABRIC_ENDPOINT));
     }
 
-    public static Stream<Arguments> createDataGetSource() {
+    static Stream<Arguments> createDataGetSource() {
         return Stream.of(
-                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTests.azureArcEndpoint, ManagedIdentitySourceType.AZURE_ARC),
-                Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTests.appServiceEndpoint, ManagedIdentitySourceType.APP_SERVICE),
-                Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTests.cloudShellEndpoint, ManagedIdentitySourceType.CLOUD_SHELL),
-                Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTests.IMDS_ENDPOINT, ManagedIdentitySourceType.DEFAULT_TO_IMDS),
+                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTestConstants.AZURE_ARC_ENDPOINT, ManagedIdentitySourceType.AZURE_ARC),
+                Arguments.of(ManagedIdentitySourceType.APP_SERVICE, ManagedIdentityTestConstants.APP_SERVICE_ENDPOINT, ManagedIdentitySourceType.APP_SERVICE),
+                Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTestConstants.CLOUDSHELL_ENDPOINT, ManagedIdentitySourceType.CLOUD_SHELL),
+                Arguments.of(ManagedIdentitySourceType.IMDS, ManagedIdentityTestConstants.IMDS_ENDPOINT, ManagedIdentitySourceType.DEFAULT_TO_IMDS),
                 Arguments.of(ManagedIdentitySourceType.IMDS, "", ManagedIdentitySourceType.DEFAULT_TO_IMDS),
-                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTests.serviceFabricEndpoint, ManagedIdentitySourceType.SERVICE_FABRIC));
+                Arguments.of(ManagedIdentitySourceType.SERVICE_FABRIC, ManagedIdentityTestConstants.SERVICE_FABRIC_ENDPOINT, ManagedIdentitySourceType.SERVICE_FABRIC));
     }
 
-    public static Stream<Arguments> createInvalidClaimsData() {
+    static Stream<Arguments> createInvalidClaimsData() {
         return Stream.of(
                 Arguments.of("invalid json format"),
                 Arguments.of("{\"access_token\": }")
