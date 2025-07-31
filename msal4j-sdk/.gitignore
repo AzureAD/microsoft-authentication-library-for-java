@@ -27,3 +27,7 @@ hs_err_pid*
 
 # Lombok
 target/*
+
+# Javadoc generated files
+**/target/site/apidocs/
+**/target/javadoc-bundle-options/
