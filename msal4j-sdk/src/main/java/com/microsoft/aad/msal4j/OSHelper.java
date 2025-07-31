@@ -25,18 +25,38 @@ public class OSHelper {
         }
     }
 
+    /**
+     * Returns the operating system name.
+     *
+     * @return the operating system name string
+     */
     public static String getOs(){
         return OS;
     }
 
+    /**
+     * Checks if the current operating system is macOS.
+     *
+     * @return true if running on macOS, false otherwise
+     */
     public static boolean isMac(){
         return OSType.MAC.equals(osType);
     }
 
+    /**
+     * Checks if the current operating system is Windows.
+     *
+     * @return true if running on Windows, false otherwise
+     */
     public static boolean isWindows(){
         return OSType.WINDOWS.equals(osType);
     }
 
+    /**
+     * Checks if the current operating system is Linux.
+     *
+     * @return true if running on Linux, false otherwise
+     */
     public static boolean isLinux(){
         return OSType.LINUX.equals(osType);
     }

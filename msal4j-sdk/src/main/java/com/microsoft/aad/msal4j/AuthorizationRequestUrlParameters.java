@@ -276,6 +276,11 @@ public class AuthorizationRequestUrlParameters {
         private boolean instanceAware;
         private Map<String, String> extraQueryParameters;
 
+        /**
+         * Builds and returns the AuthorizationRequestUrlParameters instance.
+         *
+         * @return a configured AuthorizationRequestUrlParameters instance
+         */
         public AuthorizationRequestUrlParameters build() {
             return new AuthorizationRequestUrlParameters(this);
         }

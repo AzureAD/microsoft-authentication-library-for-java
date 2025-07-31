@@ -1,0 +1,4 @@
+com.microsoft.aad.msal4jextensions
+com.microsoft.aad.msal4jextensions.persistence
+com.microsoft.aad.msal4jextensions.persistence.linux
+com.microsoft.aad.msal4jextensions.persistence.mac

@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"com.microsoft.aad.msal4jextensions"},{"l":"com.microsoft.aad.msal4jextensions.persistence"},{"l":"com.microsoft.aad.msal4jextensions.persistence.linux"},{"l":"com.microsoft.aad.msal4jextensions.persistence.mac"}];updateSearchResults();

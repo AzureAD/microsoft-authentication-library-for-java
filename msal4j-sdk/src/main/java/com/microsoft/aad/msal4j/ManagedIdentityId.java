@@ -81,10 +81,20 @@ public class ManagedIdentityId {
         return new ManagedIdentityId(ManagedIdentityIdType.OBJECT_ID, objectId);
     }
 
+    /**
+     * Gets the user assigned ID.
+     *
+     * @return the user assigned ID string, or null for system assigned identities
+     */
     public String getUserAssignedId() {
         return this.userAssignedId;
     }
 
+    /**
+     * Gets the managed identity ID type.
+     *
+     * @return the ManagedIdentityIdType indicating whether this is system or user assigned
+     */
     public ManagedIdentityIdType getIdType() {
         return this.idType;
     }
