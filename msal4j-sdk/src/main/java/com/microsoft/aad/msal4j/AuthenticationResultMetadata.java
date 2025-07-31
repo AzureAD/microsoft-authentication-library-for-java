@@ -31,18 +31,30 @@ public class AuthenticationResultMetadata implements Serializable {
         this.cacheRefreshReason = cacheRefreshReason == null ? CacheRefreshReason.NOT_APPLICABLE : cacheRefreshReason;
     }
 
+    /**
+     * TODO: Add description
+     */
     public static AuthenticationResultMetadataBuilder builder() {
         return new AuthenticationResultMetadataBuilder();
     }
 
+    /**
+     * TODO: Add description
+     */
     public TokenSource tokenSource() {
         return this.tokenSource;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Long refreshOn() {
         return this.refreshOn;
     }
 
+    /**
+     * TODO: Add description
+     */
     public CacheRefreshReason cacheRefreshReason() {
         return this.cacheRefreshReason;
     }
@@ -67,25 +79,44 @@ public class AuthenticationResultMetadata implements Serializable {
         AuthenticationResultMetadataBuilder() {
         }
 
+    /**
+     * TODO: Add description
+     */
         public AuthenticationResultMetadataBuilder tokenSource(TokenSource tokenSource) {
             this.tokenSource = tokenSource;
             return this;
         }
 
+    /**
+     * TODO: Add description
+     */
         public AuthenticationResultMetadataBuilder refreshOn(Long refreshOn) {
             this.refreshOn = refreshOn;
             return this;
         }
 
+    /**
+     * TODO: Add description
+     */
         public AuthenticationResultMetadataBuilder cacheRefreshReason(CacheRefreshReason cacheRefreshReason) {
             this.cacheRefreshReason = cacheRefreshReason;
             return this;
         }
 
+    /**
+     * Builds and returns the configured object.
+     * 
+     * @return built object instance
+     */
         public AuthenticationResultMetadata build() {
             return new AuthenticationResultMetadata(this.tokenSource, this.refreshOn, cacheRefreshReason);
         }
 
+    /**
+     * Returns a string representation of the object.
+     * 
+     * @return string representation of this object
+     */
         public String toString() {
             return "AuthenticationResultMetadata.AuthenticationResultMetadataBuilder(tokenSource=" + this.tokenSource + ", refreshOn=" + this.refreshOn + ", cacheRefreshReason$value=" + this.cacheRefreshReason + ")";
         }

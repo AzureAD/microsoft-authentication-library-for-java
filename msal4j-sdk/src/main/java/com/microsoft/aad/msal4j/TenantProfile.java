@@ -19,23 +19,40 @@ class TenantProfile implements ITenantProfile {
         this.environment = environment;
     }
 
+    /**
+     * Gets the claims.
+     * 
+     * @return the claims
+     */
     public Map<String, ?> getClaims() {
         return idTokenClaims;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Map<String, ?> idTokenClaims() {
         return this.idTokenClaims;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String environment() {
         return this.environment;
     }
 
+    /**
+     * TODO: Add description
+     */
     public TenantProfile idTokenClaims(Map<String, ?> idTokenClaims) {
         this.idTokenClaims = idTokenClaims;
         return this;
     }
 
+    /**
+     * TODO: Add description
+     */
     public TenantProfile environment(String environment) {
         this.environment = environment;
         return this;

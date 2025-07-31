@@ -29,6 +29,9 @@ class UserDiscoveryResponse implements JsonSerializable<UserDiscoveryResponse> {
                 && this.accountType.equalsIgnoreCase("Managed");
     }
 
+    /**
+     * TODO: Add description
+     */
     public static UserDiscoveryResponse fromJson(JsonReader jsonReader) throws IOException {
         UserDiscoveryResponse response = new UserDiscoveryResponse();
         return jsonReader.readObject(reader -> {
@@ -63,6 +66,9 @@ class UserDiscoveryResponse implements JsonSerializable<UserDiscoveryResponse> {
         });
     }
 
+    /**
+     * TODO: Add description
+     */
     public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
         jsonWriter.writeStartObject();
         jsonWriter.writeFloatField("ver", version);

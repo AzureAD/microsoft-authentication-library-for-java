@@ -36,18 +36,30 @@ class NamespaceContextImpl implements NamespaceContext {
                 "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd");
     }
 
+    /**
+     * TODO: Add description
+     */
     public void modifyNameSpace(String key, String value) {
         PREF_MAP.put(key, value);
     }
 
+    /**
+     * TODO: Add description
+     */
     public String getNamespaceURI(String prefix) {
         return PREF_MAP.get(prefix);
     }
 
+    /**
+     * TODO: Add description
+     */
     public String getPrefix(String uri) {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * TODO: Add description
+     */
     public Iterator getPrefixes(String uri) {
         throw new UnsupportedOperationException();
     }

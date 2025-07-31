@@ -40,6 +40,9 @@ public class AuthorizationRequestUrlParameters {
 
     Logger log = LoggerFactory.getLogger(AuthorizationRequestUrlParameters.class);
 
+    /**
+     * TODO: Add field description
+     */
     public static Builder builder(String redirectUri,
                                   Set<String> scopes) {
 
@@ -189,62 +192,107 @@ public class AuthorizationRequestUrlParameters {
         return authorizationRequestUrl;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String redirectUri() {
         return this.redirectUri;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Set<String> scopes() {
         return this.scopes;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String codeChallenge() {
         return this.codeChallenge;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String codeChallengeMethod() {
         return this.codeChallengeMethod;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String state() {
         return this.state;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String nonce() {
         return this.nonce;
     }
 
+    /**
+     * TODO: Add description
+     */
     public ResponseMode responseMode() {
         return this.responseMode;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String loginHint() {
         return this.loginHint;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String domainHint() {
         return this.domainHint;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Prompt prompt() {
         return this.prompt;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String correlationId() {
         return this.correlationId;
     }
 
+    /**
+     * TODO: Add description
+     */
     public boolean instanceAware() {
         return this.instanceAware;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Map<String, String> extraQueryParameters() {
         return this.extraQueryParameters;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Map<String, List<String>> requestParameters() {
         return this.requestParameters;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Logger log() {
         return this.log;
     }
@@ -269,6 +317,11 @@ public class AuthorizationRequestUrlParameters {
         private boolean instanceAware;
         private Map<String, String> extraQueryParameters;
 
+    /**
+     * Builds and returns the configured object.
+     * 
+     * @return built object instance
+     */
         public AuthorizationRequestUrlParameters build() {
             return new AuthorizationRequestUrlParameters(this);
         }

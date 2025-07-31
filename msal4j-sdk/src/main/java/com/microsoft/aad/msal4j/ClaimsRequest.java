@@ -143,10 +143,20 @@ public class ClaimsRequest {
         }
     }
 
+    /**
+     * Gets the id token requested claims.
+     * 
+     * @return the id token requested claims
+     */
     public List<RequestedClaim> getIdTokenRequestedClaims() {
         return this.idTokenRequestedClaims;
     }
 
+    /**
+     * Sets the id token requested claims.
+     * 
+     * @param idTokenRequestedClaims the id token requested claims to set
+     */
     public void setIdTokenRequestedClaims(List<RequestedClaim> idTokenRequestedClaims) {
         this.idTokenRequestedClaims = idTokenRequestedClaims;
     }

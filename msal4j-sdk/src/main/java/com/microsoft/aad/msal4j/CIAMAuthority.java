@@ -6,8 +6,14 @@ package com.microsoft.aad.msal4j;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+/**
+ * TODO: Add class description
+ */
 public class CIAMAuthority extends Authority {
 
+    /**
+     * TODO: Add field description
+     */
     public static final String CIAM_HOST_SEGMENT = ".ciamlogin.com";
 
     static final String AUTHORIZATION_ENDPOINT = "oauth2/v2.0/authorize";

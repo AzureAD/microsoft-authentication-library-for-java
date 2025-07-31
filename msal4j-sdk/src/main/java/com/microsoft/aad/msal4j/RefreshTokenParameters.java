@@ -56,26 +56,44 @@ public class RefreshTokenParameters implements IAcquireTokenParameters {
                 .refreshToken(refreshToken);
     }
 
+    /**
+     * TODO: Add description
+     */
     public Set<String> scopes() {
         return this.scopes;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String refreshToken() {
         return this.refreshToken;
     }
 
+    /**
+     * TODO: Add description
+     */
     public ClaimsRequest claims() {
         return this.claims;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Map<String, String> extraHttpHeaders() {
         return this.extraHttpHeaders;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Map<String, String> extraQueryParameters() {
         return this.extraQueryParameters;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String tenant() {
         return this.tenant;
     }
@@ -147,10 +165,20 @@ public class RefreshTokenParameters implements IAcquireTokenParameters {
             return this;
         }
 
+    /**
+     * Builds and returns the configured object.
+     * 
+     * @return built object instance
+     */
         public RefreshTokenParameters build() {
             return new RefreshTokenParameters(this.scopes, this.refreshToken, this.claims, this.extraHttpHeaders, this.extraQueryParameters, this.tenant);
         }
 
+    /**
+     * Returns a string representation of the object.
+     * 
+     * @return string representation of this object
+     */
         public String toString() {
             return "RefreshTokenParameters.RefreshTokenParametersBuilder(scopes=" + this.scopes + ", refreshToken=" + this.refreshToken + ", claims=" + this.claims + ", extraHttpHeaders=" + this.extraHttpHeaders + ", extraQueryParameters=" + this.extraQueryParameters + ", tenant=" + this.tenant + ")";
         }

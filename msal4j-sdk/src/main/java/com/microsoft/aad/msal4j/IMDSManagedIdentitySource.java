@@ -72,6 +72,9 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public void createManagedIdentityRequest(String resource) {
         managedIdentityRequest.baseEndpoint = imdsEndpoint;
         managedIdentityRequest.method = HttpMethod.GET;
@@ -90,6 +93,9 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
     }
 
     @Override
+    /**
+     * TODO: Add field description
+     */
     public ManagedIdentityResponse handleResponse(
             ManagedIdentityParameters parameters,
             IHttpResponse response)

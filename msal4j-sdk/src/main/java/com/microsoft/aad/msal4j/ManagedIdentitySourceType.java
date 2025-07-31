@@ -3,6 +3,9 @@
 
 package com.microsoft.aad.msal4j;
 
+/**
+ * TODO: Add enum description
+ */
 public enum ManagedIdentitySourceType {
     // Default.
     NONE,

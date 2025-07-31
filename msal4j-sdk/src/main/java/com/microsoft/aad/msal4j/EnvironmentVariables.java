@@ -6,6 +6,9 @@ package com.microsoft.aad.msal4j;
 class EnvironmentVariables implements IEnvironmentVariables {
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public String getEnvironmentVariable(String envVariable) {
         return System.getenv(envVariable);
     }

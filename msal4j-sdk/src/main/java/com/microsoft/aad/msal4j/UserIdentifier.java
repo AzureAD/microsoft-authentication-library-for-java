@@ -18,12 +18,18 @@ public class UserIdentifier {
     private UserIdentifier() {
     }
 
+    /**
+     * TODO: Add description
+     */
     public static UserIdentifier fromUpn(String upn) {
         UserIdentifier userIdentifier = new UserIdentifier();
         userIdentifier.upn = upn;
         return userIdentifier;
     }
 
+    /**
+     * TODO: Add description
+     */
     public static UserIdentifier fromHomeAccountId(String homeAccountId) {
         UserIdentifier userIdentifier = new UserIdentifier();
 

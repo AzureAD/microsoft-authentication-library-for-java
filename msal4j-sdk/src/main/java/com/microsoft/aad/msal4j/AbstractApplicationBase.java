@@ -123,30 +123,57 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
         return supplier;
     }
 
+    /**
+     * Gets the correlation ID used to correlate requests and responses.
+     * 
+     * @return the correlation ID
+     */
     public String correlationId() {
         return this.correlationId;
     }
 
+    /**
+     * Gets whether PII (personally identifiable information) should be logged.
+     * 
+     * @return true if PII should be logged, false otherwise
+     */
     public boolean logPii() {
         return this.logPii;
     }
 
+    /**
+     * Gets the proxy configuration for HTTP requests.
+     * 
+     * @return the proxy configuration, or null if no proxy is configured
+     */
     public Proxy proxy() {
         return this.proxy;
     }
 
+    /**
+     * TODO: Add description
+     */
     public SSLSocketFactory sslSocketFactory() {
         return this.sslSocketFactory;
     }
 
+    /**
+     * TODO: Add description
+     */
     public IHttpClient httpClient() {
         return this.httpClient;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Integer connectTimeoutForDefaultHttpClient() {
         return this.connectTimeoutForDefaultHttpClient;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Integer readTimeoutForDefaultHttpClient() {
         return this.readTimeoutForDefaultHttpClient;
     }

@@ -11,17 +11,26 @@ class DefaultRetryPolicy implements IRetryPolicy {
     private static final int RETRY_DELAY_MS = 1000;
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public boolean isRetryable(IHttpResponse httpResponse) {
         return HttpStatus.isServerError(httpResponse.statusCode()) &&
                 HttpHelper.getRetryAfterHeader(httpResponse) == null;
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public int getMaxRetryCount(IHttpResponse httpResponse) {
         return RETRY_NUM;
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public int getRetryDelayMs(IHttpResponse httpResponse) {
         return RETRY_DELAY_MS;
     }

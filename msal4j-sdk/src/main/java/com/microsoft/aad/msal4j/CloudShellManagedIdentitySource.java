@@ -18,6 +18,9 @@ class CloudShellManagedIdentitySource extends AbstractManagedIdentitySource{
     private final URI msiEndpoint;
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public void createManagedIdentityRequest(String resource) {
         managedIdentityRequest.baseEndpoint = msiEndpoint;
         managedIdentityRequest.method = HttpMethod.GET;

@@ -54,23 +54,38 @@ public class HttpResponse implements IHttpResponse {
         }
     }
 
+    /**
+     * TODO: Add description
+     */
     public int statusCode() {
         return this.statusCode;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Map<String, List<String>> headers() {
         return this.headers;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String body() {
         return this.body;
     }
 
+    /**
+     * TODO: Add description
+     */
     public HttpResponse statusCode(int statusCode) {
         this.statusCode = statusCode;
         return this;
     }
 
+    /**
+     * TODO: Add description
+     */
     public HttpResponse body(String body) {
         this.body = body;
         return this;

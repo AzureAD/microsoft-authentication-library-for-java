@@ -66,6 +66,9 @@ class AcquireTokenByAppProviderSupplier extends AuthenticationResultSupplier {
         return authenticationResult;
     }
 
+    /**
+     * TODO: Add description
+     */
     public AuthenticationResult fetchTokenUsingAppTokenProvider(AppTokenProviderParameters appTokenProviderParameters) throws ExecutionException, InterruptedException {
 
         TokenProviderResult tokenProviderResult;

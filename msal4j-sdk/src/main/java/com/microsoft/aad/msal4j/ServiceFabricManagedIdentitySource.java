@@ -28,6 +28,9 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
     private static HttpHelper httpHelper = new HttpHelper(httpClient, new ManagedIdentityRetryPolicy());
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public void createManagedIdentityRequest(String resource) {
         managedIdentityRequest.baseEndpoint = msiEndpoint;
         managedIdentityRequest.method = HttpMethod.GET;
@@ -53,6 +56,9 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
     }
 
     @Override
+    /**
+     * TODO: Add field description
+     */
     public ManagedIdentityResponse getManagedIdentityResponse(
             ManagedIdentityParameters parameters) {
 

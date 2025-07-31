@@ -20,6 +20,9 @@ class AccountsSupplier implements Supplier<Set<IAccount>> {
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public Set<IAccount> get() {
         try {
             return clientApplication.tokenCache.getAccounts

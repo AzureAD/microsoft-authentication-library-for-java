@@ -37,6 +37,9 @@ class DefaultHttpClient implements IHttpClient {
         if (readTimeout != null) this.readTimeout = readTimeout;
     }
 
+    /**
+     * TODO: Add description
+     */
     public IHttpResponse send(HttpRequest httpRequest) throws Exception {
 
         HttpResponse response = null;

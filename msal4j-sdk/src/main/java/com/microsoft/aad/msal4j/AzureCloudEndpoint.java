@@ -27,6 +27,9 @@ public enum AzureCloudEndpoint {
      */
     AzureUsGovernment("https://login.microsoftonline.us/");
 
+    /**
+     * TODO: Add field description
+     */
     public final String endpoint;
 
     AzureCloudEndpoint(String endpoint) {

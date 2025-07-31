@@ -34,22 +34,37 @@ public class SystemBrowserOptions {
         return new SystemBrowserOptionsBuilder();
     }
 
+    /**
+     * TODO: Add description
+     */
     public String htmlMessageSuccess() {
         return this.htmlMessageSuccess;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String htmlMessageError() {
         return this.htmlMessageError;
     }
 
+    /**
+     * TODO: Add description
+     */
     public URI browserRedirectSuccess() {
         return this.browserRedirectSuccess;
     }
 
+    /**
+     * TODO: Add description
+     */
     public URI browserRedirectError() {
         return this.browserRedirectError;
     }
 
+    /**
+     * TODO: Add description
+     */
     public OpenBrowserAction openBrowserAction() {
         return this.openBrowserAction;
     }
@@ -111,10 +126,20 @@ public class SystemBrowserOptions {
             return this;
         }
 
+    /**
+     * Builds and returns the configured object.
+     * 
+     * @return built object instance
+     */
         public SystemBrowserOptions build() {
             return new SystemBrowserOptions(this.htmlMessageSuccess, this.htmlMessageError, this.browserRedirectSuccess, this.browserRedirectError, this.openBrowserAction);
         }
 
+    /**
+     * Returns a string representation of the object.
+     * 
+     * @return string representation of this object
+     */
         public String toString() {
             return "SystemBrowserOptions.SystemBrowserOptionsBuilder(htmlMessageSuccess=" + this.htmlMessageSuccess + ", htmlMessageError=" + this.htmlMessageError + ", browserRedirectSuccess=" + this.browserRedirectSuccess + ", browserRedirectError=" + this.browserRedirectError + ", openBrowserAction=" + this.openBrowserAction + ")";
         }

@@ -3,6 +3,9 @@
 
 package com.microsoft.aad.msal4j;
 
+/**
+ * TODO: Add class description
+ */
 public class AuthenticationErrorMessage {
 
     /**

@@ -46,6 +46,11 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
         this.clientCapabilities = builder.clientCapabilities;
     }
 
+    /**
+     * Gets the shared token cache.
+     * 
+     * @return the shared token cache
+     */
     public static TokenCache getSharedTokenCache() {
         return ManagedIdentityApplication.sharedTokenCache;
     }
@@ -54,13 +59,26 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
         return ManagedIdentityApplication.environmentVariables;
     }
 
+    /**
+     * Gets the managed identity id.
+     * 
+     * @return the managed identity id
+     */
     public ManagedIdentityId getManagedIdentityId() {
         return this.managedIdentityId;
     }
 
+    /**
+     * Gets the client capabilities.
+     * 
+     * @return the client capabilities
+     */
     public List<String> getClientCapabilities() { return this.clientCapabilities; }
     
     @Override
+    /**
+     * TODO: Add description
+     */
     public CompletableFuture<IAuthenticationResult> acquireTokenForManagedIdentity(ManagedIdentityParameters managedIdentityParameters)
             throws Exception {
         RequestContext requestContext = new RequestContext(
@@ -99,6 +117,9 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
             this.managedIdentityId = managedIdentityId;
         }
 
+    /**
+     * TODO: Add description
+     */
         public Builder resource(String resource) {
             this.resource = resource;
             return self();
@@ -119,6 +140,11 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
         }
 
         @Override
+    /**
+     * Builds and returns the configured object.
+     * 
+     * @return built object instance
+     */
         public ManagedIdentityApplication build() {
             return new ManagedIdentityApplication(this);
         }

@@ -20,6 +20,9 @@ class AadInstanceDiscoveryResponse implements JsonSerializable<AadInstanceDiscov
     private String error;
     private String correlationId;
 
+    /**
+     * TODO: Add description
+     */
     public static AadInstanceDiscoveryResponse fromJson(JsonReader jsonReader) throws IOException {
         AadInstanceDiscoveryResponse response = new AadInstanceDiscoveryResponse();
         return jsonReader.readObject(reader -> {
@@ -54,6 +57,9 @@ class AadInstanceDiscoveryResponse implements JsonSerializable<AadInstanceDiscov
         });
     }
 
+    /**
+     * TODO: Add description
+     */
     public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
         jsonWriter.writeStartObject();
         jsonWriter.writeStringField("tenant_discovery_endpoint", tenantDiscoveryEndpoint);

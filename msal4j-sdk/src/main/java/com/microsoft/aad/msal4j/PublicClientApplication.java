@@ -28,6 +28,9 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
     private boolean brokerEnabled;
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public CompletableFuture<IAuthenticationResult> acquireToken(UserNamePasswordParameters parameters) {
 
         validateNotNull("parameters", parameters);
@@ -55,6 +58,9 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public CompletableFuture<IAuthenticationResult> acquireToken(IntegratedWindowsAuthenticationParameters parameters) {
 
         validateNotNull("parameters", parameters);
@@ -75,6 +81,9 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public CompletableFuture<IAuthenticationResult> acquireToken(DeviceCodeFlowParameters parameters) {
 
         if (AuthorityType.B2C.equals(authenticationAuthority.authorityType())) {
@@ -104,6 +113,9 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public CompletableFuture<IAuthenticationResult> acquireToken(InteractiveRequestParameters parameters) {
 
         validateNotNull("parameters", parameters);
@@ -136,6 +148,9 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public CompletableFuture<IAuthenticationResult> acquireTokenSilently(SilentParameters parameters) throws MalformedURLException {
         CompletableFuture<IAuthenticationResult> future;
 
@@ -149,6 +164,9 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public CompletableFuture<Void> removeAccount(IAccount account) {
         if (brokerEnabled) {
             broker.removeAccount(this, account);
@@ -206,6 +224,11 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
         }
 
         @Override
+    /**
+     * Builds and returns the configured object.
+     * 
+     * @return built object instance
+     */
         public PublicClientApplication build() {
 
             return new PublicClientApplication(this);

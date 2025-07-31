@@ -22,6 +22,9 @@ class ManagedIdentityResponse implements JsonSerializable<ManagedIdentityRespons
     String resource;
     String clientId;
 
+    /**
+     * TODO: Add description
+     */
     public static ManagedIdentityResponse fromJson(JsonReader jsonReader) throws IOException {
         ManagedIdentityResponse response = new ManagedIdentityResponse();
         return jsonReader.readObject(reader -> {
@@ -54,6 +57,9 @@ class ManagedIdentityResponse implements JsonSerializable<ManagedIdentityRespons
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
         jsonWriter.writeStartObject();
         jsonWriter.writeStringField("token_type", tokenType);
@@ -65,22 +71,47 @@ class ManagedIdentityResponse implements JsonSerializable<ManagedIdentityRespons
         return jsonWriter;
     }
 
+    /**
+     * Gets the token type.
+     * 
+     * @return the token type
+     */
     public String getTokenType() {
         return this.tokenType;
     }
 
+    /**
+     * Gets the access token.
+     * 
+     * @return the access token
+     */
     public String getAccessToken() {
         return this.accessToken;
     }
 
+    /**
+     * Gets the expires on.
+     * 
+     * @return the expires on
+     */
     public String getExpiresOn() {
         return this.expiresOn;
     }
 
+    /**
+     * Gets the resource.
+     * 
+     * @return the resource
+     */
     public String getResource() {
         return this.resource;
     }
 
+    /**
+     * Gets the client id.
+     * 
+     * @return the client id
+     */
     public String getClientId() {
         return this.clientId;
     }

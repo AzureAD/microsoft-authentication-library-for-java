@@ -54,6 +54,9 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
     abstract AuthenticationResult execute() throws Exception;
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public IAuthenticationResult get() {
         AuthenticationResult result;
 

@@ -63,6 +63,9 @@ public class TokenCache implements ITokenCache {
     private transient String serializedCachedSnapshot;
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public void deserialize(String data) {
         if (StringHelper.isBlank(data)) {
             return;
@@ -136,6 +139,9 @@ public class TokenCache implements ITokenCache {
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public String serialize() {
         lock.readLock().lock();
         try {
@@ -166,6 +172,9 @@ public class TokenCache implements ITokenCache {
         }
 
         @Override
+    /**
+     * TODO: Add description
+     */
         public void close() {
             if (tokenCacheAccessAspect != null) {
                 tokenCacheAccessAspect.afterCacheAccess(context);

@@ -27,6 +27,9 @@ class InstanceDiscoveryMetadataEntry implements JsonSerializable<InstanceDiscove
     public InstanceDiscoveryMetadataEntry() {
     }
 
+    /**
+     * TODO: Add description
+     */
     public static InstanceDiscoveryMetadataEntry fromJson(JsonReader jsonReader) throws IOException {
         InstanceDiscoveryMetadataEntry entry = new InstanceDiscoveryMetadataEntry();
         return jsonReader.readObject(reader -> {
@@ -52,6 +55,9 @@ class InstanceDiscoveryMetadataEntry implements JsonSerializable<InstanceDiscove
         });
     }
 
+    /**
+     * TODO: Add description
+     */
     public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
         jsonWriter.writeStartObject();
         jsonWriter.writeStringField("preferred_network", preferredNetwork);

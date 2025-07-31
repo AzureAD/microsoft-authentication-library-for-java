@@ -55,30 +55,51 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         return builder().scopes(scopes);
     }
 
+    /**
+     * TODO: Add description
+     */
     public Set<String> scopes() {
         return this.scopes;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Boolean skipCache() {
         return this.skipCache;
     }
 
+    /**
+     * TODO: Add description
+     */
     public ClaimsRequest claims() {
         return this.claims;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Map<String, String> extraHttpHeaders() {
         return this.extraHttpHeaders;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Map<String, String> extraQueryParameters() {
         return this.extraQueryParameters;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String tenant() {
         return this.tenant;
     }
 
+    /**
+     * TODO: Add description
+     */
     public IClientCredential clientCredential() {
         return this.clientCredential;
     }
@@ -156,10 +177,20 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
             return this;
         }
 
+    /**
+     * Builds and returns the configured object.
+     * 
+     * @return built object instance
+     */
         public ClientCredentialParameters build() {
             return new ClientCredentialParameters(this.scopes, this.skipCache, this.claims, this.extraHttpHeaders, this.extraQueryParameters, this.tenant, this.clientCredential);
         }
 
+    /**
+     * Returns a string representation of the object.
+     * 
+     * @return string representation of this object
+     */
         public String toString() {
             return "ClientCredentialParameters.ClientCredentialParametersBuilder(scopes=" + this.scopes + ", skipCache=" + this.skipCache + ", claims=" + this.claims + ", extraHttpHeaders=" + this.extraHttpHeaders + ", extraQueryParameters=" + this.extraQueryParameters + ", tenant=" + this.tenant + ", clientCredential=" + this.clientCredential + ")";
         }

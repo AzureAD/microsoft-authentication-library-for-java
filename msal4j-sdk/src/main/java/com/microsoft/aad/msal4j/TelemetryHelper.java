@@ -27,6 +27,9 @@ class TelemetryHelper implements AutoCloseable {
         }
     }
 
+    /**
+     * TODO: Add description
+     */
     public void close() {
         if (telemetry != null) {
             telemetry.stopEvent(requestId, eventToEnd);

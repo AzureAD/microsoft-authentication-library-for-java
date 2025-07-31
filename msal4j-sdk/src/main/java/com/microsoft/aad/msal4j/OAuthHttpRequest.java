@@ -33,6 +33,9 @@ class OAuthHttpRequest extends HTTPRequest {
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public HTTPResponse send() throws IOException {
 
         Map<String, String> httpHeaders = configureHttpHeaders();

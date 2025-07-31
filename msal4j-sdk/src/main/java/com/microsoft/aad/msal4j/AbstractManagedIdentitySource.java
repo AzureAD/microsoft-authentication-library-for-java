@@ -37,6 +37,9 @@ abstract class AbstractManagedIdentitySource {
         this.userAssignedId = ((ManagedIdentityApplication) msalRequest.application()).getManagedIdentityId().getUserAssignedId();
     }
 
+    /**
+     * TODO: Add field description
+     */
     public ManagedIdentityResponse getManagedIdentityResponse(
             ManagedIdentityParameters parameters) {
 
@@ -62,6 +65,9 @@ abstract class AbstractManagedIdentitySource {
         return handleResponse(parameters, response);
     }
 
+    /**
+     * TODO: Add field description
+     */
     public ManagedIdentityResponse handleResponse(
             ManagedIdentityParameters parameters,
             IHttpResponse response) {
@@ -90,6 +96,9 @@ abstract class AbstractManagedIdentitySource {
         }
     }
 
+    /**
+     * TODO: Add description
+     */
     public abstract void createManagedIdentityRequest(String resource);
 
     protected ManagedIdentityResponse getSuccessfulResponse(IHttpResponse response) {
@@ -137,26 +146,56 @@ abstract class AbstractManagedIdentitySource {
                 new EnvironmentVariables() : ManagedIdentityApplication.environmentVariables;
     }
 
+    /**
+     * Checks if user assigned managed identity.
+     * 
+     * @return true if user assigned managed identity, false otherwise
+     */
     public boolean isUserAssignedManagedIdentity() {
         return this.isUserAssignedManagedIdentity;
     }
 
+    /**
+     * Gets the managed identity user assigned client id.
+     * 
+     * @return the managed identity user assigned client id
+     */
     public String getManagedIdentityUserAssignedClientId() {
         return this.managedIdentityUserAssignedClientId;
     }
 
+    /**
+     * Gets the managed identity user assigned resource id.
+     * 
+     * @return the managed identity user assigned resource id
+     */
     public String getManagedIdentityUserAssignedResourceId() {
         return this.managedIdentityUserAssignedResourceId;
     }
 
+    /**
+     * Sets the user assigned managed identity.
+     * 
+     * @param isUserAssignedManagedIdentity the user assigned managed identity to set
+     */
     public void setUserAssignedManagedIdentity(boolean isUserAssignedManagedIdentity) {
         this.isUserAssignedManagedIdentity = isUserAssignedManagedIdentity;
     }
 
+    /**
+     * Sets the managed identity user assigned client id.
+     * 
+     * @param managedIdentityUserAssignedClientId the managed identity user assigned client id to set
+     */
     public void setManagedIdentityUserAssignedClientId(String managedIdentityUserAssignedClientId) {
         this.managedIdentityUserAssignedClientId = managedIdentityUserAssignedClientId;
     }
 
+    /**
+     * Sets the managed identity user assigned resource id.
+     * 
+     * @param managedIdentityUserAssignedResourceId the managed identity user assigned resource id to set
+     */
     public void setManagedIdentityUserAssignedResourceId(String managedIdentityUserAssignedResourceId) {
         this.managedIdentityUserAssignedResourceId = managedIdentityUserAssignedResourceId;
     }

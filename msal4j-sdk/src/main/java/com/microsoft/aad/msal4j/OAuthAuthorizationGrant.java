@@ -66,6 +66,9 @@ class OAuthAuthorizationGrant extends AbstractMsalAuthorizationGrant {
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public Map<String, List<String>> toParameters() {
         final Map<String, List<String>> outParams = new LinkedHashMap<>();
         outParams.putAll(params);

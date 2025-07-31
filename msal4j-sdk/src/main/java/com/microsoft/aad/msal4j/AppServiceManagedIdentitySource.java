@@ -23,6 +23,9 @@ class AppServiceManagedIdentitySource extends AbstractManagedIdentitySource{
     private final String identityHeader;
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public void createManagedIdentityRequest(String resource) {
         managedIdentityRequest.baseEndpoint = msiEndpoint;
         managedIdentityRequest.method = HttpMethod.GET;

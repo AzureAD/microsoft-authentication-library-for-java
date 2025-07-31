@@ -9,6 +9,9 @@ import java.util.List;
 
 class AppMetadataCacheEntity {
 
+    /**
+     * TODO: Add field description
+     */
     public static final String APP_METADATA_CACHE_ENTITY_ID = "appmetadata";
 
     @JsonProperty("client_id")

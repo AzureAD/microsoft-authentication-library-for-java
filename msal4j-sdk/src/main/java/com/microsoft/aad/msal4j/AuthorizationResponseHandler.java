@@ -38,6 +38,9 @@ class AuthorizationResponseHandler implements HttpHandler {
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public void handle(HttpExchange httpExchange) throws IOException {
         try {
             if (!httpExchange.getRequestURI().getPath().equalsIgnoreCase("/")) {

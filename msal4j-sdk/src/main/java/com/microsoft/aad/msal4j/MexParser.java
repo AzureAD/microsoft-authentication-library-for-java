@@ -40,6 +40,9 @@ class MexParser {
     }
 
     private static class NegotiateAuthenticationPolicySelector implements PolicySelector {
+    /**
+     * TODO: Add description
+     */
         public Map<String, BindingPolicy> selectPolicies(Document xmlDocument, XPath xPath, boolean logPii) throws XPathExpressionException {
             String xpathExpression = "//wsdl:definitions/wsp:Policy/wsp:ExactlyOne/wsp:All/http:NegotiateAuthentication";
 
@@ -48,6 +51,9 @@ class MexParser {
     }
 
     private static class WsTrustEndpointPolicySelector implements PolicySelector {
+    /**
+     * TODO: Add description
+     */
         public Map<String, BindingPolicy> selectPolicies(Document xmlDocument, XPath xPath, boolean logPii)
                 throws XPathExpressionException {
             String xpathExpression = "//wsdl:definitions/wsp:Policy/wsp:ExactlyOne/wsp:All/"

@@ -11,6 +11,9 @@ enum HTTPContentType {
     ApplicationURLEncoded("application/x-www-form-urlencoded; charset=UTF-8"),
     ApplicationJSON("application/json; charset=UTF-8");
 
+    /**
+     * TODO: Add field description
+     */
     public final String contentType;
 
     HTTPContentType(String contentType) {

@@ -32,6 +32,9 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
      Make sure you can open a page using xdg-open tool. See <a href="https://aka.ms/msal-net-os-browser">...</a> for details. */
     public static final String LINUX_XDG_OPEN = "linux_xdg_open_failed";
 
+    /**
+     * TODO: Add field description
+     */
     public static final String LINUX_OPEN_AS_SUDO_NOT_SUPPORTED = "Unable to open a web page using xdg-open, gnome-open, kfmclient or wslview tools in sudo mode. Please run the process as non-sudo user.";
 
     AcquireTokenByInteractiveFlowSupplier(PublicClientApplication clientApplication,

@@ -34,6 +34,9 @@ public class MsalException extends RuntimeException {
         this.errorCode = errorCode;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String errorCode() {
         return this.errorCode;
     }

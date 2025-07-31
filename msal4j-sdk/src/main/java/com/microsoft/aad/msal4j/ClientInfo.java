@@ -18,6 +18,9 @@ class ClientInfo {
     @JsonProperty("utid")
     private String uniqueTenantIdentifier;
 
+    /**
+     * TODO: Add description
+     */
     public static ClientInfo createFromJson(String clientInfoJsonBase64Encoded) {
         if (StringHelper.isBlank(clientInfoJsonBase64Encoded)) {
             return null;

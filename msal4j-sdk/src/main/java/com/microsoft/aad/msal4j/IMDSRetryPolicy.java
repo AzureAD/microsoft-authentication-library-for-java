@@ -31,6 +31,9 @@ class IMDSRetryPolicy extends ManagedIdentityRetryPolicy {
     );
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public boolean isRetryable(IHttpResponse httpResponse) {
         currentRetryCount++;
         lastStatusCode = httpResponse.statusCode();
@@ -39,11 +42,17 @@ class IMDSRetryPolicy extends ManagedIdentityRetryPolicy {
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public int getMaxRetryCount(IHttpResponse httpResponse) {
         return (httpResponse.statusCode() == HttpStatus.HTTP_GONE) ? LINEAR_RETRY_NUM : EXPONENTIAL_RETRY_NUM;
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public int getRetryDelayMs(IHttpResponse httpResponse) {
         // Use exponential backoff for non-410 status codes
         if (lastStatusCode == HttpStatus.HTTP_GONE) {

@@ -74,6 +74,9 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public void createManagedIdentityRequest(String resource)
     {
         managedIdentityRequest.baseEndpoint = MSI_ENDPOINT;
@@ -88,6 +91,9 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
     }
 
     @Override
+    /**
+     * TODO: Add field description
+     */
     public ManagedIdentityResponse handleResponse(
             ManagedIdentityParameters parameters,
             IHttpResponse response) {

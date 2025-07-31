@@ -29,9 +29,15 @@ import java.security.cert.X509Certificate;
  */
 class DefaultHttpClientManagedIdentity extends DefaultHttpClient {
 
+    /**
+     * TODO: Add description
+     */
     public static final HostnameVerifier ALL_HOSTS_ACCEPT_HOSTNAME_VERIFIER = new HostnameVerifier() {
         @SuppressWarnings("BadHostnameVerifier")
         @Override
+    /**
+     * TODO: Add description
+     */
         public boolean verify(String hostname, SSLSession session) {
             return true; // Allow all hostnames, however the TrustManager created later on will only trust a certificate with a specific thumbprint.
         }
@@ -92,15 +98,26 @@ class DefaultHttpClientManagedIdentity extends DefaultHttpClient {
 
         // Create a Trust manager that trusts only certificate with specified thumbprint.
         TrustManager[] certificateTrust = new TrustManager[]{new X509TrustManager() {
+    /**
+     * Gets the accepted issuers.
+     * 
+     * @return the accepted issuers
+     */
             public X509Certificate[] getAcceptedIssuers() {
                 return new X509Certificate[]{};
             }
 
+    /**
+     * TODO: Add description
+     */
             public void checkClientTrusted(X509Certificate[] certificates, String authenticationType)
                     throws CertificateException {
                 throw new CertificateException("No client side certificate configured.");
             }
 
+    /**
+     * TODO: Add description
+     */
             public void checkServerTrusted(X509Certificate[] certificates, String authenticationType)
                     throws CertificateException {
                 if (certificates == null || certificates.length == 0) {

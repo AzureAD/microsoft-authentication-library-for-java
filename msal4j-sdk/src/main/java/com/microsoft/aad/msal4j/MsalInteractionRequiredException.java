@@ -32,6 +32,9 @@ public class MsalInteractionRequiredException extends MsalServiceException {
         reason = InteractionRequiredExceptionReason.fromSubErrorString(errorResponse.subError);
     }
 
+    /**
+     * TODO: Add description
+     */
     public InteractionRequiredExceptionReason reason() {
         return this.reason;
     }

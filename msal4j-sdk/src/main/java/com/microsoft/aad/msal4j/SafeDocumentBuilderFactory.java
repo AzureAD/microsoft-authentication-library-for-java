@@ -8,6 +8,9 @@ import javax.xml.parsers.ParserConfigurationException;
 
 final class SafeDocumentBuilderFactory {
 
+    /**
+     * TODO: Add description
+     */
     public static DocumentBuilderFactory createInstance() throws ParserConfigurationException {
 
         final DocumentBuilderFactory builderFactory = DocumentBuilderFactory

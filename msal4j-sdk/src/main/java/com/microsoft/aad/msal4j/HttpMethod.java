@@ -48,6 +48,9 @@ public enum HttpMethod {
      */
     TRACE("TRACE");
 
+    /**
+     * TODO: Add field description
+     */
     public final String methodName;
 
     HttpMethod(String methodName) {

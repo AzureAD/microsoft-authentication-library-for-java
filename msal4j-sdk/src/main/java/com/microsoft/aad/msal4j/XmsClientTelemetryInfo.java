@@ -57,18 +57,38 @@ class XmsClientTelemetryInfo {
         return pattern.matcher(header);
     }
 
+    /**
+     * Gets the server error code.
+     * 
+     * @return the server error code
+     */
     public String getServerErrorCode() {
         return serverErrorCode;
     }
 
+    /**
+     * Gets the server sub error code.
+     * 
+     * @return the server sub error code
+     */
     public String getServerSubErrorCode() {
         return serverSubErrorCode;
     }
 
+    /**
+     * Gets the token age.
+     * 
+     * @return the token age
+     */
     public String getTokenAge() {
         return tokenAge;
     }
 
+    /**
+     * Gets the spe info.
+     * 
+     * @return the spe info
+     */
     public String getSpeInfo() {
         return speInfo;
     }

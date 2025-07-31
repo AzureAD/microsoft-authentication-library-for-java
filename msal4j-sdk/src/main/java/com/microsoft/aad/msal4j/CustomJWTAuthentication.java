@@ -14,6 +14,9 @@ import com.nimbusds.oauth2.sdk.util.URLUtils;
 
 import java.util.*;
 
+/**
+ * TODO: Add class description
+ */
 public class CustomJWTAuthentication extends ClientAuthentication {
     private ClientAssertion clientAssertion;
 
@@ -23,12 +26,20 @@ public class CustomJWTAuthentication extends ClientAuthentication {
     }
 
     @Override
+    /**
+     * Gets the form parameter names.
+     * 
+     * @return the form parameter names
+     */
     public Set<String> getFormParameterNames() {
         return Collections.unmodifiableSet(new HashSet(Arrays.asList("client_assertion", "client_assertion_type", "client_id")));
 
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public void applyTo(HTTPRequest httpRequest) {
         if (httpRequest.getMethod() != HTTPRequest.Method.POST) {
             throw new SerializeException("The HTTP request method must be POST");
@@ -47,6 +58,9 @@ public class CustomJWTAuthentication extends ClientAuthentication {
         }
     }
 
+    /**
+     * TODO: Add description
+     */
     public Map<String, List<String>> toParameters() {
         HashMap<String, List<String>> params = new HashMap<>();
 

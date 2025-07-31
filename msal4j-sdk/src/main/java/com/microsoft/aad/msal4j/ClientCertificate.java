@@ -14,6 +14,9 @@ import java.util.*;
 
 final class ClientCertificate implements IClientCertificate {
 
+    /**
+     * TODO: Add field description
+     */
     public static final String DEFAULT_PKCS12_PASSWORD = "";
 
     private final PrivateKey privateKey;
@@ -32,6 +35,9 @@ final class ClientCertificate implements IClientCertificate {
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public String publicCertificateHash256()
             throws CertificateEncodingException, NoSuchAlgorithmException {
 
@@ -39,6 +45,9 @@ final class ClientCertificate implements IClientCertificate {
                 .getHashSha256(publicKeyCertificateChain.get(0).getEncoded()));
     }
 
+    /**
+     * TODO: Add description
+     */
     public String publicCertificateHash()
             throws CertificateEncodingException, NoSuchAlgorithmException {
 
@@ -46,6 +55,11 @@ final class ClientCertificate implements IClientCertificate {
                 .getHashSha1(publicKeyCertificateChain.get(0).getEncoded()));
     }
 
+    /**
+     * Gets the encoded public key certificate chain.
+     * 
+     * @return the encoded public key certificate chain
+     */
     public List<String> getEncodedPublicKeyCertificateChain() throws CertificateEncodingException {
         List<String> result = new ArrayList<>();
 
@@ -121,6 +135,9 @@ final class ClientCertificate implements IClientCertificate {
         return md.digest();
     }
 
+    /**
+     * TODO: Add description
+     */
     public PrivateKey privateKey() {
         return this.privateKey;
     }

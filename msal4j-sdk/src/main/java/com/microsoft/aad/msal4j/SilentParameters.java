@@ -95,38 +95,65 @@ public class SilentParameters implements IAcquireTokenParameters {
         return updatedScopes;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Set<String> scopes() {
         return this.scopes;
     }
 
+    /**
+     * TODO: Add description
+     */
     public IAccount account() {
         return this.account;
     }
 
+    /**
+     * TODO: Add description
+     */
     public ClaimsRequest claims() {
         return this.claims;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String authorityUrl() {
         return this.authorityUrl;
     }
 
+    /**
+     * TODO: Add description
+     */
     public boolean forceRefresh() {
         return this.forceRefresh;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Map<String, String> extraHttpHeaders() {
         return this.extraHttpHeaders;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Map<String, String> extraQueryParameters() {
         return this.extraQueryParameters;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String tenant() {
         return this.tenant;
     }
 
+    /**
+     * TODO: Add description
+     */
     public PopParameters proofOfPossession() {
         return this.proofOfPossession;
     }
@@ -229,10 +256,20 @@ public class SilentParameters implements IAcquireTokenParameters {
             return this;
         }
 
+    /**
+     * Builds and returns the configured object.
+     * 
+     * @return built object instance
+     */
         public SilentParameters build() {
             return new SilentParameters(this.scopes, this.account, this.claims, this.authorityUrl, this.forceRefresh, this.extraHttpHeaders, this.extraQueryParameters, this.tenant, this.proofOfPossession);
         }
 
+    /**
+     * Returns a string representation of the object.
+     * 
+     * @return string representation of this object
+     */
         public String toString() {
             return "SilentParameters.SilentParametersBuilder(scopes=" + this.scopes + ", account=" + this.account + ", claims=" + this.claims + ", authorityUrl=" + this.authorityUrl + ", forceRefresh=" + this.forceRefresh + ", extraHttpHeaders=" + this.extraHttpHeaders + ", extraQueryParameters=" + this.extraQueryParameters + ", tenant=" + this.tenant + ", proofOfPossession=" + this.proofOfPossession + ")";
         }

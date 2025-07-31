@@ -68,34 +68,58 @@ public class AuthorizationCodeParameters implements IAcquireTokenParameters {
                 .redirectUri(redirectUri);
     }
 
+    /**
+     * TODO: Add description
+     */
     public String authorizationCode() {
         return this.authorizationCode;
     }
 
+    /**
+     * TODO: Add description
+     */
     public URI redirectUri() {
         return this.redirectUri;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Set<String> scopes() {
         return this.scopes;
     }
 
+    /**
+     * TODO: Add description
+     */
     public ClaimsRequest claims() {
         return this.claims;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String codeVerifier() {
         return this.codeVerifier;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Map<String, String> extraHttpHeaders() {
         return this.extraHttpHeaders;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Map<String, String> extraQueryParameters() {
         return this.extraQueryParameters;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String tenant() {
         return this.tenant;
     }
@@ -187,10 +211,20 @@ public class AuthorizationCodeParameters implements IAcquireTokenParameters {
             return this;
         }
 
+    /**
+     * Builds and returns the configured object.
+     * 
+     * @return built object instance
+     */
         public AuthorizationCodeParameters build() {
             return new AuthorizationCodeParameters(this.authorizationCode, this.redirectUri, this.scopes, this.claims, this.codeVerifier, this.extraHttpHeaders, this.extraQueryParameters, this.tenant);
         }
 
+    /**
+     * Returns a string representation of the object.
+     * 
+     * @return string representation of this object
+     */
         public String toString() {
             return "AuthorizationCodeParameters.AuthorizationCodeParametersBuilder(authorizationCode=" + this.authorizationCode + ", redirectUri=" + this.redirectUri + ", scopes=" + this.scopes + ", claims=" + this.claims + ", codeVerifier=" + this.codeVerifier + ", extraHttpHeaders=" + this.extraHttpHeaders + ", extraQueryParameters=" + this.extraQueryParameters + ", tenant=" + this.tenant + ")";
         }

@@ -112,6 +112,9 @@ public class MsalServiceException extends MsalException {
         return this.headers;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String managedIdentitySource() {
         return this.managedIdentitySource;
     }

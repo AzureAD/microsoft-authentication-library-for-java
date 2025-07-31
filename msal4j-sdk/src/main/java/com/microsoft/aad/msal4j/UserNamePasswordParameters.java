@@ -37,6 +37,9 @@ public class UserNamePasswordParameters implements IAcquireTokenParameters {
         this.proofOfPossession = proofOfPossession;
     }
 
+    /**
+     * TODO: Add description
+     */
     public char[] password() {
         return password.clone();
     }
@@ -67,30 +70,51 @@ public class UserNamePasswordParameters implements IAcquireTokenParameters {
                 .password(password);
     }
 
+    /**
+     * TODO: Add description
+     */
     public Set<String> scopes() {
         return this.scopes;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String username() {
         return this.username;
     }
 
+    /**
+     * TODO: Add description
+     */
     public ClaimsRequest claims() {
         return this.claims;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Map<String, String> extraHttpHeaders() {
         return this.extraHttpHeaders;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Map<String, String> extraQueryParameters() {
         return this.extraQueryParameters;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String tenant() {
         return this.tenant;
     }
 
+    /**
+     * TODO: Add description
+     */
     public PopParameters proofOfPossession() {
         return this.proofOfPossession;
     }
@@ -189,10 +213,20 @@ public class UserNamePasswordParameters implements IAcquireTokenParameters {
             return this;
         }
 
+    /**
+     * Builds and returns the configured object.
+     * 
+     * @return built object instance
+     */
         public UserNamePasswordParameters build() {
             return new UserNamePasswordParameters(this.scopes, this.username, this.password, this.claims, this.extraHttpHeaders, this.extraQueryParameters, this.tenant, this.proofOfPossession);
         }
 
+    /**
+     * Returns a string representation of the object.
+     * 
+     * @return string representation of this object
+     */
         public String toString() {
             return "UserNamePasswordParameters.UserNamePasswordParametersBuilder(scopes=" + this.scopes + ", username=" + this.username + ", password=" + java.util.Arrays.toString(this.password) + ", claims=" + this.claims + ", extraHttpHeaders=" + this.extraHttpHeaders + ", extraQueryParameters=" + this.extraQueryParameters + ", tenant=" + this.tenant + ", proofOfPossession=" + this.proofOfPossession + ")";
         }

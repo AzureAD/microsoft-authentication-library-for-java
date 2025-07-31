@@ -69,6 +69,9 @@ public class InteractiveRequestParameters implements IAcquireTokenParameters {
         return new InteractiveRequestParametersBuilder();
     }
 
+    /**
+     * TODO: Add description
+     */
     public static InteractiveRequestParametersBuilder builder(URI redirectUri) {
 
         validateNotNull("redirect_uri", redirectUri);
@@ -77,62 +80,107 @@ public class InteractiveRequestParameters implements IAcquireTokenParameters {
                 .redirectUri(redirectUri);
     }
 
+    /**
+     * TODO: Add description
+     */
     public URI redirectUri() {
         return this.redirectUri;
     }
 
+    /**
+     * TODO: Add description
+     */
     public ClaimsRequest claims() {
         return this.claims;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Set<String> scopes() {
         return this.scopes;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Prompt prompt() {
         return this.prompt;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String loginHint() {
         return this.loginHint;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String domainHint() {
         return this.domainHint;
     }
 
+    /**
+     * TODO: Add description
+     */
     public SystemBrowserOptions systemBrowserOptions() {
         return this.systemBrowserOptions;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String claimsChallenge() {
         return this.claimsChallenge;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Map<String, String> extraHttpHeaders() {
         return this.extraHttpHeaders;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Map<String, String> extraQueryParameters() {
         return this.extraQueryParameters;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String tenant() {
         return this.tenant;
     }
 
+    /**
+     * TODO: Add description
+     */
     public int httpPollingTimeoutInSeconds() {
         return this.httpPollingTimeoutInSeconds;
     }
 
+    /**
+     * TODO: Add description
+     */
     public boolean instanceAware() {
         return this.instanceAware;
     }
 
+    /**
+     * TODO: Add description
+     */
     public long windowHandle() {
         return this.windowHandle;
     }
 
+    /**
+     * TODO: Add description
+     */
     public PopParameters proofOfPossession() {
         return this.proofOfPossession;
     }
@@ -309,10 +357,20 @@ public class InteractiveRequestParameters implements IAcquireTokenParameters {
             return this;
         }
 
+    /**
+     * Builds and returns the configured object.
+     * 
+     * @return built object instance
+     */
         public InteractiveRequestParameters build() {
             return new InteractiveRequestParameters(this.redirectUri, this.claims, this.scopes, this.prompt, this.loginHint, this.domainHint, this.systemBrowserOptions, this.claimsChallenge, this.extraHttpHeaders, this.extraQueryParameters, this.tenant, this.httpPollingTimeoutInSeconds, this.instanceAware, this.windowHandle, this.proofOfPossession);
         }
 
+    /**
+     * Returns a string representation of the object.
+     * 
+     * @return string representation of this object
+     */
         public String toString() {
             return "InteractiveRequestParameters.InteractiveRequestParametersBuilder(redirectUri=" + this.redirectUri + ", claims=" + this.claims + ", scopes=" + this.scopes + ", prompt=" + this.prompt + ", loginHint=" + this.loginHint + ", domainHint=" + this.domainHint + ", systemBrowserOptions=" + this.systemBrowserOptions + ", claimsChallenge=" + this.claimsChallenge + ", extraHttpHeaders=" + this.extraHttpHeaders + ", extraQueryParameters=" + this.extraQueryParameters + ", tenant=" + this.tenant + ", httpPollingTimeoutInSeconds=" + this.httpPollingTimeoutInSeconds + ", instanceAware=" + this.instanceAware + ", windowHandle=" + this.windowHandle + ", proofOfPossession=" + this.proofOfPossession + ")";
         }

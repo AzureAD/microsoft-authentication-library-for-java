@@ -30,6 +30,11 @@ class Account implements IAccount {
 
     Map<String, ITenantProfile> tenantProfiles;
 
+    /**
+     * Gets the tenant profiles.
+     * 
+     * @return the tenant profiles
+     */
     public Map<String, ITenantProfile> getTenantProfiles() {
         return tenantProfiles;
     }

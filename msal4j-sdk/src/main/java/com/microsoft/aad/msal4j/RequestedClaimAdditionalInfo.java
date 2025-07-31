@@ -32,26 +32,56 @@ public class RequestedClaimAdditionalInfo {
         this.values = values;
     }
 
+    /**
+     * Checks if essential.
+     * 
+     * @return true if essential, false otherwise
+     */
     public boolean isEssential() {
         return this.essential;
     }
 
+    /**
+     * Gets the value.
+     * 
+     * @return the value
+     */
     public String getValue() {
         return this.value;
     }
 
+    /**
+     * Gets the values.
+     * 
+     * @return the values
+     */
     public List<String> getValues() {
         return this.values;
     }
 
+    /**
+     * Sets the essential.
+     * 
+     * @param essential the essential to set
+     */
     public void setEssential(boolean essential) {
         this.essential = essential;
     }
 
+    /**
+     * Sets the value.
+     * 
+     * @param value the value to set
+     */
     public void setValue(String value) {
         this.value = value;
     }
 
+    /**
+     * Sets the values.
+     * 
+     * @param values the values to set
+     */
     public void setValues(List<String> values) {
         this.values = values;
     }

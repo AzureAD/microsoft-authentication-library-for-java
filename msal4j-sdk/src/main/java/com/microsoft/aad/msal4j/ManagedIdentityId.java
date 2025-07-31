@@ -3,6 +3,9 @@
 
 package com.microsoft.aad.msal4j;
 
+/**
+ * TODO: Add class description
+ */
 public class ManagedIdentityId {
 
     private String userAssignedId;
@@ -76,10 +79,20 @@ public class ManagedIdentityId {
         return new ManagedIdentityId(ManagedIdentityIdType.OBJECT_ID, objectId);
     }
 
+    /**
+     * Gets the user assigned id.
+     * 
+     * @return the user assigned id
+     */
     public String getUserAssignedId() {
         return this.userAssignedId;
     }
 
+    /**
+     * Gets the id type.
+     * 
+     * @return the id type
+     */
     public ManagedIdentityIdType getIdType() {
         return this.idType;
     }

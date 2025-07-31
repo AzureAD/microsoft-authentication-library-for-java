@@ -1,5 +1,8 @@
 package com.microsoft.aad.msal4j;
 
+/**
+ * TODO: Add class description
+ */
 public class OSHelper {
     enum OSType{
         MAC,
@@ -21,18 +24,38 @@ public class OSHelper {
         }
     }
 
+    /**
+     * Gets the os.
+     * 
+     * @return the os
+     */
     public static String getOs(){
         return OS;
     }
 
+    /**
+     * Checks if mac.
+     * 
+     * @return true if mac, false otherwise
+     */
     public static boolean isMac(){
         return OSType.MAC.equals(osType);
     }
 
+    /**
+     * Checks if windows.
+     * 
+     * @return true if windows, false otherwise
+     */
     public static boolean isWindows(){
         return OSType.WINDOWS.equals(osType);
     }
 
+    /**
+     * Checks if linux.
+     * 
+     * @return true if linux, false otherwise
+     */
     public static boolean isLinux(){
         return OSType.LINUX.equals(osType);
     }

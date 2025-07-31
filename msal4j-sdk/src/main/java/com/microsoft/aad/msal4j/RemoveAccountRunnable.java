@@ -19,6 +19,9 @@ class RemoveAccountRunnable implements Runnable {
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public void run() {
         try {
             clientApplication.tokenCache.removeAccount

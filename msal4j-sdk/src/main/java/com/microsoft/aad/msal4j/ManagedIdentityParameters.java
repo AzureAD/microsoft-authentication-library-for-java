@@ -24,11 +24,17 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public Set<String> scopes() {
         return null;
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public ClaimsRequest claims() {
         if (claims == null || claims.isEmpty()) {
             return null;
@@ -44,16 +50,25 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public Map<String, String> extraHttpHeaders() {
         return null;
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public String tenant() {
         return Constants.MANAGED_IDENTITY_DEFAULT_TENTANT;
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public Map<String, String> extraQueryParameters() {
         return null;
     }
@@ -71,14 +86,23 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
         return builder().resource(resource);
     }
 
+    /**
+     * TODO: Add description
+     */
     public boolean forceRefresh() {
         return this.forceRefresh;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String resource() {
         return this.resource;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String revokedTokenHash() {
         return this.revokedTokenHash;
     }
@@ -91,11 +115,17 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
         ManagedIdentityParametersBuilder() {
         }
 
+    /**
+     * TODO: Add description
+     */
         public ManagedIdentityParametersBuilder resource(String resource) {
             this.resource = resource;
             return this;
         }
 
+    /**
+     * TODO: Add description
+     */
         public ManagedIdentityParametersBuilder forceRefresh(boolean forceRefresh) {
             this.forceRefresh = forceRefresh;
             return this;
@@ -118,10 +148,20 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
             return this;
         }
 
+    /**
+     * Builds and returns the configured object.
+     * 
+     * @return built object instance
+     */
         public ManagedIdentityParameters build() {
             return new ManagedIdentityParameters(this.resource, this.forceRefresh, this.claims);
         }
 
+    /**
+     * Returns a string representation of the object.
+     * 
+     * @return string representation of this object
+     */
         public String toString() {
             return "ManagedIdentityParameters.ManagedIdentityParametersBuilder(resource=" + this.resource + ", forceRefresh=" + this.forceRefresh + ")";
         }

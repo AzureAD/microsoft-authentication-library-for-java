@@ -29,16 +29,25 @@ class ManagedIdentityRetryPolicy implements IRetryPolicy {
     );
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public boolean isRetryable(IHttpResponse httpResponse) {
         return RETRYABLE_STATUS_CODES.contains(httpResponse.statusCode());
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public int getMaxRetryCount(IHttpResponse httpResponse) {
         return RETRY_NUM;
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public int getRetryDelayMs(IHttpResponse httpResponse) {
         return currentRetryDelayMs;
     }

@@ -36,6 +36,9 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
     private boolean sendX5c;
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public CompletableFuture<IAuthenticationResult> acquireToken(ClientCredentialParameters parameters) {
         validateNotNull("parameters", parameters);
 
@@ -55,6 +58,9 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public CompletableFuture<IAuthenticationResult> acquireToken(OnBehalfOfParameters parameters) {
         validateNotNull("parameters", parameters);
 
@@ -162,6 +168,9 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
         return new Builder(clientId, clientCredential);
     }
 
+    /**
+     * TODO: Add description
+     */
     public boolean sendX5c() {
         return this.sendX5c;
     }
@@ -201,6 +210,9 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
         /// </summary>
         /// <param name="appTokenProvider">Authentication callback which returns an access token.</param>
         /// <returns>The builder to chain the .With methods</returns>
+    /**
+     * TODO: Add description
+     */
         public ConfidentialClientApplication.Builder appTokenProvider(Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> appTokenProvider){
             if(appTokenProvider!=null){
                 this.appTokenProvider = appTokenProvider;
@@ -211,6 +223,11 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
         }
 
         @Override
+    /**
+     * Builds and returns the configured object.
+     * 
+     * @return built object instance
+     */
         public ConfidentialClientApplication build() {
 
             return new ConfidentialClientApplication(this);

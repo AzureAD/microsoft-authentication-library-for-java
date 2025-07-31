@@ -154,5 +154,8 @@ public class AuthenticationErrorCode {
      */
     public static final String CRYPTO_ERROR = "crypto_error";
 
+    /**
+     * TODO: Add field description
+     */
     public static final String INVALID_TIMESTAMP_FORMAT = "invalid_timestamp_format";
 }

@@ -49,6 +49,11 @@ class DeviceCodeAuthorizationGrant extends AbstractMsalAuthorizationGrant {
         return outParams;
     }
 
+    /**
+     * Gets the correlation id.
+     * 
+     * @return the correlation id
+     */
     public String getCorrelationId() {
         return correlationId;
     }

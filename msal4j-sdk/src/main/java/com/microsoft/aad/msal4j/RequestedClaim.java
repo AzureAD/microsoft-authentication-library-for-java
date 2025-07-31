@@ -19,6 +19,9 @@ import java.util.Map;
 public class RequestedClaim {
 
     @JsonIgnore
+    /**
+     * TODO: Add field description
+     */
     public String name;
 
     RequestedClaimAdditionalInfo requestedClaimAdditionalInfo;

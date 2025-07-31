@@ -20,6 +20,11 @@ class ClientAuthenticationPost extends ClientAuthentication {
     }
 
     @Override
+    /**
+     * Gets the form parameter names.
+     * 
+     * @return the form parameter names
+     */
     public Set<String> getFormParameterNames() {
         return Collections.unmodifiableSet(new HashSet(Arrays.asList("client_assertion", "client_assertion_type", "client_id")));
     }
@@ -34,6 +39,9 @@ class ClientAuthenticationPost extends ClientAuthentication {
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public void applyTo(HTTPRequest httpRequest) throws SerializeException {
 
         if (httpRequest.getMethod() != HTTPRequest.Method.POST)

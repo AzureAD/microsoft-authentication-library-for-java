@@ -36,11 +36,17 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
     private boolean instanceDiscovery;
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public TokenCache tokenCache() {
         return super.tokenCache;
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public CompletableFuture<IAuthenticationResult> acquireToken(AuthorizationCodeParameters parameters) {
 
         validateNotNull("parameters", parameters);
@@ -59,6 +65,9 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public CompletableFuture<IAuthenticationResult> acquireToken(RefreshTokenParameters parameters) {
 
         validateNotNull("parameters", parameters);
@@ -77,6 +86,9 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public CompletableFuture<IAuthenticationResult> acquireTokenSilently(SilentParameters parameters)
             throws MalformedURLException {
 
@@ -106,6 +118,11 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
         return executeRequest(silentRequest);
     }
 
+    /**
+     * Gets the accounts.
+     * 
+     * @return the accounts
+     */
     public CompletableFuture<Set<IAccount>> getAccounts() {
 
         RequestContext context = new RequestContext(this, PublicApi.GET_ACCOUNTS, null);
@@ -120,6 +137,9 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
                 CompletableFuture.supplyAsync(supplier);
     }
 
+    /**
+     * TODO: Add description
+     */
     public CompletableFuture<Void> removeAccount(IAccount account) {
         RequestContext context = new RequestContext(this, PublicApi.REMOVE_ACCOUNTS, null);
         MsalRequest msalRequest = new MsalRequest(this, null, context) {
@@ -133,6 +153,9 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public URL getAuthorizationRequestUrl(AuthorizationRequestUrlParameters parameters) {
 
         validateNotNull("parameters", parameters);
@@ -156,44 +179,78 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public String clientId() {
         return this.clientId;
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public String authority() {
         return this.authority;
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public boolean validateAuthority() {
         return this.validateAuthority;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String applicationName() {
         return this.applicationName;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String applicationVersion() {
         return this.applicationVersion;
     }
 
+    /**
+     * Checks if covery response.
+     * 
+     * @return true if covery response, false otherwise
+     */
     public AadInstanceDiscoveryResponse aadAadInstanceDiscoveryResponse() {
         return this.aadAadInstanceDiscoveryResponse;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String clientCapabilities() {
         return this.clientCapabilities;
     }
 
+    /**
+     * TODO: Add description
+     */
     public boolean autoDetectRegion() {
         return this.autoDetectRegion;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String azureRegion() {
         return this.azureRegion;
     }
 
+    /**
+     * Checks if covery.
+     * 
+     * @return true if covery, false otherwise
+     */
     public boolean instanceDiscovery() {
         return this.instanceDiscovery;
     }
@@ -394,6 +451,9 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
             return authority;
         }
 
+    /**
+     * TODO: Add description
+     */
         public T clientCapabilities(Set<String> capabilities) {
             clientCapabilities = JsonHelper.formCapabilitiesJson(capabilities);
 

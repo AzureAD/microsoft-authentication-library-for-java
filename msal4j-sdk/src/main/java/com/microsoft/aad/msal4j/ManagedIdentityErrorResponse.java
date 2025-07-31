@@ -5,6 +5,9 @@ package com.microsoft.aad.msal4j;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * TODO: Add class description
+ */
 public class ManagedIdentityErrorResponse {
 
     @JsonProperty("message")
@@ -27,18 +30,38 @@ public class ManagedIdentityErrorResponse {
     @JsonProperty("error_description")
     private String errorDescription;
 
+    /**
+     * Gets the message.
+     * 
+     * @return the message
+     */
     public String getMessage() {
         return this.message;
     }
 
+    /**
+     * Gets the correlation id.
+     * 
+     * @return the correlation id
+     */
     public String getCorrelationId() {
         return this.correlationId;
     }
 
+    /**
+     * Gets the error.
+     * 
+     * @return the error
+     */
     public String getError() {
         return this.error;
     }
 
+    /**
+     * Gets the error description.
+     * 
+     * @return the error description
+     */
     public String getErrorDescription() {
         return this.errorDescription;
     }

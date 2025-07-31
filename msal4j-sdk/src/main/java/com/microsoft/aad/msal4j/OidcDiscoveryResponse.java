@@ -17,6 +17,9 @@ class OidcDiscoveryResponse implements JsonSerializable<OidcDiscoveryResponse> {
     private String deviceCodeEndpoint;
     private String issuer;
 
+    /**
+     * TODO: Add description
+     */
     public static OidcDiscoveryResponse fromJson(JsonReader jsonReader) throws IOException {
         OidcDiscoveryResponse response = new OidcDiscoveryResponse();
         return jsonReader.readObject(reader -> {
@@ -45,6 +48,9 @@ class OidcDiscoveryResponse implements JsonSerializable<OidcDiscoveryResponse> {
         });
     }
 
+    /**
+     * TODO: Add description
+     */
     public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
         jsonWriter.writeStartObject();
         jsonWriter.writeStringField("authorization_endpoint", authorizationEndpoint);

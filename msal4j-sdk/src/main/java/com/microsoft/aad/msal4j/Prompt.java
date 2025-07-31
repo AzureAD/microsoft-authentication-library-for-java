@@ -42,6 +42,11 @@ public enum Prompt {
     }
 
     @Override
+    /**
+     * Returns a string representation of the object.
+     * 
+     * @return string representation of this object
+     */
     public String toString() {
         return prompt;
     }

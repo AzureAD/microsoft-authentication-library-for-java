@@ -31,6 +31,9 @@ class TelemetryManager implements ITelemetryManager, ITelemetry {
         this.onlySendFailureTelemetry = onlySendFailureTelemetry;
     }
 
+    /**
+     * TODO: Add field description
+     */
     public TelemetryHelper createTelemetryHelper(String requestId,
                                                  String clientId,
                                                  Event eventToStart,
@@ -38,11 +41,17 @@ class TelemetryManager implements ITelemetryManager, ITelemetry {
         return new TelemetryHelper(this, requestId, clientId, eventToStart, shouldFlush);
     }
 
+    /**
+     * TODO: Add description
+     */
     public String generateRequestId() {
         return UUID.randomUUID().toString();
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public void startEvent(String requestId, Event eventToStart) {
         if (hasConsumer() && !StringHelper.isBlank(requestId)) {
             eventsInProgress.put(new EventKey(requestId, eventToStart), eventToStart);
@@ -50,6 +59,9 @@ class TelemetryManager implements ITelemetryManager, ITelemetry {
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public void stopEvent(String requestId, Event eventToStop) {
         if (!hasConsumer() || StringHelper.isBlank(requestId)) return;
 
@@ -75,6 +87,9 @@ class TelemetryManager implements ITelemetryManager, ITelemetry {
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public void flush(String requestId, String clientId) {
         if (!hasConsumer()) {
             return;

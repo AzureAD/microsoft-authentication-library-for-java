@@ -34,6 +34,11 @@ class ManagedIdentityRequest extends MsalRequest {
         super(managedIdentityApplication, requestContext);
     }
 
+    /**
+     * Gets the body as string.
+     * 
+     * @return the body as string
+     */
     public String getBodyAsString() {
         if (bodyParameters == null || bodyParameters.isEmpty())
             return "";
@@ -41,6 +46,9 @@ class ManagedIdentityRequest extends MsalRequest {
         return URLUtils.serializeParameters(bodyParameters);
     }
 
+    /**
+     * TODO: Add description
+     */
     public URL computeURI() throws URISyntaxException {
         String endpoint = this.appendQueryParametersToBaseEndpoint();
         try {

@@ -14,15 +14,28 @@ class EventKey {
         this.eventName = event.get(Event.EVENT_NAME_KEY);
     }
 
+    /**
+     * Gets the request id.
+     * 
+     * @return the request id
+     */
     public String getRequestId() {
         return requestId;
     }
 
+    /**
+     * Gets the event name.
+     * 
+     * @return the event name
+     */
     public String getEventName() {
         return eventName;
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public boolean equals(Object obj) {
         if (obj == null) return false;
         if (!(obj instanceof EventKey)) return false;
@@ -34,6 +47,11 @@ class EventKey {
     }
 
     @Override
+    /**
+     * Checks if has h code.
+     * 
+     * @return true if has h code, false otherwise
+     */
     public int hashCode() {
         return Objects.hash(requestId, eventName);
     }

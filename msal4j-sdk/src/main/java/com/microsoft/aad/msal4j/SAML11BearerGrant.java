@@ -24,6 +24,9 @@ class SAML11BearerGrant extends SAML2BearerGrant {
     }
 
     @Override
+    /**
+     * TODO: Add description
+     */
     public Map<String, List<String>> toParameters() {
 
         Map<String, List<String>> params = super.toParameters();

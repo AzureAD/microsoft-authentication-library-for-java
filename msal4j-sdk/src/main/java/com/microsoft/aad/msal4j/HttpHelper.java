@@ -17,6 +17,9 @@ import static com.microsoft.aad.msal4j.Constants.POINT_DELIMITER;
 class HttpHelper implements IHttpHelper {
 
     private static final Logger log = LoggerFactory.getLogger(HttpHelper.class);
+    /**
+     * TODO: Add field description
+     */
     public static final String RETRY_AFTER_HEADER = "Retry-After";
 
     private IHttpClient httpClient;
@@ -34,6 +37,9 @@ class HttpHelper implements IHttpHelper {
         this.retryPolicy = retryPolicy != null ? retryPolicy : new DefaultRetryPolicy();
     }
 
+    /**
+     * TODO: Add field description
+     */
     public IHttpResponse executeHttpRequest(HttpRequest httpRequest,
                                             RequestContext requestContext,
                                             ServiceBundle serviceBundle) {

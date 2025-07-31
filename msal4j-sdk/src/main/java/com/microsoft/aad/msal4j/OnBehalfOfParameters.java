@@ -56,30 +56,51 @@ public class OnBehalfOfParameters implements IAcquireTokenParameters {
                 .userAssertion(userAssertion);
     }
 
+    /**
+     * TODO: Add description
+     */
     public Set<String> scopes() {
         return this.scopes;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Boolean skipCache() {
         return this.skipCache;
     }
 
+    /**
+     * TODO: Add description
+     */
     public IUserAssertion userAssertion() {
         return this.userAssertion;
     }
 
+    /**
+     * TODO: Add description
+     */
     public ClaimsRequest claims() {
         return this.claims;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Map<String, String> extraHttpHeaders() {
         return this.extraHttpHeaders;
     }
 
+    /**
+     * TODO: Add description
+     */
     public Map<String, String> extraQueryParameters() {
         return this.extraQueryParameters;
     }
 
+    /**
+     * TODO: Add description
+     */
     public String tenant() {
         return this.tenant;
     }
@@ -96,6 +117,9 @@ public class OnBehalfOfParameters implements IAcquireTokenParameters {
         OnBehalfOfParametersBuilder() {
         }
 
+    /**
+     * TODO: Add description
+     */
         public OnBehalfOfParametersBuilder scopes(Set<String> scopes) {
             validateNotNull("scopes", scopes);
 
@@ -111,6 +135,9 @@ public class OnBehalfOfParameters implements IAcquireTokenParameters {
             return this;
         }
 
+    /**
+     * TODO: Add description
+     */
         public OnBehalfOfParametersBuilder userAssertion(IUserAssertion userAssertion) {
             validateNotNull("userAssertion", userAssertion);
 
@@ -150,10 +177,20 @@ public class OnBehalfOfParameters implements IAcquireTokenParameters {
             return this;
         }
 
+    /**
+     * Builds and returns the configured object.
+     * 
+     * @return built object instance
+     */
         public OnBehalfOfParameters build() {
             return new OnBehalfOfParameters(this.scopes, this.skipCache, this.userAssertion, this.claims, this.extraHttpHeaders, this.extraQueryParameters, this.tenant);
         }
 
+    /**
+     * Returns a string representation of the object.
+     * 
+     * @return string representation of this object
+     */
         public String toString() {
             return "OnBehalfOfParameters.OnBehalfOfParametersBuilder(scopes=" + this.scopes + ", skipCache$value=" + this.skipCache + ", userAssertion=" + this.userAssertion + ", claims=" + this.claims + ", extraHttpHeaders=" + this.extraHttpHeaders + ", extraQueryParameters=" + this.extraQueryParameters + ", tenant=" + this.tenant + ")";
         }

@@ -11,14 +11,29 @@ public class PopParameters {
     URI uri;
     String nonce;
 
+    /**
+     * Gets the http method.
+     * 
+     * @return the http method
+     */
     public HttpMethod getHttpMethod() {
         return httpMethod;
     }
 
+    /**
+     * Gets the uri.
+     * 
+     * @return the uri
+     */
     public URI getUri() {
         return uri;
     }
 
+    /**
+     * Gets the nonce.
+     * 
+     * @return the nonce
+     */
     public String getNonce() {
         return nonce;
     }

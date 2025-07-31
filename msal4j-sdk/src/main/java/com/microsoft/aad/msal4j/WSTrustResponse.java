@@ -29,6 +29,9 @@ class WSTrustResponse {
     private static final Logger log = LoggerFactory
             .getLogger(WSTrustResponse.class);
 
+    /**
+     * TODO: Add field description
+     */
     public static final String SAML1_ASSERTION = "urn:oasis:names:tc:SAML:1.0:assertion";
     private String faultMessage;
     private boolean errorFound;
