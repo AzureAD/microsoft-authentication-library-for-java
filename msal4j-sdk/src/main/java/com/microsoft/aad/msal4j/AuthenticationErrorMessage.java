@@ -3,6 +3,10 @@
 
 package com.microsoft.aad.msal4j;
 
+/**
+ * Contains constant error messages used throughout the authentication process.
+ * Provides standardized error messaging for common authentication scenarios.
+ */
 public class AuthenticationErrorMessage {
 
     /**

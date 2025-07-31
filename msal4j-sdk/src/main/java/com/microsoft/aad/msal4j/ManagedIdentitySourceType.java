@@ -3,6 +3,10 @@
 
 package com.microsoft.aad.msal4j;
 
+/**
+ * Enumeration of managed identity source types used to identify the specific
+ * Azure service or infrastructure component providing the managed identity token endpoint.
+ */
 public enum ManagedIdentitySourceType {
     // Default.
     NONE,

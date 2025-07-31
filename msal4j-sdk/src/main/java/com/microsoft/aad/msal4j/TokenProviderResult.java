@@ -3,7 +3,10 @@
 
 package com.microsoft.aad.msal4j;
 
-/// Token result from external token provider
+/**
+ * Represents the result returned by an external token provider.
+ * Contains the access token, tenant information, and expiration details.
+ */
 public class TokenProviderResult {
 
     //Access token - mandatory

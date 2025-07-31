@@ -3,6 +3,11 @@
 
 package com.microsoft.aad.msal4j;
 
+/**
+ * Represents the identifier for a managed identity in Azure.
+ * A managed identity provides Azure services with an automatically managed identity in Azure AD.
+ * This class supports both system-assigned and user-assigned managed identities.
+ */
 public class ManagedIdentityId {
 
     private String userAssignedId;

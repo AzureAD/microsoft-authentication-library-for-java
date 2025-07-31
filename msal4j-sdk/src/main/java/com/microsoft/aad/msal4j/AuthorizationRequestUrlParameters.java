@@ -40,6 +40,13 @@ public class AuthorizationRequestUrlParameters {
 
     Logger log = LoggerFactory.getLogger(AuthorizationRequestUrlParameters.class);
 
+    /**
+     * Creates a new builder for authorization request URL parameters.
+     *
+     * @param redirectUri the redirect URI where the authorization response will be sent
+     * @param scopes the set of scopes to request for the access token
+     * @return a new Builder instance
+     */
     public static Builder builder(String redirectUri,
                                   Set<String> scopes) {
 

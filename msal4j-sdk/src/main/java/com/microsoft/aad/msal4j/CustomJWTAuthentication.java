@@ -14,6 +14,10 @@ import com.nimbusds.oauth2.sdk.util.URLUtils;
 
 import java.util.*;
 
+/**
+ * Custom JWT-based client authentication implementation for OAuth 2.0 client authentication.
+ * This class handles authentication using client assertions based on JWT tokens.
+ */
 public class CustomJWTAuthentication extends ClientAuthentication {
     private ClientAssertion clientAssertion;
 

@@ -5,6 +5,10 @@ package com.microsoft.aad.msal4j;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Represents an error response from a managed identity token request.
+ * Contains error details, correlation ID, and error descriptions for debugging purposes.
+ */
 public class ManagedIdentityErrorResponse {
 
     @JsonProperty("message")

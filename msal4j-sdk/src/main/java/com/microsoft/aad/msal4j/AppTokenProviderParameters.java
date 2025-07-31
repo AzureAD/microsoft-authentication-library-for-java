@@ -5,7 +5,10 @@ package com.microsoft.aad.msal4j;
 
 import java.util.Set;
 
-/// The authentication parameters provided to the app token provider callback.
+/**
+ * Represents the authentication parameters provided to an external app token provider callback.
+ * Contains information about the requested scopes, correlation ID, and claims for token acquisition.
+ */
 public class AppTokenProviderParameters {
 
     /// Specifies which scopes to request.

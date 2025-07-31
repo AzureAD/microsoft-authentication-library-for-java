@@ -6,6 +6,10 @@ package com.microsoft.aad.msal4j;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+/**
+ * Represents a Customer Identity and Access Management (CIAM) authority for Azure AD B2C scenarios.
+ * CIAM authorities are used for customer-facing applications and identity management.
+ */
 public class CIAMAuthority extends Authority {
 
     public static final String CIAM_HOST_SEGMENT = ".ciamlogin.com";

@@ -1,5 +1,9 @@
 package com.microsoft.aad.msal4j;
 
+/**
+ * Utility class for operating system detection and OS-specific operations.
+ * Provides methods to identify the current operating system (Windows, macOS, Linux).
+ */
 public class OSHelper {
     enum OSType{
         MAC,

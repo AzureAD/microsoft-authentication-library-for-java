@@ -6,6 +6,10 @@ package com.microsoft.aad.msal4j;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+/**
+ * Represents an OpenID Connect (OIDC) authority that handles authentication and token issuance.
+ * This authority type supports the standard OIDC discovery process.
+ */
 public class OidcAuthority extends Authority {
     //Part of the OpenIdConnect standard, this is appended to the authority to create the endpoint that has OIDC metadata
     private static final String WELL_KNOWN_OPENID_CONFIGURATION = ".well-known/openid-configuration";
