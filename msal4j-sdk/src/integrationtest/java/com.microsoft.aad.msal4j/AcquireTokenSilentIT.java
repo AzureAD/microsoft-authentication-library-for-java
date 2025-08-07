@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j;
 import labapi.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.api.BeforeAll;
@@ -100,6 +101,7 @@ class AcquireTokenSilentIT {
 
     @ParameterizedTest
     @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
     void acquireTokenSilent_MultipleAccountsInCache_UseCorrectAccount(String environment) throws Exception {
         cfg = new Config(environment);
 
@@ -123,6 +125,7 @@ class AcquireTokenSilentIT {
 
     @ParameterizedTest
     @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
     void acquireTokenSilent_ADFS2019(String environment) throws Exception {
         cfg = new Config(environment);
 

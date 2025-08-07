@@ -32,6 +32,10 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <skip.unit.tests>false</skip.unit.tests>
         <skip.integration.tests>false</skip.integration.tests>
+
+        <!-- Test category control properties. -->
+        <!-- Disable test categories by setting to 'true' in the mvn command (i.e., mvn verify -Dadfs.disabled=true)-->
+        <adfs.disabled>false</adfs.disabled>
     </properties>
 
     <dependencies>
@@ -279,6 +283,9 @@
                 </executions>
                 <configuration>
                     <skipTests>${skip.integration.tests}</skipTests>
+                    <systemPropertyVariables>
+                        <adfs.disabled>${adfs.disabled}</adfs.disabled>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
             <plugin>

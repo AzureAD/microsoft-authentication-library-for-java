@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.api.BeforeAll;
@@ -54,6 +55,7 @@ class DeviceCodeIT {
     }
 
     @Test()
+    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
     void DeviceCodeFlowADFSv2019Test() throws Exception {
 
         User user = labUserProvider.getOnPremAdfsUser(FederationProvider.ADFS_2019);

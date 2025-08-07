@@ -7,6 +7,7 @@ import labapi.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -59,6 +60,7 @@ class TokenCacheIT {
     }
 
     @Test
+    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
     void twoAccountsInCache_RemoveAccountTest() throws Exception {
 
         User managedUser = labUserProvider.getDefaultUser();
@@ -108,6 +110,7 @@ class TokenCacheIT {
     }
 
     @Test
+    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
     void twoAccountsInCache_SameUserDifferentTenants_RemoveAccountTest() throws Exception {
 
         UserQueryParameters query = new UserQueryParameters();
@@ -172,6 +175,7 @@ class TokenCacheIT {
     }
 
     @Test
+    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
     void retrieveAccounts_ADFSOnPrem() throws Exception {
         UserQueryParameters query = new UserQueryParameters();
         query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, FederationProvider.ADFS_2019);
