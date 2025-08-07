@@ -7,6 +7,7 @@ import labapi.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.jupiter.api.Test;
@@ -56,6 +57,7 @@ class AuthorizationCodeIT extends SeleniumTest {
     }
 
     @Test
+    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
     public void acquireTokenWithAuthorizationCode_ADFSv2019_OnPrem() {
         User user = labUserProvider.getOnPremAdfsUser(FederationProvider.ADFS_2019);
         assertAcquireTokenADFS2019(user);
@@ -63,6 +65,7 @@ class AuthorizationCodeIT extends SeleniumTest {
 
     @ParameterizedTest
     @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
     public void acquireTokenWithAuthorizationCode_ADFSv2019_Federated(String environment) {
         cfg = new Config(environment);
 
@@ -72,6 +75,7 @@ class AuthorizationCodeIT extends SeleniumTest {
 
     @ParameterizedTest
     @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
     public void acquireTokenWithAuthorizationCode_ADFSv4_Federated(String environment) {
         cfg = new Config(environment);
 
