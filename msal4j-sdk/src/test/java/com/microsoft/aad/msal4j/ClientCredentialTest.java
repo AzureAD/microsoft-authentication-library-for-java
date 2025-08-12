@@ -47,7 +47,7 @@ class ClientCredentialTest {
     void OnBehalfOf_InternalCacheLookup_Success() throws Exception {
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(new HashMap<>())));
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(HttpStatus.HTTP_OK, TestHelper.getSuccessfulTokenResponse(new HashMap<>())));
 
         ConfidentialClientApplication cca =
                 ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromSecret("password"))
@@ -82,7 +82,7 @@ class ClientCredentialTest {
         HashMap<String, String> tokenResponseValues = new HashMap<>();
         tokenResponseValues.put("access_token", "accessTokenFirstCall");
 
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(tokenResponseValues)));
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(HttpStatus.HTTP_OK, TestHelper.getSuccessfulTokenResponse(tokenResponseValues)));
         ClientCredentialParameters parameters = ClientCredentialParameters.builder(Collections.singleton("scopes")).build();
 
         //The two acquireToken calls have the same parameters...
@@ -95,7 +95,7 @@ class ClientCredentialTest {
 
         tokenResponseValues.put("access_token", "accessTokenSecondCall");
 
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(tokenResponseValues)));
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(HttpStatus.HTTP_OK, TestHelper.getSuccessfulTokenResponse(tokenResponseValues)));
         parameters = ClientCredentialParameters.builder(Collections.singleton("scopes")).tenant("otherTenant").build();
 
         //Overriding the tenant parameter in the request should lead to a new token call being made...

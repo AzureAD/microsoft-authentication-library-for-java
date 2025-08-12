@@ -3,6 +3,8 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.nimbusds.oauth2.sdk.auth.PrivateKeyJWT;
+import com.nimbusds.jwt.SignedJWT;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -10,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -17,6 +20,7 @@ import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.interfaces.RSAPrivateKey;
+import java.text.ParseException;
 import java.util.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -69,9 +73,14 @@ class ClientCertificateTest {
         HashMap<String, String> tokenResponseValues = new HashMap<>();
         tokenResponseValues.put("access_token", "accessTokenSha256");
 
-        when(httpClientMock.send(any(HttpRequest.class))).thenAnswer( parameters -> {
+        when(httpClientMock.send(any(HttpRequest.class))).thenAnswer(parameters -> {
             HttpRequest request = parameters.getArgument(0);
-            if (request.body().contains(cca.assertion)) {
+            String requestBody = request.body();
+
+            SignedJWT signedJWT = SignedJWT.parse(cca.assertion);
+
+            if (requestBody.contains(cca.assertion)
+                    && signedJWT.getHeader().toJSONObject().containsKey("x5t#S256")) {
                 return TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(tokenResponseValues));
             }
             return null;

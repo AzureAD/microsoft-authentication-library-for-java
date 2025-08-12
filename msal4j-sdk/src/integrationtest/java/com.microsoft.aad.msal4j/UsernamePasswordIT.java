@@ -6,11 +6,11 @@ package com.microsoft.aad.msal4j;
 import labapi.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.api.BeforeAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,6 +39,7 @@ class UsernamePasswordIT {
 
     @ParameterizedTest
     @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
     void acquireTokenWithUsernamePassword_ADFSv2019_Federated(String environment) throws Exception {
         cfg = new Config(environment);
 
@@ -53,6 +54,7 @@ class UsernamePasswordIT {
     }
 
     @Test
+    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
     void acquireTokenWithUsernamePassword_ADFSv2019_OnPrem() throws Exception {
         UserQueryParameters query = new UserQueryParameters();
         query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, FederationProvider.ADFS_2019);
@@ -65,6 +67,7 @@ class UsernamePasswordIT {
 
     @ParameterizedTest
     @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
     void acquireTokenWithUsernamePassword_ADFSv4(String environment) throws Exception {
         cfg = new Config(environment);
 

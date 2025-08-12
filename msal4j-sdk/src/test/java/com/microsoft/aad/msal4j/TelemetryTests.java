@@ -68,7 +68,7 @@ class TelemetryTests {
 
         HttpEvent httpEvent1 = createHttpEvent();
         telemetryManager.startEvent(reqId, httpEvent1);
-        httpEvent1.setHttpResponseStatus(200);
+        httpEvent1.setHttpResponseStatus(HttpStatus.HTTP_OK);
         telemetryManager.stopEvent(reqId, httpEvent1);
 
         telemetryManager.flush(reqId, clientId);
@@ -93,7 +93,7 @@ class TelemetryTests {
 
         HttpEvent httpEvent1 = createHttpEvent();
         telemetryManager.startEvent(reqId, httpEvent1);
-        httpEvent1.setHttpResponseStatus(200);
+        httpEvent1.setHttpResponseStatus(HttpStatus.HTTP_OK);
         telemetryManager.stopEvent(reqId, httpEvent1);
 
         telemetryManager.flush(reqId, clientId);

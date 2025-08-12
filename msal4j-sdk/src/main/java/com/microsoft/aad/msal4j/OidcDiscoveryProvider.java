@@ -14,7 +14,7 @@ class OidcDiscoveryProvider {
 
         OidcDiscoveryResponse response = JsonHelper.convertJsonStringToJsonSerializableObject(httpResponse.body(), OidcDiscoveryResponse::fromJson);
 
-        if (httpResponse.statusCode() != HttpHelper.HTTP_STATUS_200) {
+        if (httpResponse.statusCode() != HttpStatus.HTTP_OK) {
             throw MsalServiceExceptionFactory.fromHttpResponse(httpResponse);
         }
 

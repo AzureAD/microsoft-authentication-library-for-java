@@ -15,7 +15,8 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
     String resource;
     boolean forceRefresh;
     String claims;
-
+    String revokedTokenHash;
+    
     private ManagedIdentityParameters(String resource, boolean forceRefresh, String claims) {
         this.resource = resource;
         this.forceRefresh = forceRefresh;
@@ -76,6 +77,10 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
 
     public String resource() {
         return this.resource;
+    }
+
+    public String revokedTokenHash() {
+        return this.revokedTokenHash;
     }
 
     public static class ManagedIdentityParametersBuilder {

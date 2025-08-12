@@ -235,8 +235,8 @@ class AadInstanceDiscoveryProvider {
 
         AadInstanceDiscoveryResponse response = JsonHelper.convertJsonStringToJsonSerializableObject(httpResponse.body(), AadInstanceDiscoveryResponse::fromJson);
 
-        if (httpResponse.statusCode() != HttpHelper.HTTP_STATUS_200) {
-            if (httpResponse.statusCode() == HttpHelper.HTTP_STATUS_400 && response.error().equals("invalid_instance")) {
+        if (httpResponse.statusCode() != HttpStatus.HTTP_OK) {
+            if (httpResponse.statusCode() == HttpStatus.HTTP_BAD_REQUEST && response.error().equals("invalid_instance")) {
                 // instance discovery failed due to an invalid authority, throw an exception.
                 throw MsalServiceExceptionFactory.fromHttpResponse(httpResponse);
             }
@@ -310,7 +310,7 @@ class AadInstanceDiscoveryProvider {
             log.info("Starting call to IMDS endpoint.");
             IHttpResponse httpResponse = future.get(IMDS_TIMEOUT, IMDS_TIMEOUT_UNIT);
             //If call to IMDS endpoint was successful, return region from response body
-            if (httpResponse.statusCode() == HttpHelper.HTTP_STATUS_200 && !httpResponse.body().isEmpty()) {
+            if (httpResponse.statusCode() == HttpStatus.HTTP_OK && !httpResponse.body().isEmpty()) {
                 log.info(String.format("Region retrieved from IMDS endpoint: %s", httpResponse.body()));
                 currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_IMDS.telemetryValue);
 
