@@ -1,8 +1,14 @@
-Version 1.30.0-beta
+Version 1.23.0
 =============
-- Replace org.projectlombok dependencies with implementations of generated code (#946)
-- Replace com.nimbusds dependencies with implementations of OAuth behavior (#926, #927, #928, #941, #945)
-- Replace com.fasterxml.jackson with com.azure.json for JSON behavior (#947, #948)
+- Reduced dependency footprint by removing third-party libraries (#909):
+  - Replaced org.projectlombok with direct implementations of previously generated code (#946)
+  - Replaced com.nimbusds OAuth/OIDC functionality with our own implementation (#926, #927, #928, #941, #945)
+  - Replaced com.fasterxml.jackson with com.azure.json for JSON parsing/serialization (#947, #948)
+  - Internal behavior and public APIs remain unchanged, except for those noted below
+- Minor breaking changes:
+  - Removed protected APIs that returned or used com.nimbusds.ClientAuthentication
+    - These APIs were not used by any other public MSAL API, and are unlikely to have been used by other libraries
+  - Improved JSON error handling to return more informative MsalClientException/MsalServiceException rather than generic JSON exceptions
 
 Version 1.22.0
 =============
