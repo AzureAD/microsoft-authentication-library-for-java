@@ -212,42 +212,6 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
                 .get();
     }
 
-    public void acquireTokensInHomeAndGuestClouds(String homeCloud) throws MalformedURLException {
-
-        User user = labUserProvider.getUserByGuestHomeAzureEnvironments
-                (AzureEnvironment.AZURE, homeCloud);
-
-        // use user`s upn from home cloud
-        user.setUpn(user.getHomeUPN());
-
-        ITokenCacheAccessAspect persistenceAspect = new ITokenCacheAccessAspect() {
-            String data;
-
-            @Override
-            public void beforeCacheAccess(ITokenCacheAccessContext iTokenCacheAccessContext) {
-                iTokenCacheAccessContext.tokenCache().deserialize(data);
-            }
-
-            @Override
-            public void afterCacheAccess(ITokenCacheAccessContext iTokenCacheAccessContext) {
-                data = iTokenCacheAccessContext.tokenCache().serialize();
-            }
-        };
-
-        PublicClientApplication publicCloudPca = PublicClientApplication.builder(
-                user.getAppId()).
-                authority(TestConstants.AUTHORITY_PUBLIC_TENANT_SPECIFIC).setTokenCacheAccessAspect(persistenceAspect).
-                build();
-
-        IAuthenticationResult result = acquireTokenInteractive(user, publicCloudPca, TestConstants.USER_READ_SCOPE);
-        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
-        assertEquals(user.getHomeUPN(), result.account().username());
-
-        publicCloudPca.removeAccount(publicCloudPca.getAccounts().join().iterator().next()).join();
-
-        assertEquals(publicCloudPca.getAccounts().join().size(), 0);
-    }
-
     private IAuthenticationResult acquireTokenInteractive(
             User user,
             PublicClientApplication pca,

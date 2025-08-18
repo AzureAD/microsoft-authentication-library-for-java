@@ -3,29 +3,70 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.azure.json.JsonReader;
+import com.azure.json.JsonSerializable;
+import com.azure.json.JsonToken;
+import com.azure.json.JsonWriter;
 
-public class ManagedIdentityErrorResponse {
+import java.io.IOException;
 
-    @JsonProperty("message")
+public class ManagedIdentityErrorResponse implements JsonSerializable<ManagedIdentityErrorResponse> {
+
     private String message;
-
-    @JsonProperty("correlationId")
     private String correlationId;
+    private String error;
+    private String errorDescription;
 
-    //In some MSI scenarios such as Cloud Shell, the actual error info is in a JSON within the main JSON. To parse that second
-    // JSON layer, we need to first pass it into a subclass, parse it using the usual @JsonProperty annotation, and then retrieve the values.
-    @JsonProperty("error")
-    private void parseErrorField(ErrorField errorResponse) {
-        this.error = errorResponse.code;
-        this.message = errorResponse.message;
+    public static ManagedIdentityErrorResponse fromJson(JsonReader jsonReader) throws IOException {
+        ManagedIdentityErrorResponse response = new ManagedIdentityErrorResponse();
+
+        return jsonReader.readObject(reader -> {
+            while (reader.nextToken() != JsonToken.END_OBJECT) {
+                String fieldName = reader.getFieldName();
+                reader.nextToken();
+
+                switch (fieldName) {
+                    case "message":
+                        response.message = reader.getString();
+                        break;
+                    case "correlationId":
+                        response.correlationId = reader.getString();
+                        break;
+                    case "error":
+                        if (reader.currentToken() == JsonToken.START_OBJECT) {
+                            // Handle nested JSON error object
+                            ErrorField errorField = ErrorField.fromJson(reader);
+                            response.error = errorField.getCode();
+                            response.message = errorField.getMessage();
+                        } else {
+                            response.error = reader.getString();
+                        }
+                        break;
+                    case "error_description":
+                        response.errorDescription = reader.getString();
+                        break;
+                    default:
+                        reader.skipChildren();
+                        break;
+                }
+            }
+            return response;
+        });
     }
 
-    @JsonProperty("error")
-    private String error;
+    @Override
+    public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
+        jsonWriter.writeStartObject();
 
-    @JsonProperty("error_description")
-    private String errorDescription;
+        jsonWriter.writeStringField("message", message);
+        jsonWriter.writeStringField("correlationId", correlationId);
+        jsonWriter.writeStringField("error", error);
+        jsonWriter.writeStringField("error_description", errorDescription);
+
+        jsonWriter.writeEndObject();
+
+        return jsonWriter;
+    }
 
     public String getMessage() {
         return this.message;
@@ -44,13 +85,34 @@ public class ManagedIdentityErrorResponse {
     }
 
     private static class ErrorField {
-        @JsonProperty("code")
         private String code;
-
-        @JsonProperty("message")
         private String message;
 
-       String getCode() {
+        static ErrorField fromJson(JsonReader jsonReader) throws IOException {
+            ErrorField errorField = new ErrorField();
+
+            return jsonReader.readObject(reader -> {
+                while (reader.nextToken() != JsonToken.END_OBJECT) {
+                    String fieldName = reader.getFieldName();
+                    reader.nextToken();
+
+                    switch (fieldName) {
+                        case "code":
+                            errorField.code = reader.getString();
+                            break;
+                        case "message":
+                            errorField.message = reader.getString();
+                            break;
+                        default:
+                            reader.skipChildren();
+                            break;
+                    }
+                }
+                return errorField;
+            });
+        }
+
+        String getCode() {
             return this.code;
         }
 

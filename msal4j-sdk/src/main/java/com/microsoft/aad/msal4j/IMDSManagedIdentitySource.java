@@ -80,8 +80,8 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
         managedIdentityRequest.headers.put("Metadata", "true");
 
         managedIdentityRequest.queryParameters = new HashMap<>();
-        managedIdentityRequest.queryParameters.put("api-version", Collections.singletonList(IMDS_API_VERSION));
-        managedIdentityRequest.queryParameters.put("resource", Collections.singletonList(resource));
+        managedIdentityRequest.queryParameters.put("api-version", IMDS_API_VERSION);
+        managedIdentityRequest.queryParameters.put("resource", resource);
 
         if (this.idType != null && !StringHelper.isNullOrBlank(this.userAssignedId)) {
             LOG.info("[Managed Identity] Adding user assigned ID to the request for IMDS Managed Identity.");

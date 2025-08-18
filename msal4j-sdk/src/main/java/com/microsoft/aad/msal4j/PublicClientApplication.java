@@ -3,9 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
-import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod;
-import com.nimbusds.oauth2.sdk.id.ClientID;
 import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
@@ -23,7 +20,6 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
  */
 public class PublicClientApplication extends AbstractClientApplicationBase implements IPublicClientApplication {
 
-    private final ClientAuthenticationPost clientAuthentication;
     private IBroker broker;
     private boolean brokerEnabled;
 
@@ -161,16 +157,9 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
         super(builder);
         validateNotBlank("clientId", clientId());
         log = LoggerFactory.getLogger(PublicClientApplication.class);
-        this.clientAuthentication = new ClientAuthenticationPost(ClientAuthenticationMethod.NONE,
-                new ClientID(clientId()));
         this.broker = builder.broker;
         this.brokerEnabled = builder.brokerEnabled;
         this.tenant = this.authenticationAuthority.tenant;
-    }
-
-    @Override
-    protected ClientAuthentication clientAuthentication() {
-        return clientAuthentication;
     }
 
     /**

@@ -3,33 +3,29 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.AuthorizationCode;
-import com.nimbusds.oauth2.sdk.AuthorizationCodeGrant;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class MsalOauthAuthorizatonGrantTest {
 
     @Test
-    void testConstructor() {
-        final OAuthAuthorizationGrant grant = new OAuthAuthorizationGrant(null,
-                new HashMap<>());
-        assertNotNull(grant);
-    }
+    void testToParameters() {
+        Map<String, String> params = new LinkedHashMap<>();
+        params.put(GrantConstants.GRANT_TYPE_PARAMETER, "SomeGrantType");
 
-    @Test
-    void testToParameters() throws URISyntaxException {
-        final OAuthAuthorizationGrant grant = new OAuthAuthorizationGrant(
-                new AuthorizationCodeGrant(new AuthorizationCode("grant"),
-                        new URI("http://microsoft.com")),
-                null);
+        final OAuthAuthorizationGrant grant = new OAuthAuthorizationGrant(params, null);
+
         assertNotNull(grant);
         assertNotNull(grant.toParameters());
+        assertEquals("SomeGrantType", grant.toParameters().get(GrantConstants.GRANT_TYPE_PARAMETER));
     }
 }

@@ -3,10 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.oauth2.sdk.http.HTTPRequest;
-import com.nimbusds.oauth2.sdk.http.HTTPResponse;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -15,32 +11,35 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class OAuthHttpRequest extends HTTPRequest {
+class OAuthHttpRequest {
 
+    final HttpMethod method;
+    final URL url;
+    String query;
     private final Map<String, String> extraHeaderParams;
     private final ServiceBundle serviceBundle;
     private final RequestContext requestContext;
 
-    OAuthHttpRequest(final Method method,
+    OAuthHttpRequest(final HttpMethod method,
                      final URL url,
                      final Map<String, String> extraHeaderParams,
                      RequestContext requestContext,
                      final ServiceBundle serviceBundle) {
-        super(method, url);
+        this.method = method;
+        this.url = url;
         this.extraHeaderParams = extraHeaderParams;
         this.requestContext = requestContext;
         this.serviceBundle = serviceBundle;
     }
 
-    @Override
-    public HTTPResponse send() throws IOException {
+    public HttpResponse send() throws IOException {
 
         Map<String, String> httpHeaders = configureHttpHeaders();
         HttpRequest httpRequest = new HttpRequest(
                 HttpMethod.POST,
-                this.getURL().toString(),
+                this.url.toString(),
                 httpHeaders,
-                this.getQuery());
+                this.query);
 
         IHttpResponse httpResponse = serviceBundle.getHttpHelper().executeHttpRequest(
                 httpRequest,
@@ -55,10 +54,6 @@ class OAuthHttpRequest extends HTTPRequest {
         Map<String, String> httpHeaders = new HashMap<>(extraHeaderParams);
         httpHeaders.put("Content-Type", HTTPContentType.ApplicationURLEncoded.contentType);
 
-        if (this.getAuthorization() != null) {
-            httpHeaders.put("Authorization", this.getAuthorization());
-        }
-
         Map<String, String> telemetryHeaders =
                 serviceBundle.getServerSideTelemetry().getServerTelemetryHeaderMap();
         httpHeaders.putAll(telemetryHeaders);
@@ -66,28 +61,24 @@ class OAuthHttpRequest extends HTTPRequest {
         return httpHeaders;
     }
 
-    private HTTPResponse createOauthHttpResponseFromHttpResponse(IHttpResponse httpResponse)
+    private HttpResponse createOauthHttpResponseFromHttpResponse(IHttpResponse httpResponse)
             throws IOException {
 
-        final HTTPResponse response = new HTTPResponse(httpResponse.statusCode());
+        final HttpResponse response = new HttpResponse();
+        response.statusCode(httpResponse.statusCode());
 
         final String location = HttpUtils.headerValue(httpResponse.headers(), "Location");
         if (!StringHelper.isBlank(location)) {
             try {
-                response.setLocation(new URI(location));
+                response.addHeader("Location", new URI(location).toString());
             } catch (URISyntaxException e) {
                 throw new IOException("Invalid location URI " + location, e);
             }
         }
 
-        try {
-            String contentType = HttpUtils.headerValue(httpResponse.headers(), "Content-Type");
-            if (!StringHelper.isBlank(contentType)) {
-                response.setContentType(contentType);
-            }
-        } catch (final ParseException e) {
-            throw new IOException("Couldn't parse Content-Type header: "
-                    + e.getMessage(), e);
+        String contentType = HttpUtils.headerValue(httpResponse.headers(), "Content-Type");
+        if (!StringHelper.isBlank(contentType)) {
+            response.addHeader("Content-Type", contentType);
         }
 
         Map<String, List<String>> headers = httpResponse.headers();
@@ -97,16 +88,20 @@ class OAuthHttpRequest extends HTTPRequest {
                 continue;
             }
 
-            String headerValue = response.getHeaderValue(header.getKey());
-            if (headerValue == null || StringHelper.isBlank(headerValue)) {
-                response.setHeader(header.getKey(), header.getValue().toArray(new String[0]));
+            List<String> headerValue = response.getHeader((header.getKey()));
+            if (headerValue == null) {
+                response.addHeader(header.getKey(), header.getValue().toArray(new String[0]));
             }
         }
 
         if (!StringHelper.isBlank(httpResponse.body())) {
-            response.setContent(httpResponse.body());
+            response.body(httpResponse.body());
         }
         return response;
+    }
+
+    void setQuery(String query) {
+        this.query = query;
     }
 
     Map<String, String> getExtraHeaderParams() {

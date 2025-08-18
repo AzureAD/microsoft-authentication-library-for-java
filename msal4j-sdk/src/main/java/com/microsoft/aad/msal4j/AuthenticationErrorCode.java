@@ -94,6 +94,11 @@ public class AuthenticationErrorCode {
     public final static String INVALID_REDIRECT_URI = "invalid_redirect_uri";
 
     /**
+     * Indicates token endpoint is invalid. Ensure authority and tenant are correctly set, as this endpoint is typically created using those values.
+     */
+    public final static String INVALID_ENDPOINT_URI = "invalid_endpoint_uri";
+
+    /**
      * MSAL was unable to open the user-default browser. This is either because the current platform
      * does not support {@link java.awt.Desktop} or {@link java.awt.Desktop.Action#BROWSE}. Interactive
      * requests require that the client have a system default browser. For more details, see

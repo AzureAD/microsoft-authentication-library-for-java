@@ -3,8 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.jwt.JWTParser;
-
 import java.net.URL;
 import java.util.concurrent.CompletableFuture;
 
@@ -107,11 +105,10 @@ public interface IBroker {
             if (idToken != null) {
                 builder.idToken(idToken);
                 if (accountId != null) {
-                    String idTokenJson =
-                            JWTParser.parse(idToken).getParsedParts()[1].decodeToString();
+                    IdToken idTokenObj = JsonHelper.createIdTokenFromEncodedTokenString(idToken);
+
                     builder.accountCacheEntity(AccountCacheEntity.create(clientInfo,
-                            Authority.createAuthority(new URL(authority)), JsonHelper.convertJsonToObject(idTokenJson,
-                                    IdToken.class), null));
+                            Authority.createAuthority(new URL(authority)), idTokenObj, null));
                 }
             }
             if (accessToken != null) {

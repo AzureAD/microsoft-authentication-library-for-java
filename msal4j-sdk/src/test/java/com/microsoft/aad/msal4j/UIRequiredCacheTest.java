@@ -3,7 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,10 +32,6 @@ class UIRequiredCacheTest {
         return RefreshTokenParameters
                 .builder(Collections.singleton(scope), "refreshToken")
                 .build();
-    }
-
-    private RefreshTokenParameters getAcquireTokenApiParameters() {
-        return getAcquireTokenApiParameters("default-scope");
     }
 
     private PublicClientApplication getPublicClientApp() throws Exception {
@@ -88,12 +83,10 @@ class UIRequiredCacheTest {
             throws Exception {
         IHttpClient httpClientMock = mock(IHttpClient.class);
 
-        HttpResponse httpResponse =
-                getHttpResponse(HTTPResponse.SC_OK, TestConfiguration.TOKEN_ENDPOINT_OK_RESPONSE);
+        HttpResponse httpResponse = getHttpResponse(HttpStatus.HTTP_OK, TestConfiguration.TOKEN_ENDPOINT_OK_RESPONSE_ID_AND_ACCESS);
         lenient().doReturn(httpResponse).when(httpClientMock).send(any());
 
-        httpResponse = getHttpResponse(HTTPResponse.SC_UNAUTHORIZED,
-                TestConfiguration.TOKEN_ENDPOINT_INVALID_GRANT_ERROR_RESPONSE);
+        httpResponse = getHttpResponse(HttpStatus.HTTP_UNAUTHORIZED, TestConfiguration.TOKEN_ENDPOINT_INVALID_GRANT_ERROR_RESPONSE);
         lenient().doReturn(httpResponse).when(httpClientMock).send(any());
 
         PublicClientApplication app = getPublicClientApp(httpClientMock);

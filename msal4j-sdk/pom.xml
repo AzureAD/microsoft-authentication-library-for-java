@@ -1,32 +1,32 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <groupId>com.microsoft.azure</groupId>
-    <artifactId>msal4j</artifactId>
-    <version>1.22.0</version>
-    <packaging>jar</packaging>
-    <name>msal4j</name>
-    <description>
-        Microsoft Authentication Library for Java gives you the ability to obtain tokens from Microsoft Entra (work and
-        school accounts, MSA) and Azure AD B2C, gaining access to Microsoft Cloud API and any other API secured by Microsoft
-        identities
-    </description>
-    <url>https://github.com/AzureAD/microsoft-authentication-library-for-java</url>
-    <developers>
-        <developer>
-            <id>msopentech</id>
-            <name>Microsoft Open Technologies, Inc.</name>
-        </developer>
-    </developers>
-    <licenses>
-        <license>
-            <name>MIT License</name>
-        </license>
-    </licenses>
-    <inceptionYear>2013</inceptionYear>
-    <scm>
-        <url>https://github.com/AzureAD/microsoft-authentication-library-for-java</url>
-    </scm>
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.microsoft.azure</groupId>
+	<artifactId>msal4j</artifactId>
+	<version>1.30.0-beta</version>
+	<packaging>jar</packaging>
+	<name>msal4j</name>
+	<description>
+    Microsoft Authentication Library for Java gives you the ability to obtain tokens from Azure AD v2 (work and school
+		accounts, MSA) and Azure AD B2C, gaining access to Microsoft Cloud API and any other API secured by Microsoft
+		identities
+  </description>
+	<url>https://github.com/AzureAD/microsoft-authentication-library-for-java</url>
+	<developers>
+		<developer>
+			<id>msopentech</id>
+			<name>Microsoft Open Technologies, Inc.</name>
+		</developer>
+	</developers>
+	<licenses>
+		<license>
+			<name>MIT License</name>
+		</license>
+	</licenses>
+	<inceptionYear>2013</inceptionYear>
+	<scm>
+		<url>https://github.com/AzureAD/microsoft-authentication-library-for-java</url>
+	</scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -40,19 +40,22 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.nimbusds</groupId>
-            <artifactId>oauth2-oidc-sdk</artifactId>
-            <version>11.23.1</version>
-        </dependency>
-        <dependency>
-            <groupId>net.minidev</groupId>
-            <artifactId>json-smart</artifactId>
-            <version>2.5.2</version>
-        </dependency>
-        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.7.36</version>
+        </dependency>
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-json</artifactId>
+            <version>1.4.0</version>
+        </dependency>
+
+        <!-- test dependencies -->
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>oauth2-oidc-sdk</artifactId>
+            <version>11.23</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -60,24 +63,6 @@
             <version>1.6.2</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.36</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.azure</groupId>
-            <artifactId>azure-json</artifactId>
-            <version>1.4.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.18.1</version>
-        </dependency>
-
-        <!-- test dependencies -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -167,7 +152,7 @@
     </pluginRepositories>
 
     <build>
-        <sourceDirectory>${project.build.directory}/delombok</sourceDirectory>
+        <sourceDirectory>src/main/java</sourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.revapi</groupId>
@@ -198,30 +183,7 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.projectlombok</groupId>
-                <artifactId>lombok-maven-plugin</artifactId>
-                <version>1.18.20.0</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.projectlombok</groupId>
-                        <artifactId>lombok</artifactId>
-                        <version>1.18.36</version>
-                    </dependency>
-                </dependencies>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>delombok</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <sourceDirectory>src/main/java</sourceDirectory>
-                    <outputDirectory>${project.build.directory}/delombok</outputDirectory>
-                    <addOutputDirectory>false</addOutputDirectory>
-                </configuration>
-            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -250,7 +212,7 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>3.1.0</version>
                 <configuration>
-                    <sourcepath>${project.build.directory}/delombok</sourcepath>
+                    <sourcepath>src/main/java</sourcepath>
                 </configuration>
                 <executions>
                     <execution>

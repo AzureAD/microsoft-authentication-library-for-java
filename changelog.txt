@@ -1,3 +1,9 @@
+Version 1.30.0-beta
+=============
+- Replace org.projectlombok dependencies with implementations of generated code (#946)
+- Replace com.nimbusds dependencies with implementations of OAuth behavior (#926, #927, #928, #941, #945)
+- Replace com.fasterxml.jackson with com.azure.json for JSON behavior (#947, #948)
+
 Version 1.22.0
 =============
 - Validate issuer from OIDC endpoint when using the oidcAuthority() API (#970)
@@ -11,7 +17,7 @@ Version 1.21.0
 - Fix query parameter issue in IMDS scenarios (#954)
 - Update dependencies used in tests to avoid CVE warnings (#962)
 
-Version 1.20.1
+ 1.20.1
 =============
 - Fix Base64URL decoding bug (#938)
 

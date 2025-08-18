@@ -3,32 +3,23 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.azure.json.JsonReader;
+import com.azure.json.JsonSerializable;
+import com.azure.json.JsonToken;
+import com.azure.json.JsonWriter;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-class AccessTokenCacheEntity extends Credential {
+class AccessTokenCacheEntity extends Credential implements JsonSerializable<Credential> {
 
-    @JsonProperty("credential_type")
     private String credentialType;
-
-    @JsonProperty("realm")
     protected String realm;
-
-    @JsonProperty("target")
     private String target;
-
-    @JsonProperty("cached_at")
     private String cachedAt;
-
-    @JsonProperty("expires_on")
     private String expiresOn;
-
-    @JsonProperty("extended_expires_on")
     private String extExpiresOn;
-
-    @JsonProperty("refresh_on")
     private String refreshOn;
 
     String getKey() {
@@ -44,12 +35,80 @@ class AccessTokenCacheEntity extends Credential {
         return String.join(Constants.CACHE_KEY_SEPARATOR, keyParts).toLowerCase();
     }
 
-    String credentialType() {
-        return this.credentialType;
+    static AccessTokenCacheEntity fromJson(JsonReader jsonReader) throws IOException {
+        AccessTokenCacheEntity entity = new AccessTokenCacheEntity();
+
+        return jsonReader.readObject(reader -> {
+            while (reader.nextToken() != JsonToken.END_OBJECT) {
+                String fieldName = reader.getFieldName();
+                reader.nextToken();
+
+                switch (fieldName) {
+                    case "home_account_id":
+                        entity.homeAccountId = reader.getString();
+                        break;
+                    case "environment":
+                        entity.environment = reader.getString();
+                        break;
+                    case "credential_type":
+                        entity.credentialType = reader.getString();
+                        break;
+                    case "client_id":
+                        entity.clientId = reader.getString();
+                        break;
+                    case "secret":
+                        entity.secret = reader.getString();
+                        break;
+                    case "realm":
+                        entity.realm = reader.getString();
+                        break;
+                    case "target":
+                        entity.target = reader.getString();
+                        break;
+                    case "cached_at":
+                        entity.cachedAt = reader.getString();
+                        break;
+                    case "expires_on":
+                        entity.expiresOn = reader.getString();
+                        break;
+                    case "extended_expires_on":
+                        entity.extExpiresOn = reader.getString();
+                        break;
+                    case "refresh_on":
+                        entity.refreshOn = reader.getString();
+                        break;
+                    case "user_assertion_hash":
+                        entity.userAssertionHash = reader.getString();
+                        break;
+                    default:
+                        reader.skipChildren();
+                        break;
+                }
+            }
+            return entity;
+        });
     }
 
-    String realm() {
-        return this.realm;
+    @Override
+    public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
+        jsonWriter.writeStartObject();
+
+        jsonWriter.writeStringField("home_account_id", homeAccountId);
+        jsonWriter.writeStringField("environment", environment);
+        jsonWriter.writeStringField("credential_type", credentialType);
+        jsonWriter.writeStringField("client_id", clientId);
+        jsonWriter.writeStringField("secret", secret);
+        jsonWriter.writeStringField("realm", realm);
+        jsonWriter.writeStringField("target", target);
+        jsonWriter.writeStringField("cached_at", cachedAt);
+        jsonWriter.writeStringField("expires_on", expiresOn);
+        jsonWriter.writeStringField("extended_expires_on", extExpiresOn);
+        jsonWriter.writeStringField("refresh_on", refreshOn);
+        jsonWriter.writeStringField("user_assertion_hash", userAssertionHash);
+
+        jsonWriter.writeEndObject();
+
+        return jsonWriter;
     }
 
     String target() {
