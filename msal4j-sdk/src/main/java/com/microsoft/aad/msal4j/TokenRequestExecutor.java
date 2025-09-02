@@ -91,10 +91,10 @@ class TokenRequestExecutor {
         if (msalRequest.application() instanceof ConfidentialClientApplication) {
             if (msalRequest instanceof ClientCredentialRequest && ((ClientCredentialRequest) msalRequest).parameters.clientCredential() != null) {
                 IClientCredential credential = ((ClientCredentialRequest) msalRequest).parameters.clientCredential();
-                addJWTBearerAssertionParams(queryParameters, ((ConfidentialClientApplication) msalRequest.application()).getAssertionString(credential));
+                addJWTBearerAssertionParams(queryParameters, ((ConfidentialClientApplication) msalRequest.application()).getAssertionString());
             } else {
-                if (((ConfidentialClientApplication) msalRequest.application()).assertion != null) {
-                    addJWTBearerAssertionParams(queryParameters, ((ConfidentialClientApplication) msalRequest.application()).assertion);
+                if (((ConfidentialClientApplication) msalRequest.application()).getAssertionString() != null) {
+                    addJWTBearerAssertionParams(queryParameters, ((ConfidentialClientApplication) msalRequest.application()).getAssertionString());
                 } else if (((ConfidentialClientApplication) msalRequest.application()).secret != null) {
                     // Client secrets have a different parameter than bearer assertions
                     queryParameters.put("client_secret", ((ConfidentialClientApplication) msalRequest.application()).secret);

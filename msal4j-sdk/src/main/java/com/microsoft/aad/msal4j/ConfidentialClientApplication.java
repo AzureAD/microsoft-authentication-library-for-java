@@ -20,7 +20,7 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 public class ConfidentialClientApplication extends AbstractClientApplicationBase implements IConfidentialClientApplication {
 
     private ClientCertificate clientCertificate;
-    String assertion;
+    IClientCredential clientCredential;
     String secret;
 
     /** AppTokenProvider creates a Credential from a function that provides access tokens. The function
@@ -81,19 +81,20 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
     private void initClientAuthentication(IClientCredential clientCredential) {
         validateNotNull("clientCredential", clientCredential);
 
+        this.clientCredential = clientCredential;
         if (clientCredential instanceof ClientSecret) {
             this.secret = ((ClientSecret) clientCredential).clientSecret();
         } else if (clientCredential instanceof ClientCertificate) {
             this.clientCertificate = (ClientCertificate) clientCredential;
-            this.assertion = getAssertionString(clientCredential);
+            getAssertionString();
         } else if (clientCredential instanceof ClientAssertion) {
-            this.assertion = getAssertionString(clientCredential);
+            getAssertionString();
         } else {
             throw new IllegalArgumentException("Unsupported client credential");
         }
     }
 
-    String getAssertionString(IClientCredential clientCredential) {
+    String getAssertionString() {
         if (clientCredential instanceof ClientCertificate) {
             boolean useSha1 = Authority.detectAuthorityType(this.authenticationAuthority.canonicalAuthorityUrl()) == AuthorityType.ADFS;
 
