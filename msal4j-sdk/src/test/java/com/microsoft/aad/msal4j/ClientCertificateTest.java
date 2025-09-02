@@ -77,9 +77,9 @@ class ClientCertificateTest {
             HttpRequest request = parameters.getArgument(0);
             String requestBody = request.body();
 
-            SignedJWT signedJWT = SignedJWT.parse(cca.assertion);
+            SignedJWT signedJWT = SignedJWT.parse(cca.getAssertionString());
 
-            if (requestBody.contains(cca.assertion)
+            if (requestBody.contains(cca.getAssertionString())
                     && signedJWT.getHeader().toJSONObject().containsKey("x5t#S256")) {
                 return TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(tokenResponseValues));
             }
