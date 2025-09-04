@@ -21,17 +21,13 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
  */
 public class ConfidentialClientApplication extends AbstractClientApplicationBase implements IConfidentialClientApplication {
 
-    private ClientCertificate clientCertificate;
-    private String assertion;
-    private IClientCredential clientCredential;
-    String secret;
+    IClientCredential clientCredential;
+    private boolean sendX5c;
 
     /** AppTokenProvider creates a Credential from a function that provides access tokens. The function
      must be concurrency safe. This is intended only to allow the Azure SDK to cache MSI tokens. It isn't
      useful to applications in general because the token provider must implement all authentication logic. */
     public Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> appTokenProvider;
-
-    private boolean sendX5c;
 
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(ClientCredentialParameters parameters) {
@@ -76,78 +72,9 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
 
         log = LoggerFactory.getLogger(ConfidentialClientApplication.class);
 
-        initClientAuthentication(builder.clientCredential);
+        this.clientCredential = builder.clientCredential;
 
         this.tenant = this.authenticationAuthority.tenant;
-    }
-
-    private void initClientAuthentication(IClientCredential clientCredential) {
-        validateNotNull("clientCredential", clientCredential);
-
-        this.clientCredential = clientCredential;
-
-        if (clientCredential instanceof ClientSecret) {
-            this.secret = ((ClientSecret) clientCredential).clientSecret();
-        } else if (clientCredential instanceof ClientCertificate) {
-            this.clientCertificate = (ClientCertificate) clientCredential;
-            this.assertion = getAssertionString(clientCredential);
-        } else if (clientCredential instanceof ClientAssertion) {
-            this.assertion = getAssertionString(clientCredential);
-        } else {
-            throw new IllegalArgumentException("Unsupported client credential");
-        }
-    }
-
-    /**
-     * Generates a JWT-formatted assertion string based on the provided client credential. Returns null in cases where
-     * the request for that credential type would not use a JWT assertion (e.g. client secret).
-     *
-     * @param clientCredential  The client credential to use for token acquisition.
-     * @return JWT-formatted assertion string
-     */
-    String getAssertionString(IClientCredential clientCredential) {
-        if (clientCredential instanceof ClientCertificate) {
-            // Check if the current assertion is null or has expired, and if so create a new one
-            if (this.assertion == null || hasJwtExpired(this.assertion)) {
-                boolean useSha1 = Authority.detectAuthorityType(this.authenticationAuthority.canonicalAuthorityUrl()) == AuthorityType.ADFS;
-
-                this.assertion = JwtHelper.buildJwt(
-                        clientId(),
-                        clientCertificate,
-                        this.authenticationAuthority.selfSignedJwtAudience(),
-                        sendX5c,
-                        useSha1).assertion();
-            }
-            return this.assertion;
-        } else if (clientCredential instanceof ClientAssertion) {
-            return ((ClientAssertion) clientCredential).assertion();
-        } else if (clientCredential instanceof ClientSecret) {
-            return null;
-        } else {
-            throw new IllegalArgumentException("Unsupported client credential");
-        }
-    }
-
-    //Overload for the common case where the application's default credential was not overridden in the request.
-    String getAssertionString() {
-        return this.getAssertionString(this.clientCredential);
-    }
-
-    /**
-     * Checks if the JWT-formatted assertion has expired by parsing the "exp" claim.
-     *
-     * @param jwt JWT string
-     * @return true if the JWT has expired. Otherwise false
-     */
-    boolean hasJwtExpired(String jwt) {
-        final Date currentDateTime = new Date(System.currentTimeMillis());
-        Base64.Decoder decoder = Base64.getUrlDecoder();
-
-        String payload = new String(decoder.decode(jwt.split("\\.")[1]));
-
-        final Date expirationTime = (Date) JsonHelper.parseJsonToMap(payload).get("exp");
-
-        return expirationTime.before(currentDateTime);
     }
 
     /**
@@ -177,6 +104,9 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
 
         private Builder(String clientId, IClientCredential clientCredential) {
             super(clientId);
+
+            validateNotNull("clientCredential", clientCredential);
+
             this.clientCredential = clientCredential;
         }
 

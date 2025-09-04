@@ -55,6 +55,33 @@ final class ClientCertificate implements IClientCertificate {
         return result;
     }
 
+    /**
+     * Gets a newly created JWT assertion using the certificate.
+     * <p>
+     * This method creates a fresh JWT assertion on each call, which prevents issues
+     * with token expiration and ensures each request has a unique assertion.
+     *
+     * @param authority The authority for which the assertion is being created, must not be null
+     * @param clientId The client ID of the application, used as the subject of the JWT
+     * @param sendX5c Whether to include the x5c claim (certificate chain) in the JWT
+     * @return A JWT assertion for client authentication
+     * @throws NullPointerException if authority is null
+     */
+    public String getAssertion(Authority authority, String clientId, boolean sendX5c) {
+        if (authority == null) {
+            throw new NullPointerException("Authority cannot be null");
+        }
+
+        boolean useSha1 = Authority.detectAuthorityType(authority.canonicalAuthorityUrl()) == AuthorityType.ADFS;
+
+        return JwtHelper.buildJwt(
+                clientId,
+                this,
+                authority.selfSignedJwtAudience(),
+                sendX5c,
+                useSha1).assertion();
+    }
+
     static ClientCertificate create(InputStream pkcs12Certificate, String password)
             throws KeyStoreException, NoSuchProviderException, NoSuchAlgorithmException,
             CertificateException, IOException, UnrecoverableKeyException {

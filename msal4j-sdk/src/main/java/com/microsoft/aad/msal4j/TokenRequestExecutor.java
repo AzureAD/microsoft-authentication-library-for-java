@@ -86,25 +86,76 @@ class TokenRequestExecutor {
         String clientID = msalRequest.application().clientId();
         queryParameters.put("client_id", clientID);
 
-        // If the client application has a client assertion to apply to the request, check if a new client assertion
-        //  was supplied as a request parameter. If so, use the request's assertion instead of the application's
+        // Add client authentication parameters if this is a confidential client
         if (msalRequest.application() instanceof ConfidentialClientApplication) {
-            if (msalRequest instanceof ClientCredentialRequest && ((ClientCredentialRequest) msalRequest).parameters.clientCredential() != null) {
-                IClientCredential credential = ((ClientCredentialRequest) msalRequest).parameters.clientCredential();
-                addJWTBearerAssertionParams(queryParameters, ((ConfidentialClientApplication) msalRequest.application()).getAssertionString(credential));
-            } else {
-                if (((ConfidentialClientApplication) msalRequest.application()).getAssertionString() != null) {
-                    addJWTBearerAssertionParams(queryParameters, ((ConfidentialClientApplication) msalRequest.application()).getAssertionString());
-                } else if (((ConfidentialClientApplication) msalRequest.application()).secret != null) {
-                    // Client secrets have a different parameter than bearer assertions
-                    queryParameters.put("client_secret", ((ConfidentialClientApplication) msalRequest.application()).secret);
-                }
-            }
+            ConfidentialClientApplication application = (ConfidentialClientApplication) msalRequest.application();
+
+            // Determine which credential to use - either from the request or from the application
+            IClientCredential credential = getCredentialToUse(application);
+
+            // Add appropriate authentication parameters based on the credential type
+            addCredentialToRequest(queryParameters, credential, application);
         }
 
         oauthHttpRequest.setQuery(StringHelper.serializeQueryParameters(queryParameters));
     }
 
+    /**
+     * Determines which credential to use for authentication:
+     * - If the request is a ClientCredentialRequest with a specified credential, use that
+     * - Otherwise use the application's credential
+     *
+     * @param application The confidential client application
+     * @return The credential to use, may be null if no credential is available
+     */
+    private IClientCredential getCredentialToUse(ConfidentialClientApplication application) {
+        if (msalRequest instanceof ClientCredentialRequest &&
+            ((ClientCredentialRequest) msalRequest).parameters.clientCredential() != null) {
+            return ((ClientCredentialRequest) msalRequest).parameters.clientCredential();
+        }
+        return application.clientCredential;
+    }
+
+    /**
+     * Adds the appropriate authentication parameters to the request based on credential type.
+     * Handles different credential types (secret, assertion, certificate) by adding the appropriate
+     * parameters to the request.
+     *
+     * @param queryParameters The map of query parameters to add to
+     * @param credential The credential to use for authentication, may be null
+     * @param application The confidential client application
+     */
+    private void addCredentialToRequest(Map<String, String> queryParameters,
+                                       IClientCredential credential,
+                                       ConfidentialClientApplication application) {
+        if (credential == null) {
+            return;
+        }
+
+        if (credential instanceof ClientSecret) {
+            // For client secret, add client_secret parameter
+            queryParameters.put("client_secret", ((ClientSecret) credential).clientSecret());
+        } else if (credential instanceof ClientAssertion) {
+            // For client assertion, add client_assertion and client_assertion_type parameters
+            addJWTBearerAssertionParams(queryParameters, ((ClientAssertion) credential).assertion());
+        } else if (credential instanceof ClientCertificate) {
+            // For client certificate, generate a new assertion and add it to the request
+            ClientCertificate certificate = (ClientCertificate) credential;
+            String assertion = certificate.getAssertion(
+                application.authenticationAuthority,
+                application.clientId(),
+                application.sendX5c());
+            addJWTBearerAssertionParams(queryParameters, assertion);
+        }
+        // If credential is of an unknown type, no additional parameters are added
+    }
+
+    /**
+     * Adds the JWT bearer token assertion parameters to the request
+     *
+     * @param queryParameters The map of query parameters to add to
+     * @param assertion The JWT assertion string
+     */
     private void addJWTBearerAssertionParams(Map<String, String> queryParameters, String assertion) {
         queryParameters.put("client_assertion", assertion);
         queryParameters.put("client_assertion_type", ClientAssertion.ASSERTION_TYPE_JWT_BEARER);
