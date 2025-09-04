@@ -131,6 +131,40 @@ abstract class Authority {
         }
     }
 
+    /**
+     * Creates a new Authority instance with a different tenant.
+     * This is useful when overriding the tenant for a specific request.
+     *
+     * @param originalAuthority The original authority to base the new one on
+     * @param newTenant The new tenant to use in the authority URL
+     * @return A new Authority instance with the specified tenant
+     * @throws MalformedURLException If the new authority URL is invalid
+     * @throws NullPointerException If originalAuthority or newTenant is null
+     */
+    static Authority replaceTenant(Authority originalAuthority, String newTenant) throws MalformedURLException {
+        if (originalAuthority == null) {
+            throw new NullPointerException("originalAuthority");
+        }
+        if (StringHelper.isBlank(newTenant)) {
+            throw new NullPointerException("newTenant");
+        }
+
+        URL originalUrl = originalAuthority.canonicalAuthorityUrl();
+        String host = originalUrl.getHost();
+        String protocol = originalUrl.getProtocol();
+        int port = originalUrl.getPort();
+
+        // Build path with new tenant
+        String newAuthority = String.format("%s://%s%s/%s/",
+                protocol,
+                host,
+                (port == -1 ? "" : ":" + port),
+                newTenant);
+
+        // Create proper authority instance with the tenant-specific URL
+        return createAuthority(new URL(newAuthority));
+    }
+
     static String getTenant(URL authorityUrl, AuthorityType authorityType) {
         String[] segments = authorityUrl.getPath().substring(1).split("/");
         if (authorityType == AuthorityType.B2C) {

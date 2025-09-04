@@ -5,6 +5,8 @@ package com.microsoft.aad.msal4j;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -26,8 +28,9 @@ class ClientCredentialTest {
         assertThrows(NullPointerException.class, () ->
                 new ClientAssertion(""));
 
+        // Cast to String to resolve ambiguity between constructors
         assertThrows(NullPointerException.class, () ->
-                new ClientAssertion(null));
+                new ClientAssertion((String) null));
     }
 
     @Test
@@ -106,5 +109,36 @@ class ClientCredentialTest {
         assertEquals(resultRequestLevelTenant.accessToken(), resultRequestLevelTenantCached.accessToken());
         assertNotEquals(resultAppLevelTenant.accessToken(), resultRequestLevelTenant.accessToken());
         verify(httpClientMock, times(2)).send(any());
+    }
+
+    @Test
+    void acquireTokenClientCredentials_Callback() {
+        // Create a counter to track how many times our callback is invoked
+        final AtomicInteger callCounter = new AtomicInteger(0);
+
+        // Create a callable that returns a different value each time it's called
+        // by including the counter value in the returned string
+        Callable<String> callable = () -> {
+            int currentCount = callCounter.incrementAndGet();
+            return "assertion_" + currentCount;
+        };
+
+        // Create the client assertion using our callback
+        IClientAssertion credential = ClientCredentialFactory.createFromCallback(callable);
+
+        // Each call to assertion() should invoke our callable
+        String assertion1 = credential.assertion();
+        String assertion2 = credential.assertion();
+        String assertion3 = credential.assertion();
+
+        // Verify the callable was called three times, generating three different assertions
+        assertEquals(3, callCounter.get(), "Callable should have been invoked exactly three times");
+        assertEquals("assertion_1", assertion1, "First assertion value should match first call");
+        assertEquals("assertion_2", assertion2, "Second assertion value should match second call");
+        assertEquals("assertion_3", assertion3, "Third assertion value should match third call");
+
+        // Verify assertions are different from each other
+        assertNotEquals(assertion1, assertion2, "First and second assertions should be different");
+        assertNotEquals(assertion2, assertion3, "Second and third assertions should be different");
     }
 }

@@ -91,15 +91,18 @@ public class ClientCredentialFactory {
 
     /**
      * Static method to create a {@link ClientAssertion} instance from a provided Callable.
+     * The callable will be invoked each time the assertion is needed, allowing for dynamic
+     * generation of assertions.
      *
      * @param callable Callable that produces a JWT token encoded as a base64 URL encoded string
-     * @return {@link ClientAssertion}
+     * @return {@link ClientAssertion} that will invoke the callable each time assertion() is called
+     * @throws NullPointerException if callable is null
      */
-    public static IClientAssertion createFromCallback(Callable<String> callable) throws ExecutionException, InterruptedException {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
+    public static IClientAssertion createFromCallback(Callable<String> callable) {
+        if (callable == null) {
+            throw new NullPointerException("callable");
+        }
 
-        Future<String> future = executor.submit(callable);
-
-        return new ClientAssertion(future.get());
+        return new ClientAssertion(callable);
     }
 }

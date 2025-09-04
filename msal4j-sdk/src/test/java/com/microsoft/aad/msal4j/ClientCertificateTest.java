@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -154,6 +155,108 @@ class ClientCertificateTest {
         // Verify the tokens are different
         assertNotEquals(result1.accessToken(), result2.accessToken(),
                 "The access tokens from each request should be different");
+    }
+
+    @Test
+    void testClientCertificate_TenantOverride() throws Exception {
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+        Map<String, String> capturedTenants = new HashMap<>();
+
+        ConfidentialClientApplication cca =
+                ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromCertificate(TestHelper.getPrivateKey(), TestHelper.getX509Cert()))
+                        .authority("https://login.microsoftonline.com/default-tenant")
+                        .instanceDiscovery(false)
+                        .validateAuthority(false)
+                        .httpClient(httpClientMock)
+                        .build();
+
+        // Mock the HTTP client to capture and analyze assertions from each request
+        when(httpClientMock.send(any(HttpRequest.class))).thenAnswer(parameters -> {
+            HttpRequest request = parameters.getArgument(0);
+            String requestBody = request.body();
+            String url = request.url().toString();
+
+            // Capture which tenant was used in the authority
+            String tenant = extractTenantFromUrl(url);
+
+            // Extract the assertion to verify its audience claim
+            String clientAssertion = extractClientAssertion(requestBody);
+            if (clientAssertion != null) {
+                SignedJWT signedJWT = SignedJWT.parse(clientAssertion);
+
+                // Get the audience claim to verify it matches the tenant
+                String audience = signedJWT.getJWTClaimsSet().getAudience().get(0);
+
+                // Store the tenant and audience for verification
+                capturedTenants.put(tenant, audience);
+
+                // Verify it's a valid JWT with proper headers
+                if (signedJWT.getHeader().toJSONObject().containsKey("x5t#S256")) {
+                    HashMap<String, String> tokenResponseValues = new HashMap<>();
+                    tokenResponseValues.put("access_token", "access_token_for_" + tenant);
+                    return TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(tokenResponseValues));
+                }
+            }
+            return null;
+        });
+
+        // First request with default tenant
+        ClientCredentialParameters defaultParameters = ClientCredentialParameters.builder(Collections.singleton("scopes"))
+                .skipCache(true)
+                .build();
+        IAuthenticationResult resultDefault = cca.acquireToken(defaultParameters).get();
+
+        // Second request with override tenant
+        String overrideTenant = "override-tenant";
+        ClientCredentialParameters overrideParameters = ClientCredentialParameters.builder(Collections.singleton("scopes"))
+                .skipCache(true)
+                .tenant(overrideTenant)
+                .build();
+        IAuthenticationResult resultOverride = cca.acquireToken(overrideParameters).get();
+
+        // Verify both requests were processed
+        assertEquals(2, capturedTenants.size(), "Two requests with different tenants should have been processed");
+
+        // Verify both tenants were used
+        assertTrue(capturedTenants.containsKey("default-tenant"), "Default tenant should have been used");
+        assertTrue(capturedTenants.containsKey(overrideTenant), "Override tenant should have been used");
+
+        // Verify the audience in the JWT assertions reflects the different tenants
+        assertNotEquals(
+            capturedTenants.get("default-tenant"),
+            capturedTenants.get(overrideTenant),
+            "JWT audience should differ between default and override tenant"
+        );
+
+        // Verify the audience claims match the expected format with the correct tenant
+        assertTrue(
+            capturedTenants.get("default-tenant").contains("default-tenant"),
+            "Audience for default tenant should contain the default tenant name"
+        );
+        assertTrue(
+            capturedTenants.get(overrideTenant).contains(overrideTenant),
+            "Audience for override tenant should contain the override tenant name"
+        );
+
+        // Verify different access tokens were returned
+        assertNotEquals(resultDefault.accessToken(), resultOverride.accessToken(),
+            "Access tokens should differ when using different tenants");
+    }
+
+    /**
+     * Extracts the tenant name from an authority URL
+     * @param url The full URL containing the tenant
+     * @return The tenant name
+     */
+    private String extractTenantFromUrl(String url) {
+        // Authority URL format is typically https://login.microsoftonline.com/tenant/...
+        String[] parts = url.split("/");
+        for (int i = 0; i < parts.length; i++) {
+            if (parts[i].equalsIgnoreCase("login.microsoftonline.com") && i + 1 < parts.length) {
+                return parts[i + 1];
+            }
+        }
+        return null;
     }
 
     /**
