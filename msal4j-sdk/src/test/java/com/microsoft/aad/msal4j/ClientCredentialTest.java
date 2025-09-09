@@ -107,4 +107,81 @@ class ClientCredentialTest {
         assertNotEquals(resultAppLevelTenant.accessToken(), resultRequestLevelTenant.accessToken());
         verify(httpClientMock, times(2)).send(any());
     }
+
+    @Test
+    void testCredentialPrecedenceAndMixing() throws Exception {
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        // Create different credential types for testing
+        IClientCredential appLevelCredential = ClientCredentialFactory.createFromSecret("appLevelSecret");
+        IClientCredential requestLevelSecret = ClientCredentialFactory.createFromSecret("requestLevelSecret");
+        String assertionValue = "test_assertion_value";
+        IClientCredential requestLevelAssertion = ClientCredentialFactory.createFromClientAssertion(assertionValue);
+
+        // Create the application with the app-level credential
+        ConfidentialClientApplication cca =
+                ConfidentialClientApplication.builder("clientId", appLevelCredential)
+                        .authority("https://login.microsoftonline.com/tenant")
+                        .instanceDiscovery(false)
+                        .validateAuthority(false)
+                        .httpClient(httpClientMock)
+                        .build();
+
+        // Set up the mock to check which credential is being used
+        when(httpClientMock.send(any(HttpRequest.class))).thenAnswer(invocation -> {
+            HttpRequest request = invocation.getArgument(0);
+            String requestBody = request.body();
+
+            // Check which credential type is included in the request and return a matching token
+            if (requestBody.contains("client_secret=requestLevelSecret")) {
+                HashMap<String, String> responseParams = new HashMap<>();
+                responseParams.put("access_token", "request_secret_token");
+                return TestHelper.expectedResponse(HttpStatus.HTTP_OK,
+                        TestHelper.getSuccessfulTokenResponse(responseParams));
+            } else if (requestBody.contains("client_secret=appLevelSecret")) {
+                HashMap<String, String> responseParams = new HashMap<>();
+                responseParams.put("access_token", "app_secret_token");
+                return TestHelper.expectedResponse(HttpStatus.HTTP_OK,
+                        TestHelper.getSuccessfulTokenResponse(responseParams));
+            } else if (requestBody.contains("client_assertion=" + assertionValue)) {
+                HashMap<String, String> responseParams = new HashMap<>();
+                responseParams.put("access_token", "assertion_token");
+                return TestHelper.expectedResponse(HttpStatus.HTTP_OK,
+                        TestHelper.getSuccessfulTokenResponse(responseParams));
+            }
+            return null;
+        });
+
+        // Test 1: Request with same credential type (secret) at request level
+        ClientCredentialParameters parametersWithRequestSecret =
+                ClientCredentialParameters.builder(Collections.singleton("scope"))
+                        .clientCredential(requestLevelSecret)
+                        .skipCache(true)
+                        .build();
+
+        IAuthenticationResult result1 = cca.acquireToken(parametersWithRequestSecret).get();
+        assertEquals("request_secret_token", result1.accessToken(),
+                "Request-level secret should be used when provided");
+
+        // Test 2: Request with different credential type (assertion) at request level
+        ClientCredentialParameters parametersWithAssertion =
+                ClientCredentialParameters.builder(Collections.singleton("scope"))
+                        .clientCredential(requestLevelAssertion)
+                        .skipCache(true)
+                        .build();
+
+        IAuthenticationResult result2 = cca.acquireToken(parametersWithAssertion).get();
+        assertEquals("assertion_token", result2.accessToken(),
+                "Request-level assertion should be used when provided");
+
+        // Test 3: Request without credential specified should fall back to app-level
+        ClientCredentialParameters parametersWithoutCredential =
+                ClientCredentialParameters.builder(Collections.singleton("scope"))
+                        .skipCache(true)
+                        .build();
+
+        IAuthenticationResult result3 = cca.acquireToken(parametersWithoutCredential).get();
+        assertEquals("app_secret_token", result3.accessToken(),
+                "App-level credential should be used when request-level credential is not provided");
+    }
 }
