@@ -133,7 +133,7 @@ abstract class Authority {
 
     /**
      * Creates a new Authority instance with a different tenant.
-     * This is useful when overriding the tenant for a specific request.
+     * This is useful when overriding the tenant at request level.
      *
      * @param originalAuthority The original authority to base the new one on
      * @param newTenant The new tenant to use in the authority URL
