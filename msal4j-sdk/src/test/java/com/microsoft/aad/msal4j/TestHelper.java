@@ -6,17 +6,30 @@ package com.microsoft.aad.msal4j;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.*;
 import java.security.cert.X509Certificate;
+import java.security.spec.MGF1ParameterSpec;
+import java.security.spec.PSSParameterSpec;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import sun.security.x509.AlgorithmId;
+import sun.security.x509.CertificateAlgorithmId;
+import sun.security.x509.CertificateSerialNumber;
+import sun.security.x509.CertificateValidity;
+import sun.security.x509.CertificateVersion;
+import sun.security.x509.CertificateX509Key;
+import sun.security.x509.X500Name;
+import sun.security.x509.X509CertImpl;
+import sun.security.x509.X509CertInfo;
 
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.when;
@@ -74,13 +87,18 @@ class TestHelper {
             "\"tid\": \"%s\"," +
             "\"ver\": \"2.0\"}";
 
-    static X509Certificate x509Cert = getX509Cert();
-    static PrivateKey privateKey = getPrivateKey();
-
-    public static String CERTIFICATE_ALIAS = "LabAuth.MSIDLab.com";
+    private static final String CERTIFICATE_ALIAS = "LabAuth.MSIDLab.com";
     private static final String WIN_KEYSTORE = "Windows-MY";
     private static final String KEYSTORE_PROVIDER = "SunMSCAPI";
     private static final String MAC_KEYSTORE = "KeychainStore";
+
+    // Certificate and key storage - programmatically generated
+    static X509Certificate x509Cert = getX509Cert();
+    static PrivateKey privateKey = getPrivateKey();
+
+    // Certificate and key storage - from system keystore
+    static X509Certificate x509CertFromKeystore = getX509CertFromKeystore();
+    static PrivateKey privateKeyFromKeystore = getPrivateKeyFromKeystore();
 
     static String readResource(Class<?> classInstance, String resource) {
         try {
@@ -106,7 +124,7 @@ class TestHelper {
             keyGen.initialize(2048);
             KeyPair keyPair = keyGen.generateKeyPair();
 
-            String header = "{\"alg\":\"RS256\",\"typ\":\"JWT\",\"kid\":\"kid\"}";
+            String header = "{\"alg\":\"PS256\",\"typ\":\"JWT\",\"kid\":\"kid\"}";
             String encodedHeader = Base64.getUrlEncoder().withoutPadding()
                     .encodeToString(header.getBytes(StandardCharsets.UTF_8));
 
@@ -115,7 +133,9 @@ class TestHelper {
                     .encodeToString(payload.getBytes(StandardCharsets.UTF_8));
 
             String dataToSign = encodedHeader + "." + encodedPayload;
-            Signature signature = Signature.getInstance("SHA256withRSA");
+            Signature signature = Signature.getInstance("RSASSA-PSS");
+            signature.setParameter(new PSSParameterSpec("SHA-256", "MGF1", MGF1ParameterSpec.SHA256, 32, 1));
+
             signature.initSign(keyPair.getPrivate());
             signature.update(dataToSign.getBytes(StandardCharsets.UTF_8));
             byte[] signatureBytes = signature.sign();
@@ -123,7 +143,7 @@ class TestHelper {
                     .encodeToString(signatureBytes);
 
             return encodedHeader + "." + encodedPayload + "." + encodedSignature;
-        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException | InvalidAlgorithmParameterException e) {
             throw new RuntimeException("Error generating token: " + e.getMessage(), e);
         }
     }
@@ -201,7 +221,60 @@ class TestHelper {
         return String.format("someheader.%s.somesignature", encodedTokenValues);
     }
 
-    static void setPrivateKeyAndCert() {
+    /**
+     * Lazily generates an RSA key pair and certificate for testing.
+     * This produces a standard RSAPrivateKey that works with the PS256 algorithm.
+     */
+    private static void setPrivateKeyAndCertFromKeyPair() {
+        try {
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+            keyPairGenerator.initialize(2048); // 2048-bit key size
+            KeyPair keyPair = keyPairGenerator.generateKeyPair();
+            privateKey = keyPair.getPrivate();
+
+            x509Cert = generateCertificate(keyPair);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Failed to generate key pair: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Generate a self-signed X.509 certificate from a key pair
+     * @param keyPair The KeyPair to use for the certificate
+     * @return A self-signed X509Certificate
+     */
+    private static X509Certificate generateCertificate(KeyPair keyPair) {
+        try {
+            X500Name issuerName = new X500Name("CN=TestIssuer");
+
+            Date startDate = new Date();
+            // Certificate valid for 1 year
+            Date endDate = new Date(System.currentTimeMillis() + 365 * 24 * 60 * 60 * 1000L);
+
+            X509CertInfo info = new X509CertInfo();
+            info.set(X509CertInfo.VERSION, new CertificateVersion(2));
+            info.set(X509CertInfo.SERIAL_NUMBER, new CertificateSerialNumber(new BigInteger(64, new SecureRandom())));
+            info.set(X509CertInfo.ALGORITHM_ID, new CertificateAlgorithmId(AlgorithmId.get("SHA256withRSA")));
+            info.set(X509CertInfo.SUBJECT, issuerName);
+            info.set(X509CertInfo.ISSUER, issuerName);
+            info.set(X509CertInfo.VALIDITY, new CertificateValidity(startDate, endDate));
+            info.set(X509CertInfo.KEY, new CertificateX509Key(keyPair.getPublic()));
+
+            X509CertImpl certificate = new X509CertImpl(info);
+            certificate.sign(keyPair.getPrivate(), "SHA256withRSA");
+
+            return certificate;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate certificate: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Loads a key and certificate from the system keystore.
+     * This produces a special key type (typically CPrivateKey on Windows) that works with RS256
+     * but not with PS256, making it useful for testing the fallback mechanism.
+     */
+    private static void setPrivateKeyAndCertFromKeystore() {
         try {
             String os = System.getProperty("os.name");
             KeyStore keystore;
@@ -212,27 +285,68 @@ class TestHelper {
             }
 
             keystore.load(null, null);
-            privateKey = (PrivateKey) keystore.getKey(CERTIFICATE_ALIAS, null);
-            x509Cert = (X509Certificate) keystore.getCertificate(
+            privateKeyFromKeystore = (PrivateKey) keystore.getKey(CERTIFICATE_ALIAS, null);
+            x509CertFromKeystore = (X509Certificate) keystore.getCertificate(
                     CERTIFICATE_ALIAS);
         } catch (Exception e) {
-            throw new RuntimeException("Error getting certificate from keystore: " + e.getMessage());
+            throw new RuntimeException("Error getting certificate from keystore: " + e.getMessage(), e);
         }
     }
 
+    /**
+     * Get a programmatically generated X509Certificate suitable for unit tests.
+     * This certificate works with both PS256 and RS256 algorithms.
+     *
+     * @return A self-signed X509Certificate
+     */
     static X509Certificate getX509Cert() {
         if (x509Cert == null) {
-            setPrivateKeyAndCert();
+            setPrivateKeyAndCertFromKeyPair();
         }
 
         return x509Cert;
     }
 
+    /**
+     * Get a programmatically generated RSA private key suitable for unit tests.
+     * This key works with both PS256 and RS256 algorithms.
+     *
+     * @return An RSA private key
+     */
     static PrivateKey getPrivateKey() {
         if (privateKey == null) {
-            setPrivateKeyAndCert();
+            setPrivateKeyAndCertFromKeyPair();
         }
 
         return privateKey;
+    }
+
+    /**
+     * Get a certificate from the system keystore.
+     * This is primarily used for end-to-end tests that need to connect to real services.
+     *
+     * @return An X509Certificate from the system keystore
+     */
+    static X509Certificate getX509CertFromKeystore() {
+        if (x509CertFromKeystore == null) {
+            setPrivateKeyAndCertFromKeystore();
+        }
+
+        return x509CertFromKeystore;
+    }
+
+    /**
+     * Get a private key from the system keystore.
+     * On Windows, this typically returns a CPrivateKey that works with RS256
+     * but fails with PS256, making it useful for testing the algorithm fallback.
+     *
+     * @return A PrivateKey from the system keystore
+     */
+    static PrivateKey getPrivateKeyFromKeystore() {
+        if (privateKeyFromKeystore == null) {
+            setPrivateKeyAndCertFromKeystore();
+        }
+
+        return privateKeyFromKeystore;
     }
 }

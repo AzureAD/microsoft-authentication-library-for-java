@@ -3,11 +3,14 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.nimbusds.jwt.SignedJWT;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.cert.CertificateEncodingException;
+import java.security.interfaces.RSAPrivateKey;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -115,7 +118,7 @@ class HelperAndUtilityTests {
 
         // Decode and verify headers
         String headerJson = new String(Base64.getUrlDecoder().decode(jwtParts[0]));
-        assertTrue(headerJson.contains("\"alg\":\"RS256\""), "Header should specify RS256 algorithm");
+        assertTrue(headerJson.contains("\"alg\":\"PS256\""), "Header should specify RS256 algorithm");
         assertTrue(headerJson.contains("\"typ\":\"JWT\""), "Header should specify JWT type");
         assertTrue(headerJson.contains("\"x5t#S256\":\"certificateHash256\""), "Header should contain x5t#S256");
         assertTrue(headerJson.contains("\"x5c\":[\"cert1\",\"cert2\"]"), "Header should contain x5c");
@@ -186,5 +189,100 @@ class HelperAndUtilityTests {
                 () -> JsonHelper.createIdTokenFromEncodedTokenString(invalidToken));
 
         assertEquals(AuthenticationErrorCode.INVALID_JSON, exception.errorCode());
+    }
+
+    @Test
+    void JwtHelper_buildJwt_UsesPSS256WhenSupported() throws Exception {
+        // Create a certificate mock with an RSAPrivateKey that supports PSS
+        RSAPrivateKey rsaPrivateKey = (RSAPrivateKey) TestHelper.getPrivateKey();
+
+        ClientCertificate clientCertificateMock = mock(ClientCertificate.class);
+        when(clientCertificateMock.privateKey()).thenReturn(rsaPrivateKey);
+        when(clientCertificateMock.publicCertificateHash()).thenReturn("certificateHash");
+        when(clientCertificateMock.publicCertificateHash256()).thenReturn("certificateHash256");
+        when(clientCertificateMock.getEncodedPublicKeyCertificateChain()).thenReturn(Arrays.asList("cert1", "cert2"));
+
+        String clientId = "clientId";
+        String audience = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
+
+        // Create the JWT
+        ClientAssertion clientAssertion = JwtHelper.buildJwt(clientId, clientCertificateMock, audience, true, false);
+
+        assertNotNull(clientAssertion);
+        String jwt = clientAssertion.assertion();
+        String[] jwtParts = jwt.split("\\.");
+        assertEquals(3, jwtParts.length, "JWT should have three parts");
+
+        // Decode and verify header uses PS256
+        String headerJson = new String(Base64.getUrlDecoder().decode(jwtParts[0]));
+        assertTrue(headerJson.contains("\"alg\":\"PS256\""), "Header should specify PS256 algorithm");
+
+        // Parse the JWT to verify the algorithm is PS256
+        SignedJWT signedJWT = SignedJWT.parse(jwt);
+        assertEquals("PS256", signedJWT.getHeader().getAlgorithm().getName(), "JWT should use PS256 algorithm");
+    }
+
+    @Test
+    void JwtHelper_buildJwt_FallsBackToRS256WhenPSSNotSupported() throws Exception {
+        // When loaded from the Windows-MY keystore the PrivateKey will be a sun.security.mscapi.CPrivateKey,
+        // which for some reason works with the library's older RS256 signature but not the newer PSS signature.
+        PrivateKey nonRsaCompatibleKey = TestHelper.getPrivateKeyFromKeystore();
+
+        // This key should cause the PSS code to fail with an InvalidKeyException
+        ClientCertificate clientCertificateMock = mock(ClientCertificate.class);
+        when(clientCertificateMock.privateKey()).thenReturn(nonRsaCompatibleKey);
+        when(clientCertificateMock.publicCertificateHash()).thenReturn("certificateHash");
+        when(clientCertificateMock.publicCertificateHash256()).thenReturn("certificateHash256");
+        when(clientCertificateMock.getEncodedPublicKeyCertificateChain()).thenReturn(Arrays.asList("cert1", "cert2"));
+
+        String clientId = "clientId";
+        String audience = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
+
+        // Create the JWT - this should fallback to RS256
+        ClientAssertion clientAssertion = JwtHelper.buildJwt(clientId, clientCertificateMock, audience, true, false);
+
+        assertNotNull(clientAssertion);
+        String jwt = clientAssertion.assertion();
+        String[] jwtParts = jwt.split("\\.");
+        assertEquals(3, jwtParts.length, "JWT should have three parts");
+
+        // Decode and verify header uses RS256 as fallback
+        String headerJson = new String(Base64.getUrlDecoder().decode(jwtParts[0]));
+        assertTrue(headerJson.contains("\"alg\":\"RS256\""), "Header should specify RS256 algorithm as fallback");
+    }
+
+    @Test
+    void JwtHelper_buildJwt_UsesCorrectSignatureAlgorithmsBasedOnKeyType() throws Exception {
+        // Use real keys for both RSA and non-RSA tests
+        RSAPrivateKey rsaPrivateKey = (RSAPrivateKey) TestHelper.getPrivateKey();
+        PrivateKey nonRsaPrivateKey = TestHelper.privateKeyFromKeystore;
+
+        ClientCertificate rsaCertMock = mock(ClientCertificate.class);
+        when(rsaCertMock.privateKey()).thenReturn(rsaPrivateKey);
+        when(rsaCertMock.publicCertificateHash256()).thenReturn("certHash256");
+        when(rsaCertMock.getEncodedPublicKeyCertificateChain()).thenReturn(Arrays.asList("cert1", "cert2"));
+
+        ClientCertificate nonRsaCertMock = mock(ClientCertificate.class);
+        when(nonRsaCertMock.privateKey()).thenReturn(nonRsaPrivateKey);
+        when(nonRsaCertMock.publicCertificateHash256()).thenReturn("certHash256");
+        when(nonRsaCertMock.getEncodedPublicKeyCertificateChain()).thenReturn(Arrays.asList("cert1", "cert2"));
+
+        String clientId = "clientId";
+        String audience = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
+
+        // Test RSA key -> should use PS256
+        ClientAssertion rsaAssertion = JwtHelper.buildJwt(clientId, rsaCertMock, audience, true, false);
+        String rsaJwt = rsaAssertion.assertion();
+        String rsaHeader = new String(Base64.getUrlDecoder().decode(rsaJwt.split("\\.")[0]));
+        assertTrue(rsaHeader.contains("\"alg\":\"PS256\""), "RSA key should produce PS256 algorithm");
+
+        // Test non-RSA key -> should fallback to RS256
+        ClientAssertion nonRsaAssertion = JwtHelper.buildJwt(clientId, nonRsaCertMock, audience, true, false);
+        String nonRsaJwt = nonRsaAssertion.assertion();
+        String nonRsaHeader = new String(Base64.getUrlDecoder().decode(nonRsaJwt.split("\\.")[0]));
+        assertTrue(nonRsaHeader.contains("\"alg\":\"RS256\""), "Non-RSA key should fallback to RS256 algorithm");
+
+        // Verify we're actually using different keys for the different tests
+        assertNotEquals(rsaJwt, nonRsaJwt, "The two assertions should be different");
     }
 }
