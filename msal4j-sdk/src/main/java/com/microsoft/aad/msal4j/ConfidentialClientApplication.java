@@ -5,8 +5,6 @@ package com.microsoft.aad.msal4j;
 
 import org.slf4j.LoggerFactory;
 
-import java.util.Base64;
-import java.util.Date;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
