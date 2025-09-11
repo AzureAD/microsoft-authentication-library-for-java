@@ -4,21 +4,66 @@
 package com.microsoft.aad.msal4j;
 
 import java.util.Objects;
+import java.util.concurrent.Callable;
 
 final class ClientAssertion implements IClientAssertion {
 
     static final String ASSERTION_TYPE_JWT_BEARER = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
     private final String assertion;
+    private final Callable<String> assertionProvider;
 
+    /**
+     * Constructor that accepts a static assertion string
+     *
+     * @param assertion The JWT assertion string to use
+     * @throws NullPointerException if assertion is null or empty
+     */
     ClientAssertion(final String assertion) {
         if (StringHelper.isBlank(assertion)) {
             throw new NullPointerException("assertion");
         }
 
         this.assertion = assertion;
+        this.assertionProvider = null;
     }
 
+    /**
+     * Constructor that accepts a callable that provides the assertion string
+     *
+     * @param assertionProvider A callable that returns a JWT assertion string
+     * @throws NullPointerException if assertionProvider is null
+     */
+    ClientAssertion(final Callable<String> assertionProvider) {
+        if (assertionProvider == null) {
+            throw new NullPointerException("assertionProvider");
+        }
+
+        this.assertion = null;
+        this.assertionProvider = assertionProvider;
+    }
+
+    /**
+     * Gets the JWT assertion for client authentication.
+     * If this ClientAssertion was created with a Callable, the callable will be
+     * invoked each time this method is called to generate a fresh assertion.
+     *
+     * @return A JWT assertion string
+     * @throws MsalClientException if the assertion provider returns null/empty or throws an exception
+     */
     public String assertion() {
+        if (assertionProvider != null) {
+            try {
+                String generatedAssertion = assertionProvider.call();
+                if (StringHelper.isBlank(generatedAssertion)) {
+                    throw new MsalClientException("Assertion provider returned null or empty assertion",
+                            AuthenticationErrorCode.INVALID_JWT);
+                }
+                return generatedAssertion;
+            } catch (Exception ex) {
+                throw new MsalClientException(ex);
+            }
+        }
+
         return this.assertion;
     }
 
@@ -30,11 +75,24 @@ final class ClientAssertion implements IClientAssertion {
         if (!(o instanceof ClientAssertion)) return false;
 
         ClientAssertion other = (ClientAssertion) o;
+
+        // For assertion providers, we consider them equal if they're the same object
+        if (this.assertionProvider != null && other.assertionProvider != null) {
+            return this.assertionProvider == other.assertionProvider;
+        }
+
+        // For static assertions, compare the assertion strings
         return Objects.equals(assertion(), other.assertion());
     }
 
     @Override
     public int hashCode() {
+        // For assertion providers, use the provider's identity hash code
+        if (assertionProvider != null) {
+            return System.identityHashCode(assertionProvider);
+        }
+
+        // For static assertions, hash the assertion string
         int result = 1;
         result = result * 59 + (this.assertion == null ? 43 : this.assertion.hashCode());
         return result;
