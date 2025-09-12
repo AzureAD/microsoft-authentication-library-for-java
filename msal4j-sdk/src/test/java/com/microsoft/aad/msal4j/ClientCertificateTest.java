@@ -243,6 +243,46 @@ class ClientCertificateTest {
             "Access tokens should differ when using different tenants");
     }
 
+    @Test
+    void testClientCertificate_TenantOverride_B2C() throws Exception {
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+        String replacementTenant = "overrideTenant";
+
+        ConfidentialClientApplication cca =
+                ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromCertificate(TestHelper.getPrivateKey(), TestHelper.getX509Cert()))
+                        .b2cAuthority(TestConfiguration.B2C_AUTHORITY)
+                        .instanceDiscovery(false)
+                        .validateAuthority(false)
+                        .httpClient(httpClientMock)
+                        .build();
+
+        when(httpClientMock.send(any(HttpRequest.class))).thenAnswer(parameters -> {
+            HttpRequest request = parameters.getArgument(0);
+            String requestBody = request.body();
+            String url = request.url().toString();
+
+            // Extract the assertion to verify its audience claim
+            String clientAssertion = extractClientAssertion(requestBody);
+
+            if (clientAssertion != null && url.contains(replacementTenant)) {
+                    HashMap<String, String> tokenResponseValues = new HashMap<>();
+                    tokenResponseValues.put("access_token", "access_token_for_" + replacementTenant);
+                    return TestHelper.expectedResponse(200, TestHelper.getSuccessfulTokenResponse(tokenResponseValues));
+            }
+
+            return null;
+        });
+
+        ClientCredentialParameters overrideParameters = ClientCredentialParameters.builder(Collections.singleton("scopes"))
+                .skipCache(true)
+                .tenant(replacementTenant)
+                .build();
+        IAuthenticationResult result = cca.acquireToken(overrideParameters).get();
+
+        assertNotNull(result);
+        assertEquals("access_token_for_"+ replacementTenant, result.accessToken());
+    }
+
     /**
      * Extracts the tenant name from an authority URL
      * @param url The full URL containing the tenant
