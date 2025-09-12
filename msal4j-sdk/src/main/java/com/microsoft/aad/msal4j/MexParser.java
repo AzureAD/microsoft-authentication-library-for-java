@@ -23,7 +23,7 @@ import org.w3c.dom.NodeList;
 
 class MexParser {
 
-    private final static Logger log = LoggerFactory.getLogger(MexParser.class);
+    private static final Logger log = LoggerFactory.getLogger(MexParser.class);
 
     private static final String TRANSPORT_BINDING_XPATH = "wsp:ExactlyOne/wsp:All/sp:TransportBinding";
     private static final String TRANSPORT_BINDING_2005_XPATH = "wsp:ExactlyOne/wsp:All/sp2005:TransportBinding";

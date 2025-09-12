@@ -7,11 +7,11 @@ import java.net.URL;
 
 class B2CAuthority extends Authority {
 
-    private final static String AUTHORIZATION_ENDPOINT = "/oauth2/v2.0/authorize";
-    private final static String TOKEN_ENDPOINT = "/oauth2/v2.0/token";
+    private static final String AUTHORIZATION_ENDPOINT = "/oauth2/v2.0/authorize";
+    private static final String TOKEN_ENDPOINT = "/oauth2/v2.0/token";
 
-    private final static String B2C_AUTHORIZATION_ENDPOINT_FORMAT = "https://%s/%s/%s" + AUTHORIZATION_ENDPOINT;
-    private final static String B2C_TOKEN_ENDPOINT_FORMAT = "https://%s/%s" + TOKEN_ENDPOINT + "?p=%s";
+    private static final String B2C_AUTHORIZATION_ENDPOINT_FORMAT = "https://%s/%s/%s" + AUTHORIZATION_ENDPOINT;
+    private static final String B2C_TOKEN_ENDPOINT_FORMAT = "https://%s/%s" + TOKEN_ENDPOINT + "?p=%s";
     private String policy;
 
     B2CAuthority(final URL authorityUrl) {

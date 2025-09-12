@@ -23,7 +23,7 @@ import java.util.function.Consumer;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DeviceCodeIT {
-    private final static Logger LOG = LoggerFactory.getLogger(DeviceCodeIT.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DeviceCodeIT.class);
 
     private LabUserProvider labUserProvider;
     private WebDriver seleniumDriver;

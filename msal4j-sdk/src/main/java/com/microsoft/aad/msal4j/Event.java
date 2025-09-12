@@ -14,11 +14,11 @@ import java.util.Map;
 
 abstract class Event extends HashMap<String, String> {
 
-    final static String EVENT_NAME_KEY = "event_name";
-    final static String START_TIME_KEY = "start_time";
-    final static String ELAPSED_TIME_KEY = "elapsed_time";
-    private final static String TENANT_PLACEHOLDER = "<tenant>";
-    private final static String USERNAME_PLACEHOLDER = "<user>";
+    static final String EVENT_NAME_KEY = "event_name";
+    static final String START_TIME_KEY = "start_time";
+    static final String ELAPSED_TIME_KEY = "elapsed_time";
+    private static final String TENANT_PLACEHOLDER = "<tenant>";
+    private static final String USERNAME_PLACEHOLDER = "<user>";
 
     private long startTimeStamp;
 

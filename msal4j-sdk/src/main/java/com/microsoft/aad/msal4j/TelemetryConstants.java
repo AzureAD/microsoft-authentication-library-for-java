@@ -4,9 +4,9 @@
 package com.microsoft.aad.msal4j;
 
 class TelemetryConstants {
-    final static String EVENT_NAME_PREFIX = "msal.";
-    final static String DEFAULT_EVENT_NAME_KEY = EVENT_NAME_PREFIX + "default_event";
-    final static String API_EVENT_NAME_KEY = EVENT_NAME_PREFIX + "api_event";
-    final static String HTTP_EVENT_NAME_KEY = EVENT_NAME_PREFIX + "http_event";
-    final static String CACHE_EVENT_NAME_KEY = EVENT_NAME_PREFIX + "cache_event";
+    static final String EVENT_NAME_PREFIX = "msal.";
+    static final String DEFAULT_EVENT_NAME_KEY = EVENT_NAME_PREFIX + "default_event";
+    static final String API_EVENT_NAME_KEY = EVENT_NAME_PREFIX + "api_event";
+    static final String HTTP_EVENT_NAME_KEY = EVENT_NAME_PREFIX + "http_event";
+    static final String CACHE_EVENT_NAME_KEY = EVENT_NAME_PREFIX + "cache_event";
 }
