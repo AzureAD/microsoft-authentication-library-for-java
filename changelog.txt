@@ -1,3 +1,10 @@
+Version 1.23.1
+=============
+- Fix regression and other issues related to client credentials (#986)
+  - Fix for regression after latest release where certificate-based assertions were never refreshed (#984)
+  - Fix/improve behavior to properly handle callback-based assertions set at the application level (#879, #977)
+  - Generally improve internal assertion behavior by making assertions entirely per-request
+
 Version 1.23.0
 =============
 - Reduced dependency footprint by removing third-party libraries (#909):
