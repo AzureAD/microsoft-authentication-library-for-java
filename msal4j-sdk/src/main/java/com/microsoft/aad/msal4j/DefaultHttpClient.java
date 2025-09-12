@@ -21,7 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 class DefaultHttpClient implements IHttpClient {
-    private static final  Logger LOG = LoggerFactory.getLogger(DefaultHttpClient.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultHttpClient.class);
 
     final Proxy proxy;
     final SSLSocketFactory sslSocketFactory;

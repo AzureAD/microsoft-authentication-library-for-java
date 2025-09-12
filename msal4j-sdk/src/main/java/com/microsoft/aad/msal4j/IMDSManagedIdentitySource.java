@@ -43,7 +43,7 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
         }
 
         if (!StringHelper.isNullOrBlank(environmentVariables.getEnvironmentVariable(Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST))){
-            LOG.info(String.format("[Managed Identity] Environment variable AZURE_POD_IDENTITY_AUTHORITY_HOST for IMDS returned endpoint: %s", environmentVariables.getEnvironmentVariable(Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST)));
+            LOG.info("[Managed Identity] Environment variable AZURE_POD_IDENTITY_AUTHORITY_HOST for IMDS returned endpoint: {}", environmentVariables.getEnvironmentVariable(Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST));
             try {
                 imdsEndpoint = new URI(environmentVariables.getEnvironmentVariable(Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST));
             } catch (URISyntaxException e) {
@@ -68,7 +68,7 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
             imdsEndpoint = DEFAULT_IMDS_ENDPOINT;
         }
 
-        LOG.info(String.format("[Managed Identity] Creating IMDS managed identity source. Endpoint URI: %s", imdsEndpoint));
+        LOG.info("[Managed Identity] Creating IMDS managed identity source. Endpoint URI: {}", imdsEndpoint);
     }
 
     @Override
@@ -114,7 +114,7 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
 
             message = message + " " + errorContentMessage;
 
-            LOG.error(String.format("Error message: %s Http status code: %s", message, response.statusCode()));
+            LOG.error("Error message: {} Http status code: {}", message, response.statusCode());
             throw new MsalServiceException(message, MsalError.MANAGED_IDENTITY_REQUEST_FAILED,
                     ManagedIdentitySourceType.IMDS);
         }

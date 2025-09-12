@@ -109,7 +109,7 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
         try {
             URI updatedRedirectUrl = new URI("http://localhost:" + httpListener.port());
             interactiveRequest.interactiveRequestParameters().redirectUri(updatedRedirectUrl);
-            LOG.debug("Redirect URI updated to" + updatedRedirectUrl);
+            LOG.debug("Redirect URI updated to {}", updatedRedirectUrl);
         } catch (URISyntaxException ex) {
             throw new MsalClientException("Error updating redirect URI. Not a valid URI format",
                     AuthenticationErrorCode.INVALID_REDIRECT_URI);
@@ -204,7 +204,7 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
             long expirationTime;
 
             if (timeFromParameters > 0) {
-                LOG.debug(String.format("Listening for authorization result. Listener will timeout after %S seconds.", timeFromParameters));
+                LOG.debug("Listening for authorization result. Listener will timeout after {} seconds.", timeFromParameters);
                 expirationTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) + timeFromParameters;
             } else {
                 LOG.warn("Listening for authorization result. Timeout configured to less than 1 second, listener will use a 1 second timeout instead.");
@@ -213,7 +213,7 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
 
             while (result == null && !interactiveRequest.futureReference().get().isDone()) {
                 if (TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) > expirationTime) {
-                    LOG.warn(String.format("Listener timed out after %S seconds, no authorization code was returned from the server during that time.", timeFromParameters));
+                    LOG.warn("Listener timed out after {} seconds, no authorization code was returned from the server during that time.", timeFromParameters);
                     break;
                 }
 

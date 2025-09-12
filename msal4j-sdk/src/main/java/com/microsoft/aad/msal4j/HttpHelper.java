@@ -16,7 +16,7 @@ import static com.microsoft.aad.msal4j.Constants.POINT_DELIMITER;
 
 class HttpHelper implements IHttpHelper {
 
-    private static final Logger log = LoggerFactory.getLogger(HttpHelper.class);
+    private static final Logger LOG = LoggerFactory.getLogger(HttpHelper.class);
     public static final String RETRY_AFTER_HEADER = "Retry-After";
 
     private IHttpClient httpClient;
@@ -210,7 +210,7 @@ class HttpHelper implements IHttpHelper {
                         return headerValue;
                     }
                 } catch (NumberFormatException ex) {
-                    log.warn("Failed to parse value of Retry-After header - NumberFormatException");
+                    LOG.warn("Failed to parse value of Retry-After header - NumberFormatException");
                 }
             }
         }
@@ -228,7 +228,7 @@ class HttpHelper implements IHttpHelper {
             String correlationId = httpRequest.headerValue(
                     HttpHeaders.CORRELATION_ID_HEADER_NAME);
 
-            log.warn(LogHelper.createMessage("Setting URL telemetry fields failed: " +
+            LOG.warn(LogHelper.createMessage("Setting URL telemetry fields failed: " +
                             LogHelper.getPiiScrubbedDetails(ex),
                     correlationId != null ? correlationId : ""));
         }
@@ -281,7 +281,7 @@ class HttpHelper implements IHttpHelper {
                             returnedCorrelationId),
                     sentCorrelationId);
 
-            log.info(msg);
+            LOG.info(msg);
         }
     }
 

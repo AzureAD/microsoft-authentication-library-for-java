@@ -52,7 +52,7 @@ class AuthorizationResponseHandler implements HttpHandler {
             authorizationResultQueue.put(result);
 
         } catch (InterruptedException ex) {
-            LOG.error("Error reading response from socket: " + ex.getMessage());
+            LOG.error("Error reading response from socket: {}", ex.getMessage());
             throw new MsalClientException(ex);
         } finally {
             httpExchange.close();

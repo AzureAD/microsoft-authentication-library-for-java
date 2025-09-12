@@ -37,7 +37,7 @@ public class AuthorizationRequestUrlParameters {
 
     Map<String, String> requestParameters = new HashMap<>();
 
-    Logger log = LoggerFactory.getLogger(AuthorizationRequestUrlParameters.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AuthorizationRequestUrlParameters.class);
 
     public static Builder builder(String redirectUri,
                                   Set<String> scopes) {
@@ -157,7 +157,7 @@ public class AuthorizationRequestUrlParameters {
                 String key = entry.getKey();
                 String value = entry.getValue();
                 if(requestParameters.containsKey(key)){
-                    log.warn("A query parameter {} has been provided with values multiple times.", key);
+                    LOG.warn("A query parameter {} has been provided with values multiple times.", key);
                 }
                 requestParameters.put(key, value);
             }
@@ -243,7 +243,7 @@ public class AuthorizationRequestUrlParameters {
     }
 
     public Logger log() {
-        return this.log;
+        return LOG;
     }
 
     public static class Builder {

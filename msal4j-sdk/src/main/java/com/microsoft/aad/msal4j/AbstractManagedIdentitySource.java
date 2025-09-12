@@ -74,9 +74,8 @@ abstract class AbstractManagedIdentitySource {
                 return getSuccessfulResponse(response);
             } else {
                 message = getMessageFromErrorResponse(response);
-                LOG.error(
-                        String.format("[Managed Identity] request failed, HttpStatusCode: %s, Error message: %s",
-                                response.statusCode(), message));
+                LOG.error("[Managed Identity] request failed, HttpStatusCode: {}, Error message: {}",
+                        response.statusCode(), message);
                 throw new MsalServiceException(message, AuthenticationErrorCode.MANAGED_IDENTITY_REQUEST_FAILED, managedIdentitySourceType);
             }
         } catch (Exception e) {
