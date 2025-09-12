@@ -93,7 +93,7 @@ class AadInstanceDiscoveryProvider {
                 if (((AbstractClientApplicationBase) msalRequest.application()).azureRegion() == null
                         && ((AbstractClientApplicationBase) msalRequest.application()).autoDetectRegion()
                         && detectedRegion != null) {
-                    log.debug(String.format("Region autodetection found %s, this region will be used for future calls.", detectedRegion));
+                    log.debug("Region autodetection found {}, this region will be used for future calls.", detectedRegion);
 
                     ((AbstractClientApplicationBase) msalRequest.application()).azureRegion = detectedRegion;
                     host = getRegionalizedHost(authorityUrl.getHost(), ((AbstractClientApplicationBase) msalRequest.application()).azureRegion());
@@ -293,7 +293,7 @@ class AadInstanceDiscoveryProvider {
 
         //Check if the REGION_NAME environment variable has a value for the region
         if (System.getenv(REGION_NAME) != null) {
-            log.info(String.format("Region found in environment variable: %s",System.getenv(REGION_NAME)));
+            log.info("Region found in environment variable: {}", System.getenv(REGION_NAME));
             currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_ENV_VARIABLE.telemetryValue);
 
             return System.getenv(REGION_NAME);
@@ -311,19 +311,19 @@ class AadInstanceDiscoveryProvider {
             IHttpResponse httpResponse = future.get(IMDS_TIMEOUT, IMDS_TIMEOUT_UNIT);
             //If call to IMDS endpoint was successful, return region from response body
             if (httpResponse.statusCode() == HttpStatus.HTTP_OK && !httpResponse.body().isEmpty()) {
-                log.info(String.format("Region retrieved from IMDS endpoint: %s", httpResponse.body()));
+                log.info("Region retrieved from IMDS endpoint: {}", httpResponse.body());
                 currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_IMDS.telemetryValue);
 
                 return httpResponse.body();
             }
-            log.warn(String.format("Call to local IMDS failed with status code: %s, or response was empty", httpResponse.statusCode()));
+            log.warn("Call to local IMDS failed with status code: {}, or response was empty", httpResponse.statusCode());
             currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_FAILED_AUTODETECT.telemetryValue);
         } catch (Exception ex) {
             // handle other exceptions
             //IMDS call failed, cannot find region
             //The IMDS endpoint is only available from within an Azure environment, so the most common cause of this
             //  exception will likely be java.net.SocketException: Network is unreachable: connect
-            log.warn(String.format("Exception during call to local IMDS endpoint: %s", ex.getMessage()));
+            log.warn("Exception during call to local IMDS endpoint: {}", ex.getMessage());
             currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_FAILED_AUTODETECT.telemetryValue);
             future.cancel(true);
 
