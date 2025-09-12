@@ -54,11 +54,16 @@ final class ClientAssertion implements IClientAssertion {
         if (assertionProvider != null) {
             try {
                 String generatedAssertion = assertionProvider.call();
+
                 if (StringHelper.isBlank(generatedAssertion)) {
-                    throw new MsalClientException("Assertion provider returned null or empty assertion",
-                            AuthenticationErrorCode.INVALID_JWT);
+                    throw new MsalClientException(
+                        "Assertion provider returned null or empty assertion",
+                        AuthenticationErrorCode.INVALID_JWT);
                 }
+
                 return generatedAssertion;
+            } catch (MsalClientException ex) {
+                throw ex;
             } catch (Exception ex) {
                 throw new MsalClientException(ex);
             }
