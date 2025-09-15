@@ -4,9 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import javax.net.ssl.SSLSocketFactory;
-import java.net.MalformedURLException;
 import java.net.Proxy;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Base interface representing a client application that can acquire tokens from the Microsoft identity platform.

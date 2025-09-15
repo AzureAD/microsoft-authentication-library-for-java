@@ -73,7 +73,7 @@ public class ClientCredentialFactory {
      * @return {@link ClientCertificate}
      */
     public static IClientCertificate createFromCertificateChain(PrivateKey key, List<X509Certificate> publicKeyCertificateChain) {
-        if (key == null || publicKeyCertificateChain == null || publicKeyCertificateChain.size() == 0) {
+        if (key == null || publicKeyCertificateChain == null || publicKeyCertificateChain.isEmpty()) {
             throw new IllegalArgumentException("null or empty input parameter");
         }
         return new ClientCertificate(key, publicKeyCertificateChain);

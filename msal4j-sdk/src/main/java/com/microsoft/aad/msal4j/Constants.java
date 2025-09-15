@@ -36,4 +36,5 @@ final class Constants {
         add(ManagedIdentitySourceType.SERVICE_FABRIC);
     }};
 
+    static final String REFRESH_REASON_LOG_MESSAGE = "Refreshing access token. Cache refresh reason: %s";
 }

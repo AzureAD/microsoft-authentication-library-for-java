@@ -3,7 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import java.net.URL;
 import java.util.Set;
 import java.util.concurrent.CompletionException;
 import java.util.function.Supplier;

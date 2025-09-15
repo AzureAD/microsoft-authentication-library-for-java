@@ -3,9 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import javax.net.ssl.SSLSocketFactory;
 import java.net.MalformedURLException;
-import java.net.Proxy;
 import java.net.URL;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;

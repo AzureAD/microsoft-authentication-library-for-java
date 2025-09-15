@@ -87,7 +87,7 @@ class TelemetryManager implements ITelemetryManager, ITelemetry {
 
         List<Event> eventsToFlush = completedEvents.remove(requestId);
         Map<String, Integer> eventCountToFlush = eventCount.remove(requestId);
-        eventCountToFlush = !(eventCountToFlush == null) ?
+        eventCountToFlush = eventCountToFlush != null ?
                 eventCountToFlush :
                 new ConcurrentHashMap<>();
 
@@ -96,7 +96,7 @@ class TelemetryManager implements ITelemetryManager, ITelemetry {
         if (onlySendFailureTelemetry && eventsToFlush.stream().anyMatch(isSuccessfulPredicate)) {
             eventsToFlush.clear();
         }
-        if (eventsToFlush.size() <= 0) {
+        if (eventsToFlush.isEmpty()) {
             return;
         }
         eventsToFlush.add(0, new DefaultEvent(clientId, eventCountToFlush));

@@ -38,8 +38,6 @@ class AadInstanceDiscoveryProvider {
 
     private static final Logger log = LoggerFactory.getLogger(AadInstanceDiscoveryProvider.class);
 
-    //flag to check if instance discovery has failed
-    private static boolean instanceDiscoveryFailed = false;
     static ConcurrentHashMap<String, InstanceDiscoveryMetadataEntry> cache = new ConcurrentHashMap<>();
 
     static {
@@ -50,8 +48,8 @@ class AadInstanceDiscoveryProvider {
                 "login.microsoftonline.us"));
 
         TRUSTED_HOSTS_SET.addAll(Arrays.asList(
+                DEFAULT_TRUSTED_HOST,
                 "login.windows.net",
-                "login.microsoftonline.com",
                 "login.microsoft.com",
                 "sts.windows.net"));
 
