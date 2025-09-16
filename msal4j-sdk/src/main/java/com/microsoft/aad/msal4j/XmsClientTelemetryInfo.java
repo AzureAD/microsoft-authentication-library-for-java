@@ -8,11 +8,11 @@ import java.util.regex.Pattern;
 
 class XmsClientTelemetryInfo {
 
-    private final static String EXPECTED_HEADER_VERSION = "1";
-    private final static int ERROR_CODE_INDEX = 1;
-    private final static int SUB_ERROR_CODE_INDEX = 2;
-    private final static int TOKEN_AGE_INDEX = 3;
-    private final static int SPE_INFO_INDEX = 4;
+    private static final String EXPECTED_HEADER_VERSION = "1";
+    private static final int ERROR_CODE_INDEX = 1;
+    private static final int SUB_ERROR_CODE_INDEX = 2;
+    private static final int TOKEN_AGE_INDEX = 3;
+    private static final int SPE_INFO_INDEX = 4;
 
     private String serverErrorCode;
     private String serverSubErrorCode;

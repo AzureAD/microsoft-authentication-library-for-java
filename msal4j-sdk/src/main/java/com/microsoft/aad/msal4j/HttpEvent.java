@@ -10,18 +10,18 @@ import java.util.Locale;
 import static com.microsoft.aad.msal4j.TelemetryConstants.EVENT_NAME_PREFIX;
 
 class HttpEvent extends Event {
-    private final static String HTTP_PATH_KEY = EVENT_NAME_PREFIX + "http_path";
-    private final static String USER_AGENT_KEY = EVENT_NAME_PREFIX + "user_agent";
-    private final static String QUERY_PARAMETERS_KEY = EVENT_NAME_PREFIX + "query_parameters";
-    private final static String API_VERSION_KEY = EVENT_NAME_PREFIX + "api_version";
-    private final static String RESPONSE_CODE_KEY = EVENT_NAME_PREFIX + "response_code";
-    private final static String OAUTH_ERROR_CODE_KEY = EVENT_NAME_PREFIX + "oauth_error_code";
-    private final static String HTTP_METHOD_KEY = EVENT_NAME_PREFIX + "http_method";
-    private final static String REQUEST_ID_HEADER_KEY = EVENT_NAME_PREFIX + "request_id_header";
-    private final static String TOKEN_AGEN_KEY = EVENT_NAME_PREFIX + "token_age";
-    private final static String SPE_INFO_KEY = EVENT_NAME_PREFIX + "spe_info";
-    private final static String SERVER_ERROR_CODE_KEY = EVENT_NAME_PREFIX + "server_error_code";
-    private final static String SERVER_SUB_ERROR_CODE_KEY = EVENT_NAME_PREFIX + "server_sub_error_code";
+    private static final String HTTP_PATH_KEY = EVENT_NAME_PREFIX + "http_path";
+    private static final String USER_AGENT_KEY = EVENT_NAME_PREFIX + "user_agent";
+    private static final String QUERY_PARAMETERS_KEY = EVENT_NAME_PREFIX + "query_parameters";
+    private static final String API_VERSION_KEY = EVENT_NAME_PREFIX + "api_version";
+    private static final String RESPONSE_CODE_KEY = EVENT_NAME_PREFIX + "response_code";
+    private static final String OAUTH_ERROR_CODE_KEY = EVENT_NAME_PREFIX + "oauth_error_code";
+    private static final String HTTP_METHOD_KEY = EVENT_NAME_PREFIX + "http_method";
+    private static final String REQUEST_ID_HEADER_KEY = EVENT_NAME_PREFIX + "request_id_header";
+    private static final String TOKEN_AGEN_KEY = EVENT_NAME_PREFIX + "token_age";
+    private static final String SPE_INFO_KEY = EVENT_NAME_PREFIX + "spe_info";
+    private static final String SERVER_ERROR_CODE_KEY = EVENT_NAME_PREFIX + "server_error_code";
+    private static final String SERVER_SUB_ERROR_CODE_KEY = EVENT_NAME_PREFIX + "server_sub_error_code";
 
     HttpEvent() {
         super(TelemetryConstants.HTTP_EVENT_NAME_KEY);

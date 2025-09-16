@@ -15,8 +15,8 @@ abstract class Authority {
     private static final String B2C_PATH_SEGMENT = "tfp";
     private static final String B2C_HOST_SEGMENT = "b2clogin.com";
 
-    private final static String USER_REALM_ENDPOINT = "common/userrealm";
-    private final static String userRealmEndpointFormat = "https://%s/" + USER_REALM_ENDPOINT + "/%s?api-version=1.0";
+    private static final String USER_REALM_ENDPOINT = "common/userrealm";
+    private static final String userRealmEndpointFormat = "https://%s/" + USER_REALM_ENDPOINT + "/%s?api-version=1.0";
 
     String authority;
     final URL canonicalAuthorityUrl;
@@ -129,6 +129,21 @@ abstract class Authority {
                         IllegalArgumentExceptionMessages.AUTHORITY_URI_EMPTY_PATH_SEGMENT);
             }
         }
+    }
+
+    /**
+     * Creates a new Authority instance with a different tenant.
+     * This is useful when overriding the tenant at request level.
+     *
+     * @param originalAuthority The original authority to base the new one on
+     * @param newTenant The new tenant to use in the authority URL
+     * @return A new Authority instance with the specified tenant
+     */
+    static Authority replaceTenant(Authority originalAuthority, String newTenant) throws MalformedURLException {
+        String authorityString = originalAuthority.canonicalAuthorityUrl().toString();
+        authorityString = authorityString.replace(originalAuthority.tenant, newTenant);
+
+        return createAuthority(new URL(authorityString));
     }
 
     static String getTenant(URL authorityUrl, AuthorityType authorityType) {

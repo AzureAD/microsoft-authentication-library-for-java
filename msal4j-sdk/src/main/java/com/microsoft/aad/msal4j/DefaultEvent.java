@@ -7,11 +7,11 @@ import java.util.Map;
 
 class DefaultEvent extends Event {
 
-    private final static String CLIENT_ID_KEY = TelemetryConstants.EVENT_NAME_PREFIX + "client_id";
-    private final static String SDK_PLATFORM_KEY = TelemetryConstants.EVENT_NAME_PREFIX + "sdk_platform";
-    private final static String SDK_VERSION_KEY = TelemetryConstants.EVENT_NAME_PREFIX + "sdk_version";
-    private final static String HTTP_EVENT_COUNT_KEY = TelemetryConstants.EVENT_NAME_PREFIX + "http_event_count";
-    private final static String CACHE_EVENT_COUNT_KEY = TelemetryConstants.EVENT_NAME_PREFIX + "cache_event_count";
+    private static final String CLIENT_ID_KEY = TelemetryConstants.EVENT_NAME_PREFIX + "client_id";
+    private static final String SDK_PLATFORM_KEY = TelemetryConstants.EVENT_NAME_PREFIX + "sdk_platform";
+    private static final String SDK_VERSION_KEY = TelemetryConstants.EVENT_NAME_PREFIX + "sdk_version";
+    private static final String HTTP_EVENT_COUNT_KEY = TelemetryConstants.EVENT_NAME_PREFIX + "http_event_count";
+    private static final String CACHE_EVENT_COUNT_KEY = TelemetryConstants.EVENT_NAME_PREFIX + "cache_event_count";
     private Map<String, Integer> eventCount;
 
     public DefaultEvent(String clientId, Map<String, Integer> eventCount) {

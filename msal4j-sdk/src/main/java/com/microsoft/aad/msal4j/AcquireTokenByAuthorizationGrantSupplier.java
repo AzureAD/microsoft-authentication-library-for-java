@@ -52,9 +52,7 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
             requestAuthority = clientApplication.authenticationAuthority;
         }
 
-        if (requestAuthority.authorityType == AuthorityType.AAD) {
-            requestAuthority = getAuthorityWithPrefNetworkHost(requestAuthority.authority());
-        }
+        requestAuthority = getAuthorityWithPrefNetworkHost(requestAuthority.authority());
 
         try {
             return clientApplication.acquireTokenCommon(msalRequest, requestAuthority);

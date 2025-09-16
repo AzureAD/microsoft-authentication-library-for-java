@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 class AcquireTokenByOnBehalfOfSupplier extends AuthenticationResultSupplier {
 
-    private final static Logger LOG = LoggerFactory.getLogger(AcquireTokenByOnBehalfOfSupplier.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AcquireTokenByOnBehalfOfSupplier.class);
     private OnBehalfOfRequest onBehalfOfRequest;
 
     AcquireTokenByOnBehalfOfSupplier(ConfidentialClientApplication clientApplication,

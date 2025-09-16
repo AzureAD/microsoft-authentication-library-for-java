@@ -24,11 +24,7 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
     @Override
     AuthenticationResult execute() throws Exception {
         boolean shouldRefresh;
-        Authority requestAuthority = silentRequest.requestAuthority();
-        if (requestAuthority.authorityType != AuthorityType.B2C) {
-            requestAuthority =
-                    getAuthorityWithPrefNetworkHost(silentRequest.requestAuthority().authority());
-        }
+        Authority requestAuthority = getAuthorityWithPrefNetworkHost(silentRequest.requestAuthority().authority());
 
         AuthenticationResult res;
         if (silentRequest.parameters().account() == null) {

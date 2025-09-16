@@ -18,13 +18,13 @@ import java.util.stream.Collectors;
 
 class AuthorizationResponseHandler implements HttpHandler {
 
-    private final static Logger LOG = LoggerFactory.getLogger(AuthorizationResponseHandler.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AuthorizationResponseHandler.class);
 
-    private final static String DEFAULT_SUCCESS_MESSAGE = "<html><head><title>Authentication Complete</title></head>" +
+    private static final String DEFAULT_SUCCESS_MESSAGE = "<html><head><title>Authentication Complete</title></head>" +
             "  <body> Authentication complete. You can close the browser and return to the application." +
             "  </body></html>";
 
-    private final static String DEFAULT_FAILURE_MESSAGE = "<html><head><title>Authentication Failed</title></head> " +
+    private static final String DEFAULT_FAILURE_MESSAGE = "<html><head><title>Authentication Failed</title></head> " +
             "<body> Authentication failed. You can return to the application. Feel free to close this browser tab. " +
             "</br></br></br></br> Error details: error {0} error_description: {1} </body> </html>";
 

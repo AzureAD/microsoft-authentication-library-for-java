@@ -13,7 +13,7 @@ import java.net.InetSocketAddress;
 
 class HttpListener {
 
-    private final static Logger LOG = LoggerFactory.getLogger(HttpListener.class);
+    private static final Logger LOG = LoggerFactory.getLogger(HttpListener.class);
 
     private HttpServer server;
 

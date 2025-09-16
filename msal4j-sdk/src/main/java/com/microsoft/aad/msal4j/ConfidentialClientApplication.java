@@ -19,16 +19,13 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
  */
 public class ConfidentialClientApplication extends AbstractClientApplicationBase implements IConfidentialClientApplication {
 
-    private ClientCertificate clientCertificate;
-    String assertion;
-    String secret;
+    IClientCredential clientCredential;
+    private boolean sendX5c;
 
     /** AppTokenProvider creates a Credential from a function that provides access tokens. The function
      must be concurrency safe. This is intended only to allow the Azure SDK to cache MSI tokens. It isn't
      useful to applications in general because the token provider must implement all authentication logic. */
     public Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> appTokenProvider;
-
-    private boolean sendX5c;
 
     @Override
     public CompletableFuture<IAuthenticationResult> acquireToken(ClientCredentialParameters parameters) {
@@ -73,41 +70,9 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
 
         log = LoggerFactory.getLogger(ConfidentialClientApplication.class);
 
-        initClientAuthentication(builder.clientCredential);
+        this.clientCredential = builder.clientCredential;
 
         this.tenant = this.authenticationAuthority.tenant;
-    }
-
-    private void initClientAuthentication(IClientCredential clientCredential) {
-        validateNotNull("clientCredential", clientCredential);
-
-        if (clientCredential instanceof ClientSecret) {
-            this.secret = ((ClientSecret) clientCredential).clientSecret();
-        } else if (clientCredential instanceof ClientCertificate) {
-            this.clientCertificate = (ClientCertificate) clientCredential;
-            this.assertion = getAssertionString(clientCredential);
-        } else if (clientCredential instanceof ClientAssertion) {
-            this.assertion = getAssertionString(clientCredential);
-        } else {
-            throw new IllegalArgumentException("Unsupported client credential");
-        }
-    }
-
-    String getAssertionString(IClientCredential clientCredential) {
-        if (clientCredential instanceof ClientCertificate) {
-            boolean useSha1 = Authority.detectAuthorityType(this.authenticationAuthority.canonicalAuthorityUrl()) == AuthorityType.ADFS;
-
-            return JwtHelper.buildJwt(
-                    clientId(),
-                    clientCertificate,
-                    this.authenticationAuthority.selfSignedJwtAudience(),
-                    sendX5c,
-                    useSha1).assertion();
-        } else if (clientCredential instanceof ClientAssertion) {
-            return ((ClientAssertion) clientCredential).assertion();
-        } else {
-            throw new IllegalArgumentException("Unsupported client credential");
-        }
     }
 
     /**
@@ -137,6 +102,9 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
 
         private Builder(String clientId, IClientCredential clientCredential) {
             super(clientId);
+
+            validateNotNull("clientCredential", clientCredential);
+
             this.clientCredential = clientCredential;
         }
 

@@ -8,5 +8,5 @@ public class AuthenticationErrorMessage {
     /**
      * Token not found in the cache
      */
-    public final static String NO_TOKEN_IN_CACHE = "Token not found in the cache";
+    public static final String NO_TOKEN_IN_CACHE = "Token not found in the cache";
 }
