@@ -122,7 +122,7 @@ class TokenRequestExecutor {
                 try {
                     authorityToUse = Authority.replaceTenant(authorityToUse, parameters.tenant());
                 } catch (MalformedURLException e) {
-                    log.warn("Could not create authority with tenant override: {}", e.getMessage());
+                    LOG.warn("Could not create authority with tenant override: {}", e.getMessage());
                 }
             }
         }
