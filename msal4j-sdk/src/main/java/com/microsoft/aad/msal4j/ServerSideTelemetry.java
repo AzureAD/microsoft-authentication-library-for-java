@@ -14,15 +14,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 class ServerSideTelemetry {
 
-    private final static Logger log = LoggerFactory.getLogger(ServerSideTelemetry.class);
+    private static final Logger log = LoggerFactory.getLogger(ServerSideTelemetry.class);
 
-    private final static String SCHEMA_VERSION = "5";
-    private final static String SCHEMA_PIPE_DELIMITER = "|";
-    private final static String SCHEMA_COMMA_DELIMITER = ",";
-    private final static String CURRENT_REQUEST_HEADER_NAME = "x-client-current-telemetry";
-    private final static String LAST_REQUEST_HEADER_NAME = "x-client-last-telemetry";
-    private final static int CURRENT_REQUEST_MAX_SIZE = 100;
-    private final static int LAST_REQUEST_MAX_SIZE = 350;
+    private static final String SCHEMA_VERSION = "5";
+    private static final String SCHEMA_PIPE_DELIMITER = "|";
+    private static final String SCHEMA_COMMA_DELIMITER = ",";
+    private static final String CURRENT_REQUEST_HEADER_NAME = "x-client-current-telemetry";
+    private static final String LAST_REQUEST_HEADER_NAME = "x-client-last-telemetry";
+    private static final int CURRENT_REQUEST_MAX_SIZE = 100;
+    private static final int LAST_REQUEST_MAX_SIZE = 350;
 
     private CurrentRequest currentRequest;
     private AtomicInteger silentSuccessfulCount = new AtomicInteger(0);

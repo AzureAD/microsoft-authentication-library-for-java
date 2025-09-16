@@ -15,8 +15,8 @@ abstract class Authority {
     private static final String B2C_PATH_SEGMENT = "tfp";
     private static final String B2C_HOST_SEGMENT = "b2clogin.com";
 
-    private final static String USER_REALM_ENDPOINT = "common/userrealm";
-    private final static String userRealmEndpointFormat = "https://%s/" + USER_REALM_ENDPOINT + "/%s?api-version=1.0";
+    private static final String USER_REALM_ENDPOINT = "common/userrealm";
+    private static final String userRealmEndpointFormat = "https://%s/" + USER_REALM_ENDPOINT + "/%s?api-version=1.0";
 
     String authority;
     final URL canonicalAuthorityUrl;

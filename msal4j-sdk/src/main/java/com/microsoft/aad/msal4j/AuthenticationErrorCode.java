@@ -12,91 +12,91 @@ public class AuthenticationErrorCode {
      * In the context of device code user has not yet authenticated via browser. For more details,
      * see https://aka.ms/msal4j-device-code
      */
-    public final static String AUTHORIZATION_PENDING = "authorization_pending";
+    public static final String AUTHORIZATION_PENDING = "authorization_pending";
 
     /**
      * In the context of device code, this error happens when the device code has expired before
      * the user signed-in on another device (this is usually after 15 min). For more details, see
      * https://aka.ms/msal4j-device-code
      */
-    public final static String CODE_EXPIRED = "code_expired";
+    public static final String CODE_EXPIRED = "code_expired";
 
     /**
      * Standard Oauth2 protocol error code. It indicates that the application needs to expose
      * the UI to the user so that user does an interactive action in order to get a new token.
      */
-    public final static String INVALID_GRANT = "invalid_grant";
+    public static final String INVALID_GRANT = "invalid_grant";
 
     /**
      * WS-Trust Endpoint not found in Metadata document
      */
-    public final static String WSTRUST_ENDPOINT_NOT_FOUND_IN_METADATA_DOCUMENT = "wstrust_endpoint_not_found";
+    public static final String WSTRUST_ENDPOINT_NOT_FOUND_IN_METADATA_DOCUMENT = "wstrust_endpoint_not_found";
 
     /**
      * WS-Trust endpoint response did not contain the required fields
      */
-    public final static String WSTRUST_INVALID_RESPONSE = "wstrust_invalid_response";
+    public static final String WSTRUST_INVALID_RESPONSE = "wstrust_invalid_response";
 
     /**
      * WS-Trust request resulted in service error
      */
-    public final static String WSTRUST_SERVICE_ERROR = "wstrust_service_error";
+    public static final String WSTRUST_SERVICE_ERROR = "wstrust_service_error";
 
     /**
      * Password is required for managed user. Will typically happen when trying to do integrated windows authentication
      * for managed users. For more information, see https://aka.ms/msal4j-iwa
      */
-    public final static String PASSWORD_REQUIRED_FOR_MANAGED_USER = "password_required_for_managed_user";
+    public static final String PASSWORD_REQUIRED_FOR_MANAGED_USER = "password_required_for_managed_user";
 
     /**
      * User realm discovery failed
      */
-    public final static String USER_REALM_DISCOVERY_FAILED = "user_realm_discovery_failed";
+    public static final String USER_REALM_DISCOVERY_FAILED = "user_realm_discovery_failed";
 
     /**
      * Not found in the cache
      */
-    public final static String CACHE_MISS = "cache_miss";
+    public static final String CACHE_MISS = "cache_miss";
 
     /**
      * Not able to parse instance discovery metadata. Ensure data is in valid JSON format, and that
      * it contains relevant fields. For more information, see https://aka.ms/msal4j-instance-discovery
      */
-    public final static String INVALID_INSTANCE_DISCOVERY_METADATA = "invalid_instance_discovery_metadata";
+    public static final String INVALID_INSTANCE_DISCOVERY_METADATA = "invalid_instance_discovery_metadata";
 
     /**
      * Unknown error occurred
      */
-    public final static String UNKNOWN = "unknown";
+    public static final String UNKNOWN = "unknown";
 
     /**
      * The current redirect URI is not a loopback URL. To use the OS browser, a loopback URL must be
      * configured both during app registration as well as when initializing the InteractiveRequestParameters
      * object. For more details, see https://aka.ms/msal4j-interactive-request
      */
-    public final static String LOOPBACK_REDIRECT_URI = "loopback_redirect_uri";
+    public static final String LOOPBACK_REDIRECT_URI = "loopback_redirect_uri";
 
     /**
      * Unable to start Http listener to the specified port. This might be because the port is busy.
      */
-    public final static String UNABLE_TO_START_HTTP_LISTENER = "unable_to_start_http_listener";
+    public static final String UNABLE_TO_START_HTTP_LISTENER = "unable_to_start_http_listener";
 
     /**
      * Authorization result response is invalid. Authorization result must contain authorization
      * code and state.
      */
-    public final static String INVALID_AUTHORIZATION_RESULT = "invalid_authorization_result";
+    public static final String INVALID_AUTHORIZATION_RESULT = "invalid_authorization_result";
 
     /**
      * Redirect URI provided to MSAL is of invalid format. Redirect URL must be a loopback URL.
      * For more details, see https://aka.ms/msal4j-interactive-request
      */
-    public final static String INVALID_REDIRECT_URI = "invalid_redirect_uri";
+    public static final String INVALID_REDIRECT_URI = "invalid_redirect_uri";
 
     /**
      * Indicates token endpoint is invalid. Ensure authority and tenant are correctly set, as this endpoint is typically created using those values.
      */
-    public final static String INVALID_ENDPOINT_URI = "invalid_endpoint_uri";
+    public static final String INVALID_ENDPOINT_URI = "invalid_endpoint_uri";
 
     /**
      * MSAL was unable to open the user-default browser. This is either because the current platform
@@ -104,29 +104,29 @@ public class AuthenticationErrorCode {
      * requests require that the client have a system default browser. For more details, see
      * https://aka.ms/msal4j-interactive-request
      */
-    public final static String DESKTOP_BROWSER_NOT_SUPPORTED = "desktop_browser_not_supported";
+    public static final String DESKTOP_BROWSER_NOT_SUPPORTED = "desktop_browser_not_supported";
 
     /**
      * Request was throttled according to instructions from STS.
      */
-    public final static String THROTTLED_REQUEST = "throttled_request";
+    public static final String THROTTLED_REQUEST = "throttled_request";
 
     /**
      * A JSON processing failure, indicating the JSON provided to MSAL is of invalid format.
      */
-    public final static String INVALID_JSON = "invalid_json";
+    public static final String INVALID_JSON = "invalid_json";
 
     /**
      * A JWT parsing failure, indicating the JWT provided to MSAL is of invalid format.
      */
-    public final static String INVALID_JWT = "invalid_jwt";
+    public static final String INVALID_JWT = "invalid_jwt";
 
     /**
      * Indicates that a Broker implementation is missing from the device, such as when an app developer
      * does not include one of our broker packages as a dependency in their project, or otherwise cannot
      * be accessed by MSAL Java
      */
-    public final static String MISSING_BROKER = "missing_broker";
+    public static final String MISSING_BROKER = "missing_broker";
 
     /**
      * Indicates that a timeout occurred during an HTTP call. If this was thrown in relation to a connection timeout error,
@@ -134,18 +134,18 @@ public class AuthenticationErrorCode {
      * If this was thrown in relation to a read timeout error, there is likely an issue in the service itself causing a
      * slow response, and this may be resolvable by increasing timeouts. For more details, see https://aka.ms/msal4j-http-client
      */
-    public final static String HTTP_TIMEOUT = "http_timeout";
+    public static final String HTTP_TIMEOUT = "http_timeout";
 
     /**
      * Indicates an error from the MSAL Java/MSALRuntime interop layer used by the Java Brokers package,
      * and will generally just be forwarding an error message from the interop layer or MSALRuntime itself
      */
-    public final static String MSALRUNTIME_INTEROP_ERROR = "interop_package_error";
+    public static final String MSALRUNTIME_INTEROP_ERROR = "interop_package_error";
 
     /**
      * Indicates an error related to the MSAL Java Brokers package
      */
-    public final static String MSALJAVA_BROKERS_ERROR = "brokers_package_error";
+    public static final String MSALJAVA_BROKERS_ERROR = "brokers_package_error";
 
     /**
      * Indicates that a request to managed identity endpoint failed, see error message for detailed reason and correlation id.
