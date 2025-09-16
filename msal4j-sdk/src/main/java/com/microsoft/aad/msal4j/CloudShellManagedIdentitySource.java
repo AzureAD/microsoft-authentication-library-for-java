@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collections;
 import java.util.HashMap;
 
 class CloudShellManagedIdentitySource extends AbstractManagedIdentitySource{

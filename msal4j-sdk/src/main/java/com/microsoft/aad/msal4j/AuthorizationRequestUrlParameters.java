@@ -78,7 +78,7 @@ public class AuthorizationRequestUrlParameters {
             requestParameters.put("claims", claimsParam);
         }
 
-        if (builder.claimsChallenge != null && builder.claimsChallenge.trim().length() > 0) {
+        if (builder.claimsChallenge != null && !builder.claimsChallenge.trim().isEmpty()) {
             JsonHelper.validateJsonFormat(builder.claimsChallenge);
             requestParameters.put("claims", builder.claimsChallenge);
         }

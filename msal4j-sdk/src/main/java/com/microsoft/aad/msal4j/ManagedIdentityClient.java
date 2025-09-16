@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
  * Class to initialize a managed identity and identify the service.
  */
 class ManagedIdentityClient {
-    private static final Logger LOG = LoggerFactory.getLogger(ManagedIdentityClient.class);
 
     static ManagedIdentitySourceType getManagedIdentitySource() {
         IEnvironmentVariables environmentVariables = AbstractManagedIdentitySource.getEnvironmentVariables();

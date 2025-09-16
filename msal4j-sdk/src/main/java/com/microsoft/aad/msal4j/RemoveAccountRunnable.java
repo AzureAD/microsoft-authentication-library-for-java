@@ -3,7 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import java.util.Set;
 import java.util.concurrent.CompletionException;
 
 class RemoveAccountRunnable implements Runnable {

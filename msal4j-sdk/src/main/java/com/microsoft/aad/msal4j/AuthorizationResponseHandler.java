@@ -13,6 +13,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.BlockingQueue;
 import java.util.stream.Collectors;
 
@@ -96,7 +97,7 @@ class AuthorizationResponseHandler implements HttpHandler {
     }
 
     private void send200Response(HttpExchange httpExchange, String response) throws IOException {
-        byte[] responseBytes = response.getBytes("UTF-8");
+        byte[] responseBytes = response.getBytes(StandardCharsets.UTF_8);
         httpExchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
         httpExchange.sendResponseHeaders(HttpStatus.HTTP_OK, responseBytes.length);
         OutputStream os = httpExchange.getResponseBody();

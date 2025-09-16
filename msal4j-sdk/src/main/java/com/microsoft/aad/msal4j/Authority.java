@@ -111,7 +111,7 @@ abstract class Authority {
 
         final String path = authorityUrl.getPath();
 
-        if (path.length() == 0) {
+        if (path.isEmpty()) {
             throw new IllegalArgumentException(
                     IllegalArgumentExceptionMessages.AUTHORITY_URI_EMPTY_PATH);
         }

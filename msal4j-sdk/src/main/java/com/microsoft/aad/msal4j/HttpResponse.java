@@ -3,10 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.azure.json.JsonProviders;
-import com.azure.json.JsonReader;
-
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;

@@ -88,7 +88,6 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
 
     public static class Builder extends AbstractApplicationBase.Builder<Builder> {
 
-        private String resource;
         private ManagedIdentityId managedIdentityId;
         private List<String> clientCapabilities;
 
@@ -99,8 +98,16 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
             this.managedIdentityId = managedIdentityId;
         }
 
+        /**
+         * @deprecated This method has no effect as the resource field is not used in the ManagedIdentityApplication itself.
+         * Use {@link ManagedIdentityParameters#builder(String)} to set the resource when calling
+         * {@link ManagedIdentityApplication#acquireTokenForManagedIdentity(ManagedIdentityParameters)}.
+         *
+         * @param resource Resource to access (unused)
+         * @return instance of Builder of ManagedIdentityApplication
+         */
+        @Deprecated
         public Builder resource(String resource) {
-            this.resource = resource;
             return self();
         }
 

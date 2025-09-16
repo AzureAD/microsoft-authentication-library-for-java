@@ -83,7 +83,7 @@ final class ClientCertificate implements IClientCertificate {
     }
 
     static ClientCertificate create(InputStream pkcs12Certificate, String password)
-            throws KeyStoreException, NoSuchProviderException, NoSuchAlgorithmException,
+            throws KeyStoreException, NoSuchAlgorithmException,
             CertificateException, IOException, UnrecoverableKeyException {
         // treat null password as default one - empty string
         if (password == null) {

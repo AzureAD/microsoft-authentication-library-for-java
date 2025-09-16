@@ -14,8 +14,6 @@ import java.io.IOException;
 
 class ManagedIdentityResponse implements JsonSerializable<ManagedIdentityResponse> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ManagedIdentityResponse.class);
-
     String tokenType;
     String accessToken;
     String expiresOn;

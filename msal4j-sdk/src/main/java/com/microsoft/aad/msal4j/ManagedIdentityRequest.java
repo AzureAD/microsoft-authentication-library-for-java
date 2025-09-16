@@ -10,7 +10,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -98,7 +97,7 @@ class ManagedIdentityRequest extends MsalRequest {
                 // Add client capabilities as a comma separated string for all the values in client capabilities
                 String clientCapabilities = String.join(",", managedIdentityApplication.getClientCapabilities());
 
-                queryParameters.put(Constants.CLIENT_CAPABILITY_REQUEST_PARAM, clientCapabilities.toString());
+                queryParameters.put(Constants.CLIENT_CAPABILITY_REQUEST_PARAM, clientCapabilities);
             }
 
             // Pass the token revocation parameter if the claims are present and there is a token to revoke
