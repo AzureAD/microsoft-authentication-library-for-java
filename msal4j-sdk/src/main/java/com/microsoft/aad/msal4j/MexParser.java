@@ -250,7 +250,7 @@ class MexParser {
                     return WSTrustVersion.WSTRUST13;
                 } else if (soapAction.equalsIgnoreCase(RST_SOAP_ACTION_2005)) {
                     if (logPii) {
-                        LOG.debug("Binding node did not match soap Action or Transport: {}", bindingName);
+                        LOG.debug("Binding node did not match SOAP Action or Transport: {}", bindingName);
                     } else {
                         LOG.debug("Binding node did not match SOAP Action or Transport");
                     }
