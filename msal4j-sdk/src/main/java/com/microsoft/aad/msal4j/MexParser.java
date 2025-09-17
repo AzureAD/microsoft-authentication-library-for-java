@@ -252,7 +252,7 @@ class MexParser {
                     if (logPii) {
                         LOG.debug("Binding node did not match soap Action or Transport: {}", bindingName);
                     } else {
-                        LOG.debug("Binding node did not match soap Action or Transport");
+                        LOG.debug("Binding node did not match SOAP Action or Transport");
                     }
 
                     return WSTrustVersion.WSTRUST2005;
