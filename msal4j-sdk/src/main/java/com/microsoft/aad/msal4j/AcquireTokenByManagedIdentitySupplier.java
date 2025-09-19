@@ -90,15 +90,15 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
                     return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor, CacheRefreshReason.CLAIMS);
                 }
 
-                LOG.debug(String.format("Refreshing access token. Cache refresh reason: %s", cacheRefreshReason));
+                LOG.debug("Refreshing access token. Cache refresh reason: {}", cacheRefreshReason);
                 return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor, cacheRefreshReason);
             }
         } catch (MsalClientException ex) {
             if (ex.errorCode().equals(AuthenticationErrorCode.CACHE_MISS)) {
-                LOG.debug(String.format("Cache lookup failed: %s", ex.getMessage()));
+                LOG.debug("Cache lookup failed: {}", ex.getMessage());
                 return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor, cacheRefreshReason);
             } else {
-                LOG.error(String.format("Error occurred while cache lookup: %s", ex.getMessage()));
+                LOG.error("Error occurred while cache lookup: {}", ex.getMessage());
                 throw ex;
             }
         }
@@ -108,8 +108,8 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
 
         ManagedIdentityClient managedIdentityClient = new ManagedIdentityClient(msalRequest, tokenRequestExecutor.getServiceBundle());
 
-        LOG.debug(String.format("[Managed Identity] Managed Identity source and ID type identified and set successfully, request will use Managed Identity for %s",
-                managedIdentityClient.managedIdentitySource.managedIdentitySourceType.name()));
+        LOG.debug("[Managed Identity] Managed Identity source and ID type identified and set successfully, request will use Managed Identity for {}",
+                managedIdentityClient.managedIdentitySource.managedIdentitySourceType.name());
 
         ManagedIdentityResponse managedIdentityResponse = managedIdentityClient
                 .getManagedIdentityResponse(managedIdentityParameters);

@@ -11,7 +11,7 @@ import java.net.MalformedURLException;
 import java.util.*;
 
 class TokenRequestExecutor {
-    Logger log = LoggerFactory.getLogger(TokenRequestExecutor.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TokenRequestExecutor.class);
 
     final Authority requestAuthority;
     final String tenant;
@@ -29,7 +29,7 @@ class TokenRequestExecutor {
 
     AuthenticationResult executeTokenRequest() throws IOException {
 
-        log.debug("Sending token request to: {}", requestAuthority.canonicalAuthorityUrl());
+        LOG.debug("Sending token request to: {}", requestAuthority.canonicalAuthorityUrl());
         OAuthHttpRequest oAuthHttpRequest = createOauthHttpRequest();
         HttpResponse oauthHttpResponse = oAuthHttpRequest.send();
         return createAuthenticationResultFromOauthHttpResponse(oauthHttpResponse);
@@ -66,7 +66,7 @@ class TokenRequestExecutor {
         if(msalRequest.requestContext().apiParameters().extraQueryParameters() != null ){
             for(String key: msalRequest.requestContext().apiParameters().extraQueryParameters().keySet()){
                     if(params.containsKey(key)){
-                       log.warn("A query parameter {} has been provided with values multiple times.", key);
+                       LOG.warn("A query parameter {} has been provided with values multiple times.", key);
                     }
                     params.put(key, msalRequest.requestContext().apiParameters().extraQueryParameters().get(key));
             }
@@ -122,7 +122,7 @@ class TokenRequestExecutor {
                 try {
                     authorityToUse = Authority.replaceTenant(authorityToUse, parameters.tenant());
                 } catch (MalformedURLException e) {
-                    log.warn("Could not create authority with tenant override: {}", e.getMessage());
+                    LOG.warn("Could not create authority with tenant override: {}", e.getMessage());
                 }
             }
         }
@@ -221,7 +221,7 @@ class TokenRequestExecutor {
     }
 
     Logger getLog() {
-        return this.log;
+        return LOG;
     }
 
     Authority getRequestAuthority() {

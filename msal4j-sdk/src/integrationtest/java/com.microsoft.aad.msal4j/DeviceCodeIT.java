@@ -152,7 +152,7 @@ class DeviceCodeIT {
             if (!isRunningLocally) {
                 SeleniumExtensions.takeScreenShot(seleniumDriver);
             }
-            LOG.error("Browser automation failed: " + e.getMessage());
+            LOG.error("Browser automation failed: {}", e.getMessage());
             throw new RuntimeException("Browser automation failed: " + e.getMessage());
         }
     }

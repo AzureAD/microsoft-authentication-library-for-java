@@ -63,7 +63,7 @@ class CloudShellManagedIdentitySource extends AbstractManagedIdentitySource{
         try
         {
             URI endpointUri = new URI(msiEndpoint);
-            LOG.info(String.format("[Managed Identity] Environment variables validation passed for cloud shell managed identity. Endpoint URI: %s. Creating cloud shell managed identity.", endpointUri));
+            LOG.info("[Managed Identity] Environment variables validation passed for Cloud Shell managed identity. Endpoint URI: {}. Creating Cloud Shell managed identity.", endpointUri);
             return endpointUri;
         }
         catch (URISyntaxException ex)

@@ -106,7 +106,7 @@ class ServiceFabricManagedIdentitySource extends AbstractManagedIdentitySource {
         try
         {
             URI endpointUri = new URI(msiEndpoint);
-            LOG.info(String.format("[Managed Identity] Environment variables validation passed for Service Fabric Managed Identity. Endpoint URI: %s", endpointUri));
+            LOG.info("[Managed Identity] Environment variables validation passed for Service Fabric Managed Identity. Endpoint URI: {}", endpointUri);
             return endpointUri;
         }
         catch (URISyntaxException ex)

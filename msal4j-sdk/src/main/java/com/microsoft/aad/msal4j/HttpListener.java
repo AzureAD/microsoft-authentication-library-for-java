@@ -28,7 +28,7 @@ class HttpListener {
             server.createContext("/", httpHandler);
             this.port = server.getAddress().getPort();
             server.start();
-            LOG.debug("Http listener started. Listening on port: " + port);
+            LOG.debug("Http listener started. Listening on port: {}", port);
         } catch (Exception e) {
             throw new MsalClientException(e.getMessage(),
                     AuthenticationErrorCode.UNABLE_TO_START_HTTP_LISTENER);

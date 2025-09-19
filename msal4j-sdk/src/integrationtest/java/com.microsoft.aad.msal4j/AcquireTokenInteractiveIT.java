@@ -145,7 +145,7 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
             result = pca.acquireToken(parameters).get();
 
         } catch (Exception e) {
-            LOG.error("Error acquiring token with authCode: " + e.getMessage());
+            LOG.error("Error acquiring token with authCode: {}", e.getMessage());
             throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
         }
 
@@ -236,7 +236,7 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
             result = pca.acquireToken(parameters).get();
 
         } catch (Exception e) {
-            LOG.error("Error acquiring token with authCode: " + e.getMessage());
+            LOG.error("Error acquiring token with authCode: {}", e.getMessage());
             throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
         }
         return result;
@@ -266,7 +266,7 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
             result = pca.acquireToken(parameters).get();
 
         } catch (Exception e) {
-            LOG.error("Error acquiring token with authCode: " + e.getMessage());
+            LOG.error("Error acquiring token with authCode: {}", e.getMessage());
             throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
         }
         return result;

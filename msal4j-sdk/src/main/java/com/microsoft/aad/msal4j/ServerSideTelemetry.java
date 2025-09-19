@@ -77,7 +77,7 @@ class ServerSideTelemetry {
                 SCHEMA_PIPE_DELIMITER;
 
         if (currentRequestHeader.getBytes(StandardCharsets.UTF_8).length > CURRENT_REQUEST_MAX_SIZE) {
-            log.warn("Current request telemetry header greater than 100 bytes");
+            log.warn("Current request telemetry header greater than {} bytes", CURRENT_REQUEST_MAX_SIZE);
         }
 
         return currentRequestHeader;

@@ -57,7 +57,7 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
                     ManagedIdentitySourceType.AZURE_ARC);
         }
 
-        LOG.info(String.format("[Managed Identity] Creating Azure Arc managed identity. Endpoint URI: %s", endpointUri));
+        LOG.info("[Managed Identity] Creating Azure Arc managed identity. Endpoint URI: {}", endpointUri);
         return endpointUri;
     }
 
@@ -163,14 +163,14 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
     private void validateFile(Path path) {
         String osName = System.getProperty("os.name").toLowerCase();
         if (!(osName.contains("windows") || osName.contains("linux"))) {
-            LOG.error(String.format("[Managed Identity] Unsupported platform: %s", osName));
+            LOG.error("[Managed Identity] Unsupported platform: {}", osName);
             throw new MsalServiceException(MsalErrorMessage.MANAGED_IDENTITY_PLATFORM_NOT_SUPPORTED, MsalError.MANAGED_IDENTITY_FILE_READ_ERROR,
                     ManagedIdentitySourceType.AZURE_ARC);
         }
 
         if (isValidWindowsPath(path) || isValidLinuxPath(path)) {
             if (path.toFile().length() > MAX_FILE_SIZE_BYTES) {
-                LOG.error(String.format("[Managed Identity] File is larger than %s bytes.", MAX_FILE_SIZE_BYTES));
+                LOG.error("[Managed Identity] File is larger than {} bytes.", MAX_FILE_SIZE_BYTES);
                 throw new MsalServiceException(MsalErrorMessage.MANAGED_IDENTITY_INVALID_FILEPATH, MsalError.MANAGED_IDENTITY_FILE_READ_ERROR,
                         ManagedIdentitySourceType.AZURE_ARC);
             }

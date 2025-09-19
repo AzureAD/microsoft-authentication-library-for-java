@@ -36,7 +36,7 @@ class AadInstanceDiscoveryProvider {
     static final TreeSet<String> TRUSTED_HOSTS_SET = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     static final TreeSet<String> TRUSTED_SOVEREIGN_HOSTS_SET = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
-    private static final Logger log = LoggerFactory.getLogger(AadInstanceDiscoveryProvider.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AadInstanceDiscoveryProvider.class);
 
     static ConcurrentHashMap<String, InstanceDiscoveryMetadataEntry> cache = new ConcurrentHashMap<>();
 
@@ -65,7 +65,7 @@ class AadInstanceDiscoveryProvider {
         //If instanceDiscovery flag set to false OR this is a managed identity scenario, cache a basic instance metadata entry to skip this and future lookups
         if (msalRequest.application() instanceof ManagedIdentityApplication || !((AbstractClientApplicationBase) msalRequest.application()).instanceDiscovery()) {
             if (cache.get(host) == null) {
-                log.debug("Instance discovery set to false, caching a default entry.");
+                LOG.debug("Instance discovery set to false, caching a default entry.");
                 cacheInstanceDiscoveryMetadata(host);
             }
             return cache.get(host);
@@ -78,10 +78,10 @@ class AadInstanceDiscoveryProvider {
 
         //If there is no cached instance metadata, do instance discovery cache the result
         if (cache.get(host) == null) {
-            log.debug("No cached instance metadata, will attempt instance discovery.");
+            LOG.debug("No cached instance metadata, will attempt instance discovery.");
 
             if (shouldUseRegionalEndpoint(msalRequest)) {
-                log.debug("Region API used, will attempt to discover Azure region.");
+                LOG.debug("Region API used, will attempt to discover Azure region.");
 
                 //Server side telemetry requires the result from region discovery when any part of the region API is used
                 String detectedRegion = discoverRegion(msalRequest, serviceBundle);
@@ -91,7 +91,7 @@ class AadInstanceDiscoveryProvider {
                 if (((AbstractClientApplicationBase) msalRequest.application()).azureRegion() == null
                         && ((AbstractClientApplicationBase) msalRequest.application()).autoDetectRegion()
                         && detectedRegion != null) {
-                    log.debug(String.format("Region autodetection found %s, this region will be used for future calls.", detectedRegion));
+                    LOG.debug("Region autodetection found {}, this region will be used for future calls.", detectedRegion);
 
                     ((AbstractClientApplicationBase) msalRequest.application()).azureRegion = detectedRegion;
                     host = getRegionalizedHost(authorityUrl.getHost(), ((AbstractClientApplicationBase) msalRequest.application()).azureRegion());
@@ -158,7 +158,7 @@ class AadInstanceDiscoveryProvider {
             } else {
                 //Avoid unnecessary warnings when looking for cached tokens by checking if request was a silent call
                 if (msalRequest.getClass() != SilentRequest.class) {
-                    log.warn("Regional endpoints are only available for client credential flow, request will fall back to using the global endpoint. See here for more information about supported scenarios: https://aka.ms/msal4j-azure-regions");
+                    LOG.warn("Regional endpoints are only available for client credential flow, request will fall back to using the global endpoint. See here for more information about supported scenarios: https://aka.ms/msal4j-azure-regions");
                 }
                 return false;
             }
@@ -239,7 +239,7 @@ class AadInstanceDiscoveryProvider {
                 throw MsalServiceExceptionFactory.fromHttpResponse(httpResponse);
             }
             // instance discovery failed due to reasons other than an invalid authority, do not perform instance discovery again in this environment.
-            log.debug("Instance discovery failed due to an unknown error, no more instance discovery attempts will be made.");
+            LOG.debug("Instance discovery failed due to an unknown error, no more instance discovery attempts will be made.");
             cacheInstanceDiscoveryMetadata(authorityUrl.getHost());
         }
 
@@ -291,7 +291,7 @@ class AadInstanceDiscoveryProvider {
 
         //Check if the REGION_NAME environment variable has a value for the region
         if (System.getenv(REGION_NAME) != null) {
-            log.info(String.format("Region found in environment variable: %s",System.getenv(REGION_NAME)));
+            LOG.info("Region found in environment variable: {}", System.getenv(REGION_NAME));
             currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_ENV_VARIABLE.telemetryValue);
 
             return System.getenv(REGION_NAME);
@@ -305,23 +305,23 @@ class AadInstanceDiscoveryProvider {
         Future<IHttpResponse> future = executor.submit(() -> executeRequest(IMDS_ENDPOINT, headers, msalRequest, serviceBundle));
 
         try {
-            log.info("Starting call to IMDS endpoint.");
+            LOG.info("Starting call to IMDS endpoint.");
             IHttpResponse httpResponse = future.get(IMDS_TIMEOUT, IMDS_TIMEOUT_UNIT);
             //If call to IMDS endpoint was successful, return region from response body
             if (httpResponse.statusCode() == HttpStatus.HTTP_OK && !httpResponse.body().isEmpty()) {
-                log.info(String.format("Region retrieved from IMDS endpoint: %s", httpResponse.body()));
+                LOG.info("Region retrieved from IMDS endpoint: {}", httpResponse.body());
                 currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_IMDS.telemetryValue);
 
                 return httpResponse.body();
             }
-            log.warn(String.format("Call to local IMDS failed with status code: %s, or response was empty", httpResponse.statusCode()));
+            LOG.warn("Call to local IMDS failed with status code: {}, or response was empty", httpResponse.statusCode());
             currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_FAILED_AUTODETECT.telemetryValue);
         } catch (Exception ex) {
             // handle other exceptions
             //IMDS call failed, cannot find region
             //The IMDS endpoint is only available from within an Azure environment, so the most common cause of this
             //  exception will likely be java.net.SocketException: Network is unreachable: connect
-            log.warn(String.format("Exception during call to local IMDS endpoint: %s", ex.getMessage()));
+            LOG.warn("Exception during call to local IMDS endpoint: {}", ex.getMessage());
             currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_FAILED_AUTODETECT.telemetryValue);
             future.cancel(true);
 

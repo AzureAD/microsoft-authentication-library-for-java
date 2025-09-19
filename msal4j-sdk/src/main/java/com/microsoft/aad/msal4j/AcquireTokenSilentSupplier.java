@@ -11,7 +11,7 @@ import java.util.Date;
 
 class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
 
-    private static final Logger log = LoggerFactory.getLogger(AcquireTokenSilentSupplier.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AcquireTokenSilentSupplier.class);
     private SilentRequest silentRequest;
     protected static final int ACCESS_TOKEN_EXPIRE_BUFFER_IN_SEC = 5 * 60;
 
@@ -74,7 +74,7 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
             throw new MsalClientException(AuthenticationErrorMessage.NO_TOKEN_IN_CACHE, AuthenticationErrorCode.CACHE_MISS);
         }
 
-        log.debug("Returning token from cache");
+        LOG.debug("Returning token from cache");
 
         return res;
     }
@@ -99,7 +99,7 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
             refreshedResult.metadata().tokenSource(TokenSource.IDENTITY_PROVIDER);
             refreshedResult.metadata().cacheRefreshReason(refreshReason);
 
-            log.info("Access token refreshed successfully.");
+            LOG.info("Access token refreshed successfully.");
             return refreshedResult;
         } catch (MsalServiceException ex) {
             //If the token refresh attempt threw a MsalServiceException but the refresh attempt was done
@@ -117,7 +117,7 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
         //If forceRefresh is true, no reason to check any other option
         if (parameters.forceRefresh()) {
             setCacheTelemetry(CacheRefreshReason.FORCE_REFRESH);
-            log.debug(String.format("Refreshing access token. Cache refresh reason: %s", CacheRefreshReason.FORCE_REFRESH));
+            LOG.debug("Refreshing access token. Cache refresh reason: {}", CacheRefreshReason.FORCE_REFRESH);
             return true;
         }
 
@@ -125,7 +125,7 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
         //  Note: these are the types of claims found in (for example) a claims challenge, and do not include client capabilities
         if (parameters.claims() != null) {
             setCacheTelemetry(CacheRefreshReason.CLAIMS);
-            log.debug(String.format("Refreshing access token. Cache refresh reason: %s", CacheRefreshReason.CLAIMS));
+            LOG.debug("Refreshing access token. Cache refresh reason: {}", CacheRefreshReason.CLAIMS);
             return true;
         }
 
@@ -134,7 +134,7 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
         //If the access token is expired or within 5 minutes of becoming expired, refresh it
         if (!StringHelper.isBlank(cachedResult.accessToken()) && cachedResult.expiresOn() < (currTimeStampSec + ACCESS_TOKEN_EXPIRE_BUFFER_IN_SEC)) {
             setCacheTelemetry(CacheRefreshReason.EXPIRED);
-            log.debug(String.format("Refreshing access token. Cache refresh reason: %s", CacheRefreshReason.EXPIRED));
+            LOG.debug("Refreshing access token. Cache refresh reason: {}", CacheRefreshReason.EXPIRED);
             return true;
         }
 
@@ -143,14 +143,14 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
                 cachedResult.refreshOn() != null && cachedResult.refreshOn() > 0 &&
                 cachedResult.refreshOn() < currTimeStampSec && cachedResult.expiresOn() >= (currTimeStampSec + ACCESS_TOKEN_EXPIRE_BUFFER_IN_SEC)){
             setCacheTelemetry(CacheRefreshReason.PROACTIVE_REFRESH);
-            log.debug(String.format("Refreshing access token. Cache refresh reason: %s", CacheRefreshReason.PROACTIVE_REFRESH));
+            LOG.debug("Refreshing access token. Cache refresh reason: {}", CacheRefreshReason.PROACTIVE_REFRESH);
             return true;
         }
 
         //If there is a refresh token but no access token, we should use the refresh token to get the access token
         if (StringHelper.isBlank(cachedResult.accessToken()) && !StringHelper.isBlank(cachedResult.refreshToken())) {
             setCacheTelemetry(CacheRefreshReason.NO_CACHED_ACCESS_TOKEN);
-            log.debug(String.format("Refreshing access token. Cache refresh reason: %s", CacheRefreshReason.NO_CACHED_ACCESS_TOKEN));
+            LOG.debug("Refreshing access token. Cache refresh reason: {}", CacheRefreshReason.NO_CACHED_ACCESS_TOKEN);
             return true;
         }
 

@@ -22,7 +22,7 @@ import org.w3c.dom.NodeList;
 
 class MexParser {
 
-    private static final Logger log = LoggerFactory.getLogger(MexParser.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MexParser.class);
 
     private static final String TRANSPORT_BINDING_XPATH = "wsp:ExactlyOne/wsp:All/sp:TransportBinding";
     private static final String TRANSPORT_BINDING_2005_XPATH = "wsp:ExactlyOne/wsp:All/sp2005:TransportBinding";
@@ -83,7 +83,7 @@ class MexParser {
         Map<String, BindingPolicy> policies = policySelector.selectPolicies(xmlDocument, xPath, logPii);
 
         if (policies.isEmpty()) {
-            log.debug("No matching policies");
+            LOG.debug("No matching policies");
 
             return null;
         } else {
@@ -91,7 +91,7 @@ class MexParser {
                     xmlDocument, xPath, policies, logPii);
 
             if (bindings.isEmpty()) {
-                log.debug("No matching bindings");
+                LOG.debug("No matching bindings");
 
                 return null;
             } else {
@@ -131,7 +131,7 @@ class MexParser {
         }
 
         if (wstrust13 == null && wstrust2005 == null) {
-            log.warn("No policies found with the url");
+            LOG.warn("No policies found with the url");
 
             return null;
         }
@@ -147,7 +147,7 @@ class MexParser {
                 xmlDocument, XPathConstants.NODESET);
 
         if (portNodes.getLength() == 0) {
-            log.warn("No ports found");
+            LOG.warn("No ports found");
         } else {
             for (int i = 0; i < portNodes.getLength(); i++) {
                 Node portNode = portNodes.item(i);
@@ -174,9 +174,9 @@ class MexParser {
                                 bindingPolicy.setUrl(address.trim());
                             } else {
                                 if (logPii) {
-                                    log.warn("Skipping insecure endpoint" + ": " + address);
+                                    LOG.warn("Skipping insecure endpoint: {}", address);
                                 } else {
-                                    log.warn("Skipping insecure endpoint");
+                                    LOG.warn("Skipping insecure endpoint");
                                 }
                             }
                         } else {
@@ -241,17 +241,17 @@ class MexParser {
 
                 if (soapAction.equalsIgnoreCase(RST_SOAP_ACTION)) {
                     if (logPii) {
-                        log.debug("Found binding matching Action and Transport: " + bindingName);
+                        LOG.debug("Found binding matching Action and Transport: {}", bindingName);
                     } else {
-                        log.debug("Found binding matching Action and Transport");
+                        LOG.debug("Found binding matching Action and Transport");
                     }
 
                     return WSTrustVersion.WSTRUST13;
                 } else if (soapAction.equalsIgnoreCase(RST_SOAP_ACTION_2005)) {
                     if (logPii) {
-                        log.debug("Binding node did not match soap Action or Transport: " + bindingName);
+                        LOG.debug("Binding node did not match SOAP Action or Transport: {}", bindingName);
                     } else {
-                        log.debug("Binding node did not match soap Action or Transport");
+                        LOG.debug("Binding node did not match SOAP Action or Transport");
                     }
 
                     return WSTrustVersion.WSTRUST2005;
@@ -321,9 +321,9 @@ class MexParser {
             policyId = id.getNodeValue();
 
             if (logPii) {
-                log.debug("found matching policy id: " + policyId);
+                LOG.debug("found matching policy id: {}", policyId);
             } else {
-                log.debug("found matching policy");
+                LOG.debug("found matching policy");
             }
         } else {
             String nodeValue = "none";
@@ -332,9 +332,9 @@ class MexParser {
             }
 
             if (logPii) {
-                log.debug("potential policy did not match required transport binding: " + nodeValue);
+                LOG.debug("potential policy did not match required transport binding: {}", nodeValue);
             } else {
-                log.debug("potential policy did not match required transport binding");
+                LOG.debug("potential policy did not match required transport binding");
             }
         }
         return policyId;

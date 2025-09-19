@@ -46,7 +46,7 @@ class AcquireTokenByClientCredentialSupplier extends AuthenticationResultSupplie
 
                 return supplier.execute();
             } catch (MsalClientException ex) {
-                LOG.debug(String.format("Cache lookup failed: %s", ex.getMessage()));
+                LOG.debug("Cache lookup failed: {}", ex.getMessage());
                 return acquireTokenByClientCredential();
             }
         }

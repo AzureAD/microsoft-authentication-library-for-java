@@ -78,7 +78,7 @@ class AppServiceManagedIdentitySource extends AbstractManagedIdentitySource{
                     ManagedIdentitySourceType.APP_SERVICE);
         }
 
-        LOG.info("[Managed Identity] Environment variables validation passed for app service managed identity. Endpoint URI: {endpointUri}. Creating App Service managed identity.");
+        LOG.info("[Managed Identity] Environment variables validation passed for app service managed identity. Endpoint URI: {}. Creating App Service managed identity.", endpointUri);
         return endpointUri;
     }
 

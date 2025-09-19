@@ -3,9 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Class to initialize a managed identity and identify the service.
  */
