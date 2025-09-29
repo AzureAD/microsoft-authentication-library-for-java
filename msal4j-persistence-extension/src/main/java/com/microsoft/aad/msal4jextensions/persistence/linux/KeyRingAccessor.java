@@ -5,7 +5,6 @@ package com.microsoft.aad.msal4jextensions.persistence.linux;
 
 import com.microsoft.aad.msal4jextensions.persistence.CacheFileAccessor;
 import com.microsoft.aad.msal4jextensions.persistence.ICacheAccessor;
-import com.nimbusds.jose.util.StandardCharset;
 import com.sun.jna.Pointer;
 
 import java.io.IOException;
@@ -57,7 +56,7 @@ public class KeyRingAccessor implements ICacheAccessor {
 
         byte[] readData = read(testAttributeValue1, testAttributeValue2);
 
-        if (readData == null || !testData.equals(new String(readData, StandardCharset.UTF_8))) {
+        if (readData == null || !testData.equals(new String(readData, StandardCharsets.UTF_8))) {
             throw new KeyRingAccessException("An error while validating KeyRing availability");
         }
 

@@ -9,13 +9,13 @@ import com.microsoft.aad.msal4jextensions.persistence.CacheFileAccessor;
 import com.microsoft.aad.msal4jextensions.persistence.ICacheAccessor;
 import com.microsoft.aad.msal4jextensions.persistence.linux.KeyRingAccessor;
 import com.microsoft.aad.msal4jextensions.persistence.mac.KeyChainAccessor;
-import com.nimbusds.jose.util.StandardCharset;
 import com.sun.jna.Platform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 /**
@@ -124,7 +124,7 @@ public class PersistenceTokenCacheAccessAspect implements ITokenCacheAccessAspec
             }
             byte[] data = cacheAccessor.read();
             if (data != null) {
-                iTokenCacheAccessContext.tokenCache().deserialize(new String(data, StandardCharset.UTF_8));
+                iTokenCacheAccessContext.tokenCache().deserialize(new String(data, StandardCharsets.UTF_8));
             }
 
             updateLastSeenCacheFileModifiedTimestamp();
@@ -141,7 +141,7 @@ public class PersistenceTokenCacheAccessAspect implements ITokenCacheAccessAspec
     public void afterCacheAccess(ITokenCacheAccessContext iTokenCacheAccessContext) {
         try {
             if (isWriteAccess(iTokenCacheAccessContext)) {
-                cacheAccessor.write(iTokenCacheAccessContext.tokenCache().serialize().getBytes(StandardCharset.UTF_8));
+                cacheAccessor.write(iTokenCacheAccessContext.tokenCache().serialize().getBytes(StandardCharsets.UTF_8));
                 updateLastSeenCacheFileModifiedTimestamp();
             }
         } finally {
