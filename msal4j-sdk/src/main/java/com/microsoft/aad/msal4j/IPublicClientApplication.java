@@ -14,11 +14,15 @@ import java.util.concurrent.CompletableFuture;
 public interface IPublicClientApplication extends IClientApplicationBase {
 
     /**
-     * Acquires tokens from the authority configured in the application via Username/Password authentication.
+     * Acquires tokens from the authority configured in the application via Username/Password authentication.<br>
+     * <p><b>Deprecated:</b> This API has been deprecated and will be removed in a future release. Use a more secure flow instead.<br>
+     * See <a href="https://aka.ms/msalnet-ropc-migration">https://aka.ms/msalnet-ropc-migration</a> for migration guidance.
      *
      * @param parameters instance of {@link UserNamePasswordParameters}
      * @return {@link CompletableFuture} containing an {@link IAuthenticationResult}
+     * @deprecated This API not a secure flow and will be removed in a future release.
      */
+    @Deprecated
     CompletableFuture<IAuthenticationResult> acquireToken(UserNamePasswordParameters parameters);
 
     /**
