@@ -24,6 +24,7 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
     private boolean brokerEnabled;
 
     @Override
+    @Deprecated
     public CompletableFuture<IAuthenticationResult> acquireToken(UserNamePasswordParameters parameters) {
 
         validateNotNull("parameters", parameters);
