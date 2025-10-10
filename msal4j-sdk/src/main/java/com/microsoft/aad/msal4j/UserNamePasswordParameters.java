@@ -13,8 +13,13 @@ import static com.microsoft.aad.msal4j.ParameterValidationUtils.*;
  * Object containing parameters for Username/Password flow. Can be used as parameter to
  * {@link PublicClientApplication#acquireToken(UserNamePasswordParameters)}
  * <p>
+ * <p><b>Deprecated:</b> This class supports the Resource Owner Password Credentials (ROPC) flow,
+ * which is insecure and will be removed in a future release.</p>
+ *
+ * <p>See <a href="https://aka.ms/msal-ropc-migration">https://aka.ms/msal-ropc-migration</a> for migration guidance.</p>
  * For more details, see https://aka.ms/msal4j-username-password
  */
+@Deprecated
 public class UserNamePasswordParameters implements IAcquireTokenParameters {
 
     private Set<String> scopes;

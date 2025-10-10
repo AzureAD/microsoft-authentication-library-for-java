@@ -16,7 +16,7 @@ public interface IPublicClientApplication extends IClientApplicationBase {
     /**
      * Acquires tokens from the authority configured in the application via Username/Password authentication.<br>
      * <p><b>Deprecated:</b> This API has been deprecated and will be removed in a future release. Use a more secure flow instead.<br>
-     * See <a href="https://aka.ms/msalnet-ropc-migration">https://aka.ms/msalnet-ropc-migration</a> for migration guidance.
+     * See <a href="https://aka.ms/msal-ropc-migration">https://aka.ms/msal-ropc-migration</a> for migration guidance.
      *
      * @param parameters instance of {@link UserNamePasswordParameters}
      * @return {@link CompletableFuture} containing an {@link IAuthenticationResult}
