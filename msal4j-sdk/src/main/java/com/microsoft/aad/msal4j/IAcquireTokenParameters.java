@@ -62,6 +62,7 @@ interface IAcquireTokenParameters {
      * This can be useful for scenarios requiring custom parameters that aren't explicitly supported in the library.
      *
      * @return A map of additional query parameters to include with the token request, or null if no extra parameters are needed.
+     *
      * @deprecated Not recommended for production scenarios. It will be removed in a future release, and the behavior may be replaced by a new API.
      */
     @Deprecated
