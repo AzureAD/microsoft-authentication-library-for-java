@@ -234,6 +234,10 @@ public class AuthorizationRequestUrlParameters {
         return this.instanceAware;
     }
 
+    /**
+     * @deprecated Not recommended for production scenarios. It will be removed in a future release, and the behavior may be replaced by a new API.
+     */
+    @Deprecated
     public Map<String, String> extraQueryParameters() {
         return this.extraQueryParameters;
     }
@@ -419,7 +423,9 @@ public class AuthorizationRequestUrlParameters {
         /**
          * Query parameters that you can add to the request,
          * in addition to the list of parameters already provided.
+         * @deprecated Not recommended for production scenarios. It will be removed in a future release, and the behavior may be replaced by a new API.
          */
+        @Deprecated
         public Builder extraQueryParameters(Map<String, String> val) {
             this.extraQueryParameters = val;
             return self();

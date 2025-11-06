@@ -113,6 +113,10 @@ public class InteractiveRequestParameters implements IAcquireTokenParameters {
         return this.extraHttpHeaders;
     }
 
+    /**
+     * @deprecated Not recommended for production scenarios. It will be removed in a future release, and the behavior may be replaced by a new API.
+     */
+    @Deprecated
     public Map<String, String> extraQueryParameters() {
         return this.extraQueryParameters;
     }
@@ -262,7 +266,9 @@ public class InteractiveRequestParameters implements IAcquireTokenParameters {
 
         /**
          * Adds additional query parameters to the token request
+         * @deprecated Not recommended for production scenarios. It will be removed in a future release, and the behavior may be replaced by a new API.
          */
+        @Deprecated
         public InteractiveRequestParametersBuilder extraQueryParameters(Map<String, String> extraQueryParameters) {
             this.extraQueryParameters = extraQueryParameters;
             return this;
