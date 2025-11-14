@@ -1,0 +1,262 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+package com.microsoft.aad.msal4j.labapi2;
+
+import com.azure.json.JsonProviders;
+import com.azure.json.JsonReader;
+import com.microsoft.aad.msal4j.ClientCredentialParameters;
+import com.microsoft.aad.msal4j.ConfidentialClientApplication;
+import com.microsoft.aad.msal4j.IAuthenticationResult;
+import com.microsoft.aad.msal4j.labapi2.LabServiceParameters.MFA;
+import com.microsoft.aad.msal4j.labapi2.LabServiceParameters.ProtectionPolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
+import static com.microsoft.aad.msal4j.labapi2.LabHttpHelper.buildUrl;
+
+/**
+ * Wrapper for lab service API interactions.
+ */
+public class LabServiceApi {
+
+    private static final Logger log = LoggerFactory.getLogger(LabServiceApi.class);
+
+    private ConfidentialClientApplication labApp;
+
+
+    /**
+     * Returns a test user account for use in testing.
+     *
+     * @param query Any and all parameters that the returned user should satisfy
+     * @return CompletableFuture containing LabResponse with user that matches the query
+     */
+    public CompletableFuture<LabResponse> getLabResponseFromApiAsync(UserQuery query) {
+        log.debug("Querying lab API for user with parameters: {}", query);
+
+        return runQueryAsync(query)
+                .thenCompose(result -> {
+                    if (result == null || result.trim().isEmpty()) {
+                        log.error("No lab user found for query");
+                        throw new LabUserNotFoundException(query,
+                                "No lab user with specified parameters exists");
+                    }
+                    log.debug("Lab API returned {} characters of data", result.length());
+                    return createLabResponseFromResultStringAsync(result);
+                })
+                .whenComplete((response, error) -> {
+                    if (error != null) {
+                        log.error("Failed to get lab response: {}", error.getMessage());
+                    } else if (response != null && response.getUser() != null) {
+                        log.info("Successfully retrieved lab user: {}", response.getUser().getUpn());
+                    }
+                });
+    }
+
+    /**
+     * Create a LabResponse object from JSON result string.
+     *
+     * @param result JSON string containing lab user array
+     * @return CompletableFuture containing populated LabResponse
+     */
+    CompletableFuture<LabResponse> createLabResponseFromResultStringAsync(String result) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                log.debug("Parsing lab user JSON response");
+
+                List<LabUser> userResponses;
+                try (JsonReader jsonReader = JsonProviders.createReader(result)) {
+                    userResponses = jsonReader.readArray(LabUser::fromJson);
+                }
+
+                if (userResponses.isEmpty()) {
+                    log.error("Lab API returned empty user array");
+                    throw new RuntimeException("Lab API returned empty user array");
+                }
+
+                LabUser user = userResponses.get(0);
+                log.debug("Parsed lab user: {}, fetching app and lab info", user.getUpn());
+
+                // Fetch app and lab info
+                String appEndpoint = LabApiConstants.LAB_APP_ENDPOINT + user.getAppId();
+                log.debug("Fetching app info from: {}", appEndpoint);
+                String appResponse = getLabResponseAsync(appEndpoint).join();
+
+                List<LabApp> labApps;
+                try (JsonReader appReader = JsonProviders.createReader(appResponse)) {
+                    labApps = appReader.readArray(LabApp::fromJson);
+                }
+
+                if (labApps.isEmpty()) {
+                    log.error("No lab app found for appId: {}", user.getAppId());
+                    throw new RuntimeException("No lab app found for appId: " + user.getAppId());
+                }
+                log.debug("Successfully parsed lab app: {}", labApps.get(0).getAppId());
+
+                String labInfoEndpoint = LabApiConstants.LAB_INFO_ENDPOINT + user.getLabName();
+                log.debug("Fetching lab info from: {}", labInfoEndpoint);
+                String labInfoResponse = getLabResponseAsync(labInfoEndpoint).join();
+
+                List<Lab> labs;
+                try (JsonReader labReader = JsonProviders.createReader(labInfoResponse)) {
+                    labs = labReader.readArray(Lab::fromJson);
+                }
+
+                if (labs.isEmpty()) {
+                    log.error("No lab info found for labName: {}", user.getLabName());
+                    throw new RuntimeException("No lab info found for labName: " + user.getLabName());
+                }
+                log.debug("Successfully parsed lab info for: {}", user.getLabName());
+
+                LabResponse response = new LabResponse();
+                response.setUser(user);
+                response.setApp(labApps.get(0));
+                response.setLab(labs.get(0));
+
+                log.info("Successfully created LabResponse for user: {}", user.getUpn());
+                return response;
+
+            } catch (Exception e) {
+                log.error("Failed to create LabResponse from API result: {}", e.getMessage(), e);
+                throw new RuntimeException("Failed to create LabResponse from API result", e);
+            }
+        });
+    }
+
+    /**
+     * Execute a query against the lab API.
+     *
+     * @param query UserQuery parameters
+     * @return CompletableFuture containing JSON response string
+     */
+    private CompletableFuture<String> runQueryAsync(UserQuery query) {
+        Map<String, String> queryDict = new HashMap<>();
+
+        // Building user query - required parameters set to defaults if not supplied
+        queryDict.put(
+                LabApiConstants.MULTI_FACTOR_AUTHENTICATION,
+                MFA.NONE.toString()
+        );
+
+        queryDict.put(
+                LabApiConstants.PROTECTION_POLICY,
+                ProtectionPolicy.NONE.toString()
+        );
+
+        if (query.getUserType() != null) {
+            queryDict.put(LabApiConstants.USER_TYPE, query.getUserType().toString());
+        }
+
+        if (query.getB2cIdentityProvider() != null) {
+            queryDict.put(LabApiConstants.B2C_PROVIDER,
+                    query.getB2cIdentityProvider().toString());
+        }
+
+        if (query.getFederationProvider() != null) {
+            queryDict.put(LabApiConstants.FEDERATION_PROVIDER,
+                    query.getFederationProvider().toString());
+        }
+
+        if (query.getAzureEnvironment() != null) {
+            queryDict.put(LabApiConstants.AZURE_ENVIRONMENT,
+                    query.getAzureEnvironment().toString());
+        }
+
+        return sendLabRequestAsync(LabApiConstants.LAB_ENDPOINT, queryDict);
+    }
+
+    /**
+     * Send HTTP request to lab API with query parameters.
+     *
+     * @param requestUrl Base URL for the request
+     * @param queryDict  Query parameters
+     * @return CompletableFuture containing response string
+     */
+    private CompletableFuture<String> sendLabRequestAsync(String requestUrl, Map<String, String> queryDict) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                log.debug("Acquiring lab access token");
+                String accessToken = getLabAccessToken();
+                log.debug("Sending lab request to: {} with {} query parameters", requestUrl, queryDict.size());
+
+                String response = LabHttpHelper.sendRequestToLab(requestUrl, queryDict, accessToken);
+                log.debug("Lab request successful, received {} characters", response.length());
+                return response;
+            } catch (IOException e) {
+                log.error("Failed to send lab request to {}: {}", requestUrl, e.getMessage());
+                throw new RuntimeException("Failed to send lab request", e);
+            }
+        });
+    }
+
+    private void initLabApp() {
+        if (labApp == null) {
+            log.debug("Initializing lab app");
+            KeyVaultSecretsProvider keyVaultSecretsProvider = new KeyVaultSecretsProvider();
+
+            String appID = keyVaultSecretsProvider.getSecretByName("LabVaultAppID").getValue();
+            log.debug("Retrieved lab app ID from Key Vault");
+
+            try {
+                labApp = ConfidentialClientApplication.builder(
+                                appID,
+                                keyVaultSecretsProvider.getClientCredentialFromKeyStore())
+                        .authority(LabApiConstants.MICROSOFT_AUTHORITY)
+                        .build();
+                log.debug("Lab app initialized successfully");
+            } catch (Exception e) {
+                log.error("Error initializing lab app: {}", e.getMessage(), e);
+                throw new RuntimeException("Error initializing lab app: " + e.getMessage());
+            }
+        }
+    }
+
+    private String getLabAccessToken() {
+        try {
+            initLabApp();
+
+            log.debug("Acquiring lab access token");
+            IAuthenticationResult result = labApp.acquireToken(
+                    ClientCredentialParameters
+                            .builder(Collections.singleton(LabApiConstants.LAB_API_SCOPE))
+                            .build()
+            ).get();
+
+            log.debug("Successfully acquired lab access token");
+            return result.accessToken();
+
+        } catch (Exception e) {
+            log.error("Error acquiring lab access token: {}", e.getMessage(), e);
+            throw new RuntimeException("Error acquiring lab access token: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Execute HTTP GET request to lab API endpoint.
+     *
+     * @param address Full URL to request
+     * @return CompletableFuture containing response body as string
+     */
+    CompletableFuture<String> getLabResponseAsync(String address) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                log.debug("Getting lab response from: {}", address);
+                String accessToken = getLabAccessToken();
+                String response = LabHttpHelper.sendRequestToLab(address, accessToken);
+                log.debug("Successfully retrieved lab response: {} characters", response.length());
+                return response;
+            } catch (IOException e) {
+                log.error("Failed to get lab response from {}: {}", address, e.getMessage());
+                throw new RuntimeException("Failed to get lab response from: " + address, e);
+            }
+        });
+    }
+}

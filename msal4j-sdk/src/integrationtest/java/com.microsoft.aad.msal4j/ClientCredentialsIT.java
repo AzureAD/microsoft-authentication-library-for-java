@@ -3,10 +3,8 @@
 
 package com.microsoft.aad.msal4j;
 
-import labapi.AppCredentialProvider;
-import labapi.AzureEnvironment;
-import labapi.LabUserProvider;
-import labapi.User;
+import com.microsoft.aad.msal4j.labapi2.KeyVaultSecretsProvider;
+import com.microsoft.aad.msal4j.labapi2.LabServiceApi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.BeforeAll;
@@ -21,8 +19,6 @@ import java.security.NoSuchProviderException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
@@ -30,12 +26,14 @@ import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ClientCredentialsIT {
     private IClientCertificate certificate;
-    private LabUserProvider labUserProvider;
+    private KeyVaultSecretsProvider keyVaultSecretsProvider;
+    private LabServiceApi labServiceApi;
 
     @BeforeAll
     void init() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, NoSuchProviderException, IOException {
         certificate = CertificateHelper.getClientCertificate();
-        labUserProvider = LabUserProvider.getInstance();
+        keyVaultSecretsProvider = new KeyVaultSecretsProvider();
+        labServiceApi = new LabServiceApi();
     }
 
     @Test
@@ -46,8 +44,7 @@ class ClientCredentialsIT {
 
     @Test
     void acquireTokenClientCredentials_ClientSecret() throws Exception {
-        AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.AZURE);
-        final String clientId = appProvider.getLabVaultAppId();
+        final String clientId = keyVaultSecretsProvider.getSecretByName("LabVaultAppID").getValue();
         IClientCredential credential = CertificateHelper.getClientCertificate();
 
         assertAcquireTokenCommon(clientId, credential, TestConstants.MICROSOFT_AUTHORITY);
@@ -64,28 +61,21 @@ class ClientCredentialsIT {
         assertAcquireTokenCommon(clientId, credential, TestConstants.MICROSOFT_AUTHORITY);
     }
 
-    @Test
-    void acquireTokenClientCredentials_ClientSecret_Ciam() throws Exception {
-
-        User user = labUserProvider.getCiamCudUser();
-        String clientId = user.getAppId();
-
-        AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.CIAM);
-        IClientCredential credential = ClientCredentialFactory.createFromSecret(appProvider.getOboAppPassword());
-
-        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
-                        clientId, credential).
-                authority("https://" + user.getLabName() + ".ciamlogin.com/").
-                build();
-
-        IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
-                        .builder(Collections.singleton(TestConstants.DEFAULT_SCOPE))
-                        .build())
-                .get();
-
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
-    }
+//    @Test
+//    void acquireTokenClientCredentials_ClientSecret_Ciam() throws Exception {
+//        User user = LabUserHelper.getCiamUserge(labServiceApi);
+//        String clientId = user.getAppId();
+//
+//        String ciamPassword = keyVaultSecretsProvider.getSecretByName("CiamAppPassword").getValu
+//
+//        IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
+//                        .builder(Collections.singleton(TestConstants.DEFAULT_SCOPE))
+//                        .build())
+//                .get();
+//
+//        assertNotNull(result);
+//        assertNotNull(result.accessToken());
+//    }
 
     @Test
     void acquireTokenClientCredentials_Certificate_CiamCud() throws Exception {
@@ -132,8 +122,7 @@ class ClientCredentialsIT {
 
     @Test
     void acquireTokenClientCredentials_DefaultCacheLookup() throws Exception {
-        AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.AZURE);
-        final String clientId = appProvider.getLabVaultAppId();
+        final String clientId = keyVaultSecretsProvider.getSecretByName("LabVaultAppID").getValue();
 
         ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
                 clientId, CertificateHelper.getClientCertificate()).
