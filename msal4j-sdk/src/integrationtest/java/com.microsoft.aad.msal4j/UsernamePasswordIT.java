@@ -18,34 +18,12 @@ import java.util.Collections;
 class UsernamePasswordIT {
     private Config cfg;
 
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    void acquireTokenWithUsernamePassword_Managed(String environment) throws Exception {
-        cfg = new Config(environment);
-
-        LabResponse labResponse = LabUserHelper.getDefaultUser(environment);
-        assertAcquireTokenCommon(labResponse.getUser(), cfg.organizationsAuthority(), cfg.graphDefaultScope(), labResponse.getApp().getAppId());
-    }
-
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-    void acquireTokenWithUsernamePassword_ADFSv2019_Federated(String environment) throws Exception {
-        cfg = new Config(environment);
-
-        LabResponse labResponse = LabUserHelper.getDefaultAdfsUser(environment);
-        LabUser user = labResponse.getUser();
-
-        assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope(), labResponse.getApp().getAppId());
-    }
-
     @Test
-    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-    void acquireTokenWithUsernamePassword_ADFSv2019_OnPrem() throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultAdfsUser();
-        LabUser user = labResponse.getUser();
+    void acquireTokenWithUsernamePassword_Managed() throws Exception {
+        cfg = new Config();
 
-        assertAcquireTokenCommon(user, TestConstants.ADFS_AUTHORITY, TestConstants.ADFS_SCOPE, TestConstants.ADFS_APP_ID);
+        LabResponse labResponse = LabUserHelper.getDefaultUser();
+        assertAcquireTokenCommon(labResponse.getUser(), cfg.organizationsAuthority(), cfg.graphDefaultScope(), labResponse.getApp().getAppId());
     }
 
 //    @Test

@@ -20,21 +20,21 @@ class HttpClientIT {
 
     @Test
     void acquireToken_okHttpClient() throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser(AzureEnvironment.AZURE);
+        LabResponse labResponse = LabUserHelper.getDefaultUser();
         LabUser user = labResponse.getUser();
         assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), new OkHttpClientAdapter());
     }
 
     @Test
     void acquireToken_apacheHttpClient() throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser(AzureEnvironment.AZURE);
+        LabResponse labResponse = LabUserHelper.getDefaultUser();
         LabUser user = labResponse.getUser();
         assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), new ApacheHttpClientAdapter());
     }
 
     @Test
     void acquireToken_readTimeout() throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser(AzureEnvironment.AZURE);
+        LabResponse labResponse = LabUserHelper.getDefaultUser();
         LabUser user = labResponse.getUser();
 
         //Set a 1ms read timeout, which will almost certainly occur before the service can respond

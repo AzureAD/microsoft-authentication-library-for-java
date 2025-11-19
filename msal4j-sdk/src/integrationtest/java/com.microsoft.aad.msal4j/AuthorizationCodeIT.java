@@ -42,34 +42,13 @@ class AuthorizationCodeIT extends SeleniumTest {
         startUpBrowser();
     }
 
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    public void acquireTokenWithAuthorizationCode_ManagedUser(String environment) {
-        cfg = new Config(environment);
+    @Test
+    public void acquireTokenWithAuthorizationCode_ManagedUser() {
+        cfg = new Config();
 
-        LabResponse labResponse = LabUserHelper.getDefaultUser(environment);
+        LabResponse labResponse = LabUserHelper.getDefaultUser();
         LabUser user = labResponse.getUser();
-        assertAcquireTokenAAD(user, null);
-    }
-
-    // TODO: labapi2 doesn't have on-prem ADFS user configuration yet - will be pulled from MSAL.NET
-//    @Test
-//    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-//    public void acquireTokenWithAuthorizationCode_ADFSv2019_OnPrem() {
-//        LabResponse labResponse = LabUserHelper.getOnPremAdfsUser(LabServiceParameters.FederationProvider.ADFS_V2019);
-//        LabUser user = labResponse.getUser();
-//        assertAcquireTokenADFS2019(user);
-//    }
-
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-    public void acquireTokenWithAuthorizationCode_ADFSv2019_Federated(String environment) {
-        cfg = new Config(environment);
-
-        LabResponse labResponse = LabUserHelper.getDefaultAdfsUser(environment);
-        LabUser user = labResponse.getUser();
-        assertAcquireTokenAAD(user, null);
+        assertAcquireTokenAAD(user, labResponse.getApp().getAppId(), null);
     }
 
     // TODO: labapi2 doesn't have ADFS v4 specific user helper yet - will be pulled from MSAL.NET
@@ -85,10 +64,9 @@ class AuthorizationCodeIT extends SeleniumTest {
 //        assertAcquireTokenAAD(user, null);
 //    }
 
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    public void acquireTokenWithAuthorizationCode_B2C_Local(String environment) {
-        cfg = new Config(environment);
+    @Test
+    public void acquireTokenWithAuthorizationCode_B2C_Local() {
+        cfg = new Config();
 
         LabResponse labResponse = LabUserHelper.getB2CLocalAccount();
         LabUser user = labResponse.getUser();
@@ -155,9 +133,9 @@ class AuthorizationCodeIT extends SeleniumTest {
         assertEquals(user.getUpn(), result.account().username());
     }
 
-    private void assertAcquireTokenAAD(LabUser user, Map<String, Set<String>> parameters) {
+    private void assertAcquireTokenAAD(LabUser user, String appId, Map<String, Set<String>> parameters) {
 
-        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(user.getAppId(), cfg.commonAuthority());
+        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(appId, cfg.commonAuthority());
 
         String authCode = acquireAuthorizationCodeAutomated(user, pca, parameters);
         IAuthenticationResult result = acquireTokenAuthorizationCodeFlow(

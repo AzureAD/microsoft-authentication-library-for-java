@@ -24,11 +24,9 @@ import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 class AcquireTokenSilentIT {
     private Config cfg;
 
-
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    void acquireTokenSilent_OrganizationAuthority_TokenRefreshed(String environment) throws Exception {
-        cfg = new Config(environment);
+    @Test
+    void acquireTokenSilent_OrganizationAuthority_TokenRefreshed() throws Exception {
+        cfg = new Config();
 
         // When using common, organization, or consumer tenants, cache has no way
         // of determining which access token to return therefore token is always refreshed
@@ -39,14 +37,12 @@ class AcquireTokenSilentIT {
         assertResultNotNull(result);
     }
 
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    void acquireTokenSilent_LabAuthority_TokenNotRefreshed(String environment) throws Exception {
-        cfg = new Config(environment);
+    @Test
+    void acquireTokenSilent_LabAuthority_TokenNotRefreshed() throws Exception {
+        cfg = new Config();
 
         // Access token should be returned from cache, and not using refresh token
-
-        LabResponse labResponse = LabUserHelper.getDefaultUser(environment);
+        LabResponse labResponse = LabUserHelper.getDefaultUser();
         LabUser user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
@@ -67,12 +63,11 @@ class AcquireTokenSilentIT {
         assertEquals(TokenSource.CACHE, acquireSilentResult.metadata().tokenSource());
     }
 
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    void acquireTokenSilent_ForceRefresh(String environment) throws Exception {
-        cfg = new Config(environment);
+    @Test
+    void acquireTokenSilent_ForceRefresh() throws Exception {
+        cfg = new Config();
 
-        LabResponse labResponse = LabUserHelper.getDefaultUser(environment);
+        LabResponse labResponse = LabUserHelper.getDefaultUser();
         LabUser user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
@@ -119,34 +114,6 @@ class AcquireTokenSilentIT {
 //        assertEquals(result.account().username(), user.getUpn());
 //    }
 
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-    void acquireTokenSilent_ADFS2019(String environment) throws Exception {
-        cfg = new Config(environment);
-
-        LabResponse labResponse = LabUserHelper.getDefaultAdfsUser(environment);
-        LabUser user = labResponse.getUser();
-
-        PublicClientApplication pca = PublicClientApplication.builder(
-                labResponse.getApp().getAppId()).
-                authority(cfg.organizationsAuthority()).
-                build();
-
-        IAuthenticationResult result = acquireTokenUsernamePassword(user, pca, cfg.graphDefaultScope());
-        assertResultNotNull(result);
-
-        IAccount account = pca.getAccounts().join().iterator().next();
-        IAuthenticationResult acquireSilentResult = acquireTokenSilently(pca, account, TestConstants.ADFS_SCOPE, false);
-        assertResultNotNull(acquireSilentResult);
-
-        account = pca.getAccounts().join().iterator().next();
-        IAuthenticationResult resultAfterRefresh = acquireTokenSilently(pca, account, TestConstants.ADFS_SCOPE, true);
-        assertResultNotNull(resultAfterRefresh);
-
-        assertTokensAreNotEqual(result, resultAfterRefresh);
-    }
-
     @Test
     void acquireTokenSilent_usingCommonAuthority_returnCachedAt() throws Exception {
         acquireTokenSilent_returnCachedTokens(cfg.organizationsAuthority());
@@ -157,10 +124,9 @@ class AcquireTokenSilentIT {
         acquireTokenSilent_returnCachedTokens(cfg.tenantSpecificAuthority());
     }
 
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    void acquireTokenSilent_ConfidentialClient_acquireTokenSilent(String environment) throws Exception {
-        cfg = new Config(environment);
+    @Test
+    void acquireTokenSilent_ConfidentialClient_acquireTokenSilent() throws Exception {
+        cfg = new Config();
 
         IConfidentialClientApplication cca = getConfidentialClientApplications();
         //test that adding extra query parameters does not break the flow
@@ -190,7 +156,7 @@ class AcquireTokenSilentIT {
     @Test
     void acquireTokenSilent_ConfidentialClient_acquireTokenSilentDifferentScopeThrowsException()
             throws Exception {
-        cfg = new Config(AzureEnvironment.AZURE);
+        cfg = new Config();
 
         IConfidentialClientApplication cca = getConfidentialClientApplications();
 
@@ -209,12 +175,11 @@ class AcquireTokenSilentIT {
                 .get());
     }
 
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    void acquireTokenSilent_WithRefreshOn(String environment) throws Exception {
-        cfg = new Config(environment);
+    @Test
+    void acquireTokenSilent_WithRefreshOn() throws Exception {
+        cfg = new Config();
 
-        LabResponse labResponse = LabUserHelper.getDefaultUser(environment);
+        LabResponse labResponse = LabUserHelper.getDefaultUser();
         LabUser user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
@@ -257,12 +222,11 @@ class AcquireTokenSilentIT {
         assertEquals(TokenSource.IDENTITY_PROVIDER, resultSilentWithRefreshOn.metadata().tokenSource());
     }
 
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    void acquireTokenSilent_TenantAsParameter(String environment) throws Exception {
-        cfg = new Config(environment);
+    @Test
+    void acquireTokenSilent_TenantAsParameter() throws Exception {
+        cfg = new Config();
 
-        LabResponse labResponse = LabUserHelper.getDefaultUser(environment);
+        LabResponse labResponse = LabUserHelper.getDefaultUser();
         LabUser user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
@@ -290,11 +254,10 @@ class AcquireTokenSilentIT {
         assertTokensAreNotEqual(result, resultWithTenantParam);
     }
 
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    void acquireTokenSilent_emptyStringScope(String environment) throws Exception {
-        cfg = new Config(environment);
-        LabResponse labResponse = LabUserHelper.getDefaultUser(environment);
+    @Test
+    void acquireTokenSilent_emptyStringScope() throws Exception {
+        cfg = new Config();
+        LabResponse labResponse = LabUserHelper.getDefaultUser();
         LabUser user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
@@ -312,11 +275,10 @@ class AcquireTokenSilentIT {
         assertEquals(result.accessToken(), silentResult.accessToken());
     }
 
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    void acquireTokenSilent_emptyScopeSet(String environment) throws Exception {
-        cfg = new Config(environment);
-        LabResponse labResponse = LabUserHelper.getDefaultUser(environment);
+    @Test
+    void acquireTokenSilent_emptyScopeSet() throws Exception {
+        cfg = new Config();
+        LabResponse labResponse = LabUserHelper.getDefaultUser();
         LabUser user = labResponse.getUser();
 
         Set<String> scopes = new HashSet<>();
@@ -345,8 +307,8 @@ class AcquireTokenSilentIT {
 
     @Test
     public void acquireTokenSilent_ClaimsForceRefresh() throws Exception {
-        cfg = new Config(AzureEnvironment.AZURE);
-        LabResponse labResponse = LabUserHelper.getDefaultUser(AzureEnvironment.AZURE);
+        cfg = new Config();
+        LabResponse labResponse = LabUserHelper.getDefaultUser();
         LabUser user = labResponse.getUser();
 
         Set<String> scopes = new HashSet<>();
@@ -387,8 +349,8 @@ class AcquireTokenSilentIT {
     }
 
     private IConfidentialClientApplication getConfidentialClientApplications() throws Exception {
-        String clientId = cfg.appProvider.getOboAppId();
-        String password = cfg.appProvider.getOboAppPassword();
+        String clientId = cfg.appProvider().getOboAppId();
+        String password = cfg.appProvider().getOboAppPassword();
 
         IClientCredential credential = ClientCredentialFactory.createFromSecret(password);
 
@@ -400,7 +362,7 @@ class AcquireTokenSilentIT {
     }
 
     private void acquireTokenSilent_returnCachedTokens(String authority) throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser(cfg.azureEnvironment);
+        LabResponse labResponse = LabUserHelper.getDefaultUser();
         LabUser user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
@@ -424,7 +386,7 @@ class AcquireTokenSilentIT {
 
     private IPublicClientApplication getPublicClientApplicationWithTokensInCache()
             throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser(cfg.azureEnvironment);
+        LabResponse labResponse = LabUserHelper.getDefaultUser();
         LabUser user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(

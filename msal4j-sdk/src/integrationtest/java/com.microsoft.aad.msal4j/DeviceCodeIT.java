@@ -32,12 +32,11 @@ class DeviceCodeIT {
         seleniumDriver = SeleniumExtensions.createDefaultWebDriver();
     }
 
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    void DeviceCodeFlowADTest(String environment) throws Exception {
-        Config cfg = new Config(environment);
+    @Test
+    void DeviceCodeFlowADTest() throws Exception {
+        Config cfg = new Config();
 
-        LabResponse labResponse = LabUserHelper.getDefaultUser(environment);
+        LabResponse labResponse = LabUserHelper.getDefaultUser();
         LabUser user = labResponse.getUser();
 
         PublicClientApplication pca = IntegrationTestHelper.createPublicApp(labResponse.getApp().getAppId(), cfg.commonAuthority());
@@ -52,32 +51,6 @@ class DeviceCodeIT {
 
         IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
     }
-
-    // TODO: labapi2 doesn't have on-prem ADFS user configuration yet - will be pulled from MSAL.NET
-//    @Test()
-//    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-//    void DeviceCodeFlowADFSv2019Test() throws Exception {
-//
-//        LabResponse labResponse = LabUserHelper.getOnPremAdfsUser(LabServiceParameters.FederationProvider.ADFS_V2019);
-//        LabUser user = labResponse.getUser();
-//
-//        PublicClientApplication pca = PublicClientApplication.builder(
-//                TestConstants.ADFS_APP_ID).
-//                authority(TestConstants.ADFS_AUTHORITY).validateAuthority(false).
-//                build();
-//
-//        Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
-//            runAutomatedDeviceCodeFlow(deviceCode, user);
-//        };
-//
-//        IAuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
-//                .builder(Collections.singleton(TestConstants.ADFS_SCOPE),
-//                        deviceCodeConsumer)
-//                .build())
-//                .get();
-//
-//        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
-//    }
 
     // TODO: labapi2 doesn't have MSA user configuration yet - will be pulled from MSAL.NET
     // NOTE: This test was also failing intermittently in the pipeline runs for the same commit, but always passed locally.
@@ -112,31 +85,13 @@ class DeviceCodeIT {
 //    }
 
     private void runAutomatedDeviceCodeFlow(DeviceCode deviceCode, LabUser user) {
-        boolean isRunningLocally = true;//!Strings.isNullOrEmpty(
-        //System.getenv(TestConstants.LOCAL_FLAG_ENV_VAR));
 
-        boolean isADFS2019 = user.getFederationProvider().equals("adfsv2019");
-
-        LOG.info("Device code running locally: " + isRunningLocally);
         try {
             String deviceCodeFormId;
             String continueButtonId;
-            if (isRunningLocally) {
-                if (isADFS2019) {
-                    deviceCodeFormId = "userCodeInput";
-                    continueButtonId = "confirmationButton";
-                } else {
-                    deviceCodeFormId = "otc";
-                    continueButtonId = "idSIButton9";
-                }
-            } else {
-                deviceCodeFormId = "code";
-                continueButtonId = "continueBtn";
-            }
+            deviceCodeFormId = "otc";
+            continueButtonId = "idSIButton9";
             LOG.info("Loggin in ... Entering device code");
-            if (isADFS2019) {
-                seleniumDriver.manage().deleteAllCookies();
-            }
             seleniumDriver.navigate().to(deviceCode.verificationUri());
             seleniumDriver.findElement(new By.ById(deviceCodeFormId)).sendKeys(deviceCode.userCode());
 
@@ -146,15 +101,8 @@ class DeviceCodeIT {
                     new By.ById(continueButtonId));
             continueBtn.click();
 
-            if (isADFS2019) {
-                SeleniumExtensions.performADFS2019Login(seleniumDriver, user);
-            } else {
-                SeleniumExtensions.performADOrCiamLogin(seleniumDriver, user);
-            }
+            SeleniumExtensions.performADOrCiamLogin(seleniumDriver, user);
         } catch (Exception e) {
-            if (!isRunningLocally) {
-                SeleniumExtensions.takeScreenShot(seleniumDriver);
-            }
             LOG.error("Browser automation failed: {}", e.getMessage());
             throw new RuntimeException("Browser automation failed: " + e.getMessage());
         }

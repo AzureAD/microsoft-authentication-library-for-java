@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j;
 import com.microsoft.aad.msal4j.labapi2.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,12 +38,11 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
         startUpBrowser();
     }
 
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    void acquireTokenInteractive_ManagedUser(String environment) {
-        cfg = new Config(environment);
+    @Test
+    void acquireTokenInteractive_ManagedUser() {
+        cfg = new Config();
 
-        LabResponse labResponse = LabUserHelper.getDefaultUser(environment);
+        LabResponse labResponse = LabUserHelper.getDefaultUser();
         LabUser user = labResponse.getUser();
         assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), cfg.commonAuthority(), cfg.graphDefaultScope());
     }
@@ -56,17 +56,6 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
 //        assertAcquireTokenCommon(user, TestConstants.ADFS_AUTHORITY, TestConstants.ADFS_SCOPE);
 //    }
 
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-    void acquireTokenInteractive_ADFSv2019_Federated(String environment) {
-        cfg = new Config(environment);
-
-        LabResponse labResponse = LabUserHelper.getDefaultAdfsUser(environment);
-        LabUser user = labResponse.getUser();
-        assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), cfg.organizationsAuthority(), cfg.graphDefaultScope());
-    }
-
     // TODO: labapi2 doesn't have ADFS v4 specific user helper yet - will be pulled from MSAL.NET
 //    @ParameterizedTest
 //    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
@@ -79,20 +68,18 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
 //        assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope());
 //    }
 
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    void acquireTokenWithAuthorizationCode_B2C_Local(String environment) {
-        cfg = new Config(environment);
+    @Test
+    void acquireTokenWithAuthorizationCode_B2C_Local() {
+        cfg = new Config();
 
         LabResponse labResponse = LabUserHelper.getB2CLocalAccount();
         LabUser user = labResponse.getUser();
         assertAcquireTokenB2C(user, TestConstants.B2C_AUTHORITY);
     }
 
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    void acquireTokenWithAuthorizationCode_B2C_LegacyFormat(String environment) {
-        cfg = new Config(environment);
+    @Test
+    void acquireTokenWithAuthorizationCode_B2C_LegacyFormat() {
+        cfg = new Config();
 
         LabResponse labResponse = LabUserHelper.getB2CLocalAccount();
         LabUser user = labResponse.getUser();

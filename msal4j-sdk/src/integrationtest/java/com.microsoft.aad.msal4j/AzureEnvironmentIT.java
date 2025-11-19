@@ -21,30 +21,25 @@ class AzureEnvironmentIT {
 
     @Test
     void acquireTokenWithUsernamePassword_AzureGovernment() throws Exception {
-        assertAcquireTokenCommon(AzureEnvironment.AZURE_US_GOVERNMENT);
-    }
-
-    private void assertAcquireTokenCommon(String azureEnvironment) throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser(azureEnvironment);
+        LabResponse labResponse = LabUserHelper.getArlingtonUser();
         LabUser user = labResponse.getUser();
         LabApp app = labResponse.getApp();
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                app.getAppId()).
+                        app.getAppId()).
                 authority(app.getAuthority() + "organizations/").
                 build();
 
         IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters
-                .builder(Collections.singleton(TestConstants.USER_READ_SCOPE),
-                        user.getUpn(),
-                        user.getPassword().toCharArray())
-                .build())
+                        .builder(Collections.singleton(TestConstants.USER_READ_SCOPE),
+                                user.getUpn(),
+                                user.getPassword().toCharArray())
+                        .build())
                 .get();
 
         assertNotNull(result);
         assertNotNull(result.accessToken());
         assertNotNull(result.idToken());
 
-        assertEquals(user.getUpn(), result.account().username());
-    }
+        assertEquals(user.getUpn(), result.account().username());    }
 }

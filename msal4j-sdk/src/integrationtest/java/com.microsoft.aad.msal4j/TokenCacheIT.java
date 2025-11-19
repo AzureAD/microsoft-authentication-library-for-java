@@ -18,11 +18,11 @@ class TokenCacheIT {
 
     @Test
     void singleAccountInCache_RemoveAccountTest() throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser(AzureEnvironment.AZURE);
+        LabResponse labResponse = LabUserHelper.getDefaultUser();
         LabUser user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                user.getAppId()).
+                labResponse.getApp().getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
 
@@ -168,34 +168,6 @@ class TokenCacheIT {
 //                this.getClass(),
 //                "/cache_data/remove-account-test-cache.json");
 //    }
-
-    // TODO: labapi2 doesn't have on-prem ADFS user configuration yet - will be pulled from MSAL.NET
-//    @Test
-//    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-//    void retrieveAccounts_ADFSOnPrem() throws Exception {
-//        UserQuery query = new UserQuery();
-//        query.setFederationProvider(LabServiceParameters.FederationProvider.ADFS_V2019);
-//        query.setUserType(LabServiceParameters.UserType.ON_PREM);
-//
-//        LabResponse labResponse = LabUserHelper.getLabUserData(query);
-//        LabUser user = labResponse.getUser();
-//
-//        PublicClientApplication pca = PublicClientApplication.builder(
-//                        TestConstants.ADFS_APP_ID).
-//                authority(TestConstants.ADFS_AUTHORITY).
-//                build();
-//
-//        pca.acquireToken(UserNamePasswordParameters.
-//                        builder(Collections.singleton(TestConstants.ADFS_SCOPE),
-//                                user.getUpn(),
-//                                user.getPassword().toCharArray())
-//                        .build())
-//                .get();
-//
-//        assertNotNull(pca.getAccounts().join().iterator().next());
-//        assertEquals(pca.getAccounts().join().size(), 1);
-//    }
-
 
     private static class TokenPersistence implements ITokenCacheAccessAspect {
         String data;

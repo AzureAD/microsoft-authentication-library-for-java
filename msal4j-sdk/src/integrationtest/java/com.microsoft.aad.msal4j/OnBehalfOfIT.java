@@ -4,6 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import com.microsoft.aad.msal4j.labapi2.*;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -18,14 +19,13 @@ class OnBehalfOfIT {
 
     private Config cfg;
 
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    void acquireTokenWithOBO_Managed(String environment) throws Exception {
-        cfg = new Config(environment);
+    @Test
+    void acquireTokenWithOBO_Managed() throws Exception {
+        cfg = new Config();
         String accessToken = this.getAccessToken();
 
-        final String clientId = cfg.appProvider.getOboAppId();
-        final String password = cfg.appProvider.getOboAppPassword();
+        final String clientId = cfg.appProvider().getOboAppId();
+        final String password = cfg.appProvider().getOboAppPassword();
 
         ConfidentialClientApplication cca =
                 ConfidentialClientApplication.builder(clientId, ClientCredentialFactory.createFromSecret(password)).
@@ -41,14 +41,12 @@ class OnBehalfOfIT {
         assertResultNotNull(result);
     }
 
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    void acquireTokenWithOBO_testCache(String environment) throws Exception {
-        cfg = new Config(environment);
+    @Test
+    void acquireTokenWithOBO_testCache() throws Exception {
         String accessToken = this.getAccessToken();
 
-        final String clientId = cfg.appProvider.getOboAppId();
-        final String password = cfg.appProvider.getOboAppPassword();
+        final String clientId = cfg.appProvider().getOboAppId();
+        final String password = cfg.appProvider().getOboAppPassword();
 
         ConfidentialClientApplication cca =
                 ConfidentialClientApplication.builder(clientId, ClientCredentialFactory.createFromSecret(password)).
@@ -129,11 +127,11 @@ class OnBehalfOfIT {
 
     private String getAccessToken() throws Exception {
 
-        LabResponse labResponse = LabUserHelper.getDefaultUser(cfg.azureEnvironment);
+        LabResponse labResponse = LabUserHelper.getDefaultUser();
         LabUser user = labResponse.getUser();
 
-        String clientId = cfg.appProvider.getAppId();
-        String apiReadScope = cfg.appProvider.getOboAppIdURI() + "/user_impersonation";
+        String clientId = cfg.appProvider().getAppId();
+        String apiReadScope = cfg.appProvider().getOboAppIdURI() + "/user_impersonation";
         PublicClientApplication pca = PublicClientApplication.builder(
                 clientId).
                 authority(cfg.tenantSpecificAuthority()).

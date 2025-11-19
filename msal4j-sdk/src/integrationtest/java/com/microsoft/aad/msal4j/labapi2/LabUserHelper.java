@@ -242,44 +242,4 @@ public class LabUserHelper {
 
        return getLabUserData(query);
     }
-
-    /**
-     * Get a default managed user for the specified Azure environment.
-     * This is the primary helper method for parameterized tests that run across multiple clouds.
-     *
-     * @param azureEnvironment The Azure environment (e.g., AzureEnvironment.AZURE or AZURE_US_GOVERNMENT)
-     * @return LabResponse for a managed user in that environment
-     */
-    public static LabResponse getDefaultUser(String azureEnvironment) {
-        log.debug("Getting default user for environment: {}", azureEnvironment);
-
-        if (AzureEnvironment.AZURE.equals(azureEnvironment)) {
-            return getDefaultUser();
-        } else if (AzureEnvironment.AZURE_US_GOVERNMENT.equals(azureEnvironment)) {
-            return getArlingtonUser();
-        } else {
-            log.error("Unsupported Azure environment: {}", azureEnvironment);
-            throw new IllegalArgumentException("Unsupported Azure environment: " + azureEnvironment);
-        }
-    }
-
-    /**
-     * Get a default ADFS user for the specified Azure environment.
-     * Currently ADFS users are environment-agnostic and come from Key Vault.
-     *
-     * @param azureEnvironment The Azure environment (included for consistency, currently unused)
-     * @return LabResponse for an ADFS federated user
-     */
-    public static LabResponse getDefaultAdfsUser(String azureEnvironment) {
-        log.debug("Getting default ADFS user for environment: {}", azureEnvironment);
-
-        if (AzureEnvironment.AZURE.equals(azureEnvironment)) {
-            return getDefaultUser();
-        } else if (AzureEnvironment.AZURE_US_GOVERNMENT.equals(azureEnvironment)) {
-            return getArlingtonADFSUser();
-        } else {
-            log.error("Unsupported Azure environment: {}", azureEnvironment);
-            throw new IllegalArgumentException("Unsupported Azure environment: " + azureEnvironment);
-        }
-    }
 }

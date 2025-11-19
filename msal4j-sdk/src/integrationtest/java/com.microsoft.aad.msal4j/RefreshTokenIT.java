@@ -20,8 +20,8 @@ class RefreshTokenIT {
 
     private Config cfg;
 
-    private void setUp(String environment) throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser(environment);
+    private void setUp() throws Exception {
+        LabResponse labResponse = LabUserHelper.getDefaultUser();
         LabUser user = labResponse.getUser();
 
         pca = PublicClientApplication.builder(
@@ -39,12 +39,11 @@ class RefreshTokenIT {
         refreshToken = result.refreshToken();
     }
 
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    void acquireTokenWithRefreshToken(String environment) throws Exception {
-        cfg = new Config(environment);
+    @Test
+    void acquireTokenWithRefreshToken() throws Exception {
+        cfg = new Config();
 
-        setUp(environment);
+        setUp();
 
         IAuthenticationResult result = pca.acquireToken(RefreshTokenParameters
                 .builder(
