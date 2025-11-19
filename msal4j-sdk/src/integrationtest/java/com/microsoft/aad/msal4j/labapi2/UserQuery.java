@@ -9,6 +9,7 @@ public class UserQuery {
     private UserType userType;
     private B2CIdentityProvider b2cIdentityProvider;
     private FederationProvider federationProvider;
+    private SignInAudience signInAudience;
     private String azureEnvironment;
 
     // Getters and Setters
@@ -30,17 +31,91 @@ public class UserQuery {
         this.azureEnvironment = azureEnvironment;
     }
 
-    public static UserQuery b2cLocalAccountUserQuery() {
-        UserQuery query = new UserQuery();
-        query.setUserType(UserType.B2C);
-        query.setB2cIdentityProvider(B2CIdentityProvider.LOCAL);
-        return query;
+    public SignInAudience getSignInAudience() { return signInAudience; }
+    public void setSignInAudience(SignInAudience signInAudience) {
+        this.signInAudience = signInAudience;
     }
 
     public static UserQuery arlingtonUserQuery() {
         UserQuery query = new UserQuery();
         query.setUserType(UserType.CLOUD);
         query.setAzureEnvironment(AzureEnvironment.AZURE_US_GOVERNMENT);
+        return query;
+    }
+
+    /**
+     * Gets an ADFS 2022 federated user from the lab.
+     * Uses the Lab API to query for a user with ADFS 2022 federation.
+     */
+    public static UserQuery adfs2022UserQuery() {
+        UserQuery query = new UserQuery();
+        query.setAzureEnvironment(AzureEnvironment.AZURE);
+        query.setFederationProvider(FederationProvider.ADFS_2022);
+        query.setUserType(UserType.FEDERATED);
+        return query;
+    }
+
+    /**
+     * Gets a B2C local account (username/password) from the lab.
+     */
+    public static UserQuery b2cLocalAccountQuery() {
+        UserQuery query = new UserQuery();
+        query.setUserType(UserType.B2C);
+        query.setB2cIdentityProvider(B2CIdentityProvider.LOCAL);
+        return query;
+    }
+
+    /**
+     * Gets a B2C user that authenticates with Microsoft Account (MSA).
+     */
+    public static UserQuery b2cMsaAccountQuery() {
+        UserQuery query = new UserQuery();
+        query.setUserType(UserType.B2C);
+        query.setB2cIdentityProvider(B2CIdentityProvider.MSA);
+        return query;
+    }
+
+    /**
+     * Gets a CIAM user with standard domain (tenant.ciamlogin.com).
+     * Uses the Lab API to query for CIAM users.
+     */
+    public static UserQuery ciamUserQuery() {
+        UserQuery query = new UserQuery();
+        query.setFederationProvider(FederationProvider.CIAM);
+        query.setSignInAudience(SignInAudience.AzureAdMyOrg);
+        return query;
+    }
+
+    /**
+     * Gets a CIAM user with Custom User Domain (CUD).
+     * Example: login.customdomain.com instead of tenant.ciamlogin.com
+     */
+    public static UserQuery ciamCudUserQuery() {
+        UserQuery query = new UserQuery();
+        query.setFederationProvider(FederationProvider.CIAMCUD);
+        query.setSignInAudience(SignInAudience.AzureAdMyOrg);
+        return query;
+    }
+
+    /**
+     * Gets a regular Microsoft Account (MSA) user, not tied to B2C.
+     * This is for consumer accounts like outlook.com, hotmail.com, etc.
+     */
+    public static UserQuery msaUserQuery() {
+        UserQuery query = new UserQuery();
+        query.setUserType(UserType.MSA);
+        return query;
+    }
+
+    /**
+     * Gets a CIAM user for OBO scenarios.
+     * CIAM supports OBO flows, so this query gets a CIAM user that can be used
+     * in OBO tests.
+     */
+    public static UserQuery ciamOboUserQuery() {
+        UserQuery query = new UserQuery();
+        query.setFederationProvider(FederationProvider.CIAM);
+        query.setSignInAudience(SignInAudience.AzureAdMyOrg);
         return query;
     }
 

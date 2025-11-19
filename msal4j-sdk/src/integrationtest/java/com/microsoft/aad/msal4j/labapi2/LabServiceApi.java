@@ -163,6 +163,11 @@ public class LabServiceApi {
                     query.getFederationProvider().toString());
         }
 
+        if (query.getSignInAudience() != null) {
+            queryDict.put(LabConstants.SIGN_IN_AUDIENCE,
+                    query.getSignInAudience().toString());
+        }
+
         if (query.getAzureEnvironment() != null) {
             queryDict.put(LabConstants.AZURE_ENVIRONMENT,
                     query.getAzureEnvironment().toString());

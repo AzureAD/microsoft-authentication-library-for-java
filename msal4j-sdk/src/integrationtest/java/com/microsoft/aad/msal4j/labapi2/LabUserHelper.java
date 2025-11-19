@@ -227,7 +227,7 @@ public class LabUserHelper {
     }
 
     public static LabResponse getB2CLocalAccount() {
-        return getLabUserData(UserQuery.b2cLocalAccountUserQuery());
+        return getLabUserData(UserQuery.b2cLocalAccountQuery());
     }
 
     public static LabResponse getArlingtonUser() {
@@ -241,5 +241,29 @@ public class LabUserHelper {
         query.setUserType(LabServiceParameters.UserType.FEDERATED);
 
        return getLabUserData(query);
+    }
+
+    public static LabResponse getCiamUser() {
+        return getLabUserData(UserQuery.ciamUserQuery());
+    }
+
+    public static LabResponse getCiamCudUser() {
+        return getLabUserData(UserQuery.ciamCudUserQuery());
+    }
+
+    public static LabResponse getMSAUser() {
+        return getLabUserData(UserQuery.msaUserQuery());
+    }
+
+    public static LabResponse getB2CMsaAccount() {
+        return getLabUserData(UserQuery.b2cMsaAccountQuery());
+    }
+
+    public static LabResponse getAdfs2022User() {
+        return getLabUserData(UserQuery.adfs2022UserQuery());
+    }
+
+    public static LabResponse getCiamOboUser() {
+        return getLabUserData(UserQuery.ciamOboUserQuery());
     }
 }

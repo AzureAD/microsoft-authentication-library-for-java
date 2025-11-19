@@ -6,13 +6,10 @@ package com.microsoft.aad.msal4j;
 import com.microsoft.aad.msal4j.labapi2.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.net.MalformedURLException;
@@ -73,44 +70,40 @@ class AuthorizationCodeIT extends SeleniumTest {
         assertAcquireTokenB2C(user);
     }
 
-    // TODO: labapi2 doesn't have CIAM CUD user configuration yet - will be pulled from MSAL.NET
-//    @Test
-//    public void acquireTokenWithAuthorizationCode_CiamCud() throws Exception {
-//        String authorityCud = "https://login.msidlabsciam.com/fe362aec-5d43-45d1-b730-9755e60dc3b9/v2.0/";
-//        LabResponse labResponse = LabUserHelper.getCiamCudUser();
-//        LabUser user = labResponse.getUser();
-//
-//        PublicClientApplication pca = PublicClientApplication.builder(
-//                        user.getAppId()).
-//                oidcAuthority(authorityCud).
-//                build();
-//
-//        assertEquals("https://login.msidlabsciam.com/fe362aec-5d43-45d1-b730-9755e60dc3b9/v2.0/.well-known/openid-configuration",
-//                pca.authenticationAuthority.canonicalAuthorityUrl.toString());
-//        assertEquals("https://login.msidlabsciam.com/fe362aec-5d43-45d1-b730-9755e60dc3b9/oauth2/v2.0/authorize",
-//                pca.authenticationAuthority.authorizationEndpoint);
-//
-//        String authCode = acquireAuthorizationCodeAutomated(user, pca, null);
-//
-//        IAuthenticationResult result = pca.acquireToken(AuthorizationCodeParameters
-//                        .builder(authCode,
-//                                new URI(TestConstants.LOCALHOST + httpListener.port()))
-//                        .scopes(Collections.singleton("user.read"))
-//                        .build())
-//                .get();
-//
-//        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
-//        assertEquals(user.getUpn(), result.account().username());
-//
-//        IAuthenticationResult resultSilent = pca.acquireTokenSilently(SilentParameters
-//                .builder(Collections.singleton("user.read"), result.account())
-//                        .build())
-//                .get();
-//
-//        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
-//        assertEquals(resultSilent.accessToken(), result.accessToken());
-//        assertEquals(resultSilent.account().username(), result.account().username());
-//    }
+    @Test
+    public void acquireTokenWithAuthorizationCode_CiamCud() throws Exception {
+        String authorityCud = "https://login.msidlabsciam.com/fe362aec-5d43-45d1-b730-9755e60dc3b9/v2.0/";
+
+        LabResponse labResponse = LabUserHelper.getCiamCudUser();
+        LabUser user = labResponse.getUser();
+        LabApp app = labResponse.getApp();
+
+        PublicClientApplication pca = PublicClientApplication.builder(
+                        app.getAppId()).
+                oidcAuthority(authorityCud).
+                build();
+
+        String authCode = acquireAuthorizationCodeAutomated(user, pca, null);
+
+        IAuthenticationResult result = pca.acquireToken(AuthorizationCodeParameters
+                        .builder(authCode,
+                                new URI(TestConstants.LOCALHOST + httpListener.port()))
+                        .scopes(Collections.singleton("user.read"))
+                        .build())
+                .get();
+
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
+        assertEquals(user.getUpn(), result.account().username());
+
+        IAuthenticationResult resultSilent = pca.acquireTokenSilently(SilentParameters
+                .builder(Collections.singleton("user.read"), result.account())
+                        .build())
+                .get();
+
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
+        assertEquals(resultSilent.accessToken(), result.accessToken());
+        assertEquals(resultSilent.account().username(), result.account().username());
+    }
 
     private void assertAcquireTokenADFS2019(LabUser user) {
         PublicClientApplication pca;

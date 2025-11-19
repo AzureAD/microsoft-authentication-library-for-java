@@ -12,9 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.AfterAll;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -52,37 +49,37 @@ class DeviceCodeIT {
         IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
     }
 
-    // TODO: labapi2 doesn't have MSA user configuration yet - will be pulled from MSAL.NET
-    // NOTE: This test was also failing intermittently in the pipeline runs for the same commit, but always passed locally.
+    //TODO: This test is failing intermittently in the pipeline runs for the same commit, but always passes locally. Disabling until we can investigate more.
     //@Test()
-//    void DeviceCodeFlowMSATest() throws Exception {
-//
-//        LabResponse labResponse = LabUserHelper.getMSAUser();
-//        LabUser user = labResponse.getUser();
-//
-//        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(user.getAppId(), TestConstants.CONSUMERS_AUTHORITY);
-//
-//        Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
-//            runAutomatedDeviceCodeFlow(deviceCode, user);
-//        };
-//
-//        IAuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
-//                .builder(Collections.singleton(""),
-//                        deviceCodeConsumer)
-//                .build())
-//                .get();
-//
-//        assertNotNull(result);
-//        assertNotNull(result.accessToken());
-//
-//        result = pca.acquireTokenSilently(SilentParameters.
-//                builder(Collections.singleton(""), result.account()).
-//                build())
-//                .get();
-//
-//        assertNotNull(result);
-//        assertNotNull(result.accessToken());
-//    }
+    void DeviceCodeFlowMSATest() throws Exception {
+
+        LabResponse labResponse = LabUserHelper.getMSAUser();
+        LabUser user = labResponse.getUser();
+        LabApp app = labResponse.getApp();
+
+        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(app.getAppId(), TestConstants.CONSUMERS_AUTHORITY);
+
+        Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
+            runAutomatedDeviceCodeFlow(deviceCode, user);
+        };
+
+        IAuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
+                .builder(Collections.singleton(""),
+                        deviceCodeConsumer)
+                .build())
+                .get();
+
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
+
+        result = pca.acquireTokenSilently(SilentParameters.
+                builder(Collections.singleton(""), result.account()).
+                build())
+                .get();
+
+        assertNotNull(result);
+        assertNotNull(result.accessToken());
+    }
 
     private void runAutomatedDeviceCodeFlow(DeviceCode deviceCode, LabUser user) {
 

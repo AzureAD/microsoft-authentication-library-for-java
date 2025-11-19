@@ -21,6 +21,7 @@ public class LabConstants {
     public static final String HOME_DOMAIN = "homedomain";
     public static final String B2C_PROVIDER = "b2cprovider";
     public static final String FEDERATION_PROVIDER = "federationprovider";
+    public static final String SIGN_IN_AUDIENCE = "SignInAudience";
     public static final String AZURE_ENVIRONMENT = "azureenvironment";
 
     public static final String MICROSOFT_AUTHORITY_HOST = "https://login.microsoftonline.com/";

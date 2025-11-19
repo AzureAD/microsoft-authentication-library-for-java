@@ -29,7 +29,7 @@ class OnBehalfOfIT {
 
         ConfidentialClientApplication cca =
                 ConfidentialClientApplication.builder(clientId, ClientCredentialFactory.createFromSecret(password)).
-                        authority(cfg.tenantSpecificAuthority()).
+                        authority(cfg.tenantSpecificAuthority("10c419d4-4a50-45b2-aa4e-919fb84df24f")).
                         build();
 
         IAuthenticationResult result =
@@ -43,6 +43,8 @@ class OnBehalfOfIT {
 
     @Test
     void acquireTokenWithOBO_testCache() throws Exception {
+        cfg = new Config();
+
         String accessToken = this.getAccessToken();
 
         final String clientId = cfg.appProvider().getOboAppId();
@@ -50,7 +52,7 @@ class OnBehalfOfIT {
 
         ConfidentialClientApplication cca =
                 ConfidentialClientApplication.builder(clientId, ClientCredentialFactory.createFromSecret(password)).
-                        authority(cfg.tenantSpecificAuthority()).
+                        authority(cfg.tenantSpecificAuthority("10c419d4-4a50-45b2-aa4e-919fb84df24f")).
                         build();
 
         IAuthenticationResult result1 =
@@ -131,10 +133,10 @@ class OnBehalfOfIT {
         LabUser user = labResponse.getUser();
 
         String clientId = cfg.appProvider().getAppId();
-        String apiReadScope = cfg.appProvider().getOboAppIdURI() + "/user_impersonation";
+        String apiReadScope = cfg.appProvider().getOboAppIdURI() + "/access_as_user";
         PublicClientApplication pca = PublicClientApplication.builder(
-                clientId).
-                authority(cfg.tenantSpecificAuthority()).
+                        clientId).
+                authority("https://login.microsoftonline.com/organizations").
                 build();
 
         IAuthenticationResult result = pca.acquireToken(

@@ -13,10 +13,10 @@ public class AppCredentialProvider {
     public AppCredentialProvider() {
         KeyVaultSecretsProvider keyVaultSecretsProvider = new KeyVaultSecretsProvider();
 
-        clientId = "c0485386-1e9a-4663-bc96-7ab30656de7f";
-        oboClientId = "f4aa5217-e87c-42b2-82af-5624dd14ee72";
-        oboAppIdURI = "api://f4aa5217-e87c-42b2-82af-5624dd14ee72";
-        oboAppPassword = keyVaultSecretsProvider.getSecretByName("TodoListServiceV2-OBO").getValue();
+        clientId = "54a2d933-8bf8-483b-a8f8-0a31924f3c1f";
+        oboClientId = "23c64cd8-21e4-41dd-9756-ab9e2c23f58c";
+        oboAppIdURI = "api://23c64cd8-21e4-41dd-9756-ab9e2c23f58c";
+        oboAppPassword = keyVaultSecretsProvider.getSecretByName("IdentityDivisionDotNetOBOServiceSecret").getValue();
     }
 
     public String getAppId() {

@@ -7,12 +7,9 @@ import com.microsoft.aad.msal4j.labapi2.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
@@ -20,6 +17,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -96,51 +95,51 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
 //        assertAcquireTokenInstanceAware(user);
 //    }
 
-    // TODO: labapi2 doesn't have CIAM CUD user configuration yet - will be pulled from MSAL.NET
-//    @Test
-//    void acquireTokenInteractive_Ciam() {
-//        LabResponse labResponse = LabUserHelper.getCiamCudUser();
-//        LabUser user = labResponse.getUser();
-//
-//        Map<String, String> extraQueryParameters = new HashMap<>();
-//
-//        PublicClientApplication pca;
-//        try {
-//            pca = PublicClientApplication.builder(
-//                            user.getAppId()).
-//                    authority("https://" + user.getLabName() + ".ciamlogin.com/")
-//                    .build();
-//        } catch (MalformedURLException ex) {
-//            throw new RuntimeException(ex.getMessage());
-//        }
-//
-//        IAuthenticationResult result;
-//        try {
-//            URI url = new URI("http://localhost:8080");
-//
-//            SystemBrowserOptions browserOptions =
-//                    SystemBrowserOptions
-//                            .builder()
-//                            .openBrowserAction(new SeleniumOpenBrowserAction(user, pca))
-//                            .build();
-//
-//            InteractiveRequestParameters parameters = InteractiveRequestParameters
-//                    .builder(url)
-//                    .scopes(Collections.singleton(TestConstants.USER_READ_SCOPE))
-//                    .extraQueryParameters(extraQueryParameters)
-//                    .systemBrowserOptions(browserOptions)
-//                    .build();
-//
-//            result = pca.acquireToken(parameters).get();
-//
-//        } catch (Exception e) {
-//            LOG.error("Error acquiring token with authCode: {}", e.getMessage());
-//            throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
-//        }
-//
-//        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
-//        assertEquals(user.getUpn(), result.account().username());
-//    }
+    @Test
+    void acquireTokenInteractive_Ciam() {
+        LabResponse labResponse = LabUserHelper.getCiamCudUser();
+        LabUser user = labResponse.getUser();
+        LabApp app = labResponse.getApp();
+
+        Map<String, String> extraQueryParameters = new HashMap<>();
+
+        PublicClientApplication pca;
+        try {
+            pca = PublicClientApplication.builder(
+                            app.getAppId()).
+                    authority(app.getAuthority())
+                    .build();
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException(ex.getMessage());
+        }
+
+        IAuthenticationResult result;
+        try {
+            URI url = new URI("http://localhost:8080");
+
+            SystemBrowserOptions browserOptions =
+                    SystemBrowserOptions
+                            .builder()
+                            .openBrowserAction(new SeleniumOpenBrowserAction(user, pca))
+                            .build();
+
+            InteractiveRequestParameters parameters = InteractiveRequestParameters
+                    .builder(url)
+                    .scopes(Collections.singleton(TestConstants.USER_READ_SCOPE))
+                    .extraQueryParameters(extraQueryParameters)
+                    .systemBrowserOptions(browserOptions)
+                    .build();
+
+            result = pca.acquireToken(parameters).get();
+
+        } catch (Exception e) {
+            LOG.error("Error acquiring token with authCode: {}", e.getMessage());
+            throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
+        }
+
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
+        assertEquals(user.getUpn(), result.account().username());
+    }
 
     private void assertAcquireTokenCommon(LabUser user, String appId, String authority, String scope) {
         PublicClientApplication pca = IntegrationTestHelper.createPublicApp(appId, authority);

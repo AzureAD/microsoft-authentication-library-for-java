@@ -42,6 +42,10 @@ public class Config {
         return LabConstants.MICROSOFT_AUTHORITY_HOST + tenant;
     }
 
+    public String tenantSpecificAuthority(String tenant) {
+        return LabConstants.MICROSOFT_AUTHORITY_HOST + tenant;
+    }
+
     public AppCredentialProvider appProvider() {
         return appProvider;
     }
