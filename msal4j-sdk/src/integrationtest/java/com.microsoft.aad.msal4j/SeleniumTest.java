@@ -3,21 +3,14 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.microsoft.aad.msal4j.labapi2.LabUser;
 import infrastructure.SeleniumExtensions;
-import labapi.B2CProvider;
-import labapi.LabUserProvider;
-import labapi.User;
 import org.openqa.selenium.WebDriver;
 
 abstract class SeleniumTest {
 
-    protected LabUserProvider labUserProvider;
     WebDriver seleniumDriver;
     HttpListener httpListener;
-
-    public void setUpLapUserProvider() {
-        labUserProvider = LabUserProvider.getInstance();
-    }
 
     public void cleanUp() {
         seleniumDriver.quit();
@@ -30,17 +23,17 @@ abstract class SeleniumTest {
         seleniumDriver = SeleniumExtensions.createDefaultWebDriver();
     }
 
-    void runSeleniumAutomatedLogin(User user, AbstractClientApplicationBase app) {
+    void runSeleniumAutomatedLogin(LabUser user, AbstractClientApplicationBase app) {
         AuthorityType authorityType = app.authenticationAuthority.authorityType;
         if (authorityType == AuthorityType.B2C) {
             switch (user.getB2cProvider().toLowerCase()) {
-                case B2CProvider.LOCAL:
+                case "local":
                     SeleniumExtensions.performLocalLogin(seleniumDriver, user);
                     break;
-                case B2CProvider.GOOGLE:
+                case "google":
                     SeleniumExtensions.performGoogleLogin(seleniumDriver, user);
                     break;
-                case B2CProvider.FACEBOOK:
+                case "facebook":
                     SeleniumExtensions.performFacebookLogin(seleniumDriver, user);
                     break;
             }

@@ -3,8 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import labapi.*;
-import org.junit.jupiter.api.Test;
+import com.microsoft.aad.msal4j.labapi2.*;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -130,8 +129,8 @@ class OnBehalfOfIT {
 
     private String getAccessToken() throws Exception {
 
-        LabUserProvider labUserProvider = LabUserProvider.getInstance();
-        User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
+        LabResponse labResponse = LabUserHelper.getDefaultUser(cfg.azureEnvironment);
+        LabUser user = labResponse.getUser();
 
         String clientId = cfg.appProvider.getAppId();
         String apiReadScope = cfg.appProvider.getOboAppIdURI() + "/user_impersonation";

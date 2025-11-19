@@ -3,27 +3,21 @@
 
 package com.microsoft.aad.msal4j;
 
-import labapi.*;
+import com.microsoft.aad.msal4j.labapi2.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.BeforeAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.Collections;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class AzureEnvironmentIT {
-    private LabUserProvider labUserProvider;
 
-    @BeforeAll
-    void setUp() {
-        labUserProvider = LabUserProvider.getInstance();
-    }
-
-    @Test
-    void acquireTokenWithUsernamePassword_AzureChina() throws Exception {
-        assertAcquireTokenCommon(AzureEnvironment.AZURE_CHINA);
-    }
+    // TODO: labapi2 doesn't have Azure China user configuration yet - will be pulled from MSAL.NET
+//    @Test
+//    void acquireTokenWithUsernamePassword_AzureChina() throws Exception {
+//        assertAcquireTokenCommon(AzureEnvironment.AZURE_CHINA);
+//    }
 
     @Test
     void acquireTokenWithUsernamePassword_AzureGovernment() throws Exception {
@@ -31,12 +25,12 @@ class AzureEnvironmentIT {
     }
 
     private void assertAcquireTokenCommon(String azureEnvironment) throws Exception {
-        User user = labUserProvider.getUserByAzureEnvironment(azureEnvironment);
-
-        App app = LabService.getApp(user.getAppId());
+        LabResponse labResponse = LabUserHelper.getDefaultUser(azureEnvironment);
+        LabUser user = labResponse.getUser();
+        LabApp app = labResponse.getApp();
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                user.getAppId()).
+                app.getAppId()).
                 authority(app.getAuthority() + "organizations/").
                 build();
 

@@ -3,9 +3,8 @@
 
 package com.microsoft.aad.msal4j;
 
-import labapi.*;
+import com.microsoft.aad.msal4j.labapi2.*;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
@@ -32,10 +31,6 @@ class AuthorizationCodeIT extends SeleniumTest {
 
     private Config cfg;
 
-    @BeforeAll
-    public void setupUserProvider() {
-        setUpLapUserProvider();
-    }
 
     @AfterEach
     public void stopBrowser() {
@@ -52,16 +47,19 @@ class AuthorizationCodeIT extends SeleniumTest {
     public void acquireTokenWithAuthorizationCode_ManagedUser(String environment) {
         cfg = new Config(environment);
 
-        User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
+        LabResponse labResponse = LabUserHelper.getDefaultUser(environment);
+        LabUser user = labResponse.getUser();
         assertAcquireTokenAAD(user, null);
     }
 
-    @Test
-    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-    public void acquireTokenWithAuthorizationCode_ADFSv2019_OnPrem() {
-        User user = labUserProvider.getOnPremAdfsUser(FederationProvider.ADFS_2019);
-        assertAcquireTokenADFS2019(user);
-    }
+    // TODO: labapi2 doesn't have on-prem ADFS user configuration yet - will be pulled from MSAL.NET
+//    @Test
+//    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
+//    public void acquireTokenWithAuthorizationCode_ADFSv2019_OnPrem() {
+//        LabResponse labResponse = LabUserHelper.getOnPremAdfsUser(LabServiceParameters.FederationProvider.ADFS_V2019);
+//        LabUser user = labResponse.getUser();
+//        assertAcquireTokenADFS2019(user);
+//    }
 
     @ParameterizedTest
     @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
@@ -69,68 +67,74 @@ class AuthorizationCodeIT extends SeleniumTest {
     public void acquireTokenWithAuthorizationCode_ADFSv2019_Federated(String environment) {
         cfg = new Config(environment);
 
-        User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_2019);
+        LabResponse labResponse = LabUserHelper.getDefaultAdfsUser(environment);
+        LabUser user = labResponse.getUser();
         assertAcquireTokenAAD(user, null);
     }
 
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-    public void acquireTokenWithAuthorizationCode_ADFSv4_Federated(String environment) {
-        cfg = new Config(environment);
-
-        User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_4);
-
-        assertAcquireTokenAAD(user, null);
-    }
+    // TODO: labapi2 doesn't have ADFS v4 specific user helper yet - will be pulled from MSAL.NET
+//    @ParameterizedTest
+//    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+//    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
+//    public void acquireTokenWithAuthorizationCode_ADFSv4_Federated(String environment) {
+//        cfg = new Config(environment);
+//
+//        LabResponse labResponse = LabUserHelper.getFederatedAdfsUser(environment, LabServiceParameters.FederationProvider.ADFS_V4);
+//        LabUser user = labResponse.getUser();
+//
+//        assertAcquireTokenAAD(user, null);
+//    }
 
     @ParameterizedTest
     @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
     public void acquireTokenWithAuthorizationCode_B2C_Local(String environment) {
         cfg = new Config(environment);
 
-        User user = labUserProvider.getB2cUser(environment, B2CProvider.LOCAL);
+        LabResponse labResponse = LabUserHelper.getB2CLocalAccount();
+        LabUser user = labResponse.getUser();
         assertAcquireTokenB2C(user);
     }
 
-    @Test
-    public void acquireTokenWithAuthorizationCode_CiamCud() throws Exception {
-        String authorityCud = "https://login.msidlabsciam.com/fe362aec-5d43-45d1-b730-9755e60dc3b9/v2.0/";
-        User user = labUserProvider.getCiamCudUser();
+    // TODO: labapi2 doesn't have CIAM CUD user configuration yet - will be pulled from MSAL.NET
+//    @Test
+//    public void acquireTokenWithAuthorizationCode_CiamCud() throws Exception {
+//        String authorityCud = "https://login.msidlabsciam.com/fe362aec-5d43-45d1-b730-9755e60dc3b9/v2.0/";
+//        LabResponse labResponse = LabUserHelper.getCiamCudUser();
+//        LabUser user = labResponse.getUser();
+//
+//        PublicClientApplication pca = PublicClientApplication.builder(
+//                        user.getAppId()).
+//                oidcAuthority(authorityCud).
+//                build();
+//
+//        assertEquals("https://login.msidlabsciam.com/fe362aec-5d43-45d1-b730-9755e60dc3b9/v2.0/.well-known/openid-configuration",
+//                pca.authenticationAuthority.canonicalAuthorityUrl.toString());
+//        assertEquals("https://login.msidlabsciam.com/fe362aec-5d43-45d1-b730-9755e60dc3b9/oauth2/v2.0/authorize",
+//                pca.authenticationAuthority.authorizationEndpoint);
+//
+//        String authCode = acquireAuthorizationCodeAutomated(user, pca, null);
+//
+//        IAuthenticationResult result = pca.acquireToken(AuthorizationCodeParameters
+//                        .builder(authCode,
+//                                new URI(TestConstants.LOCALHOST + httpListener.port()))
+//                        .scopes(Collections.singleton("user.read"))
+//                        .build())
+//                .get();
+//
+//        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
+//        assertEquals(user.getUpn(), result.account().username());
+//
+//        IAuthenticationResult resultSilent = pca.acquireTokenSilently(SilentParameters
+//                .builder(Collections.singleton("user.read"), result.account())
+//                        .build())
+//                .get();
+//
+//        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
+//        assertEquals(resultSilent.accessToken(), result.accessToken());
+//        assertEquals(resultSilent.account().username(), result.account().username());
+//    }
 
-        PublicClientApplication pca = PublicClientApplication.builder(
-                        user.getAppId()).
-                oidcAuthority(authorityCud).
-                build();
-
-        assertEquals("https://login.msidlabsciam.com/fe362aec-5d43-45d1-b730-9755e60dc3b9/v2.0/.well-known/openid-configuration",
-                pca.authenticationAuthority.canonicalAuthorityUrl.toString());
-        assertEquals("https://login.msidlabsciam.com/fe362aec-5d43-45d1-b730-9755e60dc3b9/oauth2/v2.0/authorize",
-                pca.authenticationAuthority.authorizationEndpoint);
-
-        String authCode = acquireAuthorizationCodeAutomated(user, pca, null);
-
-        IAuthenticationResult result = pca.acquireToken(AuthorizationCodeParameters
-                        .builder(authCode,
-                                new URI(TestConstants.LOCALHOST + httpListener.port()))
-                        .scopes(Collections.singleton("user.read"))
-                        .build())
-                .get();
-
-        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
-        assertEquals(user.getUpn(), result.account().username());
-
-        IAuthenticationResult resultSilent = pca.acquireTokenSilently(SilentParameters
-                .builder(Collections.singleton("user.read"), result.account())
-                        .build())
-                .get();
-
-        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
-        assertEquals(resultSilent.accessToken(), result.accessToken());
-        assertEquals(resultSilent.account().username(), result.account().username());
-    }
-
-    private void assertAcquireTokenADFS2019(User user) {
+    private void assertAcquireTokenADFS2019(LabUser user) {
         PublicClientApplication pca;
         try {
             pca = PublicClientApplication.builder(
@@ -151,7 +155,7 @@ class AuthorizationCodeIT extends SeleniumTest {
         assertEquals(user.getUpn(), result.account().username());
     }
 
-    private void assertAcquireTokenAAD(User user, Map<String, Set<String>> parameters) {
+    private void assertAcquireTokenAAD(LabUser user, Map<String, Set<String>> parameters) {
 
         PublicClientApplication pca = IntegrationTestHelper.createPublicApp(user.getAppId(), cfg.commonAuthority());
 
@@ -165,10 +169,11 @@ class AuthorizationCodeIT extends SeleniumTest {
         assertEquals(user.getUpn(), result.account().username());
     }
 
-    private void assertAcquireTokenB2C(User user) {
+    private void assertAcquireTokenB2C(LabUser user) {
 
-        String appId = LabService.getSecret(TestConstants.B2C_CONFIDENTIAL_CLIENT_LAB_APP_ID);
-        String appSecret = LabService.getSecret(TestConstants.B2C_CONFIDENTIAL_CLIENT_APP_SECRETID);
+        KeyVaultSecretsProvider keyVaultSecretsProvider = new KeyVaultSecretsProvider();
+        String appId = keyVaultSecretsProvider.getSecretByName(TestConstants.B2C_CONFIDENTIAL_CLIENT_LAB_APP_ID).getValue();
+        String appSecret = keyVaultSecretsProvider.getSecretByName(TestConstants.B2C_CONFIDENTIAL_CLIENT_APP_SECRETID).getValue();
 
         ConfidentialClientApplication cca;
         try {
@@ -226,7 +231,7 @@ class AuthorizationCodeIT extends SeleniumTest {
     }
 
     private String acquireAuthorizationCodeAutomated(
-            User user,
+            LabUser user,
             AbstractClientApplicationBase app,
             Map<String, Set<String>> parameters) {
 

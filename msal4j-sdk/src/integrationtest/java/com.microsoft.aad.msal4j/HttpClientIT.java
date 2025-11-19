@@ -3,11 +3,9 @@
 
 package com.microsoft.aad.msal4j;
 
-import labapi.LabUserProvider;
-import labapi.User;
+import com.microsoft.aad.msal4j.labapi2.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.BeforeAll;
 
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
@@ -19,37 +17,34 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class HttpClientIT {
-    private LabUserProvider labUserProvider;
-
-    @BeforeAll
-    void setUp() {
-        labUserProvider = LabUserProvider.getInstance();
-    }
 
     @Test
     void acquireToken_okHttpClient() throws Exception {
-        User user = labUserProvider.getDefaultUser();
-        assertAcquireTokenCommon(user, new OkHttpClientAdapter());
+        LabResponse labResponse = LabUserHelper.getDefaultUser(AzureEnvironment.AZURE);
+        LabUser user = labResponse.getUser();
+        assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), new OkHttpClientAdapter());
     }
 
     @Test
     void acquireToken_apacheHttpClient() throws Exception {
-        User user = labUserProvider.getDefaultUser();
-        assertAcquireTokenCommon(user, new ApacheHttpClientAdapter());
+        LabResponse labResponse = LabUserHelper.getDefaultUser(AzureEnvironment.AZURE);
+        LabUser user = labResponse.getUser();
+        assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), new ApacheHttpClientAdapter());
     }
 
     @Test
     void acquireToken_readTimeout() throws Exception {
-        User user = labUserProvider.getDefaultUser();
+        LabResponse labResponse = LabUserHelper.getDefaultUser(AzureEnvironment.AZURE);
+        LabUser user = labResponse.getUser();
 
         //Set a 1ms read timeout, which will almost certainly occur before the service can respond
-        assertAcquireTokenCommon_WithTimeout(user, 1);
+        assertAcquireTokenCommon_WithTimeout(user, labResponse.getApp().getAppId(), 1);
     }
 
-    private void assertAcquireTokenCommon(User user, IHttpClient httpClient)
+    private void assertAcquireTokenCommon(LabUser user, String appId, IHttpClient httpClient)
             throws Exception {
         PublicClientApplication pca = PublicClientApplication.builder(
-                user.getAppId()).
+                appId).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 httpClient(httpClient).
                 build();
@@ -67,10 +62,10 @@ class HttpClientIT {
         assertEquals(user.getUpn(), result.account().username());
     }
 
-    private void assertAcquireTokenCommon_WithTimeout(User user, int readTimeout)
+    private void assertAcquireTokenCommon_WithTimeout(LabUser user, String appId, int readTimeout)
             throws Exception {
         PublicClientApplication pca = PublicClientApplication.builder(
-                        user.getAppId()).
+                        appId).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 readTimeoutForDefaultHttpClient(readTimeout).
                 build();

@@ -14,14 +14,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-
-import static com.microsoft.aad.msal4j.labapi2.LabHttpHelper.buildUrl;
 
 /**
  * Wrapper for lab service API interactions.
@@ -37,140 +33,142 @@ public class LabServiceApi {
      * Returns a test user account for use in testing.
      *
      * @param query Any and all parameters that the returned user should satisfy
-     * @return CompletableFuture containing LabResponse with user that matches the query
+     * @return LabResponse with user that matches the query
      */
-    public CompletableFuture<LabResponse> getLabResponseFromApiAsync(UserQuery query) {
+    public LabResponse getLabResponseFromApi(UserQuery query) {
         log.debug("Querying lab API for user with parameters: {}", query);
 
-        return runQueryAsync(query)
-                .thenCompose(result -> {
-                    if (result == null || result.trim().isEmpty()) {
-                        log.error("No lab user found for query");
-                        throw new LabUserNotFoundException(query,
-                                "No lab user with specified parameters exists");
-                    }
-                    log.debug("Lab API returned {} characters of data", result.length());
-                    return createLabResponseFromResultStringAsync(result);
-                })
-                .whenComplete((response, error) -> {
-                    if (error != null) {
-                        log.error("Failed to get lab response: {}", error.getMessage());
-                    } else if (response != null && response.getUser() != null) {
-                        log.info("Successfully retrieved lab user: {}", response.getUser().getUpn());
-                    }
-                });
+        try {
+            String result = runQuery(query);
+
+            if (result == null || result.trim().isEmpty()) {
+                log.error("No lab user found for query");
+                throw new LabUserNotFoundException(query,
+                        "No lab user with specified parameters exists");
+            }
+            log.debug("Lab API returned {} characters of data", result.length());
+
+            LabResponse response = createLabResponseFromResultString(result);
+
+            if (response != null && response.getUser() != null) {
+                log.info("Successfully retrieved lab user: {}", response.getUser().getUpn());
+            }
+
+            return response;
+        } catch (Exception e) {
+            log.error("Failed to get lab response: {}", e.getMessage());
+            throw new RuntimeException("Failed to get lab response", e);
+        }
     }
 
     /**
      * Create a LabResponse object from JSON result string.
      *
      * @param result JSON string containing lab user array
-     * @return CompletableFuture containing populated LabResponse
+     * @return Populated LabResponse
      */
-    CompletableFuture<LabResponse> createLabResponseFromResultStringAsync(String result) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                log.debug("Parsing lab user JSON response");
+    LabResponse createLabResponseFromResultString(String result) {
+        try {
+            log.debug("Parsing lab user JSON response");
 
-                List<LabUser> userResponses;
-                try (JsonReader jsonReader = JsonProviders.createReader(result)) {
-                    userResponses = jsonReader.readArray(LabUser::fromJson);
-                }
-
-                if (userResponses.isEmpty()) {
-                    log.error("Lab API returned empty user array");
-                    throw new RuntimeException("Lab API returned empty user array");
-                }
-
-                LabUser user = userResponses.get(0);
-                log.debug("Parsed lab user: {}, fetching app and lab info", user.getUpn());
-
-                // Fetch app and lab info
-                String appEndpoint = LabApiConstants.LAB_APP_ENDPOINT + user.getAppId();
-                log.debug("Fetching app info from: {}", appEndpoint);
-                String appResponse = getLabResponseAsync(appEndpoint).join();
-
-                List<LabApp> labApps;
-                try (JsonReader appReader = JsonProviders.createReader(appResponse)) {
-                    labApps = appReader.readArray(LabApp::fromJson);
-                }
-
-                if (labApps.isEmpty()) {
-                    log.error("No lab app found for appId: {}", user.getAppId());
-                    throw new RuntimeException("No lab app found for appId: " + user.getAppId());
-                }
-                log.debug("Successfully parsed lab app: {}", labApps.get(0).getAppId());
-
-                String labInfoEndpoint = LabApiConstants.LAB_INFO_ENDPOINT + user.getLabName();
-                log.debug("Fetching lab info from: {}", labInfoEndpoint);
-                String labInfoResponse = getLabResponseAsync(labInfoEndpoint).join();
-
-                List<Lab> labs;
-                try (JsonReader labReader = JsonProviders.createReader(labInfoResponse)) {
-                    labs = labReader.readArray(Lab::fromJson);
-                }
-
-                if (labs.isEmpty()) {
-                    log.error("No lab info found for labName: {}", user.getLabName());
-                    throw new RuntimeException("No lab info found for labName: " + user.getLabName());
-                }
-                log.debug("Successfully parsed lab info for: {}", user.getLabName());
-
-                LabResponse response = new LabResponse();
-                response.setUser(user);
-                response.setApp(labApps.get(0));
-                response.setLab(labs.get(0));
-
-                log.info("Successfully created LabResponse for user: {}", user.getUpn());
-                return response;
-
-            } catch (Exception e) {
-                log.error("Failed to create LabResponse from API result: {}", e.getMessage(), e);
-                throw new RuntimeException("Failed to create LabResponse from API result", e);
+            List<LabUser> userResponses;
+            try (JsonReader jsonReader = JsonProviders.createReader(result)) {
+                userResponses = jsonReader.readArray(LabUser::fromJson);
             }
-        });
+
+            if (userResponses.isEmpty()) {
+                log.error("Lab API returned empty user array");
+                throw new RuntimeException("Lab API returned empty user array");
+            }
+
+            LabUser user = userResponses.get(0);
+            log.debug("Parsed lab user: {}, fetching app and lab info", user.getUpn());
+
+            // Fetch app and lab info
+            String appEndpoint = LabConstants.LAB_APP_ENDPOINT + user.getAppId();
+            log.debug("Fetching app info from: {}", appEndpoint);
+            String appResponse = getLabResponse(appEndpoint);
+
+            List<LabApp> labApps;
+            try (JsonReader appReader = JsonProviders.createReader(appResponse)) {
+                labApps = appReader.readArray(LabApp::fromJson);
+            }
+
+            if (labApps.isEmpty()) {
+                log.error("No lab app found for appId: {}", user.getAppId());
+                throw new RuntimeException("No lab app found for appId: " + user.getAppId());
+            }
+            log.debug("Successfully parsed lab app: {}", labApps.get(0).getAppId());
+
+            String labInfoEndpoint = LabConstants.LAB_INFO_ENDPOINT + user.getLabName();
+            log.debug("Fetching lab info from: {}", labInfoEndpoint);
+            String labInfoResponse = getLabResponse(labInfoEndpoint);
+
+            List<Lab> labs;
+            try (JsonReader labReader = JsonProviders.createReader(labInfoResponse)) {
+                labs = labReader.readArray(Lab::fromJson);
+            }
+
+            if (labs.isEmpty()) {
+                log.error("No lab info found for labName: {}", user.getLabName());
+                throw new RuntimeException("No lab info found for labName: " + user.getLabName());
+            }
+            log.debug("Successfully parsed lab info for: {}", user.getLabName());
+
+            LabResponse response = new LabResponse();
+            response.setUser(user);
+            response.setApp(labApps.get(0));
+            response.setLab(labs.get(0));
+
+            log.info("Successfully created LabResponse for user: {}", user.getUpn());
+            return response;
+
+        } catch (Exception e) {
+            log.error("Failed to create LabResponse from API result: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to create LabResponse from API result", e);
+        }
     }
 
     /**
      * Execute a query against the lab API.
      *
      * @param query UserQuery parameters
-     * @return CompletableFuture containing JSON response string
+     * @return JSON response string
      */
-    private CompletableFuture<String> runQueryAsync(UserQuery query) {
+    private String runQuery(UserQuery query) {
         Map<String, String> queryDict = new HashMap<>();
 
         // Building user query - required parameters set to defaults if not supplied
         queryDict.put(
-                LabApiConstants.MULTI_FACTOR_AUTHENTICATION,
+                LabConstants.MULTI_FACTOR_AUTHENTICATION,
                 MFA.NONE.toString()
         );
 
         queryDict.put(
-                LabApiConstants.PROTECTION_POLICY,
+                LabConstants.PROTECTION_POLICY,
                 ProtectionPolicy.NONE.toString()
         );
 
         if (query.getUserType() != null) {
-            queryDict.put(LabApiConstants.USER_TYPE, query.getUserType().toString());
+            queryDict.put(LabConstants.USER_TYPE, query.getUserType().toString());
         }
 
         if (query.getB2cIdentityProvider() != null) {
-            queryDict.put(LabApiConstants.B2C_PROVIDER,
+            queryDict.put(LabConstants.B2C_PROVIDER,
                     query.getB2cIdentityProvider().toString());
         }
 
         if (query.getFederationProvider() != null) {
-            queryDict.put(LabApiConstants.FEDERATION_PROVIDER,
+            queryDict.put(LabConstants.FEDERATION_PROVIDER,
                     query.getFederationProvider().toString());
         }
 
         if (query.getAzureEnvironment() != null) {
-            queryDict.put(LabApiConstants.AZURE_ENVIRONMENT,
+            queryDict.put(LabConstants.AZURE_ENVIRONMENT,
                     query.getAzureEnvironment().toString());
         }
 
-        return sendLabRequestAsync(LabApiConstants.LAB_ENDPOINT, queryDict);
+        return sendLabRequest(LabConstants.LAB_ENDPOINT, queryDict);
     }
 
     /**
@@ -178,23 +176,21 @@ public class LabServiceApi {
      *
      * @param requestUrl Base URL for the request
      * @param queryDict  Query parameters
-     * @return CompletableFuture containing response string
+     * @return Response string
      */
-    private CompletableFuture<String> sendLabRequestAsync(String requestUrl, Map<String, String> queryDict) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                log.debug("Acquiring lab access token");
-                String accessToken = getLabAccessToken();
-                log.debug("Sending lab request to: {} with {} query parameters", requestUrl, queryDict.size());
+    private String sendLabRequest(String requestUrl, Map<String, String> queryDict) {
+        try {
+            log.debug("Acquiring lab access token");
+            String accessToken = getLabAccessToken();
+            log.debug("Sending lab request to: {} with {} query parameters", requestUrl, queryDict.size());
 
-                String response = LabHttpHelper.sendRequestToLab(requestUrl, queryDict, accessToken);
-                log.debug("Lab request successful, received {} characters", response.length());
-                return response;
-            } catch (IOException e) {
-                log.error("Failed to send lab request to {}: {}", requestUrl, e.getMessage());
-                throw new RuntimeException("Failed to send lab request", e);
-            }
-        });
+            String response = LabHttpHelper.sendRequestToLab(requestUrl, queryDict, accessToken);
+            log.debug("Lab request successful, received {} characters", response.length());
+            return response;
+        } catch (IOException e) {
+            log.error("Failed to send lab request to {}: {}", requestUrl, e.getMessage());
+            throw new RuntimeException("Failed to send lab request", e);
+        }
     }
 
     private void initLabApp() {
@@ -209,7 +205,7 @@ public class LabServiceApi {
                 labApp = ConfidentialClientApplication.builder(
                                 appID,
                                 keyVaultSecretsProvider.getClientCredentialFromKeyStore())
-                        .authority(LabApiConstants.MICROSOFT_AUTHORITY)
+                        .authority(LabConstants.MICROSOFT_AUTHORITY)
                         .build();
                 log.debug("Lab app initialized successfully");
             } catch (Exception e) {
@@ -226,7 +222,7 @@ public class LabServiceApi {
             log.debug("Acquiring lab access token");
             IAuthenticationResult result = labApp.acquireToken(
                     ClientCredentialParameters
-                            .builder(Collections.singleton(LabApiConstants.LAB_API_SCOPE))
+                            .builder(Collections.singleton(LabConstants.LAB_API_SCOPE))
                             .build()
             ).get();
 
@@ -243,20 +239,18 @@ public class LabServiceApi {
      * Execute HTTP GET request to lab API endpoint.
      *
      * @param address Full URL to request
-     * @return CompletableFuture containing response body as string
+     * @return Response body as string
      */
-    CompletableFuture<String> getLabResponseAsync(String address) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                log.debug("Getting lab response from: {}", address);
-                String accessToken = getLabAccessToken();
-                String response = LabHttpHelper.sendRequestToLab(address, accessToken);
-                log.debug("Successfully retrieved lab response: {} characters", response.length());
-                return response;
-            } catch (IOException e) {
-                log.error("Failed to get lab response from {}: {}", address, e.getMessage());
-                throw new RuntimeException("Failed to get lab response from: " + address, e);
-            }
-        });
+    String getLabResponse(String address) {
+        try {
+            log.debug("Getting lab response from: {}", address);
+            String accessToken = getLabAccessToken();
+            String response = LabHttpHelper.sendRequestToLab(address, accessToken);
+            log.debug("Successfully retrieved lab response: {} characters", response.length());
+            return response;
+        } catch (IOException e) {
+            log.error("Failed to get lab response from {}: {}", address, e.getMessage());
+            throw new RuntimeException("Failed to get lab response from: " + address, e);
+        }
     }
 }

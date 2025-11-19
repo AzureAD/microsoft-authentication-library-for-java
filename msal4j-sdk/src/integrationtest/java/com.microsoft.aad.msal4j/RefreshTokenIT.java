@@ -3,8 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import labapi.LabUserProvider;
-import labapi.User;
+import com.microsoft.aad.msal4j.labapi2.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -13,7 +12,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Collections;
-import java.util.concurrent.ExecutionException;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RefreshTokenIT {
@@ -23,11 +21,11 @@ class RefreshTokenIT {
     private Config cfg;
 
     private void setUp(String environment) throws Exception {
-        LabUserProvider labUserProvider = LabUserProvider.getInstance();
-        User user = labUserProvider.getDefaultUser(environment);
+        LabResponse labResponse = LabUserHelper.getDefaultUser(environment);
+        LabUser user = labResponse.getUser();
 
         pca = PublicClientApplication.builder(
-                user.getAppId()).
+                labResponse.getApp().getAppId()).
                 authority(cfg.organizationsAuthority()).
                 build();
 

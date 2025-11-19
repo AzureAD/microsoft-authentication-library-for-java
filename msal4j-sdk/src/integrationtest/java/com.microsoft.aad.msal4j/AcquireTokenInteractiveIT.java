@@ -3,14 +3,12 @@
 
 package com.microsoft.aad.msal4j;
 
-import labapi.*;
+import com.microsoft.aad.msal4j.labapi2.*;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -21,8 +19,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -30,12 +26,6 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
     private static final Logger LOG = LoggerFactory.getLogger(AcquireTokenInteractiveIT.class);
 
     private Config cfg;
-
-
-    @BeforeAll
-    public void setupUserProvider() {
-        setUpLapUserProvider();
-    }
 
     @AfterEach
     public void stopBrowser() {
@@ -52,16 +42,19 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
     void acquireTokenInteractive_ManagedUser(String environment) {
         cfg = new Config(environment);
 
-        User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
-        assertAcquireTokenCommon(user, cfg.commonAuthority(), cfg.graphDefaultScope());
+        LabResponse labResponse = LabUserHelper.getDefaultUser(environment);
+        LabUser user = labResponse.getUser();
+        assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), cfg.commonAuthority(), cfg.graphDefaultScope());
     }
 
-    @Test()
-    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-    void acquireTokenInteractive_ADFSv2019_OnPrem() {
-        User user = labUserProvider.getOnPremAdfsUser(FederationProvider.ADFS_2019);
-        assertAcquireTokenCommon(user, TestConstants.ADFS_AUTHORITY, TestConstants.ADFS_SCOPE);
-    }
+    // TODO: labapi2 doesn't have on-prem ADFS user configuration yet - will be pulled from MSAL.NET
+//    @Test()
+//    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
+//    void acquireTokenInteractive_ADFSv2019_OnPrem() {
+//        LabResponse labResponse = LabUserHelper.getOnPremAdfsUser(LabServiceParameters.FederationProvider.ADFS_V2019);
+//        LabUser user = labResponse.getUser();
+//        assertAcquireTokenCommon(user, TestConstants.ADFS_AUTHORITY, TestConstants.ADFS_SCOPE);
+//    }
 
     @ParameterizedTest
     @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
@@ -69,26 +62,30 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
     void acquireTokenInteractive_ADFSv2019_Federated(String environment) {
         cfg = new Config(environment);
 
-        User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_2019);
-        assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope());
+        LabResponse labResponse = LabUserHelper.getDefaultAdfsUser(environment);
+        LabUser user = labResponse.getUser();
+        assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), cfg.organizationsAuthority(), cfg.graphDefaultScope());
     }
 
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-    void acquireTokenInteractive_ADFSv4_Federated(String environment) {
-        cfg = new Config(environment);
-
-        User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_4);
-        assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope());
-    }
+    // TODO: labapi2 doesn't have ADFS v4 specific user helper yet - will be pulled from MSAL.NET
+//    @ParameterizedTest
+//    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+//    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
+//    void acquireTokenInteractive_ADFSv4_Federated(String environment) {
+//        cfg = new Config(environment);
+//
+//        LabResponse labResponse = LabUserHelper.getFederatedAdfsUser(environment, LabServiceParameters.FederationProvider.ADFS_V4);
+//        LabUser user = labResponse.getUser();
+//        assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope());
+//    }
 
     @ParameterizedTest
     @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
     void acquireTokenWithAuthorizationCode_B2C_Local(String environment) {
         cfg = new Config(environment);
 
-        User user = labUserProvider.getB2cUser(cfg.azureEnvironment, B2CProvider.LOCAL);
+        LabResponse labResponse = LabUserHelper.getB2CLocalAccount();
+        LabUser user = labResponse.getUser();
         assertAcquireTokenB2C(user, TestConstants.B2C_AUTHORITY);
     }
 
@@ -97,64 +94,69 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
     void acquireTokenWithAuthorizationCode_B2C_LegacyFormat(String environment) {
         cfg = new Config(environment);
 
-        User user = labUserProvider.getB2cUser(cfg.azureEnvironment, B2CProvider.LOCAL);
+        LabResponse labResponse = LabUserHelper.getB2CLocalAccount();
+        LabUser user = labResponse.getUser();
         assertAcquireTokenB2C(user, TestConstants.B2C_AUTHORITY_LEGACY_FORMAT);
     }
 
-    @Test
-    void acquireTokenInteractive_ManagedUser_InstanceAware() {
-        cfg = new Config(AzureEnvironment.AZURE);
+    // TODO: labapi2 needs cross-cloud instance aware test configuration - will be pulled from MSAL.NET
+//    @Test
+//    void acquireTokenInteractive_ManagedUser_InstanceAware() {
+//        cfg = new Config(AzureEnvironment.AZURE);
+//
+//        LabResponse labResponse = LabUserHelper.getDefaultUser(AzureEnvironment.AZURE_US_GOVERNMENT);
+//        LabUser user = labResponse.getUser();
+//        assertAcquireTokenInstanceAware(user);
+//    }
 
-        User user = labUserProvider.getDefaultUser(AzureEnvironment.AZURE_US_GOVERNMENT);
-        assertAcquireTokenInstanceAware(user);
-    }
+    // TODO: labapi2 doesn't have CIAM CUD user configuration yet - will be pulled from MSAL.NET
+//    @Test
+//    void acquireTokenInteractive_Ciam() {
+//        LabResponse labResponse = LabUserHelper.getCiamCudUser();
+//        LabUser user = labResponse.getUser();
+//
+//        Map<String, String> extraQueryParameters = new HashMap<>();
+//
+//        PublicClientApplication pca;
+//        try {
+//            pca = PublicClientApplication.builder(
+//                            user.getAppId()).
+//                    authority("https://" + user.getLabName() + ".ciamlogin.com/")
+//                    .build();
+//        } catch (MalformedURLException ex) {
+//            throw new RuntimeException(ex.getMessage());
+//        }
+//
+//        IAuthenticationResult result;
+//        try {
+//            URI url = new URI("http://localhost:8080");
+//
+//            SystemBrowserOptions browserOptions =
+//                    SystemBrowserOptions
+//                            .builder()
+//                            .openBrowserAction(new SeleniumOpenBrowserAction(user, pca))
+//                            .build();
+//
+//            InteractiveRequestParameters parameters = InteractiveRequestParameters
+//                    .builder(url)
+//                    .scopes(Collections.singleton(TestConstants.USER_READ_SCOPE))
+//                    .extraQueryParameters(extraQueryParameters)
+//                    .systemBrowserOptions(browserOptions)
+//                    .build();
+//
+//            result = pca.acquireToken(parameters).get();
+//
+//        } catch (Exception e) {
+//            LOG.error("Error acquiring token with authCode: {}", e.getMessage());
+//            throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
+//        }
+//
+//        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
+//        assertEquals(user.getUpn(), result.account().username());
+//    }
 
-    @Test
-    void acquireTokenInteractive_Ciam() {
-        User user = labUserProvider.getCiamCudUser();
-
-        Map<String, String> extraQueryParameters = new HashMap<>();
-
-        PublicClientApplication pca;
-        try {
-            pca = PublicClientApplication.builder(
-                            user.getAppId()).
-                    authority("https://" + user.getLabName() + ".ciamlogin.com/")
-                    .build();
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException(ex.getMessage());
-        }
-
-        IAuthenticationResult result;
-        try {
-            URI url = new URI("http://localhost:8080");
-
-            SystemBrowserOptions browserOptions =
-                    SystemBrowserOptions
-                            .builder()
-                            .openBrowserAction(new SeleniumOpenBrowserAction(user, pca))
-                            .build();
-
-            InteractiveRequestParameters parameters = InteractiveRequestParameters
-                    .builder(url)
-                    .scopes(Collections.singleton(TestConstants.USER_READ_SCOPE))
-                    .extraQueryParameters(extraQueryParameters)
-                    .systemBrowserOptions(browserOptions)
-                    .build();
-
-            result = pca.acquireToken(parameters).get();
-
-        } catch (Exception e) {
-            LOG.error("Error acquiring token with authCode: {}", e.getMessage());
-            throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
-        }
-
-        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
-        assertEquals(user.getUpn(), result.account().username());
-    }
-
-    private void assertAcquireTokenCommon(User user, String authority, String scope) {
-        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(user.getAppId(), authority);
+    private void assertAcquireTokenCommon(LabUser user, String appId, String authority, String scope) {
+        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(appId, authority);
 
         IAuthenticationResult result = acquireTokenInteractive(
                 user,
@@ -165,7 +167,7 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
         assertEquals(user.getUpn(), result.account().username());
     }
 
-    private void assertAcquireTokenB2C(User user, String authority) {
+    private void assertAcquireTokenB2C(LabUser user, String authority) {
 
         PublicClientApplication pca;
         try {
@@ -181,8 +183,8 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
         IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
     }
 
-    private void assertAcquireTokenInstanceAware(User user) {
-        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(user.getAppId(), TestConstants.MICROSOFT_AUTHORITY_HOST + user.getTenantID());
+    private void assertAcquireTokenInstanceAware(LabUser user) {
+        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(user.getAppId(), TestConstants.MICROSOFT_AUTHORITY_HOST + user.getTenantId());
 
         IAuthenticationResult result = acquireTokenInteractive_instanceAware(user, pca, cfg.graphDefaultScope());
 
@@ -213,7 +215,7 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
     }
 
     private IAuthenticationResult acquireTokenInteractive(
-            User user,
+            LabUser user,
             PublicClientApplication pca,
             String scope) {
 
@@ -243,7 +245,7 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
     }
 
     private IAuthenticationResult acquireTokenInteractive_instanceAware(
-            User user,
+            LabUser user,
             PublicClientApplication pca,
             String scope) {
 
@@ -274,10 +276,10 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
 
     class SeleniumOpenBrowserAction implements OpenBrowserAction {
 
-        private User user;
+        private LabUser user;
         private PublicClientApplication pca;
 
-        SeleniumOpenBrowserAction(User user, PublicClientApplication pca) {
+        SeleniumOpenBrowserAction(LabUser user, PublicClientApplication pca) {
             this.user = user;
             this.pca = pca;
         }

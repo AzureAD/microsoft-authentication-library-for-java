@@ -24,6 +24,7 @@ public class LabUser implements JsonSerializable<LabUser> {
     private String lastUpdatedDate;
     private String tenantId;
     private String password;
+    private String federationProvider;
 
     static LabUser fromJson(JsonReader jsonReader) throws IOException {
         LabUser user = new LabUser();
@@ -79,6 +80,9 @@ public class LabUser implements JsonSerializable<LabUser> {
                     case "tenantId":
                         user.tenantId = reader.getString();
                         break;
+                    case "federationProvider":
+                        user.federationProvider = reader.getString();
+                        break;
                     default:
                         reader.skipChildren();
                         break;
@@ -125,6 +129,26 @@ public class LabUser implements JsonSerializable<LabUser> {
         return this.labName;
     }
 
+    public String getB2cProvider() {
+        return this.b2cProvider;
+    }
+
+    public String getUserType() {
+        return this.userType;
+    }
+
+    public String getHomeDomain() {
+        return this.homeDomain;
+    }
+
+    public String getHomeUPN() {
+        return this.homeUPN;
+    }
+
+    public String getTenantId() {
+        return this.tenantId;
+    }
+
     /**
      * Get the user's password, fetching from MSID Key Vault if necessary.
      *
@@ -136,5 +160,23 @@ public class LabUser implements JsonSerializable<LabUser> {
             password = LabUserHelper.fetchUserPassword(labName);
         }
         return password;
+    }
+
+    /**
+     * Get the federation provider for this user.
+     *
+     * @return The federation provider string (e.g., "adfsv2019", "adfsv4", "none")
+     */
+    public String getFederationProvider() {
+        return federationProvider != null ? federationProvider : "none";
+    }
+
+    /**
+     * Set the federation provider for this user.
+     *
+     * @param federationProvider The federation provider string
+     */
+    public void setFederationProvider(String federationProvider) {
+        this.federationProvider = federationProvider;
     }
 }

@@ -4,7 +4,7 @@
 package infrastructure;
 
 import com.microsoft.aad.msal4j.TestConstants;
-import labapi.User;
+import com.microsoft.aad.msal4j.labapi2.LabUser;
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.OutputType;
@@ -70,7 +70,7 @@ public class SeleniumExtensions {
         return waitForElementToBeVisibleAndEnable(driver, by, DEFAULT_TIMEOUT_IN_SEC);
     }
 
-    public static void performADOrCiamLogin(WebDriver driver, User user) {
+    public static void performADOrCiamLogin(WebDriver driver, LabUser user) {
         LOG.info("performADOrCiamLogin");
 
         UserInformationFields fields = new UserInformationFields(user);
@@ -134,7 +134,7 @@ public class SeleniumExtensions {
         });
     }
 
-    public static void performADFS2019Login(WebDriver driver, User user) {
+    public static void performADFS2019Login(WebDriver driver, LabUser user) {
         LOG.info("PerformADFS2019Login");
 
         UserInformationFields fields = new UserInformationFields(user);
@@ -151,7 +151,7 @@ public class SeleniumExtensions {
                 click();
     }
 
-    public static void performLocalLogin(WebDriver driver, User user) {
+    public static void performLocalLogin(WebDriver driver, LabUser user) {
         LOG.info("PerformLocalLogin");
 
         driver.findElement(new By.ById(SeleniumConstants.B2C_LOCAL_ACCOUNT_ID)).click();
@@ -167,7 +167,7 @@ public class SeleniumExtensions {
                 click();
     }
 
-    public static void performGoogleLogin(WebDriver driver, User user) {
+    public static void performGoogleLogin(WebDriver driver, LabUser user) {
         LOG.info("PerformGoogleLogin");
 
         driver.findElement(new By.ById(SeleniumConstants.GOOGLE_ACCOUNT_ID)).click();
@@ -187,7 +187,7 @@ public class SeleniumExtensions {
         waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.GOOGLE_NEXT_BUTTON_ID)).click();
     }
 
-    public static void performFacebookLogin(WebDriver driver, User user) {
+    public static void performFacebookLogin(WebDriver driver, LabUser user) {
         LOG.info("PerformFacebookLogin");
 
         driver.findElement(new By.ById(SeleniumConstants.FACEBOOK_ACCOUNT_ID)).click();

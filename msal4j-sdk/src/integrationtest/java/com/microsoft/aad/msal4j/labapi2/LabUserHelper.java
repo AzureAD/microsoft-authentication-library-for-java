@@ -9,7 +9,6 @@ import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class LabUserHelper {
@@ -36,29 +35,28 @@ public class LabUserHelper {
      * Get lab user data with caching support.
      *
      * @param query The UserQuery to search for
-     * @return CompletableFuture containing LabResponse
+     * @return LabResponse
      */
-    public static CompletableFuture<LabResponse> getLabUserDataAsync(UserQuery query) {
+    public static LabResponse getLabUserData(UserQuery query) {
         if (userCache.containsKey(query)) {
             LabResponse cached = userCache.get(query);
             log.debug("Lab cache hit: {}",
                     cached.getUser() != null ? cached.getUser().getUpn() : "N/A");
-            return CompletableFuture.completedFuture(cached);
+            return cached;
         }
 
-        return labService.getLabResponseFromApiAsync(query)
-                .thenApply(response -> {
-                    if (response == null) {
-                        log.error("No lab user found for query");
-                        throw new LabUserNotFoundException(query, "Found no users for the given query.");
-                    }
+        LabResponse response = labService.getLabResponseFromApi(query);
 
-                    log.info("Lab API returned user: {}",
-                            response.getUser() != null ? response.getUser().getUpn() : "N/A");
+        if (response == null) {
+            log.error("No lab user found for query");
+            throw new LabUserNotFoundException(query, "Found no users for the given query.");
+        }
 
-                    userCache.put(query, response);
-                    return response;
-                });
+        log.info("Lab API returned user: {}",
+                response.getUser() != null ? response.getUser().getUpn() : "N/A");
+
+        userCache.put(query, response);
+        return response;
     }
 
     /**
@@ -66,49 +64,47 @@ public class LabUserHelper {
      * Uses the MSAL Team vault for configuration data.
      *
      * @param secret The Key Vault secret name
-     * @return CompletableFuture containing either LabResponse or String
+     * @return Either LabResponse or String
      */
-    public static CompletableFuture<Object> getKVLabData(String secret) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                log.debug("Retrieving Key Vault secret: {}", secret);
-                // Use MSAL Team vault for configuration
-                KeyVaultSecret keyVaultSecret = keyVaultSecretsProviderMsal.getSecretByName(secret);
-                String labData = keyVaultSecret.getValue();
+    private static Object getKVLabData(String secret) {
+        try {
+            log.debug("Retrieving Key Vault secret: {}", secret);
+            // Use MSAL Team vault for configuration
+            KeyVaultSecret keyVaultSecret = keyVaultSecretsProviderMsal.getSecretByName(secret);
+            String labData = keyVaultSecret.getValue();
 
-                if (labData == null || labData.isEmpty()) {
-                    log.error("Key Vault secret '{}' is empty", secret);
-                    throw new LabUserNotFoundException(new UserQuery(),
-                            "Found no content for secret '" + secret + "' in Key Vault.");
-                }
-
-                // Check if the value is JSON
-                if (isValidJson(labData)) {
-                    LabResponse response;
-                    try (JsonReader jsonReader = JsonProviders.createReader(labData)) {
-                        response = LabResponse.fromJson(jsonReader);
-                    }
-
-                    if (response == null) {
-                        log.error("Failed to deserialize Key Vault secret '{}' to LabResponse", secret);
-                        throw new LabUserNotFoundException(new UserQuery(),
-                                "Failed to deserialize Key Vault secret '" + secret + "' to LabResponse.");
-                    }
-
-                    log.debug("Retrieved LabResponse from Key Vault '{}': {}", secret,
-                            response.getUser() != null ? response.getUser().getUpn() :
-                                    response.getApp() != null ? response.getApp().getAppId() : "Unknown");
-                    return response;
-                } else {
-                    log.debug("Retrieved raw string from Key Vault '{}': {} characters", secret, labData.length());
-                    return labData;
-                }
-            } catch (Exception e) {
-                log.error("Failed to retrieve Key Vault secret '{}': {}", secret, e.getMessage());
-                throw new RuntimeException(
-                        "Failed to retrieve or parse Key Vault secret '" + secret + "'", e);
+            if (labData == null || labData.isEmpty()) {
+                log.error("Key Vault secret '{}' is empty", secret);
+                throw new LabUserNotFoundException(new UserQuery(),
+                        "Found no content for secret '" + secret + "' in Key Vault.");
             }
-        });
+
+            // Check if the value is JSON
+            if (isValidJson(labData)) {
+                LabResponse response;
+                try (JsonReader jsonReader = JsonProviders.createReader(labData)) {
+                    response = LabResponse.fromJson(jsonReader);
+                }
+
+                if (response == null) {
+                    log.error("Failed to deserialize Key Vault secret '{}' to LabResponse", secret);
+                    throw new LabUserNotFoundException(new UserQuery(),
+                            "Failed to deserialize Key Vault secret '" + secret + "' to LabResponse.");
+                }
+
+                log.debug("Retrieved LabResponse from Key Vault '{}': {}", secret,
+                        response.getUser() != null ? response.getUser().getUpn() :
+                                response.getApp() != null ? response.getApp().getAppId() : "Unknown");
+                return response;
+            } else {
+                log.debug("Retrieved raw string from Key Vault '{}': {} characters", secret, labData.length());
+                return labData;
+            }
+        } catch (Exception e) {
+            log.error("Failed to retrieve Key Vault secret '{}': {}", secret, e.getMessage());
+            throw new RuntimeException(
+                    "Failed to retrieve or parse Key Vault secret '" + secret + "'", e);
+        }
     }
 
     /**
@@ -172,7 +168,7 @@ public class LabUserHelper {
 
             for (String secret : secrets) {
 
-                Object data = getKVLabData(secret).join();
+                Object data = getKVLabData(secret);
 
                 if (data instanceof LabResponse) {
                     LabResponse response = (LabResponse) data;
@@ -222,31 +218,29 @@ public class LabUserHelper {
         }
     }
 
-    public static CompletableFuture<LabResponse> getDefaultUserAsync() {
-        return CompletableFuture.completedFuture(
-                mergeKVLabData("MSAL-User-Default-JSON", "ID4SLAB1", "MSAL-App-Default-JSON"));
+    public static LabResponse getDefaultUser() {
+        return mergeKVLabData("MSAL-User-Default-JSON", "ID4SLAB1", "MSAL-App-Default-JSON");
     }
 
-    public static CompletableFuture<LabResponse> getDefaultAdfsUserAsync() {
-        return CompletableFuture.completedFuture(
-                mergeKVLabData("MSAL-USER-FedDefault-JSON", "ID4SLAB1", "MSAL-App-Default-JSON"));
+    public static LabResponse getDefaultAdfsUser() {
+        return mergeKVLabData("MSAL-USER-FedDefault-JSON", "ID4SLAB1", "MSAL-App-Default-JSON");
     }
 
-    public static CompletableFuture<LabResponse> getB2CLocalAccountAsync() {
-        return getLabUserDataAsync(UserQuery.b2cLocalAccountUserQuery());
+    public static LabResponse getB2CLocalAccount() {
+        return getLabUserData(UserQuery.b2cLocalAccountUserQuery());
     }
 
-    public static CompletableFuture<LabResponse> getArlingtonUserAsync() {
+    public static LabResponse getArlingtonUser() {
         // Query the Lab API with Arlington-specific parameters
-        return getLabUserDataAsync(UserQuery.arlingtonUserQuery());
+        return getLabUserData(UserQuery.arlingtonUserQuery());
     }
 
-    public static CompletableFuture<LabResponse> getArlingtonADFSUserAsync() {
+    public static LabResponse getArlingtonADFSUser() {
         // Create a modified query with federated user type
         UserQuery query = UserQuery.arlingtonUserQuery();
         query.setUserType(LabServiceParameters.UserType.FEDERATED);
 
-       return getLabUserDataAsync(query);
+       return getLabUserData(query);
     }
 
     /**
@@ -254,15 +248,15 @@ public class LabUserHelper {
      * This is the primary helper method for parameterized tests that run across multiple clouds.
      *
      * @param azureEnvironment The Azure environment (e.g., AzureEnvironment.AZURE or AZURE_US_GOVERNMENT)
-     * @return CompletableFuture containing LabResponse for a managed user in that environment
+     * @return LabResponse for a managed user in that environment
      */
-    public static CompletableFuture<LabResponse> getDefaultUserAsync(String azureEnvironment) {
+    public static LabResponse getDefaultUser(String azureEnvironment) {
         log.debug("Getting default user for environment: {}", azureEnvironment);
 
         if (AzureEnvironment.AZURE.equals(azureEnvironment)) {
-            return getDefaultUserAsync();
+            return getDefaultUser();
         } else if (AzureEnvironment.AZURE_US_GOVERNMENT.equals(azureEnvironment)) {
-            return getArlingtonUserAsync();
+            return getArlingtonUser();
         } else {
             log.error("Unsupported Azure environment: {}", azureEnvironment);
             throw new IllegalArgumentException("Unsupported Azure environment: " + azureEnvironment);
@@ -274,15 +268,15 @@ public class LabUserHelper {
      * Currently ADFS users are environment-agnostic and come from Key Vault.
      *
      * @param azureEnvironment The Azure environment (included for consistency, currently unused)
-     * @return CompletableFuture containing LabResponse for an ADFS federated user
+     * @return LabResponse for an ADFS federated user
      */
-    public static CompletableFuture<LabResponse> getDefaultAdfsUserAsync(String azureEnvironment) {
+    public static LabResponse getDefaultAdfsUser(String azureEnvironment) {
         log.debug("Getting default ADFS user for environment: {}", azureEnvironment);
 
         if (AzureEnvironment.AZURE.equals(azureEnvironment)) {
-            return getDefaultUserAsync();
+            return getDefaultUser();
         } else if (AzureEnvironment.AZURE_US_GOVERNMENT.equals(azureEnvironment)) {
-            return getArlingtonADFSUserAsync();
+            return getArlingtonADFSUser();
         } else {
             log.error("Unsupported Azure environment: {}", azureEnvironment);
             throw new IllegalArgumentException("Unsupported Azure environment: " + azureEnvironment);

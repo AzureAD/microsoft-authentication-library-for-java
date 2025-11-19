@@ -8,7 +8,7 @@ import labapi.AzureEnvironment;
 public class EnvironmentsProvider {
     public static Object[][] createData() {
         return new Object[][]{
-                {AzureEnvironment.AZURE},
-                {AzureEnvironment.AZURE_US_GOVERNMENT}};
+                {AzureEnvironment.AZURE}};
+                //{AzureEnvironment.AZURE_US_GOVERNMENT}};//Might be removed entirely under new system
     }
 }

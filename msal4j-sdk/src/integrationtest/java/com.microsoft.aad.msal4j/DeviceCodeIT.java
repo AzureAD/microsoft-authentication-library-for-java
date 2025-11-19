@@ -3,8 +3,8 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.microsoft.aad.msal4j.labapi2.*;
 import infrastructure.SeleniumExtensions;
-import labapi.*;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -25,12 +25,10 @@ import java.util.function.Consumer;
 class DeviceCodeIT {
     private static final Logger LOG = LoggerFactory.getLogger(DeviceCodeIT.class);
 
-    private LabUserProvider labUserProvider;
     private WebDriver seleniumDriver;
 
     @BeforeAll
     void setUp() {
-        labUserProvider = LabUserProvider.getInstance();
         seleniumDriver = SeleniumExtensions.createDefaultWebDriver();
     }
 
@@ -39,9 +37,10 @@ class DeviceCodeIT {
     void DeviceCodeFlowADTest(String environment) throws Exception {
         Config cfg = new Config(environment);
 
-        User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
+        LabResponse labResponse = LabUserHelper.getDefaultUser(environment);
+        LabUser user = labResponse.getUser();
 
-        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(user.getAppId(), cfg.commonAuthority());
+        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(labResponse.getApp().getAppId(), cfg.commonAuthority());
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> runAutomatedDeviceCodeFlow(deviceCode, user);
 
@@ -54,61 +53,65 @@ class DeviceCodeIT {
         IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
     }
 
-    @Test()
-    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-    void DeviceCodeFlowADFSv2019Test() throws Exception {
+    // TODO: labapi2 doesn't have on-prem ADFS user configuration yet - will be pulled from MSAL.NET
+//    @Test()
+//    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
+//    void DeviceCodeFlowADFSv2019Test() throws Exception {
+//
+//        LabResponse labResponse = LabUserHelper.getOnPremAdfsUser(LabServiceParameters.FederationProvider.ADFS_V2019);
+//        LabUser user = labResponse.getUser();
+//
+//        PublicClientApplication pca = PublicClientApplication.builder(
+//                TestConstants.ADFS_APP_ID).
+//                authority(TestConstants.ADFS_AUTHORITY).validateAuthority(false).
+//                build();
+//
+//        Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
+//            runAutomatedDeviceCodeFlow(deviceCode, user);
+//        };
+//
+//        IAuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
+//                .builder(Collections.singleton(TestConstants.ADFS_SCOPE),
+//                        deviceCodeConsumer)
+//                .build())
+//                .get();
+//
+//        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
+//    }
 
-        User user = labUserProvider.getOnPremAdfsUser(FederationProvider.ADFS_2019);
-
-        PublicClientApplication pca = PublicClientApplication.builder(
-                TestConstants.ADFS_APP_ID).
-                authority(TestConstants.ADFS_AUTHORITY).validateAuthority(false).
-                build();
-
-        Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
-            runAutomatedDeviceCodeFlow(deviceCode, user);
-        };
-
-        IAuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
-                .builder(Collections.singleton(TestConstants.ADFS_SCOPE),
-                        deviceCodeConsumer)
-                .build())
-                .get();
-
-        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
-    }
-
-    //TODO: This test is failing intermittently in the pipeline runs for the same commit, but always passes locally. Disabling until we can investigate more.
+    // TODO: labapi2 doesn't have MSA user configuration yet - will be pulled from MSAL.NET
+    // NOTE: This test was also failing intermittently in the pipeline runs for the same commit, but always passed locally.
     //@Test()
-    void DeviceCodeFlowMSATest() throws Exception {
+//    void DeviceCodeFlowMSATest() throws Exception {
+//
+//        LabResponse labResponse = LabUserHelper.getMSAUser();
+//        LabUser user = labResponse.getUser();
+//
+//        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(user.getAppId(), TestConstants.CONSUMERS_AUTHORITY);
+//
+//        Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
+//            runAutomatedDeviceCodeFlow(deviceCode, user);
+//        };
+//
+//        IAuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
+//                .builder(Collections.singleton(""),
+//                        deviceCodeConsumer)
+//                .build())
+//                .get();
+//
+//        assertNotNull(result);
+//        assertNotNull(result.accessToken());
+//
+//        result = pca.acquireTokenSilently(SilentParameters.
+//                builder(Collections.singleton(""), result.account()).
+//                build())
+//                .get();
+//
+//        assertNotNull(result);
+//        assertNotNull(result.accessToken());
+//    }
 
-        User user = labUserProvider.getMSAUser();
-
-        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(user.getAppId(), TestConstants.CONSUMERS_AUTHORITY);
-
-        Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
-            runAutomatedDeviceCodeFlow(deviceCode, user);
-        };
-
-        IAuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
-                .builder(Collections.singleton(""),
-                        deviceCodeConsumer)
-                .build())
-                .get();
-
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
-
-        result = pca.acquireTokenSilently(SilentParameters.
-                builder(Collections.singleton(""), result.account()).
-                build())
-                .get();
-
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
-    }
-
-    private void runAutomatedDeviceCodeFlow(DeviceCode deviceCode, User user) {
+    private void runAutomatedDeviceCodeFlow(DeviceCode deviceCode, LabUser user) {
         boolean isRunningLocally = true;//!Strings.isNullOrEmpty(
         //System.getenv(TestConstants.LOCAL_FLAG_ENV_VAR));
 

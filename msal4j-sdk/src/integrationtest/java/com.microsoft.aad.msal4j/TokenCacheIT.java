@@ -3,33 +3,23 @@
 
 package com.microsoft.aad.msal4j;
 
-import labapi.*;
+import com.microsoft.aad.msal4j.labapi2.*;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TokenCacheIT {
 
-    private LabUserProvider labUserProvider;
-
-    @BeforeAll
-    void setUp() {
-        labUserProvider = LabUserProvider.getInstance();
-    }
-
     @Test
     void singleAccountInCache_RemoveAccountTest() throws Exception {
-        User user = labUserProvider.getDefaultUser();
+        LabResponse labResponse = LabUserHelper.getDefaultUser(AzureEnvironment.AZURE);
+        LabUser user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
                 user.getAppId()).
@@ -59,145 +49,152 @@ class TokenCacheIT {
         assertEquals(pca.getAccounts().join().size(), 0);
     }
 
-    @Test
-    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-    void twoAccountsInCache_RemoveAccountTest() throws Exception {
+    // TODO: labapi2 doesn't have ADFS v4 specific user helper yet - will be pulled from MSAL.NET
+//    @Test
+//    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
+//    void twoAccountsInCache_RemoveAccountTest() throws Exception {
+//
+//        LabResponse managedResponse = LabUserHelper.getDefaultUser(AzureEnvironment.AZURE);
+//        LabUser managedUser = managedResponse.getUser();
+//
+//        PublicClientApplication pca = PublicClientApplication.builder(
+//                managedResponse.getApp().getAppId()).
+//                authority(TestConstants.ORGANIZATIONS_AUTHORITY).
+//                build();
+//
+//        assertEquals(pca.getAccounts().join().size(), 0);
+//
+//        pca.acquireToken(UserNamePasswordParameters.
+//                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+//                        managedUser.getUpn(),
+//                        managedUser.getPassword().toCharArray())
+//                .build())
+//                .get();
+//
+//        assertEquals(pca.getAccounts().join().size(), 1);
+//
+//        // get lab user for different account
+//        LabResponse adfsResponse = LabUserHelper.getFederatedAdfsUser(AzureEnvironment.AZURE, LabServiceParameters.FederationProvider.ADFS_V4);
+//        LabUser adfsUser = adfsResponse.getUser();
+//
+//        // acquire token for different account
+//        pca.acquireToken(UserNamePasswordParameters.
+//                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+//                        adfsUser.getUpn(),
+//                        adfsUser.getPassword().toCharArray())
+//                .build())
+//                .get();
+//
+//        assertEquals(pca.getAccounts().join().size(), 2);
+//
+//        Set<IAccount> accounts = pca.getAccounts().join();
+//        IAccount accountLabResponse1 = accounts.stream().filter(
+//                x -> x.username().equalsIgnoreCase(
+//                        managedUser.getUpn())).findFirst().orElse(null);
+//
+//        pca.removeAccount(accountLabResponse1).join();
+//
+//        assertEquals(pca.getAccounts().join().size(), 1);
+//
+//        IAccount accountLabResponse2 = pca.getAccounts().get().iterator().next();
+//
+//        // Check that the right account was left in the cache
+//        assertEquals(accountLabResponse2.username(), adfsUser.getUpn());
+//    }
 
-        User managedUser = labUserProvider.getDefaultUser();
+    // TODO: labapi2 doesn't have guest user configuration yet - will be pulled from MSAL.NET
+//    @Test
+//    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
+//    void twoAccountsInCache_SameUserDifferentTenants_RemoveAccountTest() throws Exception {
+//
+//        UserQuery query = new UserQuery();
+//        query.setUserType(LabServiceParameters.UserType.GUEST);
+//
+//        LabResponse labResponse = LabUserHelper.getLabUserData(query);
+//        LabUser guestUser = labResponse.getUser();
+//        Lab lab = labResponse.getLab();
+//
+//        String dataToInitCache = TestHelper.readResource(
+//                this.getClass(),
+//                "/cache_data/remove-account-test-cache.json");
+//
+//        // check that cache is empty
+//        assertEquals(dataToInitCache, "");
+//
+//        ITokenCacheAccessAspect persistenceAspect = new TokenPersistence(dataToInitCache);
+//
+//        // acquire tokens for home tenant, and serialize cache
+//        PublicClientApplication pca = PublicClientApplication.builder(
+//                guestUser.getAppId()).
+//                authority(TestConstants.ORGANIZATIONS_AUTHORITY)
+//                .setTokenCacheAccessAspect(persistenceAspect)
+//                .build();
+//
+//        pca.acquireToken(UserNamePasswordParameters.
+//                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+//                        guestUser.getHomeUPN(),
+//                        guestUser.getPassword().toCharArray())
+//                .build())
+//                .get();
+//
+//        String guestTenantAuthority = TestConstants.MICROSOFT_AUTHORITY_HOST + lab.getTenantId();
+//
+//        // initialize pca with tenant where user is guest, deserialize cache, and acquire second token
+//        PublicClientApplication pca2 = PublicClientApplication.builder(
+//                guestUser.getAppId()).
+//                authority(guestTenantAuthority).
+//                setTokenCacheAccessAspect(persistenceAspect).
+//                build();
+//
+//        pca2.acquireToken(UserNamePasswordParameters.
+//                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+//                        guestUser.getHomeUPN(),
+//                        guestUser.getPassword().toCharArray())
+//                .build())
+//                .get();
+//
+//        // There should be two tokens in cache, with same accounts except for tenant
+//        assertEquals(pca2.getAccounts().join().iterator().next().getTenantProfiles().size(), 2);
+//
+//        IAccount account = pca2.getAccounts().get().iterator().next();
+//
+//        // RemoveAccount should remove both cache entities
+//        pca2.removeAccount(account).join();
+//
+//        assertEquals(0, pca2.getAccounts().join().size());
+//
+//        //clean up file
+//        TestHelper.deleteFileContent(
+//                this.getClass(),
+//                "/cache_data/remove-account-test-cache.json");
+//    }
 
-        PublicClientApplication pca = PublicClientApplication.builder(
-                managedUser.getAppId()).
-                authority(TestConstants.ORGANIZATIONS_AUTHORITY).
-                build();
-
-        assertEquals(pca.getAccounts().join().size(), 0);
-
-        pca.acquireToken(UserNamePasswordParameters.
-                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-                        managedUser.getUpn(),
-                        managedUser.getPassword().toCharArray())
-                .build())
-                .get();
-
-        assertEquals(pca.getAccounts().join().size(), 1);
-
-        // get lab user for different account
-        User adfsUser = labUserProvider.getFederatedAdfsUser(FederationProvider.ADFS_4);
-
-        // acquire token for different account
-        pca.acquireToken(UserNamePasswordParameters.
-                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-                        adfsUser.getUpn(),
-                        adfsUser.getPassword().toCharArray())
-                .build())
-                .get();
-
-        assertEquals(pca.getAccounts().join().size(), 2);
-
-        Set<IAccount> accounts = pca.getAccounts().join();
-        IAccount accountLabResponse1 = accounts.stream().filter(
-                x -> x.username().equalsIgnoreCase(
-                        managedUser.getUpn())).findFirst().orElse(null);
-
-        pca.removeAccount(accountLabResponse1).join();
-
-        assertEquals(pca.getAccounts().join().size(), 1);
-
-        IAccount accountLabResponse2 = pca.getAccounts().get().iterator().next();
-
-        // Check that the right account was left in the cache
-        assertEquals(accountLabResponse2.username(), adfsUser.getUpn());
-    }
-
-    @Test
-    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-    void twoAccountsInCache_SameUserDifferentTenants_RemoveAccountTest() throws Exception {
-
-        UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.GUEST);
-
-        User guestUser = labUserProvider.getLabUser(query);
-        Lab lab = LabService.getLab(guestUser.getLabName());
-
-        String dataToInitCache = TestHelper.readResource(
-                this.getClass(),
-                "/cache_data/remove-account-test-cache.json");
-
-        // check that cache is empty
-        assertEquals(dataToInitCache, "");
-
-        ITokenCacheAccessAspect persistenceAspect = new TokenPersistence(dataToInitCache);
-
-        // acquire tokens for home tenant, and serialize cache
-        PublicClientApplication pca = PublicClientApplication.builder(
-                guestUser.getAppId()).
-                authority(TestConstants.ORGANIZATIONS_AUTHORITY)
-                .setTokenCacheAccessAspect(persistenceAspect)
-                .build();
-
-        pca.acquireToken(UserNamePasswordParameters.
-                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-                        guestUser.getHomeUPN(),
-                        guestUser.getPassword().toCharArray())
-                .build())
-                .get();
-
-        String guestTenantAuthority = TestConstants.MICROSOFT_AUTHORITY_HOST + lab.getTenantId();
-
-        // initialize pca with tenant where user is guest, deserialize cache, and acquire second token
-        PublicClientApplication pca2 = PublicClientApplication.builder(
-                guestUser.getAppId()).
-                authority(guestTenantAuthority).
-                setTokenCacheAccessAspect(persistenceAspect).
-                build();
-
-        pca2.acquireToken(UserNamePasswordParameters.
-                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-                        guestUser.getHomeUPN(),
-                        guestUser.getPassword().toCharArray())
-                .build())
-                .get();
-
-        // There should be two tokens in cache, with same accounts except for tenant
-        assertEquals(pca2.getAccounts().join().iterator().next().getTenantProfiles().size(), 2);
-
-        IAccount account = pca2.getAccounts().get().iterator().next();
-
-        // RemoveAccount should remove both cache entities
-        pca2.removeAccount(account).join();
-
-        assertEquals(0, pca2.getAccounts().join().size());
-
-        //clean up file
-        TestHelper.deleteFileContent(
-                this.getClass(),
-                "/cache_data/remove-account-test-cache.json");
-    }
-
-    @Test
-    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-    void retrieveAccounts_ADFSOnPrem() throws Exception {
-        UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, FederationProvider.ADFS_2019);
-        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.ON_PREM);
-
-        User user = labUserProvider.getLabUser(query);
-
-        PublicClientApplication pca = PublicClientApplication.builder(
-                        TestConstants.ADFS_APP_ID).
-                authority(TestConstants.ADFS_AUTHORITY).
-                build();
-
-        pca.acquireToken(UserNamePasswordParameters.
-                        builder(Collections.singleton(TestConstants.ADFS_SCOPE),
-                                user.getUpn(),
-                                user.getPassword().toCharArray())
-                        .build())
-                .get();
-
-        assertNotNull(pca.getAccounts().join().iterator().next());
-        assertEquals(pca.getAccounts().join().size(), 1);
-    }
+    // TODO: labapi2 doesn't have on-prem ADFS user configuration yet - will be pulled from MSAL.NET
+//    @Test
+//    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
+//    void retrieveAccounts_ADFSOnPrem() throws Exception {
+//        UserQuery query = new UserQuery();
+//        query.setFederationProvider(LabServiceParameters.FederationProvider.ADFS_V2019);
+//        query.setUserType(LabServiceParameters.UserType.ON_PREM);
+//
+//        LabResponse labResponse = LabUserHelper.getLabUserData(query);
+//        LabUser user = labResponse.getUser();
+//
+//        PublicClientApplication pca = PublicClientApplication.builder(
+//                        TestConstants.ADFS_APP_ID).
+//                authority(TestConstants.ADFS_AUTHORITY).
+//                build();
+//
+//        pca.acquireToken(UserNamePasswordParameters.
+//                        builder(Collections.singleton(TestConstants.ADFS_SCOPE),
+//                                user.getUpn(),
+//                                user.getPassword().toCharArray())
+//                        .build())
+//                .get();
+//
+//        assertNotNull(pca.getAccounts().join().iterator().next());
+//        assertEquals(pca.getAccounts().join().size(), 1);
+//    }
 
 
     private static class TokenPersistence implements ITokenCacheAccessAspect {

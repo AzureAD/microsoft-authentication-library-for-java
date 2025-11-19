@@ -3,16 +3,14 @@
 
 package infrastructure;
 
-import labapi.FederationProvider;
-import labapi.LabConstants;
-import labapi.User;
+import com.microsoft.aad.msal4j.labapi2.LabUser;
 
 class UserInformationFields {
-    private final User user;
+    private final LabUser user;
     private String passwordInputId;
     private String passwordSigInButtonId;
 
-    UserInformationFields(User labUser) {
+    UserInformationFields(LabUser labUser) {
         this.user = labUser;
     }
 
@@ -43,18 +41,17 @@ class UserInformationFields {
     }
 
     private void determineFieldIds() {
-        switch (user.getFederationProvider()) {
-            case FederationProvider.ADFS_2019:
-                passwordInputId = SeleniumConstants.ADFS2019_PASSWORD_ID;
-                passwordSigInButtonId = SeleniumConstants.ADFS2019_SUBMIT_ID;
-                break;
-            case FederationProvider.ADFS_4:
-                passwordInputId = SeleniumConstants.ADFSV4_WEB_PASSWORD_ID;
-                passwordSigInButtonId = SeleniumConstants.ADFSV4_WEB_SUBMIT_ID;
-                break;
-            default:
-                passwordInputId = SeleniumConstants.WEB_PASSWORD_ID;
-                passwordSigInButtonId = SeleniumConstants.WEB_SUBMIT_ID;
+        String federationProvider = user.getFederationProvider();
+
+        if ("adfsv2019".equalsIgnoreCase(federationProvider)) {
+            passwordInputId = SeleniumConstants.ADFS2019_PASSWORD_ID;
+            passwordSigInButtonId = SeleniumConstants.ADFS2019_SUBMIT_ID;
+        } else if ("adfsv4".equalsIgnoreCase(federationProvider)) {
+            passwordInputId = SeleniumConstants.ADFSV4_WEB_PASSWORD_ID;
+            passwordSigInButtonId = SeleniumConstants.ADFSV4_WEB_SUBMIT_ID;
+        } else {
+            passwordInputId = SeleniumConstants.WEB_PASSWORD_ID;
+            passwordSigInButtonId = SeleniumConstants.WEB_SUBMIT_ID;
         }
     }
 }

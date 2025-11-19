@@ -27,13 +27,11 @@ import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 class ClientCredentialsIT {
     private IClientCertificate certificate;
     private KeyVaultSecretsProvider keyVaultSecretsProvider;
-    private LabServiceApi labServiceApi;
 
     @BeforeAll
     void init() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, NoSuchProviderException, IOException {
         certificate = CertificateHelper.getClientCertificate();
         keyVaultSecretsProvider = new KeyVaultSecretsProvider();
-        labServiceApi = new LabServiceApi();
     }
 
     @Test

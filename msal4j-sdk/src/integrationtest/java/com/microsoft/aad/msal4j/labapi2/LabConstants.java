@@ -6,7 +6,7 @@ package com.microsoft.aad.msal4j.labapi2;
 /**
  * Constants for lab API endpoints and query parameters.
  */
-public class LabApiConstants {
+public class LabConstants {
 
     // Base endpoints
     public static final String LAB_ENDPOINT = "https://msidlab.com/api/user";
@@ -28,14 +28,17 @@ public class LabApiConstants {
     public static final String MICROSOFT_AUTHORITY_TENANT = "msidlab4.onmicrosoft.com";
     public static final String ARLINGTON_AUTHORITY_TENANT = "arlmsidlab1.onmicrosoft.us";
 
+    public static final String COMMON_AUTHORITY = MICROSOFT_AUTHORITY_HOST + "common/";
     public static final String ORGANIZATIONS_AUTHORITY = MICROSOFT_AUTHORITY_HOST + "organizations/";
     public static final String MICROSOFT_AUTHORITY = MICROSOFT_AUTHORITY_HOST + "microsoft.onmicrosoft.com";
 
+    public static final String ARLINGTON_COMMON_AUTHORITY = ARLINGTON_MICROSOFT_AUTHORITY_HOST + "common/";
     public static final String ARLINGTON_ORGANIZATIONS_AUTHORITY = ARLINGTON_MICROSOFT_AUTHORITY_HOST + "organizations/";
     public static final String ARLINGTON_GRAPH_DEFAULT_SCOPE = "https://graph.microsoft.us/.default";
     public static final String GRAPH_DEFAULT_SCOPE = "https://graph.windows.net/.default";
 
     public static final String ARLINGTON_APP_ID = "cb7faed4-b8c0-49ee-b421-f5ed16894c83";
+    public static final String ARLINGTON_OBO_APP_ID = "c0555d2d-02f2-4838-802e-3463422e571d";
     public static final String LAB_API_SCOPE = "https://request.msidlab.com/.default";
 
 }

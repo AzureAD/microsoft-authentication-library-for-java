@@ -3,13 +3,12 @@
 
 package com.microsoft.aad.msal4j;
 
-import labapi.*;
+import com.microsoft.aad.msal4j.labapi2.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.api.BeforeAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -23,14 +22,8 @@ import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class AcquireTokenSilentIT {
-    private LabUserProvider labUserProvider;
-
     private Config cfg;
 
-    @BeforeAll
-    void setUp() {
-        labUserProvider = LabUserProvider.getInstance();
-    }
 
     @ParameterizedTest
     @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
@@ -53,11 +46,11 @@ class AcquireTokenSilentIT {
 
         // Access token should be returned from cache, and not using refresh token
 
-        User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
-
+        LabResponse labResponse = LabUserHelper.getDefaultUser(environment);
+        LabUser user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                user.getAppId()).
+                labResponse.getApp().getAppId()).
                 authority(cfg.organizationsAuthority()).
                 build();
 
@@ -79,10 +72,11 @@ class AcquireTokenSilentIT {
     void acquireTokenSilent_ForceRefresh(String environment) throws Exception {
         cfg = new Config(environment);
 
-        User user = labUserProvider.getDefaultUser(environment);
+        LabResponse labResponse = LabUserHelper.getDefaultUser(environment);
+        LabUser user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                user.getAppId()).
+                labResponse.getApp().getAppId()).
                 authority(cfg.organizationsAuthority()).
                 build();
 
@@ -99,29 +93,31 @@ class AcquireTokenSilentIT {
         assertEquals(TokenSource.IDENTITY_PROVIDER, resultAfterRefresh.metadata().tokenSource());
     }
 
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-    void acquireTokenSilent_MultipleAccountsInCache_UseCorrectAccount(String environment) throws Exception {
-        cfg = new Config(environment);
-
-        IPublicClientApplication pca = getPublicClientApplicationWithTokensInCache();
-
-        // get lab user for different account
-        User user = labUserProvider.getFederatedAdfsUser(cfg.azureEnvironment, FederationProvider.ADFS_4);
-
-        // acquire token for different account
-        acquireTokenUsernamePassword(user, pca, cfg.graphDefaultScope());
-
-        Set<IAccount> accounts = pca.getAccounts().join();
-        IAccount account = accounts.stream().filter(
-                x -> x.username().equalsIgnoreCase(
-                        user.getUpn())).findFirst().orElse(null);
-
-        IAuthenticationResult result = acquireTokenSilently(pca, account, cfg.graphDefaultScope(), false);
-        assertResultNotNull(result);
-        assertEquals(result.account().username(), user.getUpn());
-    }
+    // TODO: labapi2 doesn't have ADFS v4 specific user helper yet - will be pulled from MSAL.NET
+//    @ParameterizedTest
+//    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
+//    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
+//    void acquireTokenSilent_MultipleAccountsInCache_UseCorrectAccount(String environment) throws Exception {
+//        cfg = new Config(environment);
+//
+//        IPublicClientApplication pca = getPublicClientApplicationWithTokensInCache();
+//
+//        // get lab user for different account
+//        LabResponse labResponse = LabUserHelper.getFederatedAdfsUser(environment, LabServiceParameters.FederationProvider.ADFS_V4);
+//        LabUser user = labResponse.getUser();
+//
+//        // acquire token for different account
+//        acquireTokenUsernamePassword(user, pca, cfg.graphDefaultScope());
+//
+//        Set<IAccount> accounts = pca.getAccounts().join();
+//        IAccount account = accounts.stream().filter(
+//                x -> x.username().equalsIgnoreCase(
+//                        user.getUpn())).findFirst().orElse(null);
+//
+//        IAuthenticationResult result = acquireTokenSilently(pca, account, cfg.graphDefaultScope(), false);
+//        assertResultNotNull(result);
+//        assertEquals(result.account().username(), user.getUpn());
+//    }
 
     @ParameterizedTest
     @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
@@ -129,15 +125,11 @@ class AcquireTokenSilentIT {
     void acquireTokenSilent_ADFS2019(String environment) throws Exception {
         cfg = new Config(environment);
 
-        UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT, cfg.azureEnvironment);
-        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, FederationProvider.ADFS_2019);
-        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.FEDERATED);
-
-        User user = labUserProvider.getLabUser(query);
+        LabResponse labResponse = LabUserHelper.getDefaultAdfsUser(environment);
+        LabUser user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                user.getAppId()).
+                labResponse.getApp().getAppId()).
                 authority(cfg.organizationsAuthority()).
                 build();
 
@@ -222,10 +214,11 @@ class AcquireTokenSilentIT {
     void acquireTokenSilent_WithRefreshOn(String environment) throws Exception {
         cfg = new Config(environment);
 
-        User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
+        LabResponse labResponse = LabUserHelper.getDefaultUser(environment);
+        LabUser user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                user.getAppId()).
+                labResponse.getApp().getAppId()).
                 authority(cfg.organizationsAuthority()).
                 build();
 
@@ -269,10 +262,11 @@ class AcquireTokenSilentIT {
     void acquireTokenSilent_TenantAsParameter(String environment) throws Exception {
         cfg = new Config(environment);
 
-        User user = labUserProvider.getDefaultUser(environment);
+        LabResponse labResponse = LabUserHelper.getDefaultUser(environment);
+        LabUser user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                user.getAppId()).
+                labResponse.getApp().getAppId()).
                 authority(cfg.organizationsAuthority()).
                 build();
 
@@ -300,10 +294,11 @@ class AcquireTokenSilentIT {
     @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
     void acquireTokenSilent_emptyStringScope(String environment) throws Exception {
         cfg = new Config(environment);
-        User user = labUserProvider.getDefaultUser(environment);
+        LabResponse labResponse = LabUserHelper.getDefaultUser(environment);
+        LabUser user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                user.getAppId()).
+                labResponse.getApp().getAppId()).
                 authority(cfg.organizationsAuthority()).
                 build();
 
@@ -321,11 +316,12 @@ class AcquireTokenSilentIT {
     @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
     void acquireTokenSilent_emptyScopeSet(String environment) throws Exception {
         cfg = new Config(environment);
-        User user = labUserProvider.getDefaultUser(environment);
+        LabResponse labResponse = LabUserHelper.getDefaultUser(environment);
+        LabUser user = labResponse.getUser();
 
         Set<String> scopes = new HashSet<>();
         PublicClientApplication pca = PublicClientApplication.builder(
-                user.getAppId()).
+                labResponse.getApp().getAppId()).
                 authority(cfg.organizationsAuthority()).
                 build();
 
@@ -350,11 +346,12 @@ class AcquireTokenSilentIT {
     @Test
     public void acquireTokenSilent_ClaimsForceRefresh() throws Exception {
         cfg = new Config(AzureEnvironment.AZURE);
-        User user = labUserProvider.getDefaultUser(AzureEnvironment.AZURE);
+        LabResponse labResponse = LabUserHelper.getDefaultUser(AzureEnvironment.AZURE);
+        LabUser user = labResponse.getUser();
 
         Set<String> scopes = new HashSet<>();
         PublicClientApplication pca = PublicClientApplication.builder(
-                        user.getAppId()).
+                        labResponse.getApp().getAppId()).
                 authority(cfg.organizationsAuthority()).
                 build();
 
@@ -403,10 +400,11 @@ class AcquireTokenSilentIT {
     }
 
     private void acquireTokenSilent_returnCachedTokens(String authority) throws Exception {
-        User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
+        LabResponse labResponse = LabUserHelper.getDefaultUser(cfg.azureEnvironment);
+        LabUser user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                user.getAppId()).
+                labResponse.getApp().getAppId()).
                 authority(authority).
                 build();
 
@@ -426,10 +424,11 @@ class AcquireTokenSilentIT {
 
     private IPublicClientApplication getPublicClientApplicationWithTokensInCache()
             throws Exception {
-        User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
+        LabResponse labResponse = LabUserHelper.getDefaultUser(cfg.azureEnvironment);
+        LabUser user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                user.getAppId()).
+                labResponse.getApp().getAppId()).
                 authority(cfg.organizationsAuthority()).
                 build();
 
@@ -445,7 +444,7 @@ class AcquireTokenSilentIT {
                 .get();
     }
 
-    private IAuthenticationResult acquireTokenUsernamePassword(User user, IPublicClientApplication pca, String scope) throws InterruptedException, ExecutionException {
+    private IAuthenticationResult acquireTokenUsernamePassword(LabUser user, IPublicClientApplication pca, String scope) throws InterruptedException, ExecutionException {
         Map<String, String> map = new HashMap<>();
         map.put("test","test");
         return pca.acquireToken(UserNamePasswordParameters.

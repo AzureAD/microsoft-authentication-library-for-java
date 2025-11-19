@@ -4,6 +4,7 @@
 package com.microsoft.aad.msal4j.labapi2;
 
 public class Config {
+    private String commonAuthority;
     private String organizationsAuthority;
     private String graphDefaultScope;
     AppCredentialProvider appProvider;
@@ -16,20 +17,26 @@ public class Config {
 
         switch (azureEnvironment) {
             case AzureEnvironment.AZURE:
-                organizationsAuthority = LabApiConstants.ORGANIZATIONS_AUTHORITY;
-                graphDefaultScope = LabApiConstants.GRAPH_DEFAULT_SCOPE;
+                commonAuthority = LabConstants.COMMON_AUTHORITY;
+                organizationsAuthority = LabConstants.ORGANIZATIONS_AUTHORITY;
+                graphDefaultScope = LabConstants.GRAPH_DEFAULT_SCOPE;
                 appProvider = new AppCredentialProvider(azureEnvironment);
-                tenant = LabApiConstants.MICROSOFT_AUTHORITY_TENANT;
+                tenant = LabConstants.MICROSOFT_AUTHORITY_TENANT;
                 break;
             case AzureEnvironment.AZURE_US_GOVERNMENT:
-                organizationsAuthority = LabApiConstants.ARLINGTON_ORGANIZATIONS_AUTHORITY;
-                graphDefaultScope = LabApiConstants.ARLINGTON_GRAPH_DEFAULT_SCOPE;
+                commonAuthority = LabConstants.ARLINGTON_COMMON_AUTHORITY;
+                organizationsAuthority = LabConstants.ARLINGTON_ORGANIZATIONS_AUTHORITY;
+                graphDefaultScope = LabConstants.ARLINGTON_GRAPH_DEFAULT_SCOPE;
                 appProvider = new AppCredentialProvider(azureEnvironment);
-                tenant = LabApiConstants.ARLINGTON_AUTHORITY_TENANT;
+                tenant = LabConstants.ARLINGTON_AUTHORITY_TENANT;
                 break;
             default:
                 throw new UnsupportedOperationException("Azure Environment - " + azureEnvironment + " unsupported");
         }
+    }
+
+    public String commonAuthority() {
+        return this.commonAuthority;
     }
 
     public String organizationsAuthority() {
@@ -42,5 +49,16 @@ public class Config {
 
     public String tenant() {
         return this.tenant;
+    }
+
+    public String tenantSpecificAuthority() {
+        switch (azureEnvironment) {
+            case AzureEnvironment.AZURE:
+                return LabConstants.MICROSOFT_AUTHORITY_HOST + tenant;
+            case AzureEnvironment.AZURE_US_GOVERNMENT:
+                return LabConstants.ARLINGTON_MICROSOFT_AUTHORITY_HOST + tenant;
+            default:
+                throw new UnsupportedOperationException("Azure Environment - " + azureEnvironment + " unsupported");
+        }
     }
 }

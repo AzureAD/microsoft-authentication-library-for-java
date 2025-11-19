@@ -23,7 +23,7 @@ class UsernamePasswordIT {
     void acquireTokenWithUsernamePassword_Managed(String environment) throws Exception {
         cfg = new Config(environment);
 
-        LabResponse labResponse = LabUserHelper.getDefaultUserAsync(environment).join();
+        LabResponse labResponse = LabUserHelper.getDefaultUser(environment);
         assertAcquireTokenCommon(labResponse.getUser(), cfg.organizationsAuthority(), cfg.graphDefaultScope(), labResponse.getApp().getAppId());
     }
 
@@ -33,7 +33,7 @@ class UsernamePasswordIT {
     void acquireTokenWithUsernamePassword_ADFSv2019_Federated(String environment) throws Exception {
         cfg = new Config(environment);
 
-        LabResponse labResponse = LabUserHelper.getDefaultAdfsUserAsync(environment).join();
+        LabResponse labResponse = LabUserHelper.getDefaultAdfsUser(environment);
         LabUser user = labResponse.getUser();
 
         assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope(), labResponse.getApp().getAppId());
@@ -42,7 +42,7 @@ class UsernamePasswordIT {
     @Test
     @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
     void acquireTokenWithUsernamePassword_ADFSv2019_OnPrem() throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultAdfsUserAsync().join();
+        LabResponse labResponse = LabUserHelper.getDefaultAdfsUser();
         LabUser user = labResponse.getUser();
 
         assertAcquireTokenCommon(user, TestConstants.ADFS_AUTHORITY, TestConstants.ADFS_SCOPE, TestConstants.ADFS_APP_ID);
@@ -50,7 +50,7 @@ class UsernamePasswordIT {
 
 //    @Test
 //    void acquireTokenWithUsernamePassword_AuthorityWithPort() throws Exception {
-//        LabResponse labResponse = LabUserHelper.getDefaultUserAsync().join();
+//        LabResponse labResponse = LabUserHelper.getDefaultUser();
 //        LabUser user = labResponse.getUser();
 //
 //        assertAcquireTokenCommon(
@@ -68,7 +68,7 @@ class UsernamePasswordIT {
 //        query.setUserType(LabServiceParameters.UserType.CLOUD);
 //        query.setAzureEnvironment(LabServiceParameters.AzureEnvironment.AZURE_CIAM);
 //
-//        LabResponse labResponse = LabUserHelper.getLabUserDataAsync(query).join();
+//        LabResponse labResponse = LabUserHelper.getLabUserData(query);
 //
 //        LabUser user = labResponse.getUser();        PublicClientApplication pca = PublicClientApplication.builder(user.getAppId())
 //                .authority("https://" + user.getLabName() + ".ciamlogin.com/")
@@ -108,7 +108,7 @@ class UsernamePasswordIT {
 
     @Test
     void acquireTokenWithUsernamePassword_B2C_CustomAuthority() throws Exception {
-        LabResponse labResponse = LabUserHelper.getB2CLocalAccountAsync().join();
+        LabResponse labResponse = LabUserHelper.getB2CLocalAccount();
         LabUser user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
@@ -138,7 +138,7 @@ class UsernamePasswordIT {
 
     @Test
     void acquireTokenWithUsernamePassword_B2C_LoginMicrosoftOnline() throws Exception {
-        LabResponse labResponse = LabUserHelper.getB2CLocalAccountAsync().join();
+        LabResponse labResponse = LabUserHelper.getB2CLocalAccount();
         LabUser user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
