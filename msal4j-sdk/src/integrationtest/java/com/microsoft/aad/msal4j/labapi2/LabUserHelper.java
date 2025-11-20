@@ -68,7 +68,7 @@ public class LabUserHelper {
      */
     private static Object getKVLabData(String secret) {
         try {
-            log.debug("Retrieving Key Vault secret: {}", secret);
+            log.info("Retrieving Key Vault secret: {}", secret);
             // Use MSAL Team vault for configuration
             KeyVaultSecret keyVaultSecret = keyVaultSecretsProviderMsal.getSecretByName(secret);
             String labData = keyVaultSecret.getValue();
@@ -197,6 +197,8 @@ public class LabUserHelper {
 
             log.info("Merged secrets [{}]: {}", String.join(", ", secrets),
                     mergedResponse.getUser() != null ? mergedResponse.getUser().getUpn() : "N/A");
+
+            System.out.println(mergedResponse.toJsonString());
 
             return mergedResponse;
         } catch (Exception e) {

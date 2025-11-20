@@ -43,12 +43,7 @@ class UserInformationFields {
     private void determineFieldIds() {
         String federationProvider = user.getFederationProvider();
 
-        if ("adfsv2022".equalsIgnoreCase(federationProvider)) {
-            passwordInputId = SeleniumConstants.ADFS_PASSWORD_ID;
-            passwordSigInButtonId = SeleniumConstants.ADFS_SUBMIT_ID;
-        } else {
             passwordInputId = SeleniumConstants.WEB_PASSWORD_ID;
             passwordSigInButtonId = SeleniumConstants.WEB_SUBMIT_ID;
-        }
     }
 }

@@ -93,10 +93,10 @@ class DeviceCodeIT {
             seleniumDriver.findElement(new By.ById(deviceCodeFormId)).sendKeys(deviceCode.userCode());
 
             LOG.info("Loggin in ... click continue");
-            WebElement continueBtn = SeleniumExtensions.waitForElementToBeVisibleAndEnable(
-                    seleniumDriver,
-                    new By.ById(continueButtonId));
-            continueBtn.click();
+//            WebElement continueBtn = SeleniumExtensions.waitForElementToBeVisibleAndEnable(
+//                    seleniumDriver,
+//                    new By.ById(continueButtonId));
+//            continueBtn.click();
 
             SeleniumExtensions.performADOrCiamLogin(seleniumDriver, user);
         } catch (Exception e) {

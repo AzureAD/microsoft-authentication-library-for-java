@@ -74,6 +74,10 @@ public class Lab implements JsonSerializable<Lab> {
         return this.tenantId;
     }
 
+    public String getAuthority() {
+        return this.authority;
+    }
+
     public String getFederationProvider() {
         return this.federationProvider;
     }

@@ -111,6 +111,7 @@ public class LabUser implements JsonSerializable<LabUser> {
         jsonWriter.writeStringField("lastUpdatedBy", lastUpdatedBy);
         jsonWriter.writeStringField("lastUpdatedDate", lastUpdatedDate);
         jsonWriter.writeStringField("tenantId", tenantId);
+        jsonWriter.writeStringField("federationProvider", federationProvider);
 
         jsonWriter.writeEndObject();
 
