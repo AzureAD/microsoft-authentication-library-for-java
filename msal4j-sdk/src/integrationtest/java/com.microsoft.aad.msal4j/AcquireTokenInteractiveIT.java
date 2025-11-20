@@ -7,6 +7,7 @@ import com.microsoft.aad.msal4j.labapi2.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.jupiter.api.TestInstance;
@@ -46,26 +47,15 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
         assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), cfg.commonAuthority(), cfg.graphDefaultScope());
     }
 
-    // TODO: labapi2 doesn't have on-prem ADFS user configuration yet - will be pulled from MSAL.NET
-//    @Test()
-//    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-//    void acquireTokenInteractive_ADFSv2019_OnPrem() {
-//        LabResponse labResponse = LabUserHelper.getOnPremAdfsUser(LabServiceParameters.FederationProvider.ADFS_V2019);
-//        LabUser user = labResponse.getUser();
-//        assertAcquireTokenCommon(user, TestConstants.ADFS_AUTHORITY, TestConstants.ADFS_SCOPE);
-//    }
+    //TODO: need to sort out ADFS 2022 configuration
+    @Test()
+    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
+    void acquireTokenInteractive_ADFSv2022() {
+        LabResponse labResponse = LabUserHelper.getDefaultAdfsUser();
 
-    // TODO: labapi2 doesn't have ADFS v4 specific user helper yet - will be pulled from MSAL.NET
-//    @ParameterizedTest
-//    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-//    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-//    void acquireTokenInteractive_ADFSv4_Federated(String environment) {
-//        cfg = new Config(environment);
-//
-//        LabResponse labResponse = LabUserHelper.getFederatedAdfsUser(environment, LabServiceParameters.FederationProvider.ADFS_V4);
-//        LabUser user = labResponse.getUser();
-//        assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope());
-//    }
+        LabUser user = labResponse.getUser();
+        assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), labResponse.getApp().getAuthority() + "organizations/", TestConstants.ADFS_SCOPE);
+    }
 
     @Test
     void acquireTokenWithAuthorizationCode_B2C_Local() {
@@ -85,15 +75,14 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
         assertAcquireTokenB2C(user, TestConstants.B2C_AUTHORITY_LEGACY_FORMAT);
     }
 
-    // TODO: labapi2 needs cross-cloud instance aware test configuration - will be pulled from MSAL.NET
-//    @Test
-//    void acquireTokenInteractive_ManagedUser_InstanceAware() {
-//        cfg = new Config(AzureEnvironment.AZURE);
-//
-//        LabResponse labResponse = LabUserHelper.getDefaultUser(AzureEnvironment.AZURE_US_GOVERNMENT);
-//        LabUser user = labResponse.getUser();
-//        assertAcquireTokenInstanceAware(user);
-//    }
+    @Test
+    void acquireTokenInteractive_ManagedUser_InstanceAware() {
+        cfg = new Config();
+
+        LabResponse labResponse = LabUserHelper.getArlingtonUser();
+        LabUser user = labResponse.getUser();
+        assertAcquireTokenInstanceAware(user, labResponse.getApp().getAppId(), labResponse.getLab().getTenantId());
+    }
 
     @Test
     void acquireTokenInteractive_Ciam() {
@@ -169,8 +158,8 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
         IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
     }
 
-    private void assertAcquireTokenInstanceAware(LabUser user) {
-        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(user.getAppId(), TestConstants.MICROSOFT_AUTHORITY_HOST + user.getTenantId());
+    private void assertAcquireTokenInstanceAware(LabUser user, String appId, String tenantId) {
+        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(appId, TestConstants.MICROSOFT_AUTHORITY_HOST + tenantId);
 
         IAuthenticationResult result = acquireTokenInteractive_instanceAware(user, pca, cfg.graphDefaultScope());
 

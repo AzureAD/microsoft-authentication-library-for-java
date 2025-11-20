@@ -88,32 +88,6 @@ class AcquireTokenSilentIT {
         assertEquals(TokenSource.IDENTITY_PROVIDER, resultAfterRefresh.metadata().tokenSource());
     }
 
-    // TODO: labapi2 doesn't have ADFS v4 specific user helper yet - will be pulled from MSAL.NET
-//    @ParameterizedTest
-//    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-//    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-//    void acquireTokenSilent_MultipleAccountsInCache_UseCorrectAccount(String environment) throws Exception {
-//        cfg = new Config(environment);
-//
-//        IPublicClientApplication pca = getPublicClientApplicationWithTokensInCache();
-//
-//        // get lab user for different account
-//        LabResponse labResponse = LabUserHelper.getFederatedAdfsUser(environment, LabServiceParameters.FederationProvider.ADFS_V4);
-//        LabUser user = labResponse.getUser();
-//
-//        // acquire token for different account
-//        acquireTokenUsernamePassword(user, pca, cfg.graphDefaultScope());
-//
-//        Set<IAccount> accounts = pca.getAccounts().join();
-//        IAccount account = accounts.stream().filter(
-//                x -> x.username().equalsIgnoreCase(
-//                        user.getUpn())).findFirst().orElse(null);
-//
-//        IAuthenticationResult result = acquireTokenSilently(pca, account, cfg.graphDefaultScope(), false);
-//        assertResultNotNull(result);
-//        assertEquals(result.account().username(), user.getUpn());
-//    }
-
     @Test
     void acquireTokenSilent_usingCommonAuthority_returnCachedAt() throws Exception {
         acquireTokenSilent_returnCachedTokens(cfg.organizationsAuthority());

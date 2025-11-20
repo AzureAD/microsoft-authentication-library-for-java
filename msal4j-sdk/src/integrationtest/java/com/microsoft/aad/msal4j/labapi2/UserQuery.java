@@ -44,18 +44,6 @@ public class UserQuery {
     }
 
     /**
-     * Gets an ADFS 2022 federated user from the lab.
-     * Uses the Lab API to query for a user with ADFS 2022 federation.
-     */
-    public static UserQuery adfs2022UserQuery() {
-        UserQuery query = new UserQuery();
-        query.setAzureEnvironment(AzureEnvironment.AZURE);
-        query.setFederationProvider(FederationProvider.ADFS_2022);
-        query.setUserType(UserType.FEDERATED);
-        return query;
-    }
-
-    /**
      * Gets a B2C local account (username/password) from the lab.
      */
     public static UserQuery b2cLocalAccountQuery() {

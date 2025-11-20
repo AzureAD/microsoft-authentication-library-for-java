@@ -38,7 +38,7 @@ public class SeleniumExtensions {
         ChromeOptions options = new ChromeOptions();
 
         //No visual rendering, remove to see browser window when debugging
-        options.addArguments("--headless");
+//        options.addArguments("--headless");
         //Add to avoid issues if your real browser's history/cookies are affecting tests, should not be needed in ADO pipelines
         options.addArguments("--incognito");
 
@@ -134,13 +134,13 @@ public class SeleniumExtensions {
         });
     }
 
-    public static void performADFS2019Login(WebDriver driver, LabUser user) {
-        LOG.info("PerformADFS2019Login");
+    public static void performADFSLogin(WebDriver driver, LabUser user) {
+        LOG.info("PerformADFSLogin");
 
         UserInformationFields fields = new UserInformationFields(user);
 
         LOG.info("Loggin in ... Entering username");
-        driver.findElement(new By.ById(fields.getADFS2019UserNameInputId())).sendKeys(user.getUpn());
+        driver.findElement(new By.ById(fields.getADFSUserNameInputId())).sendKeys(user.getUpn());
 
         LOG.info("Loggin in ... Entering password");
         By by = new By.ById(fields.getPasswordInputId());
@@ -165,53 +165,5 @@ public class SeleniumExtensions {
 
         waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.B2C_LOCAL_SIGN_IN_BUTTON_ID)).
                 click();
-    }
-
-    public static void performGoogleLogin(WebDriver driver, LabUser user) {
-        LOG.info("PerformGoogleLogin");
-
-        driver.findElement(new By.ById(SeleniumConstants.GOOGLE_ACCOUNT_ID)).click();
-
-        LOG.info("Loggin in ... Entering username");
-        driver.findElement(new By.ById(SeleniumConstants.GOOGLE_USERNAME_ID)).sendKeys(user.getUpn());
-
-        LOG.info("Loggin in ... Clicking <Next> after username");
-        driver.findElement(new By.ById(SeleniumConstants.GOOGLE_NEXT_AFTER_USERNAME_BUTTON)).click();
-
-        LOG.info("Loggin in ... Entering password");
-        By by = new By.ByName(SeleniumConstants.GOOGLE_PASSWORD_ID);
-        waitForElementToBeVisibleAndEnable(driver, by).sendKeys(user.getPassword());
-
-        LOG.info("Loggin in ... click submit");
-
-        waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.GOOGLE_NEXT_BUTTON_ID)).click();
-    }
-
-    public static void performFacebookLogin(WebDriver driver, LabUser user) {
-        LOG.info("PerformFacebookLogin");
-
-        driver.findElement(new By.ById(SeleniumConstants.FACEBOOK_ACCOUNT_ID)).click();
-
-        LOG.info("Loggin in ... Entering username");
-        driver.findElement(new By.ById(SeleniumConstants.FACEBOOK_USERNAME_ID)).sendKeys(user.getUpn());
-
-        LOG.info("Loggin in ... Entering password");
-        By by = new By.ById(SeleniumConstants.FACEBOOK_PASSWORD_ID);
-        waitForElementToBeVisibleAndEnable(driver, by).sendKeys(user.getPassword());
-
-        waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.FACEBOOK_LOGIN_BUTTON_ID)).
-                click();
-    }
-
-    public static void takeScreenShot(WebDriver driver) {
-        String file = System.getenv("BUILD_STAGINGDIRECTORY");
-        File destination = new File(file + "" + "/SeleniumError.png");
-        File scrFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-        try {
-            FileUtils.copyFile(scrFile, destination);
-            LOG.info("Screenshot can be found at: " + destination.getPath());
-        } catch (Exception exception) {
-            LOG.error("Error taking screenshot: " + exception.getMessage());
-        }
     }
 }

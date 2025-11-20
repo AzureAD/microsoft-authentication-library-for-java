@@ -10,7 +10,7 @@ public class LabServiceParameters {
         ADFS_V4,
         @Deprecated // ADFSv3 is out of support, do not use. The Arlington lab is federated to ADFSv3, so this value is needed
         ADFS_V3,
-        ADFS_2022,
+        ADFSv2022,
         CIAM,     // CIAM
         CIAMCUD,     // CIAM CUD
     }

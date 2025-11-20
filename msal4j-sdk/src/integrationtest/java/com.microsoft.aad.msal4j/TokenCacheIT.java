@@ -49,59 +49,6 @@ class TokenCacheIT {
         assertEquals(pca.getAccounts().join().size(), 0);
     }
 
-    // TODO: labapi2 doesn't have ADFS v4 specific user helper yet - will be pulled from MSAL.NET
-//    @Test
-//    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-//    void twoAccountsInCache_RemoveAccountTest() throws Exception {
-//
-//        LabResponse managedResponse = LabUserHelper.getDefaultUser(AzureEnvironment.AZURE);
-//        LabUser managedUser = managedResponse.getUser();
-//
-//        PublicClientApplication pca = PublicClientApplication.builder(
-//                managedResponse.getApp().getAppId()).
-//                authority(TestConstants.ORGANIZATIONS_AUTHORITY).
-//                build();
-//
-//        assertEquals(pca.getAccounts().join().size(), 0);
-//
-//        pca.acquireToken(UserNamePasswordParameters.
-//                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-//                        managedUser.getUpn(),
-//                        managedUser.getPassword().toCharArray())
-//                .build())
-//                .get();
-//
-//        assertEquals(pca.getAccounts().join().size(), 1);
-//
-//        // get lab user for different account
-//        LabResponse adfsResponse = LabUserHelper.getFederatedAdfsUser(AzureEnvironment.AZURE, LabServiceParameters.FederationProvider.ADFS_V4);
-//        LabUser adfsUser = adfsResponse.getUser();
-//
-//        // acquire token for different account
-//        pca.acquireToken(UserNamePasswordParameters.
-//                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-//                        adfsUser.getUpn(),
-//                        adfsUser.getPassword().toCharArray())
-//                .build())
-//                .get();
-//
-//        assertEquals(pca.getAccounts().join().size(), 2);
-//
-//        Set<IAccount> accounts = pca.getAccounts().join();
-//        IAccount accountLabResponse1 = accounts.stream().filter(
-//                x -> x.username().equalsIgnoreCase(
-//                        managedUser.getUpn())).findFirst().orElse(null);
-//
-//        pca.removeAccount(accountLabResponse1).join();
-//
-//        assertEquals(pca.getAccounts().join().size(), 1);
-//
-//        IAccount accountLabResponse2 = pca.getAccounts().get().iterator().next();
-//
-//        // Check that the right account was left in the cache
-//        assertEquals(accountLabResponse2.username(), adfsUser.getUpn());
-//    }
-
     // TODO: labapi2 doesn't have guest user configuration yet - will be pulled from MSAL.NET
 //    @Test
 //    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")

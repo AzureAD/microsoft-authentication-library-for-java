@@ -259,10 +259,6 @@ public class LabUserHelper {
         return getLabUserData(UserQuery.b2cMsaAccountQuery());
     }
 
-    public static LabResponse getAdfs2022User() {
-        return getLabUserData(UserQuery.adfs2022UserQuery());
-    }
-
     public static LabResponse getCiamOboUser() {
         return getLabUserData(UserQuery.ciamOboUserQuery());
     }

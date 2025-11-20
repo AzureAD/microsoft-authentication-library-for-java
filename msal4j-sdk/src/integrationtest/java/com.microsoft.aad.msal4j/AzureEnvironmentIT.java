@@ -13,12 +13,6 @@ import java.util.Collections;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class AzureEnvironmentIT {
 
-    // TODO: labapi2 doesn't have Azure China user configuration yet - will be pulled from MSAL.NET
-//    @Test
-//    void acquireTokenWithUsernamePassword_AzureChina() throws Exception {
-//        assertAcquireTokenCommon(AzureEnvironment.AZURE_CHINA);
-//    }
-
     @Test
     void acquireTokenWithUsernamePassword_AzureGovernment() throws Exception {
         LabResponse labResponse = LabUserHelper.getArlingtonUser();

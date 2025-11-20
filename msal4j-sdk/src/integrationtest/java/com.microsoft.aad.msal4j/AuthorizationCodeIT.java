@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j;
 import com.microsoft.aad.msal4j.labapi2.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.jupiter.api.Test;
@@ -47,19 +48,6 @@ class AuthorizationCodeIT extends SeleniumTest {
         LabUser user = labResponse.getUser();
         assertAcquireTokenAAD(user, labResponse.getApp().getAppId(), null);
     }
-
-    // TODO: labapi2 doesn't have ADFS v4 specific user helper yet - will be pulled from MSAL.NET
-//    @ParameterizedTest
-//    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-//    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-//    public void acquireTokenWithAuthorizationCode_ADFSv4_Federated(String environment) {
-//        cfg = new Config(environment);
-//
-//        LabResponse labResponse = LabUserHelper.getFederatedAdfsUser(environment, LabServiceParameters.FederationProvider.ADFS_V4);
-//        LabUser user = labResponse.getUser();
-//
-//        assertAcquireTokenAAD(user, null);
-//    }
 
     @Test
     public void acquireTokenWithAuthorizationCode_B2C_Local() {
@@ -105,12 +93,22 @@ class AuthorizationCodeIT extends SeleniumTest {
         assertEquals(resultSilent.account().username(), result.account().username());
     }
 
-    private void assertAcquireTokenADFS2019(LabUser user) {
+    //TODO: need to sort out ADFS 2022 configuration
+    @Test
+    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
+    void acquireTokenWithAuthorizationCode_ADFSv2022() {
+        LabResponse labResponse = LabUserHelper.getDefaultAdfsUser();
+
+        LabUser user = labResponse.getUser();
+        assertAcquireTokenADFS(user, labResponse.getApp().getAppId(), labResponse.getApp().getAuthority() + "organizations/");
+    }
+
+    private void assertAcquireTokenADFS(LabUser user, String appId, String authority) {
         PublicClientApplication pca;
         try {
             pca = PublicClientApplication.builder(
-                    TestConstants.ADFS_APP_ID).
-                    authority(TestConstants.ADFS_AUTHORITY).
+                            appId).
+                    authority(authority).
                     build();
         } catch (MalformedURLException ex) {
             throw new RuntimeException(ex.getMessage());

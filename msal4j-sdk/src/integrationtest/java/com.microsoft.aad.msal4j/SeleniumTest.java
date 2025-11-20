@@ -25,22 +25,13 @@ abstract class SeleniumTest {
 
     void runSeleniumAutomatedLogin(LabUser user, AbstractClientApplicationBase app) {
         AuthorityType authorityType = app.authenticationAuthority.authorityType;
+
         if (authorityType == AuthorityType.B2C) {
-            switch (user.getB2cProvider().toLowerCase()) {
-                case "local":
-                    SeleniumExtensions.performLocalLogin(seleniumDriver, user);
-                    break;
-                case "google":
-                    SeleniumExtensions.performGoogleLogin(seleniumDriver, user);
-                    break;
-                case "facebook":
-                    SeleniumExtensions.performFacebookLogin(seleniumDriver, user);
-                    break;
-            }
+            SeleniumExtensions.performLocalLogin(seleniumDriver, user);
         } else if (authorityType == AuthorityType.AAD) {
             SeleniumExtensions.performADOrCiamLogin(seleniumDriver, user);
         } else if (authorityType == AuthorityType.ADFS) {
-            SeleniumExtensions.performADFS2019Login(seleniumDriver, user);
+            SeleniumExtensions.performADFSLogin(seleniumDriver, user);
         } else if (authorityType == AuthorityType.CIAM || authorityType == AuthorityType.OIDC) {
             SeleniumExtensions.performADOrCiamLogin(seleniumDriver, user);
         }

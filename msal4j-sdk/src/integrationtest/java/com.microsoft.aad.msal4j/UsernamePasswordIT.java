@@ -71,8 +71,6 @@ class UsernamePasswordIT {
                 authority(authority).
                 build();
 
-        System.out.println("Scope: " + scope);
-        System.out.println("UPN: " + user.getUpn());
         IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters.
                 builder(Collections.singleton(scope),
                         user.getUpn(),
