@@ -42,7 +42,17 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
     void acquireTokenInteractive_ManagedUser() {
         cfg = new Config();
 
-        LabResponse labResponse = LabUserHelper.getDefaultUser();
+        LabResponse labResponse = LabUserHelper.getDefaultUserMultiTenantApp();
+        LabUser user = labResponse.getUser();
+
+        assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), labResponse.getApp().getAuthority()+ "common", cfg.graphDefaultScope());
+    }
+
+    @Test
+    void acquireTokenInteractive_Arlington() {
+        cfg = new Config();
+
+        LabResponse labResponse = LabUserHelper.getArlingtonUser();
         LabUser user = labResponse.getUser();
 
         assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), labResponse.getApp().getAuthority()+ "common", cfg.graphDefaultScope());

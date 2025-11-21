@@ -222,6 +222,10 @@ public class LabUserHelper {
         return mergeKVLabData("MSAL-User-Default-JSON", "ID4SLAB1", "MSAL-App-Default-JSON");
     }
 
+    public static LabResponse getDefaultUserMultiTenantApp() {
+        return mergeKVLabData("MSAL-User-Default-JSON", "ID4SLAB1", "MSAL-APP-AzureADMultipleOrgsPC-JSON");
+    }
+
     public static LabResponse getDefaultAdfsUser() {
         return mergeKVLabData("MSAL-USER-FedDefault-JSON", "ID4SLAB1", "MSAL-App-Default-JSON");
     }
