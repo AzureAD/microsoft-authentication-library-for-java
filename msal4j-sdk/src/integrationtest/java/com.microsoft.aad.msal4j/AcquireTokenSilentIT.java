@@ -6,9 +6,7 @@ package com.microsoft.aad.msal4j;
 import com.microsoft.aad.msal4j.labapi2.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -89,13 +87,23 @@ class AcquireTokenSilentIT {
     }
 
     @Test
-    void acquireTokenSilent_usingCommonAuthority_returnCachedAt() throws Exception {
-        acquireTokenSilent_returnCachedTokens(cfg.organizationsAuthority());
+    void acquireTokenSilent_usingOrganizationsAuthority_returnCachedAt() throws Exception {
+        cfg = new Config();
+
+        LabResponse labResponse = LabUserHelper.getDefaultUser();
+        LabUser user = labResponse.getUser();
+
+        acquireTokenSilent_returnCachedTokens(labResponse.getApp().getAppId(), cfg.organizationsAuthority(), user);
     }
 
     @Test
     void acquireTokenSilent_usingTenantSpecificAuthority_returnCachedAt() throws Exception {
-        acquireTokenSilent_returnCachedTokens(cfg.tenantSpecificAuthority());
+        cfg = new Config();
+
+        LabResponse labResponse = LabUserHelper.getDefaultUser();
+        LabUser user = labResponse.getUser();
+
+        acquireTokenSilent_returnCachedTokens(labResponse.getApp().getAppId(), cfg.tenantSpecificAuthority(labResponse.getUser().getTenantId()), user);
     }
 
     @Test
@@ -222,7 +230,7 @@ class AcquireTokenSilentIT {
 
         IAuthenticationResult resultWithTenantParam = pca.acquireTokenSilently(SilentParameters.
                 builder(Collections.singleton(cfg.graphDefaultScope()), account).
-                    tenant(cfg.tenant()).
+                    tenant(labResponse.getUser().getTenantId()).
                 build()).get();
         assertResultNotNull(resultWithTenantParam);
         assertTokensAreNotEqual(result, resultWithTenantParam);
@@ -335,12 +343,11 @@ class AcquireTokenSilentIT {
                         build();
     }
 
-    private void acquireTokenSilent_returnCachedTokens(String authority) throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser();
-        LabUser user = labResponse.getUser();
+    private void acquireTokenSilent_returnCachedTokens(String appId, String authority, LabUser user) throws Exception {
+
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                labResponse.getApp().getAppId()).
+                        appId).
                 authority(authority).
                 build();
 

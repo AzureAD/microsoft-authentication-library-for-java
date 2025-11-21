@@ -69,7 +69,7 @@ class AuthorizationResponseHandler implements HttpHandler {
                 break;
             case ProtocolError:
             case UnknownError:
-                sendErrorResponse(httpExchange, getErrorResponseMessage());
+                sendErrorResponse(httpExchange, result);
                 break;
         }
     }
@@ -82,7 +82,17 @@ class AuthorizationResponseHandler implements HttpHandler {
         }
     }
 
-    private void sendErrorResponse(HttpExchange httpExchange, String response) throws IOException {
+    private void sendErrorResponse(HttpExchange httpExchange, AuthorizationResult result) throws IOException {
+        String response = getErrorResponseMessage();
+
+        // Format the message with actual error details if using default message
+        if (systemBrowserOptions == null || systemBrowserOptions.htmlMessageError() == null) {
+            String errorCode = result.error() != null ? result.error() : "unknown";
+            String errorDescription = result.errorDescription() != null ? result.errorDescription() : "No description available";
+            response = java.text.MessageFormat.format(response, errorCode, errorDescription);
+            LOG.error("Error details: error {} error_description: {}", errorCode, errorDescription);
+        }
+
         if (systemBrowserOptions == null || systemBrowserOptions.browserRedirectError() == null) {
             send200Response(httpExchange, response);
         } else {

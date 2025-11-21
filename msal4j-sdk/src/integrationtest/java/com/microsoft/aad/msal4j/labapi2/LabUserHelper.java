@@ -198,8 +198,6 @@ public class LabUserHelper {
             log.info("Merged secrets [{}]: {}", String.join(", ", secrets),
                     mergedResponse.getUser() != null ? mergedResponse.getUser().getUpn() : "N/A");
 
-            System.out.println(mergedResponse.toJsonString());
-
             return mergedResponse;
         } catch (Exception e) {
             log.error("Failed to merge secrets [{}]: {}", String.join(", ", secrets), e.getMessage());

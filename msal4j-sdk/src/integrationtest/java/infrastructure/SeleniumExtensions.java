@@ -72,9 +72,7 @@ public class SeleniumExtensions {
                 .click();
 
         LOG.info("Entering password");
-        System.out.println("Using password ID: " + fields.getPasswordInputId());
         waitForElementToBeVisibleAndEnabled(driver, By.id(fields.getPasswordInputId()));
-        System.out.println(By.id(fields.getPasswordInputId()));
         waitForElementToBeVisibleAndEnabled(driver, By.id(fields.getPasswordInputId()))
                 .sendKeys(user.getPassword());
 

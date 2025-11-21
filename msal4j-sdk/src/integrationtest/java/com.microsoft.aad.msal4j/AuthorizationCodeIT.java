@@ -46,6 +46,7 @@ class AuthorizationCodeIT extends SeleniumTest {
 
         LabResponse labResponse = LabUserHelper.getDefaultUser();
         LabUser user = labResponse.getUser();
+
         assertAcquireTokenAAD(user, labResponse.getApp().getAppId(), null);
     }
 

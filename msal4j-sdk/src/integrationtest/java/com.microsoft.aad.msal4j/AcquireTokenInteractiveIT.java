@@ -45,7 +45,7 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
         LabResponse labResponse = LabUserHelper.getDefaultUser();
         LabUser user = labResponse.getUser();
 
-        assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), labResponse.getLab().getAuthority()+ "common", cfg.graphDefaultScope());
+        assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), labResponse.getApp().getAuthority()+ "common", cfg.graphDefaultScope());
     }
 
     //TODO: need to sort out ADFS 2022 configuration

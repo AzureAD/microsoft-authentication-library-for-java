@@ -15,6 +15,8 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.AfterAll;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import java.time.Duration;
 import java.util.Collections;
 import java.util.function.Consumer;
 
@@ -36,7 +38,7 @@ class DeviceCodeIT {
         LabResponse labResponse = LabUserHelper.getDefaultUser();
         LabUser user = labResponse.getUser();
 
-        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(labResponse.getApp().getAppId(), cfg.commonAuthority());
+        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(labResponse.getApp().getAppId(), cfg.tenantSpecificAuthority(labResponse.getUser().getTenantId()));
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> runAutomatedDeviceCodeFlow(deviceCode, user);
 
@@ -93,10 +95,11 @@ class DeviceCodeIT {
             seleniumDriver.findElement(new By.ById(deviceCodeFormId)).sendKeys(deviceCode.userCode());
 
             LOG.info("Loggin in ... click continue");
-//            WebElement continueBtn = SeleniumExtensions.waitForElementToBeVisibleAndEnable(
-//                    seleniumDriver,
-//                    new By.ById(continueButtonId));
-//            continueBtn.click();
+            WebElement continueBtn = SeleniumExtensions.waitForElementToBeVisibleAndEnabled(
+                    seleniumDriver,
+                    new By.ById(continueButtonId),
+                    Duration.ofSeconds(15));
+            continueBtn.click();
 
             SeleniumExtensions.performADOrCiamLogin(seleniumDriver, user);
         } catch (Exception e) {
