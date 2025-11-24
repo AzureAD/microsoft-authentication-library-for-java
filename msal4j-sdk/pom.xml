@@ -133,11 +133,13 @@
             <groupId>com.azure</groupId>
             <artifactId>azure-security-keyvault-certificates</artifactId>
             <version>4.5.0</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.azure</groupId>
             <artifactId>azure-identity</artifactId>
             <version>1.10.0</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
