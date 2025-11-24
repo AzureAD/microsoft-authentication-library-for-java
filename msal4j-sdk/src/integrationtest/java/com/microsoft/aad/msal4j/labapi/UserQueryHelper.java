@@ -1,14 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-package com.microsoft.aad.msal4j.labapi2;
+package com.microsoft.aad.msal4j.labapi;
 
-import com.microsoft.aad.msal4j.labapi2.LabServiceParameters.B2CIdentityProvider;
-import com.microsoft.aad.msal4j.labapi2.LabServiceParameters.FederationProvider;
-import com.microsoft.aad.msal4j.labapi2.LabServiceParameters.SignInAudience;
-import com.microsoft.aad.msal4j.labapi2.LabServiceParameters.UserType;
+import com.microsoft.aad.msal4j.labapi.LabServiceParameters.B2CIdentityProvider;
+import com.microsoft.aad.msal4j.labapi.LabServiceParameters.FederationProvider;
+import com.microsoft.aad.msal4j.labapi.LabServiceParameters.SignInAudience;
+import com.microsoft.aad.msal4j.labapi.LabServiceParameters.UserType;
 
-class UserQuery {
+class UserQueryHelper {
     private UserType userType;
     private B2CIdentityProvider b2cIdentityProvider;
     private FederationProvider federationProvider;
@@ -55,8 +55,8 @@ class UserQuery {
         this.signInAudience = signInAudience;
     }
 
-    static UserQuery arlingtonUserQuery() {
-        UserQuery query = new UserQuery();
+    static UserQueryHelper arlingtonUserQuery() {
+        UserQueryHelper query = new UserQueryHelper();
         query.setUserType(UserType.CLOUD);
         query.setAzureEnvironment(AzureEnvironment.AZURE_US_GOVERNMENT);
         return query;
@@ -65,8 +65,8 @@ class UserQuery {
     /**
      * Gets a B2C local account (username/password) from the lab.
      */
-    static UserQuery b2cLocalAccountQuery() {
-        UserQuery query = new UserQuery();
+    static UserQueryHelper b2cLocalAccountQuery() {
+        UserQueryHelper query = new UserQueryHelper();
         query.setUserType(UserType.B2C);
         query.setB2cIdentityProvider(B2CIdentityProvider.LOCAL);
         return query;
@@ -76,8 +76,8 @@ class UserQuery {
      * Gets a CIAM user with Custom User Domain (CUD).
      * Example: login.customdomain.com instead of tenant.ciamlogin.com
      */
-    static UserQuery ciamCudUserQuery() {
-        UserQuery query = new UserQuery();
+    static UserQueryHelper ciamCudUserQuery() {
+        UserQueryHelper query = new UserQueryHelper();
         query.setFederationProvider(FederationProvider.CIAMCUD);
         query.setSignInAudience(SignInAudience.AzureAdMyOrg);
         return query;
@@ -87,19 +87,20 @@ class UserQuery {
      * Gets a regular Microsoft Account (MSA) user, not tied to B2C.
      * This is for consumer accounts like outlook.com, hotmail.com, etc.
      */
-    static UserQuery msaUserQuery() {
-        UserQuery query = new UserQuery();
+    static UserQueryHelper msaUserQuery() {
+        UserQueryHelper query = new UserQueryHelper();
         query.setUserType(UserType.MSA);
         return query;
     }
 
     @Override
     public int hashCode() {
-        // Implement proper hashCode for caching
         int result = 17;
         result = 31 * result + (userType != null ? userType.hashCode() : 0);
         result = 31 * result + (azureEnvironment != null ? azureEnvironment.hashCode() : 0);
         result = 31 * result + (b2cIdentityProvider != null ? b2cIdentityProvider.hashCode() : 0);
+        result = 31 * result + (federationProvider != null ? federationProvider.hashCode() : 0);
+        result = 31 * result + (signInAudience != null ? signInAudience.hashCode() : 0);
         return result;
     }
 
@@ -108,10 +109,12 @@ class UserQuery {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
 
-        UserQuery other = (UserQuery) obj;
+        UserQueryHelper other = (UserQueryHelper) obj;
         return java.util.Objects.equals(userType, other.userType) &&
                 java.util.Objects.equals(azureEnvironment, other.azureEnvironment) &&
-                java.util.Objects.equals(b2cIdentityProvider, other.b2cIdentityProvider);
+                java.util.Objects.equals(b2cIdentityProvider, other.b2cIdentityProvider) &&
+                java.util.Objects.equals(federationProvider, other.federationProvider) &&
+                java.util.Objects.equals(signInAudience, other.signInAudience);
     }
 
     //Formats the fields as they would be seen in the query parameters section of a URL

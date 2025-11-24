@@ -1,16 +1,16 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-package com.microsoft.aad.msal4j.labapi2;
+package com.microsoft.aad.msal4j.labapi;
 
 /**
  * Exception thrown when a lab user matching the query cannot be found.
  */
 class LabUserNotFoundException extends RuntimeException {
 
-    private final UserQuery query;
+    private final UserQueryHelper query;
 
-    LabUserNotFoundException(UserQuery query, String message) {
+    LabUserNotFoundException(UserQueryHelper query, String message) {
         super(message);
         this.query = query;
     }

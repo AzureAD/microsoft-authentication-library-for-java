@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-package com.microsoft.aad.msal4j.labapi2;
+package com.microsoft.aad.msal4j.labapi;
 
 import com.azure.core.credential.AccessToken;
 import com.azure.core.credential.TokenCredential;
@@ -25,6 +25,11 @@ import java.util.Collections;
 public class KeyVaultSecretsProvider implements AutoCloseable {
 
     private static final Logger log = LoggerFactory.getLogger(KeyVaultSecretsProvider.class);
+
+    /**
+     * The certificate alias used for authentication with Key Vault.
+     */
+    public static final String CERTIFICATE_ALIAS = "LabAuth.MSIDLab.com";
 
     static class KeyVaultInstance {
         /**
@@ -145,8 +150,8 @@ public class KeyVaultSecretsProvider implements AutoCloseable {
             }
 
             keystore.load(null, null);
-            key = (PrivateKey) keystore.getKey("LabAuth.MSIDLab.com", null);
-            publicCertificate = (X509Certificate) keystore.getCertificate("LabAuth.MSIDLab.com");
+            key = (PrivateKey) keystore.getKey(CERTIFICATE_ALIAS, null);
+            publicCertificate = (X509Certificate) keystore.getCertificate(CERTIFICATE_ALIAS);
 
             log.debug("Successfully loaded client certificate from keystore");
         } catch (Exception e) {
@@ -171,7 +176,7 @@ public class KeyVaultSecretsProvider implements AutoCloseable {
 
             if (labData == null || labData.isEmpty()) {
                 log.error("Key Vault secret '{}' is empty", secretName);
-                throw new LabUserNotFoundException(new UserQuery(),
+                throw new LabUserNotFoundException(new UserQueryHelper(),
                         "Found no content for secret '" + secretName + "' in Key Vault.");
             }
 
@@ -184,7 +189,7 @@ public class KeyVaultSecretsProvider implements AutoCloseable {
 
                 if (response == null) {
                     log.error("Failed to deserialize Key Vault secret '{}' to LabResponse", secretName);
-                    throw new LabUserNotFoundException(new UserQuery(),
+                    throw new LabUserNotFoundException(new UserQueryHelper(),
                             "Failed to deserialize Key Vault secret '" + secretName + "' to LabResponse.");
                 }
 
@@ -244,7 +249,7 @@ public class KeyVaultSecretsProvider implements AutoCloseable {
             if (!hasValidResponse) {
                 log.error("Failed to merge secrets - no valid LabResponse found: {}",
                         String.join(", ", secretNames));
-                throw new LabUserNotFoundException(new UserQuery(),
+                throw new LabUserNotFoundException(new UserQueryHelper(),
                         "Failed to create merged LabResponse from secrets: " +
                                 String.join(", ", secretNames));
             }
@@ -309,6 +314,5 @@ public class KeyVaultSecretsProvider implements AutoCloseable {
 
     @Override
     public void close() {
-        // Cleanup if needed
     }
 }

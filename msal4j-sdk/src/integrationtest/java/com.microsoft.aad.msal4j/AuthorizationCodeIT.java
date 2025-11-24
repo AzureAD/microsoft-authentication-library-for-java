@@ -3,7 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.microsoft.aad.msal4j.labapi2.*;
+import com.microsoft.aad.msal4j.labapi.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;

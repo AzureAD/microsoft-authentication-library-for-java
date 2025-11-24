@@ -1,22 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-package com.microsoft.aad.msal4j.labapi2;
+package com.microsoft.aad.msal4j.labapi;
 
 public class LabUserHelper {
 
-    private static final LabServiceApi labService = new LabServiceApi();
-
-    /**
-     * Fetch user password from Key Vault.
-     * Uses the MSID Lab vault (different from configuration vault).
-     *
-     * @param userLabName The lab name of the user (used as secret name)
-     * @return The user's password
-     */
-    static String fetchUserPassword(String userLabName) {
-        return KeyVaultRegistry.getMsidLabProvider().getUserPassword(userLabName);
-    }
+    private static final LabApiService labService = new LabApiService();
 
     public static LabResponse getDefaultUser() {
         return KeyVaultRegistry.getMsalTeamProvider().mergeLabResponses("MSAL-User-Default-JSON", "ID4SLAB1", "MSAL-App-Default-JSON");
@@ -26,7 +15,7 @@ public class LabUserHelper {
         return KeyVaultRegistry.getMsalTeamProvider().mergeLabResponses("MSAL-User-Default-JSON", "ID4SLAB1", "MSAL-APP-AzureADMultipleOrgs-JSON");
     }
 
-    //Used to avoid AADSTS7000218 credential errors in certain public client scenarios
+    //Avoids AADSTS7000218 credential errors in certain public client scenarios
     public static LabResponse getDefaultUserMultiTenantAppPublicClient() {
         return KeyVaultRegistry.getMsalTeamProvider().mergeLabResponses("MSAL-User-Default-JSON", "ID4SLAB1", "MSAL-APP-AzureADMultipleOrgsPC-JSON");
     }
@@ -36,19 +25,18 @@ public class LabUserHelper {
     }
 
     public static LabResponse getB2CLocalAccount() {
-        return labService.getLabUserData(UserQuery.b2cLocalAccountQuery());
+        return labService.getLabUserData(UserQueryHelper.b2cLocalAccountQuery());
     }
 
     public static LabResponse getArlingtonUser() {
-        // Query the Lab API with Arlington-specific parameters
-        return labService.getLabUserData(UserQuery.arlingtonUserQuery());
+        return labService.getLabUserData(UserQueryHelper.arlingtonUserQuery());
     }
 
     public static LabResponse getCiamCudUser() {
-        return labService.getLabUserData(UserQuery.ciamCudUserQuery());
+        return labService.getLabUserData(UserQueryHelper.ciamCudUserQuery());
     }
 
     public static LabResponse getMSAUser() {
-        return labService.getLabUserData(UserQuery.msaUserQuery());
+        return labService.getLabUserData(UserQueryHelper.msaUserQuery());
     }
 }

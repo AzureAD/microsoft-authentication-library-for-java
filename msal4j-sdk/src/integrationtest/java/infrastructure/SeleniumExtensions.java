@@ -4,7 +4,7 @@
 package infrastructure;
 
 import com.microsoft.aad.msal4j.TestConstants;
-import com.microsoft.aad.msal4j.labapi2.LabUser;
+import com.microsoft.aad.msal4j.labapi.LabUser;
 import infrastructure.pageobjects.ADFSLoginPage;
 import infrastructure.pageobjects.AzureADLoginPage;
 import infrastructure.pageobjects.B2CLocalLoginPage;

@@ -1,15 +1,15 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-package com.microsoft.aad.msal4j.labapi2;
+package com.microsoft.aad.msal4j.labapi;
 
 import com.azure.json.JsonProviders;
 import com.azure.json.JsonReader;
 import com.microsoft.aad.msal4j.ClientCredentialParameters;
 import com.microsoft.aad.msal4j.ConfidentialClientApplication;
 import com.microsoft.aad.msal4j.IAuthenticationResult;
-import com.microsoft.aad.msal4j.labapi2.LabServiceParameters.MFA;
-import com.microsoft.aad.msal4j.labapi2.LabServiceParameters.ProtectionPolicy;
+import com.microsoft.aad.msal4j.labapi.LabServiceParameters.MFA;
+import com.microsoft.aad.msal4j.labapi.LabServiceParameters.ProtectionPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,20 +23,20 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Wrapper for lab service API interactions.
  */
-class LabServiceApi {
+class LabApiService {
 
-    private static final Logger log = LoggerFactory.getLogger(LabServiceApi.class);
+    private static final Logger log = LoggerFactory.getLogger(LabApiService.class);
 
     private ConfidentialClientApplication labApp;
-    private final ConcurrentHashMap<UserQuery, LabResponse> userCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UserQueryHelper, LabResponse> userCache = new ConcurrentHashMap<>();
 
     /**
      * Get lab user data with caching support.
      *
-     * @param query The UserQuery to search for
+     * @param query The UserQueryHelper to search for
      * @return LabResponse
      */
-    LabResponse getLabUserData(UserQuery query) {
+    LabResponse getLabUserData(UserQueryHelper query) {
         if (userCache.containsKey(query)) {
             LabResponse cached = userCache.get(query);
             log.debug("Lab cache hit: {}",
@@ -64,7 +64,7 @@ class LabServiceApi {
      * @param query Any and all parameters that the returned user should satisfy
      * @return LabResponse with user that matches the query
      */
-    private LabResponse getLabResponseFromApi(UserQuery query) {
+    private LabResponse getLabResponseFromApi(UserQueryHelper query) {
         log.debug("Querying lab API for user with parameters: {}", query);
 
         try {
@@ -161,10 +161,10 @@ class LabServiceApi {
     /**
      * Execute a query against the lab API.
      *
-     * @param query UserQuery parameters
+     * @param query UserQueryHelper parameters
      * @return JSON response string
      */
-    private String runQuery(UserQuery query) {
+    private String runQuery(UserQueryHelper query) {
         Map<String, String> queryDict = new HashMap<>();
 
         // Building user query - required parameters set to defaults if not supplied

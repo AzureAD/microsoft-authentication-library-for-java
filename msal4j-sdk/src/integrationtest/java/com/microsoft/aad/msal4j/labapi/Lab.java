@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-package labapi;
+package com.microsoft.aad.msal4j.labapi;
 
 import com.azure.json.JsonReader;
 import com.azure.json.JsonSerializable;

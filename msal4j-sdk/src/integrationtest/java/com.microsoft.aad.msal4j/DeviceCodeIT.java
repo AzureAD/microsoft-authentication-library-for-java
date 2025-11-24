@@ -3,7 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.microsoft.aad.msal4j.labapi2.*;
+import com.microsoft.aad.msal4j.labapi.*;
 import infrastructure.SeleniumExtensions;
 import org.openqa.selenium.WebDriver;
 import org.slf4j.Logger;

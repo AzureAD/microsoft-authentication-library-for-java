@@ -1,4 +1,7 @@
-package com.microsoft.aad.msal4j.labapi2;
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+package com.microsoft.aad.msal4j.labapi;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
