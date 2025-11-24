@@ -5,12 +5,12 @@ package com.microsoft.aad.msal4j.labapi2;
 
 public class AppCredentialProvider {
 
-    private String clientId;
-    private String oboClientId;
-    private String oboAppPassword;
-    private String oboAppIdURI;
+    private final String clientId;
+    private final String oboClientId;
+    private final String oboAppPassword;
+    private final String oboAppIdURI;
 
-    public AppCredentialProvider() {
+    AppCredentialProvider() {
         KeyVaultSecretsProvider keyVaultSecretsProvider = new KeyVaultSecretsProvider();
 
         clientId = "54a2d933-8bf8-483b-a8f8-0a31924f3c1f";

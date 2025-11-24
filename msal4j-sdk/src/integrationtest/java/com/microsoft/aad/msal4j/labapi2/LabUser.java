@@ -130,18 +130,6 @@ public class LabUser implements JsonSerializable<LabUser> {
         return this.labName;
     }
 
-    public String getB2cProvider() {
-        return this.b2cProvider;
-    }
-
-    public String getUserType() {
-        return this.userType;
-    }
-
-    public String getHomeDomain() {
-        return this.homeDomain;
-    }
-
     public String getHomeUPN() {
         return this.homeUPN;
     }
@@ -170,14 +158,5 @@ public class LabUser implements JsonSerializable<LabUser> {
      */
     public String getFederationProvider() {
         return federationProvider != null ? federationProvider : "none";
-    }
-
-    /**
-     * Set the federation provider for this user.
-     *
-     * @param federationProvider The federation provider string
-     */
-    public void setFederationProvider(String federationProvider) {
-        this.federationProvider = federationProvider;
     }
 }

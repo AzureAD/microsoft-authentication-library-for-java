@@ -13,6 +13,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class UsernamePasswordIT {
@@ -26,42 +28,39 @@ class UsernamePasswordIT {
         assertAcquireTokenCommon(labResponse.getUser(), cfg.organizationsAuthority(), cfg.graphDefaultScope(), labResponse.getApp().getAppId());
     }
 
-//    @Test
-//    void acquireTokenWithUsernamePassword_AuthorityWithPort() throws Exception {
-//        LabResponse labResponse = LabUserHelper.getDefaultUser();
-//        LabUser user = labResponse.getUser();
-//
-//        assertAcquireTokenCommon(
-//                user,
-//                TestConstants.COMMON_AUTHORITY_WITH_PORT,
-//                TestConstants.GRAPH_DEFAULT_SCOPE,
-//                labResponse.getApp().getAppId());
-//    }
+    @Test
+    void acquireTokenWithUsernamePassword_AuthorityWithPort() throws Exception {
+        LabResponse labResponse = LabUserHelper.getDefaultUser();
+        LabUser user = labResponse.getUser();
 
-//    @Test
-//    void acquireTokenWithUsernamePassword_Ciam() throws Exception {
-//        Map<String, String> extraQueryParameters = new HashMap<>();
-//
-//        UserQuery query = new UserQuery();
-//        query.setUserType(LabServiceParameters.UserType.CLOUD);
-//        query.setAzureEnvironment(LabServiceParameters.AzureEnvironment.AZURE_CIAM);
-//
-//        LabResponse labResponse = LabUserHelper.getLabUserData(query);
-//
-//        LabUser user = labResponse.getUser();        PublicClientApplication pca = PublicClientApplication.builder(user.getAppId())
-//                .authority("https://" + user.getLabName() + ".ciamlogin.com/")
-//                .build();
-//
-//        IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters.
-//                        builder(Collections.singleton(TestConstants.USER_READ_SCOPE),
-//                                user.getUpn(),
-//                                user.getPassword().toCharArray())
-//                        .extraQueryParameters(extraQueryParameters)
-//                        .build())
-//                .get();
-//
-//        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
-//    }
+        assertAcquireTokenCommon(
+                user,
+                TestConstants.MICROSOFT_AUTHORITY_HOST_WITH_PORT + user.getTenantId(),
+                TestConstants.GRAPH_DEFAULT_SCOPE,
+                labResponse.getApp().getAppId());
+    }
+
+    @Test
+    void acquireTokenWithUsernamePassword_Ciam() throws Exception {
+        Map<String, String> extraQueryParameters = new HashMap<>();
+
+        LabResponse labResponse = LabUserHelper.getCiamCudUser();
+        LabUser user = labResponse.getUser();
+
+        PublicClientApplication pca = PublicClientApplication.builder(user.getAppId())
+                .authority("https://" + user.getLabName() + ".ciamlogin.com/")
+                .build();
+
+        IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters.
+                        builder(Collections.singleton(TestConstants.USER_READ_SCOPE),
+                                user.getUpn(),
+                                user.getPassword().toCharArray())
+                        .extraQueryParameters(extraQueryParameters)
+                        .build())
+                .get();
+
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
+    }
 
     private void assertAcquireTokenCommon(LabUser user, String authority, String scope, String appId)
             throws Exception {

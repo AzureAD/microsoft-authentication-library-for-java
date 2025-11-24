@@ -3,40 +3,59 @@
 
 package com.microsoft.aad.msal4j.labapi2;
 
-import com.microsoft.aad.msal4j.labapi2.LabServiceParameters.*;
+import com.microsoft.aad.msal4j.labapi2.LabServiceParameters.B2CIdentityProvider;
+import com.microsoft.aad.msal4j.labapi2.LabServiceParameters.FederationProvider;
+import com.microsoft.aad.msal4j.labapi2.LabServiceParameters.SignInAudience;
+import com.microsoft.aad.msal4j.labapi2.LabServiceParameters.UserType;
 
-public class UserQuery {
+class UserQuery {
     private UserType userType;
     private B2CIdentityProvider b2cIdentityProvider;
     private FederationProvider federationProvider;
     private SignInAudience signInAudience;
     private String azureEnvironment;
 
-    // Getters and Setters
-    public UserType getUserType() { return userType; }
-    public void setUserType(UserType userType) { this.userType = userType; }
+    UserType getUserType() {
+        return userType;
+    }
 
-    public B2CIdentityProvider getB2cIdentityProvider() { return b2cIdentityProvider; }
-    public void setB2cIdentityProvider(B2CIdentityProvider b2cIdentityProvider) {
+    void setUserType(UserType userType) {
+        this.userType = userType;
+    }
+
+    B2CIdentityProvider getB2cIdentityProvider() {
+        return b2cIdentityProvider;
+    }
+
+    void setB2cIdentityProvider(B2CIdentityProvider b2cIdentityProvider) {
         this.b2cIdentityProvider = b2cIdentityProvider;
     }
 
-    public FederationProvider getFederationProvider() { return federationProvider; }
-    public void setFederationProvider(FederationProvider federationProvider) {
+    FederationProvider getFederationProvider() {
+        return federationProvider;
+    }
+
+    void setFederationProvider(FederationProvider federationProvider) {
         this.federationProvider = federationProvider;
     }
 
-    public String getAzureEnvironment() { return azureEnvironment; }
-    public void setAzureEnvironment(String azureEnvironment) {
+    String getAzureEnvironment() {
+        return azureEnvironment;
+    }
+
+    void setAzureEnvironment(String azureEnvironment) {
         this.azureEnvironment = azureEnvironment;
     }
 
-    public SignInAudience getSignInAudience() { return signInAudience; }
-    public void setSignInAudience(SignInAudience signInAudience) {
+    SignInAudience getSignInAudience() {
+        return signInAudience;
+    }
+
+    void setSignInAudience(SignInAudience signInAudience) {
         this.signInAudience = signInAudience;
     }
 
-    public static UserQuery arlingtonUserQuery() {
+    static UserQuery arlingtonUserQuery() {
         UserQuery query = new UserQuery();
         query.setUserType(UserType.CLOUD);
         query.setAzureEnvironment(AzureEnvironment.AZURE_US_GOVERNMENT);
@@ -46,7 +65,7 @@ public class UserQuery {
     /**
      * Gets a B2C local account (username/password) from the lab.
      */
-    public static UserQuery b2cLocalAccountQuery() {
+    static UserQuery b2cLocalAccountQuery() {
         UserQuery query = new UserQuery();
         query.setUserType(UserType.B2C);
         query.setB2cIdentityProvider(B2CIdentityProvider.LOCAL);
@@ -54,31 +73,10 @@ public class UserQuery {
     }
 
     /**
-     * Gets a B2C user that authenticates with Microsoft Account (MSA).
-     */
-    public static UserQuery b2cMsaAccountQuery() {
-        UserQuery query = new UserQuery();
-        query.setUserType(UserType.B2C);
-        query.setB2cIdentityProvider(B2CIdentityProvider.MSA);
-        return query;
-    }
-
-    /**
-     * Gets a CIAM user with standard domain (tenant.ciamlogin.com).
-     * Uses the Lab API to query for CIAM users.
-     */
-    public static UserQuery ciamUserQuery() {
-        UserQuery query = new UserQuery();
-        query.setFederationProvider(FederationProvider.CIAM);
-        query.setSignInAudience(SignInAudience.AzureAdMyOrg);
-        return query;
-    }
-
-    /**
      * Gets a CIAM user with Custom User Domain (CUD).
      * Example: login.customdomain.com instead of tenant.ciamlogin.com
      */
-    public static UserQuery ciamCudUserQuery() {
+    static UserQuery ciamCudUserQuery() {
         UserQuery query = new UserQuery();
         query.setFederationProvider(FederationProvider.CIAMCUD);
         query.setSignInAudience(SignInAudience.AzureAdMyOrg);
@@ -89,21 +87,9 @@ public class UserQuery {
      * Gets a regular Microsoft Account (MSA) user, not tied to B2C.
      * This is for consumer accounts like outlook.com, hotmail.com, etc.
      */
-    public static UserQuery msaUserQuery() {
+    static UserQuery msaUserQuery() {
         UserQuery query = new UserQuery();
         query.setUserType(UserType.MSA);
-        return query;
-    }
-
-    /**
-     * Gets a CIAM user for OBO scenarios.
-     * CIAM supports OBO flows, so this query gets a CIAM user that can be used
-     * in OBO tests.
-     */
-    public static UserQuery ciamOboUserQuery() {
-        UserQuery query = new UserQuery();
-        query.setFederationProvider(FederationProvider.CIAM);
-        query.setSignInAudience(SignInAudience.AzureAdMyOrg);
         return query;
     }
 
@@ -126,5 +112,38 @@ public class UserQuery {
         return java.util.Objects.equals(userType, other.userType) &&
                 java.util.Objects.equals(azureEnvironment, other.azureEnvironment) &&
                 java.util.Objects.equals(b2cIdentityProvider, other.b2cIdentityProvider);
+    }
+
+    //Formats the fields as they would be seen in the query parameters section of a URL
+    @Override
+    public String toString() {
+        StringBuilder queryString = new StringBuilder();
+
+        if (userType != null) {
+            queryString.append("userType=").append(userType).append("&");
+        }
+
+        if (b2cIdentityProvider != null) {
+            queryString.append("b2cIdentityProvider=").append(b2cIdentityProvider).append("&");
+        }
+
+        if (federationProvider != null) {
+            queryString.append("federationProvider=").append(federationProvider).append("&");
+        }
+
+        if (signInAudience != null) {
+            queryString.append("signInAudience=").append(signInAudience).append("&");
+        }
+
+        if (azureEnvironment != null) {
+            queryString.append("azureEnvironment=").append(azureEnvironment).append("&");
+        }
+
+        // Remove trailing "&" if any parameters were added
+        if (queryString.length() > 0) {
+            queryString.setLength(queryString.length() - 1);
+        }
+
+        return "?" + queryString;
     }
 }

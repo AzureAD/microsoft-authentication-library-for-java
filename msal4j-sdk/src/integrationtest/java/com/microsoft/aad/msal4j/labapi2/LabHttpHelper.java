@@ -28,6 +28,7 @@ class LabHttpHelper {
 
     static String sendRequestToLab(URL labUrl, String accessToken) throws IOException {
         log.debug("Sending HTTP GET request to: {}", labUrl);
+        System.out.println(labUrl);
 
         HttpsURLConnection conn = (HttpsURLConnection) labUrl.openConnection();
 

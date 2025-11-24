@@ -11,45 +11,45 @@ import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.microsoft.aad.msal4j.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Mono;
 
-import java.security.cert.X509Certificate;
 import java.security.KeyStore;
 import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
-import reactor.core.publisher.Mono;
 
 public class KeyVaultSecretsProvider implements AutoCloseable {
 
     private static final Logger log = LoggerFactory.getLogger(KeyVaultSecretsProvider.class);
 
-    public static class KeyVaultInstance {
+    static class KeyVaultInstance {
         /**
          * The KeyVault maintained by the MSID. It is recommended for use.
          */
-        public static final String MSID_LAB = "https://msidlabs.vault.azure.net";
+        static final String MSID_LAB = "https://msidlabs.vault.azure.net";
 
         /**
          * The KeyVault maintained by the MSAL.NET team and have full control over.
          * Should be used temporarily - secrets should be stored and managed by MSID Lab.
          */
-        public static final String MSAL_TEAM = "https://id4skeyvault.vault.azure.net/";
+        static final String MSAL_TEAM = "https://id4skeyvault.vault.azure.net/";
     }
 
     private final SecretClient secretClient;
 
     /**
      * Initialize the secrets provider with the specified Key Vault address.
-     *
+     * <p>
      * Authentication using client certificate:
-     *     1. Register Azure AD application of "Web app / API" type.
-     *        To set up certificate based access to the application PowerShell should be used.
-     *     2. Add an access policy entry to target Key Vault instance for this application.
+     * 1. Register Azure AD application of "Web app / API" type.
+     * To set up certificate based access to the application PowerShell should be used.
+     * 2. Add an access policy entry to target Key Vault instance for this application.
      *
      * @param keyVaultAddress The Key Vault URI (defaults to MSID_LAB)
      */
-    public KeyVaultSecretsProvider(String keyVaultAddress) {
+    KeyVaultSecretsProvider(String keyVaultAddress) {
         String vaultUrl = keyVaultAddress != null ? keyVaultAddress : KeyVaultInstance.MSID_LAB;
         log.debug("Initializing KeyVault secrets provider for: {}", vaultUrl);
 

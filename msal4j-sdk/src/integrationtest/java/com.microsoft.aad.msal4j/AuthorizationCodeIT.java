@@ -94,7 +94,6 @@ class AuthorizationCodeIT extends SeleniumTest {
         assertEquals(resultSilent.account().username(), result.account().username());
     }
 
-    //TODO: need to sort out ADFS 2022 configuration
     @Test
     @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
     void acquireTokenWithAuthorizationCode_ADFSv2022() {

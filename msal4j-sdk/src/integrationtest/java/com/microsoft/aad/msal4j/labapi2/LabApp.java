@@ -83,5 +83,4 @@ public class LabApp implements JsonSerializable<LabApp> {
     public String getAppId() {
         return appId;
     }
-
 }

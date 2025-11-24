@@ -3,37 +3,32 @@
 
 package com.microsoft.aad.msal4j.labapi2;
 
-public class LabServiceParameters {
+class LabServiceParameters {
 
-    public enum FederationProvider {
-        NONE,        // No federation
-        CIAM,     // CIAM
-        CIAMCUD,     // CIAM CUD
+    enum FederationProvider {
+        CIAMCUD     // CIAM CUD
     }
 
-    public enum B2CIdentityProvider {
-        LOCAL,       // Local B2C account
-        MSA
+    enum B2CIdentityProvider {
+        LOCAL       // Local B2C account
     }
 
-    public enum UserType {
+    enum UserType {
         B2C,
         CLOUD,
         FEDERATED,
-        ONPREM,
         MSA
     }
 
-    public enum MFA {
-        NONE,
+    enum MFA {
+        NONE
     }
 
-    public enum ProtectionPolicy {
-        NONE,
+    enum ProtectionPolicy {
+        NONE
     }
 
-    public enum SignInAudience
-    {
+    enum SignInAudience {
         AzureAdMyOrg
     }
 }

@@ -4,11 +4,11 @@
 package com.microsoft.aad.msal4j.labapi2;
 
 public class Config {
-    private String commonAuthority;
-    private String organizationsAuthority;
-    private String graphDefaultScope;
-    private AppCredentialProvider appProvider;
-    private String tenant;
+    private final String commonAuthority;
+    private final String organizationsAuthority;
+    private final String graphDefaultScope;
+    private final AppCredentialProvider appProvider;
+    private final String tenant;
 
     String azureEnvironment;
 
@@ -32,10 +32,6 @@ public class Config {
 
     public String graphDefaultScope() {
         return this.graphDefaultScope;
-    }
-
-    public String tenant() {
-        return this.tenant;
     }
 
     public String tenantSpecificAuthority() {

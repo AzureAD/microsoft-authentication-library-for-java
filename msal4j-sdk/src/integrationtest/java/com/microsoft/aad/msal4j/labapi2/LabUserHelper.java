@@ -37,7 +37,7 @@ public class LabUserHelper {
      * @param query The UserQuery to search for
      * @return LabResponse
      */
-    public static LabResponse getLabUserData(UserQuery query) {
+    static LabResponse getLabUserData(UserQuery query) {
         if (userCache.containsKey(query)) {
             LabResponse cached = userCache.get(query);
             log.debug("Lab cache hit: {}",
@@ -114,7 +114,7 @@ public class LabUserHelper {
      * @param userLabName The lab name of the user (used as secret name)
      * @return The user's password
      */
-    public static String fetchUserPassword(String userLabName) {
+    static String fetchUserPassword(String userLabName) {
         if (userLabName == null || userLabName.trim().isEmpty()) {
             log.error("Password fetch failed: empty lab name");
             throw new IllegalArgumentException(
@@ -156,7 +156,7 @@ public class LabUserHelper {
      * @param secrets Array of Key Vault secret names to merge
      * @return Merged LabResponse
      */
-    public static LabResponse mergeKVLabData(String... secrets) {
+    static LabResponse mergeKVLabData(String... secrets) {
         if (secrets == null || secrets.length == 0) {
             throw new IllegalArgumentException(
                     "At least one secret name must be provided.");
@@ -239,16 +239,12 @@ public class LabUserHelper {
         return getLabUserData(UserQuery.arlingtonUserQuery());
     }
 
-    public static LabResponse getArlingtonADFSUser() {
+    static LabResponse getArlingtonADFSUser() {
         // Create a modified query with federated user type
         UserQuery query = UserQuery.arlingtonUserQuery();
         query.setUserType(LabServiceParameters.UserType.FEDERATED);
 
-       return getLabUserData(query);
-    }
-
-    public static LabResponse getCiamUser() {
-        return getLabUserData(UserQuery.ciamUserQuery());
+        return getLabUserData(query);
     }
 
     public static LabResponse getCiamCudUser() {
@@ -257,13 +253,5 @@ public class LabUserHelper {
 
     public static LabResponse getMSAUser() {
         return getLabUserData(UserQuery.msaUserQuery());
-    }
-
-    public static LabResponse getB2CMsaAccount() {
-        return getLabUserData(UserQuery.b2cMsaAccountQuery());
-    }
-
-    public static LabResponse getCiamOboUser() {
-        return getLabUserData(UserQuery.ciamOboUserQuery());
     }
 }

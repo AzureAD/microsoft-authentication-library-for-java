@@ -23,7 +23,7 @@ public class LabResponse implements JsonSerializable<LabResponse> {
         return user;
     }
 
-    public void setUser(LabUser user) {
+    void setUser(LabUser user) {
         this.user = user;
     }
 
@@ -31,7 +31,7 @@ public class LabResponse implements JsonSerializable<LabResponse> {
         return app;
     }
 
-    public void setApp(LabApp app) {
+    void setApp(LabApp app) {
         this.app = app;
     }
 
@@ -39,14 +39,14 @@ public class LabResponse implements JsonSerializable<LabResponse> {
         return lab;
     }
 
-    public void setLab(Lab lab) {
+    void setLab(Lab lab) {
         this.lab = lab;
     }
 
     /**
      * Deserialize a LabResponse from JSON.
      */
-    public static LabResponse fromJson(JsonReader jsonReader) throws IOException {
+    static LabResponse fromJson(JsonReader jsonReader) throws IOException {
         return jsonReader.readObject(reader -> {
             LabResponse response = new LabResponse();
 

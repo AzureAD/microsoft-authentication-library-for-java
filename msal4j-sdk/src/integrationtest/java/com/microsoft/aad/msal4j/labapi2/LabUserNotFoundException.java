@@ -6,17 +6,13 @@ package com.microsoft.aad.msal4j.labapi2;
 /**
  * Exception thrown when a lab user matching the query cannot be found.
  */
-public class LabUserNotFoundException extends RuntimeException {
+class LabUserNotFoundException extends RuntimeException {
 
     private final UserQuery query;
 
-    public LabUserNotFoundException(UserQuery query, String message) {
+    LabUserNotFoundException(UserQuery query, String message) {
         super(message);
         this.query = query;
-    }
-
-    public UserQuery getQuery() {
-        return query;
     }
 
     @Override

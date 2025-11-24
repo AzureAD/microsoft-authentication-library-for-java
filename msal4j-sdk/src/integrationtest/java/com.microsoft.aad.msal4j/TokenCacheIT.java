@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j;
 import com.microsoft.aad.msal4j.labapi2.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -49,72 +50,67 @@ class TokenCacheIT {
         assertEquals(pca.getAccounts().join().size(), 0);
     }
 
-    // TODO: labapi2 doesn't have guest user configuration yet - will be pulled from MSAL.NET
-//    @Test
-//    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-//    void twoAccountsInCache_SameUserDifferentTenants_RemoveAccountTest() throws Exception {
-//
-//        UserQuery query = new UserQuery();
-//        query.setUserType(LabServiceParameters.UserType.GUEST);
-//
-//        LabResponse labResponse = LabUserHelper.getLabUserData(query);
-//        LabUser guestUser = labResponse.getUser();
-//        Lab lab = labResponse.getLab();
-//
-//        String dataToInitCache = TestHelper.readResource(
-//                this.getClass(),
-//                "/cache_data/remove-account-test-cache.json");
-//
-//        // check that cache is empty
-//        assertEquals(dataToInitCache, "");
-//
-//        ITokenCacheAccessAspect persistenceAspect = new TokenPersistence(dataToInitCache);
-//
-//        // acquire tokens for home tenant, and serialize cache
-//        PublicClientApplication pca = PublicClientApplication.builder(
-//                guestUser.getAppId()).
-//                authority(TestConstants.ORGANIZATIONS_AUTHORITY)
-//                .setTokenCacheAccessAspect(persistenceAspect)
-//                .build();
-//
-//        pca.acquireToken(UserNamePasswordParameters.
-//                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-//                        guestUser.getHomeUPN(),
-//                        guestUser.getPassword().toCharArray())
-//                .build())
-//                .get();
-//
-//        String guestTenantAuthority = TestConstants.MICROSOFT_AUTHORITY_HOST + lab.getTenantId();
-//
-//        // initialize pca with tenant where user is guest, deserialize cache, and acquire second token
-//        PublicClientApplication pca2 = PublicClientApplication.builder(
-//                guestUser.getAppId()).
-//                authority(guestTenantAuthority).
-//                setTokenCacheAccessAspect(persistenceAspect).
-//                build();
-//
-//        pca2.acquireToken(UserNamePasswordParameters.
-//                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-//                        guestUser.getHomeUPN(),
-//                        guestUser.getPassword().toCharArray())
-//                .build())
-//                .get();
-//
-//        // There should be two tokens in cache, with same accounts except for tenant
-//        assertEquals(pca2.getAccounts().join().iterator().next().getTenantProfiles().size(), 2);
-//
-//        IAccount account = pca2.getAccounts().get().iterator().next();
-//
-//        // RemoveAccount should remove both cache entities
-//        pca2.removeAccount(account).join();
-//
-//        assertEquals(0, pca2.getAccounts().join().size());
-//
-//        //clean up file
-//        TestHelper.deleteFileContent(
-//                this.getClass(),
-//                "/cache_data/remove-account-test-cache.json");
-//    }
+    @Test
+    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
+    void twoAccountsInCache_SameUserDifferentTenants_RemoveAccountTest() throws Exception {
+
+        LabResponse labResponse = LabUserHelper.getDefaultUser();
+        LabUser guestUser = labResponse.getUser();
+
+        String dataToInitCache = TestHelper.readResource(
+                this.getClass(),
+                "/cache_data/remove-account-test-cache.json");
+
+        // check that cache is empty
+        assertEquals(dataToInitCache, "");
+
+        ITokenCacheAccessAspect persistenceAspect = new TokenPersistence(dataToInitCache);
+
+        // acquire tokens for home tenant, and serialize cache
+        PublicClientApplication pca = PublicClientApplication.builder(
+                labResponse.getApp().getAppId()).
+                authority(TestConstants.ORGANIZATIONS_AUTHORITY)
+                .setTokenCacheAccessAspect(persistenceAspect)
+                .build();
+
+        pca.acquireToken(UserNamePasswordParameters.
+                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                        guestUser.getHomeUPN(),
+                        guestUser.getPassword().toCharArray())
+                .build())
+                .get();
+
+        String guestTenantAuthority = TestConstants.MICROSOFT_AUTHORITY_HOST + guestUser.getTenantId();
+
+        // initialize pca with tenant where user is guest, deserialize cache, and acquire second token
+        PublicClientApplication pca2 = PublicClientApplication.builder(
+                labResponse.getApp().getAppId()).
+                authority(guestTenantAuthority).
+                setTokenCacheAccessAspect(persistenceAspect).
+                build();
+
+        pca2.acquireToken(UserNamePasswordParameters.
+                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                        guestUser.getHomeUPN(),
+                        guestUser.getPassword().toCharArray())
+                .build())
+                .get();
+
+        // There should be two tokens in cache, with same accounts except for tenant
+        assertEquals(pca2.getAccounts().join().iterator().next().getTenantProfiles().size(), 2);
+
+        IAccount account = pca2.getAccounts().get().iterator().next();
+
+        // RemoveAccount should remove both cache entities
+        pca2.removeAccount(account).join();
+
+        assertEquals(0, pca2.getAccounts().join().size());
+
+        //clean up file
+        TestHelper.deleteFileContent(
+                this.getClass(),
+                "/cache_data/remove-account-test-cache.json");
+    }
 
     private static class TokenPersistence implements ITokenCacheAccessAspect {
         String data;

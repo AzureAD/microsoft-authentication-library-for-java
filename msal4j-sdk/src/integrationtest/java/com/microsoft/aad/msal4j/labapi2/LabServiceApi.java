@@ -35,7 +35,7 @@ public class LabServiceApi {
      * @param query Any and all parameters that the returned user should satisfy
      * @return LabResponse with user that matches the query
      */
-    public LabResponse getLabResponseFromApi(UserQuery query) {
+    LabResponse getLabResponseFromApi(UserQuery query) {
         log.debug("Querying lab API for user with parameters: {}", query);
 
         try {
@@ -170,7 +170,7 @@ public class LabServiceApi {
 
         if (query.getAzureEnvironment() != null) {
             queryDict.put(LabConstants.AZURE_ENVIRONMENT,
-                    query.getAzureEnvironment().toString());
+                    query.getAzureEnvironment());
         }
 
         return sendLabRequest(LabConstants.LAB_ENDPOINT, queryDict);
@@ -188,7 +188,6 @@ public class LabServiceApi {
             log.debug("Acquiring lab access token");
             String accessToken = getLabAccessToken();
             log.debug("Sending lab request to: {} with {} query parameters", requestUrl, queryDict.size());
-
             String response = LabHttpHelper.sendRequestToLab(requestUrl, queryDict, accessToken);
             log.debug("Lab request successful, received {} characters", response.length());
             return response;
