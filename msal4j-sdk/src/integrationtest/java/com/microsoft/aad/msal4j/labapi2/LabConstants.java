@@ -23,13 +23,7 @@ class LabConstants {
     static final String AZURE_ENVIRONMENT = "azureenvironment";
 
     static final String MICROSOFT_AUTHORITY_HOST = "https://login.microsoftonline.com/";
-    static final String MICROSOFT_AUTHORITY_TENANT = "msidlab4.onmicrosoft.com";
-
-    static final String COMMON_AUTHORITY = MICROSOFT_AUTHORITY_HOST + "common/";
-    static final String ORGANIZATIONS_AUTHORITY = MICROSOFT_AUTHORITY_HOST + "organizations/";
     static final String MICROSOFT_AUTHORITY = MICROSOFT_AUTHORITY_HOST + "microsoft.onmicrosoft.com";
-
-    static final String GRAPH_DEFAULT_SCOPE = "https://graph.windows.net/.default";
 
     static final String LAB_API_SCOPE = "https://request.msidlab.com/.default";
 }

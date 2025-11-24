@@ -5,9 +5,7 @@ package com.microsoft.aad.msal4j;
 
 import com.microsoft.aad.msal4j.labapi2.*;
 import infrastructure.SeleniumExtensions;
-import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.jupiter.api.Test;
@@ -16,7 +14,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.AfterAll;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import java.time.Duration;
 import java.util.Collections;
 import java.util.function.Consumer;
 
@@ -33,17 +30,15 @@ class DeviceCodeIT {
 
     @Test
     void DeviceCodeFlowADTest() throws Exception {
-        Config cfg = new Config();
-
         LabResponse labResponse = LabUserHelper.getDefaultUser();
         LabUser user = labResponse.getUser();
 
-        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(labResponse.getApp().getAppId(), cfg.tenantSpecificAuthority(labResponse.getUser().getTenantId()));
+        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(labResponse.getApp().getAppId(), TestConstants.MICROSOFT_AUTHORITY_HOST + labResponse.getUser().getTenantId());
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> runAutomatedDeviceCodeFlow(deviceCode, user);
 
         IAuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
-                .builder(Collections.singleton(cfg.graphDefaultScope()),
+                .builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
                         deviceCodeConsumer)
                 .build())
                 .get();
@@ -84,28 +79,11 @@ class DeviceCodeIT {
     }
 
     private void runAutomatedDeviceCodeFlow(DeviceCode deviceCode, LabUser user) {
-
-        try {
-            String deviceCodeFormId;
-            String continueButtonId;
-            deviceCodeFormId = "otc";
-            continueButtonId = "idSIButton9";
-            LOG.info("Loggin in ... Entering device code");
-            seleniumDriver.navigate().to(deviceCode.verificationUri());
-            seleniumDriver.findElement(new By.ById(deviceCodeFormId)).sendKeys(deviceCode.userCode());
-
-            LOG.info("Loggin in ... click continue");
-            WebElement continueBtn = SeleniumExtensions.waitForElementToBeVisibleAndEnabled(
-                    seleniumDriver,
-                    new By.ById(continueButtonId),
-                    Duration.ofSeconds(15));
-            continueBtn.click();
-
-            SeleniumExtensions.performADOrCiamLogin(seleniumDriver, user);
-        } catch (Exception e) {
-            LOG.error("Browser automation failed: {}", e.getMessage());
-            throw new RuntimeException("Browser automation failed: " + e.getMessage());
-        }
+        SeleniumExtensions.performDeviceCodeLogin(
+                seleniumDriver,
+                deviceCode.verificationUri(),
+                deviceCode.userCode(),
+                user);
     }
 
     @AfterAll

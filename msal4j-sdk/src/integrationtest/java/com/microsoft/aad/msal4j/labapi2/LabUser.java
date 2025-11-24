@@ -145,8 +145,7 @@ public class LabUser implements JsonSerializable<LabUser> {
      */
     public String getPassword() {
         if (password == null || password.isEmpty()) {
-            // Fetch from MSID Lab Key Vault
-            password = LabUserHelper.fetchUserPassword(labName);
+            password = KeyVaultRegistry.getMsidLabProvider().getUserPassword(getLabName());
         }
         return password;
     }

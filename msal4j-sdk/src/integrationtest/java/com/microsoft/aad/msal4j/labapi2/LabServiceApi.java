@@ -18,16 +18,45 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Wrapper for lab service API interactions.
  */
-public class LabServiceApi {
+class LabServiceApi {
 
     private static final Logger log = LoggerFactory.getLogger(LabServiceApi.class);
 
     private ConfidentialClientApplication labApp;
+    private final ConcurrentHashMap<UserQuery, LabResponse> userCache = new ConcurrentHashMap<>();
 
+    /**
+     * Get lab user data with caching support.
+     *
+     * @param query The UserQuery to search for
+     * @return LabResponse
+     */
+    LabResponse getLabUserData(UserQuery query) {
+        if (userCache.containsKey(query)) {
+            LabResponse cached = userCache.get(query);
+            log.debug("Lab cache hit: {}",
+                    cached.getUser() != null ? cached.getUser().getUpn() : "N/A");
+            return cached;
+        }
+
+        LabResponse response = getLabResponseFromApi(query);
+
+        if (response == null) {
+            log.error("No lab user found for query");
+            throw new LabUserNotFoundException(query, "Found no users for the given query.");
+        }
+
+        log.info("Lab API returned user: {}",
+                response.getUser() != null ? response.getUser().getUpn() : "N/A");
+
+        userCache.put(query, response);
+        return response;
+    }
 
     /**
      * Returns a test user account for use in testing.
@@ -35,7 +64,7 @@ public class LabServiceApi {
      * @param query Any and all parameters that the returned user should satisfy
      * @return LabResponse with user that matches the query
      */
-    LabResponse getLabResponseFromApi(UserQuery query) {
+    private LabResponse getLabResponseFromApi(UserQuery query) {
         log.debug("Querying lab API for user with parameters: {}", query);
 
         try {

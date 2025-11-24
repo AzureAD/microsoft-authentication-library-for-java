@@ -18,22 +18,13 @@ public class TestConstants {
     public static final String MICROSOFT_AUTHORITY_HOST = "https://login.microsoftonline.com/";
     public static final String MICROSOFT_AUTHORITY_BASIC_HOST = "login.microsoftonline.com";
     public static final String MICROSOFT_AUTHORITY_HOST_WITH_PORT = "https://login.microsoftonline.com:443/";
-    public static final String ARLINGTON_MICROSOFT_AUTHORITY_HOST = "https://login.microsoftonline.us/";
     public static final String MICROSOFT_AUTHORITY_TENANT = "msidlab4.onmicrosoft.com";
-    public static final String ARLINGTON_AUTHORITY_TENANT = "arlmsidlab1.onmicrosoft.us";
 
     public static final String ORGANIZATIONS_AUTHORITY = MICROSOFT_AUTHORITY_HOST + "organizations/";
     public static final String COMMON_AUTHORITY = MICROSOFT_AUTHORITY_HOST + "common/";
     public static final String CONSUMERS_AUTHORITY = MICROSOFT_AUTHORITY_HOST + "consumers/";
-    public static final String COMMON_AUTHORITY_WITH_PORT = MICROSOFT_AUTHORITY_HOST_WITH_PORT + "msidlab4.onmicrosoft.com";
     public static final String MICROSOFT_AUTHORITY = MICROSOFT_AUTHORITY_HOST + "microsoft.onmicrosoft.com";
-    public static final String TENANT_SPECIFIC_AUTHORITY = MICROSOFT_AUTHORITY_HOST + MICROSOFT_AUTHORITY_TENANT;
     public static final String REGIONAL_MICROSOFT_AUTHORITY_BASIC_HOST_WESTUS = "westus.login.microsoft.com";
-
-    public static final String ARLINGTON_ORGANIZATIONS_AUTHORITY = ARLINGTON_MICROSOFT_AUTHORITY_HOST + "organizations/";
-    public static final String ARLINGTON_TENANT_SPECIFIC_AUTHORITY = ARLINGTON_MICROSOFT_AUTHORITY_HOST + ARLINGTON_AUTHORITY_TENANT;
-    public static final String ARLINGTON_COMMON_AUTHORITY = ARLINGTON_MICROSOFT_AUTHORITY_HOST + "common/";
-    public static final String ARLINGTON_GRAPH_DEFAULT_SCOPE = "https://graph.microsoft.us/.default";
 
     public static final String B2C_AUTHORITY = "https://msidlabb2c.b2clogin.com/msidlabb2c.onmicrosoft.com/";
     public static final String B2C_AUTHORITY_LEGACY_FORMAT = "https://msidlabb2c.b2clogin.com/tfp/msidlabb2c.onmicrosoft.com/";
@@ -49,9 +40,11 @@ public class TestConstants {
 
     public static final String LOCALHOST = "http://localhost:";
 
-    public static final String ADFS_AUTHORITY = "https://fs.msidlab8.com/adfs/";
     public static final String ADFS_SCOPE = USER_READ_SCOPE;
-    public static final String ADFS_APP_ID = "PublicClientId";
 
     public static final String AUTHORITY_PUBLIC_TENANT_SPECIFIC = "https://login.microsoftonline.com/" + MICROSOFT_AUTHORITY_TENANT;
+
+    public static final String OBO_CLIENT_ID = "23c64cd8-21e4-41dd-9756-ab9e2c23f58c";
+    public static final String OBO_APP_ID_URI = "api://23c64cd8-21e4-41dd-9756-ab9e2c23f58c";
+
 }

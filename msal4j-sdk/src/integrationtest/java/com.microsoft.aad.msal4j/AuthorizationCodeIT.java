@@ -27,9 +27,6 @@ import java.util.concurrent.TimeUnit;
 class AuthorizationCodeIT extends SeleniumTest {
     private static final Logger LOG = LoggerFactory.getLogger(AuthorizationCodeIT.class);
 
-    private Config cfg;
-
-
     @AfterEach
     public void stopBrowser() {
         cleanUp();
@@ -42,9 +39,7 @@ class AuthorizationCodeIT extends SeleniumTest {
 
     @Test
     public void acquireTokenWithAuthorizationCode_ManagedUser() {
-        cfg = new Config();
-
-        LabResponse labResponse = LabUserHelper.getDefaultUserMultiTenantApp();
+        LabResponse labResponse = LabUserHelper.getDefaultUserMultiTenantAppPublicClient();
         LabUser user = labResponse.getUser();
 
         assertAcquireTokenAAD(user, labResponse.getApp().getAppId(), null);
@@ -52,8 +47,6 @@ class AuthorizationCodeIT extends SeleniumTest {
 
     @Test
     public void acquireTokenWithAuthorizationCode_B2C_Local() {
-        cfg = new Config();
-
         LabResponse labResponse = LabUserHelper.getB2CLocalAccount();
         LabUser user = labResponse.getUser();
         assertAcquireTokenB2C(user);
@@ -126,13 +119,13 @@ class AuthorizationCodeIT extends SeleniumTest {
 
     private void assertAcquireTokenAAD(LabUser user, String appId, Map<String, Set<String>> parameters) {
 
-        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(appId, cfg.commonAuthority());
+        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(appId, TestConstants.COMMON_AUTHORITY);
 
         String authCode = acquireAuthorizationCodeAutomated(user, pca, parameters);
         IAuthenticationResult result = acquireTokenAuthorizationCodeFlow(
                 pca,
                 authCode,
-                Collections.singleton(cfg.graphDefaultScope()));
+                Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE));
 
         IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
         assertEquals(user.getUpn(), result.account().username());
@@ -140,9 +133,8 @@ class AuthorizationCodeIT extends SeleniumTest {
 
     private void assertAcquireTokenB2C(LabUser user) {
 
-        KeyVaultSecretsProvider keyVaultSecretsProvider = new KeyVaultSecretsProvider();
-        String appId = keyVaultSecretsProvider.getSecretByName(TestConstants.B2C_CONFIDENTIAL_CLIENT_LAB_APP_ID).getValue();
-        String appSecret = keyVaultSecretsProvider.getSecretByName(TestConstants.B2C_CONFIDENTIAL_CLIENT_APP_SECRETID).getValue();
+        String appId = KeyVaultRegistry.getMsidLabProvider().getSecretByName(TestConstants.B2C_CONFIDENTIAL_CLIENT_LAB_APP_ID).getValue();
+        String appSecret = KeyVaultRegistry.getMsidLabProvider().getSecretByName(TestConstants.B2C_CONFIDENTIAL_CLIENT_APP_SECRETID).getValue();
 
         ConfidentialClientApplication cca;
         try {

@@ -26,8 +26,6 @@ import java.util.concurrent.ExecutionException;
 class AcquireTokenInteractiveIT extends SeleniumTest {
     private static final Logger LOG = LoggerFactory.getLogger(AcquireTokenInteractiveIT.class);
 
-    private Config cfg;
-
     @AfterEach
     public void stopBrowser() {
         cleanUp();
@@ -40,25 +38,20 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
 
     @Test
     void acquireTokenInteractive_ManagedUser() {
-        cfg = new Config();
-
-        LabResponse labResponse = LabUserHelper.getDefaultUserMultiTenantApp();
+        LabResponse labResponse = LabUserHelper.getDefaultUserMultiTenantAppPublicClient();
         LabUser user = labResponse.getUser();
 
-        assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), labResponse.getApp().getAuthority()+ "common", cfg.graphDefaultScope());
+        assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), labResponse.getApp().getAuthority()+ "common", TestConstants.GRAPH_DEFAULT_SCOPE);
     }
 
     @Test
     void acquireTokenInteractive_Arlington() {
-        cfg = new Config();
-
         LabResponse labResponse = LabUserHelper.getArlingtonUser();
         LabUser user = labResponse.getUser();
 
-        assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), labResponse.getApp().getAuthority()+ "common", cfg.graphDefaultScope());
+        assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), labResponse.getApp().getAuthority()+ "common", TestConstants.GRAPH_DEFAULT_SCOPE);
     }
 
-    //TODO: need to sort out ADFS 2022 configuration
     @Test()
     @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
     void acquireTokenInteractive_ADFSv2022() {
@@ -70,8 +63,6 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
 
     @Test
     void acquireTokenWithAuthorizationCode_B2C_Local() {
-        cfg = new Config();
-
         LabResponse labResponse = LabUserHelper.getB2CLocalAccount();
         LabUser user = labResponse.getUser();
         assertAcquireTokenB2C(user, TestConstants.B2C_AUTHORITY);
@@ -79,8 +70,6 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
 
     @Test
     void acquireTokenWithAuthorizationCode_B2C_LegacyFormat() {
-        cfg = new Config();
-
         LabResponse labResponse = LabUserHelper.getB2CLocalAccount();
         LabUser user = labResponse.getUser();
         assertAcquireTokenB2C(user, TestConstants.B2C_AUTHORITY_LEGACY_FORMAT);
@@ -88,8 +77,6 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
 
     @Test
     void acquireTokenInteractive_ManagedUser_InstanceAware() {
-        cfg = new Config();
-
         LabResponse labResponse = LabUserHelper.getArlingtonUser();
         LabUser user = labResponse.getUser();
         assertAcquireTokenInstanceAware(user, labResponse.getApp().getAppId(), labResponse.getLab().getTenantId());
@@ -172,7 +159,7 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
     private void assertAcquireTokenInstanceAware(LabUser user, String appId, String tenantId) {
         PublicClientApplication pca = IntegrationTestHelper.createPublicApp(appId, TestConstants.MICROSOFT_AUTHORITY_HOST + tenantId);
 
-        IAuthenticationResult result = acquireTokenInteractive_instanceAware(user, pca, cfg.graphDefaultScope());
+        IAuthenticationResult result = acquireTokenInteractive_instanceAware(user, pca, TestConstants.GRAPH_DEFAULT_SCOPE);
 
         IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
         assertEquals(user.getUpn(), result.account().username());
@@ -185,7 +172,7 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
 
         IAuthenticationResult cachedResult;
         try {
-            cachedResult = acquireTokenSilently(pca, result.account(), cfg.graphDefaultScope());
+            cachedResult = acquireTokenSilently(pca, result.account(), TestConstants.GRAPH_DEFAULT_SCOPE);
         } catch (Exception ex) {
             throw new RuntimeException(ex.getMessage());
         }

@@ -3,8 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.microsoft.aad.msal4j.labapi2.KeyVaultSecretsProvider;
-import com.microsoft.aad.msal4j.labapi2.LabServiceApi;
+import com.microsoft.aad.msal4j.labapi2.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.BeforeAll;
@@ -26,12 +25,10 @@ import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ClientCredentialsIT {
     private IClientCertificate certificate;
-    private KeyVaultSecretsProvider keyVaultSecretsProvider;
 
     @BeforeAll
     void init() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, NoSuchProviderException, IOException {
         certificate = CertificateHelper.getClientCertificate();
-        keyVaultSecretsProvider = new KeyVaultSecretsProvider();
     }
 
     @Test
@@ -42,7 +39,7 @@ class ClientCredentialsIT {
 
     @Test
     void acquireTokenClientCredentials_ClientSecret() throws Exception {
-        final String clientId = keyVaultSecretsProvider.getSecretByName("LabVaultAppID").getValue();
+        final String clientId = KeyVaultRegistry.getMsidLabProvider().getSecretByName("LabVaultAppID").getValue();
         IClientCredential credential = CertificateHelper.getClientCertificate();
 
         assertAcquireTokenCommon(clientId, credential, TestConstants.MICROSOFT_AUTHORITY);
@@ -58,22 +55,6 @@ class ClientCredentialsIT {
 
         assertAcquireTokenCommon(clientId, credential, TestConstants.MICROSOFT_AUTHORITY);
     }
-
-//    @Test
-//    void acquireTokenClientCredentials_ClientSecret_Ciam() throws Exception {
-//        User user = LabUserHelper.getCiamUserge(labServiceApi);
-//        String clientId = user.getAppId();
-//
-//        String ciamPassword = keyVaultSecretsProvider.getSecretByName("CiamAppPassword").getValu
-//
-//        IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
-//                        .builder(Collections.singleton(TestConstants.DEFAULT_SCOPE))
-//                        .build())
-//                .get();
-//
-//        assertNotNull(result);
-//        assertNotNull(result.accessToken());
-//    }
 
     @Test
     void acquireTokenClientCredentials_Certificate_CiamCud() throws Exception {
@@ -120,7 +101,7 @@ class ClientCredentialsIT {
 
     @Test
     void acquireTokenClientCredentials_DefaultCacheLookup() throws Exception {
-        final String clientId = keyVaultSecretsProvider.getSecretByName("LabVaultAppID").getValue();
+        final String clientId = KeyVaultRegistry.getMsidLabProvider().getSecretByName("LabVaultAppID").getValue();
 
         ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
                 clientId, CertificateHelper.getClientCertificate()).

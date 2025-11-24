@@ -6,8 +6,6 @@ package com.microsoft.aad.msal4j;
 import com.microsoft.aad.msal4j.labapi2.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -17,24 +15,21 @@ import java.util.Collections;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class OnBehalfOfIT {
 
-    private Config cfg;
-
     @Test
     void acquireTokenWithOBO_Managed() throws Exception {
-        cfg = new Config();
         String accessToken = this.getAccessToken();
 
-        final String clientId = cfg.appProvider().getOboAppId();
-        final String password = cfg.appProvider().getOboAppPassword();
+        String clientId = TestConstants.OBO_CLIENT_ID;
+        String password = KeyVaultRegistry.getMsalTeamProvider().getSecretByName("IdentityDivisionDotNetOBOServiceSecret").getValue();
 
         ConfidentialClientApplication cca =
                 ConfidentialClientApplication.builder(clientId, ClientCredentialFactory.createFromSecret(password)).
-                        authority(cfg.tenantSpecificAuthority("10c419d4-4a50-45b2-aa4e-919fb84df24f")).
+                        authority(TestConstants.MICROSOFT_AUTHORITY_HOST + "10c419d4-4a50-45b2-aa4e-919fb84df24f").
                         build();
 
         IAuthenticationResult result =
                 cca.acquireToken(OnBehalfOfParameters.builder(
-                        Collections.singleton(cfg.graphDefaultScope()),
+                        Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
                         new UserAssertion(accessToken)).build()).
                         get();
 
@@ -43,16 +38,14 @@ class OnBehalfOfIT {
 
     @Test
     void acquireTokenWithOBO_testCache() throws Exception {
-        cfg = new Config();
-
         String accessToken = this.getAccessToken();
 
-        final String clientId = cfg.appProvider().getOboAppId();
-        final String password = cfg.appProvider().getOboAppPassword();
+        String clientId = TestConstants.OBO_CLIENT_ID;
+        String password = KeyVaultRegistry.getMsalTeamProvider().getSecretByName("IdentityDivisionDotNetOBOServiceSecret").getValue();
 
         ConfidentialClientApplication cca =
                 ConfidentialClientApplication.builder(clientId, ClientCredentialFactory.createFromSecret(password)).
-                        authority(cfg.tenantSpecificAuthority("10c419d4-4a50-45b2-aa4e-919fb84df24f")).
+                        authority(TestConstants.MICROSOFT_AUTHORITY_HOST + "10c419d4-4a50-45b2-aa4e-919fb84df24f").
                         build();
 
         IAuthenticationResult result1 =
@@ -75,7 +68,7 @@ class OnBehalfOfIT {
         // Scope 2, should return new token
         IAuthenticationResult result3 =
                 cca.acquireToken(OnBehalfOfParameters.builder(
-                        Collections.singleton(cfg.graphDefaultScope()),
+                        Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
                         new UserAssertion(accessToken)).build()).
                         get();
 
@@ -85,7 +78,7 @@ class OnBehalfOfIT {
         // Scope 2, should return cached token
         IAuthenticationResult result4 =
                 cca.acquireToken(OnBehalfOfParameters.builder(
-                        Collections.singleton(cfg.graphDefaultScope()),
+                        Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
                         new UserAssertion(accessToken)).build()).
                         get();
 
@@ -95,7 +88,7 @@ class OnBehalfOfIT {
         IAuthenticationResult result5 =
                 cca.acquireToken(
                         OnBehalfOfParameters.builder(
-                                Collections.singleton(cfg.graphDefaultScope()),
+                                Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
                                 new UserAssertion(accessToken))
                                 .skipCache(true)
                                 .build()).
@@ -111,7 +104,7 @@ class OnBehalfOfIT {
         IAuthenticationResult result6 =
                 cca.acquireToken(
                         OnBehalfOfParameters.builder(
-                                Collections.singleton(cfg.graphDefaultScope()),
+                                Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
                                 new UserAssertion(newAccessToken))
                                 .build()).
                         get();
@@ -132,8 +125,8 @@ class OnBehalfOfIT {
         LabResponse labResponse = LabUserHelper.getDefaultUser();
         LabUser user = labResponse.getUser();
 
-        String clientId = cfg.appProvider().getAppId();
-        String apiReadScope = cfg.appProvider().getOboAppIdURI() + "/access_as_user";
+        String clientId = TestConstants.OBO_CLIENT_ID;
+        String apiReadScope = TestConstants.OBO_APP_ID_URI + "/access_as_user";
         PublicClientApplication pca = PublicClientApplication.builder(
                         clientId).
                 authority("https://login.microsoftonline.com/organizations").

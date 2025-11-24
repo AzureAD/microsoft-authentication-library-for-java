@@ -4,12 +4,8 @@
 package com.microsoft.aad.msal4j;
 
 import com.microsoft.aad.msal4j.labapi2.*;
-import com.microsoft.aad.msal4j.labapi2.Config;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Collections;
@@ -18,14 +14,10 @@ import java.util.Map;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class UsernamePasswordIT {
-    private Config cfg;
-
     @Test
     void acquireTokenWithUsernamePassword_Managed() throws Exception {
-        cfg = new Config();
-
         LabResponse labResponse = LabUserHelper.getDefaultUser();
-        assertAcquireTokenCommon(labResponse.getUser(), cfg.organizationsAuthority(), cfg.graphDefaultScope(), labResponse.getApp().getAppId());
+        assertAcquireTokenCommon(labResponse.getUser(), TestConstants.ORGANIZATIONS_AUTHORITY, TestConstants.GRAPH_DEFAULT_SCOPE, labResponse.getApp().getAppId());
     }
 
     @Test

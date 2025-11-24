@@ -6,8 +6,6 @@ package com.microsoft.aad.msal4j;
 import com.microsoft.aad.msal4j.labapi2.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -18,19 +16,17 @@ class RefreshTokenIT {
     private String refreshToken;
     private PublicClientApplication pca;
 
-    private Config cfg;
-
     private void setUp() throws Exception {
         LabResponse labResponse = LabUserHelper.getDefaultUser();
         LabUser user = labResponse.getUser();
 
         pca = PublicClientApplication.builder(
                 labResponse.getApp().getAppId()).
-                authority(cfg.organizationsAuthority()).
+                authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
 
         AuthenticationResult result = (AuthenticationResult) pca.acquireToken(UserNamePasswordParameters
-                .builder(Collections.singleton(cfg.graphDefaultScope()),
+                .builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
                         user.getUpn(),
                         user.getPassword().toCharArray())
                 .build())
@@ -41,13 +37,11 @@ class RefreshTokenIT {
 
     @Test
     void acquireTokenWithRefreshToken() throws Exception {
-        cfg = new Config();
-
         setUp();
 
         IAuthenticationResult result = pca.acquireToken(RefreshTokenParameters
                 .builder(
-                        Collections.singleton(cfg.graphDefaultScope()),
+                        Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
                         refreshToken)
                 .build())
                 .get();

@@ -17,7 +17,6 @@ class LabHttpHelper {
 
     private static final Logger log = LoggerFactory.getLogger(LabHttpHelper.class);
 
-
     static String sendRequestToLab(String url, Map<String, String> queryMap, String accessToken) throws IOException {
         return sendRequestToLab(buildUrl(url, queryMap), accessToken);
     }
@@ -28,7 +27,6 @@ class LabHttpHelper {
 
     static String sendRequestToLab(URL labUrl, String accessToken) throws IOException {
         log.debug("Sending HTTP GET request to: {}", labUrl);
-        System.out.println(labUrl);
 
         HttpsURLConnection conn = (HttpsURLConnection) labUrl.openConnection();
 
