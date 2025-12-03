@@ -38,16 +38,16 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
 
     @Test
     void acquireTokenInteractive_ManagedUser() {
-        LabResponse labResponse = LabUserHelper.getDefaultUserMultiTenantAppPublicClient();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getMultiTenantAppPublicClientConfig();
+        UserConfig user = labResponse.getUser();
 
         assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), labResponse.getApp().getAuthority()+ "common", TestConstants.GRAPH_DEFAULT_SCOPE);
     }
 
     @Test
     void acquireTokenInteractive_Arlington() {
-        LabResponse labResponse = LabUserHelper.getArlingtonUser();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getArlingtonConfig();
+        UserConfig user = labResponse.getUser();
 
         assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), labResponse.getApp().getAuthority()+ "common", TestConstants.GRAPH_DEFAULT_SCOPE);
     }
@@ -55,38 +55,39 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
     @Test()
     @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
     void acquireTokenInteractive_ADFSv2022() {
-        LabResponse labResponse = LabUserHelper.getDefaultAdfsUser();
+        LabResponse labResponse = LabConfigHelper.getAdfsConfig();
 
-        LabUser user = labResponse.getUser();
+        UserConfig user = labResponse.getUser();
         assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), labResponse.getApp().getAuthority() + "organizations/", TestConstants.ADFS_SCOPE);
     }
 
     @Test
     void acquireTokenWithAuthorizationCode_B2C_Local() {
-        LabResponse labResponse = LabUserHelper.getB2CLocalAccount();
-        LabUser user = labResponse.getUser();
-        assertAcquireTokenB2C(user, TestConstants.B2C_AUTHORITY);
+        LabResponse labResponse = LabConfigHelper.getB2CConfig();
+        UserConfig user = labResponse.getUser();
+        assertAcquireTokenB2C(user, TestConstants.B2C_AUTHORITY, labResponse.getApp().getAppId());
     }
 
     @Test
     void acquireTokenWithAuthorizationCode_B2C_LegacyFormat() {
-        LabResponse labResponse = LabUserHelper.getB2CLocalAccount();
-        LabUser user = labResponse.getUser();
-        assertAcquireTokenB2C(user, TestConstants.B2C_AUTHORITY_LEGACY_FORMAT);
+        LabResponse labResponse = LabConfigHelper.getB2CConfig();
+        UserConfig user = labResponse.getUser();
+        assertAcquireTokenB2C(user, TestConstants.B2C_AUTHORITY_LEGACY_FORMAT, labResponse.getApp().getAppId());
     }
 
     @Test
     void acquireTokenInteractive_ManagedUser_InstanceAware() {
-        LabResponse labResponse = LabUserHelper.getArlingtonUser();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getArlingtonConfig();
+        UserConfig user = labResponse.getUser();
+
         assertAcquireTokenInstanceAware(user, labResponse.getApp().getAppId(), labResponse.getLab().getTenantId());
     }
 
     @Test
     void acquireTokenInteractive_Ciam() {
-        LabResponse labResponse = LabUserHelper.getCiamCudUser();
-        LabUser user = labResponse.getUser();
-        LabApp app = labResponse.getApp();
+        LabResponse labResponse = LabConfigHelper.getCiamConfig();
+        UserConfig user = labResponse.getUser();
+        AppConfig app = labResponse.getApp();
 
         Map<String, String> extraQueryParameters = new HashMap<>();
 
@@ -128,7 +129,7 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
         assertEquals(user.getUpn(), result.account().username());
     }
 
-    private void assertAcquireTokenCommon(LabUser user, String appId, String authority, String scope) {
+    private void assertAcquireTokenCommon(UserConfig user, String appId, String authority, String scope) {
         PublicClientApplication pca = IntegrationTestHelper.createPublicApp(appId, authority);
 
         IAuthenticationResult result = acquireTokenInteractive(
@@ -140,23 +141,23 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
         assertEquals(user.getUpn(), result.account().username());
     }
 
-    private void assertAcquireTokenB2C(LabUser user, String authority) {
+    private void assertAcquireTokenB2C(UserConfig user, String authority, String appId) {
 
         PublicClientApplication pca;
         try {
             pca = PublicClientApplication.builder(
-                    user.getAppId()).
+                    appId).
                     b2cAuthority(authority + TestConstants.B2C_SIGN_IN_POLICY).
                     build();
         } catch (MalformedURLException ex) {
             throw new RuntimeException(ex.getMessage());
         }
 
-        IAuthenticationResult result = acquireTokenInteractive(user, pca, user.getAppId());
+        IAuthenticationResult result = acquireTokenInteractive(user, pca, appId);
         IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
     }
 
-    private void assertAcquireTokenInstanceAware(LabUser user, String appId, String tenantId) {
+    private void assertAcquireTokenInstanceAware(UserConfig user, String appId, String tenantId) {
         PublicClientApplication pca = IntegrationTestHelper.createPublicApp(appId, TestConstants.MICROSOFT_AUTHORITY_HOST + tenantId);
 
         IAuthenticationResult result = acquireTokenInteractive_instanceAware(user, pca, TestConstants.GRAPH_DEFAULT_SCOPE);
@@ -188,7 +189,7 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
     }
 
     private IAuthenticationResult acquireTokenInteractive(
-            LabUser user,
+            UserConfig user,
             PublicClientApplication pca,
             String scope) {
 
@@ -218,7 +219,7 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
     }
 
     private IAuthenticationResult acquireTokenInteractive_instanceAware(
-            LabUser user,
+            UserConfig user,
             PublicClientApplication pca,
             String scope) {
 
@@ -249,10 +250,10 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
 
     class SeleniumOpenBrowserAction implements OpenBrowserAction {
 
-        private LabUser user;
+        private UserConfig user;
         private PublicClientApplication pca;
 
-        SeleniumOpenBrowserAction(LabUser user, PublicClientApplication pca) {
+        SeleniumOpenBrowserAction(UserConfig user, PublicClientApplication pca) {
             this.user = user;
             this.pca = pca;
         }

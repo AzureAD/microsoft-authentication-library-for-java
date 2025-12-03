@@ -20,28 +20,28 @@ class HttpClientIT {
 
     @Test
     void acquireToken_okHttpClient() throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
+        UserConfig user = labResponse.getUser();
         assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), new OkHttpClientAdapter());
     }
 
     @Test
     void acquireToken_apacheHttpClient() throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
+        UserConfig user = labResponse.getUser();
         assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), new ApacheHttpClientAdapter());
     }
 
     @Test
     void acquireToken_readTimeout() throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
+        UserConfig user = labResponse.getUser();
 
         //Set a 1ms read timeout, which will almost certainly occur before the service can respond
         assertAcquireTokenCommon_WithTimeout(user, labResponse.getApp().getAppId(), 1);
     }
 
-    private void assertAcquireTokenCommon(LabUser user, String appId, IHttpClient httpClient)
+    private void assertAcquireTokenCommon(UserConfig user, String appId, IHttpClient httpClient)
             throws Exception {
         PublicClientApplication pca = PublicClientApplication.builder(
                 appId).
@@ -62,7 +62,7 @@ class HttpClientIT {
         assertEquals(user.getUpn(), result.account().username());
     }
 
-    private void assertAcquireTokenCommon_WithTimeout(LabUser user, String appId, int readTimeout)
+    private void assertAcquireTokenCommon_WithTimeout(UserConfig user, String appId, int readTimeout)
             throws Exception {
         PublicClientApplication pca = PublicClientApplication.builder(
                         appId).

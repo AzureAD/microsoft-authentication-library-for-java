@@ -19,8 +19,8 @@ class TokenCacheIT {
 
     @Test
     void singleAccountInCache_RemoveAccountTest() throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
+        UserConfig user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
                 labResponse.getApp().getAppId()).
@@ -54,8 +54,8 @@ class TokenCacheIT {
     @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
     void twoAccountsInCache_SameUserDifferentTenants_RemoveAccountTest() throws Exception {
 
-        LabResponse labResponse = LabUserHelper.getDefaultUser();
-        LabUser guestUser = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
+        UserConfig guestUser = labResponse.getUser();
 
         String dataToInitCache = TestHelper.readResource(
                 this.getClass(),

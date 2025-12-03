@@ -30,8 +30,8 @@ class DeviceCodeIT {
 
     @Test
     void DeviceCodeFlowADTest() throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
+        UserConfig user = labResponse.getUser();
 
         PublicClientApplication pca = IntegrationTestHelper.createPublicApp(labResponse.getApp().getAppId(), TestConstants.MICROSOFT_AUTHORITY_HOST + labResponse.getUser().getTenantId());
 
@@ -46,39 +46,39 @@ class DeviceCodeIT {
         IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
     }
 
-    //TODO: This test is failing intermittently in the pipeline runs for the same commit, but always passes locally. Disabling until we can investigate more.
+    //TODO: This test is failing intermittently due to inconsistent login page layouts and is commented out until fixed.
     //@Test()
-    void DeviceCodeFlowMSATest() throws Exception {
+//    void DeviceCodeFlowMSATest() throws Exception {
+//
+//        LabResponse labResponse = LabConfigHelper.getMSAUser();
+//        UserConfig user = labResponse.getUser();
+//        AppConfig app = labResponse.getApp();
+//
+//        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(app.getAppId(), TestConstants.CONSUMERS_AUTHORITY);
+//
+//        Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
+//            runAutomatedDeviceCodeFlow(deviceCode, user);
+//        };
+//
+//        IAuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
+//                .builder(Collections.singleton(""),
+//                        deviceCodeConsumer)
+//                .build())
+//                .get();
+//
+//        assertNotNull(result);
+//        assertNotNull(result.accessToken());
+//
+//        result = pca.acquireTokenSilently(SilentParameters.
+//                builder(Collections.singleton(""), result.account()).
+//                build())
+//                .get();
+//
+//        assertNotNull(result);
+//        assertNotNull(result.accessToken());
+//    }
 
-        LabResponse labResponse = LabUserHelper.getMSAUser();
-        LabUser user = labResponse.getUser();
-        LabApp app = labResponse.getApp();
-
-        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(app.getAppId(), TestConstants.CONSUMERS_AUTHORITY);
-
-        Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> {
-            runAutomatedDeviceCodeFlow(deviceCode, user);
-        };
-
-        IAuthenticationResult result = pca.acquireToken(DeviceCodeFlowParameters
-                .builder(Collections.singleton(""),
-                        deviceCodeConsumer)
-                .build())
-                .get();
-
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
-
-        result = pca.acquireTokenSilently(SilentParameters.
-                builder(Collections.singleton(""), result.account()).
-                build())
-                .get();
-
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
-    }
-
-    private void runAutomatedDeviceCodeFlow(DeviceCode deviceCode, LabUser user) {
+    private void runAutomatedDeviceCodeFlow(DeviceCode deviceCode, UserConfig user) {
         SeleniumExtensions.performDeviceCodeLogin(
                 seleniumDriver,
                 deviceCode.verificationUri(),

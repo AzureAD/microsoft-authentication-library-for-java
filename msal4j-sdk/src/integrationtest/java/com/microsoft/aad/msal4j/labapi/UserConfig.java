@@ -10,7 +10,7 @@ import com.azure.json.JsonWriter;
 
 import java.io.IOException;
 
-public class LabUser implements JsonSerializable<LabUser> {
+public class UserConfig implements JsonSerializable<UserConfig> {
     private String appId;
     private String objectId;
     private String userType;
@@ -29,8 +29,8 @@ public class LabUser implements JsonSerializable<LabUser> {
     private String password;
     private String federationProvider;
 
-    static LabUser fromJson(JsonReader jsonReader) throws IOException {
-        LabUser user = new LabUser();
+    static UserConfig fromJson(JsonReader jsonReader) throws IOException {
+        UserConfig user = new UserConfig();
 
         return jsonReader.readObject(reader -> {
             while (reader.nextToken() != JsonToken.END_OBJECT) {

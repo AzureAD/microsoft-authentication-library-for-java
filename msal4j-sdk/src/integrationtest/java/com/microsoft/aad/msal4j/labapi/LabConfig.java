@@ -10,7 +10,10 @@ import com.azure.json.JsonWriter;
 
 import java.io.IOException;
 
-public class Lab implements JsonSerializable<Lab> {
+/**
+ * Represents a JSON response of Lab information.
+ */
+public class LabConfig implements JsonSerializable<LabConfig> {
     private String labName;
     private String domain;
     private String tenantId;
@@ -18,8 +21,8 @@ public class Lab implements JsonSerializable<Lab> {
     private String azureEnvironment;
     private String authority;
 
-    static Lab fromJson(JsonReader jsonReader) throws IOException {
-        Lab lab = new Lab();
+    static LabConfig fromJson(JsonReader jsonReader) throws IOException {
+        LabConfig labConfig = new LabConfig();
 
         return jsonReader.readObject(reader -> {
             while (reader.nextToken() != JsonToken.END_OBJECT) {
@@ -28,29 +31,29 @@ public class Lab implements JsonSerializable<Lab> {
 
                 switch (fieldName) {
                     case "labName":
-                        lab.labName = reader.getString();
+                        labConfig.labName = reader.getString();
                         break;
                     case "domain":
-                        lab.domain = reader.getString();
+                        labConfig.domain = reader.getString();
                         break;
                     case "tenantId":
-                        lab.tenantId = reader.getString();
+                        labConfig.tenantId = reader.getString();
                         break;
                     case "federationProvider":
-                        lab.federationProvider = reader.getString();
+                        labConfig.federationProvider = reader.getString();
                         break;
                     case "azureEnvironment":
-                        lab.azureEnvironment = reader.getString();
+                        labConfig.azureEnvironment = reader.getString();
                         break;
                     case "authority":
-                        lab.authority = reader.getString();
+                        labConfig.authority = reader.getString();
                         break;
                     default:
                         reader.skipChildren();
                         break;
                 }
             }
-            return lab;
+            return labConfig;
         });
     }
 

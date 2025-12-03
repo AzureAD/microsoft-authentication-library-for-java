@@ -39,16 +39,16 @@ class AuthorizationCodeIT extends SeleniumTest {
 
     @Test
     public void acquireTokenWithAuthorizationCode_ManagedUser() {
-        LabResponse labResponse = LabUserHelper.getDefaultUserMultiTenantAppPublicClient();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getMultiTenantAppPublicClientConfig();
+        UserConfig user = labResponse.getUser();
 
         assertAcquireTokenAAD(user, labResponse.getApp().getAppId(), null);
     }
 
     @Test
     public void acquireTokenWithAuthorizationCode_B2C_Local() {
-        LabResponse labResponse = LabUserHelper.getB2CLocalAccount();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
+        UserConfig user = labResponse.getUser();
         assertAcquireTokenB2C(user);
     }
 
@@ -56,9 +56,9 @@ class AuthorizationCodeIT extends SeleniumTest {
     public void acquireTokenWithAuthorizationCode_CiamCud() throws Exception {
         String authorityCud = "https://login.msidlabsciam.com/fe362aec-5d43-45d1-b730-9755e60dc3b9/v2.0/";
 
-        LabResponse labResponse = LabUserHelper.getCiamCudUser();
-        LabUser user = labResponse.getUser();
-        LabApp app = labResponse.getApp();
+        LabResponse labResponse = LabConfigHelper.getCiamConfig();
+        UserConfig user = labResponse.getUser();
+        AppConfig app = labResponse.getApp();
 
         PublicClientApplication pca = PublicClientApplication.builder(
                         app.getAppId()).
@@ -90,13 +90,13 @@ class AuthorizationCodeIT extends SeleniumTest {
     @Test
     @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
     void acquireTokenWithAuthorizationCode_ADFSv2022() {
-        LabResponse labResponse = LabUserHelper.getDefaultAdfsUser();
+        LabResponse labResponse = LabConfigHelper.getAdfsConfig();
 
-        LabUser user = labResponse.getUser();
+        UserConfig user = labResponse.getUser();
         assertAcquireTokenADFS(user, labResponse.getApp().getAppId(), labResponse.getApp().getAuthority() + "organizations/");
     }
 
-    private void assertAcquireTokenADFS(LabUser user, String appId, String authority) {
+    private void assertAcquireTokenADFS(UserConfig user, String appId, String authority) {
         PublicClientApplication pca;
         try {
             pca = PublicClientApplication.builder(
@@ -117,7 +117,7 @@ class AuthorizationCodeIT extends SeleniumTest {
         assertEquals(user.getUpn(), result.account().username());
     }
 
-    private void assertAcquireTokenAAD(LabUser user, String appId, Map<String, Set<String>> parameters) {
+    private void assertAcquireTokenAAD(UserConfig user, String appId, Map<String, Set<String>> parameters) {
 
         PublicClientApplication pca = IntegrationTestHelper.createPublicApp(appId, TestConstants.COMMON_AUTHORITY);
 
@@ -131,7 +131,7 @@ class AuthorizationCodeIT extends SeleniumTest {
         assertEquals(user.getUpn(), result.account().username());
     }
 
-    private void assertAcquireTokenB2C(LabUser user) {
+    private void assertAcquireTokenB2C(UserConfig user) {
 
         String appId = KeyVaultRegistry.getMsidLabProvider().getSecretByName(TestConstants.B2C_CONFIDENTIAL_CLIENT_LAB_APP_ID).getValue();
         String appSecret = KeyVaultRegistry.getMsidLabProvider().getSecretByName(TestConstants.B2C_CONFIDENTIAL_CLIENT_APP_SECRETID).getValue();
@@ -192,7 +192,7 @@ class AuthorizationCodeIT extends SeleniumTest {
     }
 
     private String acquireAuthorizationCodeAutomated(
-            LabUser user,
+            UserConfig user,
             AbstractClientApplicationBase app,
             Map<String, Set<String>> parameters) {
 

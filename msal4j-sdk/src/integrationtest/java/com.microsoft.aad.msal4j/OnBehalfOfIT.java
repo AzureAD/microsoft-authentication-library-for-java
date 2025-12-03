@@ -122,8 +122,8 @@ class OnBehalfOfIT {
 
     private String getAccessToken() throws Exception {
 
-        LabResponse labResponse = LabUserHelper.getDefaultUser();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
+        UserConfig user = labResponse.getUser();
 
         String clientId = TestConstants.OBO_CLIENT_ID;
         String apiReadScope = TestConstants.OBO_APP_ID_URI + "/access_as_user";

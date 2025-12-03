@@ -10,7 +10,10 @@ import com.azure.json.JsonWriter;
 
 import java.io.IOException;
 
-public class LabApp implements JsonSerializable<LabApp> {
+/**
+ * Represents a JSON response describing an Azure app registration.
+ */
+public class AppConfig implements JsonSerializable<AppConfig> {
 
     private String appType;
     private String appName;
@@ -20,8 +23,8 @@ public class LabApp implements JsonSerializable<LabApp> {
     private String labName;
     private String clientSecret;
 
-    static LabApp fromJson(JsonReader jsonReader) throws IOException {
-        LabApp app = new LabApp();
+    static AppConfig fromJson(JsonReader jsonReader) throws IOException {
+        AppConfig app = new AppConfig();
 
         return jsonReader.readObject(reader -> {
             while (reader.nextToken() != JsonToken.END_OBJECT) {

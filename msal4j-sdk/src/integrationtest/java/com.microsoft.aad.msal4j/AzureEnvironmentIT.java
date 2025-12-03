@@ -15,9 +15,9 @@ class AzureEnvironmentIT {
 
     @Test
     void acquireTokenWithUsernamePassword_AzureGovernment() throws Exception {
-        LabResponse labResponse = LabUserHelper.getArlingtonUser();
-        LabUser user = labResponse.getUser();
-        LabApp app = labResponse.getApp();
+        LabResponse labResponse = LabConfigHelper.getArlingtonConfig();
+        UserConfig user = labResponse.getUser();
+        AppConfig app = labResponse.getApp();
 
         PublicClientApplication pca = PublicClientApplication.builder(
                         app.getAppId()).

@@ -34,8 +34,8 @@ class AcquireTokenSilentIT {
     @Test
     void acquireTokenSilent_LabAuthority_TokenNotRefreshed() throws Exception {
         // Access token should be returned from cache, and not using refresh token
-        LabResponse labResponse = LabUserHelper.getDefaultUser();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
+        UserConfig user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
                 labResponse.getApp().getAppId()).
@@ -57,8 +57,8 @@ class AcquireTokenSilentIT {
 
     @Test
     void acquireTokenSilent_ForceRefresh() throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
+        UserConfig user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
                 labResponse.getApp().getAppId()).
@@ -80,16 +80,16 @@ class AcquireTokenSilentIT {
 
     @Test
     void acquireTokenSilent_usingOrganizationsAuthority_returnCachedAt() throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
+        UserConfig user = labResponse.getUser();
 
         acquireTokenSilent_returnCachedTokens(labResponse.getApp().getAppId(), TestConstants.ORGANIZATIONS_AUTHORITY, user);
     }
 
     @Test
     void acquireTokenSilent_usingTenantSpecificAuthority_returnCachedAt() throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
+        UserConfig user = labResponse.getUser();
 
         acquireTokenSilent_returnCachedTokens(labResponse.getApp().getAppId(), TestConstants.MICROSOFT_AUTHORITY_HOST + labResponse.getUser().getTenantId(), user);
     }
@@ -144,8 +144,8 @@ class AcquireTokenSilentIT {
 
     @Test
     void acquireTokenSilent_WithRefreshOn() throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
+        UserConfig user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
                 labResponse.getApp().getAppId()).
@@ -189,8 +189,8 @@ class AcquireTokenSilentIT {
 
     @Test
     void acquireTokenSilent_TenantAsParameter() throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
+        UserConfig user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
                 labResponse.getApp().getAppId()).
@@ -219,8 +219,8 @@ class AcquireTokenSilentIT {
 
     @Test
     void acquireTokenSilent_emptyStringScope() throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
+        UserConfig user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
                 labResponse.getApp().getAppId()).
@@ -239,8 +239,8 @@ class AcquireTokenSilentIT {
 
     @Test
     void acquireTokenSilent_emptyScopeSet() throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
+        UserConfig user = labResponse.getUser();
 
         Set<String> scopes = new HashSet<>();
         PublicClientApplication pca = PublicClientApplication.builder(
@@ -268,8 +268,8 @@ class AcquireTokenSilentIT {
 
     @Test
     public void acquireTokenSilent_ClaimsForceRefresh() throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
+        UserConfig user = labResponse.getUser();
 
         Set<String> scopes = new HashSet<>();
         PublicClientApplication pca = PublicClientApplication.builder(
@@ -320,7 +320,7 @@ class AcquireTokenSilentIT {
                         build();
     }
 
-    private void acquireTokenSilent_returnCachedTokens(String appId, String authority, LabUser user) throws Exception {
+    private void acquireTokenSilent_returnCachedTokens(String appId, String authority, UserConfig user) throws Exception {
 
         PublicClientApplication pca = PublicClientApplication.builder(
                         appId).
@@ -343,8 +343,8 @@ class AcquireTokenSilentIT {
 
     private IPublicClientApplication getPublicClientApplicationWithTokensInCache()
             throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
+        UserConfig user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
                 labResponse.getApp().getAppId()).
@@ -363,7 +363,7 @@ class AcquireTokenSilentIT {
                 .get();
     }
 
-    private IAuthenticationResult acquireTokenUsernamePassword(LabUser user, IPublicClientApplication pca, String scope) throws InterruptedException, ExecutionException {
+    private IAuthenticationResult acquireTokenUsernamePassword(UserConfig user, IPublicClientApplication pca, String scope) throws InterruptedException, ExecutionException {
         Map<String, String> map = new HashMap<>();
         map.put("test","test");
         return pca.acquireToken(UserNamePasswordParameters.

@@ -11,36 +11,36 @@ import com.azure.json.JsonWriter;
 import java.io.IOException;
 
 /**
- * Container for lab API response data containing user, app, and lab information.
+ * Container that represents JSON responses from our test infrastructure, such as user and app config needed by integration tests
  */
 public class LabResponse implements JsonSerializable<LabResponse> {
 
-    private LabUser user;
-    private LabApp app;
-    private Lab lab;
+    private UserConfig user;
+    private AppConfig app;
+    private LabConfig labConfig;
 
-    public LabUser getUser() {
+    public UserConfig getUser() {
         return user;
     }
 
-    void setUser(LabUser user) {
+    void setUser(UserConfig user) {
         this.user = user;
     }
 
-    public LabApp getApp() {
+    public AppConfig getApp() {
         return app;
     }
 
-    void setApp(LabApp app) {
+    void setApp(AppConfig app) {
         this.app = app;
     }
 
-    public Lab getLab() {
-        return lab;
+    public LabConfig getLab() {
+        return labConfig;
     }
 
-    void setLab(Lab lab) {
-        this.lab = lab;
+    void setLab(LabConfig labConfig) {
+        this.labConfig = labConfig;
     }
 
     /**
@@ -51,18 +51,18 @@ public class LabResponse implements JsonSerializable<LabResponse> {
             LabResponse response = new LabResponse();
 
             while (reader.nextToken() != JsonToken.END_OBJECT) {
-                String fieldName = reader.getFieldName();
+                String fieldName = reader.getFieldName().toLowerCase();
                 reader.nextToken();
 
                 switch (fieldName) {
                     case "user":
-                        response.user = LabUser.fromJson(reader);
+                        response.user = UserConfig.fromJson(reader);
                         break;
                     case "app":
-                        response.app = LabApp.fromJson(reader);
+                        response.app = AppConfig.fromJson(reader);
                         break;
                     case "lab":
-                        response.lab = Lab.fromJson(reader);
+                        response.labConfig = LabConfig.fromJson(reader);
                         break;
                     default:
                         reader.skipChildren();
@@ -83,8 +83,8 @@ public class LabResponse implements JsonSerializable<LabResponse> {
         if (app != null) {
             jsonWriter.writeJsonField("app", app);
         }
-        if (lab != null) {
-            jsonWriter.writeJsonField("lab", lab);
+        if (labConfig != null) {
+            jsonWriter.writeJsonField("labConfig", labConfig);
         }
 
         jsonWriter.writeEndObject();
@@ -93,9 +93,9 @@ public class LabResponse implements JsonSerializable<LabResponse> {
 
     @Override
     public String toString() {
-        return String.format("LabResponse{user=%s, app=%s, lab=%s}",
+        return String.format("LabResponse{user=%s, app=%s, labConfig=%s}",
                 user != null ? user.getUpn() : "null",
                 app != null ? app.getAppId() : "null",
-                lab != null ? lab.getTenantId() : "null");
+                labConfig != null ? labConfig.getTenantId() : "null");
     }
 }

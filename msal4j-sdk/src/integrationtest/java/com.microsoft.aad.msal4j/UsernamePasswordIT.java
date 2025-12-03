@@ -16,14 +16,14 @@ import java.util.Map;
 class UsernamePasswordIT {
     @Test
     void acquireTokenWithUsernamePassword_Managed() throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser();
+        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
         assertAcquireTokenCommon(labResponse.getUser(), TestConstants.ORGANIZATIONS_AUTHORITY, TestConstants.GRAPH_DEFAULT_SCOPE, labResponse.getApp().getAppId());
     }
 
     @Test
     void acquireTokenWithUsernamePassword_AuthorityWithPort() throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
+        UserConfig user = labResponse.getUser();
 
         assertAcquireTokenCommon(
                 user,
@@ -36,10 +36,10 @@ class UsernamePasswordIT {
     void acquireTokenWithUsernamePassword_Ciam() throws Exception {
         Map<String, String> extraQueryParameters = new HashMap<>();
 
-        LabResponse labResponse = LabUserHelper.getCiamCudUser();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getCiamConfig();
+        UserConfig user = labResponse.getUser();
 
-        PublicClientApplication pca = PublicClientApplication.builder(user.getAppId())
+        PublicClientApplication pca = PublicClientApplication.builder(labResponse.getApp().getAppId())
                 .authority("https://" + user.getLabName() + ".ciamlogin.com/")
                 .build();
 
@@ -54,7 +54,7 @@ class UsernamePasswordIT {
         IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
     }
 
-    private void assertAcquireTokenCommon(LabUser user, String authority, String scope, String appId)
+    private void assertAcquireTokenCommon(UserConfig user, String authority, String scope, String appId)
             throws Exception {
 
         PublicClientApplication pca = PublicClientApplication.builder(
@@ -75,8 +75,8 @@ class UsernamePasswordIT {
 
     @Test
     void acquireTokenWithUsernamePassword_B2C_CustomAuthority() throws Exception {
-        LabResponse labResponse = LabUserHelper.getB2CLocalAccount();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getB2CConfig();
+        UserConfig user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
                 labResponse.getApp().getAppId()).
@@ -105,8 +105,8 @@ class UsernamePasswordIT {
 
     @Test
     void acquireTokenWithUsernamePassword_B2C_LoginMicrosoftOnline() throws Exception {
-        LabResponse labResponse = LabUserHelper.getB2CLocalAccount();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getB2CConfig();
+        UserConfig user = labResponse.getUser();
 
         PublicClientApplication pca = PublicClientApplication.builder(
                 labResponse.getApp().getAppId()).

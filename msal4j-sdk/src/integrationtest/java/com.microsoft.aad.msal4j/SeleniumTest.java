@@ -3,7 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.microsoft.aad.msal4j.labapi.LabUser;
+import com.microsoft.aad.msal4j.labapi.UserConfig;
 import infrastructure.SeleniumExtensions;
 import org.openqa.selenium.WebDriver;
 import org.slf4j.Logger;
@@ -36,7 +36,7 @@ abstract class SeleniumTest {
         seleniumDriver = SeleniumExtensions.createDefaultWebDriver();
     }
 
-    void runSeleniumAutomatedLogin(LabUser user, AbstractClientApplicationBase app) {
+    void runSeleniumAutomatedLogin(UserConfig user, AbstractClientApplicationBase app) {
         AuthorityType authorityType = app.authenticationAuthority.authorityType;
 
         try {

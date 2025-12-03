@@ -17,8 +17,8 @@ class RefreshTokenIT {
     private PublicClientApplication pca;
 
     private void setUp() throws Exception {
-        LabResponse labResponse = LabUserHelper.getDefaultUser();
-        LabUser user = labResponse.getUser();
+        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
+        UserConfig user = labResponse.getUser();
 
         pca = PublicClientApplication.builder(
                 labResponse.getApp().getAppId()).

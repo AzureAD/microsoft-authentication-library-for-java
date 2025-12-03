@@ -4,7 +4,7 @@
 package infrastructure;
 
 import com.microsoft.aad.msal4j.TestConstants;
-import com.microsoft.aad.msal4j.labapi.LabUser;
+import com.microsoft.aad.msal4j.labapi.UserConfig;
 import infrastructure.pageobjects.ADFSLoginPage;
 import infrastructure.pageobjects.AzureADLoginPage;
 import infrastructure.pageobjects.B2CLocalLoginPage;
@@ -40,21 +40,21 @@ public class SeleniumExtensions {
         return wait.until(ExpectedConditions.elementToBeClickable(by));
     }
 
-    public static void performADOrCiamLogin(WebDriver driver, LabUser user) {
+    public static void performADOrCiamLogin(WebDriver driver, UserConfig user) {
         LOG.info("performADOrCiamLogin for user: {}", user.getUpn());
 
         AzureADLoginPage loginPage = new AzureADLoginPage(driver);
         loginPage.login(user.getUpn(), user.getPassword());
     }
 
-    public static void performADFSLogin(WebDriver driver, LabUser user) {
+    public static void performADFSLogin(WebDriver driver, UserConfig user) {
         LOG.info("performADFSLogin for user: {}", user.getUpn());
 
         ADFSLoginPage loginPage = new ADFSLoginPage(driver);
         loginPage.login(user.getUpn(), user.getPassword());
     }
 
-    public static void performLocalLogin(WebDriver driver, LabUser user) {
+    public static void performLocalLogin(WebDriver driver, UserConfig user) {
         LOG.info("performLocalLogin");
 
         B2CLocalLoginPage loginPage = new B2CLocalLoginPage(driver);
@@ -70,7 +70,7 @@ public class SeleniumExtensions {
      * @param userCode The device code to enter
      * @param user The lab user credentials for login
      */
-    public static void performDeviceCodeLogin(WebDriver driver, String verificationUri, String userCode, LabUser user) {
+    public static void performDeviceCodeLogin(WebDriver driver, String verificationUri, String userCode, UserConfig user) {
         LOG.info("performDeviceCodeLogin for user: {}", user.getUpn());
 
         try {

@@ -22,6 +22,12 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
 
+/**
+ * Provider for retrieving secrets from Azure Key Vault.
+ * <p>
+ * Supports authentication using client certificates stored in OS keystore.
+ * Secrets can be retrieved by name and deserialized into LabResponse objects.
+ */
 public class KeyVaultSecretsProvider implements AutoCloseable {
 
     private static final Logger log = LoggerFactory.getLogger(KeyVaultSecretsProvider.class);
@@ -33,13 +39,14 @@ public class KeyVaultSecretsProvider implements AutoCloseable {
 
     static class KeyVaultInstance {
         /**
-         * The KeyVault maintained by the MSID. It is recommended for use.
+         * This Key Vault is maintained by the MSID LabConfig team. It is generally used for frequently rotated credentials and
+         * other sensitive configuration.
          */
         static final String MSID_LAB = "https://msidlabs.vault.azure.net";
 
         /**
-         * The KeyVault maintained by the MSAL.NET team and have full control over.
-         * Should be used temporarily - secrets should be stored and managed by MSID Lab.
+         * The KeyVault maintained by the MSAL/MISE team. It is generally used for static user/app/etc. info and
+         * other low-risk configuration.
          */
         static final String MSAL_TEAM = "https://id4skeyvault.vault.azure.net/";
     }
@@ -68,10 +75,6 @@ public class KeyVaultSecretsProvider implements AutoCloseable {
                 .buildClient();
 
         log.debug("KeyVault secrets provider initialized successfully");
-    }
-
-    public KeyVaultSecretsProvider() {
-        this(KeyVaultInstance.MSID_LAB);
     }
 
     /**
@@ -176,8 +179,7 @@ public class KeyVaultSecretsProvider implements AutoCloseable {
 
             if (labData == null || labData.isEmpty()) {
                 log.error("Key Vault secret '{}' is empty", secretName);
-                throw new LabUserNotFoundException(new UserQueryHelper(),
-                        "Found no content for secret '" + secretName + "' in Key Vault.");
+                throw new RuntimeException("Found no content for secret '" + secretName + "' in Key Vault.");
             }
 
             // Check if the value is JSON
@@ -189,8 +191,7 @@ public class KeyVaultSecretsProvider implements AutoCloseable {
 
                 if (response == null) {
                     log.error("Failed to deserialize Key Vault secret '{}' to LabResponse", secretName);
-                    throw new LabUserNotFoundException(new UserQueryHelper(),
-                            "Failed to deserialize Key Vault secret '" + secretName + "' to LabResponse.");
+                    throw new RuntimeException("Failed to deserialize Key Vault secret '" + secretName + "' to LabResponse.");
                 }
 
                 log.debug("Retrieved LabResponse from Key Vault '{}': {}", secretName,
@@ -249,8 +250,7 @@ public class KeyVaultSecretsProvider implements AutoCloseable {
             if (!hasValidResponse) {
                 log.error("Failed to merge secrets - no valid LabResponse found: {}",
                         String.join(", ", secretNames));
-                throw new LabUserNotFoundException(new UserQueryHelper(),
-                        "Failed to create merged LabResponse from secrets: " +
+                throw new RuntimeException("Failed to create merged LabResponse from secrets: " +
                                 String.join(", ", secretNames));
             }
 
@@ -267,7 +267,7 @@ public class KeyVaultSecretsProvider implements AutoCloseable {
 
     /**
      * Fetch user password from Key Vault.
-     * Note: This should only be called on instances configured for the MSID Lab vault.
+     * Note: This should only be called on instances configured for the MSID LabConfig vault.
      *
      * @param userLabName The lab name of the user (used as secret name)
      * @return The user's password
