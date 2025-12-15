@@ -4,6 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import com.microsoft.aad.msal4j.labapi.*;
+import static com.microsoft.aad.msal4j.labapi.KeyVaultSecrets.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
@@ -19,11 +20,11 @@ class TokenCacheIT {
 
     @Test
     void singleAccountInCache_RemoveAccountTest() throws Exception {
-        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
-        UserConfig user = labResponse.getUser();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                labResponse.getApp().getAppId()).
+                app.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
 
@@ -54,8 +55,8 @@ class TokenCacheIT {
     @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
     void twoAccountsInCache_SameUserDifferentTenants_RemoveAccountTest() throws Exception {
 
-        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
-        UserConfig guestUser = labResponse.getUser();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig guestUser = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
         String dataToInitCache = TestHelper.readResource(
                 this.getClass(),
@@ -68,7 +69,7 @@ class TokenCacheIT {
 
         // acquire tokens for home tenant, and serialize cache
         PublicClientApplication pca = PublicClientApplication.builder(
-                labResponse.getApp().getAppId()).
+                app.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY)
                 .setTokenCacheAccessAspect(persistenceAspect)
                 .build();
@@ -84,7 +85,7 @@ class TokenCacheIT {
 
         // initialize pca with tenant where user is guest, deserialize cache, and acquire second token
         PublicClientApplication pca2 = PublicClientApplication.builder(
-                labResponse.getApp().getAppId()).
+                app.getAppId()).
                 authority(guestTenantAuthority).
                 setTokenCacheAccessAspect(persistenceAspect).
                 build();

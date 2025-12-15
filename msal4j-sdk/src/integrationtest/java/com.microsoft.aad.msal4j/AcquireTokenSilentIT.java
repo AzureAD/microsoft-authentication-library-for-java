@@ -4,6 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import com.microsoft.aad.msal4j.labapi.*;
+import static com.microsoft.aad.msal4j.labapi.KeyVaultSecrets.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -34,11 +35,11 @@ class AcquireTokenSilentIT {
     @Test
     void acquireTokenSilent_LabAuthority_TokenNotRefreshed() throws Exception {
         // Access token should be returned from cache, and not using refresh token
-        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
-        UserConfig user = labResponse.getUser();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                labResponse.getApp().getAppId()).
+                app.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
 
@@ -57,11 +58,11 @@ class AcquireTokenSilentIT {
 
     @Test
     void acquireTokenSilent_ForceRefresh() throws Exception {
-        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
-        UserConfig user = labResponse.getUser();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                labResponse.getApp().getAppId()).
+                app.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
 
@@ -80,18 +81,18 @@ class AcquireTokenSilentIT {
 
     @Test
     void acquireTokenSilent_usingOrganizationsAuthority_returnCachedAt() throws Exception {
-        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
-        UserConfig user = labResponse.getUser();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
-        acquireTokenSilent_returnCachedTokens(labResponse.getApp().getAppId(), TestConstants.ORGANIZATIONS_AUTHORITY, user);
+        acquireTokenSilent_returnCachedTokens(app.getAppId(), TestConstants.ORGANIZATIONS_AUTHORITY, user);
     }
 
     @Test
     void acquireTokenSilent_usingTenantSpecificAuthority_returnCachedAt() throws Exception {
-        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
-        UserConfig user = labResponse.getUser();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
-        acquireTokenSilent_returnCachedTokens(labResponse.getApp().getAppId(), TestConstants.MICROSOFT_AUTHORITY_HOST + labResponse.getUser().getTenantId(), user);
+        acquireTokenSilent_returnCachedTokens(app.getAppId(), TestConstants.MICROSOFT_AUTHORITY_HOST + user.getTenantId(), user);
     }
 
     @Test
@@ -144,11 +145,11 @@ class AcquireTokenSilentIT {
 
     @Test
     void acquireTokenSilent_WithRefreshOn() throws Exception {
-        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
-        UserConfig user = labResponse.getUser();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                labResponse.getApp().getAppId()).
+                app.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
 
@@ -189,11 +190,11 @@ class AcquireTokenSilentIT {
 
     @Test
     void acquireTokenSilent_TenantAsParameter() throws Exception {
-        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
-        UserConfig user = labResponse.getUser();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                labResponse.getApp().getAppId()).
+                app.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
 
@@ -211,7 +212,7 @@ class AcquireTokenSilentIT {
 
         IAuthenticationResult resultWithTenantParam = pca.acquireTokenSilently(SilentParameters.
                 builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE), account).
-                    tenant(labResponse.getUser().getTenantId()).
+                    tenant(user.getTenantId()).
                 build()).get();
         assertResultNotNull(resultWithTenantParam);
         assertTokensAreNotEqual(result, resultWithTenantParam);
@@ -219,11 +220,11 @@ class AcquireTokenSilentIT {
 
     @Test
     void acquireTokenSilent_emptyStringScope() throws Exception {
-        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
-        UserConfig user = labResponse.getUser();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                labResponse.getApp().getAppId()).
+                app.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
 
@@ -239,12 +240,12 @@ class AcquireTokenSilentIT {
 
     @Test
     void acquireTokenSilent_emptyScopeSet() throws Exception {
-        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
-        UserConfig user = labResponse.getUser();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
         Set<String> scopes = new HashSet<>();
         PublicClientApplication pca = PublicClientApplication.builder(
-                labResponse.getApp().getAppId()).
+                app.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
 
@@ -268,12 +269,12 @@ class AcquireTokenSilentIT {
 
     @Test
     public void acquireTokenSilent_ClaimsForceRefresh() throws Exception {
-        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
-        UserConfig user = labResponse.getUser();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
         Set<String> scopes = new HashSet<>();
         PublicClientApplication pca = PublicClientApplication.builder(
-                        labResponse.getApp().getAppId()).
+                        app.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
 
@@ -309,13 +310,13 @@ class AcquireTokenSilentIT {
     }
 
     private IConfidentialClientApplication getConfidentialClientApplications() throws Exception {
-        String clientId = TestConstants.OBO_CLIENT_ID;
-        String password = KeyVaultRegistry.getMsalTeamProvider().getSecretByName("IdentityDivisionDotNetOBOServiceSecret").getValue();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_WEBAPI);
+        String password = KeyVaultRegistry.getMsalTeamProvider().getSecretByName(app.getClientSecret()).getValue();
 
         IClientCredential credential = ClientCredentialFactory.createFromSecret(password);
 
         return ConfidentialClientApplication.builder(
-                clientId, credential).
+                app.getAppId(), credential).
                         authority(TestConstants.AUTHORITY_PUBLIC_TENANT_SPECIFIC).
                         build();
     }
@@ -343,11 +344,11 @@ class AcquireTokenSilentIT {
 
     private IPublicClientApplication getPublicClientApplicationWithTokensInCache()
             throws Exception {
-        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
-        UserConfig user = labResponse.getUser();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                labResponse.getApp().getAppId()).
+                app.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
 

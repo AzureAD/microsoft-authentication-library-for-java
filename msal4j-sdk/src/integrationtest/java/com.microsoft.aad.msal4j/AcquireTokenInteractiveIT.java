@@ -4,6 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import com.microsoft.aad.msal4j.labapi.*;
+import static com.microsoft.aad.msal4j.labapi.KeyVaultSecrets.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,56 +39,58 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
 
     @Test
     void acquireTokenInteractive_ManagedUser() {
-        LabResponse labResponse = LabConfigHelper.getMultiTenantAppPublicClientConfig();
-        UserConfig user = labResponse.getUser();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
-        assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), labResponse.getApp().getAuthority()+ "common", TestConstants.GRAPH_DEFAULT_SCOPE);
+        assertAcquireTokenCommon(user, app.getAppId(), app.getAuthority() + "common", TestConstants.GRAPH_DEFAULT_SCOPE);
     }
 
     @Test
     void acquireTokenInteractive_Arlington() {
-        LabResponse labResponse = LabConfigHelper.getArlingtonConfig();
-        UserConfig user = labResponse.getUser();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_ARLINGTON);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_ARLINGTON);
 
-        assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), labResponse.getApp().getAuthority()+ "common", TestConstants.GRAPH_DEFAULT_SCOPE);
+        assertAcquireTokenCommon(user, app.getAppId(), app.getAuthority() + "common", TestConstants.GRAPH_DEFAULT_SCOPE);
     }
 
     @Test()
     @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
     void acquireTokenInteractive_ADFSv2022() {
-        LabResponse labResponse = LabConfigHelper.getAdfsConfig();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_FED_DEFAULT);
 
-        UserConfig user = labResponse.getUser();
-        assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), labResponse.getApp().getAuthority() + "organizations/", TestConstants.ADFS_SCOPE);
+        assertAcquireTokenCommon(user, app.getAppId(), app.getAuthority() + "organizations/", TestConstants.ADFS_SCOPE);
     }
 
     @Test
     void acquireTokenWithAuthorizationCode_B2C_Local() {
-        LabResponse labResponse = LabConfigHelper.getB2CConfig();
-        UserConfig user = labResponse.getUser();
-        assertAcquireTokenB2C(user, TestConstants.B2C_AUTHORITY, labResponse.getApp().getAppId());
+        AppConfig app = LabResponseHelper.getAppConfig(APP_B2C);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_B2C);
+
+        assertAcquireTokenB2C(user, TestConstants.B2C_AUTHORITY, app.getAppId());
     }
 
     @Test
     void acquireTokenWithAuthorizationCode_B2C_LegacyFormat() {
-        LabResponse labResponse = LabConfigHelper.getB2CConfig();
-        UserConfig user = labResponse.getUser();
-        assertAcquireTokenB2C(user, TestConstants.B2C_AUTHORITY_LEGACY_FORMAT, labResponse.getApp().getAppId());
+        AppConfig app = LabResponseHelper.getAppConfig(APP_B2C);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_B2C);
+
+        assertAcquireTokenB2C(user, TestConstants.B2C_AUTHORITY_LEGACY_FORMAT, app.getAppId());
     }
 
     @Test
     void acquireTokenInteractive_ManagedUser_InstanceAware() {
-        LabResponse labResponse = LabConfigHelper.getArlingtonConfig();
-        UserConfig user = labResponse.getUser();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_ARLINGTON);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_ARLINGTON);
+        LabConfig lab = LabResponseHelper.getLabConfig(LAB_ARLMSIDLAB1);
 
-        assertAcquireTokenInstanceAware(user, labResponse.getApp().getAppId(), labResponse.getLab().getTenantId());
+        assertAcquireTokenInstanceAware(user, app.getAppId(), lab.getTenantId());
     }
 
     @Test
     void acquireTokenInteractive_Ciam() {
-        LabResponse labResponse = LabConfigHelper.getCiamConfig();
-        UserConfig user = labResponse.getUser();
-        AppConfig app = labResponse.getApp();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_CIAM);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_CIAM);
 
         Map<String, String> extraQueryParameters = new HashMap<>();
 

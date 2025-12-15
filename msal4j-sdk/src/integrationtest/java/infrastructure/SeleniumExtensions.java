@@ -3,7 +3,6 @@
 
 package infrastructure;
 
-import com.microsoft.aad.msal4j.TestConstants;
 import com.microsoft.aad.msal4j.labapi.UserConfig;
 import infrastructure.pageobjects.ADFSLoginPage;
 import infrastructure.pageobjects.AzureADLoginPage;
@@ -58,7 +57,7 @@ public class SeleniumExtensions {
         LOG.info("performLocalLogin");
 
         B2CLocalLoginPage loginPage = new B2CLocalLoginPage(driver);
-        loginPage.login(TestConstants.B2C_UPN, user.getPassword());
+        loginPage.login(user.getUpn(), user.getPassword());
     }
 
     /**

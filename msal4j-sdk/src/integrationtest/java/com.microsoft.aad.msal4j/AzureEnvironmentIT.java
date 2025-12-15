@@ -4,6 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import com.microsoft.aad.msal4j.labapi.*;
+import static com.microsoft.aad.msal4j.labapi.KeyVaultSecrets.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -15,9 +16,8 @@ class AzureEnvironmentIT {
 
     @Test
     void acquireTokenWithUsernamePassword_AzureGovernment() throws Exception {
-        LabResponse labResponse = LabConfigHelper.getArlingtonConfig();
-        UserConfig user = labResponse.getUser();
-        AppConfig app = labResponse.getApp();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_ARLINGTON);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_ARLINGTON);
 
         PublicClientApplication pca = PublicClientApplication.builder(
                         app.getAppId()).

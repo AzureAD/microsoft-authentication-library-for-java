@@ -4,6 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import com.microsoft.aad.msal4j.labapi.*;
+import static com.microsoft.aad.msal4j.labapi.KeyVaultSecrets.*;
 import infrastructure.SeleniumExtensions;
 import org.openqa.selenium.WebDriver;
 import org.slf4j.Logger;
@@ -30,10 +31,10 @@ class DeviceCodeIT {
 
     @Test
     void DeviceCodeFlowADTest() throws Exception {
-        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
-        UserConfig user = labResponse.getUser();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
-        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(labResponse.getApp().getAppId(), TestConstants.MICROSOFT_AUTHORITY_HOST + labResponse.getUser().getTenantId());
+        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(app.getAppId(), TestConstants.MICROSOFT_AUTHORITY_HOST + user.getTenantId());
 
         Consumer<DeviceCode> deviceCodeConsumer = (DeviceCode deviceCode) -> runAutomatedDeviceCodeFlow(deviceCode, user);
 

@@ -4,6 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import com.microsoft.aad.msal4j.labapi.*;
+import static com.microsoft.aad.msal4j.labapi.KeyVaultSecrets.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,13 +19,14 @@ class OnBehalfOfIT {
     @Test
     void acquireTokenWithOBO_Managed() throws Exception {
         String accessToken = this.getAccessToken();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_WEBAPI);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
-        String clientId = TestConstants.OBO_CLIENT_ID;
-        String password = KeyVaultRegistry.getMsalTeamProvider().getSecretByName("IdentityDivisionDotNetOBOServiceSecret").getValue();
+        String password = KeyVaultRegistry.getMsalTeamProvider().getSecretByName(app.getClientSecret()).getValue();
 
         ConfidentialClientApplication cca =
-                ConfidentialClientApplication.builder(clientId, ClientCredentialFactory.createFromSecret(password)).
-                        authority(TestConstants.MICROSOFT_AUTHORITY_HOST + "10c419d4-4a50-45b2-aa4e-919fb84df24f").
+                ConfidentialClientApplication.builder(app.getAppId(), ClientCredentialFactory.createFromSecret(password)).
+                        authority(TestConstants.MICROSOFT_AUTHORITY_HOST + user.getTenantId()).
                         build();
 
         IAuthenticationResult result =
@@ -40,12 +42,14 @@ class OnBehalfOfIT {
     void acquireTokenWithOBO_testCache() throws Exception {
         String accessToken = this.getAccessToken();
 
-        String clientId = TestConstants.OBO_CLIENT_ID;
-        String password = KeyVaultRegistry.getMsalTeamProvider().getSecretByName("IdentityDivisionDotNetOBOServiceSecret").getValue();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_WEBAPI);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
+
+        String password = KeyVaultRegistry.getMsalTeamProvider().getSecretByName(app.getClientSecret()).getValue();
 
         ConfidentialClientApplication cca =
-                ConfidentialClientApplication.builder(clientId, ClientCredentialFactory.createFromSecret(password)).
-                        authority(TestConstants.MICROSOFT_AUTHORITY_HOST + "10c419d4-4a50-45b2-aa4e-919fb84df24f").
+                ConfidentialClientApplication.builder(app.getAppId(), ClientCredentialFactory.createFromSecret(password)).
+                        authority(TestConstants.MICROSOFT_AUTHORITY_HOST + user.getTenantId()).
                         build();
 
         IAuthenticationResult result1 =
@@ -122,13 +126,12 @@ class OnBehalfOfIT {
 
     private String getAccessToken() throws Exception {
 
-        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
-        UserConfig user = labResponse.getUser();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_WEBAPI);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
-        String clientId = TestConstants.OBO_CLIENT_ID;
-        String apiReadScope = TestConstants.OBO_APP_ID_URI + "/access_as_user";
-        PublicClientApplication pca = PublicClientApplication.builder(
-                        clientId).
+        String apiReadScope = "api://" + app.getAppId() + "/access_as_user";
+
+        PublicClientApplication pca = PublicClientApplication.builder(app.getAppId()).
                 authority("https://login.microsoftonline.com/organizations").
                 build();
 

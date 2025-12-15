@@ -86,4 +86,8 @@ public class AppConfig implements JsonSerializable<AppConfig> {
     public String getAppId() {
         return appId;
     }
+
+    public String getClientSecret() {
+        return clientSecret;
+    }
 }

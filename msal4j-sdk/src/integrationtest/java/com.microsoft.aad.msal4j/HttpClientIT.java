@@ -4,6 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import com.microsoft.aad.msal4j.labapi.*;
+import static com.microsoft.aad.msal4j.labapi.KeyVaultSecrets.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -20,25 +21,25 @@ class HttpClientIT {
 
     @Test
     void acquireToken_okHttpClient() throws Exception {
-        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
-        UserConfig user = labResponse.getUser();
-        assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), new OkHttpClientAdapter());
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
+        assertAcquireTokenCommon(user, app.getAppId(), new OkHttpClientAdapter());
     }
 
     @Test
     void acquireToken_apacheHttpClient() throws Exception {
-        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
-        UserConfig user = labResponse.getUser();
-        assertAcquireTokenCommon(user, labResponse.getApp().getAppId(), new ApacheHttpClientAdapter());
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
+        assertAcquireTokenCommon(user, app.getAppId(), new ApacheHttpClientAdapter());
     }
 
     @Test
     void acquireToken_readTimeout() throws Exception {
-        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
-        UserConfig user = labResponse.getUser();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
         //Set a 1ms read timeout, which will almost certainly occur before the service can respond
-        assertAcquireTokenCommon_WithTimeout(user, labResponse.getApp().getAppId(), 1);
+        assertAcquireTokenCommon_WithTimeout(user, app.getAppId(), 1);
     }
 
     private void assertAcquireTokenCommon(UserConfig user, String appId, IHttpClient httpClient)

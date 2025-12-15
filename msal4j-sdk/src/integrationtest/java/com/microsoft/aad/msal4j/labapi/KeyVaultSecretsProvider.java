@@ -37,6 +37,9 @@ public class KeyVaultSecretsProvider implements AutoCloseable {
      */
     public static final String CERTIFICATE_ALIAS = "LabAuth.MSIDLab.com";
 
+    // The app ID for the application used to access Key Vault
+    private final String MSIDLAB_APP_ID = "f62c5ae3-bf3a-4af5-afa8-a68b800396e9";
+
     static class KeyVaultInstance {
         /**
          * This Key Vault is maintained by the MSID LabConfig team. It is generally used for frequently rotated credentials and
@@ -107,10 +110,11 @@ public class KeyVaultSecretsProvider implements AutoCloseable {
 
     private AccessToken requestAccessTokenForAutomation() {
         IAuthenticationResult result;
+
         try {
             log.debug("Acquiring access token for Key Vault");
             ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
-                            TestConstants.MSIDLAB_CLIENT_ID,
+                            MSIDLAB_APP_ID,
                             getClientCredentialFromKeyStore())
                     .authority(TestConstants.MICROSOFT_AUTHORITY)
                     .sendX5c(true)

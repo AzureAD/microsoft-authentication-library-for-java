@@ -4,6 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import com.microsoft.aad.msal4j.labapi.*;
+import static com.microsoft.aad.msal4j.labapi.KeyVaultSecrets.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -16,30 +17,31 @@ import java.util.Map;
 class UsernamePasswordIT {
     @Test
     void acquireTokenWithUsernamePassword_Managed() throws Exception {
-        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
-        assertAcquireTokenCommon(labResponse.getUser(), TestConstants.ORGANIZATIONS_AUTHORITY, TestConstants.GRAPH_DEFAULT_SCOPE, labResponse.getApp().getAppId());
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
+        assertAcquireTokenCommon(user, TestConstants.ORGANIZATIONS_AUTHORITY, TestConstants.GRAPH_DEFAULT_SCOPE, app.getAppId());
     }
 
     @Test
     void acquireTokenWithUsernamePassword_AuthorityWithPort() throws Exception {
-        LabResponse labResponse = LabConfigHelper.getDefaultConfig();
-        UserConfig user = labResponse.getUser();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
         assertAcquireTokenCommon(
                 user,
                 TestConstants.MICROSOFT_AUTHORITY_HOST_WITH_PORT + user.getTenantId(),
                 TestConstants.GRAPH_DEFAULT_SCOPE,
-                labResponse.getApp().getAppId());
+                app.getAppId());
     }
 
     @Test
     void acquireTokenWithUsernamePassword_Ciam() throws Exception {
         Map<String, String> extraQueryParameters = new HashMap<>();
 
-        LabResponse labResponse = LabConfigHelper.getCiamConfig();
-        UserConfig user = labResponse.getUser();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_CIAM);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_CIAM);
 
-        PublicClientApplication pca = PublicClientApplication.builder(labResponse.getApp().getAppId())
+        PublicClientApplication pca = PublicClientApplication.builder(app.getAppId())
                 .authority("https://" + user.getLabName() + ".ciamlogin.com/")
                 .build();
 
@@ -75,11 +77,11 @@ class UsernamePasswordIT {
 
     @Test
     void acquireTokenWithUsernamePassword_B2C_CustomAuthority() throws Exception {
-        LabResponse labResponse = LabConfigHelper.getB2CConfig();
-        UserConfig user = labResponse.getUser();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_B2C);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_B2C);
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                labResponse.getApp().getAppId()).
+                app.getAppId()).
                 b2cAuthority(TestConstants.B2C_AUTHORITY_ROPC).
                 build();
 
@@ -105,11 +107,11 @@ class UsernamePasswordIT {
 
     @Test
     void acquireTokenWithUsernamePassword_B2C_LoginMicrosoftOnline() throws Exception {
-        LabResponse labResponse = LabConfigHelper.getB2CConfig();
-        UserConfig user = labResponse.getUser();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_B2C);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_B2C);
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                labResponse.getApp().getAppId()).
+                app.getAppId()).
                 b2cAuthority(TestConstants.B2C_MICROSOFTLOGIN_ROPC).
                 build();
 
