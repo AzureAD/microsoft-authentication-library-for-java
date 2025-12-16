@@ -15,7 +15,6 @@ public class LabResponseHelper {
     // Static caches for configuration instances
     private static final ConcurrentHashMap<String, AppConfig> appConfigCache = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, UserConfig> userConfigCache = new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<String, LabConfig> labConfigCache = new ConcurrentHashMap<>();
 
     /**
      * Retrieves an AppConfig from Key Vault by secret name.
@@ -48,23 +47,6 @@ public class LabResponseHelper {
                 return ((LabResponse) data).getUser();
             }
             throw new RuntimeException("Expected LabResponse with UserConfig for secret: " + key);
-        });
-    }
-
-    /**
-     * Retrieves a LabConfig from Key Vault by secret name.
-     * Results are cached to avoid redundant Key Vault calls.
-     *
-     * @param labConfigName The Key Vault secret name for the lab configuration (use KeyVaultSecrets constants)
-     * @return LabConfig instance
-     */
-    public static LabConfig getLabConfig(String labConfigName) {
-        return labConfigCache.computeIfAbsent(labConfigName, key -> {
-            Object data = KeyVaultRegistry.getMsalTeamProvider().getLabData(key);
-            if (data instanceof LabResponse) {
-                return ((LabResponse) data).getLab();
-            }
-            throw new RuntimeException("Expected LabResponse with LabConfig for secret: " + key);
         });
     }
 }

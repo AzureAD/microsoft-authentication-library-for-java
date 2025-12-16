@@ -17,30 +17,13 @@ public class LabResponse implements JsonSerializable<LabResponse> {
 
     private UserConfig user;
     private AppConfig app;
-    private LabConfig labConfig;
 
     public UserConfig getUser() {
         return user;
     }
 
-    void setUser(UserConfig user) {
-        this.user = user;
-    }
-
     public AppConfig getApp() {
         return app;
-    }
-
-    void setApp(AppConfig app) {
-        this.app = app;
-    }
-
-    public LabConfig getLab() {
-        return labConfig;
-    }
-
-    void setLab(LabConfig labConfig) {
-        this.labConfig = labConfig;
     }
 
     /**
@@ -61,9 +44,6 @@ public class LabResponse implements JsonSerializable<LabResponse> {
                     case "app":
                         response.app = AppConfig.fromJson(reader);
                         break;
-                    case "lab":
-                        response.labConfig = LabConfig.fromJson(reader);
-                        break;
                     default:
                         reader.skipChildren();
                         break;
@@ -83,19 +63,8 @@ public class LabResponse implements JsonSerializable<LabResponse> {
         if (app != null) {
             jsonWriter.writeJsonField("app", app);
         }
-        if (labConfig != null) {
-            jsonWriter.writeJsonField("labConfig", labConfig);
-        }
 
         jsonWriter.writeEndObject();
         return jsonWriter;
-    }
-
-    @Override
-    public String toString() {
-        return String.format("LabResponse{user=%s, app=%s, labConfig=%s}",
-                user != null ? user.getUpn() : "null",
-                app != null ? app.getAppId() : "null",
-                labConfig != null ? labConfig.getTenantId() : "null");
     }
 }

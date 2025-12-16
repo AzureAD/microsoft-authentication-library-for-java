@@ -38,4 +38,6 @@ public class TestConstants {
     public static final String ADFS_SCOPE = USER_READ_SCOPE;
 
     public static final String AUTHORITY_PUBLIC_TENANT_SPECIFIC = "https://login.microsoftonline.com/" + MICROSOFT_AUTHORITY_TENANT;
+
+    public static final String ARLINGTON_TENANT_ID = "45ff0c17-f8b5-489b-b7fd-2fedebbec0c4";
 }

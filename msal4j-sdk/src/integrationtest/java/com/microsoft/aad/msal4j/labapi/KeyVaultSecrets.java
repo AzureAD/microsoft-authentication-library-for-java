@@ -30,9 +30,5 @@ public final class KeyVaultSecrets {
     public static final String APP_B2C = "MSAL-App-B2C-JSON";
     public static final String APP_ARLINGTON = "MSAL-App-Arlington-JSON";
     public static final String APP_CIAM = "MSAL-App-CIAM-JSON";
-
-    // Lab Configuration Secrets
-    public static final String LAB_ID4SLAB1 = "ID4SLAB1";
-    public static final String LAB_ARLMSIDLAB1 = "ARLMSIDLAB1";
 }
 

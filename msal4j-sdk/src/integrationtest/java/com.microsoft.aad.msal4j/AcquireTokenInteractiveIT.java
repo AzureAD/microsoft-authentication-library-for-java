@@ -82,9 +82,8 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
     void acquireTokenInteractive_ManagedUser_InstanceAware() {
         AppConfig app = LabResponseHelper.getAppConfig(APP_ARLINGTON);
         UserConfig user = LabResponseHelper.getUserConfig(USER_ARLINGTON);
-        LabConfig lab = LabResponseHelper.getLabConfig(LAB_ARLMSIDLAB1);
 
-        assertAcquireTokenInstanceAware(user, app.getAppId(), lab.getTenantId());
+        assertAcquireTokenInstanceAware(user, app.getAppId(), TestConstants.ARLINGTON_TENANT_ID);
     }
 
     @Test

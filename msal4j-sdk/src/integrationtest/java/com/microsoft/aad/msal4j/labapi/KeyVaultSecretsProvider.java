@@ -38,7 +38,7 @@ public class KeyVaultSecretsProvider implements AutoCloseable {
     public static final String CERTIFICATE_ALIAS = "LabAuth.MSIDLab.com";
 
     // The app ID for the application used to access Key Vault
-    private final String MSIDLAB_APP_ID = "f62c5ae3-bf3a-4af5-afa8-a68b800396e9";
+    private static final String MSIDLAB_APP_ID = "f62c5ae3-bf3a-4af5-afa8-a68b800396e9";
 
     static class KeyVaultInstance {
         /**
@@ -210,62 +210,6 @@ public class KeyVaultSecretsProvider implements AutoCloseable {
             log.error("Failed to retrieve Key Vault secret '{}': {}", secretName, e.getMessage());
             throw new RuntimeException(
                     "Failed to retrieve or parse Key Vault secret '" + secretName + "'", e);
-        }
-    }
-
-    /**
-     * Merge multiple Key Vault secrets into a single LabResponse.
-     * Each secret should contain a LabResponse JSON object.
-     * Fields from later secrets override fields from earlier ones.
-     *
-     * @param secretNames Array of Key Vault secret names to merge
-     * @return Merged LabResponse
-     */
-    public LabResponse mergeLabResponses(String... secretNames) {
-        if (secretNames == null || secretNames.length == 0) {
-            throw new IllegalArgumentException(
-                    "At least one secret name must be provided.");
-        }
-
-        try {
-            LabResponse mergedResponse = new LabResponse();
-            boolean hasValidResponse = false;
-
-            for (String secretName : secretNames) {
-                Object data = getLabData(secretName);
-
-                if (data instanceof LabResponse) {
-                    LabResponse response = (LabResponse) data;
-                    hasValidResponse = true;
-
-                    // Merge user, app, and lab fields (later values override earlier ones)
-                    if (response.getUser() != null) {
-                        mergedResponse.setUser(response.getUser());
-                    }
-                    if (response.getApp() != null) {
-                        mergedResponse.setApp(response.getApp());
-                    }
-                    if (response.getLab() != null) {
-                        mergedResponse.setLab(response.getLab());
-                    }
-                }
-            }
-
-            if (!hasValidResponse) {
-                log.error("Failed to merge secrets - no valid LabResponse found: {}",
-                        String.join(", ", secretNames));
-                throw new RuntimeException("Failed to create merged LabResponse from secrets: " +
-                                String.join(", ", secretNames));
-            }
-
-            log.info("Merged secrets [{}]: {}", String.join(", ", secretNames),
-                    mergedResponse.getUser() != null ? mergedResponse.getUser().getUpn() : "N/A");
-
-            return mergedResponse;
-        } catch (Exception e) {
-            log.error("Failed to merge secrets [{}]: {}", String.join(", ", secretNames), e.getMessage());
-            throw new RuntimeException(
-                    "Failed to merge Key Vault secrets: " + String.join(", ", secretNames), e);
         }
     }
 
