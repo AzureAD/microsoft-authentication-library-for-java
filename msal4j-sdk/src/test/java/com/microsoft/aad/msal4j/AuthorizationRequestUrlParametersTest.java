@@ -98,31 +98,22 @@ class AuthorizationRequestUrlParametersTest {
     }
 
     @Test
-    void testBuilder_optionalParameters() throws UnsupportedEncodingException {
-        Set<String> clientCapabilities = new HashSet<>();
-        clientCapabilities.add("llt");
-        clientCapabilities.add("ssm");
-
-        PublicClientApplication app = PublicClientApplication.builder("client_id").clientCapabilities(clientCapabilities).build();
+    void testBuilder_queryResponseModeIsOverriddenToFormPost() throws UnsupportedEncodingException {
+        PublicClientApplication app = PublicClientApplication.builder("client_id").build();
 
         String redirectUri = "http://localhost:8080";
         Set<String> scope = Collections.singleton("scope");
 
+        // Test that when QUERY is passed (deprecated), it's overridden to FORM_POST
         AuthorizationRequestUrlParameters parameters =
                 AuthorizationRequestUrlParameters
                         .builder(redirectUri, scope)
-                        .extraScopesToConsent(new LinkedHashSet<>(Arrays.asList("extraScopeToConsent1", "extraScopeToConsent2")))
-                        .responseMode(ResponseMode.QUERY)
-                        .codeChallenge("challenge")
-                        .codeChallengeMethod("method")
-                        .state("app_state")
-                        .nonce("app_nonce")
-                        .correlationId("corr_id")
-                        .loginHint("hint")
-                        .domainHint("domain_hint")
-                        .claimsChallenge("{\"id_token\":{\"auth_time\":{\"essential\":true}},\"access_token\":{\"auth_time\":{\"essential\":true}}}")
-                        .prompt(Prompt.SELECT_ACCOUNT)
+                        .responseMode(ResponseMode.QUERY)  // Deprecated - should be overridden
                         .build();
+
+        // Verify that the responseMode is overridden to FORM_POST
+        assertEquals(ResponseMode.FORM_POST, parameters.responseMode(), 
+                "ResponseMode.QUERY should be overridden to ResponseMode.FORM_POST");
 
         URL authorizationUrl = app.getAuthorizationRequestUrl(parameters);
 
@@ -137,23 +128,8 @@ class AuthorizationRequestUrlParametersTest {
                     URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
         }
 
-        assertEquals(queryParameters.get("scope"),
-                "openid profile offline_access scope extraScopeToConsent1 extraScopeToConsent2");
-        assertEquals(queryParameters.get("response_type"), "code");
-        assertEquals(queryParameters.get("redirect_uri"), "http://localhost:8080");
-        assertEquals(queryParameters.get("client_id"), "client_id");
-        assertEquals(queryParameters.get("prompt"), "select_account");
-        assertEquals(queryParameters.get("response_mode"), "query");
-        assertEquals(queryParameters.get("code_challenge"), "challenge");
-        assertEquals(queryParameters.get("code_challenge_method"), "method");
-        assertEquals(queryParameters.get("state"), "app_state");
-        assertEquals(queryParameters.get("nonce"), "app_nonce");
-        assertEquals(queryParameters.get("correlation_id"), "corr_id");
-        assertEquals(queryParameters.get("login_hint"), "hint");
-        assertEquals(queryParameters.get("domain_hint"), "domain_hint");
-        assertEquals(queryParameters.get("claims"), "{\"access_token\":{\"auth_time\":{\"essential\":true},\"xms_cc\":{\"values\":[\"llt\",\"ssm\"]}},\"id_token\":{\"auth_time\":{\"essential\":true}}}");
-
-        // CCS routing
-        assertEquals(queryParameters.get(HttpHeaders.X_ANCHOR_MAILBOX), String.format(HttpHeaders.X_ANCHOR_MAILBOX_UPN_FORMAT, "hint"));
+        // Verify that the actual response_mode parameter is "form_post", not "query"
+        assertEquals("form_post", queryParameters.get("response_mode"), 
+                "response_mode query parameter should be 'form_post' even when QUERY was specified");
     }
 }

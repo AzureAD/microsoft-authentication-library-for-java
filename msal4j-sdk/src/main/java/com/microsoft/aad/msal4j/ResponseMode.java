@@ -18,7 +18,9 @@ public enum ResponseMode {
     /**
      * Authorization result returned as query string in the redirect URL when redirecting back to the
      * client application.
+     * @deprecated Query response mode is no longer supported. Use FORM_POST instead. If provided, it will be automatically overridden to FORM_POST.
      */
+    @Deprecated
     QUERY("query"),
 
     /**
