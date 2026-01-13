@@ -30,5 +30,6 @@ public final class KeyVaultSecrets {
     public static final String APP_B2C = "MSAL-App-B2C-JSON";
     public static final String APP_ARLINGTON = "MSAL-App-Arlington-JSON";
     public static final String APP_CIAM = "MSAL-App-CIAM-JSON";
+    public static final String APP_MULTI_TENANT = "MSAL-APP-AzureADMultipleOrgsPC-JSON";
 }
 

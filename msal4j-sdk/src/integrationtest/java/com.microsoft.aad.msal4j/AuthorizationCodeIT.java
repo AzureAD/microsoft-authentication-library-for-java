@@ -39,7 +39,7 @@ class AuthorizationCodeIT extends SeleniumTest {
 
     @Test
     public void acquireTokenWithAuthorizationCode_ManagedUser() {
-        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        AppConfig app = LabResponseHelper.getAppConfig(APP_MULTI_TENANT);
         UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
         assertAcquireTokenAAD(user, app.getAppId(), null);

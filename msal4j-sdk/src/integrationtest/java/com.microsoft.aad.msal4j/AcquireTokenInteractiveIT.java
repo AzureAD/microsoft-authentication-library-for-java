@@ -39,7 +39,7 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
 
     @Test
     void acquireTokenInteractive_ManagedUser() {
-        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        AppConfig app = LabResponseHelper.getAppConfig(APP_MULTI_TENANT);
         UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
         assertAcquireTokenCommon(user, app.getAppId(), app.getAuthority() + "common", TestConstants.GRAPH_DEFAULT_SCOPE);
