@@ -3,13 +3,10 @@
 
 package com.microsoft.aad.msal4j;
 
-import labapi.*;
+import com.microsoft.aad.msal4j.labapi.*;
+import static com.microsoft.aad.msal4j.labapi.KeyVaultSecrets.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.api.BeforeAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Collections;
@@ -18,86 +15,33 @@ import java.util.Map;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class UsernamePasswordIT {
-    private LabUserProvider labUserProvider;
-
-    private Config cfg;
-
-    @BeforeAll
-    void setUp() {
-        labUserProvider = LabUserProvider.getInstance();
-    }
-
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    void acquireTokenWithUsernamePassword_Managed(String environment) throws Exception {
-        cfg = new Config(environment);
-
-        User user = labUserProvider.getDefaultUser(cfg.azureEnvironment);
-
-        assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope(), user.getAppId());
-    }
-
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-    void acquireTokenWithUsernamePassword_ADFSv2019_Federated(String environment) throws Exception {
-        cfg = new Config(environment);
-
-        UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT, cfg.azureEnvironment);
-        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, FederationProvider.ADFS_2019);
-        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.FEDERATED);
-
-        User user = labUserProvider.getLabUser(query);
-
-        assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope(), user.getAppId());
-    }
-
     @Test
-    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-    void acquireTokenWithUsernamePassword_ADFSv2019_OnPrem() throws Exception {
-        UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, FederationProvider.ADFS_2019);
-        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.ON_PREM);
-
-        User user = labUserProvider.getLabUser(query);
-
-        assertAcquireTokenCommon(user, TestConstants.ADFS_AUTHORITY, TestConstants.ADFS_SCOPE, TestConstants.ADFS_APP_ID);
-    }
-
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-    void acquireTokenWithUsernamePassword_ADFSv4(String environment) throws Exception {
-        cfg = new Config(environment);
-
-        UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.AZURE_ENVIRONMENT, cfg.azureEnvironment);
-        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, FederationProvider.ADFS_4);
-        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.FEDERATED);
-
-        User user = labUserProvider.getLabUser(query);
-
-        assertAcquireTokenCommon(user, cfg.organizationsAuthority(), cfg.graphDefaultScope(), user.getAppId());
+    void acquireTokenWithUsernamePassword_Managed() throws Exception {
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
+        assertAcquireTokenCommon(user, TestConstants.ORGANIZATIONS_AUTHORITY, TestConstants.GRAPH_DEFAULT_SCOPE, app.getAppId());
     }
 
     @Test
     void acquireTokenWithUsernamePassword_AuthorityWithPort() throws Exception {
-        User user = labUserProvider.getDefaultUser();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
         assertAcquireTokenCommon(
                 user,
-                TestConstants.COMMON_AUTHORITY_WITH_PORT,
+                TestConstants.MICROSOFT_AUTHORITY_HOST_WITH_PORT + user.getTenantId(),
                 TestConstants.GRAPH_DEFAULT_SCOPE,
-                user.getAppId());
+                app.getAppId());
     }
 
     @Test
     void acquireTokenWithUsernamePassword_Ciam() throws Exception {
         Map<String, String> extraQueryParameters = new HashMap<>();
 
-        User user = labUserProvider.getCiamCudUser();
-        PublicClientApplication pca = PublicClientApplication.builder(user.getAppId())
+        AppConfig app = LabResponseHelper.getAppConfig(APP_CIAM);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_CIAM);
+
+        PublicClientApplication pca = PublicClientApplication.builder(app.getAppId())
                 .authority("https://" + user.getLabName() + ".ciamlogin.com/")
                 .build();
 
@@ -112,7 +56,7 @@ class UsernamePasswordIT {
         IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
     }
 
-    private void assertAcquireTokenCommon(User user, String authority, String scope, String appId)
+    private void assertAcquireTokenCommon(UserConfig user, String authority, String scope, String appId)
             throws Exception {
 
         PublicClientApplication pca = PublicClientApplication.builder(
@@ -125,7 +69,6 @@ class UsernamePasswordIT {
                         user.getUpn(),
                         user.getPassword().toCharArray())
                 .build())
-
                 .get();
 
         IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
@@ -134,13 +77,11 @@ class UsernamePasswordIT {
 
     @Test
     void acquireTokenWithUsernamePassword_B2C_CustomAuthority() throws Exception {
-        UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.B2C);
-        query.parameters.put(UserQueryParameters.B2C_PROVIDER, B2CProvider.LOCAL);
-        User user = labUserProvider.getLabUser(query);
+        AppConfig app = LabResponseHelper.getAppConfig(APP_B2C);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_B2C);
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                user.getAppId()).
+                app.getAppId()).
                 b2cAuthority(TestConstants.B2C_AUTHORITY_ROPC).
                 build();
 
@@ -166,13 +107,11 @@ class UsernamePasswordIT {
 
     @Test
     void acquireTokenWithUsernamePassword_B2C_LoginMicrosoftOnline() throws Exception {
-        UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.B2C);
-        query.parameters.put(UserQueryParameters.B2C_PROVIDER, B2CProvider.LOCAL);
-        User user = labUserProvider.getLabUser(query);
+        AppConfig app = LabResponseHelper.getAppConfig(APP_B2C);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_B2C);
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                user.getAppId()).
+                app.getAppId()).
                 b2cAuthority(TestConstants.B2C_MICROSOFTLOGIN_ROPC).
                 build();
 

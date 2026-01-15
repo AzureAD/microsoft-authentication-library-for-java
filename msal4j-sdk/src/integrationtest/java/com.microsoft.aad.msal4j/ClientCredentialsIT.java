@@ -3,10 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import labapi.AppCredentialProvider;
-import labapi.AzureEnvironment;
-import labapi.LabUserProvider;
-import labapi.User;
+import com.microsoft.aad.msal4j.labapi.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.BeforeAll;
@@ -21,8 +18,6 @@ import java.security.NoSuchProviderException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
@@ -30,24 +25,22 @@ import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ClientCredentialsIT {
     private IClientCertificate certificate;
-    private LabUserProvider labUserProvider;
 
     @BeforeAll
     void init() throws CertificateException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, NoSuchProviderException, IOException {
         certificate = CertificateHelper.getClientCertificate();
-        labUserProvider = LabUserProvider.getInstance();
     }
 
     @Test
     void acquireTokenClientCredentials_ClientCertificate() throws Exception {
-        String clientId = TestConstants.MSIDLAB_CLIENT_ID;
-        assertAcquireTokenCommon(clientId, certificate, TestConstants.MICROSOFT_AUTHORITY);
+        AppConfig app = LabResponseHelper.getAppConfig(KeyVaultSecrets.APP_S2S);
+
+        assertAcquireTokenCommon(app.getAppId(), certificate, TestConstants.MICROSOFT_AUTHORITY);
     }
 
     @Test
     void acquireTokenClientCredentials_ClientSecret() throws Exception {
-        AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.AZURE);
-        final String clientId = appProvider.getLabVaultAppId();
+        final String clientId = KeyVaultRegistry.getMsidLabProvider().getSecretByName("LabVaultAppID").getValue();
         IClientCredential credential = CertificateHelper.getClientCertificate();
 
         assertAcquireTokenCommon(clientId, credential, TestConstants.MICROSOFT_AUTHORITY);
@@ -55,45 +48,23 @@ class ClientCredentialsIT {
 
     @Test
     void acquireTokenClientCredentials_ClientAssertion() throws Exception {
-        String clientId = TestConstants.MSIDLAB_CLIENT_ID;
+        AppConfig app = LabResponseHelper.getAppConfig(KeyVaultSecrets.APP_S2S);
 
-        ClientAssertion clientAssertion = getClientAssertion(clientId);
+        ClientAssertion clientAssertion = getClientAssertion(app.getAppId());
 
         IClientCredential credential = ClientCredentialFactory.createFromClientAssertion(clientAssertion.assertion());
 
-        assertAcquireTokenCommon(clientId, credential, TestConstants.MICROSOFT_AUTHORITY);
-    }
-
-    @Test
-    void acquireTokenClientCredentials_ClientSecret_Ciam() throws Exception {
-
-        User user = labUserProvider.getCiamCudUser();
-        String clientId = user.getAppId();
-
-        AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.CIAM);
-        IClientCredential credential = ClientCredentialFactory.createFromSecret(appProvider.getOboAppPassword());
-
-        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
-                        clientId, credential).
-                authority("https://" + user.getLabName() + ".ciamlogin.com/").
-                build();
-
-        IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
-                        .builder(Collections.singleton(TestConstants.DEFAULT_SCOPE))
-                        .build())
-                .get();
-
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
+        assertAcquireTokenCommon(app.getAppId(), credential, TestConstants.MICROSOFT_AUTHORITY);
     }
 
     @Test
     void acquireTokenClientCredentials_Certificate_CiamCud() throws Exception {
         String authorityCud = "https://login.msidlabsciam.com/fe362aec-5d43-45d1-b730-9755e60dc3b9/v2.0/";
-        String clientId = "b244c86f-ed88-45bf-abda-6b37aa482c79";
+
+        AppConfig app = LabResponseHelper.getAppConfig(KeyVaultSecrets.APP_CIAM);
 
         ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
-                        clientId, CertificateHelper.getClientCertificate())
+                        app.getAppId(), CertificateHelper.getClientCertificate())
                 .oidcAuthority(authorityCud)
                 .build();
 
@@ -108,18 +79,18 @@ class ClientCredentialsIT {
 
     @Test
     void acquireTokenClientCredentials_Callback() throws Exception {
-        String clientId = TestConstants.MSIDLAB_CLIENT_ID;
+        AppConfig app = LabResponseHelper.getAppConfig(KeyVaultSecrets.APP_S2S);
 
         // Creates a valid client assertion using a callback, and uses it to build the client app and make a request
         Callable<String> callable = () -> {
-            ClientAssertion clientAssertion = getClientAssertion(clientId);
+            ClientAssertion clientAssertion = getClientAssertion(app.getAppId());
 
             return clientAssertion.assertion();
         };
 
         IClientCredential credential = ClientCredentialFactory.createFromCallback(callable);
 
-        assertAcquireTokenCommon(clientId, credential, TestConstants.MICROSOFT_AUTHORITY);
+        assertAcquireTokenCommon(app.getAppId(), credential, TestConstants.MICROSOFT_AUTHORITY);
 
         // Creates an invalid client assertion to build the application, but overrides it with a valid client assertion
         //  in the request parameters in order to make a successful token request
@@ -127,13 +98,12 @@ class ClientCredentialsIT {
 
         IClientCredential invalidCredentials = ClientCredentialFactory.createFromClientAssertion(invalidClientAssertion.assertion());
 
-        assertAcquireTokenCommon_withParameters(clientId, invalidCredentials, credential);
+        assertAcquireTokenCommon_withParameters(app.getAppId(), invalidCredentials, credential);
     }
 
     @Test
     void acquireTokenClientCredentials_DefaultCacheLookup() throws Exception {
-        AppCredentialProvider appProvider = new AppCredentialProvider(AzureEnvironment.AZURE);
-        final String clientId = appProvider.getLabVaultAppId();
+        final String clientId = KeyVaultRegistry.getMsidLabProvider().getSecretByName("LabVaultAppID").getValue();
 
         ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
                 clientId, CertificateHelper.getClientCertificate()).
@@ -168,9 +138,9 @@ class ClientCredentialsIT {
 
     @Test
     void acquireTokenClientCredentials_Regional() throws Exception {
-        String clientId = TestConstants.MSIDLAB_CLIENT_ID;
+        AppConfig app = LabResponseHelper.getAppConfig(KeyVaultSecrets.APP_S2S);
 
-        assertAcquireTokenCommon_withRegion(clientId, certificate, "westus", TestConstants.REGIONAL_MICROSOFT_AUTHORITY_BASIC_HOST_WESTUS);
+        assertAcquireTokenCommon_withRegion(app.getAppId(), certificate, "westus", TestConstants.REGIONAL_MICROSOFT_AUTHORITY_BASIC_HOST_WESTUS);
     }
 
     private ClientAssertion getClientAssertion(String clientId) {

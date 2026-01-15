@@ -3,7 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
-import labapi.KeyVaultSecretsProvider;
+import com.microsoft.aad.msal4j.labapi.KeyVaultSecretsProvider;
 import org.apache.commons.lang3.SystemUtils;
 
 import java.io.IOException;

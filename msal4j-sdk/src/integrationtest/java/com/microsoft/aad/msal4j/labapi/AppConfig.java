@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-package labapi;
+package com.microsoft.aad.msal4j.labapi;
 
 import com.azure.json.JsonReader;
 import com.azure.json.JsonSerializable;
@@ -10,7 +10,10 @@ import com.azure.json.JsonWriter;
 
 import java.io.IOException;
 
-public class App implements JsonSerializable<App> {
+/**
+ * Represents a JSON response describing an Azure app registration.
+ */
+public class AppConfig implements JsonSerializable<AppConfig> {
 
     private String appType;
     private String appName;
@@ -20,8 +23,8 @@ public class App implements JsonSerializable<App> {
     private String labName;
     private String clientSecret;
 
-    static App fromJson(JsonReader jsonReader) throws IOException {
-        App app = new App();
+    static AppConfig fromJson(JsonReader jsonReader) throws IOException {
+        AppConfig app = new AppConfig();
 
         return jsonReader.readObject(reader -> {
             while (reader.nextToken() != JsonToken.END_OBJECT) {
@@ -80,8 +83,11 @@ public class App implements JsonSerializable<App> {
         return authority;
     }
 
+    public String getAppId() {
+        return appId;
+    }
+
     public String getClientSecret() {
         return clientSecret;
     }
-
 }

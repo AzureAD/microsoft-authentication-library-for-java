@@ -3,215 +3,97 @@
 
 package infrastructure;
 
-import com.microsoft.aad.msal4j.TestConstants;
-import labapi.User;
-import org.apache.commons.io.FileUtils;
+import com.microsoft.aad.msal4j.labapi.UserConfig;
+import infrastructure.pageobjects.ADFSLoginPage;
+import infrastructure.pageobjects.AzureADLoginPage;
+import infrastructure.pageobjects.B2CLocalLoginPage;
 import org.openqa.selenium.By;
-import org.openqa.selenium.OutputType;
-import org.openqa.selenium.StaleElementReferenceException;
-import org.openqa.selenium.TakesScreenshot;
-import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 public class SeleniumExtensions {
 
     private static final Logger LOG = LoggerFactory.getLogger(SeleniumExtensions.class);
-
-    //These timeout values define how long Selenium will wait for elements to be visible and enabled
-    private static final int DEFAULT_TIMEOUT_IN_SEC = 15;
-    private static final int COMMON_ELEMENT_TIMEOUT_IN_SEC = 5; //Used for most elements in a sign-in flow
 
     private SeleniumExtensions() {
     }
 
     public static WebDriver createDefaultWebDriver() {
         ChromeOptions options = new ChromeOptions();
-
-        //No visual rendering, remove to see browser window when debugging
         options.addArguments("--headless");
-        //Add to avoid issues if your real browser's history/cookies are affecting tests, should not be needed in ADO pipelines
         options.addArguments("--incognito");
 
-        System.setProperty("webdriver.chrome.driver", "C:/Windows/chromedriver.exe");
-        ChromeDriver driver = new ChromeDriver(options);
-        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-
-        return driver;
+        return new ChromeDriver(options);
     }
 
-    public static WebElement waitForElementToBeVisibleAndEnable(WebDriver driver, By by, int timeOutInSeconds) {
-        WebDriverWait webDriverWait = new WebDriverWait(driver, timeOutInSeconds);
-        return webDriverWait.until(dr ->
-        {
-            try {
-                WebElement elementToBeDisplayed = driver.findElement(by);
-                if (elementToBeDisplayed.isDisplayed() && elementToBeDisplayed.isEnabled()) {
-                    return elementToBeDisplayed;
-                }
-                return null;
-            } catch (StaleElementReferenceException e) {
-                LOG.info("Stale element waitForElementToBeVisibleAndEnable: " + e.getMessage());
-                return null;
-            }
-        });
+    public static WebElement waitForElementToBeVisibleAndEnabled(WebDriver driver, By by, Duration timeout) {
+        WebDriverWait wait = new WebDriverWait(driver, timeout.getSeconds());
+        return wait.until(ExpectedConditions.elementToBeClickable(by));
     }
 
-    public static WebElement waitForElementToBeVisibleAndEnable(WebDriver driver, By by) {
-        return waitForElementToBeVisibleAndEnable(driver, by, DEFAULT_TIMEOUT_IN_SEC);
+    public static void performADOrCiamLogin(WebDriver driver, UserConfig user) {
+        LOG.info("performADOrCiamLogin for user: {}", user.getUpn());
+
+        AzureADLoginPage loginPage = new AzureADLoginPage(driver);
+        loginPage.login(user.getUpn(), user.getPassword());
     }
 
-    public static void performADOrCiamLogin(WebDriver driver, User user) {
-        LOG.info("performADOrCiamLogin");
+    public static void performADFSLogin(WebDriver driver, UserConfig user) {
+        LOG.info("performADFSLogin for user: {}", user.getUpn());
 
-        UserInformationFields fields = new UserInformationFields(user);
+        ADFSLoginPage loginPage = new ADFSLoginPage(driver);
+        loginPage.login(user.getUpn(), user.getPassword());
+    }
 
-        LOG.info("Loggin in ... Entering username");
-        driver.findElement(new By.ById(fields.getAadUserNameInputId())).sendKeys(user.getUpn());
+    public static void performLocalLogin(WebDriver driver, UserConfig user) {
+        LOG.info("performLocalLogin");
 
-        LOG.info("Loggin in ... Clicking <Next> after username");
-        driver.findElement(new By.ById(fields.getAadSignInButtonId())).click();
+        B2CLocalLoginPage loginPage = new B2CLocalLoginPage(driver);
+        loginPage.login(user.getUpn(), user.getPassword());
+    }
 
-        LOG.info("Loggin in ... Entering password");
-        By by = new By.ById(fields.getPasswordInputId());
-        waitForElementToBeVisibleAndEnable(driver, by).sendKeys(user.getPassword());
-
-        LOG.info("Loggin in ... click submit");
-        waitForElementToBeVisibleAndEnable(driver, new By.ById(fields.getPasswordSigInButtonId())).
-                click();
+    /**
+     * Perform device code flow authentication.
+     * Navigates to the verification URI, enters the device code, and completes Azure AD login.
+     *
+     * @param driver The WebDriver instance
+     * @param verificationUri The URI to navigate to for device code entry
+     * @param userCode The device code to enter
+     * @param user The lab user credentials for login
+     */
+    public static void performDeviceCodeLogin(WebDriver driver, String verificationUri, String userCode, UserConfig user) {
+        LOG.info("performDeviceCodeLogin for user: {}", user.getUpn());
 
         try {
-            checkAuthenticationCompletePage(driver);
-            return;
-        } catch (TimeoutException ex) {
-            LOG.error("Timeout Exception while checking authentication complete page: " + ex.getMessage());
-        }
+            // Navigate to device code verification page
+            LOG.info("Navigating to verification URI");
+            driver.navigate().to(verificationUri);
 
-        LOG.info("Checking optional questions");
+            // Enter device code
+            LOG.info("Entering device code");
+            By deviceCodeInputField = By.id("otc");
+            waitForElementToBeVisibleAndEnabled(driver, deviceCodeInputField, Duration.ofSeconds(15))
+                    .sendKeys(userCode);
 
-        try {
-            LOG.info("Are you trying to sign in to ... ? checking");
-            waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.ARE_YOU_TRYING_TO_SIGN_IN_TO), COMMON_ELEMENT_TIMEOUT_IN_SEC).
-                    click();
-            LOG.info("Are you trying to sign in to ... ? click Continue");
+            // Click continue button
+            LOG.info("Clicking continue button");
+            By continueButton = By.id("idSIButton9");
+            waitForElementToBeVisibleAndEnabled(driver, continueButton, Duration.ofSeconds(15))
+                    .click();
 
-        } catch (TimeoutException ex) {
-            LOG.error("Timeout Exception while checking sign in prompt: " + ex.getMessage());
-        }
-
-        try {
-            LOG.info("Stay signed in? checking");
-            waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.STAY_SIGN_IN_NO_BUTTON_ID), COMMON_ELEMENT_TIMEOUT_IN_SEC).
-                    click();
-            LOG.info("Stay signed in?  click NO");
-        } catch (TimeoutException ex) {
-            LOG.error("Timeout Exception while checking stay signed in prompt: " + ex.getMessage());
-        }
-    }
-
-    private static void checkAuthenticationCompletePage(WebDriver driver) {
-        new WebDriverWait(driver, COMMON_ELEMENT_TIMEOUT_IN_SEC).until((ExpectedCondition<Boolean>) d -> {
-            WebElement we = d.findElement(new By.ByTagName("body"));
-            try {
-                if (we != null && we.getText().contains("Authentication complete"))
-                    //The authentication is complete and the WebDriverWait can end
-                    return true;
-            } catch (StaleElementReferenceException e) {
-                //It is possible for this method to begin executing before the redirect happens, in which case the WebElement
-                // will reference something on the previous page and cause a StaleElementReferenceException
-                return false;
-            }
-            return false;
-        });
-    }
-
-    public static void performADFS2019Login(WebDriver driver, User user) {
-        LOG.info("PerformADFS2019Login");
-
-        UserInformationFields fields = new UserInformationFields(user);
-
-        LOG.info("Loggin in ... Entering username");
-        driver.findElement(new By.ById(fields.getADFS2019UserNameInputId())).sendKeys(user.getUpn());
-
-        LOG.info("Loggin in ... Entering password");
-        By by = new By.ById(fields.getPasswordInputId());
-        waitForElementToBeVisibleAndEnable(driver, by).sendKeys(user.getPassword());
-
-        LOG.info("Loggin in ... click submit");
-        waitForElementToBeVisibleAndEnable(driver, new By.ById(fields.getPasswordSigInButtonId())).
-                click();
-    }
-
-    public static void performLocalLogin(WebDriver driver, User user) {
-        LOG.info("PerformLocalLogin");
-
-        driver.findElement(new By.ById(SeleniumConstants.B2C_LOCAL_ACCOUNT_ID)).click();
-
-        LOG.info("Loggin in ... Entering username");
-        driver.findElement(new By.ById(SeleniumConstants.B2C_LOCAL_USERNAME_ID)).sendKeys(TestConstants.B2C_UPN);
-
-        LOG.info("Loggin in ... Entering password");
-        By by = new By.ById(SeleniumConstants.B2C_LOCAL_PASSWORD_ID);
-        waitForElementToBeVisibleAndEnable(driver, by).sendKeys(user.getPassword());
-
-        waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.B2C_LOCAL_SIGN_IN_BUTTON_ID)).
-                click();
-    }
-
-    public static void performGoogleLogin(WebDriver driver, User user) {
-        LOG.info("PerformGoogleLogin");
-
-        driver.findElement(new By.ById(SeleniumConstants.GOOGLE_ACCOUNT_ID)).click();
-
-        LOG.info("Loggin in ... Entering username");
-        driver.findElement(new By.ById(SeleniumConstants.GOOGLE_USERNAME_ID)).sendKeys(user.getUpn());
-
-        LOG.info("Loggin in ... Clicking <Next> after username");
-        driver.findElement(new By.ById(SeleniumConstants.GOOGLE_NEXT_AFTER_USERNAME_BUTTON)).click();
-
-        LOG.info("Loggin in ... Entering password");
-        By by = new By.ByName(SeleniumConstants.GOOGLE_PASSWORD_ID);
-        waitForElementToBeVisibleAndEnable(driver, by).sendKeys(user.getPassword());
-
-        LOG.info("Loggin in ... click submit");
-
-        waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.GOOGLE_NEXT_BUTTON_ID)).click();
-    }
-
-    public static void performFacebookLogin(WebDriver driver, User user) {
-        LOG.info("PerformFacebookLogin");
-
-        driver.findElement(new By.ById(SeleniumConstants.FACEBOOK_ACCOUNT_ID)).click();
-
-        LOG.info("Loggin in ... Entering username");
-        driver.findElement(new By.ById(SeleniumConstants.FACEBOOK_USERNAME_ID)).sendKeys(user.getUpn());
-
-        LOG.info("Loggin in ... Entering password");
-        By by = new By.ById(SeleniumConstants.FACEBOOK_PASSWORD_ID);
-        waitForElementToBeVisibleAndEnable(driver, by).sendKeys(user.getPassword());
-
-        waitForElementToBeVisibleAndEnable(driver, new By.ById(SeleniumConstants.FACEBOOK_LOGIN_BUTTON_ID)).
-                click();
-    }
-
-    public static void takeScreenShot(WebDriver driver) {
-        String file = System.getenv("BUILD_STAGINGDIRECTORY");
-        File destination = new File(file + "" + "/SeleniumError.png");
-        File scrFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-        try {
-            FileUtils.copyFile(scrFile, destination);
-            LOG.info("Screenshot can be found at: " + destination.getPath());
-        } catch (Exception exception) {
-            LOG.error("Error taking screenshot: " + exception.getMessage());
+            // Perform standard Azure AD login
+            performADOrCiamLogin(driver, user);
+        } catch (Exception e) {
+            LOG.error("Device code flow automation failed: {}", e.getMessage());
+            throw new RuntimeException("Device code flow automation failed", e);
         }
     }
 }

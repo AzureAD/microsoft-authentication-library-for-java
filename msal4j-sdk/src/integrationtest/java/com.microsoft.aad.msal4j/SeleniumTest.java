@@ -3,26 +3,32 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.microsoft.aad.msal4j.labapi.UserConfig;
 import infrastructure.SeleniumExtensions;
-import labapi.B2CProvider;
-import labapi.LabUserProvider;
-import labapi.User;
 import org.openqa.selenium.WebDriver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 abstract class SeleniumTest {
+    private static final Logger LOG = LoggerFactory.getLogger(SeleniumTest.class);
 
-    protected LabUserProvider labUserProvider;
     WebDriver seleniumDriver;
     HttpListener httpListener;
 
-    public void setUpLapUserProvider() {
-        labUserProvider = LabUserProvider.getInstance();
-    }
-
     public void cleanUp() {
-        seleniumDriver.quit();
+        if (seleniumDriver != null) {
+            try {
+                seleniumDriver.quit();
+            } catch (Exception e) {
+                LOG.error("Error closing WebDriver: {}", e.getMessage());
+            }
+        }
         if (httpListener != null) {
-            httpListener.stopListener();
+            try {
+                httpListener.stopListener();
+            } catch (Exception e) {
+                LOG.error("Error stopping HttpListener: {}", e.getMessage());
+            }
         }
     }
 
@@ -30,26 +36,30 @@ abstract class SeleniumTest {
         seleniumDriver = SeleniumExtensions.createDefaultWebDriver();
     }
 
-    void runSeleniumAutomatedLogin(User user, AbstractClientApplicationBase app) {
+    void runSeleniumAutomatedLogin(UserConfig user, AbstractClientApplicationBase app) {
         AuthorityType authorityType = app.authenticationAuthority.authorityType;
-        if (authorityType == AuthorityType.B2C) {
-            switch (user.getB2cProvider().toLowerCase()) {
-                case B2CProvider.LOCAL:
+
+        try {
+            switch (authorityType) {
+                case B2C:
                     SeleniumExtensions.performLocalLogin(seleniumDriver, user);
                     break;
-                case B2CProvider.GOOGLE:
-                    SeleniumExtensions.performGoogleLogin(seleniumDriver, user);
+                case AAD:
+                    SeleniumExtensions.performADOrCiamLogin(seleniumDriver, user);
                     break;
-                case B2CProvider.FACEBOOK:
-                    SeleniumExtensions.performFacebookLogin(seleniumDriver, user);
+                case ADFS:
+                    SeleniumExtensions.performADFSLogin(seleniumDriver, user);
                     break;
+                case CIAM:
+                case OIDC:
+                    SeleniumExtensions.performADOrCiamLogin(seleniumDriver, user);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unsupported authority type: " + authorityType);
             }
-        } else if (authorityType == AuthorityType.AAD) {
-            SeleniumExtensions.performADOrCiamLogin(seleniumDriver, user);
-        } else if (authorityType == AuthorityType.ADFS) {
-            SeleniumExtensions.performADFS2019Login(seleniumDriver, user);
-        } else if (authorityType == AuthorityType.CIAM || authorityType == AuthorityType.OIDC) {
-            SeleniumExtensions.performADOrCiamLogin(seleniumDriver, user);
+        } catch (Exception e) {
+            LOG.error("Selenium automation failed for authority type {}: {}", authorityType, e.getMessage());
+            throw new RuntimeException("Selenium automation failed", e);
         }
     }
 }

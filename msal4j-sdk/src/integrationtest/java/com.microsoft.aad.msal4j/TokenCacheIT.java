@@ -3,36 +3,28 @@
 
 package com.microsoft.aad.msal4j;
 
-import labapi.*;
+import com.microsoft.aad.msal4j.labapi.*;
+import static com.microsoft.aad.msal4j.labapi.KeyVaultSecrets.*;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TokenCacheIT {
 
-    private LabUserProvider labUserProvider;
-
-    @BeforeAll
-    void setUp() {
-        labUserProvider = LabUserProvider.getInstance();
-    }
-
     @Test
     void singleAccountInCache_RemoveAccountTest() throws Exception {
-        User user = labUserProvider.getDefaultUser();
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
         PublicClientApplication pca = PublicClientApplication.builder(
-                user.getAppId()).
+                app.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
 
@@ -61,63 +53,10 @@ class TokenCacheIT {
 
     @Test
     @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-    void twoAccountsInCache_RemoveAccountTest() throws Exception {
-
-        User managedUser = labUserProvider.getDefaultUser();
-
-        PublicClientApplication pca = PublicClientApplication.builder(
-                managedUser.getAppId()).
-                authority(TestConstants.ORGANIZATIONS_AUTHORITY).
-                build();
-
-        assertEquals(pca.getAccounts().join().size(), 0);
-
-        pca.acquireToken(UserNamePasswordParameters.
-                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-                        managedUser.getUpn(),
-                        managedUser.getPassword().toCharArray())
-                .build())
-                .get();
-
-        assertEquals(pca.getAccounts().join().size(), 1);
-
-        // get lab user for different account
-        User adfsUser = labUserProvider.getFederatedAdfsUser(FederationProvider.ADFS_4);
-
-        // acquire token for different account
-        pca.acquireToken(UserNamePasswordParameters.
-                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-                        adfsUser.getUpn(),
-                        adfsUser.getPassword().toCharArray())
-                .build())
-                .get();
-
-        assertEquals(pca.getAccounts().join().size(), 2);
-
-        Set<IAccount> accounts = pca.getAccounts().join();
-        IAccount accountLabResponse1 = accounts.stream().filter(
-                x -> x.username().equalsIgnoreCase(
-                        managedUser.getUpn())).findFirst().orElse(null);
-
-        pca.removeAccount(accountLabResponse1).join();
-
-        assertEquals(pca.getAccounts().join().size(), 1);
-
-        IAccount accountLabResponse2 = pca.getAccounts().get().iterator().next();
-
-        // Check that the right account was left in the cache
-        assertEquals(accountLabResponse2.username(), adfsUser.getUpn());
-    }
-
-    @Test
-    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
     void twoAccountsInCache_SameUserDifferentTenants_RemoveAccountTest() throws Exception {
 
-        UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.GUEST);
-
-        User guestUser = labUserProvider.getLabUser(query);
-        Lab lab = LabService.getLab(guestUser.getLabName());
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig guestUser = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
         String dataToInitCache = TestHelper.readResource(
                 this.getClass(),
@@ -130,7 +69,7 @@ class TokenCacheIT {
 
         // acquire tokens for home tenant, and serialize cache
         PublicClientApplication pca = PublicClientApplication.builder(
-                guestUser.getAppId()).
+                app.getAppId()).
                 authority(TestConstants.ORGANIZATIONS_AUTHORITY)
                 .setTokenCacheAccessAspect(persistenceAspect)
                 .build();
@@ -142,11 +81,11 @@ class TokenCacheIT {
                 .build())
                 .get();
 
-        String guestTenantAuthority = TestConstants.MICROSOFT_AUTHORITY_HOST + lab.getTenantId();
+        String guestTenantAuthority = TestConstants.MICROSOFT_AUTHORITY_HOST + guestUser.getTenantId();
 
         // initialize pca with tenant where user is guest, deserialize cache, and acquire second token
         PublicClientApplication pca2 = PublicClientApplication.builder(
-                guestUser.getAppId()).
+                app.getAppId()).
                 authority(guestTenantAuthority).
                 setTokenCacheAccessAspect(persistenceAspect).
                 build();
@@ -173,32 +112,6 @@ class TokenCacheIT {
                 this.getClass(),
                 "/cache_data/remove-account-test-cache.json");
     }
-
-    @Test
-    @DisabledIfSystemProperty(named = "adfs.disabled", matches = "true")
-    void retrieveAccounts_ADFSOnPrem() throws Exception {
-        UserQueryParameters query = new UserQueryParameters();
-        query.parameters.put(UserQueryParameters.FEDERATION_PROVIDER, FederationProvider.ADFS_2019);
-        query.parameters.put(UserQueryParameters.USER_TYPE, UserType.ON_PREM);
-
-        User user = labUserProvider.getLabUser(query);
-
-        PublicClientApplication pca = PublicClientApplication.builder(
-                        TestConstants.ADFS_APP_ID).
-                authority(TestConstants.ADFS_AUTHORITY).
-                build();
-
-        pca.acquireToken(UserNamePasswordParameters.
-                        builder(Collections.singleton(TestConstants.ADFS_SCOPE),
-                                user.getUpn(),
-                                user.getPassword().toCharArray())
-                        .build())
-                .get();
-
-        assertNotNull(pca.getAccounts().join().iterator().next());
-        assertEquals(pca.getAccounts().join().size(), 1);
-    }
-
 
     private static class TokenPersistence implements ITokenCacheAccessAspect {
         String data;

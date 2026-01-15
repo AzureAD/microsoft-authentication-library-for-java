@@ -3,36 +3,31 @@
 
 package com.microsoft.aad.msal4j;
 
-import labapi.LabUserProvider;
-import labapi.User;
+import com.microsoft.aad.msal4j.labapi.*;
+import static com.microsoft.aad.msal4j.labapi.KeyVaultSecrets.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Collections;
-import java.util.concurrent.ExecutionException;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RefreshTokenIT {
     private String refreshToken;
     private PublicClientApplication pca;
 
-    private Config cfg;
-
-    private void setUp(String environment) throws Exception {
-        LabUserProvider labUserProvider = LabUserProvider.getInstance();
-        User user = labUserProvider.getDefaultUser(environment);
+    private void setUp() throws Exception {
+        AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
         pca = PublicClientApplication.builder(
-                user.getAppId()).
-                authority(cfg.organizationsAuthority()).
+                app.getAppId()).
+                authority(TestConstants.ORGANIZATIONS_AUTHORITY).
                 build();
 
         AuthenticationResult result = (AuthenticationResult) pca.acquireToken(UserNamePasswordParameters
-                .builder(Collections.singleton(cfg.graphDefaultScope()),
+                .builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
                         user.getUpn(),
                         user.getPassword().toCharArray())
                 .build())
@@ -41,16 +36,13 @@ class RefreshTokenIT {
         refreshToken = result.refreshToken();
     }
 
-    @ParameterizedTest
-    @MethodSource("com.microsoft.aad.msal4j.EnvironmentsProvider#createData")
-    void acquireTokenWithRefreshToken(String environment) throws Exception {
-        cfg = new Config(environment);
-
-        setUp(environment);
+    @Test
+    void acquireTokenWithRefreshToken() throws Exception {
+        setUp();
 
         IAuthenticationResult result = pca.acquireToken(RefreshTokenParameters
                 .builder(
-                        Collections.singleton(cfg.graphDefaultScope()),
+                        Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
                         refreshToken)
                 .build())
                 .get();
