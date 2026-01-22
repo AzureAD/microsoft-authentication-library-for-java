@@ -98,24 +98,34 @@ class AuthorizationRequestUrlParametersTest {
     }
 
     @Test
-    void testBuilder_queryResponseModeIsOverriddenToFormPost() throws UnsupportedEncodingException {
+    void testBuilder_responseMode() throws UnsupportedEncodingException {
         PublicClientApplication app = PublicClientApplication.builder("client_id").build();
 
         String redirectUri = "http://localhost:8080";
         Set<String> scope = Collections.singleton("scope");
 
-        // Test that when QUERY is passed (deprecated), it's overridden to FORM_POST
         AuthorizationRequestUrlParameters parameters =
                 AuthorizationRequestUrlParameters
                         .builder(redirectUri, scope)
-                        .responseMode(ResponseMode.QUERY)  // Deprecated - should be overridden
+                        .responseMode(ResponseMode.QUERY) // This should be overridden to FORM_POST
                         .build();
 
-        // Verify that the responseMode is overridden to FORM_POST
-        assertEquals(ResponseMode.FORM_POST, parameters.responseMode(), 
-                "ResponseMode.QUERY should be overridden to ResponseMode.FORM_POST");
+        assertEquals(parameters.responseMode(), ResponseMode.FORM_POST);
+        assertEquals(parameters.redirectUri(), redirectUri);
+        assertEquals(parameters.scopes().size(), 4);
+
+        assertNull(parameters.loginHint());
+        assertNull(parameters.codeChallenge());
+        assertNull(parameters.codeChallengeMethod());
+        assertNull(parameters.correlationId());
+        assertNull(parameters.nonce());
+        assertNull(parameters.prompt());
+        assertNull(parameters.state());
 
         URL authorizationUrl = app.getAuthorizationRequestUrl(parameters);
+
+        assertEquals(authorizationUrl.getHost(), "login.microsoftonline.com");
+        assertEquals(authorizationUrl.getPath(), "/common/oauth2/v2.0/authorize");
 
         Map<String, String> queryParameters = new HashMap<>();
         String query = authorizationUrl.getQuery();
@@ -128,8 +138,10 @@ class AuthorizationRequestUrlParametersTest {
                     URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
         }
 
-        // Verify that the actual response_mode parameter is "form_post", not "query"
-        assertEquals("form_post", queryParameters.get("response_mode"), 
-                "response_mode query parameter should be 'form_post' even when QUERY was specified");
+        assertEquals(queryParameters.get("scope"), "openid profile offline_access scope");
+        assertEquals(queryParameters.get("response_type"), "code");
+        assertEquals(queryParameters.get("redirect_uri"), "http://localhost:8080");
+        assertEquals(queryParameters.get("client_id"), "client_id");
+        assertEquals(queryParameters.get("response_mode"), "form_post");
     }
 }
