@@ -368,9 +368,17 @@ public class AuthorizationRequestUrlParameters {
 
         /**
          * Specifies the method that should be used to send the authentication result to your app.
+         * @deprecated ResponseMode.QUERY is deprecated. If you pass ResponseMode.QUERY, it will be automatically overridden to ResponseMode.FORM_POST.
          */
         public Builder responseMode(ResponseMode val) {
-            this.responseMode = val;
+            // Override QUERY with FORM_POST as QUERY is deprecated
+            if (val == ResponseMode.QUERY) {
+                LOG.warn("ResponseMode.QUERY is deprecated and will be removed in a future release. " +
+                        "Automatically overriding to ResponseMode.FORM_POST.");
+                this.responseMode = ResponseMode.FORM_POST;
+            } else {
+                this.responseMode = val;
+            }
             return self();
         }
 
