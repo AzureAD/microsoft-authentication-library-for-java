@@ -51,7 +51,7 @@ class AuthorizationCodeIT extends SeleniumTest {
         assertAcquireTokenB2C(user);
     }
 
-    @Test
+    // @Test Disabled, the browser automation suddenly started failing without underlying code changes and needs investigation: https://github.com/AzureAD/microsoft-authentication-library-for-java/issues/1010
     public void acquireTokenWithAuthorizationCode_CiamCud() throws Exception {
         String authorityCud = "https://login.msidlabsciam.com/fe362aec-5d43-45d1-b730-9755e60dc3b9/v2.0/";
 
