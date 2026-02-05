@@ -35,15 +35,17 @@ class ClientCredentialsIT {
     void acquireTokenClientCredentials_ClientCertificate() throws Exception {
         AppConfig app = LabResponseHelper.getAppConfig(KeyVaultSecrets.APP_S2S);
 
-        assertAcquireTokenCommon(app.getAppId(), certificate, TestConstants.MICROSOFT_AUTHORITY);
+        assertAcquireTokenCommon(app.getAppId(), certificate, app.getAuthority());
     }
 
     @Test
     void acquireTokenClientCredentials_ClientSecret() throws Exception {
-        final String clientId = KeyVaultRegistry.getMsidLabProvider().getSecretByName("LabVaultAppID").getValue();
-        IClientCredential credential = CertificateHelper.getClientCertificate();
+        AppConfig app = LabResponseHelper.getAppConfig(KeyVaultSecrets.APP_S2S);
+        String password = KeyVaultRegistry.getMsalTeamProvider().getSecretByName(app.getSecretName()).getValue();
 
-        assertAcquireTokenCommon(clientId, credential, TestConstants.MICROSOFT_AUTHORITY);
+        IClientCredential credential = ClientCredentialFactory.createFromSecret(password);
+
+        assertAcquireTokenCommon(app.getAppId(), credential, app.getAuthority());
     }
 
     @Test
@@ -54,7 +56,7 @@ class ClientCredentialsIT {
 
         IClientCredential credential = ClientCredentialFactory.createFromClientAssertion(clientAssertion.assertion());
 
-        assertAcquireTokenCommon(app.getAppId(), credential, TestConstants.MICROSOFT_AUTHORITY);
+        assertAcquireTokenCommon(app.getAppId(), credential, app.getAuthority());
     }
 
     @Test
@@ -90,7 +92,7 @@ class ClientCredentialsIT {
 
         IClientCredential credential = ClientCredentialFactory.createFromCallback(callable);
 
-        assertAcquireTokenCommon(app.getAppId(), credential, TestConstants.MICROSOFT_AUTHORITY);
+        assertAcquireTokenCommon(app.getAppId(), credential, app.getAuthority());
 
         // Creates an invalid client assertion to build the application, but overrides it with a valid client assertion
         //  in the request parameters in order to make a successful token request
@@ -98,7 +100,7 @@ class ClientCredentialsIT {
 
         IClientCredential invalidCredentials = ClientCredentialFactory.createFromClientAssertion(invalidClientAssertion.assertion());
 
-        assertAcquireTokenCommon_withParameters(app.getAppId(), invalidCredentials, credential);
+        assertAcquireTokenCommon_withParameters(app, invalidCredentials, credential);
     }
 
     @Test
@@ -140,7 +142,7 @@ class ClientCredentialsIT {
     void acquireTokenClientCredentials_Regional() throws Exception {
         AppConfig app = LabResponseHelper.getAppConfig(KeyVaultSecrets.APP_S2S);
 
-        assertAcquireTokenCommon_withRegion(app.getAppId(), certificate, "westus", TestConstants.REGIONAL_MICROSOFT_AUTHORITY_BASIC_HOST_WESTUS);
+        assertAcquireTokenCommon_withRegion(app, certificate, "westus", TestConstants.REGIONAL_MICROSOFT_AUTHORITY_BASIC_HOST_WESTUS);
     }
 
     private ClientAssertion getClientAssertion(String clientId) {
@@ -166,11 +168,11 @@ class ClientCredentialsIT {
         assertNotNull(result.accessToken());
     }
 
-    private void assertAcquireTokenCommon_withParameters(String clientId, IClientCredential credential, IClientCredential credentialParam) throws Exception {
+    private void assertAcquireTokenCommon_withParameters(AppConfig app, IClientCredential credential, IClientCredential credentialParam) throws Exception {
 
         ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
-                clientId, credential).
-                authority(TestConstants.MICROSOFT_AUTHORITY).
+                app.getAppId(), credential).
+                authority(app.getAuthority()).
                 build();
 
         IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
@@ -182,15 +184,16 @@ class ClientCredentialsIT {
         assertNotNull(result.accessToken());
     }
 
-    private void assertAcquireTokenCommon_withRegion(String clientId, IClientCredential credential, String region, String regionalAuthority) throws Exception {
+    private void assertAcquireTokenCommon_withRegion(AppConfig app, IClientCredential credential, String region, String regionalAuthority) throws Exception {
         ConfidentialClientApplication ccaNoRegion = ConfidentialClientApplication.builder(
-                clientId, credential).
-                authority(TestConstants.MICROSOFT_AUTHORITY).
+                app.getAppId(), credential).
+                authority(app.getAuthority()).
                 build();
 
         ConfidentialClientApplication ccaRegion = ConfidentialClientApplication.builder(
-                clientId, credential).
-                authority("https://login.microsoft.com/microsoft.onmicrosoft.com").azureRegion(region).
+                app.getAppId(), credential).
+                authority(app.getAuthority()).
+                azureRegion(region).
                 build();
 
         //Ensure behavior when region not specified

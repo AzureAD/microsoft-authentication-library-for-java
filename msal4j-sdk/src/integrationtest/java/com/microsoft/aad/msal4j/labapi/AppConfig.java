@@ -22,6 +22,7 @@ public class AppConfig implements JsonSerializable<AppConfig> {
     private String authority;
     private String labName;
     private String clientSecret;
+    private String secretName;
 
     static AppConfig fromJson(JsonReader jsonReader) throws IOException {
         AppConfig app = new AppConfig();
@@ -52,6 +53,9 @@ public class AppConfig implements JsonSerializable<AppConfig> {
                         break;
                     case "clientSecret":
                         app.clientSecret = reader.getString();
+                        break;
+                    case "secretName":
+                        app.secretName = reader.getString();
                         break;
                     default:
                         reader.skipChildren();
@@ -89,5 +93,9 @@ public class AppConfig implements JsonSerializable<AppConfig> {
 
     public String getClientSecret() {
         return clientSecret;
+    }
+
+    public String getSecretName() {
+        return secretName;
     }
 }
