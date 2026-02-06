@@ -1,3 +1,20 @@
+Version 1.24.0
+=============
+- Code quality improvements (#992, #993, #994)
+  - Consistently use SLF4J's recommended styles for logging (#992)
+  - Use "static final" instead of "final static" for constants (#993)
+  - Fix various minor issues found by SonarQube (#994)
+- Deprecations (#998, #1001, #1004)
+  - Deprecate ROPC (username/password) flow, which is insecure and will be removed in a future version (#998)
+  - Deprecate extraQueryParameters API due to caching issues (#1001)
+  - Deprecate ResponseMode.QUERY in system browser flow, automatically override to FORM_POST with warning (#1004)
+- Test infrastructure improvements (#1002, #1009)
+  - Migrate test infrastructure from ID Labs API to Key Vault-based approach (#1002)
+  - Refactor Selenium-based browser tests to follow Selenium conventions (#1002)
+  - Fix integration tests and disable failing CIAM browser tests pending investigation (#1009)
+  - Add copilot-instructions.md to help AI agents understand the library architecture (#1009)
+- Use java.nio.charset.StandardCharsets instead of nimbusds in persistence extensions (#996)
+
 Version 1.23.1
 =============
 - Fix regression and other issues related to client credentials (#986)
