@@ -3,11 +3,15 @@
 
 package com.microsoft.aad.msal4j;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.TimeUnit;
 
 import static com.microsoft.aad.msal4j.AuthenticationErrorCode.AUTHORIZATION_PENDING;
 
 class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier {
+    private static final Logger LOG = LoggerFactory.getLogger(AcquireTokenByDeviceCodeFlowSupplier.class);
 
     private DeviceCodeFlowRequest deviceCodeFlowRequest;
 
@@ -68,7 +72,10 @@ class AcquireTokenByDeviceCodeFlowSupplier extends AuthenticationResultSupplier 
                 }
             }
         }
-        throw new MsalClientException("Expired Device code", AuthenticationErrorCode.CODE_EXPIRED);
+        String message = "Expired Device code";
+        LOG.error(LogHelper.createMessage(message, deviceCodeFlowRequest.requestContext().correlationId()));
+        throw new MsalClientException(message, AuthenticationErrorCode.CODE_EXPIRED,
+                deviceCodeFlowRequest.requestContext().correlationId());
     }
 
     private Long getCurrentSystemTimeInSeconds() {

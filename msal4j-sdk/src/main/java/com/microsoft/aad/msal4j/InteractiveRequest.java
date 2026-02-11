@@ -3,6 +3,9 @@
 
 package com.microsoft.aad.msal4j;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
@@ -14,6 +17,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 class InteractiveRequest extends MsalRequest {
+    private static final Logger LOG = LoggerFactory.getLogger(InteractiveRequest.class);
 
     private AtomicReference<CompletableFuture<IAuthenticationResult>> futureReference;
 
@@ -53,25 +57,34 @@ class InteractiveRequest extends MsalRequest {
 
         //Validate URI scheme. Only http is valid, as determined by the HttpListener created in AcquireTokenByInteractiveFlowSupplier.startHttpListener()
         if (scheme == null || !scheme.equals("http")) {
-            throw new MsalClientException(String.format(
-                    "Only http://localhost or http://localhost:port is supported for the redirect URI of an interactive request using a browser, but \"%s\" was found. For more information about redirect URI formats, see https://aka.ms/msal4j-interactive-request", scheme),
-                    AuthenticationErrorCode.LOOPBACK_REDIRECT_URI);
+            String message = String.format(
+                    "Only http://localhost or http://localhost:port is supported for the redirect URI of an interactive request using a browser, but \"%s\" was found. For more information about redirect URI formats, see https://aka.ms/msal4j-interactive-request", scheme);
+            LOG.error(LogHelper.createMessage(message, this.requestContext().correlationId()));
+            throw new MsalClientException(message,
+                    AuthenticationErrorCode.LOOPBACK_REDIRECT_URI,
+                    this.requestContext().correlationId());
         }
 
         //Ensure that the given redirect URI has a known address
         try {
             address = InetAddress.getByName(host);
         } catch (UnknownHostException e) {
-            throw new MsalClientException(String.format(
-                    "Unknown host exception for host \"%s\". For more information about redirect URI formats, see https://aka.ms/msal4j-interactive-request", host),
-                    AuthenticationErrorCode.LOOPBACK_REDIRECT_URI);
+            String message = String.format(
+                    "Unknown host exception for host \"%s\". For more information about redirect URI formats, see https://aka.ms/msal4j-interactive-request", host);
+            LOG.error(LogHelper.createMessage(message, this.requestContext().correlationId()));
+            throw new MsalClientException(message,
+                    AuthenticationErrorCode.LOOPBACK_REDIRECT_URI,
+                    this.requestContext().correlationId());
         }
 
         //Ensure that the redirect URI is considered a loopback address
         if (address == null || !address.isLoopbackAddress()) {
+            String message = "Only loopback redirect URI is supported for interactive requests. For more information about redirect URI formats, see https://aka.ms/msal4j-interactive-request";
+            LOG.error(LogHelper.createMessage(message, this.requestContext().correlationId()));
             throw new MsalClientException(
-                    "Only loopback redirect URI is supported for interactive requests. For more information about redirect URI formats, see https://aka.ms/msal4j-interactive-request",
-                    AuthenticationErrorCode.LOOPBACK_REDIRECT_URI);
+                    message,
+                    AuthenticationErrorCode.LOOPBACK_REDIRECT_URI,
+                    this.requestContext().correlationId());
         }
     }
 

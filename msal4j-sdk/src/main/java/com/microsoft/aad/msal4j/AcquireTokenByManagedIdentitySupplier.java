@@ -27,9 +27,14 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
     AuthenticationResult execute() throws Exception {
 
         if (StringHelper.isNullOrBlank(managedIdentityParameters.resource)) {
+            String message = MsalErrorMessage.SCOPES_REQUIRED;
+            LOG.error(LogHelper.createMessage(
+                    "[Managed Identity] " + message,
+                    msalRequest.requestContext().correlationId()));
             throw new MsalClientException(
                     MsalError.RESOURCE_REQUIRED_MANAGED_IDENTITY,
-                    MsalErrorMessage.SCOPES_REQUIRED);
+                    message,
+                    msalRequest.requestContext().correlationId());
         }
 
         TokenRequestExecutor tokenRequestExecutor = new TokenRequestExecutor(
