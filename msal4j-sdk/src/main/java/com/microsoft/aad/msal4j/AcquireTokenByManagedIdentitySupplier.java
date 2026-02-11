@@ -32,8 +32,8 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
                     "[Managed Identity] " + message,
                     msalRequest.requestContext().correlationId()));
             throw new MsalClientException(
-                    MsalError.RESOURCE_REQUIRED_MANAGED_IDENTITY,
                     message,
+                    MsalError.RESOURCE_REQUIRED_MANAGED_IDENTITY,
                     msalRequest.requestContext().correlationId());
         }
 
