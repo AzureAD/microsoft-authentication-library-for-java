@@ -16,6 +16,11 @@ public class MsalException extends RuntimeException {
     private String errorCode;
 
     /**
+     * Correlation ID for request tracking
+     */
+    private String correlationId;
+
+    /**
      * Initializes a new instance of the exception class
      *
      * @param throwable the inner exception that is the cause of the current exception
@@ -34,7 +39,24 @@ public class MsalException extends RuntimeException {
         this.errorCode = errorCode;
     }
 
+    /**
+     * Initializes a new instance of the exception class with correlation ID
+     *
+     * @param message the error message that explains the reason for the exception
+     * @param errorCode the error code
+     * @param correlationId the correlation ID for request tracking
+     */
+    public MsalException(final String message, String errorCode, String correlationId) {
+        super(LogHelper.createMessage(message, correlationId));
+        this.errorCode = errorCode;
+        this.correlationId = correlationId;
+    }
+
     public String errorCode() {
         return this.errorCode;
+    }
+
+    public String correlationId() {
+        return this.correlationId;
     }
 }

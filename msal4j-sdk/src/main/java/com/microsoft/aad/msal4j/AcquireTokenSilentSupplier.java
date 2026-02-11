@@ -41,7 +41,11 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
                     clientApplication.clientId());
 
             if (res == null) {
-                throw new MsalClientException(AuthenticationErrorMessage.NO_TOKEN_IN_CACHE, AuthenticationErrorCode.CACHE_MISS);
+                String message = AuthenticationErrorMessage.NO_TOKEN_IN_CACHE;
+                clientApplication.log.info(
+                        LogHelper.createMessage(message, silentRequest.requestContext().correlationId()));
+                throw new MsalClientException(message, AuthenticationErrorCode.CACHE_MISS,
+                        silentRequest.requestContext().correlationId());
             }
 
             //Some cached tokens were found, but this metadata will be overwritten if token needs to be refreshed
@@ -71,7 +75,11 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
         }
 
         if (res == null || StringHelper.isBlank(res.accessToken())) {
-            throw new MsalClientException(AuthenticationErrorMessage.NO_TOKEN_IN_CACHE, AuthenticationErrorCode.CACHE_MISS);
+            String message = AuthenticationErrorMessage.NO_TOKEN_IN_CACHE;
+            clientApplication.log.info(
+                    LogHelper.createMessage(message, silentRequest.requestContext().correlationId()));
+            throw new MsalClientException(message, AuthenticationErrorCode.CACHE_MISS,
+                    silentRequest.requestContext().correlationId());
         }
 
         LOG.debug("Returning token from cache");

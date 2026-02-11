@@ -25,4 +25,15 @@ public class MsalClientException extends MsalException {
     public MsalClientException(final String message, final String errorCode) {
         super(message, errorCode);
     }
+
+    /**
+     * Initializes a new instance of the exception class with a specified error message and correlation ID
+     *
+     * @param message the error message that explains the reason for the exception
+     * @param errorCode the error code
+     * @param correlationId the correlation ID for request tracking
+     */
+    public MsalClientException(final String message, final String errorCode, final String correlationId) {
+        super(message, errorCode, correlationId);
+    }
 }

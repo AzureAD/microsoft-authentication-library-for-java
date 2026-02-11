@@ -53,7 +53,12 @@ abstract class AbstractManagedIdentitySource {
             throw new RuntimeException(e);
         } catch (MsalClientException e) {
             if (e.getCause() instanceof SocketException) {
-                throw new MsalServiceException(e.getMessage(), MsalError.MANAGED_IDENTITY_UNREACHABLE_NETWORK, managedIdentitySourceType);
+                String message = e.getMessage();
+                LOG.error(LogHelper.createMessage(
+                        "[Managed Identity] Network unreachable: " + message,
+                        managedIdentityRequest.requestContext().correlationId()));
+                throw new MsalServiceException(message, MsalError.MANAGED_IDENTITY_UNREACHABLE_NETWORK,
+                        managedIdentityRequest.requestContext().correlationId());
             }
 
             throw e;
@@ -74,18 +79,23 @@ abstract class AbstractManagedIdentitySource {
                 return getSuccessfulResponse(response);
             } else {
                 message = getMessageFromErrorResponse(response);
-                LOG.error("[Managed Identity] request failed, HttpStatusCode: {}, Error message: {}",
-                        response.statusCode(), message);
-                throw new MsalServiceException(message, AuthenticationErrorCode.MANAGED_IDENTITY_REQUEST_FAILED, managedIdentitySourceType);
+                LOG.error(LogHelper.createMessage(
+                        String.format("[Managed Identity] request failed, HttpStatusCode: %s, Error message: %s",
+                                response.statusCode(), message),
+                        managedIdentityRequest.requestContext().correlationId()));
+                throw new MsalServiceException(message, AuthenticationErrorCode.MANAGED_IDENTITY_REQUEST_FAILED,
+                        managedIdentityRequest.requestContext().correlationId());
             }
         } catch (Exception e) {
             if (!(e instanceof MsalServiceException)) {
                 message = String.format("[Managed Identity] Unexpected exception occurred when parsing the response, HttpStatusCode: %s, Error message: %s",
                         response.statusCode(), e.getMessage());
+                LOG.error(LogHelper.createMessage(message, managedIdentityRequest.requestContext().correlationId()));
+                throw new MsalServiceException(message, AuthenticationErrorCode.MANAGED_IDENTITY_REQUEST_FAILED,
+                        managedIdentityRequest.requestContext().correlationId());
             } else {
                 throw e;
             }
-            throw new MsalServiceException(message, AuthenticationErrorCode.MANAGED_IDENTITY_REQUEST_FAILED, managedIdentitySourceType);
         }
     }
 
@@ -103,7 +113,10 @@ abstract class AbstractManagedIdentitySource {
         if (managedIdentityResponse == null || managedIdentityResponse.getAccessToken() == null
                 || managedIdentityResponse.getAccessToken().isEmpty() || managedIdentityResponse.getExpiresOn() == null
                 || managedIdentityResponse.getExpiresOn().isEmpty()) {
-            throw new MsalServiceException("[Managed Identity] Response is either null or insufficient for authentication.", MsalError.MANAGED_IDENTITY_REQUEST_FAILED, managedIdentitySourceType);
+            String message = "[Managed Identity] Response is either null or insufficient for authentication.";
+            LOG.error(LogHelper.createMessage(message, managedIdentityRequest.requestContext().correlationId()));
+            throw new MsalServiceException(message, MsalError.MANAGED_IDENTITY_REQUEST_FAILED,
+                    managedIdentityRequest.requestContext().correlationId());
         }
 
         return managedIdentityResponse;

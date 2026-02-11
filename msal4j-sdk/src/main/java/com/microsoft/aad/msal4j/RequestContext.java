@@ -37,6 +37,11 @@ class RequestContext {
         this.publicApi = publicApi;
         this.authority = clientApplication.authority();
         this.apiParameters = apiParameters;
+
+        // Log the correlation ID when RequestContext is created
+        clientApplication.log.info(LogHelper.createMessage(
+                "Request initiated with PublicApi: " + publicApi,
+                this.correlationId));
     }
 
     public RequestContext(AbstractApplicationBase clientApplication,

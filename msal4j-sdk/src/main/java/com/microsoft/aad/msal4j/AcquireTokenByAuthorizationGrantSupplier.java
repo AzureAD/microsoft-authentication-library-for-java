@@ -139,13 +139,21 @@ class AcquireTokenByAuthorizationGrantSupplier extends AuthenticationResultSuppl
 
             params = getSAMLAuthGrantParameters(wsTrustResponse);
         } else if (userRealmResponse.isAccountManaged()) {
+            String message = "Password is required for managed user";
+            clientApplication.log.error(
+                    LogHelper.createMessage(message, msalRequest.requestContext().correlationId()));
             throw new MsalClientException(
-                    "Password is required for managed user",
-                    AuthenticationErrorCode.PASSWORD_REQUIRED_FOR_MANAGED_USER);
+                    message,
+                    AuthenticationErrorCode.PASSWORD_REQUIRED_FOR_MANAGED_USER,
+                    msalRequest.requestContext().correlationId());
         } else {
+            String message = "User Realm request failed";
+            clientApplication.log.error(
+                    LogHelper.createMessage(message, msalRequest.requestContext().correlationId()));
             throw new MsalClientException(
-                    "User Realm request failed",
-                    AuthenticationErrorCode.USER_REALM_DISCOVERY_FAILED);
+                    message,
+                    AuthenticationErrorCode.USER_REALM_DISCOVERY_FAILED,
+                    msalRequest.requestContext().correlationId());
         }
 
         return params;

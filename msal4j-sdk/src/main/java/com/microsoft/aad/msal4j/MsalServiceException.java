@@ -14,7 +14,6 @@ public class MsalServiceException extends MsalException {
 
     private Integer statusCode;
     private String statusMessage;
-    private String correlationId;
     private String claims;
     private Map<String, List<String>> headers;
     private String managedIdentitySource;
@@ -31,6 +30,17 @@ public class MsalServiceException extends MsalException {
     }
 
     /**
+     * Initializes a new instance of the exception class with a specified error message and correlation ID
+     *
+     * @param message the error message that explains the reason for the exception
+     * @param error a simplified error code from {@link AuthenticationErrorCode} and used for references in documentation
+     * @param correlationId the correlation ID for request tracking
+     */
+    public MsalServiceException(final String message, final String error, final String correlationId) {
+        super(message, error, correlationId);
+    }
+
+    /**
      * Initializes a new instance of the exception class
      *
      * @param errorResponse response object contain information about error returned by server
@@ -40,11 +50,10 @@ public class MsalServiceException extends MsalException {
             final ErrorResponse errorResponse,
             final Map<String, List<String>> httpHeaders) {
 
-        super(errorResponse.errorDescription, errorResponse.error());
+        super(errorResponse.errorDescription, errorResponse.error(), errorResponse.correlation_id());
         this.statusCode = errorResponse.statusCode();
         this.statusMessage = errorResponse.statusMessage();
         this.subError = errorResponse.subError();
-        this.correlationId = errorResponse.correlation_id();
         this.claims = errorResponse.claims();
         this.headers = Collections.unmodifiableMap(httpHeaders);
     }
@@ -70,9 +79,7 @@ public class MsalServiceException extends MsalException {
      * @param discoveryResponse response object from instance discovery network call
      */
     public MsalServiceException(final AadInstanceDiscoveryResponse discoveryResponse) {
-        super(discoveryResponse.errorDescription(), discoveryResponse.error());
-
-        this.correlationId = discoveryResponse.correlationId();
+        super(discoveryResponse.errorDescription(), discoveryResponse.error(), discoveryResponse.correlationId());
     }
 
     /**
@@ -92,8 +99,9 @@ public class MsalServiceException extends MsalException {
     /**
      * An ID that can be used to piece up a single authentication flow.
      */
+    @Override
     public String correlationId() {
-        return this.correlationId;
+        return super.correlationId();
     }
 
     /**

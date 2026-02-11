@@ -21,6 +21,19 @@ public class MsalThrottlingException extends MsalServiceException {
     }
 
     /**
+     * Constructor for MsalThrottlingException class with correlation ID
+     *
+     * @param retryInMs time to wait before retrying in milliseconds
+     * @param correlationId the correlation ID for request tracking
+     */
+    public MsalThrottlingException(long retryInMs, String correlationId) {
+        super("Request was throttled according to instructions from STS. Retry in " + retryInMs + " ms.",
+                AuthenticationErrorCode.THROTTLED_REQUEST, correlationId);
+
+        this.retryInMs = retryInMs;
+    }
+
+    /**
      * how long to wait before repeating request
      */
     public long retryInMs() {

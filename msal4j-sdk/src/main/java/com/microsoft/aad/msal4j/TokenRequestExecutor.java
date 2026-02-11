@@ -38,8 +38,11 @@ class TokenRequestExecutor {
     OAuthHttpRequest createOauthHttpRequest() throws MalformedURLException {
 
         if (requestAuthority.tokenEndpointUrl() == null) {
-            throw new MsalClientException("The endpoint URI is not specified",
-                    AuthenticationErrorCode.INVALID_ENDPOINT_URI);
+            String message = "The endpoint URI is not specified";
+            LOG.error(LogHelper.createMessage(message, msalRequest.requestContext().correlationId()));
+            throw new MsalClientException(message,
+                    AuthenticationErrorCode.INVALID_ENDPOINT_URI,
+                    msalRequest.requestContext().correlationId());
         }
 
         final OAuthHttpRequest oauthHttpRequest = new OAuthHttpRequest(

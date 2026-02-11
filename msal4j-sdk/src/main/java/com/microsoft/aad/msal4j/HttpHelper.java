@@ -55,6 +55,10 @@ class HttpHelper implements IHttpHelper {
 
             } catch (Exception e) {
                 httpEvent.setOauthErrorCode(AuthenticationErrorCode.UNKNOWN);
+                String message = LogHelper.createMessage(
+                        "HTTP request execution failed: " + e.getMessage(),
+                        requestContext.correlationId());
+                LOG.error(message);
                 throw new MsalClientException(e);
             }
 
@@ -93,6 +97,10 @@ class HttpHelper implements IHttpHelper {
 
             } catch (Exception e) {
                 httpEvent.setOauthErrorCode(AuthenticationErrorCode.UNKNOWN);
+                String message = LogHelper.createMessage(
+                        "HTTP request execution failed: " + e.getMessage(),
+                        requestContext.correlationId());
+                LOG.error(message);
                 throw new MsalClientException(e);
             }
 
@@ -113,6 +121,7 @@ class HttpHelper implements IHttpHelper {
         try {
             httpResponse = executeHttpRequestWithRetries(httpRequest, httpClient);
         } catch (Exception e) {
+            LOG.error("HTTP request execution failed: " + e.getMessage());
             throw new MsalClientException(e);
         }
 
@@ -173,7 +182,11 @@ class HttpHelper implements IHttpHelper {
             long retryInMs = ThrottlingCache.retryInMs(requestThumbprint);
 
             if (retryInMs > 0) {
-                throw new MsalThrottlingException(retryInMs);
+                String message = LogHelper.createMessage(
+                        "Request throttled, retry after " + retryInMs + " ms",
+                        requestContext.correlationId());
+                LOG.warn(message);
+                throw new MsalThrottlingException(retryInMs, requestContext.correlationId());
             }
         }
     }
