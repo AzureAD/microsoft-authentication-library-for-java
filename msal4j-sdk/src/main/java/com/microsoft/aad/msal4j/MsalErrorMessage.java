@@ -28,4 +28,21 @@ class MsalErrorMessage {
     public static final String GATEWAY_ERROR = "[Managed Identity] Authentication unavailable. The request failed due to a gateway error.";
 
     public static final String MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE = "[Managed Identity] MSI returned %s, but the response could not be parsed: %s";
+
+    public static final String MSI_V2_ATTESTATION_REQUIRES_POP =
+            "[MSI v2] withAttestationSupport=true requires mtlsProofOfPossession=true. "
+            + "Both flags must be set to use the MSI v2 mTLS PoP flow.";
+
+    public static final String MSI_V2_KEYGUARD_UNAVAILABLE =
+            "[MSI v2] KeyGuard is unavailable. Virtualization Based Security (VBS) must be enabled "
+            + "on this host for attestation-backed MSI v2 token acquisition.";
+
+    public static final String MSI_V2_PLATFORM_METADATA_FAILED =
+            "[MSI v2] Failed to retrieve platform metadata from IMDS.";
+
+    public static final String MSI_V2_ISSUECREDENTIAL_FAILED =
+            "[MSI v2] Failed to issue mTLS credential from IMDS.";
+
+    public static final String MSI_V2_TOKEN_ACQUISITION_FAILED =
+            "[MSI v2] Failed to acquire mTLS PoP token from the regional ESTS endpoint.";
 }

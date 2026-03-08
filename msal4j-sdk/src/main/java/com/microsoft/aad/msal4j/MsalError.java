@@ -36,4 +36,19 @@ public class MsalError {
     public static final String MANAGED_IDENTITY_FILE_READ_ERROR = "managed_identity_file_read_error";
 
     public static final String MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE = "managed_identity_response_parse_failure";
+
+    /**
+     * MSI v2: withAttestationSupport=true requires mtlsProofOfPossession=true.
+     */
+    public static final String MSI_V2_ATTESTATION_REQUIRES_POP = "msi_v2_attestation_requires_pop";
+
+    /**
+     * MSI v2 token acquisition failed (no silent fallback to MSI v1).
+     */
+    public static final String MSI_V2_ERROR = "msi_v2_error";
+
+    /**
+     * KeyGuard (VBS-backed hardware key) is not available on this platform.
+     */
+    public static final String MSI_V2_KEYGUARD_UNAVAILABLE = "msi_v2_keyguard_unavailable";
 }

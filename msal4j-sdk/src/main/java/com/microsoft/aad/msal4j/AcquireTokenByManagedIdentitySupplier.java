@@ -32,6 +32,27 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
                     MsalErrorMessage.SCOPES_REQUIRED);
         }
 
+        // Validate MSI v2 flag combination: attestation requires mTLS PoP
+        if (managedIdentityParameters.withAttestationSupport
+                && !managedIdentityParameters.mtlsProofOfPossession) {
+            throw new MsalClientException(
+                    MsalErrorMessage.MSI_V2_ATTESTATION_REQUIRES_POP,
+                    MsalError.MSI_V2_ATTESTATION_REQUIRES_POP);
+        }
+
+        // MSI v2 flow: use when BOTH mtlsProofOfPossession AND withAttestationSupport are set.
+        // MSI v2 bypasses the token cache and never falls back to MSI v1 on failure.
+        if (managedIdentityParameters.mtlsProofOfPossession
+                && managedIdentityParameters.withAttestationSupport) {
+            LOG.debug("[MSI v2] Both mtlsProofOfPossession and withAttestationSupport are set. "
+                    + "Using MSI v2 mTLS PoP flow.");
+            TokenRequestExecutor tokenRequestExecutor = new TokenRequestExecutor(
+                    clientApplication.authenticationAuthority,
+                    msalRequest,
+                    clientApplication.serviceBundle());
+            return fetchNewTokenMsiV2(tokenRequestExecutor);
+        }
+
         TokenRequestExecutor tokenRequestExecutor = new TokenRequestExecutor(
                 clientApplication.authenticationAuthority,
                 msalRequest,
@@ -118,6 +139,23 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
         clientApplication.tokenCache.saveTokens(tokenRequestExecutor, authenticationResult, clientApplication.authenticationAuthority.host);
         authenticationResult.metadata().tokenSource(TokenSource.IDENTITY_PROVIDER);
         authenticationResult.metadata().cacheRefreshReason(cacheRefreshReason);
+        return authenticationResult;
+    }
+
+    /**
+     * Executes the MSI v2 mTLS PoP flow. Unlike MSI v1, the result is NOT cached
+     * since MSI v2 tokens are short-lived and hardware-bound.
+     * Any failure will propagate as a {@link MsiV2Exception} without fallback to MSI v1.
+     */
+    private AuthenticationResult fetchNewTokenMsiV2(TokenRequestExecutor tokenRequestExecutor) {
+        ManagedIdentityResponse managedIdentityResponse = MsiV2.obtainToken(
+                msalRequest,
+                tokenRequestExecutor.getServiceBundle(),
+                managedIdentityParameters.resource);
+
+        AuthenticationResult authenticationResult = createFromManagedIdentityResponse(managedIdentityResponse);
+        authenticationResult.metadata().tokenSource(TokenSource.IDENTITY_PROVIDER);
+        authenticationResult.metadata().cacheRefreshReason(CacheRefreshReason.NOT_APPLICABLE);
         return authenticationResult;
     }
 

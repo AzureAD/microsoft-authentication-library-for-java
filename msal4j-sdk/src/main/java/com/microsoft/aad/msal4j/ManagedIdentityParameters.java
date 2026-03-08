@@ -16,11 +16,16 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
     boolean forceRefresh;
     String claims;
     String revokedTokenHash;
-    
-    private ManagedIdentityParameters(String resource, boolean forceRefresh, String claims) {
+    boolean mtlsProofOfPossession;
+    boolean withAttestationSupport;
+
+    private ManagedIdentityParameters(String resource, boolean forceRefresh, String claims,
+                                      boolean mtlsProofOfPossession, boolean withAttestationSupport) {
         this.resource = resource;
         this.forceRefresh = forceRefresh;
         this.claims = claims;
+        this.mtlsProofOfPossession = mtlsProofOfPossession;
+        this.withAttestationSupport = withAttestationSupport;
     }
 
     @Override
@@ -83,10 +88,20 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
         return this.revokedTokenHash;
     }
 
+    public boolean mtlsProofOfPossession() {
+        return this.mtlsProofOfPossession;
+    }
+
+    public boolean withAttestationSupport() {
+        return this.withAttestationSupport;
+    }
+
     public static class ManagedIdentityParametersBuilder {
         private String resource;
         private boolean forceRefresh;
         private String claims;
+        private boolean mtlsProofOfPossession;
+        private boolean withAttestationSupport;
 
         ManagedIdentityParametersBuilder() {
         }
@@ -118,12 +133,48 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
             return this;
         }
 
+        /**
+         * Requests an mTLS Proof-of-Possession (PoP) token instead of a standard Bearer token.
+         * <p>
+         * When set to {@code true}, the MSI v2 flow will be used if {@code withAttestationSupport}
+         * is also set to {@code true}. This requires Virtualization Based Security (VBS) and
+         * KeyGuard to be available on the host (Windows only).
+         *
+         * @param mtlsProofOfPossession {@code true} to request an mTLS PoP token
+         * @return this builder instance
+         */
+        public ManagedIdentityParametersBuilder mtlsProofOfPossession(boolean mtlsProofOfPossession) {
+            this.mtlsProofOfPossession = mtlsProofOfPossession;
+            return this;
+        }
+
+        /**
+         * Enables KeyGuard attestation support for the MSI v2 mTLS PoP flow.
+         * <p>
+         * When set to {@code true}, the SDK will use the Windows KeyGuard (VBS-backed) RSA key
+         * to obtain a hardware-attested certificate from IMDS and use it for mTLS token acquisition.
+         * <p>
+         * Requires {@code mtlsProofOfPossession=true}. If this flag is set without
+         * {@code mtlsProofOfPossession=true}, an exception will be thrown.
+         *
+         * @param withAttestationSupport {@code true} to require KeyGuard attestation
+         * @return this builder instance
+         */
+        public ManagedIdentityParametersBuilder withAttestationSupport(boolean withAttestationSupport) {
+            this.withAttestationSupport = withAttestationSupport;
+            return this;
+        }
+
         public ManagedIdentityParameters build() {
-            return new ManagedIdentityParameters(this.resource, this.forceRefresh, this.claims);
+            return new ManagedIdentityParameters(this.resource, this.forceRefresh, this.claims,
+                    this.mtlsProofOfPossession, this.withAttestationSupport);
         }
 
         public String toString() {
-            return "ManagedIdentityParameters.ManagedIdentityParametersBuilder(resource=" + this.resource + ", forceRefresh=" + this.forceRefresh + ")";
+            return "ManagedIdentityParameters.ManagedIdentityParametersBuilder(resource=" + this.resource
+                    + ", forceRefresh=" + this.forceRefresh
+                    + ", mtlsProofOfPossession=" + this.mtlsProofOfPossession
+                    + ", withAttestationSupport=" + this.withAttestationSupport + ")";
         }
     }
 }
