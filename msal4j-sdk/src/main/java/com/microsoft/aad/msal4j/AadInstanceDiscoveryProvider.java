@@ -45,7 +45,10 @@ class AadInstanceDiscoveryProvider {
                 "login.chinacloudapi.cn",
                 "login-us.microsoftonline.com",
                 "login.microsoftonline.de",
-                "login.microsoftonline.us"));
+                "login.microsoftonline.us",
+                "login.sovcloud-identity.fr",
+                "login.sovcloud-identity.de",
+                "login.sovcloud-identity.sg"));
 
         TRUSTED_HOSTS_SET.addAll(Arrays.asList(
                 DEFAULT_TRUSTED_HOST,
@@ -340,7 +343,20 @@ class AadInstanceDiscoveryProvider {
         AadInstanceDiscoveryResponse aadInstanceDiscoveryResponse = null;
 
         if (msalRequest.application().authenticationAuthority.authorityType.equals(AuthorityType.AAD)) {
-            aadInstanceDiscoveryResponse = sendInstanceDiscoveryRequest(authorityUrl, msalRequest, serviceBundle);
+            try {
+                aadInstanceDiscoveryResponse = sendInstanceDiscoveryRequest(authorityUrl, msalRequest, serviceBundle);
+            } catch (MsalServiceException ex) {
+                // MsalServiceException indicates a definitive HTTP-level error from the server
+                // (e.g. invalid_instance, bad request, server error) — always propagate.
+                throw ex;
+            } catch (Exception e) {
+                // Network failures (timeout, DNS, connection refused) — cache a fallback
+                // self-entry so subsequent calls don't retry the failing network call.
+                LOG.warn("Instance discovery network request failed. " +
+                         "MSAL will use fallback instance metadata with {} as the host. Exception: {}", authorityUrl.getHost(), e.getMessage());
+                cacheInstanceDiscoveryMetadata(authorityUrl.getHost());
+                return;
+            }
 
             if (validateAuthority) {
                 validate(aadInstanceDiscoveryResponse);
