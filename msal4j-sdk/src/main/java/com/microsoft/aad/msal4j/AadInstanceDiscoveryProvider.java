@@ -43,9 +43,11 @@ class AadInstanceDiscoveryProvider {
     static {
         TRUSTED_SOVEREIGN_HOSTS_SET.addAll(Arrays.asList(
                 "login.chinacloudapi.cn",
+                "login.partner.microsoftonline.cn",
                 "login-us.microsoftonline.com",
                 "login.microsoftonline.de",
                 "login.microsoftonline.us",
+                "login.usgovcloudapi.net",
                 "login.sovcloud-identity.fr",
                 "login.sovcloud-identity.de",
                 "login.sovcloud-identity.sg"));
@@ -145,7 +147,14 @@ class AadInstanceDiscoveryProvider {
     }
 
     static void cacheInstanceDiscoveryMetadata(String host) {
-        cache.putIfAbsent(host, new InstanceDiscoveryMetadataEntry(host, host, Collections.singleton(host)));
+        InstanceDiscoveryMetadataEntry knownEntry = KnownMetadataProvider.getMetadataEntry(host);
+        if (knownEntry != null) {
+            for (String alias : knownEntry.aliases()) {
+                cache.putIfAbsent(alias, knownEntry);
+            }
+        } else {
+            cache.putIfAbsent(host, new InstanceDiscoveryMetadataEntry(host, host, Collections.singleton(host)));
+        }
     }
 
     private static boolean shouldUseRegionalEndpoint(MsalRequest msalRequest){
@@ -346,14 +355,21 @@ class AadInstanceDiscoveryProvider {
             try {
                 aadInstanceDiscoveryResponse = sendInstanceDiscoveryRequest(authorityUrl, msalRequest, serviceBundle);
             } catch (MsalServiceException ex) {
-                // MsalServiceException indicates a definitive HTTP-level error from the server
-                // (e.g. invalid_instance, bad request, server error) — always propagate.
-                throw ex;
+                // Only propagate "invalid_instance" — this means the authority itself is invalid.
+                // All other HTTP-level errors (500, 502, 404, etc.) should fall through to the
+                // fallback path, matching the behavior of MSAL .NET's InstanceDiscoveryManager.
+                if ("invalid_instance".equals(ex.errorCode())) {
+                    throw ex;
+                }
+                LOG.warn("Instance discovery request failed with a service error. " +
+                         "MSAL will use fallback instance metadata for {}. Error: {}", authorityUrl.getHost(), ex.getMessage());
+                cacheInstanceDiscoveryMetadata(authorityUrl.getHost());
+                return;
             } catch (Exception e) {
                 // Network failures (timeout, DNS, connection refused) — cache a fallback
-                // self-entry so subsequent calls don't retry the failing network call.
+                // entry so subsequent calls don't retry the failing network call.
                 LOG.warn("Instance discovery network request failed. " +
-                         "MSAL will use fallback instance metadata with {} as the host. Exception: {}", authorityUrl.getHost(), e.getMessage());
+                         "MSAL will use fallback instance metadata for {}. Exception: {}", authorityUrl.getHost(), e.getMessage());
                 cacheInstanceDiscoveryMetadata(authorityUrl.getHost());
                 return;
             }
