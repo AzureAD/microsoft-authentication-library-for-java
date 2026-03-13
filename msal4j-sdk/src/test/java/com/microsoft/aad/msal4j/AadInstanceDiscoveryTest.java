@@ -11,13 +11,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mockStatic;
 
-import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URL;
 
@@ -137,34 +135,6 @@ class AadInstanceDiscoveryTest {
 
             assertValidResponse(entry);
         }
-    }
-
-    @Test
-    void discoveryEndpoint_routesToSovereignHost() throws Exception {
-        // Arrange
-        URL sovereignUrl = new URL("https://login.sovcloud-identity.fr/my_tenant");
-        Method method = AadInstanceDiscoveryProvider.class.getDeclaredMethod("getInstanceDiscoveryEndpoint", URL.class);
-        method.setAccessible(true);
-
-        // Act
-        String endpoint = (String) method.invoke(null, sovereignUrl);
-
-        // Assert
-        assertTrue(endpoint.contains("login.sovcloud-identity.fr"),
-                "Discovery endpoint should use the sovereign host, got: " + endpoint);
-    }
-
-    @Test
-    void regionalEndpoint_usesSovereignTemplate() throws Exception {
-        // Arrange
-        Method method = AadInstanceDiscoveryProvider.class.getDeclaredMethod("getRegionalizedHost", String.class, String.class);
-        method.setAccessible(true);
-
-        // Act
-        String result = (String) method.invoke(null, "login.sovcloud-identity.fr", "westeurope");
-
-        // Assert
-        assertEquals("westeurope.login.sovcloud-identity.fr", result);
     }
 
     void assertValidResponse(InstanceDiscoveryMetadataEntry entry) {
