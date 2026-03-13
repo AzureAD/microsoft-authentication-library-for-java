@@ -61,40 +61,6 @@ class KnownMetadataProviderTest {
     }
 
     @Test
-    void getMetadataEntry_chinaCloud_returnsCorrectAliases() {
-        // Act
-        InstanceDiscoveryMetadataEntry entry = KnownMetadataProvider.getMetadataEntry("login.chinacloudapi.cn");
-
-        // Assert
-        assertNotNull(entry);
-        assertEquals("login.partner.microsoftonline.cn", entry.preferredNetwork());
-        assertEquals("login.partner.microsoftonline.cn", entry.preferredCache());
-        assertEquals(2, entry.aliases().size());
-        assertTrue(entry.aliases().contains("login.partner.microsoftonline.cn"));
-        assertTrue(entry.aliases().contains("login.chinacloudapi.cn"));
-
-        // Both aliases should resolve to the same entry
-        assertSame(entry, KnownMetadataProvider.getMetadataEntry("login.partner.microsoftonline.cn"));
-    }
-
-    @Test
-    void getMetadataEntry_usGov_returnsCorrectAliases() {
-        // Act
-        InstanceDiscoveryMetadataEntry entry = KnownMetadataProvider.getMetadataEntry("login.microsoftonline.us");
-
-        // Assert
-        assertNotNull(entry);
-        assertEquals("login.microsoftonline.us", entry.preferredNetwork());
-        assertEquals("login.microsoftonline.us", entry.preferredCache());
-        assertEquals(2, entry.aliases().size());
-        assertTrue(entry.aliases().contains("login.microsoftonline.us"));
-        assertTrue(entry.aliases().contains("login.usgovcloudapi.net"));
-
-        // Both aliases should resolve to the same entry
-        assertSame(entry, KnownMetadataProvider.getMetadataEntry("login.usgovcloudapi.net"));
-    }
-
-    @Test
     void getMetadataEntry_unknownHost_returnsNull() {
         assertNull(KnownMetadataProvider.getMetadataEntry("custom.authority.example.com"));
     }

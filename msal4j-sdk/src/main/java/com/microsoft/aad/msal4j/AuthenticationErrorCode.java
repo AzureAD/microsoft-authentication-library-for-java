@@ -160,4 +160,10 @@ public class AuthenticationErrorCode {
     public static final String CRYPTO_ERROR = "crypto_error";
 
     public static final String INVALID_TIMESTAMP_FORMAT = "invalid_timestamp_format";
+
+    /**
+     * Indicates that instance discovery failed because the authority is not a valid instance.
+     * This is returned by the instance discovery endpoint when the provided authority host is unknown.
+     */
+    public static final String INVALID_INSTANCE = "invalid_instance";
 }

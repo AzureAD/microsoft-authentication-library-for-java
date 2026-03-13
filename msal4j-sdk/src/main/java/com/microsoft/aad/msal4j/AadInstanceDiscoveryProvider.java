@@ -246,7 +246,7 @@ class AadInstanceDiscoveryProvider {
         AadInstanceDiscoveryResponse response = JsonHelper.convertJsonStringToJsonSerializableObject(httpResponse.body(), AadInstanceDiscoveryResponse::fromJson);
 
         if (httpResponse.statusCode() != HttpStatus.HTTP_OK) {
-            if (httpResponse.statusCode() == HttpStatus.HTTP_BAD_REQUEST && response.error().equals("invalid_instance")) {
+            if (httpResponse.statusCode() == HttpStatus.HTTP_BAD_REQUEST && response.error().equals(AuthenticationErrorCode.INVALID_INSTANCE)) {
                 // instance discovery failed due to an invalid authority, throw an exception.
                 throw MsalServiceExceptionFactory.fromHttpResponse(httpResponse);
             }
@@ -355,10 +355,9 @@ class AadInstanceDiscoveryProvider {
             try {
                 aadInstanceDiscoveryResponse = sendInstanceDiscoveryRequest(authorityUrl, msalRequest, serviceBundle);
             } catch (MsalServiceException ex) {
-                // Only propagate "invalid_instance" — this means the authority itself is invalid.
-                // All other HTTP-level errors (500, 502, 404, etc.) should fall through to the
-                // fallback path, matching the behavior of MSAL .NET's InstanceDiscoveryManager.
-                if ("invalid_instance".equals(ex.errorCode())) {
+                // Throw "invalid_instance" errors: this means the authority itself is invalid.
+                // All other HTTP-level errors (500, 502, 404, etc.) should fall through to the fallback path.
+                if (ex.errorCode().equals(AuthenticationErrorCode.INVALID_INSTANCE)) {
                     throw ex;
                 }
                 LOG.warn("Instance discovery request failed with a service error. " +
