@@ -108,7 +108,7 @@ public class CacheLockTestBase {
 
         list.sort(Comparator.comparingLong(a -> a[0]));
 
-        int sum = 0;
+        long sum = 0L;
         Long[] prev = null;
         for (Long[] interval : list) {
             Assert.assertTrue(interval[0] <= interval[1]);
