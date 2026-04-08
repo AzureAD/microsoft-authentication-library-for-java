@@ -151,4 +151,8 @@ final class ClientCertificate implements IClientCertificate {
     public PrivateKey privateKey() {
         return this.privateKey;
     }
+
+    List<X509Certificate> publicKeyCertificateChain() {
+        return this.publicKeyCertificateChain;
+    }
 }

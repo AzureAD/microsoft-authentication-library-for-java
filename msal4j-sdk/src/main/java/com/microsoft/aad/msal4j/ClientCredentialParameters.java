@@ -28,7 +28,9 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
 
     private IClientCredential clientCredential;
 
-    private ClientCredentialParameters(Set<String> scopes, Boolean skipCache, ClaimsRequest claims, Map<String, String> extraHttpHeaders, Map<String, String> extraQueryParameters, String tenant, IClientCredential clientCredential) {
+    private boolean mtlsProofOfPossession;
+
+    private ClientCredentialParameters(Set<String> scopes, Boolean skipCache, ClaimsRequest claims, Map<String, String> extraHttpHeaders, Map<String, String> extraQueryParameters, String tenant, IClientCredential clientCredential, boolean mtlsProofOfPossession) {
         this.scopes = scopes;
         this.skipCache = skipCache;
         this.claims = claims;
@@ -36,6 +38,7 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         this.extraQueryParameters = extraQueryParameters;
         this.tenant = tenant;
         this.clientCredential = clientCredential;
+        this.mtlsProofOfPossession = mtlsProofOfPossession;
     }
 
     private static ClientCredentialParametersBuilder builder() {
@@ -87,6 +90,20 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         return this.clientCredential;
     }
 
+    /**
+     * Whether to request an mTLS Proof-of-Possession token instead of a standard Bearer token.
+     *
+     * <p>When {@code true}, the token request is sent to the {@code mtlsauth.*} endpoint over
+     * a mutual-TLS connection using the application's {@link ClientCertificate} credential.
+     * The response token type will be {@code "mtls_pop"} and the access token will contain a
+     * {@code cnf.x5t#S256} claim binding it to the certificate.</p>
+     *
+     * @return {@code true} if mTLS PoP is requested
+     */
+    public boolean mtlsProofOfPossession() {
+        return this.mtlsProofOfPossession;
+    }
+
     public static class ClientCredentialParametersBuilder {
         private Set<String> scopes;
         private Boolean skipCache = false;
@@ -95,6 +112,7 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         private Map<String, String> extraQueryParameters;
         private String tenant;
         private IClientCredential clientCredential;
+        private boolean mtlsProofOfPossession;
 
         ClientCredentialParametersBuilder() {
         }
@@ -162,12 +180,26 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
             return this;
         }
 
+        /**
+         * Requests an mTLS Proof-of-Possession token instead of a standard Bearer token.
+         *
+         * <p>Requires that the application was created with a {@link ClientCertificate} credential,
+         * the authority is a tenanted AAD authority (not {@code /common} or {@code /organizations}),
+         * and an Azure region is configured via
+         * {@link ConfidentialClientApplication.Builder#azureRegion(String)} or
+         * {@link ConfidentialClientApplication.Builder#autoDetectRegion(boolean)}.</p>
+         */
+        public ClientCredentialParametersBuilder withMtlsProofOfPossession() {
+            this.mtlsProofOfPossession = true;
+            return this;
+        }
+
         public ClientCredentialParameters build() {
-            return new ClientCredentialParameters(this.scopes, this.skipCache, this.claims, this.extraHttpHeaders, this.extraQueryParameters, this.tenant, this.clientCredential);
+            return new ClientCredentialParameters(this.scopes, this.skipCache, this.claims, this.extraHttpHeaders, this.extraQueryParameters, this.tenant, this.clientCredential, this.mtlsProofOfPossession);
         }
 
         public String toString() {
-            return "ClientCredentialParameters.ClientCredentialParametersBuilder(scopes=" + this.scopes + ", skipCache=" + this.skipCache + ", claims=" + this.claims + ", extraHttpHeaders=" + this.extraHttpHeaders + ", extraQueryParameters=" + this.extraQueryParameters + ", tenant=" + this.tenant + ", clientCredential=" + this.clientCredential + ")";
+            return "ClientCredentialParameters.ClientCredentialParametersBuilder(scopes=" + this.scopes + ", skipCache=" + this.skipCache + ", claims=" + this.claims + ", extraHttpHeaders=" + this.extraHttpHeaders + ", extraQueryParameters=" + this.extraQueryParameters + ", tenant=" + this.tenant + ", clientCredential=" + this.clientCredential + ", mtlsProofOfPossession=" + this.mtlsProofOfPossession + ")";
         }
     }
 }

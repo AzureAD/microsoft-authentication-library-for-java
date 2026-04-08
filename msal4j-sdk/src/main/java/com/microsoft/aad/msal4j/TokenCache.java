@@ -295,7 +295,16 @@ public class TokenCache implements ITokenCache {
                                                                        AuthenticationResult authenticationResult,
                                                                        String environmentAlias) {
         AccessTokenCacheEntity at = new AccessTokenCacheEntity();
-        at.credentialType(CredentialTypeEnum.ACCESS_TOKEN.value());
+
+        boolean isMtlsPop = MtlsPopAuthenticationScheme.TOKEN_TYPE_MTLS_POP.equals(authenticationResult.tokenType());
+        if (isMtlsPop) {
+            at.credentialType(CredentialTypeEnum.ACCESS_TOKEN_WITH_AUTH_SCHEME.value());
+            if (authenticationResult.bindingCertificate() != null) {
+                at.keyId(MtlsPopAuthenticationScheme.computeX5tS256(authenticationResult.bindingCertificate()));
+            }
+        } else {
+            at.credentialType(CredentialTypeEnum.ACCESS_TOKEN.value());
+        }
 
         if (authenticationResult.account() != null) {
             at.homeAccountId(authenticationResult.account().homeAccountId());

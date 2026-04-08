@@ -9,5 +9,6 @@
 		<module>msal4j-sdk</module>
 		<module>msal4j-brokers</module>
         <module>msal4j-persistence-extension</module>
+        <module>msal4j-mtls-extensions</module>
     </modules>
 </project>

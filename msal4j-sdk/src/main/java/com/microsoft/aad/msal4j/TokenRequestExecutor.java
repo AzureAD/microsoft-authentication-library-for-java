@@ -6,8 +6,11 @@ package com.microsoft.aad.msal4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URL;
+import java.security.cert.X509Certificate;
 import java.util.*;
 
 class TokenRequestExecutor {
@@ -31,8 +34,74 @@ class TokenRequestExecutor {
 
         LOG.debug("Sending token request to: {}", requestAuthority.canonicalAuthorityUrl());
         OAuthHttpRequest oAuthHttpRequest = createOauthHttpRequest();
+
+        if (isMtlsPopRequest()) {
+            return executeTokenRequestWithMtls(oAuthHttpRequest);
+        }
+
         HttpResponse oauthHttpResponse = oAuthHttpRequest.send();
         return createAuthenticationResultFromOauthHttpResponse(oauthHttpResponse);
+    }
+
+    private boolean isMtlsPopRequest() {
+        return msalRequest instanceof ClientCredentialRequest &&
+                ((ClientCredentialRequest) msalRequest).parameters.mtlsProofOfPossession();
+    }
+
+    private AuthenticationResult executeTokenRequestWithMtls(OAuthHttpRequest oAuthHttpRequest) throws IOException {
+        ClientCertificate cert = getMtlsClientCertificate();
+
+        X509Certificate[] chain = cert.publicKeyCertificateChain().toArray(new X509Certificate[0]);
+        SSLSocketFactory sslSocketFactory = MtlsSslContextHelper.createSslSocketFactory(cert.privateKey(), chain);
+        IHttpClient mtlsHttpClient = new DefaultHttpClient(null, sslSocketFactory, null, null);
+
+        String region = ((AbstractClientApplicationBase) msalRequest.application()).azureRegion();
+        String mtlsEndpoint = MtlsPopAuthenticationScheme.buildMtlsTokenEndpoint(
+                region, requestAuthority.tenant, requestAuthority.host);
+        URL mtlsUrl = new URL(mtlsEndpoint);
+
+        LOG.debug("mTLS PoP: sending token request to {}", mtlsEndpoint);
+        HttpResponse oauthHttpResponse = oAuthHttpRequest.sendWithClient(mtlsUrl, mtlsHttpClient);
+        AuthenticationResult result = createAuthenticationResultFromOauthHttpResponse(oauthHttpResponse);
+
+        // Annotate with mTLS PoP token type and binding certificate
+        return AuthenticationResult.builder()
+                .accessToken(result.accessToken())
+                .refreshToken(result.refreshToken())
+                .familyId(result.familyId())
+                .idToken(result.idToken())
+                .environment(result.environment())
+                .expiresOn(result.expiresOn())
+                .extExpiresOn(result.extExpiresOn())
+                .refreshOn(result.refreshOn())
+                .accountCacheEntity(result.accountCacheEntity())
+                .scopes(result.scopes())
+                .metadata(result.metadata())
+                .isPopAuthorization(result.isPopAuthorization())
+                .tokenType(MtlsPopAuthenticationScheme.TOKEN_TYPE_MTLS_POP)
+                .bindingCertificate(chain[0])
+                .build();
+    }
+
+    private ClientCertificate getMtlsClientCertificate() {
+        ConfidentialClientApplication app = (ConfidentialClientApplication) msalRequest.application();
+        IClientCredential credential = app.clientCredential;
+
+        // Check for per-request credential override
+        if (msalRequest instanceof ClientCredentialRequest) {
+            IClientCredential override = ((ClientCredentialRequest) msalRequest).parameters.clientCredential();
+            if (override != null) {
+                credential = override;
+            }
+        }
+
+        if (!(credential instanceof ClientCertificate)) {
+            throw new MsalClientException(
+                    "mTLS Proof-of-Possession requires a ClientCertificate credential. " +
+                    "ClientSecret and ClientAssertion are not supported for mTLS PoP.",
+                    AuthenticationErrorCode.INVALID_REQUEST);
+        }
+        return (ClientCertificate) credential;
     }
 
     OAuthHttpRequest createOauthHttpRequest() throws MalformedURLException {
@@ -125,6 +194,12 @@ class TokenRequestExecutor {
                     LOG.warn("Could not create authority with tenant override: {}", e.getMessage());
                 }
             }
+
+            // For mTLS PoP, authentication happens at the TLS layer — do not send client_assertion
+            if (parameters.mtlsProofOfPossession()) {
+                queryParameters.put("token_type", MtlsPopAuthenticationScheme.TOKEN_TYPE_MTLS_POP);
+                return;
+            }
         }
 
         // Quick return if no credential is provided
@@ -202,6 +277,7 @@ class TokenRequestExecutor {
                     refreshOn(response.getRefreshIn() > 0 ? currTimestampSec + response.getRefreshIn() : 0).
                     accountCacheEntity(accountCacheEntity).
                     scopes(response.getScope()).
+                    tokenType(response.getTokenType()).
                     metadata(AuthenticationResultMetadata.builder()
                             .tokenSource(TokenSource.IDENTITY_PROVIDER)
                             .refreshOn(response.getRefreshIn() > 0 ? currTimestampSec + response.getRefreshIn() : 0)

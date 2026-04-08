@@ -16,6 +16,7 @@ class TokenResponse {
     private String accessToken;
     private String idToken;
     private String refreshToken;
+    private String tokenType;
 
     TokenResponse(Map<String, String> jsonMap) {
         this.accessToken = jsonMap.get("access_token");
@@ -27,6 +28,7 @@ class TokenResponse {
         this.extExpiresIn = StringHelper.isNullOrBlank(jsonMap.get("ext_expires_in")) ? 0 : Long.parseLong(jsonMap.get("ext_expires_in"));
         this.refreshIn = StringHelper.isNullOrBlank(jsonMap.get("refresh_in")) ? 0: Long.parseLong(jsonMap.get("refresh_in"));
         this.foci = jsonMap.get("foci");
+        this.tokenType = jsonMap.get("token_type");
     }
 
     static TokenResponse parseHttpResponse(final HttpResponse httpResponse) {
@@ -72,5 +74,9 @@ class TokenResponse {
 
     public String refreshToken() {
         return refreshToken;
+    }
+
+    public String getTokenType() {
+        return tokenType;
     }
 }

@@ -162,6 +162,12 @@ public class AuthenticationErrorCode {
     public static final String INVALID_TIMESTAMP_FORMAT = "invalid_timestamp_format";
 
     /**
+     * Indicates that the request is invalid or malformed. For example, required parameters are missing,
+     * a value is out of range, or the request is not authorized for the specified scope.
+     */
+    public static final String INVALID_REQUEST = "invalid_request";
+
+    /**
      * Indicates that instance discovery failed because the authority is not a valid instance.
      * This is returned by the instance discovery endpoint when the provided authority host is unknown.
      */
