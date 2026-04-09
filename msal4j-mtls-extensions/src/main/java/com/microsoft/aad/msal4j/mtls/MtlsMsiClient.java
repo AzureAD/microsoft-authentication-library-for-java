@@ -3,34 +3,57 @@
 
 package com.microsoft.aad.msal4j.mtls;
 
+import com.sun.jna.Pointer;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509KeyManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
+import java.security.PrivateKey;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
 /**
- * Acquires mTLS Proof-of-Possession tokens for Azure Managed Identity by spawning
- * {@code MsalMtlsMsiHelper.exe} as a child process.
+ * Acquires mTLS Proof-of-Possession tokens for Azure Managed Identity.
  *
- * <h2>Why a subprocess?</h2>
- * <p>Java's TLS stack (JSSE) uses Windows CryptoAPI (CAPI) via {@code SunMSCAPI}, which is the
- * legacy API — not CNG ({@code NCrypt*}). Azure Managed Identity mTLS PoP requires KeyGuard keys,
- * which are created with {@code NCryptCreatePersistedKey} using CNG-only VBS isolation flags
- * ({@code NCRYPT_VBS_KEYISOLATION_FLAG}). CAPI cannot create or use these keys, and JSSE cannot
- * delegate a TLS handshake to a {@code NCRYPT_KEY_HANDLE} directly (unlike .NET's Schannel).
- * Therefore, the entire flow — key creation, CSR, optional MAA attestation, IMDS credential
- * issuance, and the mTLS token request — is delegated to a .NET 8 subprocess that calls
- * {@code Microsoft.Identity.Client}.</p>
+ * <p>Uses JNA to call Windows CNG ({@code ncrypt.dll}) and, optionally,
+ * {@code AttestationClientLib.dll} directly from the JVM. No .NET runtime or subprocess is
+ * required.</p>
+ *
+ * <h2>Architecture</h2>
+ * <ol>
+ *   <li>Get or create a KeyGuard CNG key via {@link CngKeyGuard} (JNA → {@code ncrypt.dll}).</li>
+ *   <li>Generate a PKCS#10 CSR signed with that key ({@link Pkcs10Builder}).</li>
+ *   <li>Optionally obtain an MAA attestation JWT from {@code AttestationClientLib.dll}.</li>
+ *   <li>POST CSR (+ attestation JWT) to IMDS {@code /issuecredential} → X.509 certificate.</li>
+ *   <li>Build a JSSE {@link SSLContext} backed by a custom {@link CngProvider} that signs the
+ *       TLS handshake using {@code NCryptSignHash} — the private key never leaves CNG.</li>
+ *   <li>POST to the regional mTLS token endpoint and return the {@code mtls_pop} token.</li>
+ * </ol>
  *
  * <h2>Requirements</h2>
  * <ul>
  *   <li>Windows Azure VM with Managed Identity enabled</li>
- *   <li>.NET 8 runtime installed (pre-installed on most Azure Windows VM images)</li>
- *   <li>{@code MsalMtlsMsiHelper.exe} bundled in the JAR or pointed to via
- *       {@code MSAL_MTLS_HELPER_PATH}</li>
+ *   <li>{@code AttestationClientLib.dll} on {@code PATH} (from the
+ *       {@code Microsoft.Azure.Security.KeyGuardAttestation} NuGet package) when
+ *       {@code withAttestation=true} and the VM is Trusted Launch</li>
  * </ul>
  *
  * <h2>Usage</h2>
@@ -38,7 +61,7 @@ import java.util.UUID;
  * MtlsMsiClient client = new MtlsMsiClient();
  * MtlsMsiHelperResult result = client.acquireToken(
  *     "https://management.azure.com",   // resource
- *     "SystemAssigned",                  // identityType
+ *     "SystemAssigned",                  // identityType (informational — IMDS determines identity)
  *     null,                              // identityId (null for system-assigned)
  *     true,                              // withAttestation
  *     UUID.randomUUID().toString()       // correlationId (optional)
@@ -48,33 +71,25 @@ import java.util.UUID;
  */
 public class MtlsMsiClient {
 
-    private final MtlsMsiHelperLocator locator;
-
-    /** Creates a client using the default {@link MtlsMsiHelperLocator}. */
-    public MtlsMsiClient() {
-        this(new MtlsMsiHelperLocator());
-    }
-
-    /**
-     * Creates a client with a custom locator (useful for testing).
-     *
-     * @param locator custom locator for the helper binary
-     */
-    public MtlsMsiClient(MtlsMsiHelperLocator locator) {
-        this.locator = locator;
-    }
+    /** Creates a new client. */
+    public MtlsMsiClient() {}
 
     /**
      * Acquires an mTLS PoP token for a Managed Identity resource.
      *
+     * <p>Note: {@code identityType} and {@code identityId} are accepted for API compatibility but
+     * are not forwarded to IMDS — the VM's managed identity configuration determines which
+     * identity is used. For UserAssigned identities, configure the VM with the desired identity
+     * before calling this method.</p>
+     *
      * @param resource        Azure resource URI (e.g. {@code https://management.azure.com})
-     * @param identityType    {@code "SystemAssigned"} or {@code "UserAssigned"}
-     * @param identityId      Client ID or resource ID for UserAssigned; {@code null} for SystemAssigned
-     * @param withAttestation Whether to include KeyGuard attestation (MAA JWT) in the request
-     * @param correlationId   Optional GUID for telemetry correlation; may be {@code null}
-     * @return the token result
-     * @throws MtlsMsiException if the subprocess fails, the binary cannot be located, or the
-     *                           response cannot be parsed
+     * @param identityType    Accepted for compatibility; IMDS ignores it in the JNA flow
+     * @param identityId      Accepted for compatibility; IMDS ignores it in the JNA flow
+     * @param withAttestation Whether to request MAA attestation (requires Trusted Launch VM with
+     *                        {@code AttestationClientLib.dll} on PATH)
+     * @param correlationId   Optional GUID for telemetry; may be {@code null}
+     * @return the mTLS PoP token result
+     * @throws MtlsMsiException on key creation, IMDS, or token acquisition failure
      */
     public MtlsMsiHelperResult acquireToken(
             String resource,
@@ -86,15 +101,17 @@ public class MtlsMsiClient {
         if (resource == null || resource.isEmpty()) {
             throw new MtlsMsiException("resource must not be null or empty");
         }
-        if (identityType == null || identityType.isEmpty()) {
-            identityType = "SystemAssigned";
-        }
 
-        List<String> cmd = buildAcquireTokenCommand(
-                resource, identityType, identityId, withAttestation, correlationId);
+        MtlsBindingInfo binding = MtlsBindingCertManager.getOrCreate(withAttestation);
+        SSLSocketFactory sslFactory = buildSslSocketFactory(binding, false);
 
-        String stdout = runProcess(cmd);
-        return parseTokenResponse(stdout);
+        String tokenUrl = buildTokenUrl(binding.mtlsEndpoint, binding.tenantId);
+        String requestBody = buildTokenRequestBody(binding.clientId, resource);
+        String requestId   = correlationId != null ? correlationId : UUID.randomUUID().toString();
+
+        String responseJson = httpsPost(tokenUrl, requestBody, "application/x-www-form-urlencoded",
+                sslFactory, requestId);
+        return parseTokenResponse(responseJson, binding);
     }
 
     /**
@@ -103,24 +120,23 @@ public class MtlsMsiClient {
      *
      * <p><strong>Important:</strong> The downstream server <em>must</em> be configured for
      * required mutual TLS — it must send a TLS {@code CertificateRequest} during the handshake.
-     * Public Azure APIs (e.g. Graph, Key Vault) use optional mTLS and will <em>NOT</em> trigger
-     * client certificate presentation. Use this mode only with servers explicitly configured to
-     * require a client certificate.</p>
+     * Public Azure APIs (Graph, Key Vault, etc.) use optional mTLS and will <em>NOT</em> trigger
+     * client certificate presentation. Use this only with servers that require a client cert.</p>
      *
      * @param url             The full URL to call
      * @param method          HTTP method ({@code GET}, {@code POST}, etc.)
-     * @param token           The mTLS PoP access token to send as the Authorization header
+     * @param token           The mTLS PoP access token for the Authorization header
      * @param body            Request body (may be {@code null})
-     * @param contentType     Content-Type header (defaults to {@code application/json} if null)
-     * @param extraHeaders    Extra headers in {@code "Name: Value"} format (may be null or empty)
-     * @param resource        Azure resource URI (used to re-acquire the binding cert)
-     * @param identityType    {@code "SystemAssigned"} or {@code "UserAssigned"}
-     * @param identityId      Client ID or resource ID for UserAssigned; {@code null} for SystemAssigned
-     * @param withAttestation Whether to include attestation when re-acquiring the binding cert
+     * @param contentType     Content-Type (defaults to {@code application/json} if null)
+     * @param extraHeaders    Extra headers in {@code "Name: Value"} format (may be null)
+     * @param resource        Azure resource URI (used to resolve binding if not cached)
+     * @param identityType    Accepted for compatibility; IMDS ignores it in the JNA flow
+     * @param identityId      Accepted for compatibility; IMDS ignores it in the JNA flow
+     * @param withAttestation Whether to include attestation when refreshing the binding cert
      * @param correlationId   Optional GUID for telemetry; may be {@code null}
-     * @param allowInsecureTls Skip server TLS cert validation (self-signed certs in local testing ONLY)
+     * @param allowInsecureTls Skip server TLS cert validation (for self-signed certs in testing ONLY)
      * @return the HTTP response from the downstream server
-     * @throws MtlsMsiException if the subprocess fails
+     * @throws MtlsMsiException if the binding cert cannot be acquired or the request fails
      */
     public MtlsMsiHttpResponse httpRequest(
             String url,
@@ -136,232 +152,211 @@ public class MtlsMsiClient {
             String correlationId,
             boolean allowInsecureTls) throws MtlsMsiException {
 
-        List<String> cmd = buildHttpRequestCommand(
-                url, method, token, body, contentType, extraHeaders,
-                resource, identityType, identityId, withAttestation, correlationId, allowInsecureTls);
+        MtlsBindingInfo binding = MtlsBindingCertManager.getOrCreate(withAttestation);
+        SSLSocketFactory sslFactory = buildSslSocketFactory(binding, allowInsecureTls);
 
-        String stdout = runProcess(cmd);
-        return parseHttpResponse(stdout);
+        String requestId = correlationId != null ? correlationId : UUID.randomUUID().toString();
+        return httpsRequest(url, method != null ? method : "GET", token, body,
+                contentType != null ? contentType : "application/json",
+                extraHeaders, sslFactory, requestId);
     }
 
-    // ─── Command builders ────────────────────────────────────────────────────
+    // ─── Token request helpers ─────────────────────────────────────────────────
 
-    private List<String> buildAcquireTokenCommand(
-            String resource, String identityType, String identityId,
-            boolean withAttestation, String correlationId) throws MtlsMsiException {
-
-        List<String> cmd = new ArrayList<>();
-        cmd.add(locator.locate());
-        cmd.add("--resource");
-        cmd.add(resource);
-        cmd.add("--identity-type");
-        cmd.add(identityType);
-        if (identityId != null && !identityId.isEmpty()) {
-            cmd.add("--identity-id");
-            cmd.add(identityId);
-        }
-        if (withAttestation) {
-            cmd.add("--with-attestation");
-        }
-        if (correlationId != null && !correlationId.isEmpty()) {
-            cmd.add("--correlation-id");
-            cmd.add(correlationId);
-        }
-        return cmd;
+    private static String buildTokenUrl(String mtlsEndpoint, String tenantId) {
+        String base = mtlsEndpoint.endsWith("/")
+                ? mtlsEndpoint.substring(0, mtlsEndpoint.length() - 1)
+                : mtlsEndpoint;
+        return base + "/" + tenantId + "/oauth2/v2.0/token";
     }
 
-    private List<String> buildHttpRequestCommand(
-            String url, String method, String token, String body, String contentType,
-            List<String> extraHeaders, String resource, String identityType, String identityId,
-            boolean withAttestation, String correlationId, boolean allowInsecureTls)
+    private static String buildTokenRequestBody(String clientId, String resource) {
+        String scope = resource.endsWith("/.default") ? resource : resource + "/.default";
+        return "grant_type=client_credentials"
+                + "&client_id=" + urlEncode(clientId)
+                + "&scope="     + urlEncode(scope)
+                + "&token_type=mtls_pop";
+    }
+
+    private static String urlEncode(String s) {
+        try {
+            return java.net.URLEncoder.encode(s, "UTF-8");
+        } catch (java.io.UnsupportedEncodingException e) {
+            return s;
+        }
+    }
+
+    // ─── JSSE mTLS helpers ────────────────────────────────────────────────────
+
+    private static SSLSocketFactory buildSslSocketFactory(MtlsBindingInfo binding,
+                                                           boolean insecure)
             throws MtlsMsiException {
+        CngProvider.installIfAbsent();
 
-        List<String> cmd = new ArrayList<>();
-        cmd.add(locator.locate());
-        cmd.add("--mode");
-        cmd.add("http-request");
-        cmd.add("--url");
-        cmd.add(url);
-        cmd.add("--method");
-        cmd.add(method != null ? method : "GET");
-        cmd.add("--token");
-        cmd.add(token);
-        if (body != null && !body.isEmpty()) {
-            cmd.add("--body");
-            cmd.add(body);
+        X509KeyManager km = new CngX509KeyManager(binding.privateKey, binding.certificate);
+        TrustManager[] tms = insecure ? new TrustManager[]{TRUST_ALL} : null;
+
+        try {
+            SSLContext ctx = SSLContext.getInstance("TLS");
+            ctx.init(new KeyManager[]{km}, tms, null);
+            return ctx.getSocketFactory();
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            throw new MtlsMsiException("Failed to build mTLS SSLContext: " + e.getMessage(), e);
         }
-        if (contentType != null && !contentType.isEmpty()) {
-            cmd.add("--content-type");
-            cmd.add(contentType);
-        }
-        if (extraHeaders != null) {
-            for (String h : extraHeaders) {
-                cmd.add("--header");
-                cmd.add(h);
-            }
-        }
-        if (resource != null && !resource.isEmpty()) {
-            cmd.add("--resource");
-            cmd.add(resource);
-        }
-        cmd.add("--identity-type");
-        cmd.add(identityType != null ? identityType : "SystemAssigned");
-        if (identityId != null && !identityId.isEmpty()) {
-            cmd.add("--identity-id");
-            cmd.add(identityId);
-        }
-        if (withAttestation) {
-            cmd.add("--with-attestation");
-        }
-        if (correlationId != null && !correlationId.isEmpty()) {
-            cmd.add("--correlation-id");
-            cmd.add(correlationId);
-        }
-        if (allowInsecureTls) {
-            cmd.add("--allow-insecure-tls");
-        }
-        return cmd;
     }
 
-    // ─── Process execution ───────────────────────────────────────────────────
+    /** X509KeyManager that returns the CNG-backed key and the IMDS certificate. */
+    private static final class CngX509KeyManager implements X509KeyManager {
+        private final CngRsaPrivateKey key;
+        private final X509Certificate  cert;
 
-    String runProcess(List<String> cmd) throws MtlsMsiException {
-        ProcessBuilder pb = new ProcessBuilder(cmd);
-        pb.redirectErrorStream(false);
+        CngX509KeyManager(CngRsaPrivateKey key, X509Certificate cert) {
+            this.key  = key;
+            this.cert = cert;
+        }
 
-        Process process;
+        @Override public String[] getClientAliases(String keyType, Principal[] issuers) {
+            return new String[]{"mtls"};
+        }
+        @Override public String chooseClientAlias(String[] keyTypes, Principal[] issuers, Socket s) {
+            return "mtls";
+        }
+        @Override public X509Certificate[] getCertificateChain(String alias) {
+            return new X509Certificate[]{cert};
+        }
+        @Override public PrivateKey getPrivateKey(String alias) { return key; }
+
+        @Override public String[] getServerAliases(String keyType, Principal[] issuers) { return null; }
+        @Override public String chooseServerAlias(String keyType, Principal[] issuers, Socket s) { return null; }
+    }
+
+    /** Accepts any server certificate — for testing only. */
+    private static final TrustManager TRUST_ALL = new X509TrustManager() {
+        public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[0]; }
+        public void checkClientTrusted(X509Certificate[] c, String a) {}
+        public void checkServerTrusted(X509Certificate[] c, String a) {}
+    };
+
+    // ─── HTTP helpers ─────────────────────────────────────────────────────────
+
+    private static String httpsPost(String urlStr, String body, String contentType,
+                                     SSLSocketFactory sslFactory, String requestId)
+            throws MtlsMsiException {
         try {
-            process = pb.start();
+            HttpsURLConnection conn = (HttpsURLConnection) new URL(urlStr).openConnection();
+            conn.setSSLSocketFactory(sslFactory);
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", contentType);
+            conn.setRequestProperty("x-ms-client-request-id", requestId);
+            conn.setConnectTimeout(10_000);
+            conn.setReadTimeout(30_000);
+            conn.setDoOutput(true);
+            byte[] bodyBytes = body.getBytes(StandardCharsets.UTF_8);
+            conn.setRequestProperty("Content-Length", String.valueOf(bodyBytes.length));
+            try (OutputStream os = conn.getOutputStream()) {
+                os.write(bodyBytes);
+            }
+            return readHttpsResponse(conn, urlStr);
         } catch (IOException e) {
-            throw new MtlsMsiException("Failed to start MsalMtlsMsiHelper process: " + e.getMessage(), e);
+            throw new MtlsMsiException("mTLS POST to " + urlStr + " failed: " + e.getMessage(), e);
         }
+    }
 
-        // Read stdout and stderr concurrently to prevent deadlock if either buffer fills.
-        final StringBuilder stdoutBuf = new StringBuilder();
-        final StringBuilder stderrBuf = new StringBuilder();
-        final IOException[] ioError = {null};
-
-        Thread stdoutThread = new Thread(() -> {
-            try {
-                stdoutBuf.append(readStreamContent(process.getInputStream()));
-            } catch (IOException e) {
-                ioError[0] = e;
-            }
-        });
-        Thread stderrThread = new Thread(() -> {
-            try {
-                stderrBuf.append(readStreamContent(process.getErrorStream()));
-            } catch (IOException e) {
-                // best-effort stderr capture
-            }
-        });
-
-        stdoutThread.start();
-        stderrThread.start();
-
-        int exitCode;
+    private static MtlsMsiHttpResponse httpsRequest(String urlStr, String method, String token,
+                                                     String body, String contentType,
+                                                     List<String> extraHeaders,
+                                                     SSLSocketFactory sslFactory, String requestId)
+            throws MtlsMsiException {
         try {
-            stdoutThread.join();
-            stderrThread.join();
-            exitCode = process.waitFor();
-        } catch (InterruptedException e) {
-            process.destroyForcibly();
-            Thread.currentThread().interrupt();
-            throw new MtlsMsiException("Interrupted while waiting for MsalMtlsMsiHelper: " + e.getMessage(), e);
-        }
+            HttpsURLConnection conn = (HttpsURLConnection) new URL(urlStr).openConnection();
+            conn.setSSLSocketFactory(sslFactory);
+            conn.setRequestMethod(method);
+            conn.setRequestProperty("Authorization", "Bearer " + token);
+            conn.setRequestProperty("Content-Type", contentType);
+            conn.setRequestProperty("x-ms-client-request-id", requestId);
+            conn.setConnectTimeout(10_000);
+            conn.setReadTimeout(30_000);
 
-        if (ioError[0] != null) {
-            throw new MtlsMsiException("Error reading MsalMtlsMsiHelper stdout: " + ioError[0].getMessage(), ioError[0]);
-        }
-
-        if (exitCode != 0) {
-            String errorMsg = parseErrorFromStderr(stderrBuf.toString());
-            throw new MtlsMsiException("MsalMtlsMsiHelper exited with code " + exitCode + ": " + errorMsg);
-        }
-
-        return stdoutBuf.toString();
-    }
-
-    private String readStream(Process process) {
-        return "";
-    }
-
-    private String readStreamContent(java.io.InputStream stream) throws IOException {
-        if (stream == null) return "";
-        StringBuilder sb = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(stream, StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (sb.length() > 0) sb.append('\n');
-                sb.append(line);
-            }
-        }
-        return sb.toString().trim();
-    }
-
-    private String parseErrorFromStderr(String stderr) {
-        // Try to extract error_description from the JSON error response
-        // {"error":"<code>","error_description":"<msg>"}
-        if (stderr == null || stderr.isEmpty()) return "(no stderr)";
-        int idx = stderr.indexOf("\"error_description\":");
-        if (idx >= 0) {
-            int start = stderr.indexOf('"', idx + 20);
-            if (start >= 0) {
-                int end = stderr.indexOf('"', start + 1);
-                if (end > start) {
-                    return stderr.substring(start + 1, end);
+            if (extraHeaders != null) {
+                for (String header : extraHeaders) {
+                    int colon = header.indexOf(':');
+                    if (colon > 0) {
+                        conn.setRequestProperty(header.substring(0, colon).trim(),
+                                header.substring(colon + 1).trim());
+                    }
                 }
             }
+
+            if (body != null && !body.isEmpty()) {
+                conn.setDoOutput(true);
+                byte[] bodyBytes = body.getBytes(StandardCharsets.UTF_8);
+                conn.setRequestProperty("Content-Length", String.valueOf(bodyBytes.length));
+                try (OutputStream os = conn.getOutputStream()) {
+                    os.write(bodyBytes);
+                }
+            }
+
+            int status   = conn.getResponseCode();
+            InputStream  stream = status >= 400 ? conn.getErrorStream() : conn.getInputStream();
+            String responseBody = readStream(stream);
+            return new MtlsMsiHttpResponse(status, responseBody, responseBody);
+        } catch (IOException e) {
+            throw new MtlsMsiException("mTLS " + method + " " + urlStr + " failed: " + e.getMessage(), e);
         }
-        return stderr;
+    }
+
+    private static String readHttpsResponse(HttpsURLConnection conn, String urlStr)
+            throws IOException, MtlsMsiException {
+        int status = conn.getResponseCode();
+        InputStream stream = status >= 400 ? conn.getErrorStream() : conn.getInputStream();
+        String body = readStream(stream);
+        if (status != 200) {
+            throw new MtlsMsiException(
+                    "mTLS token endpoint " + urlStr + " returned HTTP " + status + ": " + body);
+        }
+        return body;
+    }
+
+    private static String readStream(InputStream stream) throws IOException {
+        if (stream == null) return "";
+        StringBuilder sb = new StringBuilder();
+        try (BufferedReader reader =
+                     new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) sb.append(line);
+        }
+        return sb.toString();
     }
 
     // ─── Response parsers ────────────────────────────────────────────────────
 
-    private MtlsMsiHelperResult parseTokenResponse(String json) throws MtlsMsiException {
+    private static MtlsMsiHelperResult parseTokenResponse(String json, MtlsBindingInfo binding)
+            throws MtlsMsiException {
         if (json == null || json.isEmpty()) {
-            throw new MtlsMsiException("MsalMtlsMsiHelper returned empty output");
+            throw new MtlsMsiException("mTLS token endpoint returned empty response");
         }
-        try {
-            String accessToken = extractJsonString(json, "access_token");
-            String tokenType = extractJsonString(json, "token_type");
-            int expiresIn = extractJsonInt(json, "expires_in");
-            String bindingCert = extractJsonString(json, "binding_certificate");
-            String tenantId = extractJsonString(json, "tenant_id");
-            String clientId = extractJsonString(json, "client_id");
 
-            if (accessToken == null || accessToken.isEmpty()) {
-                throw new MtlsMsiException("MsalMtlsMsiHelper response missing access_token: " + json);
-            }
-            return new MtlsMsiHelperResult(accessToken, tokenType, expiresIn, bindingCert, tenantId, clientId);
-        } catch (MtlsMsiException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new MtlsMsiException("Failed to parse MsalMtlsMsiHelper token response: " + e.getMessage() + " | response: " + json, e);
+        String accessToken = extractJsonString(json, "access_token");
+        if (accessToken == null || accessToken.isEmpty()) {
+            throw new MtlsMsiException("mTLS token response missing access_token: " + json);
         }
+
+        String tokenType = extractJsonString(json, "token_type");
+        int expiresIn    = extractJsonInt(json, "expires_in");
+
+        // Encode the binding certificate as PEM for callers who need it.
+        String bindingCertPem = null;
+        try {
+            byte[] derBytes = binding.certificate.getEncoded();
+            String b64      = Base64.getMimeEncoder(64, new byte[]{'\n'}).encodeToString(derBytes);
+            bindingCertPem  = "-----BEGIN CERTIFICATE-----\n" + b64 + "\n-----END CERTIFICATE-----\n";
+        } catch (CertificateEncodingException ignored) {}
+
+        return new MtlsMsiHelperResult(accessToken, tokenType != null ? tokenType : "mtls_pop",
+                expiresIn, bindingCertPem, binding.tenantId, binding.clientId);
     }
 
-    /**
-     * Parses the JSON HTTP response from the {@code http-request} subprocess mode.
-     */
-    public MtlsMsiHttpResponse parseHttpResponse(String json) throws MtlsMsiException {
-        if (json == null || json.isEmpty()) {
-            throw new MtlsMsiException("MsalMtlsMsiHelper returned empty output for http-request mode");
-        }
-        try {
-            int status = extractJsonInt(json, "status");
-            String body = extractJsonString(json, "body");
-            return new MtlsMsiHttpResponse(status, body, json);
-        } catch (MtlsMsiException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new MtlsMsiException("Failed to parse MsalMtlsMsiHelper http-response: " + e.getMessage() + " | response: " + json, e);
-        }
-    }
-
-    // Minimal JSON field extractors — avoids adding a JSON library dependency.
-    // The subprocess output is machine-generated and well-formed; full DOM parsing is not needed.
+    // ─── Minimal JSON extractors ──────────────────────────────────────────────
 
     static String extractJsonString(String json, String key) {
         String search = "\"" + key + "\"";
@@ -369,25 +364,22 @@ public class MtlsMsiClient {
         if (keyIdx < 0) return null;
         int colonIdx = json.indexOf(':', keyIdx + search.length());
         if (colonIdx < 0) return null;
-        // skip whitespace
         int valueStart = colonIdx + 1;
         while (valueStart < json.length() && Character.isWhitespace(json.charAt(valueStart))) valueStart++;
         if (valueStart >= json.length()) return null;
         if (json.charAt(valueStart) == '"') {
-            // string value
             int end = valueStart + 1;
             while (end < json.length()) {
                 char c = json.charAt(end);
                 if (c == '\\') { end += 2; continue; }
-                if (c == '"') break;
+                if (c == '"')  break;
                 end++;
             }
             return json.substring(valueStart + 1, end)
-                    .replace("\\n", "\n")
+                    .replace("\\n",  "\n")
                     .replace("\\\"", "\"")
                     .replace("\\\\", "\\");
         }
-        if (json.charAt(valueStart) == 'n') return null; // null
         return null;
     }
 
@@ -399,9 +391,11 @@ public class MtlsMsiClient {
         if (colonIdx < 0) return 0;
         int valueStart = colonIdx + 1;
         while (valueStart < json.length() && Character.isWhitespace(json.charAt(valueStart))) valueStart++;
-        if (valueStart >= json.length()) return 0;
         int valueEnd = valueStart;
-        while (valueEnd < json.length() && (Character.isDigit(json.charAt(valueEnd)) || json.charAt(valueEnd) == '-')) valueEnd++;
+        while (valueEnd < json.length()
+                && (Character.isDigit(json.charAt(valueEnd)) || json.charAt(valueEnd) == '-')) {
+            valueEnd++;
+        }
         try {
             return Integer.parseInt(json.substring(valueStart, valueEnd));
         } catch (NumberFormatException e) {

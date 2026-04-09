@@ -12,11 +12,10 @@
     <name>Microsoft Authentication Library for Java - mTLS Extensions</name>
     <description>
         Extension package that enables mTLS Proof-of-Possession (mTLS PoP) token acquisition
-        for Azure Managed Identity scenarios requiring KeyGuard-bound certificates. Delegates
-        key creation, CSR generation, MAA attestation, and IMDS credential issuance to a
-        .NET 8 subprocess (MsalMtlsMsiHelper.exe) because Java's JSSE/SunMSCAPI stack uses
-        the legacy Windows CryptoAPI (CAPI), not CNG, and therefore cannot create or use
-        KeyGuard keys (which require NCryptCreatePersistedKey with CNG-only VBS isolation flags).
+        for Azure Managed Identity scenarios requiring KeyGuard-bound certificates. Uses JNA
+        to call Windows CNG (ncrypt.dll) and AttestationClientLib.dll directly from Java,
+        implementing a java.security.Provider that allows JSSE to use a non-exportable
+        KeyGuard RSA key during the TLS handshake. No .NET runtime or subprocess required.
     </description>
 
     <properties>
@@ -30,6 +29,13 @@
             <groupId>com.microsoft.azure</groupId>
             <artifactId>msal4j</artifactId>
             <version>1.23.1</version>
+        </dependency>
+
+        <!-- JNA: calls ncrypt.dll and AttestationClientLib.dll without a compiled JNI DLL -->
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna</artifactId>
+            <version>5.14.0</version>
         </dependency>
 
         <!-- Test dependencies -->
@@ -58,4 +64,22 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.1.2</version>
+                <configuration>
+                    <!-- Required for Mockito inline mock maker (static/final mocking) on Java 9+ -->
+                    <argLine>
+                        -XX:+EnableDynamicAgentLoading
+                        --add-opens=java.base/java.lang=ALL-UNNAMED
+                        --add-opens=java.base/java.security=ALL-UNNAMED
+                    </argLine>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

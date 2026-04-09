@@ -1,226 +1,140 @@
 # msal4j-mtls-extensions
 
-Provides Managed Identity mTLS Proof-of-Possession (mTLS PoP) support for `msal4j`. This module handles the acquisition of `mtls_pop` tokens using IMDS-issued, KeyGuard-backed certificates on Azure VMs.
+This extension enables mTLS Proof-of-Possession (mTLS PoP) token acquisition for Azure Managed Identity in Java applications. It uses [JNA](https://github.com/java-native-access/jna) to call Windows CNG (`ncrypt.dll`) directly, creating and using KeyGuard-isolated private keys in-process — no .NET runtime or subprocess required.
 
-> **Platform**: Windows only (requires .NET 8 runtime for the bundled `MsalMtlsMsiHelper.exe`)
+The latest code resides in the `dev` branch.
 
----
+Quick links:
 
-## Why a Separate Module?
-
-KeyGuard keys — hardware-isolated private keys used by Managed Identity mTLS PoP — are created via Windows CNG (`NCryptCreatePersistedKey` with `NCRYPT_VBS_KEYISOLATION_FLAG`). Java's Windows TLS integration (`SunMSCAPI`) uses the legacy CAPI subsystem and has no path to CNG. This is the same fundamental limitation as Node.js/OpenSSL.
-
-The solution is a subprocess model: this module bundles `MsalMtlsMsiHelper.exe`, a .NET 8 binary that uses Schannel and CNG natively to handle the full KeyGuard certificate lifecycle. `msal4j-sdk` delegates to this binary when `withMtlsProofOfPossession(true)` is set on `ManagedIdentityParameters`.
-
-For a detailed technical analysis, see [keyguard-jvm-analysis.md](../msal4j-sdk/docs/keyguard-jvm-analysis.md).
-
----
+| [Docs](docs/mtls-pop.md) | [Manual Testing](docs/mtls-pop-manual-testing.md) | [Architecture](docs/mtls-pop-architecture.md) | [Support](README.md#community-help-and-support) |
+| --- | --- | --- | --- |
 
 ## Installation
 
-Add to your `pom.xml`:
+### Requirements
+
+- Windows x64 Azure VM with Managed Identity enabled
+- Java 8 or higher
+- `AttestationClientLib.dll` on `PATH`, when using Trusted Launch VMs with attestation (see [Attestation DLL](#attestationclientlibdll) below)
+
+### Adding the dependency
 
 ```xml
 <dependency>
     <groupId>com.microsoft.azure</groupId>
     <artifactId>msal4j-mtls-extensions</artifactId>
-    <version>1.24.0</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
-The extension is a standalone artifact — you do **not** need to depend on `msal4j` separately; `msal4j-mtls-extensions` already depends on it transitively.
+`msal4j-mtls-extensions` depends on `msal4j` transitively — you do not need to declare `msal4j` separately.
 
----
+### AttestationClientLib.dll
 
-## Requirements
+On Trusted Launch VMs, the IMDS `/issuecredential` endpoint requires a MAA attestation JWT proving the key was created in a VBS-isolated enclave. This JWT is produced by `AttestationClientLib.dll`, distributed via the `Microsoft.Azure.Security.KeyGuardAttestation` NuGet package.
 
-| Requirement | Details |
-|-------------|---------|
-| OS | Windows (the bundled binary is Windows x64) |
-| .NET runtime | .NET 8.x (`dotnet --version` must print `8.x.x`) |
-| Azure environment | VM, App Service, Azure Functions, or any managed-identity-enabled resource |
-| Managed identity | System-assigned or user-assigned identity must be enabled |
+To obtain the DLL:
 
----
+```powershell
+# Download the NuGet package
+dotnet add package Microsoft.Azure.Security.KeyGuardAttestation --package-directory C:\nuget
+
+# Copy the DLL next to your application or to a directory on PATH
+$dll = Get-ChildItem C:\nuget\microsoft.azure.security.keyguardattestation -Recurse -Filter "AttestationClientLib.dll" | Select-Object -First 1
+Copy-Item $dll.FullName C:\your-app\
+```
+
+Unlike msal-dotnet, which receives this DLL automatically via NuGet, Java applications must place it on `PATH` or in the application directory. If your VM does not use Trusted Launch, pass `withAttestation: false` and no DLL is needed.
 
 ## Usage
 
-### System-Assigned Managed Identity
+Before using this extension, ensure Managed Identity is enabled on your Azure VM.
+
+### Acquiring an mTLS PoP Token
+
+Acquiring a token follows this general pattern:
+
+1. Create a client and call `acquireToken()`.
+
+   * System-assigned Managed Identity:
+
+     ```java
+     import com.microsoft.aad.msal4j.mtls.*;
+
+     MtlsMsiClient client = new MtlsMsiClient();
+     MtlsMsiHelperResult result = client.acquireToken(
+         "https://management.azure.com",   // resource
+         "SystemAssigned",                  // identity type
+         null,                              // identity id (null for system-assigned)
+         false,                             // withAttestation — set true on Trusted Launch VMs
+         null                               // correlationId (optional)
+     );
+     String accessToken = result.getAccessToken();
+     ```
+
+   * User-assigned Managed Identity:
+
+     ```java
+     MtlsMsiHelperResult result = client.acquireToken(
+         "https://management.azure.com",
+         "UserAssigned",
+         "your-client-id",
+         false,
+         null
+     );
+     String accessToken = result.getAccessToken();
+     ```
+
+2. The binding certificate is cached in-process for the lifetime of the IMDS-issued certificate (minus a 5-minute safety margin). Subsequent calls return the cached token until it nears expiry.
+
+### Making Downstream mTLS Calls
+
+Once you have a token, use `httpRequest()` to make downstream calls over the same KeyGuard-backed mTLS channel:
 
 ```java
-import com.microsoft.aad.msal4j.*;
-
-ManagedIdentityApplication app = ManagedIdentityApplication
-    .builder(ManagedIdentityId.systemAssigned())
-    .build();
-
-ManagedIdentityParameters params = ManagedIdentityParameters
-    .builder("https://management.azure.com/")
-    .withMtlsProofOfPossession(true)
-    .build();
-
-IAuthenticationResult result = app.acquireTokenForManagedIdentity(params).get();
-String token = result.accessToken();   // mtls_pop token
+MtlsMsiHttpResponse response = client.httpRequest(
+    "https://myservice.example.com/api",  // URL
+    "GET",                                 // method
+    result.getAccessToken(),               // bearer token
+    null,                                  // body
+    null,                                  // contentType
+    null,                                  // extra headers
+    "https://management.azure.com",        // resource (for cert refresh)
+    "SystemAssigned", null,                // identity type, identity id
+    false,                                 // withAttestation
+    null,                                  // correlationId
+    false                                  // allowInsecureTls
+);
+System.out.println(response.getStatus()); // e.g. 200
+System.out.println(response.getBody());
 ```
 
-### User-Assigned Managed Identity
+The downstream server must be configured to *require* mutual TLS — it must send a TLS `CertificateRequest` during the handshake. Public Azure APIs (Graph, Key Vault, etc.) do not require a client certificate.
 
-```java
-// By client ID
-ManagedIdentityApplication app = ManagedIdentityApplication
-    .builder(ManagedIdentityId.userAssignedClientId("your-client-id"))
-    .build();
+## Community Help and Support
 
-// By object ID
-ManagedIdentityApplication app2 = ManagedIdentityApplication
-    .builder(ManagedIdentityId.userAssignedObjectId("your-object-id"))
-    .build();
-```
+We use [Stack Overflow](http://stackoverflow.com/questions/tagged/msal) to work with the community on supporting Azure Active Directory and its SDKs, including this one! We highly recommend you ask your questions on Stack Overflow (we're all on there!) Also browse existing issues to see if someone has had your question before. Please use the "msal" tag when asking your questions.
 
-### With MAA Attestation
+If you find a bug or have a feature request, please raise the issue on [GitHub Issues](https://github.com/AzureAD/microsoft-authentication-library-for-java/issues).
 
-MAA (Microsoft Azure Attestation) attestation provides cryptographic proof that the key was created in a VBS-isolated enclave. Requires Trusted Launch or Confidential VM.
+## Submit Feedback
 
-```java
-ManagedIdentityParameters params = ManagedIdentityParameters
-    .builder("https://graph.microsoft.com/")
-    .withMtlsProofOfPossession(true)
-    .withAttestation(true)
-    .build();
-```
+We'd like your thoughts on this library. Please complete [this short survey.](https://forms.office.com/r/6AhHwQp3pe)
 
----
+## Contributing
 
-## API Reference
+This project welcomes contributions and suggestions. Most contributions require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
 
-### `MtlsMsiClient`
+When you submit a pull request, a CLA bot will automatically determine whether you need to provide a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions provided by the bot. You will only need to do this once across all repos using our CLA.
 
-Main entry point for the subprocess wrapper (used internally by `msal4j-sdk` via reflection).
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
-```java
-package com.microsoft.aad.msal4j.mtls;
+## Security Library
 
-public class MtlsMsiClient {
-    // Acquire an mtls_pop token via MsalMtlsMsiHelper.exe
-    public MtlsMsiHelperResult acquireToken(
-        String resource,
-        String identityType,   // "SystemAssigned" | "UserAssignedClientId" | "UserAssignedObjectId" | "UserAssignedResourceId"
-        String identityId,     // null for SystemAssigned
-        boolean withAttestation,
-        String correlationId
-    ) throws MtlsMsiException;
+This library controls how users sign in and access services. We recommend you always take the latest version of our library in your app when possible. We use [semantic versioning](http://semver.org) so you can control the risk associated with updating your app. As an example, always downloading the latest minor version number (e.g. x.*y*.x) ensures you get the latest security and feature enhancements but our API surface remains the same. You can always see the latest version and release notes under the Releases tab of GitHub.
 
-    // Make an mTLS-authenticated HTTP request via the helper
-    public MtlsMsiHttpResponse httpRequest(
-        String url,
-        String method,
-        String token,
-        Map<String, String> headers,
-        String body
-    ) throws MtlsMsiException;
-}
-```
+## Security Reporting
 
-### `MtlsMsiHelperResult`
+If you find a security issue with our libraries or services please report it to [secure@microsoft.com](mailto:secure@microsoft.com) with as much detail as possible. Your submission may be eligible for a bounty through the [Microsoft Bounty](http://aka.ms/bugbounty) program. Please do not post security issues to GitHub Issues or any other public site. We will contact you shortly upon receiving the information. We encourage you to get notifications of when security incidents occur by visiting [this page](https://technet.microsoft.com/en-us/security/dd252948) and subscribing to Security Advisory Alerts.
 
-Result of a successful `acquireToken` call.
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `accessToken` | `String` | The `mtls_pop` access token |
-| `tokenType` | `String` | Always `"mtls_pop"` |
-| `expiresOn` | `long` | Expiry as Unix timestamp (seconds) |
-| `thumbprint` | `String` | x5t#S256 Base64URL thumbprint of binding cert |
-
-### `MtlsMsiException`
-
-Thrown when the helper subprocess fails. Wraps the error JSON from the helper's stderr:
-
-```json
-{ "error": "...", "error_description": "..." }
-```
-
----
-
-## How It Works
-
-```
-Java App
-  │
-  ▼ acquireTokenForManagedIdentity(params) [withMtlsProofOfPossession=true]
-ManagedIdentityApplication (msal4j-sdk)
-  │
-  ▼ reflection → MtlsMsiClient (msal4j-mtls-extensions)
-MtlsMsiClient
-  │
-  ▼ spawn subprocess
-MsalMtlsMsiHelper.exe (.NET 8)
-  ├── IMDS getplatformmetadata
-  ├── NCryptCreatePersistedKey (CNG + NCRYPT_VBS_KEYISOLATION_FLAG)
-  ├── Generate CSR
-  ├── [optional] MAA attestation
-  ├── IMDS /issuecredential → receives KeyGuard-backed X509 cert
-  ├── mTLS token request to mtlsauth.microsoft.com (Schannel + NCRYPT_KEY_HANDLE)
-  └── stdout: JSON {access_token, token_type, expires_on, thumbprint}
-  │
-  ▼ parse JSON, build AuthenticationResult
-Java App receives IAuthenticationResult
-```
-
----
-
-## Helper Binary Location
-
-The `MsalMtlsMsiHelper.exe` binary is bundled in the JAR at `resources/MsalMtlsMsiHelper.exe`. At runtime, `MtlsMsiHelperLocator` extracts it to a temp directory on first use.
-
-**Override**: Set the `MSAL_MTLS_HELPER_PATH` environment variable to an absolute path to use a custom or pre-extracted binary:
-
-```bash
-set MSAL_MTLS_HELPER_PATH=C:\custom\path\MsalMtlsMsiHelper.exe
-```
-
-This is useful for:
-- Air-gapped environments where JAR extraction is restricted
-- Testing with a debug build of the helper
-- Pre-extracting the binary to a known location as part of VM provisioning
-
----
-
-## Building `MsalMtlsMsiHelper.exe` from Source
-
-The binary is built from the msaljs `msal-node-mtls-extensions` project:
-
-```
-C:\Projects\msaljs\extensions\msal-node-mtls-extensions\native\MsalMtlsMsiHelper\
-```
-
-Build (framework-dependent, requires .NET 8 SDK):
-
-```bash
-cd MsalMtlsMsiHelper
-dotnet publish -r win-x64 --self-contained false -o publish/
-# Output: publish/MsalMtlsMsiHelper.exe (≈1.4 MB)
-```
-
-For self-contained (no .NET runtime required on target):
-
-```bash
-dotnet publish -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish/
-# Output: publish/MsalMtlsMsiHelper.exe (≈65 MB)
-```
-
----
-
-## Token Caching
-
-mTLS PoP tokens are cached in the in-memory token cache with credential type `AccessToken_With_AuthScheme` and a `keyId` segment (the x5t#S256 thumbprint). Cache entries do not conflict with Bearer tokens for the same scope.
-
-Cache TTL matches the `expires_in` returned by AAD (typically 1 hour). Expired tokens trigger a new subprocess invocation.
-
----
-
-## Support and Servicing
-
-This module follows the same support lifecycle as `msal4j`. File issues at [GitHub Issues](https://github.com/AzureAD/microsoft-authentication-library-for-java/issues).
-
-**Windows only**: The bundled `MsalMtlsMsiHelper.exe` is a Windows x64 binary. Linux/macOS Azure environments that support Managed Identity can use the standard Bearer token flow via `ManagedIdentityApplication` without this extension.
+Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT License (the "License").
