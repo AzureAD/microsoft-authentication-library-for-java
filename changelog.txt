@@ -1,3 +1,9 @@
+Version 1.24.1
+=============
+- Improve sovereign cloud support and network error handling (#1018)
+- Internal test restructuring (#1017)
+- Update minor dependencies (#1006, #1013)
+
 Version 1.24.0
 =============
 - Code quality improvements (#992, #993, #994)

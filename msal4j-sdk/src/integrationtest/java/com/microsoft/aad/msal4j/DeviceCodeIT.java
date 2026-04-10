@@ -29,7 +29,9 @@ class DeviceCodeIT {
         seleniumDriver = SeleniumExtensions.createDefaultWebDriver();
     }
 
-    @Test
+    //Temporarily disabling: timeout occuring after 15 minutes, likely either a server-side issue or a UI change
+    //Needs investigation, tracked in https://github.com/AzureAD/microsoft-authentication-library-for-java/issues/1023
+    //@Test
     void DeviceCodeFlowADTest() throws Exception {
         AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
         UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
