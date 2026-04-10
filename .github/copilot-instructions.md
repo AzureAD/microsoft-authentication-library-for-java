@@ -228,7 +228,7 @@ Update this file whenever you make changes that affect:
 ### Example Scenarios
 
 - **Added a new auth flow?** → Add it to the "Authentication Flows & Public APIs" section with its Parameters class, Supplier class, and key classes
-- **Changed version to 1.24.0?** → Update the version in "Project Overview"
+- **Changed the version in the pom.xml?** → Update the version in "Project Overview"
 - **Refactored cache entities?** → Update the "Token Cache" description in "Key Architectural Patterns"
 - **Added a new application type?** → Update "Application Hierarchy" and relevant flow sections
 - **Moved files to new directories?** → Update the "Important Directories" section
