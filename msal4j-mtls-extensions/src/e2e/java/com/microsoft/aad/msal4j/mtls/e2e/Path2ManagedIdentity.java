@@ -33,7 +33,7 @@ import java.util.UUID;
  */
 public class Path2ManagedIdentity {
 
-    private static final String RESOURCE = "https://management.azure.com";
+    private static final String RESOURCE = "https://graph.microsoft.com";
 
     public static void main(String[] args) throws Exception {
         run(args);
@@ -67,7 +67,7 @@ public class Path2ManagedIdentity {
                 System.err.println("ℹ️  AADSTS392196: The resource application does not support certificate-bound tokens.");
                 System.err.println("   This is a tenant/resource configuration issue (same as MSAL.NET on this VM).");
                 System.err.println("   The mTLS handshake succeeded — the code is working correctly.");
-                System.err.println("   To fully test, use a tenant where mTLS PoP is enabled for management.azure.com.");
+                System.err.println("   To fully test, use a tenant where mTLS PoP is enabled for graph.microsoft.com.");
             } else {
                 System.err.println("Common causes:");
                 System.err.println("  - VBS/KeyGuard not running (check msinfo32.exe)");
@@ -110,7 +110,7 @@ public class Path2ManagedIdentity {
 
         // ── Third call: Graph /me to verify token actually works ────────────────
         System.out.println();
-        System.out.println("Making downstream mTLS call to management.azure.com...");
+        System.out.println("Making downstream mTLS call to graph.microsoft.com...");
         makeDownstreamCall(client, result1, withAttestation);
 
         System.out.println();
@@ -121,8 +121,8 @@ public class Path2ManagedIdentity {
 
     private static void makeDownstreamCall(MtlsMsiClient client, MtlsMsiHelperResult result,
                                             boolean withAttestation) {
-        // management.azure.com /subscriptions — any auth error is still a TLS success.
-        String url = "https://management.azure.com/subscriptions?api-version=2020-01-01";
+        // graph.microsoft.com /v1.0/servicePrincipals — any auth error is still a TLS success.
+        String url = "https://graph.microsoft.com/v1.0/servicePrincipals?$top=1";
         try {
             MtlsMsiHttpResponse resp = client.httpRequest(
                     url, "GET", result.getAccessToken(),
@@ -138,9 +138,9 @@ public class Path2ManagedIdentity {
                 System.out.println("  ❌ Server error — check token and resource enrollment");
             }
             if (resp.getStatus() == 200) {
-                System.out.println("  ✅ HTTP 200 — full mTLS PoP token accepted by management.azure.com");
+                System.out.println("  ✅ HTTP 200 — full mTLS PoP token accepted by graph.microsoft.com");
             } else if (resp.getStatus() == 401 || resp.getStatus() == 403) {
-                System.out.println("  ℹ️  " + resp.getStatus() + " — TLS OK, authorization depends on subscription/role");
+                System.out.println("  ℹ️  " + resp.getStatus() + " — TLS OK, authorization depends on permissions");
             }
         } catch (MtlsMsiException e) {
             System.out.println("  ❌ Downstream mTLS call failed: " + e.getMessage());
