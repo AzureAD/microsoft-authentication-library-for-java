@@ -9,9 +9,7 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509KeyManager;
-import javax.net.ssl.X509TrustManager;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -191,14 +189,16 @@ public class MtlsMsiClient {
     private static SSLSocketFactory buildSslSocketFactory(MtlsBindingInfo binding,
                                                            boolean insecure)
             throws MtlsMsiException {
+        if (insecure) {
+            throw new MtlsMsiException("Insecure trust-all TLS mode is not supported.");
+        }
         CngProvider.installIfAbsent();
 
         X509KeyManager km = new CngX509KeyManager(binding.privateKey, binding.certificate);
-        TrustManager[] tms = insecure ? new TrustManager[]{TRUST_ALL} : null;
 
         try {
             SSLContext ctx = SSLContext.getInstance("TLS");
-            ctx.init(new KeyManager[]{km}, tms, null);
+            ctx.init(new KeyManager[]{km}, null, null);
             return ctx.getSocketFactory();
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
             throw new MtlsMsiException("Failed to build mTLS SSLContext: " + e.getMessage(), e);
@@ -229,13 +229,6 @@ public class MtlsMsiClient {
         @Override public String[] getServerAliases(String keyType, Principal[] issuers) { return null; }
         @Override public String chooseServerAlias(String keyType, Principal[] issuers, Socket s) { return null; }
     }
-
-    /** Accepts any server certificate — for testing only. */
-    private static final TrustManager TRUST_ALL = new X509TrustManager() {
-        public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[0]; }
-        public void checkClientTrusted(X509Certificate[] c, String a) {}
-        public void checkServerTrusted(X509Certificate[] c, String a) {}
-    };
 
     // ─── HTTP helpers ─────────────────────────────────────────────────────────
 
