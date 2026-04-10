@@ -191,10 +191,16 @@ public class Path2ManagedIdentity {
             String header  = new String(Base64.getUrlDecoder().decode(pad(parts[0])));
             String payload = new String(Base64.getUrlDecoder().decode(pad(parts[1])));
             System.out.println("  AccessToken header:  " + header);
-            // Print only key claims to keep output readable.
+            // Key claims
             printClaim(payload, "oid");
             printClaim(payload, "tid");
+            printClaim(payload, "appid");
+            printClaim(payload, "app_displayname");
+            printClaim(payload, "idtyp");
+            printClaim(payload, "appidacr");
+            printClaim(payload, "aud");
             printClaim(payload, "token_type");
+            printClaim(payload, "xms_tbflags");
             printClaim(payload, "cnf");
             long expEpoch = extractLong(payload, "exp");
             if (expEpoch > 0) {
@@ -202,6 +208,8 @@ public class Path2ManagedIdentity {
                         + new java.util.Date(expEpoch * 1000));
             }
             System.out.println("  ✅ AccessToken present (" + jwt.length() + " chars)");
+            System.out.println("  Raw JWT:");
+            System.out.println("  " + jwt);
         } catch (Exception e) {
             System.out.println("  AccessToken: (could not decode JWT: " + e.getMessage() + ")");
         }
