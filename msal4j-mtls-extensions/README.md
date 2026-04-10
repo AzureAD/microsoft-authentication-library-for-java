@@ -6,8 +6,8 @@ The latest code resides in the `dev` branch.
 
 Quick links:
 
-| [Docs](../../msal4j-sdk/docs/mtls-pop.md) | [Manual Testing](../../msal4j-sdk/docs/mtls-pop-manual-testing.md) | [Support](README.md#community-help-and-support) |
-| --- | --- | --- |
+| [Docs](../../msal4j-sdk/docs/mtls-pop.md) | [Manual Testing](../../msal4j-sdk/docs/mtls-pop-manual-testing.md) | [Architecture](../../msal4j-sdk/docs/mtls-pop-architecture.md) | [Support](README.md#community-help-and-support) |
+| --- | --- | --- | --- |
 
 ## Installation
 

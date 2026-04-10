@@ -11,7 +11,20 @@ MSAL4J supports two mTLS PoP acquisition paths:
 | Path | Application Type | Certificate Source | Attestation |
 |------|-----------------|-------------------|-------------|
 | **SNI (Subject Name Indication)** | `ConfidentialClientApplication` | Any PKCS12/PEM cert or hardware token (PKCS11) | Not required |
-| **Managed Identity** | `ManagedIdentityApplication` | IMDS-issued KeyGuard-backed certificate | Optional (IMDS-attested) |
+| **Managed Identity** | `MtlsMsiClient` (via `msal4j-mtls-extensions`) | IMDS-issued KeyGuard-backed certificate | Optional (Trusted Launch VMs) |
+
+---
+
+## Cross-SDK Implementation Comparison
+
+| Library | TLS Stack | CNG Support | Approach |
+|---------|-----------|-------------|----------|
+| **msal-java** | JSSE + custom `SSLSocketFactory` (Path 1); JNA → `ncrypt.dll` (Path 2) | ✅ Via JNA | In-process |
+| **msal-dotnet** | Schannel (.NET) | ✅ Native | In-process |
+| **msal-go** | `crypto/tls` (pure Go) | ✅ Via `crypto.Signer` | In-process |
+| **msal-node** | OpenSSL (Node.js) | ❌ None | .NET subprocess (`MsalMtlsMsiHelper.exe`) |
+
+No subprocess is needed in msal-java.
 
 ---
 
@@ -52,22 +65,26 @@ This makes mTLS PoP suitable for high-value API access from server-side applicat
 ### Quick Start
 
 ```java
-// 1. Load your certificate
-InputStream certStream = new FileInputStream("/path/to/cert.p12");
-ClientCertificate cert = ClientCertificate.create(certStream, "password");
+import com.microsoft.aad.msal4j.*;
+import java.io.FileInputStream;
+import java.util.*;
+
+// 1. Load your certificate (PKCS12)
+IClientCertificate cert = ClientCredentialFactory.createFromCertificate(
+    new FileInputStream("/path/to/cert.p12"), "password");
 
 // 2. Build the app (tenanted authority + region required)
 ConfidentialClientApplication app = ConfidentialClientApplication
     .builder("your-client-id", cert)
     .authority("https://login.microsoftonline.com/your-tenant-id")
-    .azureRegion("eastus")     // or AzureRegion.AUTO_DISCOVER_REGION
+    .azureRegion("eastus")     // or autoDetectRegion(true)
     .build();
 
 // 3. Request an mTLS PoP token
 Set<String> scopes = Collections.singleton("https://graph.microsoft.com/.default");
 ClientCredentialParameters params = ClientCredentialParameters
     .builder(scopes)
-    .withMtlsProofOfPossession(true)
+    .withMtlsProofOfPossession()
     .build();
 
 IAuthenticationResult result = app.acquireToken(params).get();
@@ -87,12 +104,10 @@ KeyStore ks = KeyStore.getInstance("PKCS11", pkcs11Provider);
 ks.load(null, "pin".toCharArray());
 
 PrivateKey privateKey = (PrivateKey) ks.getKey("my-key-alias", null);
-X509Certificate[] certChain = ...;  // from ks.getCertificateChain()
+X509Certificate cert = (X509Certificate) ks.getCertificate("my-key-alias");
 
-ClientCertificate cert = ClientCertificate.create(privateKey, certChain);
+IClientCertificate clientCert = ClientCredentialFactory.createFromCertificate(privateKey, cert);
 ```
-
-The `MtlsSslContextHelper` handles the PKCS12 in-memory KeyStore setup transparently.
 
 ### Token Endpoint
 
@@ -183,7 +198,7 @@ ManagedIdentityApplication app = ManagedIdentityApplication
 
 | Method | Description |
 |--------|-------------|
-| `.withMtlsProofOfPossession(boolean)` | When `true`, acquires an `mtls_pop` token instead of Bearer |
+| `.withMtlsProofOfPossession()` | Acquires an `mtls_pop` token instead of Bearer |
 
 ### `ManagedIdentityParameters`
 
@@ -236,6 +251,7 @@ Standard Bearer tokens use a 6-segment key (no `keyId`). The two token types nev
 ## References
 
 - [mTLS PoP Manual Testing Guide](mtls-pop-manual-testing.md)
+- [mTLS PoP Architecture](mtls-pop-architecture.md)
 - [msal4j-mtls-extensions README](../../msal4j-mtls-extensions/README.md)
 - [MSAL.js mTLS PoP](https://github.com/AzureAD/microsoft-authentication-library-for-js/pull/8476)
 - [MSAL.NET mTLS PoP](https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/tree/main/docs)

@@ -64,11 +64,11 @@ import java.util.*;
 
 public class TestMtlsPop {
     public static void main(String[] args) throws Exception {
-        // Load certificate
-        InputStream certStream = new FileInputStream("test-cert.p12");
-        ClientCertificate cert = ClientCertificate.create(certStream, "changeit");
+        // Load certificate (PKCS12)
+        IClientCertificate cert = ClientCredentialFactory.createFromCertificate(
+            new FileInputStream("test-cert.p12"), "changeit");
 
-        // Build app
+        // Build app — tenanted authority and region required
         ConfidentialClientApplication app = ConfidentialClientApplication
             .builder("your-client-id", cert)
             .authority("https://login.microsoftonline.com/your-tenant-id")
@@ -79,7 +79,7 @@ public class TestMtlsPop {
         Set<String> scopes = Collections.singleton("https://graph.microsoft.com/.default");
         ClientCredentialParameters params = ClientCredentialParameters
             .builder(scopes)
-            .withMtlsProofOfPossession(true)
+            .withMtlsProofOfPossession()
             .build();
 
         IAuthenticationResult result = app.acquireToken(params).get();
@@ -108,8 +108,8 @@ Access token:     eyJ0eXAiOiJKV1QiLCJub25jZSI6...
 Call `acquireToken` again immediately — the second call should not make a network request:
 
 ```java
-long t0 = System.currentTimeMillis();
 IAuthenticationResult r1 = app.acquireToken(params).get();
+long t0 = System.currentTimeMillis();
 IAuthenticationResult r2 = app.acquireToken(params).get();
 System.out.println("Same token: " + r1.accessToken().equals(r2.accessToken())); // true
 System.out.println("Elapsed: " + (System.currentTimeMillis() - t0) + "ms");    // should be <50ms
@@ -277,7 +277,7 @@ IAuthenticationResult bearerResult = app.acquireToken(bearerParams).get();
 // Acquire mTLS PoP token
 ClientCredentialParameters mtlsParams = ClientCredentialParameters
     .builder(scopes)
-    .withMtlsProofOfPossession(true)
+    .withMtlsProofOfPossession()
     .build();
 IAuthenticationResult mtlsResult = app.acquireToken(mtlsParams).get();
 
