@@ -45,7 +45,9 @@ class AuthorizationCodeIT extends SeleniumTest {
         assertAcquireTokenAAD(user, app.getAppId(), null);
     }
 
-    @Test
+    //Temporarily disabling: no change in the library, but started seeing "The service has encountered an internal error. Please reauthenticate and try again."
+    //Needs investigation, tracked in https://github.com/AzureAD/microsoft-authentication-library-for-java/issues/1023
+    //@Test
     public void acquireTokenWithAuthorizationCode_B2C_Local() {
         UserConfig user = LabResponseHelper.getUserConfig(USER_B2C);
         assertAcquireTokenB2C(user);
