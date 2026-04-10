@@ -80,21 +80,27 @@ abstract class CngSignatureSpi extends SignatureSpi {
     @Override
     protected void engineInitVerify(java.security.PublicKey publicKey)
             throws InvalidKeyException {
-        if (delegate != null) {
-            try {
-                delegate.initVerify(publicKey);
-            } catch (java.security.InvalidKeyException e) {
-                throw new InvalidKeyException(e.getMessage(), e);
-            }
-        }
-        // Verification is not supported for CNG-backed keys in this provider;
-        // client-auth TLS and CSR signing only require engineInitSign.
+        // CNG only handles signing (NCryptSignHash). For verification (server cert
+        // validation, etc.) we deliberately throw InvalidKeyException so that
+        // Signature.Delegate.chooseProvider() skips this SPI and falls through to
+        // SunRsaSign or another standard provider that handles RSA/ECDSA verification.
+        throw new InvalidKeyException(
+                "CngSignatureSpi does not support verification; use SunRsaSign");
     }
 
     @Override
     protected void engineInitSign(PrivateKey key) throws InvalidKeyException {
         if (key instanceof CngRsaPrivateKey) {
-            cngHandle = ((CngRsaPrivateKey) key).getHandle();
+            Pointer h;
+            try {
+                h = ((CngRsaPrivateKey) key).getHandle();
+            } catch (IllegalStateException e) {
+                throw new InvalidKeyException("CNG key is closed: " + e.getMessage(), e);
+            }
+            if (h == null) {
+                throw new InvalidKeyException("CNG key handle is null (key may be closed or invalid)");
+            }
+            cngHandle = h;
             delegate  = null;
             try {
                 digest = MessageDigest.getInstance(hashJce);
@@ -104,6 +110,7 @@ abstract class CngSignatureSpi extends SignatureSpi {
         } else {
             // Delegate to the next provider that handles this algorithm.
             cngHandle = null;
+            delegate   = null;
             try {
                 delegate = getNextProviderSignature();
                 delegate.initSign(key);
@@ -117,8 +124,12 @@ abstract class CngSignatureSpi extends SignatureSpi {
     protected void engineUpdate(byte b) throws SignatureException {
         if (cngHandle != null) {
             digest.update(b);
-        } else {
+        } else if (delegate != null) {
             delegate.update(b);
+        } else {
+            throw new SignatureException(
+                    "CngSignatureSpi.engineUpdate called before engineInitSign — " +
+                    "Signature object was not properly initialized");
         }
     }
 
@@ -126,8 +137,12 @@ abstract class CngSignatureSpi extends SignatureSpi {
     protected void engineUpdate(byte[] b, int off, int len) throws SignatureException {
         if (cngHandle != null) {
             digest.update(b, off, len);
-        } else {
+        } else if (delegate != null) {
             delegate.update(b, off, len);
+        } else {
+            throw new SignatureException(
+                    "CngSignatureSpi.engineUpdate called before engineInitSign — " +
+                    "Signature object was not properly initialized");
         }
     }
 

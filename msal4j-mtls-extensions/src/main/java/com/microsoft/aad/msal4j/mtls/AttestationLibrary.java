@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j.mtls;
 
+import com.sun.jna.Callback;
 import com.sun.jna.Library;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
@@ -34,18 +35,37 @@ import java.util.List;
 interface AttestationLibrary extends Library {
 
     /**
+     * No-op log callback that satisfies the DLL's requirement for a non-null LogFunc.
+     *
+     * <p>The DLL requires a non-null log function pointer in {@link AttestationLogInfo}.
+     * Passing {@code Pointer.NULL} causes {@code InitAttestationLib} to return an error
+     * (0xFFFFFFF8 = -8). Mirrors msal-go's {@code dummyLogCallback}.</p>
+     *
+     * <p>Signature (cdecl, x64 Windows):
+     * {@code void LogFunc(void* ctx, char* tag, int lvl, char* func, int line, char* msg)}</p>
+     */
+    interface LogCallback extends Callback {
+        void log(Pointer ctx, Pointer tag, int level, Pointer func, int line, Pointer msg);
+    }
+
+    /** Shared no-op log callback instance — kept alive to prevent GC. */
+    LogCallback NOOP_LOG = (ctx, tag, level, func, line, msg) -> {};
+
+    /**
      * Mirrors the {@code AttestationLogInfo} struct:
-     * <pre>struct AttestationLogInfo { void* LogFunc; void* Ctx; }</pre>
-     * Pass zero values to disable logging.
+     * <pre>struct AttestationLogInfo { LogFunc Log; void* Ctx; }</pre>
+     *
+     * <p>The {@code logFunc} field MUST be a non-null function pointer — the DLL validates
+     * this and returns an error if it is null. Use {@link #NOOP_LOG} for no-op logging.</p>
      */
     class AttestationLogInfo extends Structure {
-        /** Function pointer for the log callback. Use zero/null for no-op. */
-        public Pointer logFunc;
+        /** Function pointer for the log callback. MUST NOT be null. */
+        public LogCallback logFunc;
         /** Caller context pointer, passed as first arg to logFunc. */
         public Pointer ctx;
 
         public AttestationLogInfo() {
-            logFunc = Pointer.NULL;
+            logFunc = NOOP_LOG;   // DLL requires a non-null log function pointer
             ctx     = Pointer.NULL;
         }
 
@@ -58,7 +78,7 @@ interface AttestationLibrary extends Library {
     /**
      * Initializes the attestation library.
      *
-     * @param logInfo logging configuration; pass a zeroed struct to disable
+     * @param logInfo logging configuration; {@code logFunc} MUST be non-null
      * @return 0 on success, non-zero on failure
      */
     int InitAttestationLib(AttestationLogInfo logInfo);
@@ -87,3 +107,4 @@ interface AttestationLibrary extends Library {
     /** Uninitializes the attestation library. Call after all attestation operations. */
     void UninitAttestationLib();
 }
+

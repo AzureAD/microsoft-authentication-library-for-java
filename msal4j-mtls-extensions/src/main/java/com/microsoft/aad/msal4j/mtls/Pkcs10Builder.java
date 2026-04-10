@@ -251,16 +251,20 @@ final class Pkcs10Builder {
 
     /**
      * CertificationRequestInfo attributes [0]:
-     * [0] IMPLICIT SET OF {
+     * [0] CONSTRUCTED {
      *   SEQUENCE { OID 1.3.6.1.4.1.311.90.2.10, SET { UTF8String(cuIdJson) } }
      * }
-     * Matches msal-go's buildCuIDAttribute().
+     *
+     * <p>Per PKCS#10, {@code [0] IMPLICIT Attributes} — IMPLICIT tagging of a constructed type
+     * keeps the constructed bit, so the tag byte is {@code 0xA0} (context-specific, constructed).
+     * Mirrors msal-go's {@code buildCuIDAttribute()} which uses
+     * {@code asn1.RawValue{Class: ClassContextSpecific, Tag: 0, IsCompound: true}}.</p>
      */
     private static byte[] buildCuIdAttribute(byte[] cuIdJsonBytes) {
-        byte[] utf8Str    = derTagLen(0x0C, cuIdJsonBytes);               // UTF8String
-        byte[] valueSet   = derSet(utf8Str);                               // SET { UTF8String }
-        byte[] attrSeq    = derSequence(concat(derOid(OID_CU_ID), valueSet)); // SEQUENCE { OID, SET }
-        return contextImplicit(0, attrSeq);                                // [0] IMPLICIT
+        byte[] utf8Str  = derTagLen(0x0C, cuIdJsonBytes);                  // UTF8String
+        byte[] valueSet = derSet(utf8Str);                                  // SET { UTF8String }
+        byte[] attrSeq  = derSequence(concat(derOid(OID_CU_ID), valueSet)); // SEQUENCE { OID, SET }
+        return contextExplicit(0, attrSeq);   // [0] CONSTRUCTED { SEQUENCE } — 0xA0 tag
     }
 
     /**
