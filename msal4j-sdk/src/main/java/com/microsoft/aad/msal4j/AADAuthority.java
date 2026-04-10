@@ -8,6 +8,7 @@ import java.net.URL;
 class AADAuthority extends Authority {
 
     private static final String TENANTLESS_TENANT_NAME = "common";
+    private static final String ORGANIZATIONS_TENANT_NAME = "organizations";
     private static final String AUTHORIZATION_ENDPOINT = "oauth2/v2.0/authorize";
     private static final String TOKEN_ENDPOINT = "oauth2/v2.0/token";
     static final String DEVICE_CODE_ENDPOINT = "oauth2/v2.0/devicecode";
@@ -28,7 +29,8 @@ class AADAuthority extends Authority {
         this.tokenEndpoint = String.format(AAD_TOKEN_ENDPOINT_FORMAT, host, tenant);
         this.deviceCodeEndpoint = String.format(DEVICE_CODE_ENDPOINT_FORMAT, host, tenant);
 
-        this.isTenantless = TENANTLESS_TENANT_NAME.equalsIgnoreCase(tenant);
+        this.isTenantless = TENANTLESS_TENANT_NAME.equalsIgnoreCase(tenant)
+                || ORGANIZATIONS_TENANT_NAME.equalsIgnoreCase(tenant);
         this.selfSignedJwtAudience = this.tokenEndpoint;
     }
 }

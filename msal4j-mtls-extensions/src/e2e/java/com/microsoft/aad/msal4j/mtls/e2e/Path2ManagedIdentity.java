@@ -36,6 +36,10 @@ public class Path2ManagedIdentity {
     private static final String RESOURCE = "https://management.azure.com";
 
     public static void main(String[] args) throws Exception {
+        run(args);
+    }
+
+    static void run(String[] args) throws Exception {
         boolean withAttestation = Arrays.asList(args).contains("--attest");
 
         System.out.println("=== Path 2: Managed Identity mTLS PoP ===");

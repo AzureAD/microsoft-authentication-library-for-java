@@ -28,7 +28,7 @@
         <dependency>
             <groupId>com.microsoft.azure</groupId>
             <artifactId>msal4j</artifactId>
-            <version>1.23.1</version>
+            <version>1.24.0</version>
         </dependency>
 
         <!-- JNA: calls ncrypt.dll and AttestationClientLib.dll without a compiled JNI DLL -->
@@ -98,6 +98,18 @@
                             </sources>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>add-e2e-resources</id>
+                        <phase>generate-resources</phase>
+                        <goals><goal>add-resource</goal></goals>
+                        <configuration>
+                            <resources>
+                                <resource>
+                                    <directory>src/e2e/resources</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
 
@@ -127,7 +139,7 @@
                             </filters>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.microsoft.aad.msal4j.mtls.e2e.Path2ManagedIdentity</mainClass>
+                                    <mainClass>com.microsoft.aad.msal4j.mtls.e2e.E2ETestRunner</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
