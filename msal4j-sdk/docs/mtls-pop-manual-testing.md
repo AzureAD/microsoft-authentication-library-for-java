@@ -10,8 +10,9 @@ This guide walks through manual verification of both mTLS PoP paths in MSAL4J.
 - For SNI path: a valid test certificate (PKCS12)
 - For Managed Identity path:
   - An Azure VM with managed identity enabled
+  - Windows x64 OS with VBS (Virtualization-Based Security) KeyGuard
   - `msal4j-mtls-extensions` on classpath (add dependency)
-  - .NET 8 runtime installed on the VM
+  - On Trusted Launch VMs: `AttestationClientLib.dll` on `PATH`
 - An AAD tenant with a registered app (client credentials configured)
 
 ---
@@ -145,119 +146,120 @@ Decode the access token (base64url decode the middle JWT segment) and verify:
 ### Prerequisites
 
 - Azure VM with managed identity enabled (System-assigned or User-assigned)
-- `msal4j-mtls-extensions` JAR on classpath
-- .NET 8 runtime: `dotnet --version` should print `8.x.x`
-- IMDS accessible: `curl http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=...`
+- Windows x64 OS with VBS (Virtualization-Based Security) KeyGuard
+- `msal4j-mtls-extensions` JAR on classpath (or use the pre-built fat JAR)
+- On Trusted Launch VMs: `AttestationClientLib.dll` on `PATH` or application directory
+- No .NET runtime required — the extension calls CNG directly via JNA
 
-### 1. Smoke-test the .NET helper binary
-
-Locate the helper (bundled in the `msal4j-mtls-extensions` JAR or at `MSAL_MTLS_HELPER_PATH`):
+### 1. Build the e2e fat JAR
 
 ```bash
-# If using env override:
-export MSAL_MTLS_HELPER_PATH=/path/to/MsalMtlsMsiHelper.exe
-
-# Smoke test - acquire token for ARM resource
-./MsalMtlsMsiHelper.exe \
-  --mode acquire-token \
-  --resource https://management.azure.com/ \
-  --identity-type SystemAssigned
+cd msal4j-mtls-extensions
+mvn package -DskipTests
+# Produces: target/msal4j-mtls-extensions-1.0.0-e2e.jar
 ```
 
-Expected stdout (JSON):
-```json
-{
-  "access_token": "eyJ0...",
-  "token_type": "mtls_pop",
-  "expires_on": 1234567890,
-  "thumbprint": "abc123..."
-}
+### 2. Run Path 2 (Managed Identity)
+
+```powershell
+# Basic (no attestation — works on standard VMs)
+java -jar target\msal4j-mtls-extensions-1.0.0-e2e.jar path2
+
+# With attestation (Trusted Launch VMs with AttestationClientLib.dll)
+java -Djava.library.path=C:\msiv2 -jar target\msal4j-mtls-extensions-1.0.0-e2e.jar path2 --attest
 ```
 
-### 2. Java test program
+### 3. Expected output
+
+```
+=== Path 2: Managed Identity mTLS PoP ===
+
+Acquiring mTLS PoP token via IMDSv2 (full flow)...
+
+[First call (from IMDS)]
+  ✅ BindingCertificate present
+     Subject:   CN=<client-id>,DC=<tenant-id>
+     Issuer:    CN=managedidentitysnissuer.login.microsoft.com
+     NotBefore: ...
+     NotAfter:  ... (14 days)
+  TokenType:  mtls_pop
+  ExpiresIn:  86399s
+  AccessToken cnf: {"x5t#S256":"<thumbprint>"}
+  ✅ AccessToken present
+
+Acquiring again (expect cert cache hit)...
+[Second call (should be cert-cached, ~fast)]
+  ✅ Binding cert cache working: same cert on second call
+  ⏱  Elapsed: ~60ms
+
+Making downstream mTLS call to graph.microsoft.com...
+  Downstream HTTP status: 401
+  ✅ TLS handshake + token delivery succeeded (HTTP < 500)
+  ℹ️  401 — TLS OK, authorization depends on permissions
+
+=== Path 2 Complete ===
+```
+
+> **Expected HTTP 401 from graph.microsoft.com:** This is correct behavior. The TLS handshake and token were accepted — the managed identity simply has no Graph role assigned. HTTP 401 confirms the mTLS PoP flow succeeded end-to-end.
+
+### 4. Java API
 
 ```java
-import com.microsoft.aad.msal4j.*;
-import java.util.*;
-
-public class TestMtlsMsi {
-    public static void main(String[] args) throws Exception {
-        ManagedIdentityApplication app = ManagedIdentityApplication
-            .builder(ManagedIdentityId.systemAssigned())
-            .build();
-
-        ManagedIdentityParameters params = ManagedIdentityParameters
-            .builder("https://management.azure.com/")
-            .withMtlsProofOfPossession(true)
-            .build();
-
-        IAuthenticationResult result = app.acquireTokenForManagedIdentity(params).get();
-
-        System.out.println("=== SUCCESS ===");
-        System.out.println("Token type: " + result.tokenType());
-        System.out.println("Expires:    " + result.expiresOnDate());
-        System.out.println("Token:      " + result.accessToken().substring(0, 40) + "...");
-    }
-}
-```
-
-### 3. With attestation
-
-```java
-ManagedIdentityParameters params = ManagedIdentityParameters
-    .builder("https://management.azure.com/")
-    .withMtlsProofOfPossession(true)
-    .withAttestation(true)
-    .build();
-```
-
-Attestation requires:
-- Azure VM with vTPM or Trusted Launch enabled
-- MAA (Microsoft Azure Attestation) service accessible from the VM
-
-### 4. User-assigned managed identity
-
-```java
-// By client ID
-ManagedIdentityApplication app = ManagedIdentityApplication
-    .builder(ManagedIdentityId.userAssignedClientId("your-client-id"))
-    .build();
-
-// By object ID  
-ManagedIdentityApplication app2 = ManagedIdentityApplication
-    .builder(ManagedIdentityId.userAssignedObjectId("your-object-id"))
-    .build();
-
-// By resource ID
-ManagedIdentityApplication app3 = ManagedIdentityApplication
-    .builder(ManagedIdentityId.userAssignedResourceId("/subscriptions/.../resourceGroups/.../providers/..."))
-    .build();
-```
-
-### 5. End-to-end test: making an mTLS-required HTTP request
-
-Use the result from step 2 to make a request to a resource server that enforces mTLS:
-
-```java
-// After acquiring the token, use MtlsMsiClient directly for mTLS-authenticated HTTP calls
-// (this requires msal4j-mtls-extensions on classpath)
-import com.microsoft.aad.msal4j.mtls.MtlsMsiClient;
+import com.microsoft.aad.msal4j.mtls.*;
 
 MtlsMsiClient client = new MtlsMsiClient();
-// Use the token to call a downstream API via mTLS
-// The helper binary handles the mTLS transport
+MtlsMsiHelperResult result = client.acquireToken(
+    "https://graph.microsoft.com",   // resource (graph.microsoft.com confirmed enrolled)
+    "SystemAssigned",                 // identity type
+    null,                             // identity id (null for system-assigned)
+    false,                            // withAttestation — set true on Trusted Launch VMs
+    null                              // correlationId (optional)
+);
+
+String accessToken = result.getAccessToken();
+String certPem     = result.getBindingCertificate();
 ```
+
+> **Resource note:** Use `https://graph.microsoft.com` or `https://storage.azure.com` for testing.
+> `https://management.azure.com` may return `AADSTS392196` if the resource is not enrolled for mTLS PoP in your tenant.
+
+### 5. Verify token claims
+
+Decode the JWT payload and confirm:
+
+```powershell
+$token = "<access-token>"
+$parts = $token -split "\."
+[System.Text.Encoding]::UTF8.GetString(
+    [System.Convert]::FromBase64String(
+        $parts[1].PadRight($parts[1].Length + (4 - $parts[1].Length % 4) % 4, '='))) |
+    ConvertFrom-Json
+```
+
+Expected claims:
+```json
+{
+  "cnf":            { "x5t#S256": "<thumbprint matching binding cert>" },
+  "xms_tbflags":    2,
+  "appidacr":       "2",
+  "aud":            "https://graph.microsoft.com",
+  "idtyp":          "app",
+  "app_displayname": "<your VM's managed identity name>"
+}
+```
+
+The `cnf.x5t#S256` thumbprint must match the binding certificate returned by `result.getBindingCertificate()`.
 
 ### Troubleshooting
 
 | Symptom | Likely Cause | Fix |
 |---------|-------------|-----|
-| `msal4j-mtls-extensions not on classpath` | Missing dependency | Add `msal4j-mtls-extensions` to pom.xml |
-| Helper not found | No exe or env var not set | Set `MSAL_MTLS_HELPER_PATH` or include extensions JAR |
-| `.NET runtime not found` | .NET 8 not installed | `sudo apt install dotnet-runtime-8.0` or Windows installer |
+| `VBS KeyGuard not available` | Credential Guard not enabled | Enable VBS/Credential Guard and reboot |
+| `AttestationClientLib.dll not found` | DLL not on PATH | Copy DLL from NuGet package to application directory |
+| `HTTP 400 from IMDS issuecredential` | Attestation token empty | Check DLL is present; VM must be Trusted Launch |
+| `AADSTS392196` | Resource not enrolled for mTLS PoP | Use `https://graph.microsoft.com` instead |
 | `IMDS not accessible` | Not running on Azure VM | This path only works in Azure managed identity environments |
-| Helper exits with non-zero | See stderr JSON `error_description` | Check IMDS logs, managed identity config, network rules |
-| Attestation failure | VM doesn't support vTPM | Use `withAttestation(false)` or enable Trusted Launch |
+| `NCryptFinalizeKey NTE_BAD_FLAGS` | VBS not running | Check `msinfo32.exe` → Virtualization-based security must show "Running" |
 
 ---
 

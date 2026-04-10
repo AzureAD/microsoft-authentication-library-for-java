@@ -6,8 +6,8 @@ The latest code resides in the `dev` branch.
 
 Quick links:
 
-| [Docs](docs/mtls-pop.md) | [Manual Testing](docs/mtls-pop-manual-testing.md) | [Architecture](docs/mtls-pop-architecture.md) | [Support](README.md#community-help-and-support) |
-| --- | --- | --- | --- |
+| [Docs](../../msal4j-sdk/docs/mtls-pop.md) | [Manual Testing](../../msal4j-sdk/docs/mtls-pop-manual-testing.md) | [Support](README.md#community-help-and-support) |
+| --- | --- | --- |
 
 ## Installation
 
@@ -50,7 +50,7 @@ Unlike msal-dotnet, which receives this DLL automatically via NuGet, Java applic
 
 Before using this extension, ensure Managed Identity is enabled on your Azure VM.
 
-### Acquiring an mTLS PoP Token
+### Path 2 — Managed Identity: Acquiring an mTLS PoP Token
 
 Acquiring a token follows this general pattern:
 
@@ -63,7 +63,7 @@ Acquiring a token follows this general pattern:
 
      MtlsMsiClient client = new MtlsMsiClient();
      MtlsMsiHelperResult result = client.acquireToken(
-         "https://management.azure.com",   // resource
+         "https://graph.microsoft.com",    // resource (confirmed enrolled for mTLS PoP)
          "SystemAssigned",                  // identity type
          null,                              // identity id (null for system-assigned)
          false,                             // withAttestation — set true on Trusted Launch VMs
@@ -76,7 +76,7 @@ Acquiring a token follows this general pattern:
 
      ```java
      MtlsMsiHelperResult result = client.acquireToken(
-         "https://management.azure.com",
+         "https://graph.microsoft.com",
          "UserAssigned",
          "your-client-id",
          false,
@@ -85,9 +85,11 @@ Acquiring a token follows this general pattern:
      String accessToken = result.getAccessToken();
      ```
 
+   > **Resource note:** Use `https://graph.microsoft.com` or `https://storage.azure.com`. `https://management.azure.com` may return `AADSTS392196` if that resource is not enrolled for mTLS PoP in your tenant.
+
 2. The binding certificate is cached in-process for the lifetime of the IMDS-issued certificate (minus a 5-minute safety margin). Subsequent calls return the cached token until it nears expiry.
 
-### Making Downstream mTLS Calls
+### Path 2 — Making Downstream mTLS Calls
 
 Once you have a token, use `httpRequest()` to make downstream calls over the same KeyGuard-backed mTLS channel:
 
@@ -99,7 +101,7 @@ MtlsMsiHttpResponse response = client.httpRequest(
     null,                                  // body
     null,                                  // contentType
     null,                                  // extra headers
-    "https://management.azure.com",        // resource (for cert refresh)
+    "https://graph.microsoft.com",         // resource (for cert refresh)
     "SystemAssigned", null,                // identity type, identity id
     false,                                 // withAttestation
     null,                                  // correlationId
@@ -109,7 +111,65 @@ System.out.println(response.getStatus()); // e.g. 200
 System.out.println(response.getBody());
 ```
 
-The downstream server must be configured to *require* mutual TLS — it must send a TLS `CertificateRequest` during the handshake. Public Azure APIs (Graph, Key Vault, etc.) do not require a client certificate.
+The downstream server must be configured to *require* mutual TLS — it must send a TLS `CertificateRequest` during the handshake.
+
+### Path 1 — Confidential Client (SNI Certificate)
+
+For applications with an SNI certificate (e.g., from OneCert/DSMS), use `ConfidentialClientApplication` from the core `msal4j` library:
+
+```java
+import com.microsoft.aad.msal4j.*;
+import java.io.FileInputStream;
+
+// 1. Load your certificate (PKCS12)
+IClientCertificate cert = ClientCredentialFactory.createFromCertificate(
+    new FileInputStream("cert.p12"), "password");
+
+// 2. Build the app — tenanted authority and region required
+ConfidentialClientApplication app = ConfidentialClientApplication
+    .builder("your-client-id", cert)
+    .authority("https://login.microsoftonline.com/your-tenant-id")
+    .azureRegion("centraluseuap")
+    .build();
+
+// 3. Acquire an mTLS PoP token
+IAuthenticationResult result = app.acquireToken(
+    ClientCredentialParameters
+        .builder(Collections.singleton("https://graph.microsoft.com/.default"))
+        .withMtlsProofOfPossession()
+        .build()
+).get();
+
+System.out.println("Token type:    " + result.tokenType());       // "mtls_pop"
+System.out.println("Binding cert:  " + result.bindingCertificate().getSubjectX500Principal());
+System.out.println("Access token:  " + result.accessToken());
+```
+
+**Requirements:** Certificate credential, tenanted authority (not `/common` or `/organizations`), Azure region.
+
+---
+
+## End-to-End Test Driver
+
+The `msal4j-mtls-extensions` module ships an e2e fat JAR for manual testing:
+
+```powershell
+# Build
+mvn package -DskipTests
+
+# Path 1 — error-case validation (no Azure credentials required)
+java -jar target\msal4j-mtls-extensions-1.0.0-e2e.jar path1 --errors-only
+
+# Path 1 — full happy path
+java -jar target\msal4j-mtls-extensions-1.0.0-e2e.jar path1 `
+    --tenant <tenantID> --client <clientID> --region centraluseuap
+
+# Path 2 — Managed Identity (with attestation)
+java -Djava.library.path=C:\msiv2 `
+    -jar target\msal4j-mtls-extensions-1.0.0-e2e.jar path2 --attest
+```
+
+See [Manual Testing Guide](../../msal4j-sdk/docs/mtls-pop-manual-testing.md) for full instructions.
 
 ## Community Help and Support
 

@@ -121,26 +121,25 @@ This prevents a Bearer token cache hit from returning an mTLS PoP token and vice
 
 ### How It Works
 
-Managed Identity mTLS PoP uses a KeyGuard-backed certificate issued by IMDS. KeyGuard keys are hardware-isolated keys created with CNG (`NCryptCreatePersistedKey` with `NCRYPT_VBS_KEYISOLATION_FLAG`). Java's JSSE and `SunMSCAPI` use the legacy Windows CryptoAPI (CAPI) and cannot create or use KeyGuard keys — the same limitation that exists in Node.js/OpenSSL. See [keyguard-jvm-analysis.md](keyguard-jvm-analysis.md) for a detailed technical analysis.
+Managed Identity mTLS PoP uses a KeyGuard-backed certificate issued by IMDS. KeyGuard keys are hardware-isolated keys created with CNG (`NCryptCreatePersistedKey` with `NCRYPT_VBS_KEYISOLATION_FLAG`). The `msal4j-mtls-extensions` module calls Windows CNG directly via JNA (Java Native Access), so no .NET runtime or external subprocess is needed.
 
-The implementation uses a subprocess approach: `MsalMtlsMsiHelper.exe`, a .NET 8 binary bundled in the `msal4j-mtls-extensions` module. The helper handles:
+The extension handles:
 1. IMDS `getplatformmetadata` call
-2. KeyGuard key creation via CNG
+2. KeyGuard key creation via CNG (`ncrypt.dll`)
 3. CSR generation
-4. Optional MAA attestation
+4. Optional MAA attestation via `AttestationClientLib.dll`
 5. IMDS `/issuecredential` (get cert from IMDS)
 6. mTLS token request to AAD
 
-MSAL4J orchestrates the subprocess and caches the result.
+MSAL4J orchestrates the extension via reflection and caches the result.
 
 ### Requirements
 
-- Azure VM, App Service, Azure Functions, or other managed identity-enabled resource
+- Azure VM with system-assigned or user-assigned managed identity enabled
+- Windows x64 OS with VBS (Virtualization-Based Security) KeyGuard available
 - `msal4j-mtls-extensions` artifact on the classpath (add as Maven dependency)
-- .NET 8 runtime on the target host (pre-installed on most Azure Windows VMs)
-- System-assigned or user-assigned managed identity enabled
-
-See [msal4j-mtls-extensions/README.md](../../msal4j-mtls-extensions/README.md) for setup details.
+- On Trusted Launch VMs: `AttestationClientLib.dll` on `PATH` or in the application directory (see [msal4j-mtls-extensions README](../../msal4j-mtls-extensions/README.md))
+- No .NET runtime required
 
 ### Quick Start
 
@@ -190,7 +189,7 @@ ManagedIdentityApplication app = ManagedIdentityApplication
 
 | Method | Description |
 |--------|-------------|
-| `.withMtlsProofOfPossession(boolean)` | When `true`, delegates to `MsalMtlsMsiHelper.exe` for KeyGuard-backed cert |
+| `.withMtlsProofOfPossession(boolean)` | When `true`, uses the JNA-backed KeyGuard extension to acquire a hardware-bound `mtls_pop` token |
 
 ### `IAuthenticationResult`
 
@@ -216,8 +215,7 @@ Standard Bearer tokens use a 6-segment key (no `keyId`). The two token types nev
 ## Known Limitations
 
 - **US Government and China clouds** are not supported for SNI path (no mTLS auth endpoint).
-- **Managed Identity path** requires Windows with .NET 8 runtime (the helper is a Windows-only binary).
-- **Java cannot natively use KeyGuard keys** — see [keyguard-jvm-analysis.md](keyguard-jvm-analysis.md).
+- **Managed Identity path** requires Windows x64 with VBS KeyGuard (the JNA native binding is Windows-only).
 - **No refresh token** — mTLS PoP tokens cannot be silently refreshed via a refresh token. They are re-acquired via client credentials or re-issued by IMDS. The in-memory cache covers the token lifetime.
 - **Sovereign cloud attestation** — MAA attestation is only available in public cloud regions.
 
@@ -235,21 +233,10 @@ Standard Bearer tokens use a 6-segment key (no `keyId`). The two token types nev
 
 ---
 
-## Why Java's MI Path Cannot Use CNG
-
-Java's TLS stack (JSSE) on Windows uses `SunMSCAPI` for Windows certificate store integration. `SunMSCAPI` bridges through the legacy **CryptoAPI (CAPI)** — not the modern **CNG (Cryptography API: Next Generation)**. KeyGuard keys are CNG-only; they require `NCryptCreatePersistedKey` with `NCRYPT_VBS_KEYISOLATION_FLAG`. CAPI cannot create or export these keys, and JSSE's `SunX509KeyManager` ultimately calls `java.security.Signature` which requires access to raw key material — a path that doesn't exist for hardware-isolated KeyGuard keys.
-
-.NET's `HttpClientHandler` integrates with Schannel, which delegates TLS operations directly to `NCRYPT_KEY_HANDLE`, bypassing any need to export the private key. Java has no equivalent path.
-
-See [keyguard-jvm-analysis.md](keyguard-jvm-analysis.md) for the full analysis including a JNI feasibility study.
-
----
-
 ## References
 
 - [mTLS PoP Manual Testing Guide](mtls-pop-manual-testing.md)
 - [msal4j-mtls-extensions README](../../msal4j-mtls-extensions/README.md)
-- [KeyGuard JVM Analysis](keyguard-jvm-analysis.md)
 - [MSAL.js mTLS PoP](https://github.com/AzureAD/microsoft-authentication-library-for-js/pull/8476)
 - [MSAL.NET mTLS PoP](https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/tree/main/docs)
 - [RFC 8705 - OAuth 2.0 Mutual-TLS Client Authentication and Certificate-Bound Access Tokens](https://www.rfc-editor.org/rfc/rfc8705)
