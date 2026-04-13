@@ -707,6 +707,7 @@ class ManagedIdentityTests {
             HttpRequest capturedRequest = captor.getValue();
             assertEquals(EXPECTED_SKU, capturedRequest.headers().get("x-client-SKU"));
             assertNotNull(capturedRequest.headers().get("x-client-VER"));
+            assertEquals(TEST_CORRELATION_ID, capturedRequest.headers().get("x-ms-client-request-id"));
             assertDoesNotThrow(() -> UUID.fromString(capturedRequest.headers().get("x-ms-client-request-id")));
         }
 
