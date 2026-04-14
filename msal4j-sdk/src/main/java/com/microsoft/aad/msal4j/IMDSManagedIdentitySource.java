@@ -77,6 +77,9 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
 
         managedIdentityRequest.headers = new HashMap<>();
         managedIdentityRequest.headers.put("Metadata", "true");
+        managedIdentityRequest.headers.put(HttpHeaders.PRODUCT_HEADER_NAME, HttpHeaders.PRODUCT_HEADER_VALUE);
+        managedIdentityRequest.headers.put(HttpHeaders.PRODUCT_VERSION_HEADER_NAME, HttpHeaders.PRODUCT_VERSION_HEADER_VALUE);
+        managedIdentityRequest.headers.put("x-ms-client-request-id", managedIdentityRequest.requestContext().correlationId());
 
         managedIdentityRequest.queryParameters = new HashMap<>();
         managedIdentityRequest.queryParameters.put("api-version", IMDS_API_VERSION);

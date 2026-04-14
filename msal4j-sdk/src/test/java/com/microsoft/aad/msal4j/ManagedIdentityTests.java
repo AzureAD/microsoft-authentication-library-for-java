@@ -14,6 +14,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.mockito.ArgumentCaptor;
+
 import java.net.SocketException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -36,6 +38,9 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class ManagedIdentityTests {
+
+    private static final String EXPECTED_SKU = "MSAL.Java";
+    private static final String TEST_CORRELATION_ID = "00000000-0000-0000-0000-000000000001";
 
     @BeforeAll
     static void setupRetryPolicies() {
@@ -145,6 +150,9 @@ class ManagedIdentityTests {
             default:
                 queryParameters.put("api-version", "2018-02-01");
                 headers.put("Metadata", "true");
+                headers.put("x-client-SKU", EXPECTED_SKU);
+                headers.put("x-client-VER", HttpHeaders.PRODUCT_VERSION_HEADER_VALUE);
+                headers.put("x-ms-client-request-id", TEST_CORRELATION_ID);
                 return ManagedIdentityTestConstants.IMDS_ENDPOINT;
         }
     }
@@ -206,6 +214,7 @@ class ManagedIdentityTests {
             miApp = ManagedIdentityApplication
                     .builder(idType)
                     .httpClient(httpClientMock)
+                    .correlationId(TEST_CORRELATION_ID)
                     .build();
 
             // ManagedIdentityApplication uses a static token cache, avoid cross test pollution by clearing it
@@ -396,6 +405,7 @@ class ManagedIdentityTests {
                     .builder(ManagedIdentityId.systemAssigned())
                     .httpClient(httpClientMock)
                     .clientCapabilities(singletonList("cp1"))
+                    .correlationId(TEST_CORRELATION_ID)
                     .build();
 
             miApp.tokenCache.accessTokens.clear();
@@ -425,6 +435,7 @@ class ManagedIdentityTests {
                     .builder(ManagedIdentityId.systemAssigned())
                     .clientCapabilities(singletonList("cp1"))
                     .httpClient(httpClientMock)
+                    .correlationId(TEST_CORRELATION_ID)
                     .build();
 
             // First call, get the token from the identity provider.
@@ -554,6 +565,7 @@ class ManagedIdentityTests {
             miApp = ManagedIdentityApplication
                     .builder(ManagedIdentityId.systemAssigned())
                     .httpClient(httpClientMock)
+                    .correlationId(TEST_CORRELATION_ID)
                     .build();
 
             //Several specific 4xx and 5xx errors, such as 500, should trigger MSAL's retry logic
@@ -602,6 +614,7 @@ class ManagedIdentityTests {
                     .builder(ManagedIdentityId.systemAssigned())
                     .httpClient(httpClientMock)
                     .disableInternalRetries()
+                    .correlationId(TEST_CORRELATION_ID)
                     .build();
 
             //Several specific 4xx and 5xx errors, such as 500, should trigger MSAL's retry logic
@@ -631,6 +644,7 @@ class ManagedIdentityTests {
             miApp = ManagedIdentityApplication
                     .builder(ManagedIdentityId.systemAssigned())
                     .httpClient(httpClientMock)
+                    .correlationId(TEST_CORRELATION_ID)
                     .build();
 
             // IMDS has different retry logic for certain status codes, such as 410
@@ -672,6 +686,7 @@ class ManagedIdentityTests {
             miApp = ManagedIdentityApplication
                     .builder(ManagedIdentityId.systemAssigned())
                     .httpClient(httpClientMock)
+                    .correlationId(TEST_CORRELATION_ID)
                     .build();
 
             // First call returns 500, subsequent calls return 200
@@ -685,7 +700,15 @@ class ManagedIdentityTests {
             assertNotNull(result.accessToken());
 
             // Verify that the client was called exactly twice (first attempt + one retry)
-            verify(httpClientMock, times(2)).send(any());
+            ArgumentCaptor<HttpRequest> captor = ArgumentCaptor.forClass(HttpRequest.class);
+            verify(httpClientMock, times(2)).send(captor.capture());
+
+            // Verify IMDS client metadata headers on the captured request
+            HttpRequest capturedRequest = captor.getValue();
+            assertEquals(EXPECTED_SKU, capturedRequest.headers().get("x-client-SKU"));
+            assertNotNull(capturedRequest.headers().get("x-client-VER"));
+            assertEquals(TEST_CORRELATION_ID, capturedRequest.headers().get("x-ms-client-request-id"));
+            assertDoesNotThrow(() -> UUID.fromString(capturedRequest.headers().get("x-ms-client-request-id")));
         }
 
         @Test
@@ -698,6 +721,7 @@ class ManagedIdentityTests {
             miApp = ManagedIdentityApplication
                     .builder(ManagedIdentityId.systemAssigned())
                     .httpClient(httpClientMock)
+                    .correlationId(TEST_CORRELATION_ID)
                     .build();
 
             // Use a status code that doesn't trigger retries (499)
@@ -727,6 +751,7 @@ class ManagedIdentityTests {
             miApp = ManagedIdentityApplication
                     .builder(ManagedIdentityId.systemAssigned())
                     .httpClient(httpClientMock)
+                    .correlationId(TEST_CORRELATION_ID)
                     .build();
 
             // First call returns 500, subsequent calls return 200
