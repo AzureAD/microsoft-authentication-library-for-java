@@ -21,6 +21,7 @@ class AccessTokenCacheEntity extends Credential implements JsonSerializable<Cred
     private String expiresOn;
     private String extExpiresOn;
     private String refreshOn;
+    private String keyId;
 
     String getKey() {
         List<String> keyParts = new ArrayList<>();
@@ -31,6 +32,9 @@ class AccessTokenCacheEntity extends Credential implements JsonSerializable<Cred
         keyParts.add(clientId);
         keyParts.add(realm);
         keyParts.add(target);
+        if (!StringHelper.isBlank(keyId)) {
+            keyParts.add(keyId);
+        }
 
         return String.join(Constants.CACHE_KEY_SEPARATOR, keyParts).toLowerCase();
     }
@@ -77,6 +81,9 @@ class AccessTokenCacheEntity extends Credential implements JsonSerializable<Cred
                     case "refresh_on":
                         entity.refreshOn = reader.getString();
                         break;
+                    case "key_id":
+                        entity.keyId = reader.getString();
+                        break;
                     case "user_assertion_hash":
                         entity.userAssertionHash = reader.getString();
                         break;
@@ -105,6 +112,9 @@ class AccessTokenCacheEntity extends Credential implements JsonSerializable<Cred
         jsonWriter.writeStringField("extended_expires_on", extExpiresOn);
         jsonWriter.writeStringField("refresh_on", refreshOn);
         jsonWriter.writeStringField("user_assertion_hash", userAssertionHash);
+        if (!StringHelper.isBlank(keyId)) {
+            jsonWriter.writeStringField("key_id", keyId);
+        }
 
         jsonWriter.writeEndObject();
 
@@ -157,5 +167,13 @@ class AccessTokenCacheEntity extends Credential implements JsonSerializable<Cred
 
     void refreshOn(String refreshOn) {
         this.refreshOn = refreshOn;
+    }
+
+    String keyId() {
+        return this.keyId;
+    }
+
+    void keyId(String keyId) {
+        this.keyId = keyId;
     }
 }

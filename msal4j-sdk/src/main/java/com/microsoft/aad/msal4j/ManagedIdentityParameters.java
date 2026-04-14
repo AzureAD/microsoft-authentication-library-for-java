@@ -16,11 +16,13 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
     boolean forceRefresh;
     String claims;
     String revokedTokenHash;
-    
-    private ManagedIdentityParameters(String resource, boolean forceRefresh, String claims) {
+    boolean mtlsProofOfPossession;
+
+    private ManagedIdentityParameters(String resource, boolean forceRefresh, String claims, boolean mtlsProofOfPossession) {
         this.resource = resource;
         this.forceRefresh = forceRefresh;
         this.claims = claims;
+        this.mtlsProofOfPossession = mtlsProofOfPossession;
     }
 
     @Override
@@ -83,10 +85,27 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
         return this.revokedTokenHash;
     }
 
+    /**
+     * Whether to request an mTLS Proof-of-Possession token instead of a standard Bearer token.
+     *
+     * <p>When {@code true}, the Managed Identity mTLS PoP flow is used. This flow requires
+     * a Windows Azure VM with Managed Identity enabled, and the .NET 8 runtime installed.
+     * The token acquisition is delegated to {@code MsalMtlsMsiHelper.exe} (provided by the
+     * {@code msal4j-mtls-extensions} package), which handles KeyGuard key creation, CSR
+     * generation, optional MAA attestation, IMDS credential issuance, and the mTLS token
+     * request to the regional STS.</p>
+     *
+     * @return {@code true} if mTLS PoP is requested
+     */
+    public boolean mtlsProofOfPossession() {
+        return this.mtlsProofOfPossession;
+    }
+
     public static class ManagedIdentityParametersBuilder {
         private String resource;
         private boolean forceRefresh;
         private String claims;
+        private boolean mtlsProofOfPossession;
 
         ManagedIdentityParametersBuilder() {
         }
@@ -118,12 +137,23 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
             return this;
         }
 
+        /**
+         * Requests an mTLS Proof-of-Possession token instead of a standard Bearer token.
+         *
+         * <p>Requires the {@code msal4j-mtls-extensions} package. See
+         * {@link ManagedIdentityParameters#mtlsProofOfPossession()} for details.</p>
+         */
+        public ManagedIdentityParametersBuilder withMtlsProofOfPossession() {
+            this.mtlsProofOfPossession = true;
+            return this;
+        }
+
         public ManagedIdentityParameters build() {
-            return new ManagedIdentityParameters(this.resource, this.forceRefresh, this.claims);
+            return new ManagedIdentityParameters(this.resource, this.forceRefresh, this.claims, this.mtlsProofOfPossession);
         }
 
         public String toString() {
-            return "ManagedIdentityParameters.ManagedIdentityParametersBuilder(resource=" + this.resource + ", forceRefresh=" + this.forceRefresh + ")";
+            return "ManagedIdentityParameters.ManagedIdentityParametersBuilder(resource=" + this.resource + ", forceRefresh=" + this.forceRefresh + ", mtlsProofOfPossession=" + this.mtlsProofOfPossession + ")";
         }
     }
 }

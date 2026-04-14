@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
@@ -30,6 +31,10 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
             throw new MsalClientException(
                     MsalError.RESOURCE_REQUIRED_MANAGED_IDENTITY,
                     MsalErrorMessage.SCOPES_REQUIRED);
+        }
+
+        if (managedIdentityParameters.mtlsProofOfPossession()) {
+            return executeMtlsPop();
         }
 
         TokenRequestExecutor tokenRequestExecutor = new TokenRequestExecutor(
@@ -170,5 +175,92 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
 
         //The refreshOn value should be half the value of the token lifetime, if the lifetime is greater than two hours
         return expiresIn > TWO_HOURS ? (expiresIn / 2) + timestampSeconds : 0;
+    }
+
+    /**
+     * Handles the mTLS PoP path by delegating to {@code MtlsMsiClient} from the
+     * {@code msal4j-mtls-extensions} package (loaded via reflection so that the core SDK
+     * does not have a compile-time dependency on the extension).
+     */
+    private AuthenticationResult executeMtlsPop() throws Exception {
+        // Resolve identity type and ID from the ManagedIdentityId on the application
+        ManagedIdentityApplication miApp = (ManagedIdentityApplication) clientApplication;
+        ManagedIdentityId miId = miApp.getManagedIdentityId();
+        String identityType = miId.getIdType() == ManagedIdentityIdType.SYSTEM_ASSIGNED
+                ? "SystemAssigned" : "UserAssigned";
+        String identityId = miId.getIdType() != ManagedIdentityIdType.SYSTEM_ASSIGNED
+                ? miId.getUserAssignedId() : null;
+
+        // Reflective invocation of MtlsMsiClient to keep msal4j-sdk free of a hard dep
+        // on msal4j-mtls-extensions. The extension module registers MtlsMsiClient on the
+        // classpath; ManagedIdentityApplication.validateMtlsPopParameters() already verified
+        // the class is present before we get here.
+        Class<?> clientClass = Class.forName("com.microsoft.aad.msal4j.mtls.MtlsMsiClient");
+        Object client = clientClass.getDeclaredConstructor().newInstance();
+        Method acquireTokenMethod = clientClass.getMethod(
+                "acquireToken", String.class, String.class, String.class, boolean.class, String.class);
+
+        Object result = acquireTokenMethod.invoke(
+                client,
+                managedIdentityParameters.resource(),
+                identityType,
+                identityId,
+                false,  // withAttestation — false by default; set MSAL_MTLS_HELPER_PATH to use a custom build with attestation enabled
+                null    // correlationId — not available here; helper will generate one
+        );
+
+        // Extract fields from MtlsMsiHelperResult via reflection
+        Class<?> resultClass = result.getClass();
+        String accessToken  = (String) resultClass.getMethod("getAccessToken").invoke(result);
+        String tokenType    = (String) resultClass.getMethod("getTokenType").invoke(result);
+        int expiresIn       = (int)    resultClass.getMethod("getExpiresIn").invoke(result);
+        String bindingCertPem = (String) resultClass.getMethod("getBindingCertificate").invoke(result);
+
+        long now = System.currentTimeMillis() / 1000;
+        long expiresOn = now + expiresIn;
+        long refreshOn = calculateRefreshOn(expiresOn);
+
+        // Parse the PEM binding certificate if present
+        java.security.cert.X509Certificate bindingCert = null;
+        if (bindingCertPem != null && !bindingCertPem.isEmpty()) {
+            try {
+                byte[] der = java.util.Base64.getDecoder().decode(
+                        bindingCertPem
+                                .replace("-----BEGIN CERTIFICATE-----", "")
+                                .replace("-----END CERTIFICATE-----", "")
+                                .replaceAll("\\s", ""));
+                bindingCert = (java.security.cert.X509Certificate)
+                        java.security.cert.CertificateFactory.getInstance("X.509")
+                                .generateCertificate(new java.io.ByteArrayInputStream(der));
+            } catch (Exception e) {
+                LOG.warn("Failed to parse binding certificate PEM from MtlsMsiHelper: {}", e.getMessage());
+            }
+        }
+
+        AuthenticationResultMetadata metadata = AuthenticationResultMetadata.builder()
+                .tokenSource(TokenSource.IDENTITY_PROVIDER)
+                .refreshOn(refreshOn)
+                .build();
+
+        TokenRequestExecutor tokenRequestExecutor = new TokenRequestExecutor(
+                clientApplication.authenticationAuthority,
+                msalRequest,
+                clientApplication.serviceBundle());
+
+        AuthenticationResult authResult = AuthenticationResult.builder()
+                .accessToken(accessToken)
+                .scopes(managedIdentityParameters.resource())
+                .expiresOn(expiresOn)
+                .extExpiresOn(0)
+                .refreshOn(refreshOn)
+                .metadata(metadata)
+                .tokenType(tokenType)
+                .bindingCertificate(bindingCert)
+                .build();
+
+        clientApplication.tokenCache.saveTokens(tokenRequestExecutor, authResult,
+                clientApplication.authenticationAuthority.host);
+        authResult.metadata().tokenSource(TokenSource.IDENTITY_PROVIDER);
+        return authResult;
     }
 }

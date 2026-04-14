@@ -49,6 +49,30 @@ class OAuthHttpRequest {
         return createOauthHttpResponseFromHttpResponse(httpResponse);
     }
 
+    /**
+     * Sends the request to the given {@code overrideUrl} using the supplied {@code httpClient}
+     * instead of the service bundle's default HTTP client.
+     *
+     * <p>Used for mTLS PoP flows where the token endpoint URL is the {@code mtlsauth.*} endpoint
+     * and the HTTP client is configured with a client-certificate {@link javax.net.ssl.SSLSocketFactory}.</p>
+     */
+    HttpResponse sendWithClient(URL overrideUrl, IHttpClient httpClient) throws IOException {
+        Map<String, String> httpHeaders = configureHttpHeaders();
+        HttpRequest httpRequest = new HttpRequest(
+                HttpMethod.POST,
+                overrideUrl.toString(),
+                httpHeaders,
+                this.query);
+
+        IHttpResponse httpResponse = ((HttpHelper) serviceBundle.getHttpHelper()).executeHttpRequest(
+                httpRequest,
+                this.requestContext,
+                serviceBundle.getTelemetryManager(),
+                httpClient);
+
+        return createOauthHttpResponseFromHttpResponse(httpResponse);
+    }
+
     private Map<String, String> configureHttpHeaders() {
 
         Map<String, String> httpHeaders = new HashMap<>(extraHeaderParams);

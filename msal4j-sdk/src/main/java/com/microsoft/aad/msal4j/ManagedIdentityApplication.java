@@ -46,6 +46,18 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
         this.clientCapabilities = builder.clientCapabilities;
     }
 
+    private void validateMtlsPopParameters() {
+        // Check that the msal4j-mtls-extensions module is on the classpath
+        try {
+            Class.forName("com.microsoft.aad.msal4j.mtls.MtlsMsiClient");
+        } catch (ClassNotFoundException e) {
+            throw new MsalClientException(
+                    "mTLS Proof-of-Possession for Managed Identity requires the msal4j-mtls-extensions package. " +
+                    "Add com.microsoft.azure:msal4j-mtls-extensions to your project dependencies.",
+                    AuthenticationErrorCode.INVALID_REQUEST);
+        }
+    }
+
     public static TokenCache getSharedTokenCache() {
         return ManagedIdentityApplication.sharedTokenCache;
     }
@@ -63,6 +75,9 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
     @Override
     public CompletableFuture<IAuthenticationResult> acquireTokenForManagedIdentity(ManagedIdentityParameters managedIdentityParameters)
             throws Exception {
+        if (managedIdentityParameters.mtlsProofOfPossession()) {
+            validateMtlsPopParameters();
+        }
         RequestContext requestContext = new RequestContext(
                 this,
                 managedIdentityId.getIdType() == ManagedIdentityIdType.SYSTEM_ASSIGNED ?

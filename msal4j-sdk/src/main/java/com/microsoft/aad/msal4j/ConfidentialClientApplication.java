@@ -31,6 +31,10 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
     public CompletableFuture<IAuthenticationResult> acquireToken(ClientCredentialParameters parameters) {
         validateNotNull("parameters", parameters);
 
+        if (parameters.mtlsProofOfPossession()) {
+            validateMtlsPopParameters(parameters);
+        }
+
         RequestContext context = new RequestContext(
                 this,
                 PublicApi.ACQUIRE_TOKEN_FOR_CLIENT,
@@ -44,6 +48,33 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
                         appTokenProvider);
 
         return this.executeRequest(clientCredentialRequest);
+    }
+
+    private void validateMtlsPopParameters(ClientCredentialParameters parameters) {
+        IClientCredential cred = parameters.clientCredential() != null ? parameters.clientCredential() : this.clientCredential;
+        if (!(cred instanceof ClientCertificate)) {
+            throw new MsalClientException(
+                    "mTLS Proof-of-Possession requires a ClientCertificate credential. " +
+                    "Use ConfidentialClientApplication.builder(clientId, ClientCredentialFactory.createFromCertificate(...)).",
+                    AuthenticationErrorCode.INVALID_REQUEST);
+        }
+        if (authenticationAuthority.isTenantless) {
+            throw new MsalClientException(
+                    "mTLS Proof-of-Possession is not supported with /common or /organizations authorities. " +
+                    "Use a tenanted authority: https://login.microsoftonline.com/{tenantId}",
+                    AuthenticationErrorCode.INVALID_REQUEST);
+        }
+        if (authenticationAuthority.authorityType == AuthorityType.B2C) {
+            throw new MsalClientException(
+                    "mTLS Proof-of-Possession is not supported for B2C authorities.",
+                    AuthenticationErrorCode.INVALID_REQUEST);
+        }
+        if (this.azureRegion == null && !this.autoDetectRegion()) {
+            throw new MsalClientException(
+                    "mTLS Proof-of-Possession requires an Azure region. " +
+                    "Set azureRegion or autoDetectRegion on the application builder.",
+                    AuthenticationErrorCode.INVALID_REQUEST);
+        }
     }
 
     @Override
