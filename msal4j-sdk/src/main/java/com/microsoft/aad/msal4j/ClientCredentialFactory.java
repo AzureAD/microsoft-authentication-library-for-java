@@ -14,6 +14,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Function;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 
@@ -104,5 +105,24 @@ public class ClientCredentialFactory {
         }
 
         return new ClientAssertion(callable);
+    }
+
+    /**
+     * Static method to create a {@link ClientAssertion} instance from a provided Function that
+     * receives {@link AssertionRequestOptions} context. The function will be invoked each time
+     * the assertion is needed, allowing for dynamic generation of assertions based on the
+     * request context (such as the FMI path in agent identity scenarios).
+     *
+     * @param assertionProvider Function that receives {@link AssertionRequestOptions} and produces
+     *                          a JWT token encoded as a base64 URL encoded string
+     * @return {@link ClientAssertion} that will invoke the function each time assertion() is called
+     * @throws NullPointerException if assertionProvider is null
+     */
+    public static IClientAssertion createFromCallback(Function<AssertionRequestOptions, String> assertionProvider) {
+        if (assertionProvider == null) {
+            throw new NullPointerException("assertionProvider");
+        }
+
+        return new ClientAssertion(assertionProvider);
     }
 }

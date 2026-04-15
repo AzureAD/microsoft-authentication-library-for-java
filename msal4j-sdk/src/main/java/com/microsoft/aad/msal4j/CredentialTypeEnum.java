@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j;
 enum CredentialTypeEnum {
 
     ACCESS_TOKEN("AccessToken"),
+    ACCESS_TOKEN_EXTENDED("atext"),
     REFRESH_TOKEN("RefreshToken"),
     ID_TOKEN("IdToken");
 

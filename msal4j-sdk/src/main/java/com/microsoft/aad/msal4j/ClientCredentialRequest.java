@@ -30,6 +30,10 @@ class ClientCredentialRequest extends MsalRequest {
 
         params.put(GrantConstants.GRANT_TYPE_PARAMETER, GrantConstants.CLIENT_CREDENTIALS);
 
+        if (!StringHelper.isBlank(parameters.fmiPath())) {
+            params.put("fmi_path", parameters.fmiPath());
+        }
+
         return new OAuthAuthorizationGrant(params, parameters.scopes(), parameters.claims());
     }
 }

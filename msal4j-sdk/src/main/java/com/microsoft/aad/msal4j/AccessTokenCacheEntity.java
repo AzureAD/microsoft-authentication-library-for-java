@@ -21,6 +21,7 @@ class AccessTokenCacheEntity extends Credential implements JsonSerializable<Cred
     private String expiresOn;
     private String extExpiresOn;
     private String refreshOn;
+    private String extCacheKeyHash;
 
     String getKey() {
         List<String> keyParts = new ArrayList<>();
@@ -31,6 +32,10 @@ class AccessTokenCacheEntity extends Credential implements JsonSerializable<Cred
         keyParts.add(clientId);
         keyParts.add(realm);
         keyParts.add(target);
+
+        if (!StringHelper.isBlank(extCacheKeyHash)) {
+            keyParts.add(extCacheKeyHash);
+        }
 
         return String.join(Constants.CACHE_KEY_SEPARATOR, keyParts).toLowerCase();
     }
@@ -80,6 +85,9 @@ class AccessTokenCacheEntity extends Credential implements JsonSerializable<Cred
                     case "user_assertion_hash":
                         entity.userAssertionHash = reader.getString();
                         break;
+                    case "ext_cache_key_hash":
+                        entity.extCacheKeyHash = reader.getString();
+                        break;
                     default:
                         reader.skipChildren();
                         break;
@@ -105,6 +113,9 @@ class AccessTokenCacheEntity extends Credential implements JsonSerializable<Cred
         jsonWriter.writeStringField("extended_expires_on", extExpiresOn);
         jsonWriter.writeStringField("refresh_on", refreshOn);
         jsonWriter.writeStringField("user_assertion_hash", userAssertionHash);
+        if (!StringHelper.isBlank(extCacheKeyHash)) {
+            jsonWriter.writeStringField("ext_cache_key_hash", extCacheKeyHash);
+        }
 
         jsonWriter.writeEndObject();
 
@@ -157,5 +168,13 @@ class AccessTokenCacheEntity extends Credential implements JsonSerializable<Cred
 
     void refreshOn(String refreshOn) {
         this.refreshOn = refreshOn;
+    }
+
+    String extCacheKeyHash() {
+        return this.extCacheKeyHash;
+    }
+
+    void extCacheKeyHash(String extCacheKeyHash) {
+        this.extCacheKeyHash = extCacheKeyHash;
     }
 }

@@ -137,7 +137,30 @@ class TokenRequestExecutor {
             queryParameters.put("client_secret", ((ClientSecret) credentialToUse).clientSecret());
         } else if (credentialToUse instanceof ClientAssertion) {
             // For client assertion, add client_assertion and client_assertion_type parameters
-            addJWTBearerAssertionParams(queryParameters, ((ClientAssertion) credentialToUse).assertion());
+            ClientAssertion clientAssertion = (ClientAssertion) credentialToUse;
+            String assertionValue;
+            if (clientAssertion.isContextAware()) {
+                // Build assertion context with fmi_path if available
+                String fmiPath = null;
+                if (msalRequest instanceof ClientCredentialRequest) {
+                    fmiPath = ((ClientCredentialRequest) msalRequest).parameters.fmiPath();
+                }
+                String tokenEndpoint = null;
+                try {
+                    tokenEndpoint = authorityToUse.tokenEndpointUrl() != null
+                            ? authorityToUse.tokenEndpointUrl().toString() : null;
+                } catch (MalformedURLException e) {
+                    LOG.warn("Could not resolve token endpoint URL for assertion context: {}", e.getMessage());
+                }
+                AssertionRequestOptions options = new AssertionRequestOptions(
+                        application.clientId(),
+                        tokenEndpoint,
+                        fmiPath);
+                assertionValue = clientAssertion.assertion(options);
+            } else {
+                assertionValue = clientAssertion.assertion();
+            }
+            addJWTBearerAssertionParams(queryParameters, assertionValue);
         } else if (credentialToUse instanceof ClientCertificate) {
             // For client certificate, generate a new assertion and add it to the request
             ClientCertificate certificate = (ClientCertificate) credentialToUse;

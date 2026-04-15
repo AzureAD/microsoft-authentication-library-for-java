@@ -40,6 +40,13 @@ class AcquireTokenByClientCredentialSupplier extends AuthenticationResultSupplie
                         context,
                         null);
 
+                // Propagate ext_cache_key_hash for fmi_path-based cache isolation
+                if (!StringHelper.isBlank(this.clientCredentialRequest.parameters.fmiPath())) {
+                    java.util.TreeMap<String, String> components = new java.util.TreeMap<>();
+                    components.put("fmi_path", this.clientCredentialRequest.parameters.fmiPath());
+                    silentRequest.extCacheKeyHash(StringHelper.computeExtCacheKeyHash(components));
+                }
+
                 AcquireTokenSilentSupplier supplier = new AcquireTokenSilentSupplier(
                         this.clientApplication,
                         silentRequest);

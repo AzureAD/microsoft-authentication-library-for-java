@@ -28,7 +28,9 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
 
     private IClientCredential clientCredential;
 
-    private ClientCredentialParameters(Set<String> scopes, Boolean skipCache, ClaimsRequest claims, Map<String, String> extraHttpHeaders, Map<String, String> extraQueryParameters, String tenant, IClientCredential clientCredential) {
+    private String fmiPath;
+
+    private ClientCredentialParameters(Set<String> scopes, Boolean skipCache, ClaimsRequest claims, Map<String, String> extraHttpHeaders, Map<String, String> extraQueryParameters, String tenant, IClientCredential clientCredential, String fmiPath) {
         this.scopes = scopes;
         this.skipCache = skipCache;
         this.claims = claims;
@@ -36,6 +38,7 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         this.extraQueryParameters = extraQueryParameters;
         this.tenant = tenant;
         this.clientCredential = clientCredential;
+        this.fmiPath = fmiPath;
     }
 
     private static ClientCredentialParametersBuilder builder() {
@@ -87,6 +90,17 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         return this.clientCredential;
     }
 
+    /**
+     * Gets the FMI (Federated Managed Identity) path for agent identity scenarios.
+     * When set, {@code fmi_path} is sent as a body parameter in the client credentials token request,
+     * which scopes the resulting token to a specific agent identity.
+     *
+     * @return the FMI path, or null if not set
+     */
+    public String fmiPath() {
+        return this.fmiPath;
+    }
+
     public static class ClientCredentialParametersBuilder {
         private Set<String> scopes;
         private Boolean skipCache = false;
@@ -95,6 +109,7 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         private Map<String, String> extraQueryParameters;
         private String tenant;
         private IClientCredential clientCredential;
+        private String fmiPath;
 
         ClientCredentialParametersBuilder() {
         }
@@ -162,12 +177,27 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
             return this;
         }
 
+        /**
+         * Sets the FMI (Federated Managed Identity) path for agent identity scenarios.
+         * When set, {@code fmi_path} is sent as a body parameter in the client credentials token request,
+         * which tells Entra ID to scope the resulting token to a specific agent identity.
+         * The token is also cached with an extended cache key to prevent collisions between
+         * tokens for different agent identities.
+         *
+         * @param fmiPath the FMI path value (typically the agent application ID)
+         * @return builder that can be used to construct ClientCredentialParameters
+         */
+        public ClientCredentialParametersBuilder fmiPath(String fmiPath) {
+            this.fmiPath = fmiPath;
+            return this;
+        }
+
         public ClientCredentialParameters build() {
-            return new ClientCredentialParameters(this.scopes, this.skipCache, this.claims, this.extraHttpHeaders, this.extraQueryParameters, this.tenant, this.clientCredential);
+            return new ClientCredentialParameters(this.scopes, this.skipCache, this.claims, this.extraHttpHeaders, this.extraQueryParameters, this.tenant, this.clientCredential, this.fmiPath);
         }
 
         public String toString() {
-            return "ClientCredentialParameters.ClientCredentialParametersBuilder(scopes=" + this.scopes + ", skipCache=" + this.skipCache + ", claims=" + this.claims + ", extraHttpHeaders=" + this.extraHttpHeaders + ", extraQueryParameters=" + this.extraQueryParameters + ", tenant=" + this.tenant + ", clientCredential=" + this.clientCredential + ")";
+            return "ClientCredentialParameters.ClientCredentialParametersBuilder(scopes=" + this.scopes + ", skipCache=" + this.skipCache + ", claims=" + this.claims + ", extraHttpHeaders=" + this.extraHttpHeaders + ", extraQueryParameters=" + this.extraQueryParameters + ", tenant=" + this.tenant + ", clientCredential=" + this.clientCredential + ", fmiPath=" + this.fmiPath + ")";
         }
     }
 }
