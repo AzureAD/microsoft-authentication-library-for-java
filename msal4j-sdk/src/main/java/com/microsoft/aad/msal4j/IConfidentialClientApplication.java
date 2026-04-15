@@ -62,4 +62,18 @@ public interface IConfidentialClientApplication extends IClientApplicationBase {
      * @return {@link CompletableFuture} containing an {@link IAuthenticationResult}
      */
     CompletableFuture<IAuthenticationResult> acquireToken(UserFederatedIdentityCredentialParameters parameters);
+
+    /**
+     * Acquires a token for agent scenarios by orchestrating the full three-leg
+     * FMI/FIC token exchange. The developer passes scopes and an {@link AgentIdentity};
+     * MSAL handles Legs 1-3 internally, including caching intermediate tokens.
+     * <p>
+     * For user-scoped tokens, the agent identity must include either a UPN
+     * ({@link AgentIdentity#withUsername}) or an Object ID ({@link AgentIdentity#AgentIdentity(String, java.util.UUID)}).
+     * For app-only tokens, use {@link AgentIdentity#appOnly}.
+     *
+     * @param parameters instance of {@link AcquireTokenForAgentParameters}
+     * @return {@link CompletableFuture} containing an {@link IAuthenticationResult}
+     */
+    CompletableFuture<IAuthenticationResult> acquireTokenForAgent(AcquireTokenForAgentParameters parameters);
 }

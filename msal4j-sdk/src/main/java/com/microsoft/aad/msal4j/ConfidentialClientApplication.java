@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
@@ -21,6 +22,12 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
 
     IClientCredential clientCredential;
     private boolean sendX5c;
+
+    /**
+     * Cache of internal Agent CCA instances keyed by "agent_" + agentAppId.
+     * Each agent CCA has its own app and user token caches that persist across calls.
+     */
+    final ConcurrentHashMap<String, ConfidentialClientApplication> agentCcaCache = new ConcurrentHashMap<>();
 
     /** AppTokenProvider creates a Credential from a function that provides access tokens. The function
      must be concurrency safe. This is intended only to allow the Azure SDK to cache MSI tokens. It isn't
@@ -79,6 +86,24 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
                         context);
 
         return this.executeRequest(userFicRequest);
+    }
+
+    @Override
+    public CompletableFuture<IAuthenticationResult> acquireTokenForAgent(AcquireTokenForAgentParameters parameters) {
+        validateNotNull("parameters", parameters);
+
+        RequestContext context = new RequestContext(
+                this,
+                PublicApi.ACQUIRE_TOKEN_FOR_AGENT,
+                parameters);
+
+        AcquireTokenForAgentRequest agentRequest =
+                new AcquireTokenForAgentRequest(
+                        parameters,
+                        this,
+                        context);
+
+        return this.executeRequest(agentRequest);
     }
 
     private ConfidentialClientApplication(Builder builder) {
