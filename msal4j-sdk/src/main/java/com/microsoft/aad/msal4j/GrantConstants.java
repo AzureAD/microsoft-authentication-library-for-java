@@ -14,9 +14,14 @@ class GrantConstants {
     static final String USERNAME_PARAMETER = "username";
     static final String PASSWORD_PARAMETER = "password";
 
+    //Parameter names for user_fic flow
+    static final String USER_FEDERATED_IDENTITY_CREDENTIAL = "user_federated_identity_credential";
+    static final String USER_ID_PARAMETER = "user_id";
+
     //Grant types
     static final String AUTHORIZATION_CODE = "authorization_code";
     static final String CLIENT_CREDENTIALS = "client_credentials";
+    static final String USER_FIC = "user_fic";
     static final String PASSWORD = "password";
     static final String SAML_2_BEARER = "urn:ietf:params:oauth:grant-type:saml2-bearer";
     static final String SAML_1_1_BEARER = "urn:ietf:params:oauth:grant-type:saml1_1-bearer";

@@ -49,4 +49,17 @@ public interface IConfidentialClientApplication extends IClientApplicationBase {
      * @return {@link CompletableFuture} containing an {@link IAuthenticationResult}
      */
     CompletableFuture<IAuthenticationResult> acquireToken(OnBehalfOfParameters parameters);
+
+    /**
+     * Acquires a token using the User Federated Identity Credential (user_fic) flow.
+     * This is Leg 3 of the agent identity protocol, where a federated identity credential
+     * (obtained from Leg 2) is exchanged for a user-scoped token.
+     * <p>
+     * The user can be identified by either UPN (username) or Object ID, as specified
+     * in the {@link UserFederatedIdentityCredentialParameters}.
+     *
+     * @param parameters instance of {@link UserFederatedIdentityCredentialParameters}
+     * @return {@link CompletableFuture} containing an {@link IAuthenticationResult}
+     */
+    CompletableFuture<IAuthenticationResult> acquireToken(UserFederatedIdentityCredentialParameters parameters);
 }

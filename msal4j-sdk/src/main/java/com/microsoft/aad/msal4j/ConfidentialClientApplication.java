@@ -63,6 +63,24 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
         return this.executeRequest(oboRequest);
     }
 
+    @Override
+    public CompletableFuture<IAuthenticationResult> acquireToken(UserFederatedIdentityCredentialParameters parameters) {
+        validateNotNull("parameters", parameters);
+
+        RequestContext context = new RequestContext(
+                this,
+                PublicApi.ACQUIRE_TOKEN_BY_USER_FEDERATED_IDENTITY_CREDENTIAL,
+                parameters);
+
+        UserFederatedIdentityCredentialRequest userFicRequest =
+                new UserFederatedIdentityCredentialRequest(
+                        parameters,
+                        this,
+                        context);
+
+        return this.executeRequest(userFicRequest);
+    }
+
     private ConfidentialClientApplication(Builder builder) {
         super(builder);
         sendX5c = builder.sendX5c;
