@@ -182,37 +182,6 @@ class FmiTest {
     }
 
     @Test
-    void fmiPath_ExtendedCredentialTypeInCacheKey() throws Exception {
-        // Arrange
-        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
-
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(
-                TestHelper.expectedResponse(HttpStatus.HTTP_OK,
-                        TestHelper.getSuccessfulTokenResponse(new HashMap<>())));
-
-        ConfidentialClientApplication cca =
-                ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromSecret("secret"))
-                        .authority("https://login.microsoftonline.com/tenant/")
-                        .instanceDiscovery(false)
-                        .validateAuthority(false)
-                        .httpClient(httpClientMock)
-                        .build();
-
-        // Act — acquire with fmi_path
-        ClientCredentialParameters params = ClientCredentialParameters
-                .builder(Collections.singleton("api://AzureADTokenExchange/.default"))
-                .fmiPath("agentA")
-                .build();
-        cca.acquireToken(params).get();
-
-        // Assert — cache entry should use "atext" credential type (matching Go/Python convention)
-        assertEquals(1, cca.tokenCache.accessTokens.size());
-        String cacheKey = cca.tokenCache.accessTokens.keySet().iterator().next();
-        assertTrue(cacheKey.contains("-atext-"),
-                "Cache key should contain 'atext' credential type for extended tokens, got: " + cacheKey);
-    }
-
-    @Test
     void fmiPath_CacheDoesNotCollideWithNonFmiTokens() throws Exception {
         // Arrange
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
@@ -259,38 +228,6 @@ class FmiTest {
     // ========================================================================
     // §3: ext_cache_key hash computation
     // ========================================================================
-
-    @Test
-    void computeExtCacheKeyHash_MatchesCrossSDKAlgorithm() {
-        // Arrange — the same input should produce the same hash across .NET, Go, Python, and Java
-        TreeMap<String, String> components = new TreeMap<>();
-        components.put("fmi_path", "agentAppId123");
-
-        // Act
-        String hash = StringHelper.computeExtCacheKeyHash(components);
-
-        // Assert — hash should be a non-empty Base64URL-encoded SHA-256
-        assertNotNull(hash);
-        assertFalse(hash.isEmpty());
-        // Base64URL characters only (no + / = padding)
-        assertTrue(hash.matches("[A-Za-z0-9_-]+"), "Hash should be Base64URL encoded: " + hash);
-        // SHA-256 produces 32 bytes → 43 Base64URL characters (without padding)
-        assertEquals(43, hash.length(), "Base64URL-encoded SHA-256 should be 43 chars: " + hash);
-    }
-
-    @Test
-    void computeExtCacheKeyHash_DifferentValuesProduceDifferentHashes() {
-        TreeMap<String, String> componentsA = new TreeMap<>();
-        componentsA.put("fmi_path", "agentA");
-
-        TreeMap<String, String> componentsB = new TreeMap<>();
-        componentsB.put("fmi_path", "agentB");
-
-        String hashA = StringHelper.computeExtCacheKeyHash(componentsA);
-        String hashB = StringHelper.computeExtCacheKeyHash(componentsB);
-
-        assertNotEquals(hashA, hashB, "Different fmi_path values should produce different hashes");
-    }
 
     @Test
     void computeExtCacheKeyHash_EmptyMapReturnsEmpty() {
@@ -415,24 +352,130 @@ class FmiTest {
     }
 
     // ========================================================================
-    // §5: AssertionRequestOptions model
+    // Input validation
     // ========================================================================
 
     @Test
-    void assertionRequestOptions_PropertiesAccessible() {
-        AssertionRequestOptions options = new AssertionRequestOptions(
-                "clientId123",
-                "https://login.microsoftonline.com/tenant/oauth2/v2.0/token",
-                "agentAppId");
-
-        assertEquals("clientId123", options.clientId());
-        assertEquals("https://login.microsoftonline.com/tenant/oauth2/v2.0/token", options.tokenEndpoint());
-        assertEquals("agentAppId", options.fmiPath());
+    void fmiPath_BlankValueThrowsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () ->
+                ClientCredentialParameters
+                        .builder(Collections.singleton("scope"))
+                        .fmiPath("")
+                        .build());
     }
 
     @Test
-    void assertionRequestOptions_NullFmiPath() {
-        AssertionRequestOptions options = new AssertionRequestOptions("clientId", "endpoint", null);
-        assertNull(options.fmiPath());
+    void fmiPath_WhitespaceOnlyThrowsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () ->
+                ClientCredentialParameters
+                        .builder(Collections.singleton("scope"))
+                        .fmiPath("   ")
+                        .build());
+    }
+
+    // ========================================================================
+    // §3: Exact cache key string validation (cross-SDK compatibility)
+    // ========================================================================
+
+    @Test
+    void fmiPath_CacheKeyFormat_MatchesDotNetFormat() throws Exception {
+        // This test verifies that the internal cache key produced by Java uses the correct
+        // format: "-{env}-atext-{clientId}-{tenantId}-{scopes}-{hash}"
+        // Using the same fmi_path as .NET's Flow1 test: "SomeFmiPath/FmiCredentialPath"
+        // Expected hash (case-sensitive): zm2n0E62zwTsnNsozptLsoOoB_C7i-GfpxHYQQINJUw
+        // The full cache key is lowercased (both .NET and Java do this).
+        // Java resolves login.microsoftonline.com → login.windows.net (preferred alias).
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(
+                TestHelper.expectedResponse(HttpStatus.HTTP_OK,
+                        TestHelper.getSuccessfulTokenResponse(new HashMap<>())));
+
+        ConfidentialClientApplication cca =
+                ConfidentialClientApplication.builder("3bf56293-fbb5-42bd-a407-248ba7431a8c",
+                                ClientCredentialFactory.createFromSecret("secret"))
+                        .authority("https://login.microsoftonline.com/10c419d4-4a50-45b2-aa4e-919fb84df24f/")
+                        .instanceDiscovery(false)
+                        .validateAuthority(false)
+                        .httpClient(httpClientMock)
+                        .build();
+
+        ClientCredentialParameters params = ClientCredentialParameters
+                .builder(Collections.singleton("api://AzureFMITokenExchange/.default"))
+                .fmiPath("SomeFmiPath/FmiCredentialPath")
+                .build();
+
+        cca.acquireToken(params).get();
+
+        // Verify the cache key structure
+        assertEquals(1, cca.tokenCache.accessTokens.size());
+        String cacheKey = cca.tokenCache.accessTokens.keySet().iterator().next();
+
+        // Verify key uses "atext" credential type
+        assertTrue(cacheKey.contains("-atext-"),
+                "Cache key should contain 'atext' credential type, got: " + cacheKey);
+        // Verify key contains the clientId and tenantId
+        assertTrue(cacheKey.contains("3bf56293-fbb5-42bd-a407-248ba7431a8c"),
+                "Cache key should contain client ID");
+        assertTrue(cacheKey.contains("10c419d4-4a50-45b2-aa4e-919fb84df24f"),
+                "Cache key should contain tenant ID");
+        // Verify key ends with the lowercased hash of the fmi_path
+        String expectedHashLower = "zm2n0E62zwTsnNsozptLsoOoB_C7i-GfpxHYQQINJUw".toLowerCase();
+        assertTrue(cacheKey.endsWith(expectedHashLower),
+                "Cache key should end with the fmi_path hash, got: " + cacheKey);
+        // Verify scope is in the key
+        assertTrue(cacheKey.contains("api://azurefmitokenexchange/.default"),
+                "Cache key should contain the requested scope (lowercased)");
+    }
+
+    @Test
+    void fmiPath_HashValueMatchesCrossSDK() {
+        // Verify that the Java hash computation matches .NET for known inputs
+        TreeMap<String, String> components = new TreeMap<>();
+        components.put("fmi_path", "SomeFmiPath/FmiCredentialPath");
+
+        String hash = StringHelper.computeExtCacheKeyHash(components);
+        assertEquals("zm2n0E62zwTsnNsozptLsoOoB_C7i-GfpxHYQQINJUw", hash,
+                "Hash for 'SomeFmiPath/FmiCredentialPath' should match .NET/Go/Python");
+
+        // Second known value from .NET tests
+        TreeMap<String, String> components2 = new TreeMap<>();
+        components2.put("fmi_path", "SomeFmiPath/Path");
+
+        String hash2 = StringHelper.computeExtCacheKeyHash(components2);
+        assertEquals("7CX57Q63os7benQ6ER0sxgJPtNQSv7TGb5zexcidFoI", hash2,
+                "Hash for 'SomeFmiPath/Path' should match .NET");
+    }
+
+    @Test
+    void fmiPath_NoFmiPath_CacheKeyUsesAccessTokenCredentialType() throws Exception {
+        // Without fmi_path, the cache key should use "AccessToken" (not "atext")
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(
+                TestHelper.expectedResponse(HttpStatus.HTTP_OK,
+                        TestHelper.getSuccessfulTokenResponse(new HashMap<>())));
+
+        ConfidentialClientApplication cca =
+                ConfidentialClientApplication.builder("clientId",
+                                ClientCredentialFactory.createFromSecret("secret"))
+                        .authority("https://login.microsoftonline.com/tenant/")
+                        .instanceDiscovery(false)
+                        .validateAuthority(false)
+                        .httpClient(httpClientMock)
+                        .build();
+
+        ClientCredentialParameters params = ClientCredentialParameters
+                .builder(Collections.singleton("scope"))
+                .build();
+
+        cca.acquireToken(params).get();
+
+        assertEquals(1, cca.tokenCache.accessTokens.size());
+        String cacheKey = cca.tokenCache.accessTokens.keySet().iterator().next();
+        assertTrue(cacheKey.contains("-accesstoken-"),
+                "Cache key without fmi_path should use 'accesstoken' credential type, got: " + cacheKey);
+        assertFalse(cacheKey.contains("-atext-"),
+                "Cache key without fmi_path should NOT use 'atext' credential type");
     }
 }

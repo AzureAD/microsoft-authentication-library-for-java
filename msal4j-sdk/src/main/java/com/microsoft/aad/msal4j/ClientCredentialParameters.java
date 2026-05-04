@@ -188,6 +188,9 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
          * @return builder that can be used to construct ClientCredentialParameters
          */
         public ClientCredentialParametersBuilder fmiPath(String fmiPath) {
+            if (fmiPath != null && fmiPath.trim().isEmpty()) {
+                throw new IllegalArgumentException("fmiPath cannot be empty or blank");
+            }
             this.fmiPath = fmiPath;
             return this;
         }
