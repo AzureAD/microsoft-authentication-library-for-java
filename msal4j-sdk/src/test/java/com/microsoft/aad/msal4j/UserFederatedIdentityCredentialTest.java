@@ -6,11 +6,14 @@ package com.microsoft.aad.msal4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -385,5 +388,174 @@ class UserFederatedIdentityCredentialTest {
         assertEquals(TEST_OID, params.userObjectId());
         assertEquals(FAKE_ASSERTION, params.assertion());
         assertFalse(params.forceRefresh());
+    }
+
+    // ========================================================================
+    // Multi-user cache isolation (matches .NET TwoUpns/TwoOids tests)
+    // ========================================================================
+
+    /**
+     * Creates a token response with a specific user identity (oid + preferred_username).
+     * This allows simulating different users in the token cache.
+     */
+    private HttpResponse createUserResponse(String oid, String preferredUsername, String accessToken, String tid) {
+        // Build client_info: Base64URL({"uid":"<oid>","utid":"<tid>"})
+        String clientInfoJson = String.format("{\"uid\":\"%s\",\"utid\":\"%s\"}", oid, tid);
+        String clientInfo = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(clientInfoJson.getBytes(StandardCharsets.UTF_8));
+
+        // Build id_token with the user's identity
+        HashMap<String, String> idTokenValues = new HashMap<>();
+        idTokenValues.put("oid", oid);
+        idTokenValues.put("preferred_username", preferredUsername);
+        idTokenValues.put("tid", tid);
+        String idToken = TestHelper.createIdToken(idTokenValues);
+
+        // Build full response
+        HashMap<String, String> responseValues = new HashMap<>();
+        responseValues.put("access_token", accessToken);
+        responseValues.put("id_token", idToken);
+        responseValues.put("client_info", clientInfo);
+
+        return TestHelper.expectedResponse(HttpStatus.HTTP_OK,
+                TestHelper.getSuccessfulTokenResponse(responseValues));
+    }
+
+    /**
+     * Verifies that two different users (by UPN) acquire tokens via UserFIC on the same CCA,
+     * and AcquireTokenSilent returns the correct cached token for each user.
+     * Matches .NET's AcquireTokenByUserFic_TwoUpns_SilentReturnsCorrectToken_Async.
+     */
+    @Test
+    void userFic_TwoUpns_SilentReturnsCorrectToken() throws Exception {
+        // Arrange
+        String alice_oid = "oid-alice-1111";
+        String alice_upn = "alice@contoso.com";
+        String alice_token = "access-token-alice";
+
+        String bob_oid = "oid-bob-2222";
+        String bob_upn = "bob@contoso.com";
+        String bob_token = "access-token-bob";
+
+        String tid = "f645ad92-e38d-4d1a-b510-d1b09a74a8ca";
+
+        AtomicReference<HttpResponse> nextResponse = new AtomicReference<>();
+
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+        when(httpClientMock.send(any(HttpRequest.class))).thenAnswer(invocation -> nextResponse.get());
+
+        ConfidentialClientApplication cca = createCca(httpClientMock);
+
+        // Act: Acquire token for Alice
+        nextResponse.set(createUserResponse(alice_oid, alice_upn, alice_token, tid));
+
+        UserFederatedIdentityCredentialParameters aliceParams = UserFederatedIdentityCredentialParameters
+                .builder(SCOPES, alice_upn, FAKE_ASSERTION)
+                .forceRefresh(true)
+                .build();
+        IAuthenticationResult aliceResult = cca.acquireToken(aliceParams).get();
+        assertEquals(alice_token, aliceResult.accessToken());
+        assertNotNull(aliceResult.account());
+
+        // Act: Acquire token for Bob
+        nextResponse.set(createUserResponse(bob_oid, bob_upn, bob_token, tid));
+
+        UserFederatedIdentityCredentialParameters bobParams = UserFederatedIdentityCredentialParameters
+                .builder(SCOPES, bob_upn, FAKE_ASSERTION)
+                .forceRefresh(true)
+                .build();
+        IAuthenticationResult bobResult = cca.acquireToken(bobParams).get();
+        assertEquals(bob_token, bobResult.accessToken());
+        assertNotNull(bobResult.account());
+
+        // Assert: Both accounts in cache
+        Set<IAccount> accounts = cca.getAccounts().get();
+        assertEquals(2, accounts.size(), "Two accounts should be cached");
+
+        // Silent for Alice → should return Alice's token
+        IAccount aliceAccount = accounts.stream()
+                .filter(a -> alice_upn.equalsIgnoreCase(a.username()))
+                .findFirst().orElse(null);
+        assertNotNull(aliceAccount, "Alice account should be in cache");
+        IAuthenticationResult silentAlice = cca.acquireTokenSilently(
+                SilentParameters.builder(SCOPES, aliceAccount).build()).get();
+        assertEquals(alice_token, silentAlice.accessToken(), "Silent for Alice should return Alice's token");
+
+        // Silent for Bob → should return Bob's token
+        IAccount bobAccount = accounts.stream()
+                .filter(a -> bob_upn.equalsIgnoreCase(a.username()))
+                .findFirst().orElse(null);
+        assertNotNull(bobAccount, "Bob account should be in cache");
+        IAuthenticationResult silentBob = cca.acquireTokenSilently(
+                SilentParameters.builder(SCOPES, bobAccount).build()).get();
+        assertEquals(bob_token, silentBob.accessToken(), "Silent for Bob should return Bob's token");
+    }
+
+    /**
+     * Verifies that two different users (by OID) acquire tokens via UserFIC on the same CCA,
+     * and AcquireTokenSilent resolves the correct account by OID.
+     * Matches .NET's AcquireTokenByUserFic_TwoOids_SilentReturnsCorrectToken_Async.
+     */
+    @Test
+    void userFic_TwoOids_SilentReturnsCorrectToken() throws Exception {
+        // Arrange
+        String carol_oid = "oid-carol-3333";
+        String carol_upn = "carol@contoso.com";
+        String carol_token = "access-token-carol";
+
+        String dave_oid = "oid-dave-4444";
+        String dave_upn = "dave@contoso.com";
+        String dave_token = "access-token-dave";
+
+        String tid = "f645ad92-e38d-4d1a-b510-d1b09a74a8ca";
+
+        AtomicReference<HttpResponse> nextResponse = new AtomicReference<>();
+
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+        when(httpClientMock.send(any(HttpRequest.class))).thenAnswer(invocation -> nextResponse.get());
+
+        ConfidentialClientApplication cca = createCca(httpClientMock);
+
+        // Act: Acquire token for Carol (using UPN)
+        nextResponse.set(createUserResponse(carol_oid, carol_upn, carol_token, tid));
+
+        UserFederatedIdentityCredentialParameters carolParams = UserFederatedIdentityCredentialParameters
+                .builder(SCOPES, carol_upn, FAKE_ASSERTION)
+                .forceRefresh(true)
+                .build();
+        IAuthenticationResult carolResult = cca.acquireToken(carolParams).get();
+        assertEquals(carol_token, carolResult.accessToken());
+
+        // Act: Acquire token for Dave (using UPN)
+        nextResponse.set(createUserResponse(dave_oid, dave_upn, dave_token, tid));
+
+        UserFederatedIdentityCredentialParameters daveParams = UserFederatedIdentityCredentialParameters
+                .builder(SCOPES, dave_upn, FAKE_ASSERTION)
+                .forceRefresh(true)
+                .build();
+        IAuthenticationResult daveResult = cca.acquireToken(daveParams).get();
+        assertEquals(dave_token, daveResult.accessToken());
+
+        // Assert: Both accounts in cache
+        Set<IAccount> accounts = cca.getAccounts().get();
+        assertEquals(2, accounts.size(), "Two accounts should be cached");
+
+        // Lookup by OID for Carol
+        IAccount carolAccount = accounts.stream()
+                .filter(a -> a.homeAccountId().contains(carol_oid))
+                .findFirst().orElse(null);
+        assertNotNull(carolAccount, "Carol account should be in cache");
+        IAuthenticationResult silentCarol = cca.acquireTokenSilently(
+                SilentParameters.builder(SCOPES, carolAccount).build()).get();
+        assertEquals(carol_token, silentCarol.accessToken(), "OID-based lookup for Carol should return Carol's token");
+
+        // Lookup by OID for Dave
+        IAccount daveAccount = accounts.stream()
+                .filter(a -> a.homeAccountId().contains(dave_oid))
+                .findFirst().orElse(null);
+        assertNotNull(daveAccount, "Dave account should be in cache");
+        IAuthenticationResult silentDave = cca.acquireTokenSilently(
+                SilentParameters.builder(SCOPES, daveAccount).build()).get();
+        assertEquals(dave_token, silentDave.accessToken(), "OID-based lookup for Dave should return Dave's token");
     }
 }
