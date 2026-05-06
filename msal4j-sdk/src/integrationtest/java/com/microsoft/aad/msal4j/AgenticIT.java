@@ -44,9 +44,11 @@ class AgenticIT {
 
     // Lab test configuration
     private static final String BLUEPRINT_CLIENT_ID = "aab5089d-e764-47e3-9f28-cc11c2513821";
+    private static final String RMA_CLIENT_ID = "3bf56293-fbb5-42bd-a407-248ba7431a8c";
     private static final String TENANT_ID = "10c419d4-4a50-45b2-aa4e-919fb84df24f";
     private static final String AGENT_APP_ID = "ab18ca07-d139-4840-8b3b-4be9610c6ed5";
     private static final String TOKEN_EXCHANGE_SCOPE = "api://AzureADTokenExchange/.default";
+    private static final String FMI_EXCHANGE_SCOPE = "api://AzureFMITokenExchange/.default";
     private static final String GRAPH_SCOPE = "https://graph.microsoft.com/.default";
     private static final String AZURE_REGION = "westus3";
 
@@ -117,7 +119,7 @@ class AgenticIT {
         Function<AssertionRequestOptions, String> assertionProvider = options -> {
             capturedOptions.set(options);
             try {
-                return acquireFmiCredentialForAgent(options.fmiPath());
+                return acquireFmiCredentialFromRma();
             } catch (Exception e) {
                 throw new RuntimeException("Failed to acquire FMI credential", e);
             }
@@ -132,7 +134,7 @@ class AgenticIT {
                 .build();
 
         ClientCredentialParameters params = ClientCredentialParameters
-                .builder(Collections.singleton(TOKEN_EXCHANGE_SCOPE))
+                .builder(Collections.singleton(FMI_EXCHANGE_SCOPE))
                 .fmiPath(AGENT_APP_ID)
                 .skipCache(true)
                 .build();
@@ -194,9 +196,7 @@ class AgenticIT {
     void agentFmiToken_CacheIsolation_DifferentFmiPaths() throws Exception {
         Function<AssertionRequestOptions, String> assertionProvider = options -> {
             try {
-                // Use the fmiPath from the context if available, otherwise use default agent ID
-                String targetPath = options.fmiPath() != null ? options.fmiPath() : AGENT_APP_ID;
-                return acquireFmiCredentialForAgent(targetPath);
+                return acquireFmiCredentialFromRma();
             } catch (Exception e) {
                 throw new RuntimeException("Failed to acquire FMI credential", e);
             }
@@ -212,14 +212,14 @@ class AgenticIT {
 
         // Acquire with first fmi_path
         ClientCredentialParameters params1 = ClientCredentialParameters
-                .builder(Collections.singleton(TOKEN_EXCHANGE_SCOPE))
+                .builder(Collections.singleton(FMI_EXCHANGE_SCOPE))
                 .fmiPath(AGENT_APP_ID)
                 .build();
         IAuthenticationResult result1 = cca.acquireToken(params1).get();
 
         // Acquire with different fmi_path
         ClientCredentialParameters params2 = ClientCredentialParameters
-                .builder(Collections.singleton(TOKEN_EXCHANGE_SCOPE))
+                .builder(Collections.singleton(FMI_EXCHANGE_SCOPE))
                 .fmiPath("SomeFmiPath/DifferentAgent")
                 .build();
         IAuthenticationResult result2 = cca.acquireToken(params2).get();
@@ -233,7 +233,7 @@ class AgenticIT {
 
     /**
      * Helper: acquires an FMI credential from the blueprint app for the given agent app ID.
-     * This is Leg 1 of the agent identity flow.
+     * Uses the agent token exchange scope (api://AzureADTokenExchange).
      */
     private String acquireFmiCredentialForAgent(String agentAppId) throws Exception {
         IClientCertificate clientCert = ClientCredentialFactory.createFromCertificate(privateKey, certificate);
@@ -251,6 +251,29 @@ class AgenticIT {
                 .build();
 
         IAuthenticationResult result = blueprintCca.acquireToken(params).get();
+        return result.accessToken();
+    }
+
+    /**
+     * Helper: acquires an FMI credential from the RMA using a certificate.
+     * Uses the FMI-specific exchange scope (api://AzureFMITokenExchange).
+     */
+    private String acquireFmiCredentialFromRma() throws Exception {
+        IClientCertificate clientCert = ClientCredentialFactory.createFromCertificate(privateKey, certificate);
+
+        ConfidentialClientApplication rmaCca = ConfidentialClientApplication.builder(
+                        RMA_CLIENT_ID, clientCert)
+                .authority(AUTHORITY)
+                .sendX5c(true)
+                .azureRegion(AZURE_REGION)
+                .build();
+
+        ClientCredentialParameters params = ClientCredentialParameters
+                .builder(Collections.singleton(FMI_EXCHANGE_SCOPE))
+                .fmiPath("SomeFmiPath/FmiCredentialPath")
+                .build();
+
+        IAuthenticationResult result = rmaCca.acquireToken(params).get();
         return result.accessToken();
     }
 }
