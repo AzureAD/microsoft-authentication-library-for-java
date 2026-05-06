@@ -21,8 +21,8 @@ import java.util.function.Function;
 
 /**
  * Integration tests for agentic (agent identity) scenarios using MSAL Java APIs.
- * Tests FMI credential acquisition via assertion callbacks and cache isolation,
- * plus FIC user_fic flows for the full 3-leg agent identity protocol.
+ * Corresponds to .NET's Agentic.cs — tests the MSAL-level APIs for the agent identity flow
+ * (specifically the FMI portions that are available on this branch, plus FIC user_fic flows).
  *
  * <p>These tests use MSAL token acquisition APIs (unlike AgenticRawHttpIT which uses raw HTTP).
  *
@@ -72,6 +72,42 @@ class AgenticIT {
 
         assertNotNull(privateKey, "Lab private key not found. Ensure the lab cert is installed.");
         assertNotNull(certificate, "Lab certificate not found. Ensure the lab cert is installed.");
+    }
+
+    /**
+     * Agent gets an app-only token for Graph using an FMI-sourced client assertion.
+     * This tests Leg 2 of the agent identity flow:
+     * 1. Blueprint CCA acquires FMI credential (fmi_path = agentAppId)
+     * 2. Agent CCA uses that credential as client_assertion to get Graph token
+     *
+     * Corresponds to .NET's AgentGetsAppTokenForGraphTest.
+     */
+    @Test
+    void agentGetsAppToken_UsingFmiAssertion() throws Exception {
+        // The assertion callback simulates what an SDK or middleware would do:
+        // it calls the blueprint app to get an FMI credential for the agent
+        Function<AssertionRequestOptions, String> assertionProvider = options -> {
+            try {
+                return acquireFmiCredentialForAgent(AGENT_APP_ID);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to acquire FMI credential", e);
+            }
+        };
+
+        IClientCredential credential = ClientCredentialFactory.createFromCallback(assertionProvider);
+
+        ConfidentialClientApplication agentCca = ConfidentialClientApplication.builder(AGENT_APP_ID, credential)
+                .authority(AUTHORITY)
+                .build();
+
+        IAuthenticationResult result = agentCca.acquireToken(ClientCredentialParameters
+                        .builder(Collections.singleton(GRAPH_SCOPE))
+                        .build())
+                .get();
+
+        assertNotNull(result, "Auth result should not be null");
+        assertNotNull(result.accessToken(), "Access token should not be null");
+        assertFalse(result.accessToken().isEmpty(), "Access token should not be empty");
     }
 
     /**
@@ -263,8 +299,9 @@ class AgenticIT {
     }
 
     /**
-     * Helper: acquires an FMI credential from the RMA using a certificate.
-     * Uses the FMI-specific exchange scope (api://AzureFMITokenExchange).
+     * Helper: acquires an FMI credential from the RMA (Resource Management Application).
+     * Uses FMI_EXCHANGE_SCOPE, matching FmiIT's Flow3 pattern.
+     * Suitable for use as client_assertion when client_id = "urn:microsoft:identity:fmi".
      */
     private String acquireFmiCredentialFromRma() throws Exception {
         IClientCertificate clientCert = ClientCredentialFactory.createFromCertificate(privateKey, certificate);

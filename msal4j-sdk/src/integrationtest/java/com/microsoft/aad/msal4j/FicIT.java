@@ -21,12 +21,11 @@ import java.util.function.Function;
 
 /**
  * Integration tests for FIC (Federated Identity Credential) / user_fic grant support.
- * Corresponds to .NET's Agentic.cs UserFIC-related tests.
  *
- * <p>Tests the low-level UserFIC primitive: acquires an FMI-sourced assertion,
+ * <p>Tests the user_fic primitive: acquires an FMI-sourced assertion,
  * then exchanges it for a user-scoped token using the user_fic grant type.
  *
- * <p>Test configuration (same as .NET Agentic.cs):
+ * <p>Test configuration:
  * <ul>
  *   <li>Blueprint app: {@link #BLUEPRINT_CLIENT_ID}</li>
  *   <li>Agent app: {@link #AGENT_APP_ID}</li>
@@ -37,7 +36,7 @@ import java.util.function.Function;
  * <p>Flows tested:
  * <ul>
  *   <li>Full 3-leg: FMI → assertion → user_fic → user token (UPN-based)</li>
- *   <li>OID-based user_fic (Guid overload)</li>
+ *   <li>OID-based user_fic (UUID overload)</li>
  *   <li>Cache hit: second call returns cached user token</li>
  *   <li>Force refresh: bypasses cache</li>
  * </ul>
@@ -45,7 +44,7 @@ import java.util.function.Function;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class FicIT {
 
-    // Same config as .NET Agentic.cs
+    // Same config as AgenticIT
     private static final String BLUEPRINT_CLIENT_ID = "aab5089d-e764-47e3-9f28-cc11c2513821";
     private static final String TENANT_ID = "10c419d4-4a50-45b2-aa4e-919fb84df24f";
     private static final String AGENT_APP_ID = "ab18ca07-d139-4840-8b3b-4be9610c6ed5";
@@ -76,7 +75,6 @@ class FicIT {
     /**
      * Full 3-leg flow using UPN: FMI credential → assertion → user_fic → user-scoped Graph token.
      * Then verifies the token is cached and can be retrieved silently.
-     * Corresponds to .NET's AgentUserIdentityGetsTokenForGraphTest.
      */
     @Test
     void userFic_FullFlow_WithUpn_GetsUserToken() throws Exception {
@@ -114,7 +112,6 @@ class FicIT {
 
     /**
      * OID-based user_fic: discovers user's OID via UPN flow, then uses UUID overload.
-     * Corresponds to .NET's UserFic_WithGuidObjectId_Test.
      */
     @Test
     void userFic_WithGuidObjectId_GetsUserToken() throws Exception {
@@ -222,7 +219,6 @@ class FicIT {
 
     /**
      * Leg 1: Blueprint CCA acquires FMI credential (T1) for the agent app.
-     * Equivalent to .NET's GetAppCredentialAsync(fmiPath).
      * T1 is used as client_assertion to authenticate the agent CCA.
      */
     private String acquireFmiCredential(String fmiPath) throws Exception {
@@ -272,8 +268,7 @@ class FicIT {
 
     /**
      * Builds an agent CCA whose credential callback produces T1 (FMI credential).
-     * This matches .NET's pattern: the CCA authenticates with T1 as client_assertion.
-     * Equivalent to .NET's WithClientAssertion(_ => GetAppCredentialAsync(AgentIdentity)).
+     * The CCA authenticates with T1 as client_assertion for Leg 2 and Leg 3 requests.
      */
     private ConfidentialClientApplication buildAgentCca() throws Exception {
         Function<AssertionRequestOptions, String> assertionProvider = options -> {

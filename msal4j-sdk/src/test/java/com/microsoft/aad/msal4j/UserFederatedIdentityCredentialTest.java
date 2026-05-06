@@ -21,8 +21,6 @@ import static org.mockito.Mockito.*;
 
 /**
  * Tests for the User Federated Identity Credential (user_fic) flow.
- * Covers §6 (user_fic grant type), §7 (user_federated_identity_credential body param),
- * §8 (user_id/username body params), and §11 (primitive API) from AgentIDs_ComponentsReference.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class UserFederatedIdentityCredentialTest {
@@ -59,7 +57,7 @@ class UserFederatedIdentityCredentialTest {
     }
 
     // ========================================================================
-    // §6: user_fic grant type
+    // Grant type and body parameters
     // ========================================================================
 
     @Test
@@ -86,7 +84,7 @@ class UserFederatedIdentityCredentialTest {
     }
 
     // ========================================================================
-    // §7: user_federated_identity_credential body parameter
+    // user_federated_identity_credential body parameter
     // ========================================================================
 
     @Test
@@ -113,7 +111,7 @@ class UserFederatedIdentityCredentialTest {
     }
 
     // ========================================================================
-    // §8: user_id / username body parameters — mutual exclusion
+    // user_id / username body parameters — mutual exclusion
     // ========================================================================
 
     @Test
@@ -165,7 +163,7 @@ class UserFederatedIdentityCredentialTest {
     }
 
     // ========================================================================
-    // §6+§7+§8 combined: all parameters sent together
+    // All parameters sent together
     // ========================================================================
 
     @Test
@@ -224,7 +222,7 @@ class UserFederatedIdentityCredentialTest {
     }
 
     // ========================================================================
-    // §11: Token stored in user cache
+    // Token stored in user cache
     // ========================================================================
 
     @Test
@@ -251,7 +249,7 @@ class UserFederatedIdentityCredentialTest {
     }
 
     // ========================================================================
-    // §11: Force refresh bypasses cache
+    // Force refresh bypasses cache
     // ========================================================================
 
     @Test
@@ -285,7 +283,7 @@ class UserFederatedIdentityCredentialTest {
     }
 
     // ========================================================================
-    // §11: Cache hit when not force-refreshing
+    // Cache hit when not force-refreshing
     // ========================================================================
 
     @Test
@@ -391,7 +389,7 @@ class UserFederatedIdentityCredentialTest {
     }
 
     // ========================================================================
-    // Multi-user cache isolation (matches .NET TwoUpns/TwoOids tests)
+    // Multi-user cache isolation
     // ========================================================================
 
     /**
@@ -422,9 +420,8 @@ class UserFederatedIdentityCredentialTest {
     }
 
     /**
-     * Verifies that two different users (by UPN) acquire tokens via UserFIC on the same CCA,
+     * Verifies that two different users (by UPN) acquire tokens via user_fic on the same CCA,
      * and AcquireTokenSilent returns the correct cached token for each user.
-     * Matches .NET's AcquireTokenByUserFic_TwoUpns_SilentReturnsCorrectToken_Async.
      */
     @Test
     void userFic_TwoUpns_SilentReturnsCorrectToken() throws Exception {
@@ -492,9 +489,8 @@ class UserFederatedIdentityCredentialTest {
     }
 
     /**
-     * Verifies that two different users (by OID) acquire tokens via UserFIC on the same CCA,
+     * Verifies that two different users (by OID) acquire tokens via user_fic on the same CCA,
      * and AcquireTokenSilent resolves the correct account by OID.
-     * Matches .NET's AcquireTokenByUserFic_TwoOids_SilentReturnsCorrectToken_Async.
      */
     @Test
     void userFic_TwoOids_SilentReturnsCorrectToken() throws Exception {
