@@ -10,9 +10,11 @@ import java.util.function.Function;
 final class ClientAssertion implements IClientAssertion {
 
     static final String ASSERTION_TYPE_JWT_BEARER = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
+    static final String ASSERTION_TYPE_JWT_POP = "urn:ietf:params:oauth:client-assertion-type:jwt-pop";
     private final String assertion;
     private final Callable<String> assertionProvider;
     private final Function<AssertionRequestOptions, String> contextAwareAssertionProvider;
+    private final Function<AssertionRequestOptions, AssertionResponse> contextAwareResponseProvider;
 
     /**
      * Constructor that accepts a static assertion string
@@ -28,6 +30,7 @@ final class ClientAssertion implements IClientAssertion {
         this.assertion = assertion;
         this.assertionProvider = null;
         this.contextAwareAssertionProvider = null;
+        this.contextAwareResponseProvider = null;
     }
 
     /**
@@ -44,6 +47,7 @@ final class ClientAssertion implements IClientAssertion {
         this.assertion = null;
         this.assertionProvider = assertionProvider;
         this.contextAwareAssertionProvider = null;
+        this.contextAwareResponseProvider = null;
     }
 
     /**
@@ -62,6 +66,27 @@ final class ClientAssertion implements IClientAssertion {
         this.assertion = null;
         this.assertionProvider = null;
         this.contextAwareAssertionProvider = contextAwareAssertionProvider;
+        this.contextAwareResponseProvider = null;
+    }
+
+    /**
+     * Constructor that accepts a context-aware function returning an {@link AssertionResponse}.
+     * This allows the callback to supply both the assertion JWT and an optional token-binding
+     * certificate for mTLS PoP scenarios.
+     *
+     * @param contextAwareResponseProvider A function that receives context and returns an AssertionResponse
+     * @throws NullPointerException if contextAwareResponseProvider is null
+     */
+    ClientAssertion(final Function<AssertionRequestOptions, AssertionResponse> contextAwareResponseProvider,
+                    boolean responseProvider) {
+        if (contextAwareResponseProvider == null) {
+            throw new NullPointerException("contextAwareResponseProvider");
+        }
+
+        this.assertion = null;
+        this.assertionProvider = null;
+        this.contextAwareAssertionProvider = null;
+        this.contextAwareResponseProvider = contextAwareResponseProvider;
     }
 
     /**
@@ -74,6 +99,11 @@ final class ClientAssertion implements IClientAssertion {
      * @throws MsalClientException if the assertion provider returns null/empty or throws an exception
      */
     public String assertion() {
+        if (contextAwareResponseProvider != null) {
+            AssertionResponse response = assertionResponse(new AssertionRequestOptions(null, null, null));
+            return response.assertion();
+        }
+
         if (contextAwareAssertionProvider != null) {
             return assertion(new AssertionRequestOptions(null, null, null));
         }
@@ -95,6 +125,11 @@ final class ClientAssertion implements IClientAssertion {
      * @throws MsalClientException if the assertion provider returns null/empty or throws an exception
      */
     String assertion(AssertionRequestOptions options) {
+        if (contextAwareResponseProvider != null) {
+            AssertionResponse response = assertionResponse(options);
+            return response.assertion();
+        }
+
         if (contextAwareAssertionProvider != null) {
             try {
                 String generatedAssertion = contextAwareAssertionProvider.apply(options);
@@ -118,10 +153,40 @@ final class ClientAssertion implements IClientAssertion {
     }
 
     /**
-     * Returns true if this assertion uses a context-aware provider.
+     * Gets the full AssertionResponse from the context-aware response provider.
+     * Returns null if this ClientAssertion does not use a response provider.
+     *
+     * @param options context information for the assertion request
+     * @return An AssertionResponse, or null if not using a response provider
+     * @throws MsalClientException if the provider returns null or throws an exception
+     */
+    AssertionResponse assertionResponse(AssertionRequestOptions options) {
+        if (contextAwareResponseProvider == null) {
+            return null;
+        }
+
+        try {
+            AssertionResponse response = contextAwareResponseProvider.apply(options);
+
+            if (response == null || StringHelper.isBlank(response.assertion())) {
+                throw new MsalClientException(
+                    "Assertion provider returned null or empty assertion",
+                    AuthenticationErrorCode.INVALID_JWT);
+            }
+
+            return response;
+        } catch (MsalClientException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new MsalClientException(ex);
+        }
+    }
+
+    /**
+     * Returns true if this assertion uses a context-aware provider (either string or response).
      */
     boolean isContextAware() {
-        return contextAwareAssertionProvider != null;
+        return contextAwareAssertionProvider != null || contextAwareResponseProvider != null;
     }
 
     private String invokeCallable() {
@@ -151,6 +216,11 @@ final class ClientAssertion implements IClientAssertion {
 
         ClientAssertion other = (ClientAssertion) o;
 
+        // For context-aware response providers, we consider them equal if they're the same object
+        if (this.contextAwareResponseProvider != null && other.contextAwareResponseProvider != null) {
+            return this.contextAwareResponseProvider == other.contextAwareResponseProvider;
+        }
+
         // For context-aware providers, we consider them equal if they're the same object
         if (this.contextAwareAssertionProvider != null && other.contextAwareAssertionProvider != null) {
             return this.contextAwareAssertionProvider == other.contextAwareAssertionProvider;
@@ -167,6 +237,11 @@ final class ClientAssertion implements IClientAssertion {
 
     @Override
     public int hashCode() {
+        // For context-aware response providers, use the provider's identity hash code
+        if (contextAwareResponseProvider != null) {
+            return System.identityHashCode(contextAwareResponseProvider);
+        }
+
         // For context-aware providers, use the provider's identity hash code
         if (contextAwareAssertionProvider != null) {
             return System.identityHashCode(contextAwareAssertionProvider);

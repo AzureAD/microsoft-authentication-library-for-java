@@ -460,4 +460,195 @@ class FmiTest {
         assertEquals(expectedKey, cacheKey,
                 "Cache key without fmi_path should use 'accesstoken' credential type and no hash suffix");
     }
+
+    // ========================================================================
+    // AssertionResponse (object-returning callback)
+    // ========================================================================
+
+    @Test
+    void assertionResponseCallback_WithoutCert_UsesJwtBearerType() throws Exception {
+        // Arrange: callback returns AssertionResponse with no certificate
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(
+                TestHelper.expectedResponse(HttpStatus.HTTP_OK,
+                        TestHelper.getSuccessfulTokenResponse(new HashMap<>())));
+
+        Function<AssertionRequestOptions, AssertionResponse> responseProvider =
+                options -> new AssertionResponse("my-test-assertion-jwt");
+
+        ConfidentialClientApplication cca =
+                ConfidentialClientApplication.builder("clientId",
+                        ClientCredentialFactory.createFromAssertionResponseCallback(responseProvider))
+                        .authority("https://login.microsoftonline.com/tenant/")
+                        .instanceDiscovery(false)
+                        .validateAuthority(false)
+                        .httpClient(httpClientMock)
+                        .build();
+
+        ClientCredentialParameters params = ClientCredentialParameters
+                .builder(Collections.singleton("scope"))
+                .build();
+
+        // Act
+        cca.acquireToken(params).get();
+
+        // Assert: verify the request used jwt-bearer assertion type
+        verify(httpClientMock).send(argThat(request -> {
+            String body = request.body();
+            return body.contains("client_assertion=my-test-assertion-jwt")
+                    && body.contains("client_assertion_type=urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer");
+        }));
+    }
+
+    @Test
+    void assertionResponseCallback_WithCert_UsesJwtPopType() throws Exception {
+        // Arrange: callback returns AssertionResponse with a certificate
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(
+                TestHelper.expectedResponse(HttpStatus.HTTP_OK,
+                        TestHelper.getSuccessfulTokenResponse(new HashMap<>())));
+
+        java.security.cert.X509Certificate mockCert = mock(java.security.cert.X509Certificate.class);
+
+        Function<AssertionRequestOptions, AssertionResponse> responseProvider =
+                options -> new AssertionResponse("my-pop-assertion-jwt", mockCert);
+
+        ConfidentialClientApplication cca =
+                ConfidentialClientApplication.builder("clientId",
+                        ClientCredentialFactory.createFromAssertionResponseCallback(responseProvider))
+                        .authority("https://login.microsoftonline.com/tenant/")
+                        .instanceDiscovery(false)
+                        .validateAuthority(false)
+                        .httpClient(httpClientMock)
+                        .build();
+
+        ClientCredentialParameters params = ClientCredentialParameters
+                .builder(Collections.singleton("scope"))
+                .build();
+
+        // Act
+        cca.acquireToken(params).get();
+
+        // Assert: verify the request used jwt-pop assertion type
+        verify(httpClientMock).send(argThat(request -> {
+            String body = request.body();
+            return body.contains("client_assertion=my-pop-assertion-jwt")
+                    && body.contains("client_assertion_type=urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-pop");
+        }));
+    }
+
+    @Test
+    void assertionResponseCallback_ReceivesCorrectContext() throws Exception {
+        // Arrange: track the options passed to the callback
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(
+                TestHelper.expectedResponse(HttpStatus.HTTP_OK,
+                        TestHelper.getSuccessfulTokenResponse(new HashMap<>())));
+
+        AtomicReference<AssertionRequestOptions> capturedOptions = new AtomicReference<>();
+
+        Function<AssertionRequestOptions, AssertionResponse> responseProvider = options -> {
+            capturedOptions.set(options);
+            return new AssertionResponse("context-assertion");
+        };
+
+        ConfidentialClientApplication cca =
+                ConfidentialClientApplication.builder("myClientId",
+                        ClientCredentialFactory.createFromAssertionResponseCallback(responseProvider))
+                        .authority("https://login.microsoftonline.com/myTenant/")
+                        .instanceDiscovery(false)
+                        .validateAuthority(false)
+                        .httpClient(httpClientMock)
+                        .build();
+
+        ClientCredentialParameters params = ClientCredentialParameters
+                .builder(Collections.singleton("scope"))
+                .fmiPath("myAgent/path")
+                .build();
+
+        // Act
+        cca.acquireToken(params).get();
+
+        // Assert: callback received the correct context
+        assertNotNull(capturedOptions.get());
+        assertEquals("myClientId", capturedOptions.get().clientId());
+        assertEquals("myAgent/path", capturedOptions.get().fmiPath());
+        assertNotNull(capturedOptions.get().tokenEndpoint());
+    }
+
+    @Test
+    void assertionResponseCallback_NullAssertion_ThrowsException() {
+        // Arrange: callback returns AssertionResponse with null assertion
+        Function<AssertionRequestOptions, AssertionResponse> responseProvider =
+                options -> new AssertionResponse(null);
+
+        ClientAssertion clientAssertion = new ClientAssertion(responseProvider, true);
+
+        // Act & Assert
+        assertThrows(MsalClientException.class, () -> {
+            clientAssertion.assertionResponse(new AssertionRequestOptions("clientId", "endpoint", null));
+        });
+    }
+
+    @Test
+    void assertionResponseCallback_NullResponse_ThrowsException() {
+        // Arrange: callback returns null
+        Function<AssertionRequestOptions, AssertionResponse> responseProvider =
+                options -> null;
+
+        ClientAssertion clientAssertion = new ClientAssertion(responseProvider, true);
+
+        // Act & Assert
+        assertThrows(MsalClientException.class, () -> {
+            clientAssertion.assertionResponse(new AssertionRequestOptions("clientId", "endpoint", null));
+        });
+    }
+
+    @Test
+    void assertionResponseCallback_NullProvider_ThrowsNullPointerException() {
+        // Act & Assert
+        assertThrows(NullPointerException.class, () -> {
+            ClientCredentialFactory.createFromAssertionResponseCallback(null);
+        });
+    }
+
+    @Test
+    void assertionResponseCallback_WithFmiPath_CacheKeyUsesExtendedType() throws Exception {
+        // Arrange: AssertionResponse callback with fmiPath should use atext credential type
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(
+                TestHelper.expectedResponse(HttpStatus.HTTP_OK,
+                        TestHelper.getSuccessfulTokenResponse(new HashMap<>())));
+
+        Function<AssertionRequestOptions, AssertionResponse> responseProvider =
+                options -> new AssertionResponse("fmi-assertion");
+
+        ConfidentialClientApplication cca =
+                ConfidentialClientApplication.builder("clientId",
+                        ClientCredentialFactory.createFromAssertionResponseCallback(responseProvider))
+                        .authority("https://login.microsoftonline.com/tenant/")
+                        .instanceDiscovery(false)
+                        .validateAuthority(false)
+                        .httpClient(httpClientMock)
+                        .build();
+
+        ClientCredentialParameters params = ClientCredentialParameters
+                .builder(Collections.singleton("api://AzureADTokenExchange/.default"))
+                .fmiPath("SomeFmiPath/FmiCredentialPath")
+                .build();
+
+        // Act
+        cca.acquireToken(params).get();
+
+        // Assert: cache key uses "atext" credential type with hash
+        assertEquals(1, cca.tokenCache.accessTokens.size());
+        String cacheKey = cca.tokenCache.accessTokens.keySet().iterator().next();
+
+        String expectedKey = "-login.windows.net-atext-clientid-tenant-api://azureadtokenexchange/.default openid profile offline_access-zm2n0e62zwtsnnsozptlsooob_c7i-gfpxhyqqinjuw";
+        assertEquals(expectedKey, cacheKey);
+    }
 }

@@ -138,7 +138,6 @@ class TokenRequestExecutor {
         } else if (credentialToUse instanceof ClientAssertion) {
             // For client assertion, add client_assertion and client_assertion_type parameters
             ClientAssertion clientAssertion = (ClientAssertion) credentialToUse;
-            String assertionValue;
             if (clientAssertion.isContextAware()) {
                 // Build assertion context with fmi_path if available
                 String fmiPath = null;
@@ -156,11 +155,17 @@ class TokenRequestExecutor {
                         application.clientId(),
                         tokenEndpoint,
                         fmiPath);
-                assertionValue = clientAssertion.assertion(options);
+
+                // Try to get the full AssertionResponse first
+                AssertionResponse response = clientAssertion.assertionResponse(options);
+                if (response != null) {
+                    addAssertionResponseParams(queryParameters, response);
+                } else {
+                    addJWTBearerAssertionParams(queryParameters, clientAssertion.assertion(options));
+                }
             } else {
-                assertionValue = clientAssertion.assertion();
+                addJWTBearerAssertionParams(queryParameters, clientAssertion.assertion());
             }
-            addJWTBearerAssertionParams(queryParameters, assertionValue);
         } else if (credentialToUse instanceof ClientCertificate) {
             // For client certificate, generate a new assertion and add it to the request
             ClientCertificate certificate = (ClientCertificate) credentialToUse;
@@ -181,6 +186,23 @@ class TokenRequestExecutor {
     private void addJWTBearerAssertionParams(Map<String, String> queryParameters, String assertion) {
         queryParameters.put("client_assertion", assertion);
         queryParameters.put("client_assertion_type", ClientAssertion.ASSERTION_TYPE_JWT_BEARER);
+    }
+
+    /**
+     * Adds assertion parameters from an AssertionResponse, using jwt-pop assertion type
+     * when a token-binding certificate is present, or jwt-bearer otherwise.
+     *
+     * @param queryParameters The map of query parameters to add to
+     * @param response The AssertionResponse containing the assertion and optional certificate
+     */
+    private void addAssertionResponseParams(Map<String, String> queryParameters, AssertionResponse response) {
+        queryParameters.put("client_assertion", response.assertion());
+
+        if (response.tokenBindingCertificate() != null) {
+            queryParameters.put("client_assertion_type", ClientAssertion.ASSERTION_TYPE_JWT_POP);
+        } else {
+            queryParameters.put("client_assertion_type", ClientAssertion.ASSERTION_TYPE_JWT_BEARER);
+        }
     }
 
     private AuthenticationResult createAuthenticationResultFromOauthHttpResponse(HttpResponse oauthHttpResponse) {
