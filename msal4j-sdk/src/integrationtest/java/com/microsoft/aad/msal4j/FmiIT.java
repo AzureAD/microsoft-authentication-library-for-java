@@ -21,8 +21,7 @@ import com.microsoft.aad.msal4j.labapi.KeyVaultSecretsProvider;
 
 /**
  * Integration tests for FMI (Federated Managed Identity) support.
- * Corresponds to .NET's FmiIntegrationTests.cs — validates real Entra ID interactions
- * for the FMI token acquisition flows described in the FMI protocol spec v1.0 Section 3.2.
+ * Validates real Entra ID interactions for the FMI token acquisition flows.
  *
  * <p>Test apps are in MSID Lab 4:
  * <ul>
@@ -41,7 +40,7 @@ import com.microsoft.aad.msal4j.labapi.KeyVaultSecretsProvider;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class FmiIT {
 
-    // Same configuration as .NET's FmiIntegrationTests.cs
+    // Lab test configuration
     private static final String TENANT_ID = "10c419d4-4a50-45b2-aa4e-919fb84df24f";
     private static final String RMA_CLIENT_ID = "3bf56293-fbb5-42bd-a407-248ba7431a8c";
     private static final String WEB_API_SCOPE = "api://aa464f73-2868-4f67-b0e7-fc2f749e757f/.default";

@@ -340,7 +340,7 @@ public class TokenCache implements ITokenCache {
     /**
      * Computes the extended cache key hash for a request, if applicable.
      * Currently, this is used for client credential requests with an fmi_path parameter.
-     * The algorithm matches MSAL .NET/Go/Python: sorted key-value concatenation → SHA-256 → Base64URL.
+     * The algorithm uses sorted key-value concatenation → SHA-256 → Base64URL (cross-SDK compatible).
      */
     private static String computeExtCacheKeyHashForRequest(MsalRequest msalRequest) {
         if (msalRequest instanceof ClientCredentialRequest) {

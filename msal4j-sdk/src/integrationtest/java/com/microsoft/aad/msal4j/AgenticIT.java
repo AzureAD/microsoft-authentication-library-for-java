@@ -20,12 +20,12 @@ import java.util.function.Function;
 
 /**
  * Integration tests for agentic (agent identity) scenarios using MSAL Java APIs.
- * Corresponds to .NET's Agentic.cs — tests the MSAL-level APIs for the agent identity flow
+ * Tests the MSAL-level APIs for the agent identity flow
  * (specifically the FMI portions that are available on this branch).
  *
  * <p>These tests use MSAL token acquisition APIs (unlike AgenticRawHttpIT which uses raw HTTP).
  *
- * <p>Test configuration (same as .NET Agentic.cs):
+ * <p>Test configuration:
  * <ul>
  *   <li>Blueprint app: {@link #BLUEPRINT_CLIENT_ID}</li>
  *   <li>Agent app: {@link #AGENT_APP_ID}</li>
@@ -42,7 +42,7 @@ import java.util.function.Function;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class AgenticIT {
 
-    // Same config as .NET Agentic.cs
+    // Lab test configuration
     private static final String BLUEPRINT_CLIENT_ID = "aab5089d-e764-47e3-9f28-cc11c2513821";
     private static final String TENANT_ID = "10c419d4-4a50-45b2-aa4e-919fb84df24f";
     private static final String AGENT_APP_ID = "ab18ca07-d139-4840-8b3b-4be9610c6ed5";
@@ -74,8 +74,6 @@ class AgenticIT {
      * This tests Leg 2 of the agent identity flow:
      * 1. Blueprint CCA acquires FMI credential (fmi_path = agentAppId)
      * 2. Agent CCA uses that credential as client_assertion to get Graph token
-     *
-     * Corresponds to .NET's AgentGetsAppTokenForGraphTest.
      */
     @Test
     void agentGetsAppToken_UsingFmiAssertion() throws Exception {

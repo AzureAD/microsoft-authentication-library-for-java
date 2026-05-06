@@ -83,8 +83,8 @@ final class StringHelper {
 
     /**
      * Computes an extended cache key hash from a sorted map of key-value components.
-     * Uses the same algorithm as MSAL .NET, Go, and Python: concatenate sorted key+value pairs,
-     * SHA-256 hash, then Base64URL encode without padding.
+     * Concatenates sorted key+value pairs, SHA-256 hashes, then Base64URL encodes without padding.
+     * This algorithm is cross-SDK compatible (same output for the same inputs in all MSAL SDKs).
      *
      * @param cacheKeyComponents a sorted map of component names to values
      * @return Base64URL-encoded SHA-256 hash, or empty string if the map is null/empty

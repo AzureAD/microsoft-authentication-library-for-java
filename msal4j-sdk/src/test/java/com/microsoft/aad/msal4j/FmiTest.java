@@ -20,15 +20,12 @@ import static org.mockito.Mockito.*;
  * Tests for FMI (Federated Managed Identity) support in client credential flows.
  * Covers fmi_path body parameter injection, cache key isolation via ext_cache_key,
  * and assertion context (AssertionRequestOptions) propagation.
- *
- * These tests correspond to MSAL .NET's FmiIntegrationTests (§1-§3) and
- * UserFederatedIdentityCredentialTests (§4-§5) in the AgentIDs_ComponentsReference.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class FmiTest {
 
     // ========================================================================
-    // §2: fmi_path body parameter
+    // fmi_path body parameter
     // ========================================================================
 
     @Test
@@ -99,7 +96,7 @@ class FmiTest {
     }
 
     // ========================================================================
-    // §3: Cache key isolation (ext_cache_key)
+    // Cache key isolation (ext_cache_key)
     // ========================================================================
 
     @Test
@@ -226,7 +223,7 @@ class FmiTest {
     }
 
     // ========================================================================
-    // §3: ext_cache_key hash computation
+    // ext_cache_key hash computation
     // ========================================================================
 
     @Test
@@ -236,7 +233,7 @@ class FmiTest {
     }
 
     // ========================================================================
-    // §5: Assertion context — AssertionRequestOptions
+    // Assertion context — AssertionRequestOptions
     // ========================================================================
 
     @Test
@@ -374,16 +371,16 @@ class FmiTest {
     }
 
     // ========================================================================
-    // §3: Exact cache key string validation (cross-SDK compatibility)
+    // Exact cache key string validation (cross-SDK compatibility)
     // ========================================================================
 
     @Test
-    void fmiPath_CacheKeyFormat_MatchesDotNetFormat() throws Exception {
+    void fmiPath_CacheKeyFormat_MatchesCrossSDKFormat() throws Exception {
         // This test verifies that the internal cache key produced by Java uses the correct
         // format: "-{env}-atext-{clientId}-{tenantId}-{scopes}-{hash}"
-        // Using the same fmi_path as .NET's Flow1 test: "SomeFmiPath/FmiCredentialPath"
+        // Using the same fmi_path as other SDKs' integration tests: "SomeFmiPath/FmiCredentialPath"
         // Expected hash (case-sensitive): zm2n0E62zwTsnNsozptLsoOoB_C7i-GfpxHYQQINJUw
-        // The full cache key is lowercased (both .NET and Java do this).
+        // The full cache key is lowercased.
         // Java resolves login.microsoftonline.com → login.windows.net (preferred alias).
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
@@ -430,21 +427,21 @@ class FmiTest {
 
     @Test
     void fmiPath_HashValueMatchesCrossSDK() {
-        // Verify that the Java hash computation matches .NET for known inputs
+        // Verify that the Java hash computation matches other MSAL SDKs for known inputs
         TreeMap<String, String> components = new TreeMap<>();
         components.put("fmi_path", "SomeFmiPath/FmiCredentialPath");
 
         String hash = StringHelper.computeExtCacheKeyHash(components);
         assertEquals("zm2n0E62zwTsnNsozptLsoOoB_C7i-GfpxHYQQINJUw", hash,
-                "Hash for 'SomeFmiPath/FmiCredentialPath' should match .NET/Go/Python");
+                "Hash for 'SomeFmiPath/FmiCredentialPath' should match cross-SDK value");
 
-        // Second known value from .NET tests
+        // Second known value
         TreeMap<String, String> components2 = new TreeMap<>();
         components2.put("fmi_path", "SomeFmiPath/Path");
 
         String hash2 = StringHelper.computeExtCacheKeyHash(components2);
         assertEquals("7CX57Q63os7benQ6ER0sxgJPtNQSv7TGb5zexcidFoI", hash2,
-                "Hash for 'SomeFmiPath/Path' should match .NET");
+                "Hash for 'SomeFmiPath/Path' should match cross-SDK value");
     }
 
     @Test
