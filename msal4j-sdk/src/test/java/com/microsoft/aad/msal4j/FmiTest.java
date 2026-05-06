@@ -48,7 +48,6 @@ class FmiTest {
         ClientCredentialParameters parameters = ClientCredentialParameters
                 .builder(Collections.singleton("api://AzureADTokenExchange/.default"))
                 .fmiPath("agentAppId123")
-                .skipCache(true)
                 .build();
 
         // Act
@@ -81,7 +80,6 @@ class FmiTest {
 
         ClientCredentialParameters parameters = ClientCredentialParameters
                 .builder(Collections.singleton("scopes"))
-                .skipCache(true)
                 .build();
 
         // Act
@@ -264,7 +262,6 @@ class FmiTest {
         ClientCredentialParameters params = ClientCredentialParameters
                 .builder(Collections.singleton("api://AzureADTokenExchange/.default"))
                 .fmiPath("agentAppId456")
-                .skipCache(true)
                 .build();
 
         // Act
@@ -304,7 +301,6 @@ class FmiTest {
 
         ClientCredentialParameters params = ClientCredentialParameters
                 .builder(Collections.singleton("scopes"))
-                .skipCache(true)
                 .build();
 
         // Act
@@ -337,7 +333,6 @@ class FmiTest {
         ClientCredentialParameters params = ClientCredentialParameters
                 .builder(Collections.singleton("scopes"))
                 .fmiPath("agentApp")
-                .skipCache(true)
                 .build();
 
         // Act — should not throw, even with fmiPath set (legacy callback ignores context)
@@ -404,25 +399,14 @@ class FmiTest {
 
         cca.acquireToken(params).get();
 
-        // Verify the cache key structure
+        // Verify the full cache key matches the expected cross-SDK format:
+        // "{homeAccountId}-{env}-{credType}-{clientId}-{tenantId}-{scopes}-{hash}" (all lowercased)
         assertEquals(1, cca.tokenCache.accessTokens.size());
         String cacheKey = cca.tokenCache.accessTokens.keySet().iterator().next();
 
-        // Verify key uses "atext" credential type
-        assertTrue(cacheKey.contains("-atext-"),
-                "Cache key should contain 'atext' credential type, got: " + cacheKey);
-        // Verify key contains the clientId and tenantId
-        assertTrue(cacheKey.contains("3bf56293-fbb5-42bd-a407-248ba7431a8c"),
-                "Cache key should contain client ID");
-        assertTrue(cacheKey.contains("10c419d4-4a50-45b2-aa4e-919fb84df24f"),
-                "Cache key should contain tenant ID");
-        // Verify key ends with the lowercased hash of the fmi_path
-        String expectedHashLower = "zm2n0E62zwTsnNsozptLsoOoB_C7i-GfpxHYQQINJUw".toLowerCase();
-        assertTrue(cacheKey.endsWith(expectedHashLower),
-                "Cache key should end with the fmi_path hash, got: " + cacheKey);
-        // Verify scope is in the key
-        assertTrue(cacheKey.contains("api://azurefmitokenexchange/.default"),
-                "Cache key should contain the requested scope (lowercased)");
+        String expectedKey = "-login.windows.net-atext-3bf56293-fbb5-42bd-a407-248ba7431a8c-10c419d4-4a50-45b2-aa4e-919fb84df24f-openid profile offline_access api://azurefmitokenexchange/.default-"
+                + "zm2n0E62zwTsnNsozptLsoOoB_C7i-GfpxHYQQINJUw".toLowerCase();
+        assertEquals(expectedKey, cacheKey, "Full cache key should match cross-SDK format");
     }
 
     @Test
@@ -468,11 +452,12 @@ class FmiTest {
 
         cca.acquireToken(params).get();
 
+        // Verify the full cache key uses "accesstoken" (no ext_cache_key_hash appended)
         assertEquals(1, cca.tokenCache.accessTokens.size());
         String cacheKey = cca.tokenCache.accessTokens.keySet().iterator().next();
-        assertTrue(cacheKey.contains("-accesstoken-"),
-                "Cache key without fmi_path should use 'accesstoken' credential type, got: " + cacheKey);
-        assertFalse(cacheKey.contains("-atext-"),
-                "Cache key without fmi_path should NOT use 'atext' credential type");
+
+        String expectedKey = "-login.windows.net-accesstoken-clientid-tenant-openid profile offline_access scope";
+        assertEquals(expectedKey, cacheKey,
+                "Cache key without fmi_path should use 'accesstoken' credential type and no hash suffix");
     }
 }
