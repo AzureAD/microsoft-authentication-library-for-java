@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -69,7 +70,8 @@ class AcquireTokenForAgentSupplier extends AuthenticationResultSupplier {
             LOG.debug("App-only agent flow for agent app ID: {}", agentAppId);
             return (AuthenticationResult) joinAndUnwrap(
                     agentCca.acquireToken(
-                            ClientCredentialParameters.builder(callerScopes).build()));
+                            propagateToClientCredentialParams(
+                                    ClientCredentialParameters.builder(callerScopes)).build()));
         }
 
         // --- User identity flow ---
@@ -92,7 +94,9 @@ class AcquireTokenForAgentSupplier extends AuthenticationResultSupplier {
         LOG.debug("Executing Leg 2 (assertion token) for agent app ID: {}", agentAppId);
         IAuthenticationResult assertionResult = joinAndUnwrap(
                 agentCca.acquireToken(
-                        ClientCredentialParameters.builder(TOKEN_EXCHANGE_SCOPE).build()));
+                        propagateToClientCredentialParams(
+                                ClientCredentialParameters.builder(TOKEN_EXCHANGE_SCOPE)
+                                        .credentialFmiPath(agentAppId)).build()));
 
         String assertion = assertionResult.accessToken();
 
@@ -101,14 +105,16 @@ class AcquireTokenForAgentSupplier extends AuthenticationResultSupplier {
         LOG.debug("Executing Leg 3 (user FIC token) for agent app ID: {}", agentAppId);
         UserFederatedIdentityCredentialParameters ficParams;
         if (agentIdentity.userObjectId() != null) {
-            ficParams = UserFederatedIdentityCredentialParameters
-                    .builder(callerScopes, agentIdentity.userObjectId(), assertion)
-                    .forceRefresh(true) // always fetch from network (we already checked the cache above)
+            ficParams = propagateToUserFicParams(
+                    UserFederatedIdentityCredentialParameters
+                            .builder(callerScopes, agentIdentity.userObjectId(), assertion)
+                            .forceRefresh(true)) // always fetch from network (we already checked the cache above)
                     .build();
         } else {
-            ficParams = UserFederatedIdentityCredentialParameters
-                    .builder(callerScopes, agentIdentity.username(), assertion)
-                    .forceRefresh(true)
+            ficParams = propagateToUserFicParams(
+                    UserFederatedIdentityCredentialParameters
+                            .builder(callerScopes, agentIdentity.username(), assertion)
+                            .forceRefresh(true))
                     .build();
         }
 
@@ -131,12 +137,14 @@ class AcquireTokenForAgentSupplier extends AuthenticationResultSupplier {
                 return null;
             }
 
-            SilentParameters silentParams = SilentParameters
-                    .builder(scopes, matchedAccount)
-                    .build();
+            SilentParameters.SilentParametersBuilder silentBuilder = SilentParameters
+                    .builder(scopes, matchedAccount);
+
+            // Propagate outer request parameters so that claims challenges cause cache bypass
+            propagateToSilentParams(silentBuilder);
 
             return (AuthenticationResult) joinAndUnwrap(
-                    agentCca.acquireTokenSilently(silentParams));
+                    agentCca.acquireTokenSilently(silentBuilder.build()));
         } catch (Exception ex) {
             // Token expired or requires interaction — fall through to full Leg 2 + Leg 3 flow
             LOG.debug("Silent token acquisition failed for agent: {}", ex.getMessage());
@@ -171,6 +179,81 @@ class AcquireTokenForAgentSupplier extends AuthenticationResultSupplier {
     private static String extractOid(String homeAccountId) {
         int dotIndex = homeAccountId.indexOf('.');
         return dotIndex >= 0 ? homeAccountId.substring(0, dotIndex) : homeAccountId;
+    }
+
+    // ========================================================================
+    // Outer Request Parameter Propagation
+    // ========================================================================
+
+    /**
+     * Propagates per-request parameters from the outer AcquireTokenForAgent call to a
+     * ClientCredentialParameters builder (used for Legs 1-2 and app-only).
+     * This ensures caller-specified claims, tenant overrides, extra query parameters,
+     * and extra HTTP headers flow through to inner network calls.
+     */
+    private ClientCredentialParameters.ClientCredentialParametersBuilder propagateToClientCredentialParams(
+            ClientCredentialParameters.ClientCredentialParametersBuilder builder) {
+        AcquireTokenForAgentParameters outerParams = agentRequest.parameters;
+
+        if (outerParams.claims() != null) {
+            builder.claims(outerParams.claims());
+        }
+        if (!StringHelper.isBlank(outerParams.tenant())) {
+            builder.tenant(outerParams.tenant());
+        }
+        if (outerParams.extraQueryParameters() != null && !outerParams.extraQueryParameters().isEmpty()) {
+            builder.extraQueryParameters(outerParams.extraQueryParameters());
+        }
+        if (outerParams.extraHttpHeaders() != null && !outerParams.extraHttpHeaders().isEmpty()) {
+            builder.extraHttpHeaders(outerParams.extraHttpHeaders());
+        }
+        return builder;
+    }
+
+    /**
+     * Propagates per-request parameters from the outer AcquireTokenForAgent call to a
+     * UserFederatedIdentityCredentialParameters builder (used for Leg 3).
+     */
+    private UserFederatedIdentityCredentialParameters.UserFederatedIdentityCredentialParametersBuilder propagateToUserFicParams(
+            UserFederatedIdentityCredentialParameters.UserFederatedIdentityCredentialParametersBuilder builder) {
+        AcquireTokenForAgentParameters outerParams = agentRequest.parameters;
+
+        if (outerParams.claims() != null) {
+            builder.claims(outerParams.claims());
+        }
+        if (!StringHelper.isBlank(outerParams.tenant())) {
+            builder.tenant(outerParams.tenant());
+        }
+        if (outerParams.extraQueryParameters() != null && !outerParams.extraQueryParameters().isEmpty()) {
+            builder.extraQueryParameters(outerParams.extraQueryParameters());
+        }
+        if (outerParams.extraHttpHeaders() != null && !outerParams.extraHttpHeaders().isEmpty()) {
+            builder.extraHttpHeaders(outerParams.extraHttpHeaders());
+        }
+        return builder;
+    }
+
+    /**
+     * Propagates per-request parameters from the outer AcquireTokenForAgent call to a
+     * SilentParameters builder (used for the cache-first silent check).
+     * Claims propagation is important here: if a claims challenge is present, the silent
+     * check should recognize the cached token as insufficient and force a refresh.
+     */
+    private void propagateToSilentParams(SilentParameters.SilentParametersBuilder builder) {
+        AcquireTokenForAgentParameters outerParams = agentRequest.parameters;
+
+        if (outerParams.claims() != null) {
+            builder.claims(outerParams.claims());
+        }
+        if (!StringHelper.isBlank(outerParams.tenant())) {
+            builder.tenant(outerParams.tenant());
+        }
+        if (outerParams.extraQueryParameters() != null && !outerParams.extraQueryParameters().isEmpty()) {
+            builder.extraQueryParameters(outerParams.extraQueryParameters());
+        }
+        if (outerParams.extraHttpHeaders() != null && !outerParams.extraHttpHeaders().isEmpty()) {
+            builder.extraHttpHeaders(outerParams.extraHttpHeaders());
+        }
     }
 
     // ========================================================================

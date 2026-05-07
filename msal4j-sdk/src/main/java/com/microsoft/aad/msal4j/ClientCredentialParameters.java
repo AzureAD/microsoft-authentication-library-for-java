@@ -32,15 +32,18 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
 
     private String fmiPath;
 
-    // Generic extended cache key components. Any optional or flow-specific parameters 
-    // that should influence token cache isolation adds an entry here. The hash of these
-    // components is used as part of the cache key in relevant scenarios entries.
+    private String credentialFmiPath;
+
+    // Generic extended cache key components. Any parameter that should influence token cache
+    // isolation adds an entry here (e.g., fmi_path, credential_fmi_path). The hash of these
+    // components is used as part of the cache key for AccessToken_Extended entries.
+    // Matches MSAL .NET's AdditionalCacheKeyComponents / CacheKeyComponents pattern.
     private SortedMap<String, String> cacheKeyComponents;
 
     // Memoized hash of cacheKeyComponents (computed once since parameters are immutable).
     private String extCacheKeyHashCache;
 
-    private ClientCredentialParameters(Set<String> scopes, Boolean skipCache, ClaimsRequest claims, Map<String, String> extraHttpHeaders, Map<String, String> extraQueryParameters, String tenant, IClientCredential clientCredential, String fmiPath) {
+    private ClientCredentialParameters(Set<String> scopes, Boolean skipCache, ClaimsRequest claims, Map<String, String> extraHttpHeaders, Map<String, String> extraQueryParameters, String tenant, IClientCredential clientCredential, String fmiPath, String credentialFmiPath) {
         this.scopes = scopes;
         this.skipCache = skipCache;
         this.claims = claims;
@@ -49,6 +52,7 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         this.tenant = tenant;
         this.clientCredential = clientCredential;
         this.fmiPath = fmiPath;
+        this.credentialFmiPath = credentialFmiPath;
 
         // Build cache key components from any parameters that require cache isolation.
         this.cacheKeyComponents = buildCacheKeyComponents();
@@ -124,8 +128,12 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
     private SortedMap<String, String> buildCacheKeyComponents() {
         TreeMap<String, String> components = null;
         if (!StringHelper.isBlank(fmiPath)) {
-            components = new TreeMap<>();
+            if (components == null) components = new TreeMap<>();
             components.put("fmi_path", fmiPath);
+        }
+        if (!StringHelper.isBlank(credentialFmiPath)) {
+            if (components == null) components = new TreeMap<>();
+            components.put("credential_fmi_path", credentialFmiPath);
         }
         return components;
     }
@@ -153,6 +161,18 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         return extCacheKeyHashCache;
     }
 
+    /**
+     * Gets the credential FMI path for agent identity scenarios.
+     * Unlike {@link #fmiPath()}, this is cache-key-only: it contributes to the extended
+     * cache key hash ({@code credential_fmi_path}) but is NOT sent as an HTTP body parameter.
+     * This isolates assertion tokens (Leg 2) from user tokens in the agent CCA's flat cache.
+     *
+     * @return the credential FMI path, or null if not set
+     */
+    public String credentialFmiPath() {
+        return this.credentialFmiPath;
+    }
+
     public static class ClientCredentialParametersBuilder {
         private Set<String> scopes;
         private Boolean skipCache = false;
@@ -162,6 +182,7 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         private String tenant;
         private IClientCredential clientCredential;
         private String fmiPath;
+        private String credentialFmiPath;
 
         ClientCredentialParametersBuilder() {
         }
@@ -245,12 +266,38 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
             return this;
         }
 
+        /**
+         * Sets the credential FMI path for agent identity scenarios.
+         * Unlike {@link #fmiPath(String)}, this is cache-key-only: it contributes to the
+         * extended cache key hash ({@code credential_fmi_path}) but is NOT sent as an HTTP
+         * body parameter. This isolates assertion tokens from user tokens in flat caches.
+         * <p>
+         * Mutually exclusive with {@link #fmiPath(String)} — setting both will throw
+         * {@link IllegalStateException} at build time.
+         *
+         * @param credentialFmiPath the credential FMI path value (typically the agent application ID)
+         * @return builder that can be used to construct ClientCredentialParameters
+         */
+        public ClientCredentialParametersBuilder credentialFmiPath(String credentialFmiPath) {
+            if (credentialFmiPath != null && credentialFmiPath.trim().isEmpty()) {
+                throw new IllegalArgumentException("credentialFmiPath cannot be empty or blank");
+            }
+            this.credentialFmiPath = credentialFmiPath;
+            return this;
+        }
+
         public ClientCredentialParameters build() {
-            return new ClientCredentialParameters(this.scopes, this.skipCache, this.claims, this.extraHttpHeaders, this.extraQueryParameters, this.tenant, this.clientCredential, this.fmiPath);
+            if (!StringHelper.isBlank(this.fmiPath) && !StringHelper.isBlank(this.credentialFmiPath)) {
+                throw new IllegalStateException(
+                        "fmiPath and credentialFmiPath are mutually exclusive. " +
+                        "Use fmiPath for FMI body parameter + cache key, or " +
+                        "credentialFmiPath for cache key isolation only.");
+            }
+            return new ClientCredentialParameters(this.scopes, this.skipCache, this.claims, this.extraHttpHeaders, this.extraQueryParameters, this.tenant, this.clientCredential, this.fmiPath, this.credentialFmiPath);
         }
 
         public String toString() {
-            return "ClientCredentialParameters.ClientCredentialParametersBuilder(scopes=" + this.scopes + ", skipCache=" + this.skipCache + ", claims=" + this.claims + ", extraHttpHeaders=" + this.extraHttpHeaders + ", extraQueryParameters=" + this.extraQueryParameters + ", tenant=" + this.tenant + ", clientCredential=" + this.clientCredential + ", fmiPath=" + this.fmiPath + ")";
+            return "ClientCredentialParameters.ClientCredentialParametersBuilder(scopes=" + this.scopes + ", skipCache=" + this.skipCache + ", claims=" + this.claims + ", extraHttpHeaders=" + this.extraHttpHeaders + ", extraQueryParameters=" + this.extraQueryParameters + ", tenant=" + this.tenant + ", clientCredential=" + this.clientCredential + ", fmiPath=" + this.fmiPath + ", credentialFmiPath=" + this.credentialFmiPath + ")";
         }
     }
 }

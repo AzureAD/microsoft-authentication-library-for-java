@@ -287,6 +287,203 @@ class AgenticIT {
                 "Cache should have exactly 2 entries (app + user)");
     }
 
+    // ========================================================================
+    // High-level AcquireTokenForAgent tests (composite API)
+    // ========================================================================
+
+    /**
+     * Tests the high-level acquireTokenForAgent API with a UPN-based AgentIdentity.
+     * Exercises the full 3-leg flow orchestrated internally by AcquireTokenForAgentSupplier.
+     */
+    @Test
+    void acquireTokenForAgent_withUpn_fullFlow() throws Exception {
+        IClientCertificate clientCert = ClientCredentialFactory.createFromCertificate(privateKey, certificate);
+
+        ConfidentialClientApplication blueprintCca = ConfidentialClientApplication.builder(
+                        BLUEPRINT_CLIENT_ID, clientCert)
+                .authority(AUTHORITY)
+                .sendX5c(true)
+                .azureRegion(AZURE_REGION)
+                .build();
+
+        AgentIdentity agentId = AgentIdentity.withUsername(AGENT_APP_ID, USER_UPN);
+
+        IAuthenticationResult result = blueprintCca.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(
+                        Collections.singleton(GRAPH_SCOPE), agentId).build()
+        ).get();
+
+        assertNotNull(result, "Result should not be null");
+        assertNotNull(result.accessToken(), "Access token should not be null");
+        assertFalse(result.accessToken().isEmpty(), "Access token should not be empty");
+        assertNotNull(result.account(), "Account should not be null for user token");
+    }
+
+    /**
+     * Tests the high-level acquireTokenForAgent API for app-only (no user) scenarios.
+     * Only Legs 1-2 are performed.
+     */
+    @Test
+    void acquireTokenForAgent_appOnly() throws Exception {
+        IClientCertificate clientCert = ClientCredentialFactory.createFromCertificate(privateKey, certificate);
+
+        ConfidentialClientApplication blueprintCca = ConfidentialClientApplication.builder(
+                        BLUEPRINT_CLIENT_ID, clientCert)
+                .authority(AUTHORITY)
+                .sendX5c(true)
+                .azureRegion(AZURE_REGION)
+                .build();
+
+        AgentIdentity agentId = AgentIdentity.appOnly(AGENT_APP_ID);
+
+        IAuthenticationResult result = blueprintCca.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(
+                        Collections.singleton(GRAPH_SCOPE), agentId).build()
+        ).get();
+
+        assertNotNull(result, "Result should not be null");
+        assertNotNull(result.accessToken(), "Access token should not be null");
+        assertFalse(result.accessToken().isEmpty(), "Access token should not be empty");
+    }
+
+    /**
+     * Tests the high-level acquireTokenForAgent API with ForceRefresh.
+     * First call populates cache, second call (forceRefresh) bypasses it.
+     */
+    @Test
+    void acquireTokenForAgent_forceRefresh() throws Exception {
+        IClientCertificate clientCert = ClientCredentialFactory.createFromCertificate(privateKey, certificate);
+
+        ConfidentialClientApplication blueprintCca = ConfidentialClientApplication.builder(
+                        BLUEPRINT_CLIENT_ID, clientCert)
+                .authority(AUTHORITY)
+                .sendX5c(true)
+                .azureRegion(AZURE_REGION)
+                .build();
+
+        AgentIdentity agentId = AgentIdentity.withUsername(AGENT_APP_ID, USER_UPN);
+
+        // First call — populates cache
+        IAuthenticationResult result1 = blueprintCca.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(
+                        Collections.singleton(GRAPH_SCOPE), agentId).build()
+        ).get();
+        assertNotNull(result1.accessToken());
+
+        // Second call without forceRefresh — should return cached token
+        IAuthenticationResult result2 = blueprintCca.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(
+                        Collections.singleton(GRAPH_SCOPE), agentId).build()
+        ).get();
+        assertEquals(result1.accessToken(), result2.accessToken(),
+                "Second call should return cached token");
+
+        // Third call with forceRefresh — should get a fresh token
+        IAuthenticationResult result3 = blueprintCca.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(
+                        Collections.singleton(GRAPH_SCOPE), agentId)
+                        .forceRefresh(true).build()
+        ).get();
+        assertNotNull(result3.accessToken());
+        // The fresh token may be the same string (if not expired) but the flow exercised network
+    }
+
+    /**
+     * Tests cache isolation between two blueprint CCA instances.
+     * Each blueprint should have its own agent CCA cache.
+     */
+    @Test
+    void acquireTokenForAgent_cacheIsolation_twoBlueprintCcas() throws Exception {
+        IClientCertificate clientCert = ClientCredentialFactory.createFromCertificate(privateKey, certificate);
+
+        ConfidentialClientApplication blueprint1 = ConfidentialClientApplication.builder(
+                        BLUEPRINT_CLIENT_ID, clientCert)
+                .authority(AUTHORITY)
+                .sendX5c(true)
+                .azureRegion(AZURE_REGION)
+                .build();
+
+        ConfidentialClientApplication blueprint2 = ConfidentialClientApplication.builder(
+                        BLUEPRINT_CLIENT_ID, clientCert)
+                .authority(AUTHORITY)
+                .sendX5c(true)
+                .azureRegion(AZURE_REGION)
+                .build();
+
+        AgentIdentity agentId = AgentIdentity.withUsername(AGENT_APP_ID, USER_UPN);
+
+        // Acquire via blueprint1
+        IAuthenticationResult result1 = blueprint1.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(
+                        Collections.singleton(GRAPH_SCOPE), agentId).build()
+        ).get();
+        assertNotNull(result1.accessToken());
+
+        // Blueprint1 should have agent CCA cached, blueprint2 should not
+        assertEquals(1, blueprint1.agentCcaCache.size(),
+                "Blueprint1 should have one cached agent CCA");
+        assertTrue(blueprint2.agentCcaCache.isEmpty(),
+                "Blueprint2 should have no cached agent CCAs (no bleed)");
+
+        // Acquire via blueprint2
+        IAuthenticationResult result2 = blueprint2.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(
+                        Collections.singleton(GRAPH_SCOPE), agentId).build()
+        ).get();
+        assertNotNull(result2.accessToken());
+
+        // Both should now have their own cache entries
+        assertEquals(1, blueprint1.agentCcaCache.size());
+        assertEquals(1, blueprint2.agentCcaCache.size());
+    }
+
+    /**
+     * Tests that a UPN-based token can be found by OID lookup on the same blueprint.
+     * Discovers the OID via the UPN flow, then verifies OID-based call returns cached token.
+     */
+    @Test
+    void acquireTokenForAgent_upnThenOid_sharesCache() throws Exception {
+        IClientCertificate clientCert = ClientCredentialFactory.createFromCertificate(privateKey, certificate);
+
+        ConfidentialClientApplication blueprintCca = ConfidentialClientApplication.builder(
+                        BLUEPRINT_CLIENT_ID, clientCert)
+                .authority(AUTHORITY)
+                .sendX5c(true)
+                .azureRegion(AZURE_REGION)
+                .build();
+
+        // Step 1: Acquire via UPN
+        AgentIdentity upnIdentity = AgentIdentity.withUsername(AGENT_APP_ID, USER_UPN);
+        IAuthenticationResult upnResult = blueprintCca.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(
+                        Collections.singleton(GRAPH_SCOPE), upnIdentity).build()
+        ).get();
+        assertNotNull(upnResult.account(), "Account should not be null");
+
+        // Extract OID from account's homeAccountId (format: oid.tid)
+        String homeAccountId = upnResult.account().homeAccountId();
+        assertNotNull(homeAccountId);
+        String oidString = homeAccountId.contains(".")
+                ? homeAccountId.substring(0, homeAccountId.indexOf('.'))
+                : homeAccountId;
+        java.util.UUID userOid = java.util.UUID.fromString(oidString);
+
+        // Step 2: Acquire via OID — should come from cache
+        AgentIdentity oidIdentity = new AgentIdentity(AGENT_APP_ID, userOid);
+        IAuthenticationResult oidResult = blueprintCca.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(
+                        Collections.singleton(GRAPH_SCOPE), oidIdentity).build()
+        ).get();
+
+        // Should return the same cached token
+        assertEquals(upnResult.accessToken(), oidResult.accessToken(),
+                "OID-based call should return the same cached token as UPN-based call");
+    }
+
+    // ========================================================================
+    // Helpers
+    // ========================================================================
+
     /**
      * Helper: acquires an FMI credential from the RMA (Resource Management Application).
      * Uses TestConstants.AGENTIC_FMI_EXCHANGE_SCOPE, matching FmiIT's Flow3 pattern.

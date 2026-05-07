@@ -10,11 +10,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 /**
@@ -370,5 +372,620 @@ class AcquireTokenForAgentTest {
     void parameterBuilder_nullAgentIdentity_throwsException() {
         assertThrows(IllegalArgumentException.class, () ->
                 AcquireTokenForAgentParameters.builder(CALLER_SCOPES, null));
+    }
+
+    // ========================================================================
+    // Cache isolation: two blueprint CCAs do not share agent CCA caches
+    // ========================================================================
+
+    @Test
+    void acquireTokenForAgent_twoBlueprintCcas_noCacheBleed() throws Exception {
+        // Arrange — two separate blueprint CCAs
+        DefaultHttpClient httpClient1 = mock(DefaultHttpClient.class);
+        when(httpClient1.send(any(HttpRequest.class)))
+                .thenReturn(
+                        createAppTokenResponse("fmi-token-1"),
+                        createAppTokenResponse("assertion-token-1"),
+                        createUserTokenResponse("alice-token-1", USER1_UPN, USER1_OID));
+
+        DefaultHttpClient httpClient2 = mock(DefaultHttpClient.class);
+        when(httpClient2.send(any(HttpRequest.class)))
+                .thenReturn(
+                        createAppTokenResponse("fmi-token-2"),
+                        createAppTokenResponse("assertion-token-2"),
+                        createUserTokenResponse("bob-token-2", USER2_UPN, USER2_OID));
+
+        ConfidentialClientApplication blueprint1 = createBlueprintCca(httpClient1);
+        ConfidentialClientApplication blueprint2 = createBlueprintCca(httpClient2);
+
+        AgentIdentity aliceAgent = AgentIdentity.withUsername(AGENT_APP_ID, USER1_UPN);
+        AgentIdentity bobAgent = AgentIdentity.withUsername(AGENT_APP_ID, USER2_UPN);
+
+        // Act: acquire via blueprint1
+        IAuthenticationResult result1 = blueprint1.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(CALLER_SCOPES, aliceAgent).build()
+        ).get();
+        assertEquals("alice-token-1", result1.accessToken());
+
+        // Act: acquire via blueprint2
+        IAuthenticationResult result2 = blueprint2.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(CALLER_SCOPES, bobAgent).build()
+        ).get();
+        assertEquals("bob-token-2", result2.accessToken());
+
+        // Assert: each blueprint has its own agent CCA cache
+        assertEquals(1, blueprint1.agentCcaCache.size());
+        assertEquals(1, blueprint2.agentCcaCache.size());
+
+        // Blueprint1's agent CCA should only have Alice's token (not Bob's)
+        // Verify blueprint1 still returns Alice from cache (no bleed from blueprint2)
+        IAuthenticationResult result1Again = blueprint1.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(CALLER_SCOPES, aliceAgent).build()
+        ).get();
+        assertEquals("alice-token-1", result1Again.accessToken());
+        verify(httpClient1, times(3)).send(any(HttpRequest.class)); // no new calls
+    }
+
+    // ========================================================================
+    // UPN → OID shared cache: same user found by either identifier
+    // ========================================================================
+
+    @Test
+    void acquireTokenForAgent_upnThenOid_sharesCache() throws Exception {
+        // Arrange
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        // First call (UPN): 3 HTTP calls (Legs 1+2+3)
+        // Second call (OID for same user): should come from cache (0 HTTP calls)
+        when(httpClientMock.send(any(HttpRequest.class)))
+                .thenReturn(
+                        createAppTokenResponse("fmi-token"),
+                        createAppTokenResponse("assertion-token"),
+                        createUserTokenResponse("alice-token", USER1_UPN, USER1_OID));
+
+        ConfidentialClientApplication blueprintCca = createBlueprintCca(httpClientMock);
+
+        AgentIdentity aliceByUpn = AgentIdentity.withUsername(AGENT_APP_ID, USER1_UPN);
+        UUID aliceOid = UUID.fromString(USER1_OID);
+        AgentIdentity aliceByOid = new AgentIdentity(AGENT_APP_ID, aliceOid);
+
+        // Act 1: acquire by UPN
+        IAuthenticationResult upnResult = blueprintCca.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(CALLER_SCOPES, aliceByUpn).build()
+        ).get();
+        assertEquals("alice-token", upnResult.accessToken());
+        verify(httpClientMock, times(3)).send(any(HttpRequest.class));
+
+        // Act 2: acquire by OID for the same user — should hit cache
+        IAuthenticationResult oidResult = blueprintCca.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(CALLER_SCOPES, aliceByOid).build()
+        ).get();
+        assertEquals("alice-token", oidResult.accessToken());
+        // No new HTTP calls — found via OID match in findMatchingAccount
+        verify(httpClientMock, times(3)).send(any(HttpRequest.class));
+    }
+
+    // ========================================================================
+    // Parameter propagation: tenant override flows to inner calls
+    // ========================================================================
+
+    @Test
+    void acquireTokenForAgent_withTenant_propagatesToInnerCalls() throws Exception {
+        // Arrange
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        when(httpClientMock.send(any(HttpRequest.class)))
+                .thenReturn(
+                        createAppTokenResponse("fmi-token"),
+                        createAppTokenResponse("assertion-token"),
+                        createUserTokenResponse("alice-token", USER1_UPN, USER1_OID));
+
+        ConfidentialClientApplication blueprintCca = createBlueprintCca(httpClientMock);
+        AgentIdentity agent = AgentIdentity.withUsername(AGENT_APP_ID, USER1_UPN);
+
+        String overrideTenant = "override-tenant-id";
+
+        // Act
+        IAuthenticationResult result = blueprintCca.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(CALLER_SCOPES, agent)
+                        .tenant(overrideTenant)
+                        .build()
+        ).get();
+
+        // Assert — at least one inner HTTP call should target the override tenant
+        verify(httpClientMock, atLeastOnce()).send(argThat(request -> {
+            String url = request.url() != null ? request.url().toString() : "";
+            return url.contains(overrideTenant);
+        }));
+    }
+
+    // ========================================================================
+    // Parameter propagation: extra query parameters flow to inner calls
+    // ========================================================================
+
+    @Test
+    void acquireTokenForAgent_withExtraQueryParams_propagatesToInnerCalls() throws Exception {
+        // Arrange
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        when(httpClientMock.send(any(HttpRequest.class)))
+                .thenReturn(
+                        createAppTokenResponse("fmi-token"),
+                        createAppTokenResponse("assertion-token"),
+                        createUserTokenResponse("alice-token", USER1_UPN, USER1_OID));
+
+        ConfidentialClientApplication blueprintCca = createBlueprintCca(httpClientMock);
+        AgentIdentity agent = AgentIdentity.withUsername(AGENT_APP_ID, USER1_UPN);
+
+        Map<String, String> extraParams = new HashMap<>();
+        extraParams.put("custom_param", "custom_value");
+
+        // Act
+        IAuthenticationResult result = blueprintCca.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(CALLER_SCOPES, agent)
+                        .extraQueryParameters(extraParams)
+                        .build()
+        ).get();
+
+        // Assert — at least one inner HTTP call should include the extra query parameter
+        verify(httpClientMock, atLeastOnce()).send(argThat(request -> {
+            String body = request.body();
+            return body != null && body.contains("custom_param=custom_value");
+        }));
+    }
+
+    // ========================================================================
+    // Parameter propagation: claims flow to inner calls
+    // ========================================================================
+
+    @Test
+    void acquireTokenForAgent_withClaims_propagatesToInnerCalls() throws Exception {
+        // Arrange
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        when(httpClientMock.send(any(HttpRequest.class)))
+                .thenReturn(
+                        createAppTokenResponse("fmi-token"),
+                        createAppTokenResponse("assertion-token"),
+                        createUserTokenResponse("alice-token", USER1_UPN, USER1_OID));
+
+        ConfidentialClientApplication blueprintCca = createBlueprintCca(httpClientMock);
+        AgentIdentity agent = AgentIdentity.withUsername(AGENT_APP_ID, USER1_UPN);
+
+        ClaimsRequest claims = new ClaimsRequest();
+        claims.requestClaimInAccessToken("xms_cc", null);
+
+        // Act
+        IAuthenticationResult result = blueprintCca.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(CALLER_SCOPES, agent)
+                        .claims(claims)
+                        .build()
+        ).get();
+
+        // Assert — at least one inner HTTP call should include the claims parameter
+        verify(httpClientMock, atLeastOnce()).send(argThat(request -> {
+            String body = request.body();
+            return body != null && body.contains("claims=");
+        }));
+    }
+
+    // ========================================================================
+    // Comprehensive cache behavior test: verifies token counts, isolation
+    // between users, isolation between agent and non-agent flows, and
+    // correct silent lookups across all scenarios.
+    // ========================================================================
+
+    @Test
+    void acquireTokenForAgent_comprehensiveCacheBehavior() throws Exception {
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        // Queue responses in order:
+        // --- Agent flow for Alice (Legs 1+2+3 = 3 HTTP calls) ---
+        // 1. Leg 1: FMI credential (blueprint app token)
+        // 2. Leg 2: assertion token (agent CCA app token)
+        // 3. Leg 3: user token for Alice
+        // --- Agent flow for Bob (Leg 3 only = 1 HTTP call, Legs 1+2 cached) ---
+        // 4. Leg 3: user token for Bob
+        // --- Non-agent client_credentials for Charlie on BLUEPRINT CCA (1 HTTP call) ---
+        // 5. App token for Charlie scopes on the blueprint
+        when(httpClientMock.send(any(HttpRequest.class)))
+                .thenReturn(
+                        // Alice (Legs 1+2+3)
+                        createAppTokenResponse("fmi-credential-token"),
+                        createAppTokenResponse("assertion-token"),
+                        createUserTokenResponse("alice-agent-token", USER1_UPN, USER1_OID),
+                        // Bob (Leg 3 only)
+                        createUserTokenResponse("bob-agent-token", USER2_UPN, USER2_OID),
+                        // Charlie (non-agent client_credentials on blueprint)
+                        createAppTokenResponse("charlie-app-token"));
+
+        ConfidentialClientApplication blueprintCca = createBlueprintCca(httpClientMock);
+
+        AgentIdentity aliceAgent = AgentIdentity.withUsername(AGENT_APP_ID, USER1_UPN);
+        AgentIdentity bobAgent = AgentIdentity.withUsername(AGENT_APP_ID, USER2_UPN);
+
+        // ---- Step 1: Agent flow for Alice ----
+        IAuthenticationResult aliceResult = blueprintCca.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(CALLER_SCOPES, aliceAgent).build()
+        ).get();
+
+        assertEquals("alice-agent-token", aliceResult.accessToken());
+        verify(httpClientMock, times(3)).send(any(HttpRequest.class));
+
+        // ---- Step 2: Agent flow for Bob (Legs 1+2 should be cached) ----
+        IAuthenticationResult bobResult = blueprintCca.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(CALLER_SCOPES, bobAgent).build()
+        ).get();
+
+        assertEquals("bob-agent-token", bobResult.accessToken());
+        verify(httpClientMock, times(4)).send(any(HttpRequest.class)); // +1 for Leg 3 only
+
+        // ---- Step 3: Non-agent client_credentials on the BLUEPRINT CCA ----
+        // This uses the blueprint's own token cache, NOT the agent CCA's cache.
+        IAuthenticationResult charlieResult = blueprintCca.acquireToken(
+                ClientCredentialParameters.builder(CALLER_SCOPES).build()
+        ).get();
+
+        assertEquals("charlie-app-token", charlieResult.accessToken());
+        verify(httpClientMock, times(5)).send(any(HttpRequest.class));
+
+        // ---- Cache state verification ----
+
+        // Blueprint CCA's token cache:
+        //   - 1 FMI credential (Leg 1, with extCacheKeyHash for fmi_path)
+        //   - 1 non-agent app token (Charlie's client_credentials)
+        // Total: 2 access tokens in the blueprint's own cache
+        assertEquals(2, blueprintCca.tokenCache.accessTokens.size(),
+                "Blueprint cache should have 2 tokens: FMI credential + non-agent app token");
+
+        // Agent CCA cache should have exactly one entry (for AGENT_APP_ID)
+        assertEquals(1, blueprintCca.agentCcaCache.size(),
+                "Blueprint should have 1 agent CCA cached");
+
+        ConfidentialClientApplication agentCca =
+                blueprintCca.agentCcaCache.get("agent_" + AGENT_APP_ID);
+        assertNotNull(agentCca, "Agent CCA should exist in cache");
+
+        // Agent CCA's token cache:
+        //   - 1 assertion token (Leg 2, app-level, scope=api://AzureADTokenExchange/.default)
+        //   - 2 user tokens (Alice + Bob, scope=graph.microsoft.com/.default)
+        // Total: 3 access tokens in the agent CCA's cache
+        assertEquals(3, agentCca.tokenCache.accessTokens.size(),
+                "Agent CCA cache should have 3 tokens: 1 assertion + 2 user tokens");
+
+        // ---- Step 4: Silent retrieval for Alice (agent flow, should hit cache) ----
+        IAuthenticationResult aliceSilent = blueprintCca.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(CALLER_SCOPES, aliceAgent).build()
+        ).get();
+
+        assertEquals("alice-agent-token", aliceSilent.accessToken());
+        verify(httpClientMock, times(5)).send(any(HttpRequest.class)); // still 5, no new calls
+
+        // ---- Step 5: Silent retrieval for Bob (agent flow, should hit cache) ----
+        IAuthenticationResult bobSilent = blueprintCca.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(CALLER_SCOPES, bobAgent).build()
+        ).get();
+
+        assertEquals("bob-agent-token", bobSilent.accessToken());
+        verify(httpClientMock, times(5)).send(any(HttpRequest.class)); // still 5
+
+        // ---- Step 6: Non-agent call again (should hit blueprint's cache) ----
+        IAuthenticationResult charlieAgain = blueprintCca.acquireToken(
+                ClientCredentialParameters.builder(CALLER_SCOPES).build()
+        ).get();
+
+        assertEquals("charlie-app-token", charlieAgain.accessToken());
+        verify(httpClientMock, times(5)).send(any(HttpRequest.class)); // still 5
+
+        // ---- Step 7: Verify Alice by OID also hits cache (UPN→OID shared cache) ----
+        UUID aliceOid = UUID.fromString(USER1_OID);
+        AgentIdentity aliceByOid = new AgentIdentity(AGENT_APP_ID, aliceOid);
+
+        IAuthenticationResult aliceByOidResult = blueprintCca.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(CALLER_SCOPES, aliceByOid).build()
+        ).get();
+
+        assertEquals("alice-agent-token", aliceByOidResult.accessToken());
+        verify(httpClientMock, times(5)).send(any(HttpRequest.class)); // still 5
+
+        // ---- Step 8: Verify cache counts haven't changed after all silent calls ----
+        assertEquals(2, blueprintCca.tokenCache.accessTokens.size(),
+                "Blueprint cache should still have 2 tokens after silent calls");
+        assertEquals(3, agentCca.tokenCache.accessTokens.size(),
+                "Agent CCA cache should still have 3 tokens after silent calls");
+
+        // ---- Step 9: Verify cache key isolation between FMI and non-FMI tokens ----
+        // The blueprint cache has tokens with different cache key structures:
+        //   - FMI token has extCacheKeyHash (credential_type=AccessToken_Extended)
+        //   - Non-agent token has no extCacheKeyHash (credential_type=AccessToken)
+        boolean hasFmiToken = blueprintCca.tokenCache.accessTokens.values().stream()
+                .anyMatch(at -> !StringHelper.isBlank(at.extCacheKeyHash()));
+        boolean hasNonFmiToken = blueprintCca.tokenCache.accessTokens.values().stream()
+                .anyMatch(at -> StringHelper.isBlank(at.extCacheKeyHash()));
+
+        assertTrue(hasFmiToken, "Blueprint cache should contain an FMI token with extCacheKeyHash");
+        assertTrue(hasNonFmiToken, "Blueprint cache should contain a non-FMI token without extCacheKeyHash");
+
+        // ---- Step 10: Verify agent CCA user tokens have distinct homeAccountIds ----
+        long distinctHomeAccountIds = agentCca.tokenCache.accessTokens.values().stream()
+                .map(at -> at.homeAccountId)
+                .filter(id -> id != null && !id.isEmpty())
+                .distinct()
+                .count();
+        assertEquals(2, distinctHomeAccountIds,
+                "Agent CCA should have 2 distinct homeAccountIds (Alice + Bob)");
+    }
+
+    // ========================================================================
+    // Leg 2 cache key isolation: verifies that credential_fmi_path produces an
+    // extCacheKeyHash on the assertion token, preventing collisions with user
+    // tokens that share the same scope. Also verifies credential_fmi_path is
+    // NOT sent in the HTTP request body (cache-key-only).
+    // ========================================================================
+
+    @Test
+    void acquireTokenForAgent_leg2CacheIsolation_credentialFmiPathPreventsCollision() throws Exception {
+        // Both the caller and Leg 2 use the same scope (api://AzureADTokenExchange/.default).
+        // Without credential_fmi_path isolation, Leg 2's cache lookup could return Alice's
+        // user token instead of the assertion token — an order-dependent collision.
+        Set<String> exchangeScope = Collections.singleton("api://AzureADTokenExchange/.default");
+
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        when(httpClientMock.send(any(HttpRequest.class)))
+                .thenReturn(
+                        // Alice: Legs 1+2+3 (3 HTTP calls)
+                        createAppTokenResponse("fmi-credential"),
+                        createAppTokenResponse("correct-assertion-token"),
+                        createUserTokenResponse("alice-user-token", USER1_UPN, USER1_OID),
+                        // Bob: Leg 3 only (1 HTTP call — Legs 1+2 cached)
+                        createUserTokenResponse("bob-user-token", USER2_UPN, USER2_OID));
+
+        ConfidentialClientApplication blueprintCca = createBlueprintCca(httpClientMock);
+
+        AgentIdentity aliceAgent = AgentIdentity.withUsername(AGENT_APP_ID, USER1_UPN);
+        AgentIdentity bobAgent = AgentIdentity.withUsername(AGENT_APP_ID, USER2_UPN);
+
+        // ---- Step 1: Alice's full agent flow with exchange scope ----
+        IAuthenticationResult aliceResult = blueprintCca.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(exchangeScope, aliceAgent).build()
+        ).get();
+
+        assertEquals("alice-user-token", aliceResult.accessToken());
+        verify(httpClientMock, times(3)).send(any(HttpRequest.class));
+
+        // ---- Step 2: Verify Leg 2 token has credential_fmi_path cache isolation ----
+        ConfidentialClientApplication agentCca =
+                blueprintCca.agentCcaCache.get("agent_" + AGENT_APP_ID);
+        assertNotNull(agentCca);
+
+        // Agent CCA has 2 tokens: Leg 2 app token + Alice's user token, both with exchange scope
+        assertEquals(2, agentCca.tokenCache.accessTokens.size());
+
+        // Compute the expected hash for credential_fmi_path = agentAppId
+        java.util.TreeMap<String, String> expectedComponents = new java.util.TreeMap<>();
+        expectedComponents.put("credential_fmi_path", AGENT_APP_ID);
+        String expectedHash = StringHelper.computeExtCacheKeyHash(expectedComponents);
+
+        // The Leg 2 token (app-level, empty homeAccountId) must have the correct extCacheKeyHash
+        AccessTokenCacheEntity leg2Token = agentCca.tokenCache.accessTokens.values().stream()
+                .filter(at -> StringHelper.isBlank(at.homeAccountId) || at.homeAccountId.isEmpty())
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Leg 2 app token not found"));
+
+        assertEquals(expectedHash, leg2Token.extCacheKeyHash(),
+                "Leg 2 token should have extCacheKeyHash from credential_fmi_path");
+
+        // Alice's user token must NOT have an extCacheKeyHash
+        AccessTokenCacheEntity aliceToken = agentCca.tokenCache.accessTokens.values().stream()
+                .filter(at -> !StringHelper.isBlank(at.homeAccountId) && !at.homeAccountId.isEmpty())
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Alice's user token not found"));
+
+        assertTrue(StringHelper.isBlank(aliceToken.extCacheKeyHash()),
+                "Alice's user token should NOT have an extCacheKeyHash");
+
+        // ---- Step 3: Verify credential_fmi_path is NOT sent in any HTTP body ----
+        // (It's cache-key-only, not a wire parameter)
+        org.mockito.ArgumentCaptor<HttpRequest> requestCaptor = org.mockito.ArgumentCaptor.forClass(HttpRequest.class);
+        verify(httpClientMock, times(3)).send(requestCaptor.capture());
+
+        for (HttpRequest req : requestCaptor.getAllValues()) {
+            String body = req.body() != null ? req.body() : "";
+            assertFalse(body.contains("credential_fmi_path"),
+                    "credential_fmi_path should NOT appear in any HTTP request body");
+        }
+
+        // ---- Step 4: Bob's agent flow — Leg 2 from cache, Leg 3 fresh ----
+        // Clear invocations to count only Bob's HTTP calls
+        clearInvocations(httpClientMock);
+
+        when(httpClientMock.send(any(HttpRequest.class)))
+                .thenReturn(
+                        createUserTokenResponse("bob-user-token", USER2_UPN, USER2_OID));
+
+        IAuthenticationResult bobResult = blueprintCca.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(exchangeScope, bobAgent).build()
+        ).get();
+
+        assertEquals("bob-user-token", bobResult.accessToken());
+
+        // Only 1 HTTP call: Leg 3 for Bob. If Leg 2 had a cache collision, it would
+        // miss the cache (wrong extCacheKeyHash) and make an extra network call.
+        org.mockito.ArgumentCaptor<HttpRequest> bobCaptor = org.mockito.ArgumentCaptor.forClass(HttpRequest.class);
+        verify(httpClientMock, times(1)).send(bobCaptor.capture());
+
+        // Verify Bob's Leg 3 used the correct assertion (not Alice's user token)
+        HttpRequest bobLeg3Request = bobCaptor.getValue();
+        String bobBody = bobLeg3Request.body() != null ? bobLeg3Request.body() : "";
+        assertTrue(bobBody.contains("correct-assertion-token"),
+                "Bob's Leg 3 should use the cached Leg 2 assertion token as client_assertion");
+        assertFalse(bobBody.contains("alice-user-token"),
+                "Bob's Leg 3 should NOT use Alice's user token as the assertion");
+
+        // ---- Step 5: Final cache state ----
+        assertEquals(3, agentCca.tokenCache.accessTokens.size(),
+                "Agent CCA should have 3 tokens: 1 Leg 2 assertion + 2 user tokens");
+    }
+
+    // ========================================================================
+    // Scope collision test: caller uses api://AzureADTokenExchange/.default
+    // which is the same scope used internally for Leg 2 assertion tokens.
+    // This probes whether the flat cache can distinguish between an app-level
+    // assertion token and a user-level FIC token when both share the same scope.
+    // ========================================================================
+
+    @Test
+    void acquireTokenForAgent_callerScopeMatchesInternalAssertionScope_noCollision() throws Exception {
+        // The internal Leg 2 uses api://AzureADTokenExchange/.default for the assertion token.
+        // If an external caller also requests that scope for a user token, the agent CCA's
+        // flat cache will contain both an app token and a user token with the same scope.
+        Set<String> tokenExchangeScope = Collections.singleton("api://AzureADTokenExchange/.default");
+
+        String user3Upn = "charlie@contoso.com";
+        String user3Oid = "33333333-3333-3333-3333-333333333333";
+
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        when(httpClientMock.send(any(HttpRequest.class)))
+                .thenReturn(
+                        // --- Alice: normal scopes (Legs 1+2+3 = 3 HTTP calls) ---
+                        createAppTokenResponse("fmi-credential-token"),
+                        createAppTokenResponse("assertion-token-leg2"),
+                        createUserTokenResponse("alice-graph-token", USER1_UPN, USER1_OID),
+
+                        // --- Bob: api://AzureADTokenExchange scope (Leg 3 only = 1 HTTP call) ---
+                        // Legs 1+2 are cached from Alice's flow.
+                        // Leg 3 creates a USER token with the same scope as the Leg 2 app token.
+                        createUserTokenResponse("bob-exchange-token", USER2_UPN, USER2_OID),
+
+                        // --- Charlie: non-agent client_credentials with same exchange scope ---
+                        // This goes through the BLUEPRINT CCA (not the agent CCA).
+                        createAppTokenResponse("charlie-exchange-app-token"));
+
+        ConfidentialClientApplication blueprintCca = createBlueprintCca(httpClientMock);
+
+        AgentIdentity aliceAgent = AgentIdentity.withUsername(AGENT_APP_ID, USER1_UPN);
+        AgentIdentity bobAgent = AgentIdentity.withUsername(AGENT_APP_ID, USER2_UPN);
+
+        // ---- Step 1: Alice with normal Graph scopes ----
+        IAuthenticationResult aliceResult = blueprintCca.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(CALLER_SCOPES, aliceAgent).build()
+        ).get();
+
+        assertEquals("alice-graph-token", aliceResult.accessToken());
+        verify(httpClientMock, times(3)).send(any(HttpRequest.class));
+
+        // ---- Step 2: Bob with api://AzureADTokenExchange/.default ----
+        // This is the dangerous scenario: the agent CCA already has an app token
+        // (assertion-token-leg2) for this exact scope from Leg 2. Now we're asking
+        // for a USER token with the same scope. If the cache lookup for Leg 2 on
+        // future calls uses findAny() without filtering by homeAccountId, it could
+        // return Bob's user token instead of the assertion token.
+        IAuthenticationResult bobResult = blueprintCca.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(tokenExchangeScope, bobAgent).build()
+        ).get();
+
+        assertEquals("bob-exchange-token", bobResult.accessToken());
+        verify(httpClientMock, times(4)).send(any(HttpRequest.class)); // +1 for Bob's Leg 3
+
+        // ---- Step 3: Verify agent CCA cache state ----
+        ConfidentialClientApplication agentCca =
+                blueprintCca.agentCcaCache.get("agent_" + AGENT_APP_ID);
+        assertNotNull(agentCca);
+
+        // Agent CCA should have:
+        //   - 1 Leg 2 assertion token (app token, scope=api://AzureADTokenExchange/.default, homeAccountId="")
+        //   - 1 Alice user token (scope=graph.microsoft.com/.default, homeAccountId=alice-oid.tenant)
+        //   - 1 Bob user token (scope=api://AzureADTokenExchange/.default, homeAccountId=bob-oid.tenant)
+        assertEquals(3, agentCca.tokenCache.accessTokens.size(),
+                "Agent CCA cache should have 3 tokens (1 assertion + 2 user)");
+
+        // Count how many tokens have api://AzureADTokenExchange scope in the agent CCA.
+        // There should be 2: the Leg 2 assertion token (app) and Bob's user token.
+        long exchangeScopeTokenCount = agentCca.tokenCache.accessTokens.values().stream()
+                .filter(at -> at.target() != null &&
+                        at.target().toLowerCase().contains("azureadtokenexchange"))
+                .count();
+        assertEquals(2, exchangeScopeTokenCount,
+                "Agent CCA should have 2 tokens with the exchange scope (1 app + 1 user)");
+
+        // ---- Step 4: Alice again — should still return from cache (no collision) ----
+        IAuthenticationResult aliceAgain = blueprintCca.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(CALLER_SCOPES, aliceAgent).build()
+        ).get();
+
+        assertEquals("alice-graph-token", aliceAgain.accessToken());
+        verify(httpClientMock, times(4)).send(any(HttpRequest.class)); // still 4
+
+        // ---- Step 5: Bob again — this is the critical test ----
+        // When we request Bob's token again, the silent lookup should find Bob's
+        // USER token (not the Leg 2 assertion token) even though both share the same scope.
+        IAuthenticationResult bobAgain = blueprintCca.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(tokenExchangeScope, bobAgent).build()
+        ).get();
+
+        assertEquals("bob-exchange-token", bobAgain.accessToken(),
+                "Bob's silent retrieval should return the user token, not the assertion token");
+        verify(httpClientMock, times(4)).send(any(HttpRequest.class)); // still 4
+
+        // ---- Step 6: Now trigger a NEW agent flow for a different user ----
+        // This is where the Leg 2 collision matters most. A new user triggers Leg 2
+        // (acquireToken(ClientCredentialParameters)) which uses getApplicationAccessTokenCacheEntity.
+        // If that lookup returns Bob's USER token instead of the app assertion token,
+        // Leg 3 will use the wrong assertion and fail or return incorrect results.
+        //
+        // We queue a Leg 3 response for a hypothetical third user to test this.
+        // If Leg 2 correctly returns the cached assertion token, only 1 HTTP call (Leg 3) fires.
+        // If Leg 2 gets a collision and returns Bob's user token as the assertion, the behavior
+        // will be unpredictable (wrong assertion value, possibly an error, or 2+ HTTP calls).
+
+        String user3_upn = "charlie@contoso.com";
+        String user3_oid = "33333333-3333-3333-3333-333333333333";
+
+        // Clear invocation history so we can count only Charlie's HTTP calls
+        clearInvocations(httpClientMock);
+
+        // Reset mock for the next sequence: only Leg 3 should fire (1 call).
+        // If Leg 2 has a cache collision, it may re-fetch (2+ calls), or if
+        // the wrong token is used as the assertion, it may error out.
+        when(httpClientMock.send(any(HttpRequest.class)))
+                .thenReturn(
+                        createUserTokenResponse("charlie-exchange-token", user3_upn, user3_oid));
+
+        AgentIdentity charlieAgent = AgentIdentity.withUsername(AGENT_APP_ID, user3_upn);
+        IAuthenticationResult charlieResult = blueprintCca.acquireTokenForAgent(
+                AcquireTokenForAgentParameters.builder(tokenExchangeScope, charlieAgent).build()
+        ).get();
+
+        // If this assertion fails, it means Leg 2 returned Bob's user token instead of the
+        // cached assertion token, causing downstream problems.
+        assertEquals("charlie-exchange-token", charlieResult.accessToken(),
+                "Charlie should get a fresh Leg 3 token using the cached Leg 2 assertion");
+
+        // Verify only 1 new HTTP call was made (Leg 3 for Charlie).
+        // If 2+ new calls were made, Leg 2 had to re-fetch because of a cache collision.
+        verify(httpClientMock, times(1)).send(any(HttpRequest.class));
+
+        // ---- Step 7: Final cache state verification ----
+        assertEquals(4, agentCca.tokenCache.accessTokens.size(),
+                "Agent CCA should now have 4 tokens: 1 assertion + 3 user tokens");
+
+        // ---- Step 8: Non-agent client_credentials with exchange scope on BLUEPRINT ----
+        // This tests that the blueprint's own cache doesn't collide with the FMI token
+        // (which also targets api://AzureADTokenExchange/.default but has an extCacheKeyHash).
+        clearInvocations(httpClientMock);
+        when(httpClientMock.send(any(HttpRequest.class)))
+                .thenReturn(createAppTokenResponse("blueprint-exchange-app-token"));
+
+        IAuthenticationResult blueprintExchangeResult = blueprintCca.acquireToken(
+                ClientCredentialParameters.builder(tokenExchangeScope).build()
+        ).get();
+
+        // The FMI token has extCacheKeyHash set (from fmi_path), so a plain
+        // client_credentials call without fmi_path should NOT match it.
+        // It should trigger a new HTTP call and store a separate cache entry.
+        assertEquals("blueprint-exchange-app-token", blueprintExchangeResult.accessToken(),
+                "Blueprint's non-FMI exchange token should not collide with the FMI token");
     }
 }
