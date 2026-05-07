@@ -103,20 +103,8 @@ class AcquireTokenForAgentSupplier extends AuthenticationResultSupplier {
         // Leg 3: Exchange the assertion for a user-scoped token via UserFIC.
         // The result is written to the Agent CCA's user token cache for future silent retrieval.
         LOG.debug("Executing Leg 3 (user FIC token) for agent app ID: {}", agentAppId);
-        UserFederatedIdentityCredentialParameters ficParams;
-        if (agentIdentity.userObjectId() != null) {
-            ficParams = propagateToUserFicParams(
-                    UserFederatedIdentityCredentialParameters
-                            .builder(callerScopes, agentIdentity.userObjectId(), assertion)
-                            .forceRefresh(true)) // always fetch from network (we already checked the cache above)
-                    .build();
-        } else {
-            ficParams = propagateToUserFicParams(
-                    UserFederatedIdentityCredentialParameters
-                            .builder(callerScopes, agentIdentity.username(), assertion)
-                            .forceRefresh(true))
-                    .build();
-        }
+        UserFederatedIdentityCredentialParameters ficParams = buildLeg3FicParams(
+                callerScopes, agentIdentity, assertion);
 
         return (AuthenticationResult) joinAndUnwrap(agentCca.acquireToken(ficParams));
     }
@@ -179,6 +167,27 @@ class AcquireTokenForAgentSupplier extends AuthenticationResultSupplier {
     private static String extractOid(String homeAccountId) {
         int dotIndex = homeAccountId.indexOf('.');
         return dotIndex >= 0 ? homeAccountId.substring(0, dotIndex) : homeAccountId;
+    }
+
+    /**
+     * Builds the Leg 3 (UserFIC) parameters, selecting the OID or UPN overload as
+     * appropriate. ForceRefresh is always set because the caller-level silent check
+     * (tryAcquireTokenSilent) has already run; if we reach Leg 3 the token must be
+     * fetched from the network.
+     */
+    private UserFederatedIdentityCredentialParameters buildLeg3FicParams(
+            Set<String> callerScopes,
+            AgentIdentity agentIdentity,
+            String assertion) {
+        UserFederatedIdentityCredentialParameters.UserFederatedIdentityCredentialParametersBuilder builder;
+        if (agentIdentity.userObjectId() != null) {
+            builder = UserFederatedIdentityCredentialParameters
+                    .builder(callerScopes, agentIdentity.userObjectId(), assertion);
+        } else {
+            builder = UserFederatedIdentityCredentialParameters
+                    .builder(callerScopes, agentIdentity.username(), assertion);
+        }
+        return propagateToUserFicParams(builder.forceRefresh(true)).build();
     }
 
     // ========================================================================
