@@ -70,7 +70,6 @@ class UserFederatedIdentityCredentialTest {
 
         UserFederatedIdentityCredentialParameters parameters = UserFederatedIdentityCredentialParameters
                 .builder(SCOPES, TEST_UPN, FAKE_ASSERTION)
-                .forceRefresh(true)
                 .build();
 
         // Act
@@ -97,7 +96,6 @@ class UserFederatedIdentityCredentialTest {
 
         UserFederatedIdentityCredentialParameters parameters = UserFederatedIdentityCredentialParameters
                 .builder(SCOPES, TEST_UPN, FAKE_ASSERTION)
-                .forceRefresh(true)
                 .build();
 
         // Act
@@ -124,7 +122,6 @@ class UserFederatedIdentityCredentialTest {
 
         UserFederatedIdentityCredentialParameters parameters = UserFederatedIdentityCredentialParameters
                 .builder(SCOPES, TEST_UPN, FAKE_ASSERTION)
-                .forceRefresh(true)
                 .build();
 
         // Act
@@ -148,13 +145,12 @@ class UserFederatedIdentityCredentialTest {
 
         UserFederatedIdentityCredentialParameters parameters = UserFederatedIdentityCredentialParameters
                 .builder(SCOPES, TEST_OID, FAKE_ASSERTION)
-                .forceRefresh(true)
                 .build();
 
         // Act
         cca.acquireToken(parameters).get();
 
-        // Assert — user_id present, username absent (as grant param, may appear in common params)
+        // Assert — user_id present, username absent(as grant param, may appear in common params)
         verify(httpClientMock).send(argThat(request -> {
             String body = request.body();
             return body.contains("user_id=" + TEST_OID.toString())
@@ -176,7 +172,6 @@ class UserFederatedIdentityCredentialTest {
 
         UserFederatedIdentityCredentialParameters parameters = UserFederatedIdentityCredentialParameters
                 .builder(SCOPES, TEST_UPN, FAKE_ASSERTION)
-                .forceRefresh(true)
                 .build();
 
         // Act
@@ -206,7 +201,6 @@ class UserFederatedIdentityCredentialTest {
 
         UserFederatedIdentityCredentialParameters parameters = UserFederatedIdentityCredentialParameters
                 .builder(SCOPES, TEST_UPN, FAKE_ASSERTION)
-                .forceRefresh(true)
                 .build();
 
         // Act
@@ -235,7 +229,6 @@ class UserFederatedIdentityCredentialTest {
 
         UserFederatedIdentityCredentialParameters parameters = UserFederatedIdentityCredentialParameters
                 .builder(SCOPES, TEST_UPN, FAKE_ASSERTION)
-                .forceRefresh(true)
                 .build();
 
         // Act
@@ -255,25 +248,26 @@ class UserFederatedIdentityCredentialTest {
     @Test
     void userFic_ForceRefresh_BypassesCache() throws Exception {
         // Arrange
+        String oid = "oid-user-1234";
+        String tid = "f645ad92-e38d-4d1a-b510-d1b09a74a8ca";
         AtomicInteger callCount = new AtomicInteger(0);
 
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
         when(httpClientMock.send(any(HttpRequest.class))).thenAnswer(invocation -> {
             callCount.incrementAndGet();
-            return createSuccessResponseWithIdToken();
+            return createUserResponse(oid, TEST_UPN, "access-token", tid);
         });
 
         ConfidentialClientApplication cca = createCca(httpClientMock);
 
-        // First call — populates cache
+        // First call — populates cache (empty cache, goes to IdP)
         UserFederatedIdentityCredentialParameters params1 = UserFederatedIdentityCredentialParameters
                 .builder(SCOPES, TEST_UPN, FAKE_ASSERTION)
-                .forceRefresh(true)
                 .build();
         cca.acquireToken(params1).get();
         assertEquals(1, callCount.get(), "First call should hit IdP");
 
-        // Second call with forceRefresh — should bypass cache
+        // Second call with forceRefresh — should bypass cache despite matching cached account
         UserFederatedIdentityCredentialParameters params2 = UserFederatedIdentityCredentialParameters
                 .builder(SCOPES, TEST_UPN, FAKE_ASSERTION)
                 .forceRefresh(true)
@@ -289,25 +283,26 @@ class UserFederatedIdentityCredentialTest {
     @Test
     void userFic_CacheHit_WhenNotForceRefreshing() throws Exception {
         // Arrange
+        String oid = "oid-user-1234";
+        String tid = "f645ad92-e38d-4d1a-b510-d1b09a74a8ca";
         AtomicInteger callCount = new AtomicInteger(0);
 
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
         when(httpClientMock.send(any(HttpRequest.class))).thenAnswer(invocation -> {
             callCount.incrementAndGet();
-            return createSuccessResponseWithIdToken();
+            return createUserResponse(oid, TEST_UPN, "access-token-cached", tid);
         });
 
         ConfidentialClientApplication cca = createCca(httpClientMock);
 
-        // First call — populates cache
+        // First call — populates cache (cache is empty, so goes to IdP without needing forceRefresh)
         UserFederatedIdentityCredentialParameters params1 = UserFederatedIdentityCredentialParameters
                 .builder(SCOPES, TEST_UPN, FAKE_ASSERTION)
-                .forceRefresh(true)
                 .build();
         cca.acquireToken(params1).get();
         assertEquals(1, callCount.get(), "First call should hit IdP");
 
-        // Second call without forceRefresh — should use cache
+        // Second call without forceRefresh — should use cache (same UPN matches cached account)
         UserFederatedIdentityCredentialParameters params2 = UserFederatedIdentityCredentialParameters
                 .builder(SCOPES, TEST_UPN, FAKE_ASSERTION)
                 .forceRefresh(false)
@@ -448,7 +443,6 @@ class UserFederatedIdentityCredentialTest {
 
         UserFederatedIdentityCredentialParameters aliceParams = UserFederatedIdentityCredentialParameters
                 .builder(SCOPES, alice_upn, FAKE_ASSERTION)
-                .forceRefresh(true)
                 .build();
         IAuthenticationResult aliceResult = cca.acquireToken(aliceParams).get();
         assertEquals(alice_token, aliceResult.accessToken());
@@ -459,7 +453,6 @@ class UserFederatedIdentityCredentialTest {
 
         UserFederatedIdentityCredentialParameters bobParams = UserFederatedIdentityCredentialParameters
                 .builder(SCOPES, bob_upn, FAKE_ASSERTION)
-                .forceRefresh(true)
                 .build();
         IAuthenticationResult bobResult = cca.acquireToken(bobParams).get();
         assertEquals(bob_token, bobResult.accessToken());
@@ -517,7 +510,6 @@ class UserFederatedIdentityCredentialTest {
 
         UserFederatedIdentityCredentialParameters carolParams = UserFederatedIdentityCredentialParameters
                 .builder(SCOPES, carol_upn, FAKE_ASSERTION)
-                .forceRefresh(true)
                 .build();
         IAuthenticationResult carolResult = cca.acquireToken(carolParams).get();
         assertEquals(carol_token, carolResult.accessToken());
@@ -527,7 +519,6 @@ class UserFederatedIdentityCredentialTest {
 
         UserFederatedIdentityCredentialParameters daveParams = UserFederatedIdentityCredentialParameters
                 .builder(SCOPES, dave_upn, FAKE_ASSERTION)
-                .forceRefresh(true)
                 .build();
         IAuthenticationResult daveResult = cca.acquireToken(daveParams).get();
         assertEquals(dave_token, daveResult.accessToken());
@@ -553,5 +544,75 @@ class UserFederatedIdentityCredentialTest {
         IAuthenticationResult silentDave = cca.acquireTokenSilently(
                 SilentParameters.builder(SCOPES, daveAccount).build()).get();
         assertEquals(dave_token, silentDave.accessToken(), "OID-based lookup for Dave should return Dave's token");
+    }
+
+    /**
+     * Regression test: verifies that when only one user's token is cached, a request
+     * for a different user does NOT silently return the first user's cached token.
+     *
+     * Before the fix, findCachedAccount() had a fallback: if accounts.size() == 1 it
+     * returned that sole account regardless of UPN/OID match. This caused Bob's initial
+     * acquireToken call to silently return Alice's cached token instead of going to the IdP.
+     */
+    @Test
+    void userFic_SingleAccountFallback_DoesNotReturnWrongUserToken() throws Exception {
+        // Arrange
+        String alice_oid = "oid-alice-1111";
+        String alice_upn = "alice@contoso.com";
+        String alice_token = "access-token-alice";
+
+        String bob_oid = "oid-bob-2222";
+        String bob_upn = "bob@contoso.com";
+        String bob_token = "access-token-bob";
+
+        String tid = "f645ad92-e38d-4d1a-b510-d1b09a74a8ca";
+
+        AtomicInteger networkCalls = new AtomicInteger(0);
+        AtomicReference<HttpResponse> nextResponse = new AtomicReference<>();
+
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+        when(httpClientMock.send(any(HttpRequest.class))).thenAnswer(invocation -> {
+            networkCalls.incrementAndGet();
+            return nextResponse.get();
+        });
+
+        ConfidentialClientApplication cca = createCca(httpClientMock);
+
+        // Act 1: Acquire token for Alice (goes to IdP, gets cached)
+        nextResponse.set(createUserResponse(alice_oid, alice_upn, alice_token, tid));
+
+        UserFederatedIdentityCredentialParameters aliceParams = UserFederatedIdentityCredentialParameters
+                .builder(SCOPES, alice_upn, FAKE_ASSERTION)
+                .build();
+        IAuthenticationResult aliceResult = cca.acquireToken(aliceParams).get();
+        assertEquals(alice_token, aliceResult.accessToken());
+        int callsAfterAlice = networkCalls.get();
+
+        // At this point, cache has exactly one account (Alice).
+        assertEquals(1, cca.getAccounts().get().size(), "Only Alice should be in cache");
+
+        // Act 2: Acquire token for Bob WITHOUT forceRefresh.
+        // findCachedAccount() runs; there is one account (Alice) but it doesn't match Bob.
+        // The correct behavior is to return null → go to IdP → get Bob's token.
+        // The buggy behavior was: accounts.size()==1 → return Alice → return Alice's cached token.
+        nextResponse.set(createUserResponse(bob_oid, bob_upn, bob_token, tid));
+
+        UserFederatedIdentityCredentialParameters bobParams = UserFederatedIdentityCredentialParameters
+                .builder(SCOPES, bob_upn, FAKE_ASSERTION)
+                .build();
+        IAuthenticationResult bobResult = cca.acquireToken(bobParams).get();
+
+        // Assert: Bob should have gotten his own token, not Alice's
+        assertEquals(bob_token, bobResult.accessToken(),
+                "Bob should receive his own token, not Alice's cached token");
+        assertNotEquals(alice_token, bobResult.accessToken(),
+                "Bob's token must differ from Alice's");
+
+        // Assert: A network call was made for Bob (not just a cache hit)
+        assertTrue(networkCalls.get() > callsAfterAlice,
+                "A network call should have been made for Bob since Alice is a different user");
+
+        // Assert: Both accounts now in cache
+        assertEquals(2, cca.getAccounts().get().size(), "Both Alice and Bob should be in cache");
     }
 }

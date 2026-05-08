@@ -91,13 +91,6 @@ class AcquireTokenByUserFederatedIdentityCredentialSupplier extends Authenticati
                     return account;
                 }
             }
-
-            // If no exact match but there's only one account, use it.
-            // This handles cases where the IdP returns a slightly different username format
-            // (e.g., preferred_username vs UPN) but the token is still for the same user.
-            if (accounts.size() == 1) {
-                return accounts.iterator().next();
-            }
         } catch (Exception ex) {
             LOG.debug("Error looking up cached accounts: {}", ex.getMessage());
         }
