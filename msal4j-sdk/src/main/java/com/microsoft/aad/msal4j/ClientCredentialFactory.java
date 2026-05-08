@@ -125,29 +125,4 @@ public class ClientCredentialFactory {
 
         return new ClientAssertion(assertionProvider);
     }
-
-    /**
-     * Static method to create a {@link ClientAssertion} instance from a provided Function that
-     * receives {@link AssertionRequestOptions} context and returns an {@link AssertionResponse}.
-     * This overload allows the callback to supply both the assertion JWT and an optional
-     * token-binding certificate for mTLS PoP scenarios.
-     *
-     * <p>When the returned {@link AssertionResponse} includes a
-     * {@link AssertionResponse#tokenBindingCertificate()}, MSAL uses
-     * {@code client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-pop}
-     * instead of the default {@code jwt-bearer}.</p>
-     *
-     * @param assertionProvider Function that receives {@link AssertionRequestOptions} and produces
-     *                          an {@link AssertionResponse} containing the assertion and optional certificate
-     * @return {@link ClientAssertion} that will invoke the function each time assertion() is called
-     * @throws NullPointerException if assertionProvider is null
-     */
-    public static IClientAssertion createFromAssertionResponseCallback(
-            Function<AssertionRequestOptions, AssertionResponse> assertionProvider) {
-        if (assertionProvider == null) {
-            throw new NullPointerException("assertionProvider");
-        }
-
-        return new ClientAssertion(assertionProvider, true);
-    }
 }

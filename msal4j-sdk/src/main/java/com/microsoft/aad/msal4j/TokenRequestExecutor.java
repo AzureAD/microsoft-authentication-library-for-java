@@ -156,13 +156,7 @@ class TokenRequestExecutor {
                         tokenEndpoint,
                         fmiPath);
 
-                // Try to get the full AssertionResponse first
-                AssertionResponse response = clientAssertion.assertionResponse(options);
-                if (response != null) {
-                    addAssertionResponseParams(queryParameters, response);
-                } else {
-                    addJWTBearerAssertionParams(queryParameters, clientAssertion.assertion(options));
-                }
+                addJWTBearerAssertionParams(queryParameters, clientAssertion.assertion(options));
             } else {
                 addJWTBearerAssertionParams(queryParameters, clientAssertion.assertion());
             }
@@ -186,23 +180,6 @@ class TokenRequestExecutor {
     private void addJWTBearerAssertionParams(Map<String, String> queryParameters, String assertion) {
         queryParameters.put("client_assertion", assertion);
         queryParameters.put("client_assertion_type", ClientAssertion.ASSERTION_TYPE_JWT_BEARER);
-    }
-
-    /**
-     * Adds assertion parameters from an AssertionResponse, using jwt-pop assertion type
-     * when a token-binding certificate is present, or jwt-bearer otherwise.
-     *
-     * @param queryParameters The map of query parameters to add to
-     * @param response The AssertionResponse containing the assertion and optional certificate
-     */
-    private void addAssertionResponseParams(Map<String, String> queryParameters, AssertionResponse response) {
-        queryParameters.put("client_assertion", response.assertion());
-
-        if (response.tokenBindingCertificate() != null) {
-            queryParameters.put("client_assertion_type", ClientAssertion.ASSERTION_TYPE_JWT_POP);
-        } else {
-            queryParameters.put("client_assertion_type", ClientAssertion.ASSERTION_TYPE_JWT_BEARER);
-        }
     }
 
     private AuthenticationResult createAuthenticationResultFromOauthHttpResponse(HttpResponse oauthHttpResponse) {
