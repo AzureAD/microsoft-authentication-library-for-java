@@ -99,7 +99,7 @@ class FmiIT {
         assertTrue(cacheKey.contains("-atext-"),
                 "Cache key should use 'atext' credential type for FMI tokens, got: " + cacheKey);
 
-        // Verify expected hash for "SomeFmiPath/FmiCredentialPath" matches cross-SDK value
+        // Verify hash for "SomeFmiPath/FmiCredentialPath" matches expected value
         String expectedHash = "zm2n0E62zwTsnNsozptLsoOoB_C7i-GfpxHYQQINJUw".toLowerCase();
         assertTrue(cacheKey.endsWith(expectedHash),
                 "Cache key should end with the expected fmi_path hash, got: " + cacheKey);

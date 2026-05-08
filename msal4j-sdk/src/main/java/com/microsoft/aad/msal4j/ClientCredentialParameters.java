@@ -101,6 +101,21 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         return this.fmiPath;
     }
 
+    /**
+     * Computes the extended cache key hash for this request's fmi_path, if set.
+     * Returns an empty string if fmiPath is not set.
+     * This is the single source of truth for the fmi_path cache key hash computation,
+     * used by both cache writes (TokenCache) and cache reads (silent lookup).
+     */
+    String computeFmiCacheKeyHash() {
+        if (!StringHelper.isBlank(fmiPath)) {
+            java.util.TreeMap<String, String> components = new java.util.TreeMap<>();
+            components.put("fmi_path", fmiPath);
+            return StringHelper.computeExtCacheKeyHash(components);
+        }
+        return "";
+    }
+
     public static class ClientCredentialParametersBuilder {
         private Set<String> scopes;
         private Boolean skipCache = false;

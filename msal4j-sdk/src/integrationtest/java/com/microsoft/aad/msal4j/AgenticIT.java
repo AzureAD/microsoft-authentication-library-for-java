@@ -31,7 +31,7 @@ import java.util.function.Function;
  *   <li>Tenant: {@link #TENANT_ID}</li>
  * </ul>
  *
- * <p>Flows tested (FMI-only, no FIC/user_fic on this branch):
+ * <p>Flows tested:
  * <ul>
  *   <li>Assertion callback receives correct context (AssertionRequestOptions)</li>
  *   <li>Cache isolation between different fmi_path values</li>

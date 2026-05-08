@@ -344,12 +344,7 @@ public class TokenCache implements ITokenCache {
      */
     private static String computeExtCacheKeyHashForRequest(MsalRequest msalRequest) {
         if (msalRequest instanceof ClientCredentialRequest) {
-            ClientCredentialParameters parameters = ((ClientCredentialRequest) msalRequest).parameters;
-            if (!StringHelper.isBlank(parameters.fmiPath())) {
-                TreeMap<String, String> components = new TreeMap<>();
-                components.put("fmi_path", parameters.fmiPath());
-                return StringHelper.computeExtCacheKeyHash(components);
-            }
+            return ((ClientCredentialRequest) msalRequest).parameters.computeFmiCacheKeyHash();
         }
         return "";
     }

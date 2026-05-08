@@ -366,7 +366,7 @@ class FmiTest {
     }
 
     // ========================================================================
-    // Exact cache key string validation (cross-SDK compatibility)
+    // Exact cache key string validation
     // ========================================================================
 
     @Test
@@ -399,25 +399,25 @@ class FmiTest {
 
         cca.acquireToken(params).get();
 
-        // Verify the full cache key matches the expected cross-SDK format:
+        // Verify the full cache key matches the expected format:
         // "{homeAccountId}-{env}-{credType}-{clientId}-{tenantId}-{scopes}-{hash}" (all lowercased)
         assertEquals(1, cca.tokenCache.accessTokens.size());
         String cacheKey = cca.tokenCache.accessTokens.keySet().iterator().next();
 
         String expectedKey = "-login.windows.net-atext-3bf56293-fbb5-42bd-a407-248ba7431a8c-10c419d4-4a50-45b2-aa4e-919fb84df24f-openid profile offline_access api://azurefmitokenexchange/.default-"
                 + "zm2n0E62zwTsnNsozptLsoOoB_C7i-GfpxHYQQINJUw".toLowerCase();
-        assertEquals(expectedKey, cacheKey, "Full cache key should match cross-SDK format");
+        assertEquals(expectedKey, cacheKey, "Full cache key should match expected format");
     }
 
     @Test
     void fmiPath_HashValueMatchesCrossSDK() {
-        // Verify that the Java hash computation matches other MSAL SDKs for known inputs
+        // Verify that the hash computation produces expected values for known inputs
         TreeMap<String, String> components = new TreeMap<>();
         components.put("fmi_path", "SomeFmiPath/FmiCredentialPath");
 
         String hash = StringHelper.computeExtCacheKeyHash(components);
         assertEquals("zm2n0E62zwTsnNsozptLsoOoB_C7i-GfpxHYQQINJUw", hash,
-                "Hash for 'SomeFmiPath/FmiCredentialPath' should match cross-SDK value");
+                "Hash for 'SomeFmiPath/FmiCredentialPath' should match expected value");
 
         // Second known value
         TreeMap<String, String> components2 = new TreeMap<>();
@@ -425,7 +425,7 @@ class FmiTest {
 
         String hash2 = StringHelper.computeExtCacheKeyHash(components2);
         assertEquals("7CX57Q63os7benQ6ER0sxgJPtNQSv7TGb5zexcidFoI", hash2,
-                "Hash for 'SomeFmiPath/Path' should match cross-SDK value");
+                "Hash for 'SomeFmiPath/Path' should match expected value");
     }
 
     @Test
