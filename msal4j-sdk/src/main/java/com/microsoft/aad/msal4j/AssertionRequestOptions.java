@@ -10,16 +10,16 @@ package com.microsoft.aad.msal4j;
  *
  * <p>For more details on agent identity scenarios, see the MSAL documentation on FMI/FIC flows.</p>
  */
-public class AssertionRequestOptions {
+public final class AssertionRequestOptions {
 
     private final String clientId;
     private final String tokenEndpoint;
-    private final String fmiPath;
+    private final String clientAssertionFmiPath;
 
-    AssertionRequestOptions(String clientId, String tokenEndpoint, String fmiPath) {
+    AssertionRequestOptions(String clientId, String tokenEndpoint, String clientAssertionFmiPath) {
         this.clientId = clientId;
         this.tokenEndpoint = tokenEndpoint;
-        this.fmiPath = fmiPath;
+        this.clientAssertionFmiPath = clientAssertionFmiPath;
     }
 
     /**
@@ -42,12 +42,12 @@ public class AssertionRequestOptions {
 
     /**
      * Gets the FMI (Federated Managed Identity) path for agent identity scenarios.
-     * When set, this indicates which agent identity the assertion is being requested for.
+     * When set, this indicates which agent identity the client assertion is being requested for.
      * The assertion provider can use this to include the FMI path in its token acquisition logic.
      *
-     * @return the FMI path, or null if not applicable
+     * @return the client assertion FMI path, or null if not applicable
      */
-    public String fmiPath() {
-        return fmiPath;
+    public String clientAssertionFmiPath() {
+        return clientAssertionFmiPath;
     }
 }

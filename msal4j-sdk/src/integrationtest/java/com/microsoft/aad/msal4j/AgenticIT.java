@@ -104,8 +104,8 @@ class AgenticIT {
 
         // Verify assertion callback received the correct context
         assertNotNull(capturedOptions.get(), "AssertionRequestOptions should have been passed to callback");
-        assertEquals(AGENT_APP_ID, capturedOptions.get().fmiPath(),
-                "fmiPath in callback should match the one set in parameters");
+        assertEquals(AGENT_APP_ID, capturedOptions.get().clientAssertionFmiPath(),
+                "clientAssertionFmiPath in callback should match the one set in parameters");
         assertEquals("urn:microsoft:identity:fmi", capturedOptions.get().clientId(),
                 "clientId in callback should match the CCA client ID");
         assertNotNull(capturedOptions.get().tokenEndpoint(),

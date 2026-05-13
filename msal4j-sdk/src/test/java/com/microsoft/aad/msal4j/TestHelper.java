@@ -90,6 +90,16 @@ class TestHelper {
         }
     }
 
+    /**
+     * Returns a valid AAD instance discovery response JSON string suitable for use with
+     * {@code .aadInstanceDiscoveryResponse()} on application builders, avoiding the need
+     * to disable instance discovery in unit tests.
+     */
+    static String getInstanceDiscoveryResponse() {
+        return readResource(TestHelper.class,
+                "/instance_discovery_data/aad_instance_discovery_response_valid.json");
+    }
+
     static void deleteFileContent(Class<?> classInstance, String resource)
             throws URISyntaxException, IOException {
         FileWriter fileWriter = new FileWriter(

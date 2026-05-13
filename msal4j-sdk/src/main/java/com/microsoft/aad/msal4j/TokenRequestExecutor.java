@@ -139,10 +139,10 @@ class TokenRequestExecutor {
             // For client assertion, add client_assertion and client_assertion_type parameters
             ClientAssertion clientAssertion = (ClientAssertion) credentialToUse;
             if (clientAssertion.isContextAware()) {
-                // Build assertion context with fmi_path if available
-                String fmiPath = null;
+                // Build assertion context with client assertion FMI path if available
+                String clientAssertionFmiPath = null;
                 if (msalRequest instanceof ClientCredentialRequest) {
-                    fmiPath = ((ClientCredentialRequest) msalRequest).parameters.fmiPath();
+                    clientAssertionFmiPath = ((ClientCredentialRequest) msalRequest).parameters.fmiPath();
                 }
                 String tokenEndpoint = null;
                 try {
@@ -154,7 +154,7 @@ class TokenRequestExecutor {
                 AssertionRequestOptions options = new AssertionRequestOptions(
                         application.clientId(),
                         tokenEndpoint,
-                        fmiPath);
+                        clientAssertionFmiPath);
 
                 addJWTBearerAssertionParams(queryParameters, clientAssertion.assertion(options));
             } else {

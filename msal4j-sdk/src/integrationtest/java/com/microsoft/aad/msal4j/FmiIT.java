@@ -147,7 +147,7 @@ class FmiIT {
         // Context-aware assertion callback that acquires an FMI credential from the RMA
         Function<AssertionRequestOptions, String> assertionProvider = options -> {
             try {
-                assertNotNull(options.fmiPath(), "fmiPath should be available in assertion context");
+                assertNotNull(options.clientAssertionFmiPath(), "clientAssertionFmiPath should be available in assertion context");
                 return acquireFmiCredentialFromRma();
             } catch (Exception e) {
                 throw new RuntimeException("Failed to get FMI credential from RMA", e);

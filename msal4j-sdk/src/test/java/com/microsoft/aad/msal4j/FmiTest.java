@@ -40,8 +40,7 @@ class FmiTest {
         ConfidentialClientApplication cca =
                 ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromSecret("secret"))
                         .authority("https://login.microsoftonline.com/tenant/")
-                        .instanceDiscovery(false)
-                        .validateAuthority(false)
+                        .aadInstanceDiscoveryResponse(TestHelper.getInstanceDiscoveryResponse())
                         .httpClient(httpClientMock)
                         .build();
 
@@ -73,8 +72,7 @@ class FmiTest {
         ConfidentialClientApplication cca =
                 ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromSecret("secret"))
                         .authority("https://login.microsoftonline.com/tenant/")
-                        .instanceDiscovery(false)
-                        .validateAuthority(false)
+                        .aadInstanceDiscoveryResponse(TestHelper.getInstanceDiscoveryResponse())
                         .httpClient(httpClientMock)
                         .build();
 
@@ -117,8 +115,7 @@ class FmiTest {
         ConfidentialClientApplication cca =
                 ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromSecret("secret"))
                         .authority("https://login.microsoftonline.com/tenant/")
-                        .instanceDiscovery(false)
-                        .validateAuthority(false)
+                        .aadInstanceDiscoveryResponse(TestHelper.getInstanceDiscoveryResponse())
                         .httpClient(httpClientMock)
                         .build();
 
@@ -156,8 +153,7 @@ class FmiTest {
         ConfidentialClientApplication cca =
                 ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromSecret("secret"))
                         .authority("https://login.microsoftonline.com/tenant/")
-                        .instanceDiscovery(false)
-                        .validateAuthority(false)
+                        .aadInstanceDiscoveryResponse(TestHelper.getInstanceDiscoveryResponse())
                         .httpClient(httpClientMock)
                         .build();
 
@@ -196,8 +192,7 @@ class FmiTest {
         ConfidentialClientApplication cca =
                 ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromSecret("secret"))
                         .authority("https://login.microsoftonline.com/tenant/")
-                        .instanceDiscovery(false)
-                        .validateAuthority(false)
+                        .aadInstanceDiscoveryResponse(TestHelper.getInstanceDiscoveryResponse())
                         .httpClient(httpClientMock)
                         .build();
 
@@ -254,8 +249,7 @@ class FmiTest {
         ConfidentialClientApplication cca =
                 ConfidentialClientApplication.builder("myClientId", credential)
                         .authority("https://login.microsoftonline.com/tenant/")
-                        .instanceDiscovery(false)
-                        .validateAuthority(false)
+                        .aadInstanceDiscoveryResponse(TestHelper.getInstanceDiscoveryResponse())
                         .httpClient(httpClientMock)
                         .build();
 
@@ -269,7 +263,7 @@ class FmiTest {
 
         // Assert — the callback should have received the fmi_path
         assertNotNull(capturedOptions.get(), "AssertionRequestOptions should have been passed to the callback");
-        assertEquals("agentAppId456", capturedOptions.get().fmiPath());
+        assertEquals("agentAppId456", capturedOptions.get().clientAssertionFmiPath());
         assertEquals("myClientId", capturedOptions.get().clientId());
         assertNotNull(capturedOptions.get().tokenEndpoint());
     }
@@ -294,8 +288,7 @@ class FmiTest {
         ConfidentialClientApplication cca =
                 ConfidentialClientApplication.builder("myClientId", credential)
                         .authority("https://login.microsoftonline.com/tenant/")
-                        .instanceDiscovery(false)
-                        .validateAuthority(false)
+                        .aadInstanceDiscoveryResponse(TestHelper.getInstanceDiscoveryResponse())
                         .httpClient(httpClientMock)
                         .build();
 
@@ -308,7 +301,7 @@ class FmiTest {
 
         // Assert — fmiPath should be null when not set
         assertNotNull(capturedOptions.get());
-        assertNull(capturedOptions.get().fmiPath());
+        assertNull(capturedOptions.get().clientAssertionFmiPath());
     }
 
     @Test
@@ -325,8 +318,7 @@ class FmiTest {
         ConfidentialClientApplication cca =
                 ConfidentialClientApplication.builder("clientId", credential)
                         .authority("https://login.microsoftonline.com/tenant/")
-                        .instanceDiscovery(false)
-                        .validateAuthority(false)
+                        .aadInstanceDiscoveryResponse(TestHelper.getInstanceDiscoveryResponse())
                         .httpClient(httpClientMock)
                         .build();
 
@@ -387,8 +379,7 @@ class FmiTest {
                 ConfidentialClientApplication.builder("3bf56293-fbb5-42bd-a407-248ba7431a8c",
                                 ClientCredentialFactory.createFromSecret("secret"))
                         .authority("https://login.microsoftonline.com/10c419d4-4a50-45b2-aa4e-919fb84df24f/")
-                        .instanceDiscovery(false)
-                        .validateAuthority(false)
+                        .aadInstanceDiscoveryResponse(TestHelper.getInstanceDiscoveryResponse())
                         .httpClient(httpClientMock)
                         .build();
 
@@ -441,8 +432,7 @@ class FmiTest {
                 ConfidentialClientApplication.builder("clientId",
                                 ClientCredentialFactory.createFromSecret("secret"))
                         .authority("https://login.microsoftonline.com/tenant/")
-                        .instanceDiscovery(false)
-                        .validateAuthority(false)
+                        .aadInstanceDiscoveryResponse(TestHelper.getInstanceDiscoveryResponse())
                         .httpClient(httpClientMock)
                         .build();
 
