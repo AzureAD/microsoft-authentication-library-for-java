@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -31,6 +32,16 @@ class UserFederatedIdentityCredentialTest {
     private static final String FAKE_ASSERTION = "fake.assertion.jwt";
     private static final String TEST_UPN = "user@contoso.com";
     private static final UUID TEST_OID = UUID.fromString("597f86cd-13f3-44c0-bece-a1e77ba43228");
+
+    private DefaultHttpClient httpClientMock;
+    private ConfidentialClientApplication cca;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        httpClientMock = mock(DefaultHttpClient.class);
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(createSuccessResponse());
+        cca = createCca(httpClientMock);
+    }
 
     private ConfidentialClientApplication createCca(DefaultHttpClient httpClientMock) throws Exception {
         return ConfidentialClientApplication.builder(CLIENT_ID, ClientCredentialFactory.createFromSecret("secret"))
@@ -63,11 +74,6 @@ class UserFederatedIdentityCredentialTest {
     @Test
     void userFic_SendsCorrectGrantType() throws Exception {
         // Arrange
-        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(createSuccessResponse());
-
-        ConfidentialClientApplication cca = createCca(httpClientMock);
-
         UserFederatedIdentityCredentialParameters parameters = UserFederatedIdentityCredentialParameters
                 .builder(SCOPES, TEST_UPN, FAKE_ASSERTION)
                 .build();
@@ -89,11 +95,6 @@ class UserFederatedIdentityCredentialTest {
     @Test
     void userFic_SendsAssertionInBody() throws Exception {
         // Arrange
-        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(createSuccessResponse());
-
-        ConfidentialClientApplication cca = createCca(httpClientMock);
-
         UserFederatedIdentityCredentialParameters parameters = UserFederatedIdentityCredentialParameters
                 .builder(SCOPES, TEST_UPN, FAKE_ASSERTION)
                 .build();
@@ -115,11 +116,6 @@ class UserFederatedIdentityCredentialTest {
     @Test
     void userFic_WithUpn_SendsUsernameNotUserId() throws Exception {
         // Arrange
-        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(createSuccessResponse());
-
-        ConfidentialClientApplication cca = createCca(httpClientMock);
-
         UserFederatedIdentityCredentialParameters parameters = UserFederatedIdentityCredentialParameters
                 .builder(SCOPES, TEST_UPN, FAKE_ASSERTION)
                 .build();
@@ -138,11 +134,6 @@ class UserFederatedIdentityCredentialTest {
     @Test
     void userFic_WithOid_SendsUserIdNotUsername() throws Exception {
         // Arrange
-        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(createSuccessResponse());
-
-        ConfidentialClientApplication cca = createCca(httpClientMock);
-
         UserFederatedIdentityCredentialParameters parameters = UserFederatedIdentityCredentialParameters
                 .builder(SCOPES, TEST_OID, FAKE_ASSERTION)
                 .build();
@@ -165,11 +156,6 @@ class UserFederatedIdentityCredentialTest {
     @Test
     void userFic_SendsAllOAuthParametersTogether() throws Exception {
         // Arrange
-        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(createSuccessResponse());
-
-        ConfidentialClientApplication cca = createCca(httpClientMock);
-
         UserFederatedIdentityCredentialParameters parameters = UserFederatedIdentityCredentialParameters
                 .builder(SCOPES, TEST_UPN, FAKE_ASSERTION)
                 .build();
@@ -194,11 +180,6 @@ class UserFederatedIdentityCredentialTest {
     @Test
     void userFic_ScopeIncludesOidcScopes() throws Exception {
         // Arrange
-        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(createSuccessResponse());
-
-        ConfidentialClientApplication cca = createCca(httpClientMock);
-
         UserFederatedIdentityCredentialParameters parameters = UserFederatedIdentityCredentialParameters
                 .builder(SCOPES, TEST_UPN, FAKE_ASSERTION)
                 .build();
@@ -221,11 +202,8 @@ class UserFederatedIdentityCredentialTest {
 
     @Test
     void userFic_TokenStoredInUserCache() throws Exception {
-        // Arrange
-        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+        // Arrange — override default mock to return id_token
         when(httpClientMock.send(any(HttpRequest.class))).thenReturn(createSuccessResponseWithIdToken());
-
-        ConfidentialClientApplication cca = createCca(httpClientMock);
 
         UserFederatedIdentityCredentialParameters parameters = UserFederatedIdentityCredentialParameters
                 .builder(SCOPES, TEST_UPN, FAKE_ASSERTION)
@@ -252,13 +230,10 @@ class UserFederatedIdentityCredentialTest {
         String tid = "f645ad92-e38d-4d1a-b510-d1b09a74a8ca";
         AtomicInteger callCount = new AtomicInteger(0);
 
-        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
         when(httpClientMock.send(any(HttpRequest.class))).thenAnswer(invocation -> {
             callCount.incrementAndGet();
             return createUserResponse(oid, TEST_UPN, "access-token", tid);
         });
-
-        ConfidentialClientApplication cca = createCca(httpClientMock);
 
         // First call — populates cache (empty cache, goes to IdP)
         UserFederatedIdentityCredentialParameters params1 = UserFederatedIdentityCredentialParameters
@@ -287,13 +262,10 @@ class UserFederatedIdentityCredentialTest {
         String tid = "f645ad92-e38d-4d1a-b510-d1b09a74a8ca";
         AtomicInteger callCount = new AtomicInteger(0);
 
-        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
         when(httpClientMock.send(any(HttpRequest.class))).thenAnswer(invocation -> {
             callCount.incrementAndGet();
             return createUserResponse(oid, TEST_UPN, "access-token-cached", tid);
         });
-
-        ConfidentialClientApplication cca = createCca(httpClientMock);
 
         // First call — populates cache (cache is empty, so goes to IdP without needing forceRefresh)
         UserFederatedIdentityCredentialParameters params1 = UserFederatedIdentityCredentialParameters
@@ -433,10 +405,7 @@ class UserFederatedIdentityCredentialTest {
 
         AtomicReference<HttpResponse> nextResponse = new AtomicReference<>();
 
-        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
         when(httpClientMock.send(any(HttpRequest.class))).thenAnswer(invocation -> nextResponse.get());
-
-        ConfidentialClientApplication cca = createCca(httpClientMock);
 
         // Act: Acquire token for Alice
         nextResponse.set(createUserResponse(alice_oid, alice_upn, alice_token, tid));
@@ -500,10 +469,7 @@ class UserFederatedIdentityCredentialTest {
 
         AtomicReference<HttpResponse> nextResponse = new AtomicReference<>();
 
-        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
         when(httpClientMock.send(any(HttpRequest.class))).thenAnswer(invocation -> nextResponse.get());
-
-        ConfidentialClientApplication cca = createCca(httpClientMock);
 
         // Act: Acquire token for Carol (using UPN)
         nextResponse.set(createUserResponse(carol_oid, carol_upn, carol_token, tid));
@@ -570,13 +536,10 @@ class UserFederatedIdentityCredentialTest {
         AtomicInteger networkCalls = new AtomicInteger(0);
         AtomicReference<HttpResponse> nextResponse = new AtomicReference<>();
 
-        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
         when(httpClientMock.send(any(HttpRequest.class))).thenAnswer(invocation -> {
             networkCalls.incrementAndGet();
             return nextResponse.get();
         });
-
-        ConfidentialClientApplication cca = createCca(httpClientMock);
 
         // Act 1: Acquire token for Alice (goes to IdP, gets cached)
         nextResponse.set(createUserResponse(alice_oid, alice_upn, alice_token, tid));

@@ -42,7 +42,7 @@ import java.util.function.Function;
  * </ul>
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class FicIT {
+class UserFicIT {
 
     // Same config as AgenticIT
     private static final String BLUEPRINT_CLIENT_ID = "aab5089d-e764-47e3-9f28-cc11c2513821";

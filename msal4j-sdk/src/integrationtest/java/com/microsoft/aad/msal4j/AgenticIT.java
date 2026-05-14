@@ -294,8 +294,8 @@ class AgenticIT {
                 "App token and user token should be different");
 
         // App cache should have 1 entry, user cache should have user account
-        assertTrue(agentCca.tokenCache.accessTokens.size() >= 2,
-                "Cache should have at least 2 entries (app + user)");
+        assertEquals(2, agentCca.tokenCache.accessTokens.size(),
+                "Cache should have exactly 2 entries (app + user)");
     }
 
     /**
