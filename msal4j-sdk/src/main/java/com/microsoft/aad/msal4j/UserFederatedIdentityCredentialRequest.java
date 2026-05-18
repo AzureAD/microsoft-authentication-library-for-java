@@ -30,14 +30,10 @@ class UserFederatedIdentityCredentialRequest extends MsalRequest {
             params.put(GrantConstants.USERNAME_PARAMETER, parameters.username());
         }
 
-        if (parameters.claims() != null) {
-            params.put("claims", parameters.claims().formatAsJSONString());
-        }
-
-        // OAuthAuthorizationGrant constructor automatically adds:
-        // - scope augmented with openid, offline_access, profile (COMMON_SCOPES)
-        // - client_info=1
-        return new OAuthAuthorizationGrant(params, parameters.scopes());
+        // Use the 3-arg constructor so that claims are properly set on the grant object.
+        // This ensures TokenRequestExecutor can correctly merge user claims with clientCapabilities
+        // rather than silently overwriting them.
+        return new OAuthAuthorizationGrant(params, parameters.scopes(), parameters.claims());
     }
 
     UserFederatedIdentityCredentialParameters parameters() {

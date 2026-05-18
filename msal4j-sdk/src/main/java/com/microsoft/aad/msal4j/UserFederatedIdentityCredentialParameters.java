@@ -131,6 +131,12 @@ public class UserFederatedIdentityCredentialParameters implements IAcquireTokenP
         return this.extraHttpHeaders;
     }
 
+    /**
+     * @deprecated Present only to satisfy the {@link IAcquireTokenParameters} interface contract.
+     * Not recommended for use — this API is scheduled for removal across all parameter classes
+     * and will be replaced by a new mechanism in a future release.
+     */
+    @Deprecated
     public Map<String, String> extraQueryParameters() {
         return this.extraQueryParameters;
     }
@@ -201,8 +207,11 @@ public class UserFederatedIdentityCredentialParameters implements IAcquireTokenP
         }
 
         /**
-         * Adds additional parameters to the token request.
+         * @deprecated Present only to satisfy the {@link IAcquireTokenParameters} interface contract.
+         * Not recommended for use — this API is scheduled for removal across all parameter classes
+         * and will be replaced by a new mechanism in a future release.
          */
+        @Deprecated
         public UserFederatedIdentityCredentialParametersBuilder extraQueryParameters(Map<String, String> extraQueryParameters) {
             this.extraQueryParameters = extraQueryParameters;
             return this;
