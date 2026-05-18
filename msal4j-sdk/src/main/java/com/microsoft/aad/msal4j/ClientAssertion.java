@@ -66,9 +66,13 @@ final class ClientAssertion implements IClientAssertion {
 
     /**
      * Gets the JWT assertion for client authentication.
-     * If this ClientAssertion was created with a Callable, the callable will be
-     * invoked each time this method is called to generate a fresh assertion.
-     * If created with a context-aware Function, it is invoked with a default (empty) context.
+     *
+     * <p>Dispatch logic:
+     * <ul>
+     *   <li>Context-aware provider: delegates to {@link #assertion(AssertionRequestOptions)} with empty context</li>
+     *   <li>Callable provider: invokes the callable to generate a fresh assertion</li>
+     *   <li>Static string: returns the stored assertion directly</li>
+     * </ul>
      *
      * @return A JWT assertion string
      * @throws MsalClientException if the assertion provider returns null/empty or throws an exception
@@ -87,10 +91,17 @@ final class ClientAssertion implements IClientAssertion {
 
     /**
      * Gets the JWT assertion for client authentication with context information.
-     * If this ClientAssertion was created with a context-aware Function, the function will receive
-     * the provided context. If created with a Callable or static string, the context is ignored.
      *
-     * @param options context information for the assertion request
+     * <p>Dispatch logic:
+     * <ul>
+     *   <li>Context-aware provider: invokes the Function with the provided options</li>
+     *   <li>Callable or static: context is ignored, falls back to {@link #assertion()}</li>
+     * </ul>
+     *
+     * <p>This method is the primary entry point used by {@code TokenRequestExecutor} when
+     * building token requests, as it can pass FMI path and token endpoint context.
+     *
+     * @param options context information for the assertion request (may contain nulls for non-FMI flows)
      * @return A JWT assertion string
      * @throws MsalClientException if the assertion provider returns null/empty or throws an exception
      */

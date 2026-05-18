@@ -357,6 +357,15 @@ class FmiTest {
                         .build());
     }
 
+    @Test
+    void fmiPath_NullValueThrowsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () ->
+                ClientCredentialParameters
+                        .builder(Collections.singleton("scope"))
+                        .fmiPath(null)
+                        .build());
+    }
+
     // ========================================================================
     // Exact cache key string validation
     // ========================================================================
@@ -449,6 +458,120 @@ class FmiTest {
         String expectedKey = "-login.windows.net-accesstoken-clientid-tenant-openid profile offline_access scope";
         assertEquals(expectedKey, cacheKey,
                 "Cache key without fmi_path should use 'accesstoken' credential type and no hash suffix");
+    }
+
+    // ========================================================================
+    // Cache filter isolation: FMI tokens not returned for non-FMI requests (and vice versa)
+    // ========================================================================
+
+    @Test
+    void fmiPath_CacheIsolation_FmiTokenNotReturnedForNonFmiRequest() throws Exception {
+        // Seed cache with an FMI-tagged token, then verify a non-FMI request does NOT
+        // return it from cache (goes to IdP instead).
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(
+                TestHelper.expectedResponse(HttpStatus.HTTP_OK,
+                        TestHelper.getSuccessfulTokenResponse(new HashMap<>())));
+
+        ConfidentialClientApplication cca =
+                ConfidentialClientApplication.builder("clientId",
+                                ClientCredentialFactory.createFromSecret("secret"))
+                        .authority("https://login.microsoftonline.com/tenant/")
+                        .aadInstanceDiscoveryResponse(TestHelper.getInstanceDiscoveryResponse())
+                        .httpClient(httpClientMock)
+                        .build();
+
+        // First request WITH fmi_path — seeds cache with an FMI-tagged token
+        ClientCredentialParameters fmiParams = ClientCredentialParameters
+                .builder(Collections.singleton("scope"))
+                .fmiPath("agentApp1")
+                .build();
+        cca.acquireToken(fmiParams).get();
+        assertEquals(1, cca.tokenCache.accessTokens.size());
+
+        // Second request WITHOUT fmi_path — should NOT get the FMI token from cache
+        ClientCredentialParameters nonFmiParams = ClientCredentialParameters
+                .builder(Collections.singleton("scope"))
+                .build();
+        cca.acquireToken(nonFmiParams).get();
+
+        // Both tokens should now be in cache (FMI miss → went to IdP → stored as non-FMI)
+        assertEquals(2, cca.tokenCache.accessTokens.size(),
+                "Non-FMI request should not match FMI-tagged cache entry; both tokens should exist");
+    }
+
+    @Test
+    void fmiPath_CacheIsolation_NonFmiTokenNotReturnedForFmiRequest() throws Exception {
+        // Seed cache with a non-FMI token, then verify an FMI request does NOT
+        // return it from cache (goes to IdP instead).
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(
+                TestHelper.expectedResponse(HttpStatus.HTTP_OK,
+                        TestHelper.getSuccessfulTokenResponse(new HashMap<>())));
+
+        ConfidentialClientApplication cca =
+                ConfidentialClientApplication.builder("clientId",
+                                ClientCredentialFactory.createFromSecret("secret"))
+                        .authority("https://login.microsoftonline.com/tenant/")
+                        .aadInstanceDiscoveryResponse(TestHelper.getInstanceDiscoveryResponse())
+                        .httpClient(httpClientMock)
+                        .build();
+
+        // First request WITHOUT fmi_path — seeds cache with a non-FMI token
+        ClientCredentialParameters nonFmiParams = ClientCredentialParameters
+                .builder(Collections.singleton("scope"))
+                .build();
+        cca.acquireToken(nonFmiParams).get();
+        assertEquals(1, cca.tokenCache.accessTokens.size());
+
+        // Second request WITH fmi_path — should NOT get the non-FMI token from cache
+        ClientCredentialParameters fmiParams = ClientCredentialParameters
+                .builder(Collections.singleton("scope"))
+                .fmiPath("agentApp1")
+                .build();
+        cca.acquireToken(fmiParams).get();
+
+        // Both tokens should now be in cache (FMI miss → went to IdP → stored as FMI)
+        assertEquals(2, cca.tokenCache.accessTokens.size(),
+                "FMI request should not match non-FMI cache entry; both tokens should exist");
+    }
+
+    @Test
+    void fmiPath_CacheIsolation_DifferentFmiPathsNotShared() throws Exception {
+        // Two different fmi_path values should produce separate cache entries
+        DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
+
+        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(
+                TestHelper.expectedResponse(HttpStatus.HTTP_OK,
+                        TestHelper.getSuccessfulTokenResponse(new HashMap<>())));
+
+        ConfidentialClientApplication cca =
+                ConfidentialClientApplication.builder("clientId",
+                                ClientCredentialFactory.createFromSecret("secret"))
+                        .authority("https://login.microsoftonline.com/tenant/")
+                        .aadInstanceDiscoveryResponse(TestHelper.getInstanceDiscoveryResponse())
+                        .httpClient(httpClientMock)
+                        .build();
+
+        // Request with fmi_path "agentA"
+        ClientCredentialParameters paramsA = ClientCredentialParameters
+                .builder(Collections.singleton("scope"))
+                .fmiPath("agentA")
+                .build();
+        cca.acquireToken(paramsA).get();
+
+        // Request with fmi_path "agentB"
+        ClientCredentialParameters paramsB = ClientCredentialParameters
+                .builder(Collections.singleton("scope"))
+                .fmiPath("agentB")
+                .build();
+        cca.acquireToken(paramsB).get();
+
+        // Each fmi_path produces a different hash → different cache key → 2 entries
+        assertEquals(2, cca.tokenCache.accessTokens.size(),
+                "Different fmi_path values should produce separate cache entries");
     }
 
 }

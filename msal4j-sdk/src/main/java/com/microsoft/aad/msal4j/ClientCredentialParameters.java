@@ -5,6 +5,7 @@ package com.microsoft.aad.msal4j;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 
@@ -106,14 +107,22 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
      * Returns an empty string if fmiPath is not set.
      * This is the single source of truth for the fmi_path cache key hash computation,
      * used by both cache writes (TokenCache) and cache reads (silent lookup).
+     * The result is memoized since ClientCredentialParameters is immutable after construction.
      */
+    private String fmiCacheKeyHashCache;
+
     String computeFmiCacheKeyHash() {
-        if (!StringHelper.isBlank(fmiPath)) {
-            java.util.TreeMap<String, String> components = new java.util.TreeMap<>();
-            components.put("fmi_path", fmiPath);
-            return StringHelper.computeExtCacheKeyHash(components);
+        if (fmiCacheKeyHashCache != null) {
+            return fmiCacheKeyHashCache;
         }
-        return "";
+        if (!StringHelper.isBlank(fmiPath)) {
+            TreeMap<String, String> components = new TreeMap<>();
+            components.put("fmi_path", fmiPath);
+            fmiCacheKeyHashCache = StringHelper.computeExtCacheKeyHash(components);
+        } else {
+            fmiCacheKeyHashCache = "";
+        }
+        return fmiCacheKeyHashCache;
     }
 
     public static class ClientCredentialParametersBuilder {
@@ -203,9 +212,7 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
          * @return builder that can be used to construct ClientCredentialParameters
          */
         public ClientCredentialParametersBuilder fmiPath(String fmiPath) {
-            if (fmiPath != null && fmiPath.trim().isEmpty()) {
-                throw new IllegalArgumentException("fmiPath cannot be empty or blank");
-            }
+            ParameterValidationUtils.validateNotBlank("fmiPath", fmiPath);
             this.fmiPath = fmiPath;
             return this;
         }
