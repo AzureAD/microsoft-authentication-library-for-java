@@ -33,6 +33,8 @@ class AcquireTokenByUserFederatedIdentityCredentialSupplier extends Authenticati
                             .builder(this.userFicRequest.parameters.scopes(), account)
                             .claims(this.userFicRequest.parameters.claims())
                             .tenant(this.userFicRequest.parameters.tenant())
+                            .extraHttpHeaders(this.userFicRequest.parameters.extraHttpHeaders())
+                            .extraQueryParameters(this.userFicRequest.parameters.extraQueryParameters())
                             .build();
 
                     RequestContext context = new RequestContext(
@@ -70,7 +72,10 @@ class AcquireTokenByUserFederatedIdentityCredentialSupplier extends Authenticati
      */
     private IAccount findCachedAccount() {
         try {
-            Set<IAccount> accounts = ((ConfidentialClientApplication) this.clientApplication).getAccounts().get();
+            // Use synchronous cache read to avoid potential deadlock when running on a
+            // single-thread executor (getAccounts() submits work to the same executor).
+            Set<IAccount> accounts = this.clientApplication.tokenCache().getAccounts(
+                    this.clientApplication.clientId());
             if (accounts == null || accounts.isEmpty()) {
                 return null;
             }
@@ -79,10 +84,12 @@ class AcquireTokenByUserFederatedIdentityCredentialSupplier extends Authenticati
             java.util.UUID userObjectId = userFicRequest.parameters.userObjectId();
 
             for (IAccount account : accounts) {
-                // Match by OID — homeAccountId format is "oid.tid"
-                if (userObjectId != null && account.homeAccountId() != null
-                        && account.homeAccountId().startsWith(userObjectId.toString())) {
-                    return account;
+                // Match by OID — homeAccountId format is "oid.tid", case-insensitive
+                if (userObjectId != null && account.homeAccountId() != null) {
+                    String[] parts = account.homeAccountId().split("\\.");
+                    if (parts.length > 0 && userObjectId.toString().equalsIgnoreCase(parts[0])) {
+                        return account;
+                    }
                 }
                 // Match by username (UPN) — case-insensitive
                 if (username != null && !username.isEmpty()

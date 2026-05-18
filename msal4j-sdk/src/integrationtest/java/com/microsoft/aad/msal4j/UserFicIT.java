@@ -27,10 +27,10 @@ import java.util.function.Function;
  *
  * <p>Test configuration:
  * <ul>
- *   <li>Blueprint app: {@link #BLUEPRINT_CLIENT_ID}</li>
- *   <li>Agent app: {@link #AGENT_APP_ID}</li>
- *   <li>Tenant: {@link #TENANT_ID}</li>
- *   <li>User UPN: {@link #USER_UPN}</li>
+ *   <li>Blueprint app: see {@link TestConstants#AGENTIC_BLUEPRINT_CLIENT_ID}</li>
+ *   <li>Agent app: see {@link TestConstants#AGENTIC_AGENT_APP_ID}</li>
+ *   <li>Tenant: see {@link TestConstants#AGENTIC_TENANT_ID}</li>
+ *   <li>User UPN: see {@link TestConstants#AGENTIC_USER_UPN}</li>
  * </ul>
  *
  * <p>Flows tested:
@@ -44,16 +44,7 @@ import java.util.function.Function;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class UserFicIT {
 
-    // Same config as AgenticIT
-    private static final String BLUEPRINT_CLIENT_ID = "aab5089d-e764-47e3-9f28-cc11c2513821";
-    private static final String TENANT_ID = "10c419d4-4a50-45b2-aa4e-919fb84df24f";
-    private static final String AGENT_APP_ID = "ab18ca07-d139-4840-8b3b-4be9610c6ed5";
-    private static final String USER_UPN = "agentuser1@id4slab1.onmicrosoft.com";
-    private static final String TOKEN_EXCHANGE_SCOPE = "api://AzureADTokenExchange/.default";
-    private static final String GRAPH_SCOPE = "https://graph.microsoft.com/.default";
-    private static final String AZURE_REGION = "westus3";
-
-    private static final String AUTHORITY = "https://login.microsoftonline.com/" + TENANT_ID + "/";
+    private static final String AUTHORITY = "https://login.microsoftonline.com/" + TestConstants.AGENTIC_TENANT_ID + "/";
 
     private PrivateKey privateKey;
     private X509Certificate certificate;
@@ -86,7 +77,7 @@ class UserFicIT {
         ConfidentialClientApplication cca = buildAgentCca();
 
         UserFederatedIdentityCredentialParameters params = UserFederatedIdentityCredentialParameters
-                .builder(Collections.singleton(GRAPH_SCOPE), USER_UPN, t2)
+                .builder(Collections.singleton(TestConstants.AGENTIC_GRAPH_SCOPE), TestConstants.AGENTIC_USER_UPN, t2)
                 .build();
 
         IAuthenticationResult result = cca.acquireToken(params).get();
@@ -103,7 +94,7 @@ class UserFicIT {
 
         IAccount account = accounts.iterator().next();
         IAuthenticationResult silentResult = cca.acquireTokenSilently(
-                SilentParameters.builder(Collections.singleton(GRAPH_SCOPE), account).build()).get();
+                SilentParameters.builder(Collections.singleton(TestConstants.AGENTIC_GRAPH_SCOPE), account).build()).get();
 
         assertNotNull(silentResult.accessToken(), "Silent token should not be null");
         assertEquals(result.accessToken(), silentResult.accessToken(),
@@ -121,7 +112,7 @@ class UserFicIT {
         ConfidentialClientApplication cca = buildAgentCca();
 
         UserFederatedIdentityCredentialParameters upnParams = UserFederatedIdentityCredentialParameters
-                .builder(Collections.singleton(GRAPH_SCOPE), USER_UPN, t2_1)
+                .builder(Collections.singleton(TestConstants.AGENTIC_GRAPH_SCOPE), TestConstants.AGENTIC_USER_UPN, t2_1)
                 .build();
 
         IAuthenticationResult upnResult = cca.acquireToken(upnParams).get();
@@ -138,7 +129,7 @@ class UserFicIT {
 
         // Step 3: Use the UUID overload
         UserFederatedIdentityCredentialParameters oidParams = UserFederatedIdentityCredentialParameters
-                .builder(Collections.singleton(GRAPH_SCOPE), userOid, t2_2)
+                .builder(Collections.singleton(TestConstants.AGENTIC_GRAPH_SCOPE), userOid, t2_2)
                 .forceRefresh(true)
                 .build();
 
@@ -163,7 +154,7 @@ class UserFicIT {
         ConfidentialClientApplication cca = buildAgentCca();
 
         UserFederatedIdentityCredentialParameters params = UserFederatedIdentityCredentialParameters
-                .builder(Collections.singleton(GRAPH_SCOPE), USER_UPN, t2)
+                .builder(Collections.singleton(TestConstants.AGENTIC_GRAPH_SCOPE), TestConstants.AGENTIC_USER_UPN, t2)
                 .build();
 
         IAuthenticationResult result1 = cca.acquireToken(params).get();
@@ -171,7 +162,7 @@ class UserFicIT {
 
         // Second call without forceRefresh should be a cache hit
         UserFederatedIdentityCredentialParameters params2 = UserFederatedIdentityCredentialParameters
-                .builder(Collections.singleton(GRAPH_SCOPE), USER_UPN, "stale-assertion-should-not-be-used")
+                .builder(Collections.singleton(TestConstants.AGENTIC_GRAPH_SCOPE), TestConstants.AGENTIC_USER_UPN, "stale-assertion-should-not-be-used")
                 .forceRefresh(false)
                 .build();
 
@@ -191,7 +182,7 @@ class UserFicIT {
         ConfidentialClientApplication cca = buildAgentCca();
 
         UserFederatedIdentityCredentialParameters params1 = UserFederatedIdentityCredentialParameters
-                .builder(Collections.singleton(GRAPH_SCOPE), USER_UPN, t2_1)
+                .builder(Collections.singleton(TestConstants.AGENTIC_GRAPH_SCOPE), TestConstants.AGENTIC_USER_UPN, t2_1)
                 .build();
 
         IAuthenticationResult result1 = cca.acquireToken(params1).get();
@@ -201,7 +192,7 @@ class UserFicIT {
         String t2_2 = acquireInstanceToken();
 
         UserFederatedIdentityCredentialParameters params2 = UserFederatedIdentityCredentialParameters
-                .builder(Collections.singleton(GRAPH_SCOPE), USER_UPN, t2_2)
+                .builder(Collections.singleton(TestConstants.AGENTIC_GRAPH_SCOPE), TestConstants.AGENTIC_USER_UPN, t2_2)
                 .forceRefresh(true)
                 .build();
 
@@ -225,14 +216,14 @@ class UserFicIT {
         IClientCertificate clientCert = ClientCredentialFactory.createFromCertificate(privateKey, certificate);
 
         ConfidentialClientApplication blueprintCca = ConfidentialClientApplication.builder(
-                        BLUEPRINT_CLIENT_ID, clientCert)
+                        TestConstants.AGENTIC_BLUEPRINT_CLIENT_ID, clientCert)
                 .authority(AUTHORITY)
                 .sendX5c(true)
-                .azureRegion(AZURE_REGION)
+                .azureRegion(TestConstants.AGENTIC_AZURE_REGION)
                 .build();
 
         ClientCredentialParameters fmiParams = ClientCredentialParameters
-                .builder(Collections.singleton(TOKEN_EXCHANGE_SCOPE))
+                .builder(Collections.singleton(TestConstants.AGENTIC_TOKEN_EXCHANGE_SCOPE))
                 .fmiPath(fmiPath)
                 .build();
 
@@ -248,16 +239,16 @@ class UserFicIT {
      * T2 is used as the user_federated_identity_credential in Leg 3.
      */
     private String acquireInstanceToken() throws Exception {
-        String t1 = acquireFmiCredential(AGENT_APP_ID);
+        String t1 = acquireFmiCredential(TestConstants.AGENTIC_AGENT_APP_ID);
 
         IClientCredential agentCredential = ClientCredentialFactory.createFromClientAssertion(t1);
 
-        ConfidentialClientApplication agentCca = ConfidentialClientApplication.builder(AGENT_APP_ID, agentCredential)
+        ConfidentialClientApplication agentCca = ConfidentialClientApplication.builder(TestConstants.AGENTIC_AGENT_APP_ID, agentCredential)
                 .authority(AUTHORITY)
                 .build();
 
         ClientCredentialParameters instanceParams = ClientCredentialParameters
-                .builder(Collections.singleton(TOKEN_EXCHANGE_SCOPE))
+                .builder(Collections.singleton(TestConstants.AGENTIC_TOKEN_EXCHANGE_SCOPE))
                 .skipCache(true)
                 .build();
 
@@ -273,7 +264,7 @@ class UserFicIT {
     private ConfidentialClientApplication buildAgentCca() throws Exception {
         Function<AssertionRequestOptions, String> assertionProvider = options -> {
             try {
-                return acquireFmiCredential(AGENT_APP_ID);
+                return acquireFmiCredential(TestConstants.AGENTIC_AGENT_APP_ID);
             } catch (Exception e) {
                 throw new RuntimeException("Failed to acquire FMI credential", e);
             }
@@ -281,7 +272,7 @@ class UserFicIT {
 
         IClientCredential credential = ClientCredentialFactory.createFromCallback(assertionProvider);
 
-        return ConfidentialClientApplication.builder(AGENT_APP_ID, credential)
+        return ConfidentialClientApplication.builder(TestConstants.AGENTIC_AGENT_APP_ID, credential)
                 .authority(AUTHORITY)
                 .build();
     }

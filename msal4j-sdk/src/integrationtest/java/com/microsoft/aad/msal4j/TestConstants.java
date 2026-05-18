@@ -41,4 +41,16 @@ public class TestConstants {
     public static final String AUTHORITY_PUBLIC_TENANT_SPECIFIC = "https://login.microsoftonline.com/" + MICROSOFT_AUTHORITY_TENANT;
 
     public static final String ARLINGTON_TENANT_ID = "45ff0c17-f8b5-489b-b7fd-2fedebbec0c4";
+
+    // Agentic / FMI / FIC integration test configuration (MSID Lab 4)
+    public static final String AGENTIC_TENANT_ID = "10c419d4-4a50-45b2-aa4e-919fb84df24f";
+    public static final String AGENTIC_BLUEPRINT_CLIENT_ID = "aab5089d-e764-47e3-9f28-cc11c2513821";
+    public static final String AGENTIC_RMA_CLIENT_ID = "3bf56293-fbb5-42bd-a407-248ba7431a8c";
+    public static final String AGENTIC_AGENT_APP_ID = "ab18ca07-d139-4840-8b3b-4be9610c6ed5";
+    public static final String AGENTIC_USER_UPN = "agentuser1@id4slab1.onmicrosoft.com";
+    public static final String AGENTIC_TOKEN_EXCHANGE_SCOPE = "api://AzureADTokenExchange/.default";
+    public static final String AGENTIC_FMI_EXCHANGE_SCOPE = "api://AzureFMITokenExchange/.default";
+    public static final String AGENTIC_GRAPH_SCOPE = "https://graph.microsoft.com/.default";
+    public static final String AGENTIC_WEB_API_SCOPE = "api://aa464f73-2868-4f67-b0e7-fc2f749e757f/.default";
+    public static final String AGENTIC_AZURE_REGION = "westus3";
 }
