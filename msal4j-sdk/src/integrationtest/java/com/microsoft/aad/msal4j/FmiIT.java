@@ -25,8 +25,8 @@ import com.microsoft.aad.msal4j.labapi.KeyVaultSecretsProvider;
  *
  * <p>Test apps are in MSID Lab 4:
  * <ul>
- *   <li>RMA (Resource Management Application): {@link #RMA_CLIENT_ID}</li>
- *   <li>Web API resource: {@link #WEB_API_SCOPE}</li>
+ *   <li>RMA (Resource Management Application): see {@link TestConstants#AGENTIC_RMA_CLIENT_ID}</li>
+ *   <li>Web API resource: see {@link TestConstants#AGENTIC_WEB_API_SCOPE}</li>
  * </ul>
  *
  * <p>Flows tested:
@@ -40,14 +40,7 @@ import com.microsoft.aad.msal4j.labapi.KeyVaultSecretsProvider;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class FmiIT {
 
-    // Lab test configuration
-    private static final String TENANT_ID = "10c419d4-4a50-45b2-aa4e-919fb84df24f";
-    private static final String RMA_CLIENT_ID = "3bf56293-fbb5-42bd-a407-248ba7431a8c";
-    private static final String WEB_API_SCOPE = "api://aa464f73-2868-4f67-b0e7-fc2f749e757f/.default";
-    private static final String FMI_EXCHANGE_SCOPE = "api://AzureFMITokenExchange/.default";
-    private static final String AZURE_REGION = "westus3";
-
-    private static final String AUTHORITY = "https://login.microsoftonline.com/" + TENANT_ID + "/";
+    private static final String AUTHORITY = "https://login.microsoftonline.com/" + TestConstants.AGENTIC_TENANT_ID + "/";
 
     private PrivateKey privateKey;
     private X509Certificate certificate;
@@ -75,14 +68,14 @@ class FmiIT {
     void flow1_FmiCredential_FromCert() throws Exception {
         IClientCertificate clientCert = ClientCredentialFactory.createFromCertificate(privateKey, certificate);
 
-        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(RMA_CLIENT_ID, clientCert)
+        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(TestConstants.AGENTIC_RMA_CLIENT_ID, clientCert)
                 .authority(AUTHORITY)
                 .sendX5c(true)
-                .azureRegion(AZURE_REGION)
+                .azureRegion(TestConstants.AGENTIC_AZURE_REGION)
                 .build();
 
         ClientCredentialParameters params = ClientCredentialParameters
-                .builder(Collections.singleton(FMI_EXCHANGE_SCOPE))
+                .builder(Collections.singleton(TestConstants.AGENTIC_FMI_EXCHANGE_SCOPE))
                 .fmiPath("SomeFmiPath/FmiCredentialPath")
                 .build();
 
@@ -113,14 +106,14 @@ class FmiIT {
     void flow2_FmiToken_FromCert() throws Exception {
         IClientCertificate clientCert = ClientCredentialFactory.createFromCertificate(privateKey, certificate);
 
-        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(RMA_CLIENT_ID, clientCert)
+        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(TestConstants.AGENTIC_RMA_CLIENT_ID, clientCert)
                 .authority(AUTHORITY)
                 .sendX5c(true)
-                .azureRegion(AZURE_REGION)
+                .azureRegion(TestConstants.AGENTIC_AZURE_REGION)
                 .build();
 
         ClientCredentialParameters params = ClientCredentialParameters
-                .builder(Collections.singleton(WEB_API_SCOPE))
+                .builder(Collections.singleton(TestConstants.AGENTIC_WEB_API_SCOPE))
                 .fmiPath("SomeFmiPath/FmiCredentialPath")
                 .build();
 
@@ -159,11 +152,11 @@ class FmiIT {
         ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
                         "urn:microsoft:identity:fmi", credential)
                 .authority(AUTHORITY)
-                .azureRegion(AZURE_REGION)
+                .azureRegion(TestConstants.AGENTIC_AZURE_REGION)
                 .build();
 
         ClientCredentialParameters params = ClientCredentialParameters
-                .builder(Collections.singleton(FMI_EXCHANGE_SCOPE))
+                .builder(Collections.singleton(TestConstants.AGENTIC_FMI_EXCHANGE_SCOPE))
                 .fmiPath("SomeFmiPath/Path")
                 .build();
 
@@ -203,11 +196,11 @@ class FmiIT {
         ConfidentialClientApplication cca = ConfidentialClientApplication.builder(
                         "urn:microsoft:identity:fmi", credential)
                 .authority(AUTHORITY)
-                .azureRegion(AZURE_REGION)
+                .azureRegion(TestConstants.AGENTIC_AZURE_REGION)
                 .build();
 
         ClientCredentialParameters params = ClientCredentialParameters
-                .builder(Collections.singleton(WEB_API_SCOPE))
+                .builder(Collections.singleton(TestConstants.AGENTIC_WEB_API_SCOPE))
                 .fmiPath("SomeFmiPath/Path")
                 .build();
 
@@ -233,22 +226,22 @@ class FmiIT {
     void fmiPath_CacheIsolation_Integration() throws Exception {
         IClientCertificate clientCert = ClientCredentialFactory.createFromCertificate(privateKey, certificate);
 
-        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(RMA_CLIENT_ID, clientCert)
+        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(TestConstants.AGENTIC_RMA_CLIENT_ID, clientCert)
                 .authority(AUTHORITY)
                 .sendX5c(true)
-                .azureRegion(AZURE_REGION)
+                .azureRegion(TestConstants.AGENTIC_AZURE_REGION)
                 .build();
 
         // Acquire with first fmi_path
         ClientCredentialParameters params1 = ClientCredentialParameters
-                .builder(Collections.singleton(FMI_EXCHANGE_SCOPE))
+                .builder(Collections.singleton(TestConstants.AGENTIC_FMI_EXCHANGE_SCOPE))
                 .fmiPath("SomeFmiPath/FmiCredentialPath")
                 .build();
         IAuthenticationResult result1 = cca.acquireToken(params1).get();
 
         // Acquire with different fmi_path (same scope)
         ClientCredentialParameters params2 = ClientCredentialParameters
-                .builder(Collections.singleton(FMI_EXCHANGE_SCOPE))
+                .builder(Collections.singleton(TestConstants.AGENTIC_FMI_EXCHANGE_SCOPE))
                 .fmiPath("SomeFmiPath/Path")
                 .build();
         IAuthenticationResult result2 = cca.acquireToken(params2).get();
@@ -267,14 +260,14 @@ class FmiIT {
     void fmiPath_CacheHit_Integration() throws Exception {
         IClientCertificate clientCert = ClientCredentialFactory.createFromCertificate(privateKey, certificate);
 
-        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(RMA_CLIENT_ID, clientCert)
+        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(TestConstants.AGENTIC_RMA_CLIENT_ID, clientCert)
                 .authority(AUTHORITY)
                 .sendX5c(true)
-                .azureRegion(AZURE_REGION)
+                .azureRegion(TestConstants.AGENTIC_AZURE_REGION)
                 .build();
 
         ClientCredentialParameters params = ClientCredentialParameters
-                .builder(Collections.singleton(FMI_EXCHANGE_SCOPE))
+                .builder(Collections.singleton(TestConstants.AGENTIC_FMI_EXCHANGE_SCOPE))
                 .fmiPath("SomeFmiPath/FmiCredentialPath")
                 .build();
 
@@ -295,14 +288,14 @@ class FmiIT {
     private String acquireFmiCredentialFromRma() throws Exception {
         IClientCertificate clientCert = ClientCredentialFactory.createFromCertificate(privateKey, certificate);
 
-        ConfidentialClientApplication rma = ConfidentialClientApplication.builder(RMA_CLIENT_ID, clientCert)
+        ConfidentialClientApplication rma = ConfidentialClientApplication.builder(TestConstants.AGENTIC_RMA_CLIENT_ID, clientCert)
                 .authority(AUTHORITY)
                 .sendX5c(true)
-                .azureRegion(AZURE_REGION)
+                .azureRegion(TestConstants.AGENTIC_AZURE_REGION)
                 .build();
 
         ClientCredentialParameters params = ClientCredentialParameters
-                .builder(Collections.singleton(FMI_EXCHANGE_SCOPE))
+                .builder(Collections.singleton(TestConstants.AGENTIC_FMI_EXCHANGE_SCOPE))
                 .fmiPath("SomeFmiPath/FmiCredentialPath")
                 .build();
 

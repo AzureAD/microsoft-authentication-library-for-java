@@ -111,6 +111,10 @@ public abstract class AbstractApplicationBase implements IApplicationBase {
             supplier = new AcquireTokenByOnBehalfOfSupplier(
                     (ConfidentialClientApplication) this,
                     (OnBehalfOfRequest) msalRequest);
+        } else if (msalRequest instanceof UserFederatedIdentityCredentialRequest) {
+            supplier = new AcquireTokenByUserFederatedIdentityCredentialSupplier(
+                    (ConfidentialClientApplication) this,
+                    (UserFederatedIdentityCredentialRequest) msalRequest);
         } else if (msalRequest instanceof ManagedIdentityRequest) {
             supplier = new AcquireTokenByManagedIdentitySupplier(
                     (ManagedIdentityApplication) this,
