@@ -11,6 +11,7 @@ class SilentRequest extends MsalRequest {
     private SilentParameters parameters;
     private IUserAssertion assertion;
     private Authority requestAuthority;
+    private String extCacheKeyHash;
 
     SilentRequest(SilentParameters parameters,
                   AbstractApplicationBase application,
@@ -41,5 +42,13 @@ class SilentRequest extends MsalRequest {
 
     Authority requestAuthority() {
         return this.requestAuthority;
+    }
+
+    String extCacheKeyHash() {
+        return this.extCacheKeyHash;
+    }
+
+    void extCacheKeyHash(String extCacheKeyHash) {
+        this.extCacheKeyHash = extCacheKeyHash;
     }
 }

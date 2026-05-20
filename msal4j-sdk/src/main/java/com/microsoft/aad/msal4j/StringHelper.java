@@ -81,6 +81,28 @@ final class StringHelper {
         return str == null || str.trim().isEmpty();
     }
 
+    /**
+     * Computes an extended cache key hash from a sorted map of key-value components.
+     * Concatenates sorted key+value pairs, SHA-256 hashes, then Base64URL encodes without padding.
+     * This algorithm is cross-SDK compatible (same output for the same inputs in all MSAL SDKs).
+     *
+     * @param cacheKeyComponents a sorted map of component names to values
+     * @return Base64URL-encoded SHA-256 hash, or empty string if the map is null/empty
+     */
+    static String computeExtCacheKeyHash(SortedMap<String, String> cacheKeyComponents) {
+        if (cacheKeyComponents == null || cacheKeyComponents.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, String> entry : cacheKeyComponents.entrySet()) {
+            sb.append(entry.getKey());
+            sb.append(entry.getValue());
+        }
+
+        return createBase64EncodedSha256Hash(sb.toString());
+    }
+
     //Converts a map of parameters into a URL query string
     static String serializeQueryParameters(Map<String, String> params) {
         if (params != null && !params.isEmpty()) {

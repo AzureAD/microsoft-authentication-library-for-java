@@ -5,6 +5,8 @@ package com.microsoft.aad.msal4j;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 
@@ -28,7 +30,17 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
 
     private IClientCredential clientCredential;
 
-    private ClientCredentialParameters(Set<String> scopes, Boolean skipCache, ClaimsRequest claims, Map<String, String> extraHttpHeaders, Map<String, String> extraQueryParameters, String tenant, IClientCredential clientCredential) {
+    private String fmiPath;
+
+    // Generic extended cache key components. Any optional or flow-specific parameters 
+    // that should influence token cache isolation adds an entry here. The hash of these
+    // components is used as part of the cache key in relevant scenarios entries.
+    private SortedMap<String, String> cacheKeyComponents;
+
+    // Memoized hash of cacheKeyComponents (computed once since parameters are immutable).
+    private String extCacheKeyHashCache;
+
+    private ClientCredentialParameters(Set<String> scopes, Boolean skipCache, ClaimsRequest claims, Map<String, String> extraHttpHeaders, Map<String, String> extraQueryParameters, String tenant, IClientCredential clientCredential, String fmiPath) {
         this.scopes = scopes;
         this.skipCache = skipCache;
         this.claims = claims;
@@ -36,6 +48,10 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         this.extraQueryParameters = extraQueryParameters;
         this.tenant = tenant;
         this.clientCredential = clientCredential;
+        this.fmiPath = fmiPath;
+
+        // Build cache key components from any parameters that require cache isolation.
+        this.cacheKeyComponents = buildCacheKeyComponents();
     }
 
     private static ClientCredentialParametersBuilder builder() {
@@ -87,6 +103,56 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         return this.clientCredential;
     }
 
+    /**
+     * Gets the FMI (Federated Managed Identity) path for agent identity scenarios.
+     * When set, {@code fmi_path} is sent as a body parameter in the client credentials token request,
+     * which scopes the resulting token to a specific agent identity.
+     *
+     * @return the FMI path, or null if not set
+     */
+    public String fmiPath() {
+        return this.fmiPath;
+    }
+
+    /**
+     * Builds the sorted map of cache key components from the parameters that require
+     * cache isolation. Returns null if no components are present.
+     * <p>
+     * This is the single place where parameters contribute to the extended cache key.
+     * To add a new cache key component, add an entry here.
+     */
+    private SortedMap<String, String> buildCacheKeyComponents() {
+        TreeMap<String, String> components = null;
+        if (!StringHelper.isBlank(fmiPath)) {
+            components = new TreeMap<>();
+            components.put("fmi_path", fmiPath);
+        }
+        return components;
+    }
+
+    /**
+     * Returns the extended cache key components for this request, if any.
+     * Used by {@link TokenCache} for both cache writes and reads.
+     */
+    SortedMap<String, String> cacheKeyComponents() {
+        return this.cacheKeyComponents;
+    }
+
+    /**
+     * Computes the extended cache key hash from all cache key components.
+     * Returns an empty string if no components are present.
+     * <p>
+     * The result is memoized since ClientCredentialParameters is immutable after construction.
+     * Used by both cache writes ({@link TokenCache}) and cache reads (silent lookup).
+     */
+    String computeExtCacheKeyHash() {
+        if (extCacheKeyHashCache != null) {
+            return extCacheKeyHashCache;
+        }
+        extCacheKeyHashCache = StringHelper.computeExtCacheKeyHash(cacheKeyComponents);
+        return extCacheKeyHashCache;
+    }
+
     public static class ClientCredentialParametersBuilder {
         private Set<String> scopes;
         private Boolean skipCache = false;
@@ -95,6 +161,7 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         private Map<String, String> extraQueryParameters;
         private String tenant;
         private IClientCredential clientCredential;
+        private String fmiPath;
 
         ClientCredentialParametersBuilder() {
         }
@@ -162,12 +229,28 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
             return this;
         }
 
+        /**
+         * Sets the FMI (Federated Managed Identity) path for agent identity scenarios.
+         * When set, {@code fmi_path} is sent as a body parameter in the client credentials token request,
+         * which tells Entra ID to scope the resulting token to a specific agent identity.
+         * The token is also cached with an extended cache key to prevent collisions between
+         * tokens for different agent identities.
+         *
+         * @param fmiPath the FMI path value (typically the agent application ID)
+         * @return builder that can be used to construct ClientCredentialParameters
+         */
+        public ClientCredentialParametersBuilder fmiPath(String fmiPath) {
+            ParameterValidationUtils.validateNotBlank("fmiPath", fmiPath);
+            this.fmiPath = fmiPath;
+            return this;
+        }
+
         public ClientCredentialParameters build() {
-            return new ClientCredentialParameters(this.scopes, this.skipCache, this.claims, this.extraHttpHeaders, this.extraQueryParameters, this.tenant, this.clientCredential);
+            return new ClientCredentialParameters(this.scopes, this.skipCache, this.claims, this.extraHttpHeaders, this.extraQueryParameters, this.tenant, this.clientCredential, this.fmiPath);
         }
 
         public String toString() {
-            return "ClientCredentialParameters.ClientCredentialParametersBuilder(scopes=" + this.scopes + ", skipCache=" + this.skipCache + ", claims=" + this.claims + ", extraHttpHeaders=" + this.extraHttpHeaders + ", extraQueryParameters=" + this.extraQueryParameters + ", tenant=" + this.tenant + ", clientCredential=" + this.clientCredential + ")";
+            return "ClientCredentialParameters.ClientCredentialParametersBuilder(scopes=" + this.scopes + ", skipCache=" + this.skipCache + ", claims=" + this.claims + ", extraHttpHeaders=" + this.extraHttpHeaders + ", extraQueryParameters=" + this.extraQueryParameters + ", tenant=" + this.tenant + ", clientCredential=" + this.clientCredential + ", fmiPath=" + this.fmiPath + ")";
         }
     }
 }

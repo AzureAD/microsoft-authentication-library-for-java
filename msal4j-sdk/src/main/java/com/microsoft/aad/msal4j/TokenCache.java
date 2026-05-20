@@ -295,7 +295,16 @@ public class TokenCache implements ITokenCache {
                                                                        AuthenticationResult authenticationResult,
                                                                        String environmentAlias) {
         AccessTokenCacheEntity at = new AccessTokenCacheEntity();
-        at.credentialType(CredentialTypeEnum.ACCESS_TOKEN.value());
+
+        // Determine if extended cache key is needed (e.g., for fmi_path in agent identity scenarios)
+        String extCacheKeyHash = computeExtCacheKeyHashForRequest(tokenRequestExecutor.getMsalRequest());
+
+        if (!StringHelper.isBlank(extCacheKeyHash)) {
+            at.credentialType(CredentialTypeEnum.ACCESS_TOKEN_EXTENDED.value());
+            at.extCacheKeyHash(extCacheKeyHash);
+        } else {
+            at.credentialType(CredentialTypeEnum.ACCESS_TOKEN.value());
+        }
 
         if (authenticationResult.account() != null) {
             at.homeAccountId(authenticationResult.account().homeAccountId());
@@ -326,6 +335,18 @@ public class TokenCache implements ITokenCache {
         }
 
         return at;
+    }
+
+    /**
+     * Computes the extended cache key hash for a request, if applicable.
+     * Delegates to the generic cache key components on the parameters object.
+     * The algorithm uses sorted key-value concatenation → SHA-256 → Base64URL (cross-SDK compatible).
+     */
+    private static String computeExtCacheKeyHashForRequest(MsalRequest msalRequest) {
+        if (msalRequest instanceof ClientCredentialRequest) {
+            return ((ClientCredentialRequest) msalRequest).parameters.computeExtCacheKeyHash();
+        }
+        return "";
     }
 
     private static IdTokenCacheEntity createIdTokenCacheEntity(TokenRequestExecutor tokenRequestExecutor,
@@ -541,17 +562,37 @@ public class TokenCache implements ITokenCache {
             String clientId,
             Set<String> environmentAliases,
             String userAssertionHash) {
+        return getApplicationAccessTokenCacheEntity(authority, scopes, clientId, environmentAliases, userAssertionHash, null);
+    }
+
+    private Optional<AccessTokenCacheEntity> getApplicationAccessTokenCacheEntity(
+            Authority authority,
+            Set<String> scopes,
+            String clientId,
+            Set<String> environmentAliases,
+            String userAssertionHash,
+            String extCacheKeyHash) {
         long currTimeStampSec = new Date().getTime() / 1000;
 
         return accessTokens.values().stream().filter(
                 accessToken ->
                         userAssertionHashMatches(accessToken, userAssertionHash) &&
+                                extCacheKeyHashMatches(accessToken, extCacheKeyHash) &&
                                 environmentAliases.contains(accessToken.environment) &&
                                 Long.parseLong(accessToken.expiresOn()) > currTimeStampSec + MIN_ACCESS_TOKEN_EXPIRE_IN_SEC &&
                                 accessToken.realm.equals(authority.tenant()) &&
                                 accessToken.clientId.equals(clientId) &&
                                 isMatchingScopes(accessToken, scopes))
                 .findAny();
+    }
+
+    private boolean extCacheKeyHashMatches(AccessTokenCacheEntity accessToken, String expectedHash) {
+        String cachedHash = accessToken.extCacheKeyHash();
+        if (StringHelper.isBlank(expectedHash)) {
+            // When no fmi_path/ext key is expected, only match tokens that also have no ext key
+            return StringHelper.isBlank(cachedHash);
+        }
+        return expectedHash.equals(cachedHash);
     }
 
 
@@ -709,6 +750,15 @@ public class TokenCache implements ITokenCache {
             Set<String> scopes,
             String clientId,
             IUserAssertion assertion) {
+        return getCachedAuthenticationResult(authority, scopes, clientId, assertion, null);
+    }
+
+    AuthenticationResult getCachedAuthenticationResult(
+            Authority authority,
+            Set<String> scopes,
+            String clientId,
+            IUserAssertion assertion,
+            String extCacheKeyHash) {
 
         AuthenticationResult.AuthenticationResultBuilder builder = AuthenticationResult.builder();
 
@@ -731,7 +781,7 @@ public class TokenCache implements ITokenCache {
                 accountCacheEntity.ifPresent(builder::accountCacheEntity);
 
                 Optional<AccessTokenCacheEntity> atCacheEntity =
-                        getApplicationAccessTokenCacheEntity(authority, scopes, clientId, environmentAliases, userAssertionHash);
+                        getApplicationAccessTokenCacheEntity(authority, scopes, clientId, environmentAliases, userAssertionHash, extCacheKeyHash);
 
                 if (atCacheEntity.isPresent()) {
                     builder.
