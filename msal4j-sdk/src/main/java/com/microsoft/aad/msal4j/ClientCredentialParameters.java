@@ -32,10 +32,9 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
 
     private String fmiPath;
 
-    // Generic extended cache key components. Any parameter that should influence token cache
-    // isolation adds an entry here (e.g., fmi_path, credential_fmi_path). The hash of these
-    // components is used as part of the cache key for AccessToken_Extended entries.
-    // Matches MSAL .NET's AdditionalCacheKeyComponents / CacheKeyComponents pattern.
+    // Generic extended cache key components. Any optional or flow-specific parameters 
+    // that should influence token cache isolation adds an entry here. The hash of these
+    // components is used as part of the cache key in relevant scenarios entries.
     private SortedMap<String, String> cacheKeyComponents;
 
     // Memoized hash of cacheKeyComponents (computed once since parameters are immutable).
@@ -120,8 +119,7 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
      * cache isolation. Returns null if no components are present.
      * <p>
      * This is the single place where parameters contribute to the extended cache key.
-     * To add a new cache key component, add an entry here — the hash computation and
-     * cache read/write logic are fully generic and require no changes.
+     * To add a new cache key component, add an entry here.
      */
     private SortedMap<String, String> buildCacheKeyComponents() {
         TreeMap<String, String> components = null;
