@@ -300,17 +300,17 @@ class AgenticIT {
         IClientCertificate clientCert = ClientCredentialFactory.createFromCertificate(privateKey, certificate);
 
         ConfidentialClientApplication blueprintCca = ConfidentialClientApplication.builder(
-                        BLUEPRINT_CLIENT_ID, clientCert)
+                        TestConstants.AGENTIC_BLUEPRINT_CLIENT_ID, clientCert)
                 .authority(AUTHORITY)
                 .sendX5c(true)
-                .azureRegion(AZURE_REGION)
+                .azureRegion(TestConstants.AGENTIC_AZURE_REGION)
                 .build();
 
-        AgentIdentity agentId = AgentIdentity.withUsername(AGENT_APP_ID, USER_UPN);
+        AgentIdentity agentId = AgentIdentity.withUsername(TestConstants.AGENTIC_AGENT_APP_ID, TestConstants.AGENTIC_USER_UPN);
 
         IAuthenticationResult result = blueprintCca.acquireTokenForAgent(
                 AcquireTokenForAgentParameters.builder(
-                        Collections.singleton(GRAPH_SCOPE), agentId).build()
+                        Collections.singleton(TestConstants.AGENTIC_GRAPH_SCOPE), agentId).build()
         ).get();
 
         assertNotNull(result, "Result should not be null");
@@ -328,17 +328,17 @@ class AgenticIT {
         IClientCertificate clientCert = ClientCredentialFactory.createFromCertificate(privateKey, certificate);
 
         ConfidentialClientApplication blueprintCca = ConfidentialClientApplication.builder(
-                        BLUEPRINT_CLIENT_ID, clientCert)
+                        TestConstants.AGENTIC_BLUEPRINT_CLIENT_ID, clientCert)
                 .authority(AUTHORITY)
                 .sendX5c(true)
-                .azureRegion(AZURE_REGION)
+                .azureRegion(TestConstants.AGENTIC_AZURE_REGION)
                 .build();
 
-        AgentIdentity agentId = AgentIdentity.appOnly(AGENT_APP_ID);
+        AgentIdentity agentId = AgentIdentity.appOnly(TestConstants.AGENTIC_AGENT_APP_ID);
 
         IAuthenticationResult result = blueprintCca.acquireTokenForAgent(
                 AcquireTokenForAgentParameters.builder(
-                        Collections.singleton(GRAPH_SCOPE), agentId).build()
+                        Collections.singleton(TestConstants.AGENTIC_GRAPH_SCOPE), agentId).build()
         ).get();
 
         assertNotNull(result, "Result should not be null");
@@ -355,25 +355,25 @@ class AgenticIT {
         IClientCertificate clientCert = ClientCredentialFactory.createFromCertificate(privateKey, certificate);
 
         ConfidentialClientApplication blueprintCca = ConfidentialClientApplication.builder(
-                        BLUEPRINT_CLIENT_ID, clientCert)
+                        TestConstants.AGENTIC_BLUEPRINT_CLIENT_ID, clientCert)
                 .authority(AUTHORITY)
                 .sendX5c(true)
-                .azureRegion(AZURE_REGION)
+                .azureRegion(TestConstants.AGENTIC_AZURE_REGION)
                 .build();
 
-        AgentIdentity agentId = AgentIdentity.withUsername(AGENT_APP_ID, USER_UPN);
+        AgentIdentity agentId = AgentIdentity.withUsername(TestConstants.AGENTIC_AGENT_APP_ID, TestConstants.AGENTIC_USER_UPN);
 
         // First call — populates cache
         IAuthenticationResult result1 = blueprintCca.acquireTokenForAgent(
                 AcquireTokenForAgentParameters.builder(
-                        Collections.singleton(GRAPH_SCOPE), agentId).build()
+                        Collections.singleton(TestConstants.AGENTIC_GRAPH_SCOPE), agentId).build()
         ).get();
         assertNotNull(result1.accessToken());
 
         // Second call without forceRefresh — should return cached token
         IAuthenticationResult result2 = blueprintCca.acquireTokenForAgent(
                 AcquireTokenForAgentParameters.builder(
-                        Collections.singleton(GRAPH_SCOPE), agentId).build()
+                        Collections.singleton(TestConstants.AGENTIC_GRAPH_SCOPE), agentId).build()
         ).get();
         assertEquals(result1.accessToken(), result2.accessToken(),
                 "Second call should return cached token");
@@ -381,7 +381,7 @@ class AgenticIT {
         // Third call with forceRefresh — should get a fresh token
         IAuthenticationResult result3 = blueprintCca.acquireTokenForAgent(
                 AcquireTokenForAgentParameters.builder(
-                        Collections.singleton(GRAPH_SCOPE), agentId)
+                        Collections.singleton(TestConstants.AGENTIC_GRAPH_SCOPE), agentId)
                         .forceRefresh(true).build()
         ).get();
         assertNotNull(result3.accessToken());
@@ -397,25 +397,25 @@ class AgenticIT {
         IClientCertificate clientCert = ClientCredentialFactory.createFromCertificate(privateKey, certificate);
 
         ConfidentialClientApplication blueprint1 = ConfidentialClientApplication.builder(
-                        BLUEPRINT_CLIENT_ID, clientCert)
+                        TestConstants.AGENTIC_BLUEPRINT_CLIENT_ID, clientCert)
                 .authority(AUTHORITY)
                 .sendX5c(true)
-                .azureRegion(AZURE_REGION)
+                .azureRegion(TestConstants.AGENTIC_AZURE_REGION)
                 .build();
 
         ConfidentialClientApplication blueprint2 = ConfidentialClientApplication.builder(
-                        BLUEPRINT_CLIENT_ID, clientCert)
+                        TestConstants.AGENTIC_BLUEPRINT_CLIENT_ID, clientCert)
                 .authority(AUTHORITY)
                 .sendX5c(true)
-                .azureRegion(AZURE_REGION)
+                .azureRegion(TestConstants.AGENTIC_AZURE_REGION)
                 .build();
 
-        AgentIdentity agentId = AgentIdentity.withUsername(AGENT_APP_ID, USER_UPN);
+        AgentIdentity agentId = AgentIdentity.withUsername(TestConstants.AGENTIC_AGENT_APP_ID, TestConstants.AGENTIC_USER_UPN);
 
         // Acquire via blueprint1
         IAuthenticationResult result1 = blueprint1.acquireTokenForAgent(
                 AcquireTokenForAgentParameters.builder(
-                        Collections.singleton(GRAPH_SCOPE), agentId).build()
+                        Collections.singleton(TestConstants.AGENTIC_GRAPH_SCOPE), agentId).build()
         ).get();
         assertNotNull(result1.accessToken());
 
@@ -428,7 +428,7 @@ class AgenticIT {
         // Acquire via blueprint2
         IAuthenticationResult result2 = blueprint2.acquireTokenForAgent(
                 AcquireTokenForAgentParameters.builder(
-                        Collections.singleton(GRAPH_SCOPE), agentId).build()
+                        Collections.singleton(TestConstants.AGENTIC_GRAPH_SCOPE), agentId).build()
         ).get();
         assertNotNull(result2.accessToken());
 
@@ -446,17 +446,17 @@ class AgenticIT {
         IClientCertificate clientCert = ClientCredentialFactory.createFromCertificate(privateKey, certificate);
 
         ConfidentialClientApplication blueprintCca = ConfidentialClientApplication.builder(
-                        BLUEPRINT_CLIENT_ID, clientCert)
+                        TestConstants.AGENTIC_BLUEPRINT_CLIENT_ID, clientCert)
                 .authority(AUTHORITY)
                 .sendX5c(true)
-                .azureRegion(AZURE_REGION)
+                .azureRegion(TestConstants.AGENTIC_AZURE_REGION)
                 .build();
 
         // Step 1: Acquire via UPN
-        AgentIdentity upnIdentity = AgentIdentity.withUsername(AGENT_APP_ID, USER_UPN);
+        AgentIdentity upnIdentity = AgentIdentity.withUsername(TestConstants.AGENTIC_AGENT_APP_ID, TestConstants.AGENTIC_USER_UPN);
         IAuthenticationResult upnResult = blueprintCca.acquireTokenForAgent(
                 AcquireTokenForAgentParameters.builder(
-                        Collections.singleton(GRAPH_SCOPE), upnIdentity).build()
+                        Collections.singleton(TestConstants.AGENTIC_GRAPH_SCOPE), upnIdentity).build()
         ).get();
         assertNotNull(upnResult.account(), "Account should not be null");
 
@@ -469,10 +469,10 @@ class AgenticIT {
         java.util.UUID userOid = java.util.UUID.fromString(oidString);
 
         // Step 2: Acquire via OID — should come from cache
-        AgentIdentity oidIdentity = new AgentIdentity(AGENT_APP_ID, userOid);
+        AgentIdentity oidIdentity = new AgentIdentity(TestConstants.AGENTIC_AGENT_APP_ID, userOid);
         IAuthenticationResult oidResult = blueprintCca.acquireTokenForAgent(
                 AcquireTokenForAgentParameters.builder(
-                        Collections.singleton(GRAPH_SCOPE), oidIdentity).build()
+                        Collections.singleton(TestConstants.AGENTIC_GRAPH_SCOPE), oidIdentity).build()
         ).get();
 
         // Should return the same cached token
