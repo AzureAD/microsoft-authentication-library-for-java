@@ -339,12 +339,12 @@ public class TokenCache implements ITokenCache {
 
     /**
      * Computes the extended cache key hash for a request, if applicable.
-     * Currently, this is used for client credential requests with an fmi_path parameter.
+     * Delegates to the generic cache key components on the parameters object.
      * The algorithm uses sorted key-value concatenation → SHA-256 → Base64URL (cross-SDK compatible).
      */
     private static String computeExtCacheKeyHashForRequest(MsalRequest msalRequest) {
         if (msalRequest instanceof ClientCredentialRequest) {
-            return ((ClientCredentialRequest) msalRequest).parameters.computeFmiCacheKeyHash();
+            return ((ClientCredentialRequest) msalRequest).parameters.computeExtCacheKeyHash();
         }
         return "";
     }

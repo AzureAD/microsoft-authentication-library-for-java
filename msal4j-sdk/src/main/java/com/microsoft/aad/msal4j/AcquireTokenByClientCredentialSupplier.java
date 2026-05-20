@@ -40,8 +40,8 @@ class AcquireTokenByClientCredentialSupplier extends AuthenticationResultSupplie
                         context,
                         null);
 
-                // Propagate ext_cache_key_hash for fmi_path-based cache isolation
-                String extCacheKeyHash = this.clientCredentialRequest.parameters.computeFmiCacheKeyHash();
+                // Propagate ext_cache_key_hash for cache isolation (e.g., fmi_path, credential_fmi_path)
+                String extCacheKeyHash = this.clientCredentialRequest.parameters.computeExtCacheKeyHash();
                 if (!StringHelper.isBlank(extCacheKeyHash)) {
                     silentRequest.extCacheKeyHash(extCacheKeyHash);
                 }

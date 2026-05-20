@@ -5,6 +5,7 @@ package com.microsoft.aad.msal4j;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.TreeMap;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
@@ -31,6 +32,15 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
 
     private String fmiPath;
 
+    // Generic extended cache key components. Any parameter that should influence token cache
+    // isolation adds an entry here (e.g., fmi_path, credential_fmi_path). The hash of these
+    // components is used as part of the cache key for AccessToken_Extended entries.
+    // Matches MSAL .NET's AdditionalCacheKeyComponents / CacheKeyComponents pattern.
+    private SortedMap<String, String> cacheKeyComponents;
+
+    // Memoized hash of cacheKeyComponents (computed once since parameters are immutable).
+    private String extCacheKeyHashCache;
+
     private ClientCredentialParameters(Set<String> scopes, Boolean skipCache, ClaimsRequest claims, Map<String, String> extraHttpHeaders, Map<String, String> extraQueryParameters, String tenant, IClientCredential clientCredential, String fmiPath) {
         this.scopes = scopes;
         this.skipCache = skipCache;
@@ -40,6 +50,9 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         this.tenant = tenant;
         this.clientCredential = clientCredential;
         this.fmiPath = fmiPath;
+
+        // Build cache key components from any parameters that require cache isolation.
+        this.cacheKeyComponents = buildCacheKeyComponents();
     }
 
     private static ClientCredentialParametersBuilder builder() {
@@ -103,26 +116,43 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
     }
 
     /**
-     * Computes the extended cache key hash for this request's fmi_path, if set.
-     * Returns an empty string if fmiPath is not set.
-     * This is the single source of truth for the fmi_path cache key hash computation,
-     * used by both cache writes (TokenCache) and cache reads (silent lookup).
-     * The result is memoized since ClientCredentialParameters is immutable after construction.
+     * Builds the sorted map of cache key components from the parameters that require
+     * cache isolation. Returns null if no components are present.
+     * <p>
+     * This is the single place where parameters contribute to the extended cache key.
+     * To add a new cache key component, add an entry here — the hash computation and
+     * cache read/write logic are fully generic and require no changes.
      */
-    private String fmiCacheKeyHashCache;
-
-    String computeFmiCacheKeyHash() {
-        if (fmiCacheKeyHashCache != null) {
-            return fmiCacheKeyHashCache;
-        }
+    private SortedMap<String, String> buildCacheKeyComponents() {
+        TreeMap<String, String> components = null;
         if (!StringHelper.isBlank(fmiPath)) {
-            TreeMap<String, String> components = new TreeMap<>();
+            components = new TreeMap<>();
             components.put("fmi_path", fmiPath);
-            fmiCacheKeyHashCache = StringHelper.computeExtCacheKeyHash(components);
-        } else {
-            fmiCacheKeyHashCache = "";
         }
-        return fmiCacheKeyHashCache;
+        return components;
+    }
+
+    /**
+     * Returns the extended cache key components for this request, if any.
+     * Used by {@link TokenCache} for both cache writes and reads.
+     */
+    SortedMap<String, String> cacheKeyComponents() {
+        return this.cacheKeyComponents;
+    }
+
+    /**
+     * Computes the extended cache key hash from all cache key components.
+     * Returns an empty string if no components are present.
+     * <p>
+     * The result is memoized since ClientCredentialParameters is immutable after construction.
+     * Used by both cache writes ({@link TokenCache}) and cache reads (silent lookup).
+     */
+    String computeExtCacheKeyHash() {
+        if (extCacheKeyHashCache != null) {
+            return extCacheKeyHashCache;
+        }
+        extCacheKeyHashCache = StringHelper.computeExtCacheKeyHash(cacheKeyComponents);
+        return extCacheKeyHashCache;
     }
 
     public static class ClientCredentialParametersBuilder {
