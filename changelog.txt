@@ -1,3 +1,9 @@
+Version 1.25.0
+=============
+- Add Federated Managed Identity (FMI) support for client credentials flow (#1025)
+- Add User Federated Identity Credential (user_fic) grant type support (#1026)
+- Add MSAL client metadata headers to IMDS managed identity requests (#1024)
+
 Version 1.24.1
 =============
 - Improve sovereign cloud support and network error handling (#1018)
