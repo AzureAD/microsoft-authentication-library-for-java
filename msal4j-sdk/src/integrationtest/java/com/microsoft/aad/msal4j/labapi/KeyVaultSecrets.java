@@ -26,6 +26,10 @@ public final class KeyVaultSecrets {
     public static final String APP_WEBAPI = "App-WebAPI-Config";
     public static final String APP_S2S = "App-S2S-Config";
 
+    // OBO App Configuration Secrets (ID4SLAB1 tenant, certificate-based auth)
+    public static final String APP_OBO_SERVICE = "MSAL-APP-TodoListService-JSON";
+    public static final String APP_OBO_CLIENT = "MSAL-APP-TodoListClient-JSON";
+
     // TODO: Consolidate with others or following naming convention in key vault
     public static final String APP_B2C = "MSAL-App-B2C-JSON";
     public static final String APP_ARLINGTON = "MSAL-App-Arlington-JSON";
