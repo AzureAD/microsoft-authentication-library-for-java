@@ -5,6 +5,7 @@ package com.microsoft.aad.msal4j;
 
 import com.microsoft.aad.msal4j.labapi.*;
 import static com.microsoft.aad.msal4j.labapi.KeyVaultSecrets.*;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -16,16 +17,21 @@ import java.util.Collections;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class OnBehalfOfIT {
 
+    private IClientCertificate certificate;
+
+    @BeforeAll
+    void init() throws Exception {
+        certificate = CertificateHelper.getClientCertificate();
+    }
+
     @Test
     void acquireTokenWithOBO_Managed() throws Exception {
         String accessToken = this.getAccessToken();
-        AppConfig app = LabResponseHelper.getAppConfig(APP_WEBAPI);
+        AppConfig oboService = LabResponseHelper.getAppConfig(APP_OBO_SERVICE);
         UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
-        String password = KeyVaultRegistry.getMsalTeamProvider().getSecretByName(app.getClientSecret()).getValue();
-
         ConfidentialClientApplication cca =
-                ConfidentialClientApplication.builder(app.getAppId(), ClientCredentialFactory.createFromSecret(password)).
+                ConfidentialClientApplication.builder(oboService.getAppId(), certificate).
                         authority(TestConstants.MICROSOFT_AUTHORITY_HOST + user.getTenantId()).
                         build();
 
@@ -42,13 +48,11 @@ class OnBehalfOfIT {
     void acquireTokenWithOBO_testCache() throws Exception {
         String accessToken = this.getAccessToken();
 
-        AppConfig app = LabResponseHelper.getAppConfig(APP_WEBAPI);
+        AppConfig oboService = LabResponseHelper.getAppConfig(APP_OBO_SERVICE);
         UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
-        String password = KeyVaultRegistry.getMsalTeamProvider().getSecretByName(app.getClientSecret()).getValue();
-
         ConfidentialClientApplication cca =
-                ConfidentialClientApplication.builder(app.getAppId(), ClientCredentialFactory.createFromSecret(password)).
+                ConfidentialClientApplication.builder(oboService.getAppId(), certificate).
                         authority(TestConstants.MICROSOFT_AUTHORITY_HOST + user.getTenantId()).
                         build();
 
@@ -125,13 +129,15 @@ class OnBehalfOfIT {
     }
 
     private String getAccessToken() throws Exception {
-
-        AppConfig app = LabResponseHelper.getAppConfig(APP_WEBAPI);
+        AppConfig oboService = LabResponseHelper.getAppConfig(APP_OBO_SERVICE);
+        AppConfig oboClient = LabResponseHelper.getAppConfig(APP_OBO_CLIENT);
         UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
 
-        String apiReadScope = "api://" + app.getAppId() + "/access_as_user";
+        String apiReadScope = oboService.getDefaultScopes() != null
+                ? oboService.getDefaultScopes()
+                : "api://" + oboService.getAppId() + "/access_as_user";
 
-        PublicClientApplication pca = PublicClientApplication.builder(app.getAppId()).
+        PublicClientApplication pca = PublicClientApplication.builder(oboClient.getAppId()).
                 authority("https://login.microsoftonline.com/organizations").
                 build();
 

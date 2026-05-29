@@ -23,6 +23,7 @@ public class AppConfig implements JsonSerializable<AppConfig> {
     private String labName;
     private String clientSecret;
     private String secretName;
+    private String defaultScopes;
 
     static AppConfig fromJson(JsonReader jsonReader) throws IOException {
         AppConfig app = new AppConfig();
@@ -56,6 +57,10 @@ public class AppConfig implements JsonSerializable<AppConfig> {
                         break;
                     case "secretName":
                         app.secretName = reader.getString();
+                        break;
+                    case "defaultscopes":
+                    case "defaultScopes":
+                        app.defaultScopes = reader.getString();
                         break;
                     default:
                         reader.skipChildren();
@@ -97,5 +102,9 @@ public class AppConfig implements JsonSerializable<AppConfig> {
 
     public String getSecretName() {
         return secretName;
+    }
+
+    public String getDefaultScopes() {
+        return defaultScopes;
     }
 }
