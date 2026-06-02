@@ -12,14 +12,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 //These tests were added to ensure the new usages of com.azure.json are functionally the same as the old usages of com.nimbusds packages.
 //Once we are confident in the new behavior these should no longer be necessary.
-class JsonCompatibilityTests {
+class JsonCompatibilityTest {
 
     //New style, using helper methods in JsonHelper that use com.azure.json
     private final Map<String, Object> newStyleParsedClaims = JsonHelper.parseJsonToMap(JsonHelper.getTokenPayloadClaims(TestHelper.ENCODED_JWT));
     //Old style, using com.nimbusds methods
     private final Map<String, Object> oldStyleParsedClaims = JWTParser.parse(TestHelper.ENCODED_JWT).getJWTClaimsSet().getClaims();
 
-    JsonCompatibilityTests() throws ParseException {
+    JsonCompatibilityTest() throws ParseException {
     }
 
     @Test

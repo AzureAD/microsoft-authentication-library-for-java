@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
-class HelperAndUtilityTests {
+class HelperAndUtilityTest {
 
     @Test
     void StringHelper_serializeQueryParameters_ValidUrlQueryStrings() {

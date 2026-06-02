@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class MsalOauthAuthorizatonGrantTest {
+class MsalOauthAuthorizationGrantTest {
 
     @Test
     void testToParameters() {

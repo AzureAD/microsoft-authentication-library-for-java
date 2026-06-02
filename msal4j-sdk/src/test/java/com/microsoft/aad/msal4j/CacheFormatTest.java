@@ -30,7 +30,7 @@ import static com.microsoft.aad.msal4j.Constants.POINT_DELIMITER;
 
 @ExtendWith(MockitoExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class CacheFormatTests {
+class CacheFormatTest {
     String TOKEN_RESPONSE = "/token_response.json";
     String TOKEN_RESPONSE_ID_TOKEN = "/token_response_id_token.json";
 

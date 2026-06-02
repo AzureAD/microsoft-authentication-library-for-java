@@ -20,7 +20,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ServerTelemetryTests {
+class ServerTelemetryTest {
 
     private static final String SCHEMA_VERSION = "5";
     private static final String CURRENT_REQUEST_HEADER_NAME = "x-client-current-telemetry";

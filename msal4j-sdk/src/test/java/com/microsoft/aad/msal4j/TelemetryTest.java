@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class TelemetryTests {
+class TelemetryTest {
 
     private List<HashMap<String, String>> eventsReceived = new ArrayList<>();
     private String tenantId = "tenantId123";

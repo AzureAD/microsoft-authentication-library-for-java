@@ -13,7 +13,7 @@ import java.time.temporal.ChronoUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class DateTimeTests {
+class DateTimeTest {
 
     @Test
     void parseUnixTimestampInSeconds() {

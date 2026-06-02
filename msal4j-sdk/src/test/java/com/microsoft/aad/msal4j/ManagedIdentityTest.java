@@ -37,7 +37,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
-class ManagedIdentityTests {
+class ManagedIdentityTest {
 
     private static final String EXPECTED_SKU = "MSAL.Java";
     private static final String TEST_CORRELATION_ID = "00000000-0000-0000-0000-000000000001";

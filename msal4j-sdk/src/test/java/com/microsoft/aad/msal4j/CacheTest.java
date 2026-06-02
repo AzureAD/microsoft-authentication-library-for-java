@@ -21,7 +21,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class CacheTests {
+class CacheTest {
 
     private TokenCache tokenCache;
 

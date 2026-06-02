@@ -18,7 +18,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class OnBehalfOfTests {
+class OnBehalfOfTest {
 
     @Test
     void OnBehalfOf_InternalCacheLookup_Success() throws Exception {
