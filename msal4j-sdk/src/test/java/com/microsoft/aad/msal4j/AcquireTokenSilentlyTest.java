@@ -13,10 +13,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.Mockito.*;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
@@ -28,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 class AcquireTokenSilentlyTest {
 
     Account basicAccount = new Account("home_account_id", "login.windows.net", "username", null);
-    String cache = readResource("/AAD_cache_data/full_cache.json");
+    String cache = TestHelper.readResource(this.getClass(), "/AAD_cache_data/full_cache.json");
 
     @Test
     void publicAppAcquireTokenSilently_emptyCache_MsalClientException() throws Throwable {
@@ -208,13 +204,5 @@ class AcquireTokenSilentlyTest {
         assertEquals(1, cacheSize);
         assertEquals(expectedToken, result.accessToken());
         assertEquals(expectedReason, result.metadata().cacheRefreshReason());
-    }
-
-    String readResource(String resource) {
-        try {
-            return new String(Files.readAllBytes(Paths.get(getClass().getResource(resource).toURI())));
-        } catch (IOException | URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

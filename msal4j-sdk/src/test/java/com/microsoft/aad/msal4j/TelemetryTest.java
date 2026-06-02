@@ -32,11 +32,6 @@ class TelemetryTest {
         Consumer<List<HashMap<String, String>>> telemetryConsumer =
                 (List<HashMap<String, String>> telemetryEvents) -> {
                     eventsReceived.addAll(telemetryEvents);
-                    System.out.println("Received " + telemetryEvents.size() + " events");
-                    telemetryEvents.forEach(event -> {
-                        System.out.print("Event Name: " + event.get("event_name"));
-                        event.entrySet().forEach(entry -> System.out.println("   " + entry));
-                    });
                 };
     }
 
