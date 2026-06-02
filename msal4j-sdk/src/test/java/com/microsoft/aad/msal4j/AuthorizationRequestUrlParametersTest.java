@@ -35,10 +35,10 @@ class AuthorizationRequestUrlParametersTest {
                         .extraQueryParameters(extraParameters)
                         .build();
 
-        assertEquals(parameters.responseMode(), ResponseMode.FORM_POST);
-        assertEquals(parameters.redirectUri(), redirectUri);
-        assertEquals(parameters.scopes().size(), 4);
-        assertEquals(parameters.extraQueryParameters.size(), 2);
+        assertEquals(ResponseMode.FORM_POST, parameters.responseMode());
+        assertEquals(redirectUri, parameters.redirectUri());
+        assertEquals(4, parameters.scopes().size());
+        assertEquals(2, parameters.extraQueryParameters.size());
 
         assertNull(parameters.loginHint());
         assertNull(parameters.codeChallenge());
@@ -50,8 +50,8 @@ class AuthorizationRequestUrlParametersTest {
 
         URL authorizationUrl = app.getAuthorizationRequestUrl(parameters);
 
-        assertEquals(authorizationUrl.getHost(), "login.microsoftonline.com");
-        assertEquals(authorizationUrl.getPath(), "/common/oauth2/v2.0/authorize");
+        assertEquals("login.microsoftonline.com", authorizationUrl.getHost());
+        assertEquals("/common/oauth2/v2.0/authorize", authorizationUrl.getPath());
 
         Map<String, String> queryParameters = new HashMap<>();
         String query = authorizationUrl.getQuery();
@@ -64,12 +64,12 @@ class AuthorizationRequestUrlParametersTest {
                     URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
         }
 
-        assertEquals(queryParameters.get("scope"), "openid profile offline_access scope");
-        assertEquals(queryParameters.get("response_type"), "code");
-        assertEquals(queryParameters.get("redirect_uri"), "http://localhost:8080");
-        assertEquals(queryParameters.get("client_id"), "client_id");
-        assertEquals(queryParameters.get("response_mode"), "form_post");
-        assertEquals(queryParameters.get("id_token_hint"),"test");
+        assertEquals("openid profile offline_access scope", queryParameters.get("scope"));
+        assertEquals("code", queryParameters.get("response_type"));
+        assertEquals("http://localhost:8080", queryParameters.get("redirect_uri"));
+        assertEquals("client_id", queryParameters.get("client_id"));
+        assertEquals("form_post", queryParameters.get("response_mode"));
+        assertEquals("test", queryParameters.get("id_token_hint"));
     }
 
     @Test
@@ -110,9 +110,9 @@ class AuthorizationRequestUrlParametersTest {
                         .responseMode(ResponseMode.QUERY) // This should be overridden to FORM_POST
                         .build();
 
-        assertEquals(parameters.responseMode(), ResponseMode.FORM_POST);
-        assertEquals(parameters.redirectUri(), redirectUri);
-        assertEquals(parameters.scopes().size(), 4);
+        assertEquals(ResponseMode.FORM_POST, parameters.responseMode());
+        assertEquals(redirectUri, parameters.redirectUri());
+        assertEquals(4, parameters.scopes().size());
 
         assertNull(parameters.loginHint());
         assertNull(parameters.codeChallenge());
@@ -124,8 +124,8 @@ class AuthorizationRequestUrlParametersTest {
 
         URL authorizationUrl = app.getAuthorizationRequestUrl(parameters);
 
-        assertEquals(authorizationUrl.getHost(), "login.microsoftonline.com");
-        assertEquals(authorizationUrl.getPath(), "/common/oauth2/v2.0/authorize");
+        assertEquals("login.microsoftonline.com", authorizationUrl.getHost());
+        assertEquals("/common/oauth2/v2.0/authorize", authorizationUrl.getPath());
 
         Map<String, String> queryParameters = new HashMap<>();
         String query = authorizationUrl.getQuery();
@@ -138,10 +138,10 @@ class AuthorizationRequestUrlParametersTest {
                     URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
         }
 
-        assertEquals(queryParameters.get("scope"), "openid profile offline_access scope");
-        assertEquals(queryParameters.get("response_type"), "code");
-        assertEquals(queryParameters.get("redirect_uri"), "http://localhost:8080");
-        assertEquals(queryParameters.get("client_id"), "client_id");
-        assertEquals(queryParameters.get("response_mode"), "form_post");
+        assertEquals("openid profile offline_access scope", queryParameters.get("scope"));
+        assertEquals("code", queryParameters.get("response_type"));
+        assertEquals("http://localhost:8080", queryParameters.get("redirect_uri"));
+        assertEquals("client_id", queryParameters.get("client_id"));
+        assertEquals("form_post", queryParameters.get("response_mode"));
     }
 }
