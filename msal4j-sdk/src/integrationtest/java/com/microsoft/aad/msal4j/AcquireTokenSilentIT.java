@@ -29,7 +29,7 @@ class AcquireTokenSilentIT {
 
         IAccount account = pca.getAccounts().join().iterator().next();
         IAuthenticationResult result = acquireTokenSilently(pca, account, TestConstants.GRAPH_DEFAULT_SCOPE, false);
-        assertResultNotNull(result);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
     }
 
     @Test
@@ -47,7 +47,7 @@ class AcquireTokenSilentIT {
 
         IAccount account = pca.getAccounts().join().iterator().next();
         IAuthenticationResult acquireSilentResult = acquireTokenSilently(pca, account, TestConstants.GRAPH_DEFAULT_SCOPE, false);
-        assertResultNotNull(result);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
 
         // Check that access and id tokens are coming from cache
         assertEquals(result.accessToken(), acquireSilentResult.accessToken());
@@ -67,14 +67,14 @@ class AcquireTokenSilentIT {
                 build();
 
         IAuthenticationResult result = acquireTokenUsernamePassword(user, pca, TestConstants.GRAPH_DEFAULT_SCOPE);
-        assertResultNotNull(result);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
 
         IAccount account = pca.getAccounts().join().iterator().next();
         IAuthenticationResult resultAfterRefresh = acquireTokenSilently(pca, account, TestConstants.GRAPH_DEFAULT_SCOPE, true);
-        assertResultNotNull(resultAfterRefresh);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(resultAfterRefresh);
 
         // Check that new refresh and id tokens are being returned
-        assertTokensAreNotEqual(result, resultAfterRefresh);
+        IntegrationTestHelper.assertTokensAreNotEqual(result, resultAfterRefresh);
         assertEquals(TokenSource.IDENTITY_PROVIDER, result.metadata().tokenSource());
         assertEquals(TokenSource.IDENTITY_PROVIDER, resultAfterRefresh.metadata().tokenSource());
     }
@@ -154,11 +154,11 @@ class AcquireTokenSilentIT {
                 build();
 
         IAuthenticationResult resultOriginal = acquireTokenUsernamePassword(user, pca, TestConstants.GRAPH_DEFAULT_SCOPE);
-        assertResultNotNull(resultOriginal);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(resultOriginal);
 
         IAuthenticationResult resultSilent = acquireTokenSilently(pca, resultOriginal.account(), TestConstants.GRAPH_DEFAULT_SCOPE, false);
         assertNotNull(resultSilent);
-        assertTokensAreEqual(resultOriginal, resultSilent);
+        IntegrationTestHelper.assertTokensAreEqual(resultOriginal, resultSilent);
 
         //When this test was made, token responses did not contain the refresh_in field needed for an end-to-end test.
         //In order to test silent flow behavior as though the service returned refresh_in, we manually change a cached
@@ -174,7 +174,7 @@ class AcquireTokenSilentIT {
         //Current time is before refreshOn, so token should not have been refreshed
         assertNotNull(resultSilentWithRefreshOn);
         assertEquals(pca.tokenCache.accessTokens.get(key).refreshOn(), Long.toString(currTimestampSec + 60));
-        assertTokensAreEqual(resultSilent, resultSilentWithRefreshOn);
+        IntegrationTestHelper.assertTokensAreEqual(resultSilent, resultSilentWithRefreshOn);
 
         token = pca.tokenCache.accessTokens.get(key);
         token.refreshOn(Long.toString(currTimestampSec - 60));
@@ -183,7 +183,7 @@ class AcquireTokenSilentIT {
         resultSilentWithRefreshOn = acquireTokenSilently(pca, resultOriginal.account(), TestConstants.GRAPH_DEFAULT_SCOPE, false);
         //Current time is after refreshOn, so token should be refreshed
         assertNotNull(resultSilentWithRefreshOn);
-        assertTokensAreNotEqual(resultSilent, resultSilentWithRefreshOn);
+        IntegrationTestHelper.assertTokensAreNotEqual(resultSilent, resultSilentWithRefreshOn);
         assertEquals(TokenSource.CACHE, resultSilent.metadata().tokenSource());
         assertEquals(TokenSource.IDENTITY_PROVIDER, resultSilentWithRefreshOn.metadata().tokenSource());
     }
@@ -203,19 +203,19 @@ class AcquireTokenSilentIT {
                         user.getUpn(),
                         user.getPassword().toCharArray())
                 .build()).get();
-        assertResultNotNull(result);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
 
         IAccount account = pca.getAccounts().join().iterator().next();
         IAuthenticationResult silentResult = acquireTokenSilently(pca, account, TestConstants.GRAPH_DEFAULT_SCOPE, false);
-        assertResultNotNull(silentResult);
-        assertTokensAreEqual(result, silentResult);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(silentResult);
+        IntegrationTestHelper.assertTokensAreEqual(result, silentResult);
 
         IAuthenticationResult resultWithTenantParam = pca.acquireTokenSilently(SilentParameters.
                 builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE), account).
                     tenant(user.getTenantId()).
                 build()).get();
-        assertResultNotNull(resultWithTenantParam);
-        assertTokensAreNotEqual(result, resultWithTenantParam);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(resultWithTenantParam);
+        IntegrationTestHelper.assertTokensAreNotEqual(result, resultWithTenantParam);
     }
 
     @Test
@@ -230,11 +230,11 @@ class AcquireTokenSilentIT {
 
         String emptyScope = StringHelper.EMPTY_STRING;
         IAuthenticationResult result = acquireTokenUsernamePassword(user, pca, emptyScope);
-        assertResultNotNull(result);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
 
         IAccount account = pca.getAccounts().join().iterator().next();
         IAuthenticationResult silentResult = acquireTokenSilently(pca, account, emptyScope, false);
-        assertResultNotNull(silentResult);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(silentResult);
         assertEquals(result.accessToken(), silentResult.accessToken());
     }
 
@@ -255,7 +255,7 @@ class AcquireTokenSilentIT {
                         user.getPassword().toCharArray())
                 .build())
                 .get();
-        assertResultNotNull(result);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
 
         IAccount account = pca.getAccounts().join().iterator().next();
         IAuthenticationResult silentResult = pca.acquireTokenSilently(SilentParameters.
@@ -263,7 +263,7 @@ class AcquireTokenSilentIT {
                 .build())
                 .get();
 
-        assertResultNotNull(silentResult);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(silentResult);
         assertEquals(result.accessToken(), silentResult.accessToken());
     }
 
@@ -285,14 +285,14 @@ class AcquireTokenSilentIT {
                         .build())
                 .get();
 
-        assertResultNotNull(result);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
 
         IAuthenticationResult silentResultWithoutClaims = pca.acquireTokenSilently(SilentParameters.
                         builder(scopes, result.account())
                         .build())
                 .get();
 
-        assertResultNotNull(silentResultWithoutClaims);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(silentResultWithoutClaims);
         assertEquals(result.accessToken(), silentResultWithoutClaims.accessToken());
 
         //If claims are added to a silent request, it should trigger the refresh flow and return a new token
@@ -305,7 +305,7 @@ class AcquireTokenSilentIT {
                         .build())
                 .get();
 
-        assertResultNotNull(silentResultWithClaims);
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(silentResultWithClaims);
         assertNotEquals(result.accessToken(), silentResultWithClaims.accessToken());
     }
 
@@ -376,19 +376,4 @@ class AcquireTokenSilentIT {
                 .get();
     }
 
-    private void assertResultNotNull(IAuthenticationResult result) {
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
-        assertNotNull(result.idToken());
-    }
-
-    private void assertTokensAreNotEqual(IAuthenticationResult result, IAuthenticationResult secondResult) {
-        assertNotEquals(result.accessToken(), secondResult.accessToken());
-        assertNotEquals(result.idToken(), secondResult.idToken());
-    }
-
-    private void assertTokensAreEqual(IAuthenticationResult result, IAuthenticationResult secondResult) {
-        assertEquals(result.accessToken(), secondResult.accessToken());
-        assertEquals(result.idToken(), secondResult.idToken());
-    }
 }

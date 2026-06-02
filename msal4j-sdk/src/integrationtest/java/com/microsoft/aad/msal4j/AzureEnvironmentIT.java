@@ -8,9 +8,7 @@ import static com.microsoft.aad.msal4j.labapi.KeyVaultSecrets.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import java.util.Collections;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class AzureEnvironmentIT {
 
@@ -19,21 +17,12 @@ class AzureEnvironmentIT {
         AppConfig app = LabResponseHelper.getAppConfig(APP_ARLINGTON);
         UserConfig user = LabResponseHelper.getUserConfig(USER_ARLINGTON);
 
-        PublicClientApplication pca = PublicClientApplication.builder(
-                        app.getAppId()).
-                authority(app.getAuthority() + "organizations/").
-                build();
+        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(
+                app.getAppId(), app.getAuthority() + "organizations/");
 
-        IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters
-                        .builder(Collections.singleton(TestConstants.USER_READ_SCOPE),
-                                user.getUpn(),
-                                user.getPassword().toCharArray())
-                        .build())
-                .get();
+        IAuthenticationResult result = IntegrationTestHelper.acquireTokenByRopc(
+                pca, user, TestConstants.USER_READ_SCOPE);
 
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
-        assertNotNull(result.idToken());
-
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
         assertEquals(user.getUpn(), result.account().username());    }
 }

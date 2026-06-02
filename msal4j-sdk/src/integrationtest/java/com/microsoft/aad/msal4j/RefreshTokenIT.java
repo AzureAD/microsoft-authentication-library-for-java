@@ -7,7 +7,6 @@ import com.microsoft.aad.msal4j.labapi.*;
 import static com.microsoft.aad.msal4j.labapi.KeyVaultSecrets.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Collections;
@@ -47,9 +46,7 @@ class RefreshTokenIT {
                 .build())
                 .get();
 
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
-        assertNotNull(result.idToken());
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
     }
 
     @Test

@@ -41,7 +41,7 @@ class ApacheHttpClientAdapter implements IHttpClient {
     private HttpRequestBase buildApacheRequestFromMsalRequest(HttpRequest httpRequest) {
 
         if (httpRequest.httpMethod() == HttpMethod.GET) {
-            return builGetRequest(httpRequest);
+            return buildGetRequest(httpRequest);
         } else if (httpRequest.httpMethod() == HttpMethod.POST) {
             return buildPostRequest(httpRequest);
         } else {
@@ -49,7 +49,7 @@ class ApacheHttpClientAdapter implements IHttpClient {
         }
     }
 
-    private HttpGet builGetRequest(HttpRequest httpRequest) {
+    private HttpGet buildGetRequest(HttpRequest httpRequest) {
         HttpGet httpGet = new HttpGet(httpRequest.url().toString());
 
         for (Map.Entry<String, String> entry : httpRequest.headers().entrySet()) {

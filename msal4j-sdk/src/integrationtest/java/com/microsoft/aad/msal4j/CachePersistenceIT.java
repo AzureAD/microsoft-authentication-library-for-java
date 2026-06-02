@@ -9,30 +9,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CachePersistenceIT {
 
-    static class TokenPersistence implements ITokenCacheAccessAspect {
-        String data;
-
-        TokenPersistence(String data) {
-            this.data = data;
-        }
-
-        @Override
-        public void beforeCacheAccess(ITokenCacheAccessContext iTokenCacheAccessContext) {
-            iTokenCacheAccessContext.tokenCache().deserialize(data);
-        }
-
-        @Override
-        public void afterCacheAccess(ITokenCacheAccessContext iTokenCacheAccessContext) {
-            data = iTokenCacheAccessContext.tokenCache().serialize();
-        }
-    }
-
     @Test
     void cacheDeserializationSerializationTest() {
         String dataToInitCache = TestHelper.readResource(this.getClass(), "/cache_data/serialized_cache.json");
         dataToInitCache = dataToInitCache.replace("<idToken_placeholder>", TestHelper.ENCODED_JWT);
 
-        ITokenCacheAccessAspect persistenceAspect = new TokenPersistence(dataToInitCache);
+        ITokenCacheAccessAspect persistenceAspect = new TestTokenCachePersistence(dataToInitCache);
 
         PublicClientApplication app = PublicClientApplication.builder("my_client_id")
                 .setTokenCacheAccessAspect(persistenceAspect).build();

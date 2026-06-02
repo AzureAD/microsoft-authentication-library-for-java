@@ -3,7 +3,6 @@
 
 package infrastructure.pageobjects;
 
-import com.microsoft.aad.msal4j.TestConstants;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -56,9 +55,9 @@ public class B2CLocalLoginPage {
      * @return This page object for method chaining
      */
     public B2CLocalLoginPage enterUsername(String username) {
-        LOG.info("Entering username: {}", TestConstants.B2C_UPN);
+        LOG.info("Entering username: {}", username);
         wait.until(ExpectedConditions.elementToBeClickable(USERNAME_INPUT))
-                .sendKeys(TestConstants.B2C_UPN);
+                .sendKeys(username);
         return this;
     }
 

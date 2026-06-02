@@ -8,9 +8,6 @@ import static com.microsoft.aad.msal4j.labapi.KeyVaultSecrets.*;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.Collections;
 
@@ -41,7 +38,7 @@ class OnBehalfOfIT {
                         new UserAssertion(accessToken)).build()).
                         get();
 
-        assertResultNotNull(result);
+        IntegrationTestHelper.assertAccessTokenNotNull(result);
     }
 
     @Test
@@ -62,7 +59,7 @@ class OnBehalfOfIT {
                         new UserAssertion(accessToken)).build()).
                         get();
 
-        assertResultNotNull(result1);
+        IntegrationTestHelper.assertAccessTokenNotNull(result1);
 
         // Same scope and userAssertion, should return cached tokens
         IAuthenticationResult result2 =
@@ -71,7 +68,7 @@ class OnBehalfOfIT {
                         new UserAssertion(accessToken)).build()).
                         get();
 
-        assertEquals(result1.accessToken(), result2.accessToken());
+        IntegrationTestHelper.assertAccessTokensEqual(result1, result2);
 
         // Scope 2, should return new token
         IAuthenticationResult result3 =
@@ -80,8 +77,8 @@ class OnBehalfOfIT {
                         new UserAssertion(accessToken)).build()).
                         get();
 
-        assertResultNotNull(result3);
-        assertNotEquals(result2.accessToken(), result3.accessToken());
+        IntegrationTestHelper.assertAccessTokenNotNull(result3);
+        IntegrationTestHelper.assertAccessTokensNotEqual(result2, result3);
 
         // Scope 2, should return cached token
         IAuthenticationResult result4 =
@@ -90,7 +87,7 @@ class OnBehalfOfIT {
                         new UserAssertion(accessToken)).build()).
                         get();
 
-        assertEquals(result3.accessToken(), result4.accessToken());
+        IntegrationTestHelper.assertAccessTokensEqual(result3, result4);
 
         // skipCache=true, should return new token
         IAuthenticationResult result5 =
@@ -102,9 +99,9 @@ class OnBehalfOfIT {
                                 .build()).
                         get();
 
-        assertResultNotNull(result5);
-        assertNotEquals(result5.accessToken(), result4.accessToken());
-        assertNotEquals(result5.accessToken(), result2.accessToken());
+        IntegrationTestHelper.assertAccessTokenNotNull(result5);
+        IntegrationTestHelper.assertAccessTokensNotEqual(result5, result4);
+        IntegrationTestHelper.assertAccessTokensNotEqual(result5, result2);
 
 
         String newAccessToken = this.getAccessToken();
@@ -117,15 +114,10 @@ class OnBehalfOfIT {
                                 .build()).
                         get();
 
-        assertResultNotNull(result6);
-        assertNotEquals(result6.accessToken(), result5.accessToken());
-        assertNotEquals(result6.accessToken(), result4.accessToken());
-        assertNotEquals(result6.accessToken(), result2.accessToken());
-    }
-
-    private void assertResultNotNull(IAuthenticationResult result) {
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
+        IntegrationTestHelper.assertAccessTokenNotNull(result6);
+        IntegrationTestHelper.assertAccessTokensNotEqual(result6, result5);
+        IntegrationTestHelper.assertAccessTokensNotEqual(result6, result4);
+        IntegrationTestHelper.assertAccessTokensNotEqual(result6, result2);
     }
 
     private String getAccessToken() throws Exception {

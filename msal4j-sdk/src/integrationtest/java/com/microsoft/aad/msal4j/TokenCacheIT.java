@@ -65,7 +65,7 @@ class TokenCacheIT {
         // check that cache is empty
         assertEquals(dataToInitCache, "");
 
-        ITokenCacheAccessAspect persistenceAspect = new TokenPersistence(dataToInitCache);
+        ITokenCacheAccessAspect persistenceAspect = new TestTokenCachePersistence(dataToInitCache);
 
         // acquire tokens for home tenant, and serialize cache
         PublicClientApplication pca = PublicClientApplication.builder(
@@ -111,23 +111,5 @@ class TokenCacheIT {
         TestHelper.deleteFileContent(
                 this.getClass(),
                 "/cache_data/remove-account-test-cache.json");
-    }
-
-    private static class TokenPersistence implements ITokenCacheAccessAspect {
-        String data;
-
-        TokenPersistence(String data) {
-            this.data = data;
-        }
-
-        @Override
-        public void beforeCacheAccess(ITokenCacheAccessContext iTokenCacheAccessContext) {
-            iTokenCacheAccessContext.tokenCache().deserialize(data);
-        }
-
-        @Override
-        public void afterCacheAccess(ITokenCacheAccessContext iTokenCacheAccessContext) {
-            data = iTokenCacheAccessContext.tokenCache().serialize();
-        }
     }
 }

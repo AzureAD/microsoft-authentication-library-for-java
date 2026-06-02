@@ -59,17 +59,9 @@ class UsernamePasswordIT {
     private void assertAcquireTokenCommon(UserConfig user, String authority, String scope, String appId)
             throws Exception {
 
-        PublicClientApplication pca = PublicClientApplication.builder(
-                appId).
-                authority(authority).
-                build();
+        PublicClientApplication pca = IntegrationTestHelper.createPublicApp(appId, authority);
 
-        IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters.
-                builder(Collections.singleton(scope),
-                        user.getUpn(),
-                        user.getPassword().toCharArray())
-                .build())
-                .get();
+        IAuthenticationResult result = IntegrationTestHelper.acquireTokenByRopc(pca, user, scope);
 
         IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
         assertEquals(user.getUpn(), result.account().username());
@@ -95,7 +87,6 @@ class UsernamePasswordIT {
         IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
 
         IAccount account = pca.getAccounts().join().iterator().next();
-        SilentParameters.builder(Collections.singleton(TestConstants.B2C_READ_SCOPE), account);
 
         result = pca.acquireTokenSilently(
                 SilentParameters.builder(Collections.singleton(TestConstants.B2C_READ_SCOPE), account)
@@ -125,7 +116,6 @@ class UsernamePasswordIT {
         IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
 
         IAccount account = pca.getAccounts().join().iterator().next();
-        SilentParameters.builder(Collections.singleton(TestConstants.B2C_READ_SCOPE), account);
 
         result = pca.acquireTokenSilently(
                 SilentParameters.builder(Collections.singleton(TestConstants.B2C_READ_SCOPE), account)

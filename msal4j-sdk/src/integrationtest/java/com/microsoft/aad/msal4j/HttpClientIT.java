@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -50,16 +49,10 @@ class HttpClientIT {
                 httpClient(httpClient).
                 build();
 
-        IAuthenticationResult result = pca.acquireToken(UserNamePasswordParameters.
-                builder(Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
-                        user.getUpn(),
-                        user.getPassword().toCharArray())
-                .build())
-                .get();
+        IAuthenticationResult result = IntegrationTestHelper.acquireTokenByRopc(
+                pca, user, TestConstants.GRAPH_DEFAULT_SCOPE);
 
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
-        assertNotNull(result.idToken());
+        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
         assertEquals(user.getUpn(), result.account().username());
     }
 
