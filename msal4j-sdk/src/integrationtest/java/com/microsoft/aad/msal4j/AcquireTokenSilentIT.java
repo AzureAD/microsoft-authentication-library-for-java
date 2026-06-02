@@ -107,8 +107,7 @@ class AcquireTokenSilentIT {
                 .build())
                 .get();
 
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
+        IntegrationTestHelper.assertAccessTokenNotNull(result);
 
         String cachedAt = result.accessToken();
 
@@ -133,8 +132,7 @@ class AcquireTokenSilentIT {
                 .build())
                 .get();
 
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
+        IntegrationTestHelper.assertAccessTokenNotNull(result);
 
         //Acquiring token for different scope, expect exception to be thrown
         assertThrows(ExecutionException.class, () -> cca.acquireTokenSilently(SilentParameters
