@@ -28,14 +28,14 @@ public class SeleniumExtensions {
 
     public static WebDriver createDefaultWebDriver() {
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless");
+        options.addArguments("--headless=new");
         options.addArguments("--incognito");
 
         return new ChromeDriver(options);
     }
 
     public static WebElement waitForElementToBeVisibleAndEnabled(WebDriver driver, By by, Duration timeout) {
-        WebDriverWait wait = new WebDriverWait(driver, timeout.getSeconds());
+        WebDriverWait wait = new WebDriverWait(driver, timeout);
         return wait.until(ExpectedConditions.elementToBeClickable(by));
     }
 
