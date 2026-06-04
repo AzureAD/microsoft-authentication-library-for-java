@@ -32,7 +32,7 @@ public class ADFSLoginPage {
 
     public ADFSLoginPage(WebDriver driver) {
         this.driver = driver;
-        this.wait = new WebDriverWait(driver, DEFAULT_TIMEOUT.getSeconds());
+        this.wait = new WebDriverWait(driver, DEFAULT_TIMEOUT);
     }
 
     /**
