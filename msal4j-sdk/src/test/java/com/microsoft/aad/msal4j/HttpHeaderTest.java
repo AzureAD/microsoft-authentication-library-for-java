@@ -40,12 +40,12 @@ class HttpHeaderTest {
 
         Map<String, String> httpHeaderMap = httpHeaders.getReadonlyHeaderMap();
 
-        assertEquals(httpHeaderMap.get(HttpHeaders.PRODUCT_HEADER_NAME), HttpHeaders.PRODUCT_HEADER_VALUE);
-        assertEquals(httpHeaderMap.get(HttpHeaders.PRODUCT_VERSION_HEADER_NAME), HttpHeaders.PRODUCT_VERSION_HEADER_VALUE);
-        assertEquals(httpHeaderMap.get(HttpHeaders.OS_HEADER_NAME), HttpHeaders.OS_HEADER_VALUE);
-        assertEquals(httpHeaderMap.get(HttpHeaders.APPLICATION_NAME_HEADER_NAME), "app-name");
-        assertEquals(httpHeaderMap.get(HttpHeaders.APPLICATION_VERSION_HEADER_NAME), "app-version");
-        assertEquals(httpHeaderMap.get(HttpHeaders.CORRELATION_ID_HEADER_NAME), "correlation-id");
+        assertEquals(HttpHeaders.PRODUCT_HEADER_VALUE, httpHeaderMap.get(HttpHeaders.PRODUCT_HEADER_NAME));
+        assertEquals(HttpHeaders.PRODUCT_VERSION_HEADER_VALUE, httpHeaderMap.get(HttpHeaders.PRODUCT_VERSION_HEADER_NAME));
+        assertEquals(HttpHeaders.OS_HEADER_VALUE, httpHeaderMap.get(HttpHeaders.OS_HEADER_NAME));
+        assertEquals("app-name", httpHeaderMap.get(HttpHeaders.APPLICATION_NAME_HEADER_NAME));
+        assertEquals("app-version", httpHeaderMap.get(HttpHeaders.APPLICATION_VERSION_HEADER_NAME));
+        assertEquals("correlation-id", httpHeaderMap.get(HttpHeaders.CORRELATION_ID_HEADER_NAME));
     }
 
     @Test
@@ -66,9 +66,9 @@ class HttpHeaderTest {
 
         Map<String, String> httpHeaderMap = httpHeaders.getReadonlyHeaderMap();
 
-        assertEquals(httpHeaderMap.get(HttpHeaders.PRODUCT_HEADER_NAME), HttpHeaders.PRODUCT_HEADER_VALUE);
-        assertEquals(httpHeaderMap.get(HttpHeaders.PRODUCT_VERSION_HEADER_NAME), HttpHeaders.PRODUCT_VERSION_HEADER_VALUE);
-        assertEquals(httpHeaderMap.get(HttpHeaders.OS_HEADER_NAME), HttpHeaders.OS_HEADER_VALUE);
+        assertEquals(HttpHeaders.PRODUCT_HEADER_VALUE, httpHeaderMap.get(HttpHeaders.PRODUCT_HEADER_NAME));
+        assertEquals(HttpHeaders.PRODUCT_VERSION_HEADER_VALUE, httpHeaderMap.get(HttpHeaders.PRODUCT_VERSION_HEADER_NAME));
+        assertEquals(HttpHeaders.OS_HEADER_VALUE, httpHeaderMap.get(HttpHeaders.OS_HEADER_NAME));
         assertNull(httpHeaderMap.get(HttpHeaders.APPLICATION_NAME_HEADER_NAME));
         assertNull(httpHeaderMap.get(HttpHeaders.APPLICATION_VERSION_HEADER_NAME));
         assertNotNull(httpHeaderMap.get(HttpHeaders.CORRELATION_ID_HEADER_NAME));
@@ -97,7 +97,7 @@ class HttpHeaderTest {
         Map<String, String> httpHeaderMap = httpHeaders.getReadonlyHeaderMap();
 
         String expectedValue = String.format(HttpHeaders.X_ANCHOR_MAILBOX_UPN_FORMAT, upn);
-        assertEquals(httpHeaderMap.get(HttpHeaders.X_ANCHOR_MAILBOX), expectedValue);
+        assertEquals(expectedValue, httpHeaderMap.get(HttpHeaders.X_ANCHOR_MAILBOX));
     }
 
     @Test
@@ -122,7 +122,7 @@ class HttpHeaderTest {
 
         Map<String, String> httpHeaderMap = httpHeaders.getReadonlyHeaderMap();
 
-        assertEquals(httpHeaderMap.get(HttpHeaders.X_ANCHOR_MAILBOX), "oid:userObjectId@userTenantId");
+        assertEquals("oid:userObjectId@userTenantId", httpHeaderMap.get(HttpHeaders.X_ANCHOR_MAILBOX));
     }
 
     @Test
@@ -158,16 +158,16 @@ class HttpHeaderTest {
         Map<String, String> httpHeaderMap = httpHeaders.getReadonlyHeaderMap();
 
         // Standard headers
-        assertEquals(httpHeaderMap.get(HttpHeaders.PRODUCT_HEADER_NAME), HttpHeaders.PRODUCT_HEADER_VALUE);
-        assertEquals(httpHeaderMap.get(HttpHeaders.PRODUCT_VERSION_HEADER_NAME), HttpHeaders.PRODUCT_VERSION_HEADER_VALUE);
-        assertEquals(httpHeaderMap.get(HttpHeaders.OS_HEADER_NAME), HttpHeaders.OS_HEADER_VALUE);
-        assertEquals(httpHeaderMap.get(HttpHeaders.APPLICATION_VERSION_HEADER_NAME), "app-version");
-        assertEquals(httpHeaderMap.get(HttpHeaders.CORRELATION_ID_HEADER_NAME), "correlation-id");
+        assertEquals(HttpHeaders.PRODUCT_HEADER_VALUE, httpHeaderMap.get(HttpHeaders.PRODUCT_HEADER_NAME));
+        assertEquals(HttpHeaders.PRODUCT_VERSION_HEADER_VALUE, httpHeaderMap.get(HttpHeaders.PRODUCT_VERSION_HEADER_NAME));
+        assertEquals(HttpHeaders.OS_HEADER_VALUE, httpHeaderMap.get(HttpHeaders.OS_HEADER_NAME));
+        assertEquals("app-version", httpHeaderMap.get(HttpHeaders.APPLICATION_VERSION_HEADER_NAME));
+        assertEquals("correlation-id", httpHeaderMap.get(HttpHeaders.CORRELATION_ID_HEADER_NAME));
 
         // Overwritten standard header
-        assertEquals(httpHeaderMap.get(HttpHeaders.APPLICATION_NAME_HEADER_NAME), uniqueAppName);
+        assertEquals(uniqueAppName, httpHeaderMap.get(HttpHeaders.APPLICATION_NAME_HEADER_NAME));
 
         // Extra header
-        assertEquals(httpHeaderMap.get(uniqueHeaderKey), uniqueHeaderValue);
+        assertEquals(uniqueHeaderValue, httpHeaderMap.get(uniqueHeaderKey));
     }
 }

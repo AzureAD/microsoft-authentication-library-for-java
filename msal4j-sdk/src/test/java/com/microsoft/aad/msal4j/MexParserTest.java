@@ -48,8 +48,8 @@ class MexParserTest {
         }
 
         BindingPolicy endpoint = MexParser.getWsTrustEndpointFromMexResponse(sb.toString(), false);
-        assertEquals(endpoint.getUrl(),
-                "https://msft.sts.microsoft.com/adfs/services/trust/13/usernamemixed");
+        assertEquals("https://msft.sts.microsoft.com/adfs/services/trust/13/usernamemixed",
+                endpoint.getUrl());
     }
 
     @Test
@@ -69,7 +69,7 @@ class MexParserTest {
         }
         BindingPolicy endpoint = MexParser.getWsTrustEndpointFromMexResponse(sb
                 .toString(), false);
-        assertEquals(endpoint.getUrl(), "https://msft.sts.microsoft.com/adfs/services/trust/2005/usernamemixed");
+        assertEquals("https://msft.sts.microsoft.com/adfs/services/trust/2005/usernamemixed", endpoint.getUrl());
     }
 
     @Test
@@ -89,7 +89,7 @@ class MexParserTest {
         }
         BindingPolicy endpoint = MexParser.getPolicyFromMexResponseForIntegrated(sb
                 .toString(), false);
-        assertEquals(endpoint.getUrl(),
-                "https://msft.sts.microsoft.com/adfs/services/trust/13/windowstransport");
+        assertEquals("https://msft.sts.microsoft.com/adfs/services/trust/13/windowstransport",
+                endpoint.getUrl());
     }
 }

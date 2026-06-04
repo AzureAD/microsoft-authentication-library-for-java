@@ -69,7 +69,7 @@ class TelemetryTest {
         telemetryManager.flush(reqId, clientId);
 
         // 1 Default event, 1 API event, 1 Http event
-        assertEquals(eventsReceived.size(), 3);
+        assertEquals(3, eventsReceived.size());
     }
 
     @Test
@@ -94,7 +94,7 @@ class TelemetryTest {
         telemetryManager.flush(reqId, clientId);
 
         // API event was successful, so count should be 0
-        assertEquals(eventsReceived.size(), 0);
+        assertEquals(0, eventsReceived.size());
         eventsReceived.clear();
 
         String reqId2 = telemetryManager.generateRequestId();
@@ -111,19 +111,19 @@ class TelemetryTest {
         telemetryManager.flush(reqId2, clientId);
 
         // API event failed, so count should be 3 (1 default, 1 Api, 1 http)
-        assertEquals(eventsReceived.size(), 3);
+        assertEquals(3, eventsReceived.size());
     }
 
     @Test
     void telemetryInternalApi_ScrubTenantFromUriTest() throws Exception {
-        assertEquals(Event.scrubTenant(new URI("https://login.microsoftonline.com/common/oauth2/v2.0/token")),
-                "https://login.microsoftonline.com/<tenant>/oauth2/v2.0/token");
+        assertEquals("https://login.microsoftonline.com/<tenant>/oauth2/v2.0/token",
+                Event.scrubTenant(new URI("https://login.microsoftonline.com/common/oauth2/v2.0/token")));
 
-        assertEquals(Event.scrubTenant(new URI("https://login.microsoftonline.com/common")),
-                "https://login.microsoftonline.com/<tenant>");
+        assertEquals("https://login.microsoftonline.com/<tenant>",
+                Event.scrubTenant(new URI("https://login.microsoftonline.com/common")));
 
-        assertEquals(Event.scrubTenant(new URI("https://login.microsoftonline.com/tfp/msidlabb2c.onmicrosoft.com/B2C_1_ROPC_Auth")),
-                "https://login.microsoftonline.com/tfp/<tenant>/B2C_1_ROPC_Auth");
+        assertEquals("https://login.microsoftonline.com/tfp/<tenant>/B2C_1_ROPC_Auth",
+                Event.scrubTenant(new URI("https://login.microsoftonline.com/tfp/msidlabb2c.onmicrosoft.com/B2C_1_ROPC_Auth")));
 
         assertNull(Event.scrubTenant(new URI("https://msidlabb2c.b2clogin.com/tfp/msidlabb2c.onmicrosoft.com/B2C_1_ROPC_Auth")));
 
@@ -150,7 +150,7 @@ class TelemetryTest {
 
         telemetryManager.flush(reqId, clientId);
 
-        assertEquals(eventsReceived.get(0).get("event_name"), "msal.default_event");
+        assertEquals("msal.default_event", eventsReceived.get(0).get("event_name"));
     }
 
     @Test
@@ -172,7 +172,7 @@ class TelemetryTest {
         telemetryManager.stopEvent(reqId, apiEvent1);
         telemetryManager.flush(reqId, clientId);
 
-        assertEquals(eventsReceived.size(), 3);
+        assertEquals(3, eventsReceived.size());
         assertTrue(eventsReceived.stream().anyMatch(event -> event.get("event_name").equals("msal.http_event")));
     }
 
@@ -197,7 +197,7 @@ class TelemetryTest {
 
         telemetryManager.flush(reqId, clientId);
 
-        assertEquals(eventsReceived.size(), 2);
+        assertEquals(2, eventsReceived.size());
         assertFalse(eventsReceived.stream().anyMatch(event -> event.get("event_name").equals("msal.http_event")));
     }
 
@@ -217,7 +217,7 @@ class TelemetryTest {
         telemetryManager.stopEvent(reqId, apiEvent);
 
         assertNotNull(apiEvent.get("msal.tenant_id"));
-        assertNotEquals(apiEvent.get("msal.tenant_id"), tenantId);
+        assertNotEquals(tenantId, apiEvent.get("msal.tenant_id"));
     }
 
     @Test
@@ -251,7 +251,7 @@ class TelemetryTest {
         apiEvent.setWasSuccessful(true);
         telemetryManager.stopEvent(reqId, apiEvent);
 
-        assertEquals(apiEvent.get("msal.authority"), "https://login.microsoftonline.com");
+        assertEquals("https://login.microsoftonline.com", apiEvent.get("msal.authority"));
 
 
         ApiEvent apiEvent2 = new ApiEvent(false);
@@ -268,10 +268,10 @@ class TelemetryTest {
         String responseHeader = "1,0,0,,";
         XmsClientTelemetryInfo info = XmsClientTelemetryInfo.parseXmsTelemetryInfo(responseHeader);
 
-        assertEquals(info.getServerErrorCode(), "0");
-        assertEquals(info.getServerSubErrorCode(), "0");
-        assertEquals(info.getTokenAge(), "");
-        assertEquals(info.getSpeInfo(), "");
+        assertEquals("0", info.getServerErrorCode());
+        assertEquals("0", info.getServerSubErrorCode());
+        assertEquals("", info.getTokenAge());
+        assertEquals("", info.getSpeInfo());
     }
 
     @Test

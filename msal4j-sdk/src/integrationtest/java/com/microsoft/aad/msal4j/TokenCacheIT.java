@@ -29,7 +29,7 @@ class TokenCacheIT {
                 build();
 
         // Check that cache is empty
-        assertEquals(pca.getAccounts().join().size(), 0);
+        assertEquals(0, pca.getAccounts().join().size());
 
         Map<String, String> extraQueryParameters = new HashMap<>();
         extraQueryParameters.put("test", "test");
@@ -43,12 +43,12 @@ class TokenCacheIT {
                 .get();
 
         // Check that cache contains one account
-        assertEquals(pca.getAccounts().join().size(), 1);
+        assertEquals(1, pca.getAccounts().join().size());
 
         pca.removeAccount(pca.getAccounts().join().iterator().next()).join();
 
         // Check that account has been removed
-        assertEquals(pca.getAccounts().join().size(), 0);
+        assertEquals(0, pca.getAccounts().join().size());
     }
 
     @Test

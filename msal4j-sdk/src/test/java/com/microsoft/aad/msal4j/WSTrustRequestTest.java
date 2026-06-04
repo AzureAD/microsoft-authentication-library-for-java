@@ -50,7 +50,7 @@ class WSTrustRequestTest {
         String DATA_TO_ESCAPE = "o_!as & a34~'fe<> \" a1";
         String XML_ESCAPED_DATA = "o_!as &amp; a34~&apos;fe&lt;&gt; &quot; a1";
 
-        assertEquals(WSTrustRequest.escapeXMLElementData(DATA_TO_ESCAPE), XML_ESCAPED_DATA);
+        assertEquals(XML_ESCAPED_DATA, WSTrustRequest.escapeXMLElementData(DATA_TO_ESCAPE));
         assertEquals(WSTrustRequest.escapeXMLElementData(DATA_TO_ESCAPE),
                 StringEscapeUtils.escapeXml10(DATA_TO_ESCAPE));
     }

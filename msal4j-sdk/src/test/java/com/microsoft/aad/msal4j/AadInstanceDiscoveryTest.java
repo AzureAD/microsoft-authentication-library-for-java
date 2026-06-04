@@ -138,9 +138,9 @@ class AadInstanceDiscoveryTest {
     }
 
     void assertValidResponse(InstanceDiscoveryMetadataEntry entry) {
-        assertEquals(entry.preferredNetwork(), "login.microsoftonline.com");
-        assertEquals(entry.preferredCache(), "login.windows.net");
-        assertEquals(entry.aliases().size(), 4);
+        assertEquals("login.microsoftonline.com", entry.preferredNetwork());
+        assertEquals("login.windows.net", entry.preferredCache());
+        assertEquals(4, entry.aliases().size());
         assertTrue(entry.aliases().contains("login.microsoftonline.com"));
         assertTrue(entry.aliases().contains("login.windows.net"));
         assertTrue(entry.aliases().contains("login.microsoft.com"));

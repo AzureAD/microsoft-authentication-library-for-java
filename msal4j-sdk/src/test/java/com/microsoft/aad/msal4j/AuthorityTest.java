@@ -19,31 +19,31 @@ class AuthorityTest {
     @Test
     void testDetectAuthorityType_AAD() throws Exception {
         URL url = new URL(TestConfiguration.AAD_TENANT_ENDPOINT);
-        assertEquals(Authority.detectAuthorityType(url), AuthorityType.AAD);
+        assertEquals(AuthorityType.AAD, Authority.detectAuthorityType(url));
     }
 
     @Test
     void testDetectAuthorityType_ADFS() throws Exception {
         URL url = new URL(TestConfiguration.ADFS_TENANT_ENDPOINT);
-        assertEquals(Authority.detectAuthorityType(url), AuthorityType.ADFS);
+        assertEquals(AuthorityType.ADFS, Authority.detectAuthorityType(url));
     }
 
     @Test
     void testDetectAuthorityType_B2C() throws Exception {
         URL url = new URL(TestConfiguration.B2C_AUTHORITY);
-        assertEquals(Authority.detectAuthorityType(url), AuthorityType.B2C);
+        assertEquals(AuthorityType.B2C, Authority.detectAuthorityType(url));
     }
 
     @ParameterizedTest
     @MethodSource("com.microsoft.aad.msal4j.AuthorityTest#ciamAuthorities")
     void testDetectAuthorityType_CIAM(URL authority) throws Exception {
-        assertEquals(Authority.detectAuthorityType(authority), AuthorityType.CIAM);
+        assertEquals(AuthorityType.CIAM, Authority.detectAuthorityType(authority));
     }
 
     @ParameterizedTest
     @MethodSource("com.microsoft.aad.msal4j.AuthorityTest#validCiamAuthoritiesAndTransformedAuthority")
     void testCiamAuthorityTransformation(URL authority, URL transformedAuthority) throws Exception {
-        assertEquals(CIAMAuthority.transformAuthority(authority), transformedAuthority);
+        assertEquals(transformedAuthority, CIAMAuthority.transformAuthority(authority));
     }
 
     @Test
@@ -100,35 +100,35 @@ class AuthorityTest {
     void testConstructor_AADAuthority() throws MalformedURLException {
         final AADAuthority aa = new AADAuthority(new URL(TestConfiguration.AAD_TENANT_ENDPOINT));
         assertNotNull(aa);
-        assertEquals(aa.authority(),
-                TestConfiguration.AAD_TENANT_ENDPOINT);
-        assertEquals(aa.host(), TestConfiguration.AAD_HOST_NAME);
-        assertEquals(aa.tokenEndpoint(),
-                TestConfiguration.AAD_TENANT_ENDPOINT + "oauth2/v2.0/token");
-        assertEquals(aa.selfSignedJwtAudience(),
-                TestConfiguration.AAD_TENANT_ENDPOINT + "oauth2/v2.0/token");
-        assertEquals(aa.tokenEndpoint(),
-                TestConfiguration.AAD_TENANT_ENDPOINT + "oauth2/v2.0/token");
-        assertEquals(aa.authorityType(), AuthorityType.AAD);
+        assertEquals(TestConfiguration.AAD_TENANT_ENDPOINT,
+                aa.authority());
+        assertEquals(TestConfiguration.AAD_HOST_NAME, aa.host());
+        assertEquals(TestConfiguration.AAD_TENANT_ENDPOINT + "oauth2/v2.0/token",
+                aa.tokenEndpoint());
+        assertEquals(TestConfiguration.AAD_TENANT_ENDPOINT + "oauth2/v2.0/token",
+                aa.selfSignedJwtAudience());
+        assertEquals(TestConfiguration.AAD_TENANT_ENDPOINT + "oauth2/v2.0/token",
+                aa.tokenEndpoint());
+        assertEquals(AuthorityType.AAD, aa.authorityType());
         assertFalse(aa.isTenantless());
-        assertEquals(aa.deviceCodeEndpoint(),
-                TestConfiguration.AAD_TENANT_ENDPOINT + "oauth2/v2.0/devicecode");
+        assertEquals(TestConfiguration.AAD_TENANT_ENDPOINT + "oauth2/v2.0/devicecode",
+                aa.deviceCodeEndpoint());
     }
 
     @Test
     void testConstructor_B2CAuthority() throws MalformedURLException {
         final B2CAuthority aa = new B2CAuthority(new URL(TestConfiguration.B2C_AUTHORITY));
         assertNotNull(aa);
-        assertEquals(aa.authority(),
-                TestConfiguration.B2C_AUTHORITY + "/");
-        assertEquals(aa.host(), TestConfiguration.B2C_HOST_NAME);
-        assertEquals(aa.selfSignedJwtAudience(),
-                TestConfiguration.B2C_AUTHORITY_ENDPOINT + "/oauth2/v2.0/token?p=" + TestConfiguration.B2C_SIGN_IN_POLICY);
-        assertEquals(aa.tokenEndpoint(),
-                TestConfiguration.B2C_AUTHORITY_ENDPOINT + "/oauth2/v2.0/token?p=" + TestConfiguration.B2C_SIGN_IN_POLICY);
-        assertEquals(aa.authorityType(), AuthorityType.B2C);
-        assertEquals(aa.tokenEndpoint(),
-                TestConfiguration.B2C_AUTHORITY_ENDPOINT + "/oauth2/v2.0/token?p=" + TestConfiguration.B2C_SIGN_IN_POLICY);
+        assertEquals(TestConfiguration.B2C_AUTHORITY + "/",
+                aa.authority());
+        assertEquals(TestConfiguration.B2C_HOST_NAME, aa.host());
+        assertEquals(TestConfiguration.B2C_AUTHORITY_ENDPOINT + "/oauth2/v2.0/token?p=" + TestConfiguration.B2C_SIGN_IN_POLICY,
+                aa.selfSignedJwtAudience());
+        assertEquals(TestConfiguration.B2C_AUTHORITY_ENDPOINT + "/oauth2/v2.0/token?p=" + TestConfiguration.B2C_SIGN_IN_POLICY,
+                aa.tokenEndpoint());
+        assertEquals(AuthorityType.B2C, aa.authorityType());
+        assertEquals(TestConfiguration.B2C_AUTHORITY_ENDPOINT + "/oauth2/v2.0/token?p=" + TestConfiguration.B2C_SIGN_IN_POLICY,
+                aa.tokenEndpoint());
         assertFalse(aa.isTenantless());
     }
 
@@ -136,15 +136,15 @@ class AuthorityTest {
     void testConstructor_ADFSAuthority() throws MalformedURLException {
         final ADFSAuthority a = new ADFSAuthority(new URL(TestConfiguration.ADFS_TENANT_ENDPOINT));
         assertNotNull(a);
-        assertEquals(a.authority(), TestConfiguration.ADFS_TENANT_ENDPOINT);
-        assertEquals(a.host(), TestConfiguration.ADFS_HOST_NAME);
-        assertEquals(a.selfSignedJwtAudience(),
-                TestConfiguration.ADFS_TENANT_ENDPOINT + ADFSAuthority.TOKEN_ENDPOINT);
+        assertEquals(TestConfiguration.ADFS_TENANT_ENDPOINT, a.authority());
+        assertEquals(TestConfiguration.ADFS_HOST_NAME, a.host());
+        assertEquals(TestConfiguration.ADFS_TENANT_ENDPOINT + ADFSAuthority.TOKEN_ENDPOINT,
+                a.selfSignedJwtAudience());
 
-        assertEquals(a.authorityType(), AuthorityType.ADFS);
+        assertEquals(AuthorityType.ADFS, a.authorityType());
 
-        assertEquals(a.tokenEndpoint(),
-                TestConfiguration.ADFS_TENANT_ENDPOINT + ADFSAuthority.TOKEN_ENDPOINT);
+        assertEquals(TestConfiguration.ADFS_TENANT_ENDPOINT + ADFSAuthority.TOKEN_ENDPOINT,
+                a.tokenEndpoint());
         assertFalse(a.isTenantless());
     }
 

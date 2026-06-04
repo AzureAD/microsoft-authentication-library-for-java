@@ -43,7 +43,7 @@ public class AzureADLoginPage {
 
     public AzureADLoginPage(WebDriver driver) {
         this.driver = driver;
-        this.wait = new WebDriverWait(driver, DEFAULT_TIMEOUT.getSeconds());
+        this.wait = new WebDriverWait(driver, DEFAULT_TIMEOUT);
     }
 
     /**
@@ -103,7 +103,7 @@ public class AzureADLoginPage {
      */
     public boolean isAuthenticationComplete() {
         try {
-            WebDriverWait shortWait = new WebDriverWait(driver, SHORT_TIMEOUT.getSeconds());
+            WebDriverWait shortWait = new WebDriverWait(driver, SHORT_TIMEOUT);
             shortWait.until(ExpectedConditions.textToBePresentInElementLocated(
                     AUTH_COMPLETE_BODY, AUTH_COMPLETE_TEXT));
             LOG.info("Authentication complete page detected");
@@ -150,7 +150,7 @@ public class AzureADLoginPage {
     private void handleAreYouTryingToSignInPrompt() {
         try {
             LOG.info("Checking for 'Are you trying to sign in' prompt");
-            WebDriverWait shortWait = new WebDriverWait(driver, SHORT_TIMEOUT.getSeconds());
+            WebDriverWait shortWait = new WebDriverWait(driver, SHORT_TIMEOUT);
             shortWait.until(ExpectedConditions.elementToBeClickable(ARE_YOU_TRYING_TO_SIGN_IN_BUTTON))
                     .click();
             LOG.info("Clicked Continue on 'Are you trying to sign in' prompt");
@@ -165,7 +165,7 @@ public class AzureADLoginPage {
     private void handleStaySignedInPrompt() {
         try {
             LOG.info("Checking for 'Stay signed in' prompt");
-            WebDriverWait shortWait = new WebDriverWait(driver, SHORT_TIMEOUT.getSeconds());
+            WebDriverWait shortWait = new WebDriverWait(driver, SHORT_TIMEOUT);
             shortWait.until(ExpectedConditions.elementToBeClickable(STAY_SIGNED_IN_NO_BUTTON))
                     .click();
             LOG.info("Clicked No on 'Stay signed in' prompt");

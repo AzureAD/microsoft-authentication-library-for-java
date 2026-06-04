@@ -91,22 +91,22 @@ class AccountTest {
 
         Set<IAccount> accounts = pca.getAccounts().join();
 
-        assertEquals(accounts.size(), 1);
+        assertEquals(1, accounts.size());
         IAccount account = accounts.iterator().next();
 
         Map<String, ITenantProfile> tenantProfiles = account.getTenantProfiles();
-        assertEquals(tenantProfiles.size(), 2);
+        assertEquals(2, tenantProfiles.size());
 
         assertTrue(tenantProfiles.containsKey(BLACK_FORESRT_TENANT));
         assertTrue(tenantProfiles.containsKey(WW_TENTANT));
 
         pca.removeAccount(account).join();
         accounts = pca.getAccounts().join();
-        assertEquals(accounts.size(), 0);
+        assertEquals(0, accounts.size());
 
-        assertEquals(pca.tokenCache.accounts.size(), 0);
-        assertEquals(pca.tokenCache.idTokens.size(), 0);
-        assertEquals(pca.tokenCache.refreshTokens.size(), 0);
-        assertEquals(pca.tokenCache.accessTokens.size(), 0);
+        assertEquals(0, pca.tokenCache.accounts.size());
+        assertEquals(0, pca.tokenCache.idTokens.size());
+        assertEquals(0, pca.tokenCache.refreshTokens.size());
+        assertEquals(0, pca.tokenCache.accessTokens.size());
     }
 }

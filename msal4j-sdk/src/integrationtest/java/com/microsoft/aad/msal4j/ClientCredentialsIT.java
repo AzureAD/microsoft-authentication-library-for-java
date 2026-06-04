@@ -75,8 +75,7 @@ class ClientCredentialsIT {
                         .build())
                 .get();
 
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
+        IntegrationTestHelper.assertAccessTokenNotNull(result);
     }
 
     @Test
@@ -117,8 +116,7 @@ class ClientCredentialsIT {
                 .build())
                 .get();
 
-        assertNotNull(result1);
-        assertNotNull(result1.accessToken());
+        IntegrationTestHelper.assertAccessTokenNotNull(result1);
 
         IAuthenticationResult result2 = cca.acquireToken(ClientCredentialParameters
                 .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
@@ -133,8 +131,7 @@ class ClientCredentialsIT {
                 .build())
                 .get();
 
-        assertNotNull(result3);
-        assertNotNull(result3.accessToken());
+        IntegrationTestHelper.assertAccessTokenNotNull(result3);
         assertNotEquals(result2.accessToken(), result3.accessToken());
     }
 
@@ -164,8 +161,7 @@ class ClientCredentialsIT {
                 .build())
                 .get();
 
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
+        IntegrationTestHelper.assertAccessTokenNotNull(result);
     }
 
     private void assertAcquireTokenCommon_withParameters(AppConfig app, IClientCredential credential, IClientCredential credentialParam) throws Exception {
@@ -180,8 +176,7 @@ class ClientCredentialsIT {
                 .build())
                 .get();
 
-        assertNotNull(result);
-        assertNotNull(result.accessToken());
+        IntegrationTestHelper.assertAccessTokenNotNull(result);
     }
 
     private void assertAcquireTokenCommon_withRegion(AppConfig app, IClientCredential credential, String region, String regionalAuthority) throws Exception {
@@ -202,8 +197,7 @@ class ClientCredentialsIT {
                 .build())
                 .get();
 
-        assertNotNull(resultNoRegion);
-        assertNotNull(resultNoRegion.accessToken());
+        IntegrationTestHelper.assertAccessTokenNotNull(resultNoRegion);
         assertEquals(TestConstants.MICROSOFT_AUTHORITY_BASIC_HOST, resultNoRegion.environment());
 
         //Ensure regional tokens are properly cached and retrievable
@@ -212,17 +206,15 @@ class ClientCredentialsIT {
                 .build())
                 .get();
 
-        assertNotNull(resultRegion);
-        assertNotNull(resultRegion.accessToken());
-        assertEquals(resultRegion.environment(), regionalAuthority);
+        IntegrationTestHelper.assertAccessTokenNotNull(resultRegion);
+        assertEquals(regionalAuthority, resultRegion.environment());
 
         IAuthenticationResult resultRegionCached = ccaRegion.acquireToken(ClientCredentialParameters
                 .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
                 .build())
                 .get();
 
-        assertNotNull(resultRegionCached);
-        assertNotNull(resultRegionCached.accessToken());
+        IntegrationTestHelper.assertAccessTokenNotNull(resultRegionCached);
         assertEquals(resultRegionCached.accessToken(), resultRegion.accessToken());
 
         //Tokens retrieved from regional endpoints should be interchangeable with non-regional, and vice-versa
@@ -233,8 +225,7 @@ class ClientCredentialsIT {
                 .build())
                 .get();
 
-        assertNotNull(resultNoRegion);
-        assertNotNull(resultNoRegion.accessToken());
+        IntegrationTestHelper.assertAccessTokenNotNull(resultNoRegion);
         assertEquals(resultNoRegion.accessToken(), resultRegion.accessToken());
     }
 }

@@ -65,7 +65,7 @@ class TokenRequestExecutorTest {
             fail("Expected MsalServiceException was not thrown");
         } catch (MsalInteractionRequiredException ex) {
             assertEquals(claims.replace("\\", ""), ex.claims());
-            assertEquals(ex.reason(), InteractionRequiredExceptionReason.BASIC_ACTION);
+            assertEquals(InteractionRequiredExceptionReason.BASIC_ACTION, ex.reason());
         }
     }
 
@@ -239,7 +239,7 @@ class TokenRequestExecutorTest {
 
         assertNotNull(result.account());
         assertNotNull(result.account().homeAccountId());
-        assertEquals(result.account().username(), "idlab@msidlab4.onmicrosoft.com");
+        assertEquals("idlab@msidlab4.onmicrosoft.com", result.account().username());
 
         assertFalse(StringHelper.isBlank(result.accessToken()));
         assertFalse(StringHelper.isBlank(result.refreshToken()));
