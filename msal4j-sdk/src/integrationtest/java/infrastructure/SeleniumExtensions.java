@@ -6,18 +6,21 @@ package infrastructure;
 import com.microsoft.aad.msal4j.labapi.UserConfig;
 import infrastructure.pageobjects.ADFSLoginPage;
 import infrastructure.pageobjects.AzureADLoginPage;
-import infrastructure.pageobjects.B2CLocalLoginPage;
+import infrastructure.pageobjects.CIAMLoginPage;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.logging.LogType;
+import org.openqa.selenium.logging.LoggingPreferences;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.util.logging.Level;
 
 public class SeleniumExtensions {
 
@@ -31,12 +34,62 @@ public class SeleniumExtensions {
         options.addArguments("--headless=new");
         options.addArguments("--incognito");
 
+        // Enable browser console logging for diagnostic capture on failure
+        LoggingPreferences logPrefs = new LoggingPreferences();
+        logPrefs.enable(LogType.BROWSER, Level.ALL);
+        options.setCapability("goog:loggingPrefs", logPrefs);
+
         return new ChromeDriver(options);
     }
 
     public static WebElement waitForElementToBeVisibleAndEnabled(WebDriver driver, By by, Duration timeout) {
         WebDriverWait wait = new WebDriverWait(driver, timeout);
         return wait.until(ExpectedConditions.elementToBeClickable(by));
+    }
+
+    /**
+     * Wait for any one of several locators to match a clickable element, returning the first match.
+     * <p>
+     * This uses a single wait loop that checks all locators on each poll cycle, so the total
+     * wait time is bounded by {@code timeout} regardless of how many locators are provided.
+     * When a fallback locator matches (not the primary), a warning is logged to flag that
+     * the page structure may have changed.
+     *
+     * @param driver   the WebDriver instance
+     * @param timeout  maximum time to wait for any locator to match
+     * @param locators one or more locators to try, in priority order (primary first)
+     * @return the first clickable WebElement found
+     * @throws org.openqa.selenium.TimeoutException if no locator matches within the timeout
+     */
+    public static WebElement findWithFallback(WebDriver driver, Duration timeout, By... locators) {
+        if (locators.length == 0) {
+            throw new IllegalArgumentException("At least one locator must be provided");
+        }
+
+        if (locators.length == 1) {
+            return waitForElementToBeVisibleAndEnabled(driver, locators[0], timeout);
+        }
+
+        WebDriverWait wait = new WebDriverWait(driver, timeout);
+        final By primaryLocator = locators[0];
+
+        return wait.until(d -> {
+            for (By locator : locators) {
+                try {
+                    WebElement element = d.findElement(locator);
+                    if (element != null && element.isDisplayed() && element.isEnabled()) {
+                        if (!locator.equals(primaryLocator)) {
+                            LOG.warn("Primary locator {} not found, matched fallback: {}",
+                                    primaryLocator, locator);
+                        }
+                        return element;
+                    }
+                } catch (Exception ignored) {
+                    // Element not found with this locator, try next
+                }
+            }
+            return null;
+        });
     }
 
     public static void performADOrCiamLogin(WebDriver driver, UserConfig user) {
@@ -53,10 +106,10 @@ public class SeleniumExtensions {
         loginPage.login(user.getUpn(), user.getPassword());
     }
 
-    public static void performLocalLogin(WebDriver driver, UserConfig user) {
-        LOG.info("performLocalLogin");
+    public static void performCiamLogin(WebDriver driver, UserConfig user) {
+        LOG.info("performCiamLogin for user: {}", user.getUpn());
 
-        B2CLocalLoginPage loginPage = new B2CLocalLoginPage(driver);
+        CIAMLoginPage loginPage = new CIAMLoginPage(driver);
         loginPage.login(user.getUpn(), user.getPassword());
     }
 

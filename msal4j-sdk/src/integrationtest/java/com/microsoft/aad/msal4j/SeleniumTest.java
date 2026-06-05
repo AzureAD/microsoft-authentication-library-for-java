@@ -5,11 +5,15 @@ package com.microsoft.aad.msal4j;
 
 import com.microsoft.aad.msal4j.labapi.UserConfig;
 import infrastructure.SeleniumExtensions;
+import infrastructure.SeleniumTestWatcher;
+import infrastructure.WebDriverProvider;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.WebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-abstract class SeleniumTest {
+@ExtendWith(SeleniumTestWatcher.class)
+abstract class SeleniumTest implements WebDriverProvider {
     private static final Logger LOG = LoggerFactory.getLogger(SeleniumTest.class);
 
     WebDriver seleniumDriver;
@@ -36,14 +40,16 @@ abstract class SeleniumTest {
         seleniumDriver = SeleniumExtensions.createDefaultWebDriver();
     }
 
+    @Override
+    public WebDriver getWebDriver() {
+        return seleniumDriver;
+    }
+
     void runSeleniumAutomatedLogin(UserConfig user, AbstractClientApplicationBase app) {
         AuthorityType authorityType = app.authenticationAuthority.authorityType;
 
         try {
             switch (authorityType) {
-                case B2C:
-                    SeleniumExtensions.performLocalLogin(seleniumDriver, user);
-                    break;
                 case AAD:
                     SeleniumExtensions.performADOrCiamLogin(seleniumDriver, user);
                     break;
@@ -51,8 +57,17 @@ abstract class SeleniumTest {
                     SeleniumExtensions.performADFSLogin(seleniumDriver, user);
                     break;
                 case CIAM:
+                    SeleniumExtensions.performCiamLogin(seleniumDriver, user);
+                    break;
                 case OIDC:
-                    SeleniumExtensions.performADOrCiamLogin(seleniumDriver, user);
+                    // OIDC authorities may use CIAM or AAD login pages depending on the host.
+                    // Check the authority host to determine which page object to use.
+                    if (app.authenticationAuthority.host.contains("ciam") ||
+                            app.authenticationAuthority.host.contains("msidlabsciam")) {
+                        SeleniumExtensions.performCiamLogin(seleniumDriver, user);
+                    } else {
+                        SeleniumExtensions.performADOrCiamLogin(seleniumDriver, user);
+                    }
                     break;
                 default:
                     throw new IllegalArgumentException("Unsupported authority type: " + authorityType);

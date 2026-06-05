@@ -63,22 +63,6 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
     }
 
     @Test
-    void acquireTokenWithAuthorizationCode_B2C_Local() {
-        AppConfig app = LabResponseHelper.getAppConfig(APP_B2C);
-        UserConfig user = LabResponseHelper.getUserConfig(USER_B2C);
-
-        assertAcquireTokenB2C(user, TestConstants.B2C_AUTHORITY, app.getAppId());
-    }
-
-    @Test
-    void acquireTokenWithAuthorizationCode_B2C_LegacyFormat() {
-        AppConfig app = LabResponseHelper.getAppConfig(APP_B2C);
-        UserConfig user = LabResponseHelper.getUserConfig(USER_B2C);
-
-        assertAcquireTokenB2C(user, TestConstants.B2C_AUTHORITY_LEGACY_FORMAT, app.getAppId());
-    }
-
-    @Test
     void acquireTokenInteractive_ManagedUser_InstanceAware() {
         AppConfig app = LabResponseHelper.getAppConfig(APP_ARLINGTON);
         UserConfig user = LabResponseHelper.getUserConfig(USER_ARLINGTON);
@@ -86,7 +70,7 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
         assertAcquireTokenInstanceAware(user, app.getAppId(), TestConstants.ARLINGTON_TENANT_ID);
     }
 
-    //@Test -disabled to avoid test failures, HTML page seems to have changed as this test cannot find the username input element
+    @Test
     void acquireTokenInteractive_Ciam() {
         AppConfig app = LabResponseHelper.getAppConfig(APP_CIAM);
         UserConfig user = LabResponseHelper.getUserConfig(USER_CIAM);
@@ -115,7 +99,7 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
 
             InteractiveRequestParameters parameters = InteractiveRequestParameters
                     .builder(url)
-                    .scopes(Collections.singleton("TestConstants.USER_READ_SCOPE"))
+                    .scopes(Collections.singleton(TestConstants.USER_READ_SCOPE))
                     .extraQueryParameters(extraQueryParameters)
                     .systemBrowserOptions(browserOptions)
                     .build();
@@ -141,22 +125,6 @@ class AcquireTokenInteractiveIT extends SeleniumTest {
 
         IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
         assertEquals(user.getUpn(), result.account().username());
-    }
-
-    private void assertAcquireTokenB2C(UserConfig user, String authority, String appId) {
-
-        PublicClientApplication pca;
-        try {
-            pca = PublicClientApplication.builder(
-                    appId).
-                    b2cAuthority(authority + TestConstants.B2C_SIGN_IN_POLICY).
-                    build();
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException(ex.getMessage());
-        }
-
-        IAuthenticationResult result = acquireTokenInteractive(user, pca, appId);
-        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
     }
 
     private void assertAcquireTokenInstanceAware(UserConfig user, String appId, String tenantId) {

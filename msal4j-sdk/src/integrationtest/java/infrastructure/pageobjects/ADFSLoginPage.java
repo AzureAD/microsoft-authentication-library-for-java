@@ -3,10 +3,9 @@
 
 package infrastructure.pageobjects;
 
+import infrastructure.SeleniumExtensions;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,24 +14,37 @@ import java.time.Duration;
 /**
  * Page Object Model for ADFS login page.
  * Represents the Active Directory Federation Services authentication flow.
+ * <p>
+ * Uses fallback locators to handle ADFS version differences where element IDs
+ * may vary between ADFS 2019, 2022, and other versions.
  */
 public class ADFSLoginPage {
 
     private static final Logger LOG = LoggerFactory.getLogger(ADFSLoginPage.class);
 
     private final WebDriver driver;
-    private final WebDriverWait wait;
 
-    // Element locators
-    private static final By USERNAME_INPUT = By.id("userNameInput");
-    private static final By PASSWORD_INPUT = By.id("passwordInput");
-    private static final By SUBMIT_BUTTON = By.id("submitButton");
+    // Element locators with fallbacks for different ADFS versions
+    private static final By[] USERNAME_LOCATORS = {
+            By.id("userNameInput"),
+            By.id("ContentPlaceHolder1_UsernameTextBox"),
+            By.cssSelector("input[type='text'][name='UserName']"),
+    };
+    private static final By[] PASSWORD_LOCATORS = {
+            By.id("passwordInput"),
+            By.id("ContentPlaceHolder1_PasswordTextBox"),
+            By.cssSelector("input[type='password'][name='Password']"),
+    };
+    private static final By[] SUBMIT_LOCATORS = {
+            By.id("submitButton"),
+            By.id("ContentPlaceHolder1_SubmitButton"),
+            By.cssSelector("span[id='submitButton']"),
+    };
 
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(15);
 
     public ADFSLoginPage(WebDriver driver) {
         this.driver = driver;
-        this.wait = new WebDriverWait(driver, DEFAULT_TIMEOUT);
     }
 
     /**
@@ -43,7 +55,7 @@ public class ADFSLoginPage {
      */
     public ADFSLoginPage enterUsername(String username) {
         LOG.info("Entering username: {}", username);
-        wait.until(ExpectedConditions.elementToBeClickable(USERNAME_INPUT))
+        SeleniumExtensions.findWithFallback(driver, DEFAULT_TIMEOUT, USERNAME_LOCATORS)
                 .sendKeys(username);
         return this;
     }
@@ -56,7 +68,7 @@ public class ADFSLoginPage {
      */
     public ADFSLoginPage enterPassword(String password) {
         LOG.info("Entering password");
-        wait.until(ExpectedConditions.elementToBeClickable(PASSWORD_INPUT))
+        SeleniumExtensions.findWithFallback(driver, DEFAULT_TIMEOUT, PASSWORD_LOCATORS)
                 .sendKeys(password);
         return this;
     }
@@ -68,7 +80,7 @@ public class ADFSLoginPage {
      */
     public ADFSLoginPage clickSubmit() {
         LOG.info("Clicking submit button");
-        wait.until(ExpectedConditions.elementToBeClickable(SUBMIT_BUTTON))
+        SeleniumExtensions.findWithFallback(driver, DEFAULT_TIMEOUT, SUBMIT_LOCATORS)
                 .click();
         return this;
     }

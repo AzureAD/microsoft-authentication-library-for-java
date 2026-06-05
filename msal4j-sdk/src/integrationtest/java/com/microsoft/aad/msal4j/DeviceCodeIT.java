@@ -6,6 +6,9 @@ package com.microsoft.aad.msal4j;
 import com.microsoft.aad.msal4j.labapi.*;
 import static com.microsoft.aad.msal4j.labapi.KeyVaultSecrets.*;
 import infrastructure.SeleniumExtensions;
+import infrastructure.SeleniumTestWatcher;
+import infrastructure.WebDriverProvider;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.WebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +22,8 @@ import java.util.Collections;
 import java.util.function.Consumer;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class DeviceCodeIT {
+@ExtendWith(SeleniumTestWatcher.class)
+class DeviceCodeIT implements WebDriverProvider {
     private static final Logger LOG = LoggerFactory.getLogger(DeviceCodeIT.class);
 
     private WebDriver seleniumDriver;
@@ -29,9 +33,7 @@ class DeviceCodeIT {
         seleniumDriver = SeleniumExtensions.createDefaultWebDriver();
     }
 
-    //Temporarily disabling: timeout occuring after 15 minutes, likely either a server-side issue or a UI change
-    //Needs investigation, tracked in https://github.com/AzureAD/microsoft-authentication-library-for-java/issues/1023
-    //@Test
+    @Test
     void DeviceCodeFlowADTest() throws Exception {
         AppConfig app = LabResponseHelper.getAppConfig(APP_PCACLIENT);
         UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
@@ -57,10 +59,15 @@ class DeviceCodeIT {
                 user);
     }
 
+    @Override
+    public WebDriver getWebDriver() {
+        return seleniumDriver;
+    }
+
     @AfterAll
     void cleanUp() {
         if (seleniumDriver != null) {
-            seleniumDriver.close();
+            seleniumDriver.quit();
         }
     }
 }

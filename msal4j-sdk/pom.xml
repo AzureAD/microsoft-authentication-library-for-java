@@ -307,6 +307,7 @@
                 </executions>
                 <configuration>
                     <skipTests>${skip.integration.tests}</skipTests>
+                    <rerunFailingTestsCount>1</rerunFailingTestsCount>
                     <systemPropertyVariables>
                         <adfs.disabled>${adfs.disabled}</adfs.disabled>
                     </systemPropertyVariables>

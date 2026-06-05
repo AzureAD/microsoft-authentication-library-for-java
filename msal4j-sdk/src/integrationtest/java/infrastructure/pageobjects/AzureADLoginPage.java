@@ -3,6 +3,7 @@
 
 package infrastructure.pageobjects;
 
+import infrastructure.SeleniumExtensions;
 import org.openqa.selenium.By;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
@@ -16,6 +17,9 @@ import java.time.Duration;
 /**
  * Page Object Model for Azure AD login page.
  * Represents the standard Azure AD authentication flow.
+ * <p>
+ * Uses fallback locators for username/password fields to handle variations
+ * in the Azure AD login page across different tenants and configurations.
  */
 public class AzureADLoginPage {
 
@@ -24,9 +28,17 @@ public class AzureADLoginPage {
     private final WebDriver driver;
     private final WebDriverWait wait;
 
-    // Element locators
-    private static final By USERNAME_INPUT = By.id("i0116");
-    private static final By PASSWORD_INPUT = By.id("i0118");
+    // Element locators with fallbacks
+    private static final By[] USERNAME_LOCATORS = {
+            By.id("i0116"),
+            By.name("loginfmt"),
+            By.cssSelector("input[type='email'][name='loginfmt']"),
+    };
+    private static final By[] PASSWORD_LOCATORS = {
+            By.id("i0118"),
+            By.name("passwd"),
+            By.cssSelector("input[type='password'][name='passwd']"),
+    };
     private static final By NEXT_BUTTON = By.id("idSIButton9");
     private static final By SUBMIT_BUTTON = By.id("idSIButton9");
 
@@ -54,7 +66,7 @@ public class AzureADLoginPage {
      */
     public AzureADLoginPage enterUsername(String username) {
         LOG.info("Entering username: {}", username);
-        wait.until(ExpectedConditions.elementToBeClickable(USERNAME_INPUT))
+        SeleniumExtensions.findWithFallback(driver, DEFAULT_TIMEOUT, USERNAME_LOCATORS)
                 .sendKeys(username);
         return this;
     }
@@ -79,7 +91,7 @@ public class AzureADLoginPage {
      */
     public AzureADLoginPage enterPassword(String password) {
         LOG.info("Entering password");
-        wait.until(ExpectedConditions.elementToBeClickable(PASSWORD_INPUT))
+        SeleniumExtensions.findWithFallback(driver, DEFAULT_TIMEOUT, PASSWORD_LOCATORS)
                 .sendKeys(password);
         return this;
     }

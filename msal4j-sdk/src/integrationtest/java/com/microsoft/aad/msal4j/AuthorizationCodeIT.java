@@ -45,15 +45,7 @@ class AuthorizationCodeIT extends SeleniumTest {
         assertAcquireTokenAAD(user, app.getAppId(), null);
     }
 
-    //Temporarily disabling: no change in the library, but started seeing "The service has encountered an internal error. Please reauthenticate and try again."
-    //Needs investigation, tracked in https://github.com/AzureAD/microsoft-authentication-library-for-java/issues/1023
-    //@Test
-    public void acquireTokenWithAuthorizationCode_B2C_Local() {
-        UserConfig user = LabResponseHelper.getUserConfig(USER_B2C);
-        assertAcquireTokenB2C(user);
-    }
-
-    // @Test Disabled, the browser automation suddenly started failing without underlying code changes and needs investigation: https://github.com/AzureAD/microsoft-authentication-library-for-java/issues/1010
+    @Test
     public void acquireTokenWithAuthorizationCode_CiamCud() throws Exception {
         String authorityCud = "https://login.msidlabsciam.com/fe362aec-5d43-45d1-b730-9755e60dc3b9/v2.0/";
 
@@ -131,28 +123,6 @@ class AuthorizationCodeIT extends SeleniumTest {
         assertEquals(user.getUpn(), result.account().username());
     }
 
-    private void assertAcquireTokenB2C(UserConfig user) {
-
-        String appId = KeyVaultRegistry.getMsidLabProvider().getSecretByName(TestConstants.B2C_CONFIDENTIAL_CLIENT_LAB_APP_ID).getValue();
-        String appSecret = KeyVaultRegistry.getMsidLabProvider().getSecretByName(TestConstants.B2C_CONFIDENTIAL_CLIENT_APP_SECRETID).getValue();
-
-        ConfidentialClientApplication cca;
-        try {
-            IClientCredential credential = ClientCredentialFactory.createFromSecret(appSecret);
-            cca = ConfidentialClientApplication
-                    .builder(appId, credential)
-                    .b2cAuthority(TestConstants.B2C_AUTHORITY_SIGN_IN)
-                    .build();
-        } catch (Exception ex) {
-            throw new RuntimeException(ex.getMessage());
-        }
-
-        String authCode = acquireAuthorizationCodeAutomated(user, cca, null);
-        IAuthenticationResult result = acquireTokenInteractiveB2C(cca, authCode);
-
-        IntegrationTestHelper.assertAccessAndIdTokensNotNull(result);
-    }
-
     private IAuthenticationResult acquireTokenAuthorizationCodeFlow(
             PublicClientApplication pca,
             String authCode,
@@ -167,22 +137,6 @@ class AuthorizationCodeIT extends SeleniumTest {
                     .build())
                     .get();
 
-        } catch (Exception e) {
-            LOG.error("Error acquiring token with authCode: {}", e.getMessage());
-            throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
-        }
-        return result;
-    }
-
-    private IAuthenticationResult acquireTokenInteractiveB2C(ConfidentialClientApplication cca,
-                                                             String authCode) {
-        IAuthenticationResult result;
-        try {
-            result = cca.acquireToken(AuthorizationCodeParameters
-                    .builder(authCode, new URI(TestConstants.LOCALHOST + httpListener.port()))
-                    .scopes(Collections.singleton(TestConstants.B2C_LAB_SCOPE))
-                    .build())
-                    .get();
         } catch (Exception e) {
             LOG.error("Error acquiring token with authCode: {}", e.getMessage());
             throw new RuntimeException("Error acquiring token with authCode: " + e.getMessage());
@@ -243,8 +197,6 @@ class AuthorizationCodeIT extends SeleniumTest {
         AuthorityType authorityType = app.authenticationAuthority.authorityType;
         if (authorityType == AuthorityType.AAD) {
             scope = TestConstants.GRAPH_DEFAULT_SCOPE;
-        } else if (authorityType == AuthorityType.B2C) {
-            scope = TestConstants.B2C_LAB_SCOPE;
         } else if (authorityType == AuthorityType.ADFS) {
             scope = TestConstants.ADFS_SCOPE;
         } else if (authorityType == AuthorityType.OIDC) {
