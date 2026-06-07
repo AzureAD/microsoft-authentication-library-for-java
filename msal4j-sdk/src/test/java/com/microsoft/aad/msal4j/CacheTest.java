@@ -6,15 +6,12 @@ package com.microsoft.aad.msal4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -60,8 +57,8 @@ class CacheTest {
         responseParameters.put("id_token", TestHelper.createIdToken(new HashMap<>()));
 
         when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(HttpStatus.HTTP_OK, TestHelper.getSuccessfulTokenResponse(responseParameters)));
-        OnBehalfOfParameters onBehalfOfParametersarameters = OnBehalfOfParameters.builder(Collections.singleton("someOtherScopes"), new UserAssertion(TestHelper.signedAssertion)).build();
-        IAuthenticationResult resultWithAccount = cca.acquireToken(onBehalfOfParametersarameters).get();
+        OnBehalfOfParameters onBehalfOfParameters = OnBehalfOfParameters.builder(Collections.singleton("someOtherScopes"), new UserAssertion(TestHelper.signedAssertion)).build();
+        IAuthenticationResult resultWithAccount = cca.acquireToken(onBehalfOfParameters).get();
 
         //Ensure there are now two tokens in the cache, and the result has an account
         assertEquals(2, cca.tokenCache.accessTokens.size());
@@ -325,5 +322,342 @@ class CacheTest {
                 fail("Unexpected account returned");
             }
         }
+    }
+
+    // --- Deserialize edge cases ---
+
+    @Test
+    void deserialize_NullData_NoOp() {
+        // Add some data first to verify it's not cleared
+        AccountCacheEntity account = new AccountCacheEntity();
+        account.homeAccountId("existing");
+        account.environment("login.microsoftonline.com");
+        tokenCache.accounts.put(account.getKey(), account);
+
+        tokenCache.deserialize(null);
+
+        // Existing data should still be there
+        assertEquals(1, tokenCache.accounts.size());
+    }
+
+    @Test
+    void deserialize_BlankData_NoOp() {
+        AccountCacheEntity account = new AccountCacheEntity();
+        account.homeAccountId("existing");
+        account.environment("login.microsoftonline.com");
+        tokenCache.accounts.put(account.getKey(), account);
+
+        tokenCache.deserialize("");
+        assertEquals(1, tokenCache.accounts.size());
+
+        tokenCache.deserialize("   ");
+        assertEquals(1, tokenCache.accounts.size());
+    }
+
+    // --- CacheAspect lifecycle tests ---
+
+    @Test
+    void cacheAccessAspect_CalledDuringGetAccounts() {
+        ITokenCacheAccessAspect aspect = mock(ITokenCacheAccessAspect.class);
+        TokenCache cache = new TokenCache(aspect);
+
+        cache.getAccounts("client-id");
+
+        verify(aspect, times(1)).beforeCacheAccess(any(ITokenCacheAccessContext.class));
+        verify(aspect, times(1)).afterCacheAccess(any(ITokenCacheAccessContext.class));
+    }
+
+    @Test
+    void cacheAccessAspect_CalledDuringRemoveAccount() {
+        ITokenCacheAccessAspect aspect = mock(ITokenCacheAccessAspect.class);
+        TokenCache cache = new TokenCache(aspect);
+
+        Account account = new Account("home-id", "login.microsoftonline.com", "user@example.com", null);
+        cache.removeAccount("client-id", account);
+
+        verify(aspect, times(1)).beforeCacheAccess(any(ITokenCacheAccessContext.class));
+        verify(aspect, times(1)).afterCacheAccess(any(ITokenCacheAccessContext.class));
+    }
+
+    @Test
+    void cacheAccessAspect_NotCalledWhenNull() {
+        // Default constructor — no aspect
+        TokenCache cache = new TokenCache();
+
+        // Should not throw even without an aspect
+        cache.getAccounts("client-id");
+        cache.removeAccount("client-id", new Account("id", "env", "user", null));
+    }
+
+    @Test
+    void cacheAccessAspect_DeserializesBeforeAccess() {
+        // Simulate a persistence aspect that populates cache on beforeCacheAccess
+        AccountCacheEntity account = new AccountCacheEntity();
+        account.homeAccountId("aspect-home-id");
+        account.environment("login.microsoftonline.com");
+        account.realm("tenant");
+        account.username("aspect-user@example.com");
+        tokenCache.accounts.put(account.getKey(), account);
+        String serializedWithAccount = tokenCache.serialize();
+
+        ITokenCacheAccessAspect persistenceAspect = new ITokenCacheAccessAspect() {
+            @Override
+            public void beforeCacheAccess(ITokenCacheAccessContext context) {
+                context.tokenCache().deserialize(serializedWithAccount);
+            }
+
+            @Override
+            public void afterCacheAccess(ITokenCacheAccessContext context) {
+                // no-op
+            }
+        };
+
+        // Create a fresh cache with the persistence aspect
+        TokenCache freshCache = new TokenCache(persistenceAspect);
+        assertTrue(freshCache.accounts.isEmpty());
+
+        // getAccounts should trigger beforeCacheAccess, which populates the cache
+        Set<IAccount> accounts = freshCache.getAccounts("client-id");
+        assertEquals(1, accounts.size());
+        assertEquals("aspect-user@example.com", accounts.iterator().next().username());
+    }
+
+    // --- Family RT / FOCI cache lookup tests ---
+
+    @Test
+    void getCachedAuthenticationResult_FamilyApp_PrefersAnyFamilyRT() throws Exception {
+        String homeAccountId = "home-id";
+        String environment = "login.microsoftonline.com";
+        String clientId = "family-client";
+        String realm = "tenant-id";
+
+        // Add account
+        AccountCacheEntity account = new AccountCacheEntity();
+        account.homeAccountId(homeAccountId);
+        account.environment(environment);
+        account.realm(realm);
+        tokenCache.accounts.put(account.getKey(), account);
+
+        // Add a regular (non-family) refresh token for this client
+        RefreshTokenCacheEntity regularRt = new RefreshTokenCacheEntity();
+        regularRt.homeAccountId(homeAccountId);
+        regularRt.environment(environment);
+        regularRt.clientId(clientId);
+        regularRt.credentialType(CredentialTypeEnum.REFRESH_TOKEN.value());
+        regularRt.secret("regular-rt-secret");
+        tokenCache.refreshTokens.put(regularRt.getKey(), regularRt);
+
+        // Add a family refresh token (different client, but family)
+        RefreshTokenCacheEntity familyRt = new RefreshTokenCacheEntity();
+        familyRt.homeAccountId(homeAccountId);
+        familyRt.environment(environment);
+        familyRt.clientId("other-family-client");
+        familyRt.credentialType(CredentialTypeEnum.REFRESH_TOKEN.value());
+        familyRt.secret("family-rt-secret");
+        familyRt.family_id("1");
+        tokenCache.refreshTokens.put(familyRt.getKey(), familyRt);
+
+        // Add app metadata marking this client as a family app
+        AppMetadataCacheEntity appMeta = new AppMetadataCacheEntity();
+        appMeta.clientId(clientId);
+        appMeta.environment(environment);
+        appMeta.familyId("1");
+        tokenCache.appMetadata.put(appMeta.getKey(), appMeta);
+
+        // Look up cached result — family app should prefer family RT
+        IAccount iAccount = new Account(homeAccountId, environment, "user", null);
+        Authority authority = new AADAuthority(new URL("https://login.microsoftonline.com/tenant-id/"));
+
+        AuthenticationResult result = tokenCache.getCachedAuthenticationResult(
+                iAccount, authority, Collections.singleton("scope"), clientId);
+
+        assertEquals("family-rt-secret", result.refreshToken());
+    }
+
+    @Test
+    void getCachedAuthenticationResult_NonFamilyApp_FallsBackToFamilyRT() throws Exception {
+        String homeAccountId = "home-id";
+        String environment = "login.microsoftonline.com";
+        String clientId = "non-family-client";
+        String realm = "tenant-id";
+
+        // Add account
+        AccountCacheEntity account = new AccountCacheEntity();
+        account.homeAccountId(homeAccountId);
+        account.environment(environment);
+        account.realm(realm);
+        tokenCache.accounts.put(account.getKey(), account);
+
+        // No regular RT for this client — only a family RT from another client
+        RefreshTokenCacheEntity familyRt = new RefreshTokenCacheEntity();
+        familyRt.homeAccountId(homeAccountId);
+        familyRt.environment(environment);
+        familyRt.clientId("family-client");
+        familyRt.credentialType(CredentialTypeEnum.REFRESH_TOKEN.value());
+        familyRt.secret("family-rt-fallback");
+        familyRt.family_id("1");
+        tokenCache.refreshTokens.put(familyRt.getKey(), familyRt);
+
+        // No app metadata for non-family-client (it's not a known family member)
+        IAccount iAccount = new Account(homeAccountId, environment, "user", null);
+        Authority authority = new AADAuthority(new URL("https://login.microsoftonline.com/tenant-id/"));
+
+        AuthenticationResult result = tokenCache.getCachedAuthenticationResult(
+                iAccount, authority, Collections.singleton("scope"), clientId);
+
+        // Non-family app has no regular RT, so should fall back to family RT
+        assertEquals("family-rt-fallback", result.refreshToken());
+    }
+
+    @Test
+    void getCachedAuthenticationResult_WithRefreshOn_IncludedInResult() throws Exception {
+        String homeAccountId = "home-id";
+        String environment = "login.microsoftonline.com";
+        String clientId = "client-id";
+        String realm = "tenant-id";
+
+        // Add account
+        AccountCacheEntity account = new AccountCacheEntity();
+        account.homeAccountId(homeAccountId);
+        account.environment(environment);
+        account.realm(realm);
+        tokenCache.accounts.put(account.getKey(), account);
+
+        // Add access token with refreshOn
+        long futureExpiry = (System.currentTimeMillis() / 1000) + 3600;
+        long refreshOn = (System.currentTimeMillis() / 1000) + 1800;
+
+        AccessTokenCacheEntity at = new AccessTokenCacheEntity();
+        at.homeAccountId(homeAccountId);
+        at.environment(environment);
+        at.clientId(clientId);
+        at.credentialType(CredentialTypeEnum.ACCESS_TOKEN.value());
+        at.realm(realm);
+        at.target("scope");
+        at.secret("access-token-secret");
+        at.cachedAt(Long.toString(System.currentTimeMillis() / 1000));
+        at.expiresOn(Long.toString(futureExpiry));
+        at.refreshOn(Long.toString(refreshOn));
+        tokenCache.accessTokens.put(at.getKey(), at);
+
+        IAccount iAccount = new Account(homeAccountId, environment, "user", null);
+        Authority authority = new AADAuthority(new URL("https://login.microsoftonline.com/tenant-id/"));
+
+        AuthenticationResult result = tokenCache.getCachedAuthenticationResult(
+                iAccount, authority, Collections.singleton("scope"), clientId);
+
+        assertEquals("access-token-secret", result.accessToken());
+        assertEquals(refreshOn, result.refreshOn());
+    }
+
+    @Test
+    void getCachedAuthenticationResult_NoAccessToken_FallsBackToAuthorityHost() throws Exception {
+        String homeAccountId = "home-id";
+        String environment = "login.microsoftonline.com";
+        String clientId = "client-id";
+        String realm = "tenant-id";
+
+        // Add account but no access token
+        AccountCacheEntity account = new AccountCacheEntity();
+        account.homeAccountId(homeAccountId);
+        account.environment(environment);
+        account.realm(realm);
+        tokenCache.accounts.put(account.getKey(), account);
+
+        IAccount iAccount = new Account(homeAccountId, environment, "user", null);
+        Authority authority = new AADAuthority(new URL("https://login.microsoftonline.com/tenant-id/"));
+
+        AuthenticationResult result = tokenCache.getCachedAuthenticationResult(
+                iAccount, authority, Collections.singleton("scope"), clientId);
+
+        // No AT in cache, so environment should come from authority host
+        assertNull(result.accessToken());
+        assertEquals("login.microsoftonline.com", result.environment());
+    }
+
+    @Test
+    void getCachedAuthenticationResult_AssertionBased_WithIdTokenAndRefreshToken() throws Exception {
+        String environment = "login.microsoftonline.com";
+        String clientId = "client-id";
+        String realm = "tenant-id";
+
+        // Create the assertion and get its computed hash
+        UserAssertion assertion = new UserAssertion(TestHelper.signedAssertion);
+        String userAssertionHash = assertion.getAssertionHash();
+
+        // Add access token with assertion hash
+        long futureExpiry = (System.currentTimeMillis() / 1000) + 3600;
+        AccessTokenCacheEntity at = new AccessTokenCacheEntity();
+        at.environment(environment);
+        at.clientId(clientId);
+        at.credentialType(CredentialTypeEnum.ACCESS_TOKEN.value());
+        at.realm(realm);
+        at.target("scope");
+        at.secret("at-with-assertion");
+        at.cachedAt(Long.toString(System.currentTimeMillis() / 1000));
+        at.expiresOn(Long.toString(futureExpiry));
+        at.userAssertionHash(userAssertionHash);
+        tokenCache.accessTokens.put(at.getKey(), at);
+
+        // Add ID token with assertion hash
+        IdTokenCacheEntity idToken = new IdTokenCacheEntity();
+        idToken.environment(environment);
+        idToken.clientId(clientId);
+        idToken.credentialType(CredentialTypeEnum.ID_TOKEN.value());
+        idToken.realm(realm);
+        idToken.secret("id-token-secret");
+        idToken.userAssertionHash(userAssertionHash);
+        tokenCache.idTokens.put(idToken.getKey(), idToken);
+
+        // Add refresh token with assertion hash
+        RefreshTokenCacheEntity rt = new RefreshTokenCacheEntity();
+        rt.environment(environment);
+        rt.clientId(clientId);
+        rt.credentialType(CredentialTypeEnum.REFRESH_TOKEN.value());
+        rt.secret("rt-with-assertion");
+        rt.userAssertionHash(userAssertionHash);
+        tokenCache.refreshTokens.put(rt.getKey(), rt);
+
+        Authority authority = new AADAuthority(new URL("https://login.microsoftonline.com/tenant-id/"));
+
+        AuthenticationResult result = tokenCache.getCachedAuthenticationResult(
+                authority, Collections.singleton("scope"), clientId, assertion);
+
+        assertEquals("at-with-assertion", result.accessToken());
+        assertEquals("id-token-secret", result.idToken());
+        assertEquals("rt-with-assertion", result.refreshToken());
+    }
+
+    // --- Serialize with merge behavior tests ---
+
+    @Test
+    void serialize_WithSnapshot_MergesWithExistingData() {
+        // Set up a cache with initial data, then serialize to create a snapshot
+        AccountCacheEntity account1 = new AccountCacheEntity();
+        account1.homeAccountId("account-1");
+        account1.environment("login.microsoftonline.com");
+        account1.realm("tenant-1");
+        tokenCache.accounts.put(account1.getKey(), account1);
+
+        // Deserialize from an existing snapshot to set serializedCachedSnapshot
+        String snapshot = tokenCache.serialize();
+
+        TokenCache cacheWithSnapshot = new TokenCache();
+        cacheWithSnapshot.deserialize(snapshot);
+
+        // Add new data to the cache (simulating new token acquisition)
+        AccountCacheEntity account2 = new AccountCacheEntity();
+        account2.homeAccountId("account-2");
+        account2.environment("login.microsoftonline.com");
+        account2.realm("tenant-2");
+        cacheWithSnapshot.accounts.put(account2.getKey(), account2);
+
+        // Serialize — should merge new data with snapshot
+        String mergedSerialized = cacheWithSnapshot.serialize();
+
+        // Verify both accounts are in the merged result
+        TokenCache verifyCache = new TokenCache();
+        verifyCache.deserialize(mergedSerialized);
+        assertEquals(2, verifyCache.accounts.size());
     }
 }

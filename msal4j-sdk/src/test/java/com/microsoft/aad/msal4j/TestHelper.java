@@ -74,6 +74,14 @@ class TestHelper {
             "\"tid\": \"%s\"," +
             "\"ver\": \"2.0\"}";
 
+    static String getEmptyBase64EncodedJson() {
+        return new String(Base64.getEncoder().encode("{}".getBytes()));
+    }
+
+    static String getJWTHeaderBase64EncodedJson() {
+        return new String(Base64.getEncoder().encode("{\"alg\": \"HS256\", \"typ\": \"JWT\"}".getBytes()));
+    }
+
     static X509Certificate x509Cert = getX509Cert();
     static PrivateKey privateKey = getPrivateKey();
 
