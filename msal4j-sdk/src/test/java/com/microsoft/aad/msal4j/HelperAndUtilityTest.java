@@ -78,7 +78,7 @@ class HelperAndUtilityTest {
         assertNotNull(convertedInternalMap, "Converted map should not be null");
         assertNotNull(methodReturnedMap, "Method returned map should not be null");
 
-        assertEquals(methodReturnedMap.size(), convertedInternalMap.size(), "Maps should have the same size");
+        assertEquals(convertedInternalMap.size(), methodReturnedMap.size(), "Maps should have the same size");
 
         for (String key : convertedInternalMap.keySet()) {
             assertTrue(methodReturnedMap.containsKey(key), "Method returned map should contain key: " + key);

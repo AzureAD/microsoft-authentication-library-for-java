@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -108,7 +109,7 @@ public final class SeleniumDiagnostics {
             content.append(pageSource);
 
             Path destination = getOutputPath(filePrefix + ".html");
-            Files.write(destination, content.toString().getBytes("UTF-8"));
+            Files.write(destination, content.toString().getBytes(StandardCharsets.UTF_8));
             LOG.info("Page source saved: {}", destination);
         } catch (Exception e) {
             LOG.warn("Failed to capture page source: {}", e.getMessage());
@@ -142,7 +143,7 @@ public final class SeleniumDiagnostics {
             }
 
             Path destination = getOutputPath(filePrefix + "-console.log");
-            Files.write(destination, content.toString().getBytes("UTF-8"));
+            Files.write(destination, content.toString().getBytes(StandardCharsets.UTF_8));
             LOG.info("Browser logs saved: {}", destination);
         } catch (Exception e) {
             LOG.warn("Failed to capture browser logs: {} (this may be expected if logging prefs are not supported)", e.getMessage());
