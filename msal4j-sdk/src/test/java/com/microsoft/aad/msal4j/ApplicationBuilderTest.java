@@ -26,7 +26,7 @@ import static org.mockito.Mockito.when;
 
 class ApplicationBuilderTest {
 
-    private static final String CLIENT_ID = "test-client-id";
+    private static final String CLIENT_ID = TestHelper.TEST_CLIENT_ID;
     private static final String DEFAULT_AUTHORITY = "https://login.microsoftonline.com/common/";
 
     // ========== PublicClientApplication Tests ==========

@@ -16,7 +16,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 class CacheTest {
 
@@ -31,20 +30,14 @@ class CacheTest {
     void cacheLookup_MixAccountBasedAndAssertionBasedSilentFlows() throws Exception {
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        ConfidentialClientApplication cca =
-                ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromSecret("password"))
-                        .authority("https://login.microsoftonline.com/tenant/")
-                        .instanceDiscovery(false)
-                        .validateAuthority(false)
-                        .httpClient(httpClientMock)
-                        .build();
+        ConfidentialClientApplication cca = TestHelper.buildCca(httpClientMock);
 
         HashMap<String, String> responseParameters = new HashMap<>();
         //Acquire a token with no ID token/account associated with it
         responseParameters.put("access_token", "accessTokenNoAccount");
 
         ClientCredentialParameters clientCredentialParameters = ClientCredentialParameters.builder(Collections.singleton("someScopes")).build();
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(HttpStatus.HTTP_OK, TestHelper.getSuccessfulTokenResponse(responseParameters)));
+        TestHelper.mockSuccessfulTokenResponse(httpClientMock, responseParameters);
         IAuthenticationResult resultNoAccount = cca.acquireToken(clientCredentialParameters).get();
 
         //Ensure there is one token in the cache, and the result had no account
@@ -56,7 +49,7 @@ class CacheTest {
         responseParameters.put("access_token", "accessTokenWithAccount");
         responseParameters.put("id_token", TestHelper.createIdToken(new HashMap<>()));
 
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(HttpStatus.HTTP_OK, TestHelper.getSuccessfulTokenResponse(responseParameters)));
+        TestHelper.mockSuccessfulTokenResponse(httpClientMock, responseParameters);
         OnBehalfOfParameters onBehalfOfParameters = OnBehalfOfParameters.builder(Collections.singleton("someOtherScopes"), new UserAssertion(TestHelper.signedAssertion)).build();
         IAuthenticationResult resultWithAccount = cca.acquireToken(onBehalfOfParameters).get();
 

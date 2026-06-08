@@ -4,11 +4,16 @@
 package com.microsoft.aad.msal4j;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -21,29 +26,16 @@ import static org.mockito.Mockito.*;
  */
 class AppTokenProviderTest {
 
-    private static final String CLIENT_ID = "test-client-id";
-    private static final String AUTHORITY = "https://login.microsoftonline.com/test-tenant/";
     private static final String VALID_ACCESS_TOKEN = "app-provider-access-token";
     private static final String TENANT_ID = "test-tenant";
     private static final long ONE_HOUR_SECONDS = 3600;
     private static final long TWO_HOURS_SECONDS = 7200;
 
     // ========================================================================
-    // Helper: builds a CCA with an appTokenProvider
+    // Helpers
     // ========================================================================
 
-    private ConfidentialClientApplication buildCcaWithProvider(
-            Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> provider) throws Exception {
-        return ConfidentialClientApplication
-                .builder(CLIENT_ID, ClientCredentialFactory.createFromSecret("unused-secret"))
-                .appTokenProvider(provider)
-                .authority(AUTHORITY)
-                .instanceDiscovery(false)
-                .validateAuthority(false)
-                .build();
-    }
-
-    private TokenProviderResult validTokenProviderResult() {
+    private static TokenProviderResult validTokenProviderResult() {
         TokenProviderResult result = new TokenProviderResult();
         result.setAccessToken(VALID_ACCESS_TOKEN);
         result.setExpiresInSeconds(ONE_HOUR_SECONDS);
@@ -51,9 +43,15 @@ class AppTokenProviderTest {
         return result;
     }
 
-    private Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> providerReturning(
+    private static Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> providerReturning(
             TokenProviderResult result) {
         return params -> CompletableFuture.completedFuture(result);
+    }
+
+    private static TokenProviderResult invalidResult(Consumer<TokenProviderResult> mutator) {
+        TokenProviderResult result = validTokenProviderResult();
+        mutator.accept(result);
+        return result;
     }
 
     // ========================================================================
@@ -62,20 +60,17 @@ class AppTokenProviderTest {
 
     @Test
     void appTokenProvider_ValidResult_ReturnsToken() throws Exception {
-        ConfidentialClientApplication cca = buildCcaWithProvider(providerReturning(validTokenProviderResult()));
+        ConfidentialClientApplication cca = TestHelper.buildCcaWithAppTokenProvider(
+                providerReturning(validTokenProviderResult()));
 
-        ClientCredentialParameters parameters = ClientCredentialParameters
-                .builder(Collections.singleton("scope/.default"))
-                .build();
-
-        IAuthenticationResult result = cca.acquireToken(parameters).get();
+        IAuthenticationResult result = cca.acquireToken(
+                ClientCredentialParameters.builder(TestHelper.TEST_SCOPE_SET).build()).get();
 
         assertEquals(VALID_ACCESS_TOKEN, result.accessToken());
     }
 
     @Test
     void appTokenProvider_ReceivesCorrectParameters() throws Exception {
-        // Capture the parameters passed to the provider
         @SuppressWarnings("unchecked")
         Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> provider =
                 mock(Function.class);
@@ -83,23 +78,17 @@ class AppTokenProviderTest {
         when(provider.apply(any())).thenReturn(
                 CompletableFuture.completedFuture(validTokenProviderResult()));
 
-        ConfidentialClientApplication cca = ConfidentialClientApplication
-                .builder(CLIENT_ID, ClientCredentialFactory.createFromSecret("unused-secret"))
-                .appTokenProvider(provider)
-                .authority(AUTHORITY)
-                .instanceDiscovery(false)
-                .validateAuthority(false)
-                .build();
+        ConfidentialClientApplication cca = TestHelper.buildCcaWithAppTokenProvider(provider);
 
         ClientCredentialParameters parameters = ClientCredentialParameters
-                .builder(Collections.singleton("scope/.default"))
+                .builder(TestHelper.TEST_SCOPE_SET)
                 .tenant("override-tenant")
                 .build();
 
         cca.acquireToken(parameters).get();
 
         verify(provider).apply(argThat(params -> {
-            assertTrue(params.getScopes().contains("scope/.default"));
+            assertTrue(params.getScopes().contains(TestHelper.TEST_SCOPE));
             assertEquals("override-tenant", params.getTenantId());
             assertNotNull(params.getCorrelationId());
             return true;
@@ -115,17 +104,10 @@ class AppTokenProviderTest {
         when(provider.apply(any())).thenReturn(
                 CompletableFuture.completedFuture(validTokenProviderResult()));
 
-        ConfidentialClientApplication cca = ConfidentialClientApplication
-                .builder(CLIENT_ID, ClientCredentialFactory.createFromSecret("unused-secret"))
-                .appTokenProvider(provider)
-                .authority(AUTHORITY)
-                .instanceDiscovery(false)
-                .validateAuthority(false)
-                .build();
+        ConfidentialClientApplication cca = TestHelper.buildCcaWithAppTokenProvider(provider);
 
         ClientCredentialParameters parameters = ClientCredentialParameters
-                .builder(Collections.singleton("scope/.default"))
-                .build();
+                .builder(TestHelper.TEST_SCOPE_SET).build();
 
         // Default skipCache (null) bypasses cache lookup, so provider is called each time
         cca.acquireToken(parameters).get();
@@ -143,16 +125,10 @@ class AppTokenProviderTest {
         when(provider.apply(any())).thenReturn(
                 CompletableFuture.completedFuture(validTokenProviderResult()));
 
-        ConfidentialClientApplication cca = ConfidentialClientApplication
-                .builder(CLIENT_ID, ClientCredentialFactory.createFromSecret("unused-secret"))
-                .appTokenProvider(provider)
-                .authority(AUTHORITY)
-                .instanceDiscovery(false)
-                .validateAuthority(false)
-                .build();
+        ConfidentialClientApplication cca = TestHelper.buildCcaWithAppTokenProvider(provider);
 
         ClientCredentialParameters parameters = ClientCredentialParameters
-                .builder(Collections.singleton("scope/.default"))
+                .builder(TestHelper.TEST_SCOPE_SET)
                 .skipCache(true)
                 .build();
 
@@ -164,112 +140,31 @@ class AppTokenProviderTest {
     }
 
     // ========================================================================
-    // Validation: null/empty access token
+    // Validation: invalid TokenProviderResult fields
     // ========================================================================
 
-    @Test
-    void appTokenProvider_NullAccessToken_Throws() throws Exception {
-        TokenProviderResult result = validTokenProviderResult();
-        result.setAccessToken(null);
-
-        ConfidentialClientApplication cca = buildCcaWithProvider(providerReturning(result));
+    @ParameterizedTest(name = "appTokenProvider_InvalidResult_{0}_Throws")
+    @MethodSource("invalidTokenProviderResults")
+    void appTokenProvider_InvalidResult_Throws(String scenario, TokenProviderResult result) throws Exception {
+        ConfidentialClientApplication cca = TestHelper.buildCcaWithAppTokenProvider(providerReturning(result));
 
         ClientCredentialParameters parameters = ClientCredentialParameters
-                .builder(Collections.singleton("scope/.default"))
-                .build();
-
-        ExecutionException ex = assertThrows(ExecutionException.class,
-                () -> cca.acquireToken(parameters).get());
-        assertInstanceOf(MsalClientException.class, ex.getCause());
-        assertTrue(ex.getCause().getMessage().contains("invalid"));
-    }
-
-    @Test
-    void appTokenProvider_EmptyAccessToken_Throws() throws Exception {
-        TokenProviderResult result = validTokenProviderResult();
-        result.setAccessToken("");
-
-        ConfidentialClientApplication cca = buildCcaWithProvider(providerReturning(result));
-
-        ClientCredentialParameters parameters = ClientCredentialParameters
-                .builder(Collections.singleton("scope/.default"))
-                .build();
+                .builder(TestHelper.TEST_SCOPE_SET).build();
 
         ExecutionException ex = assertThrows(ExecutionException.class,
                 () -> cca.acquireToken(parameters).get());
         assertInstanceOf(MsalClientException.class, ex.getCause());
     }
 
-    // ========================================================================
-    // Validation: invalid expiry
-    // ========================================================================
-
-    @Test
-    void appTokenProvider_ZeroExpiry_Throws() throws Exception {
-        TokenProviderResult result = validTokenProviderResult();
-        result.setExpiresInSeconds(0);
-
-        ConfidentialClientApplication cca = buildCcaWithProvider(providerReturning(result));
-
-        ClientCredentialParameters parameters = ClientCredentialParameters
-                .builder(Collections.singleton("scope/.default"))
-                .build();
-
-        ExecutionException ex = assertThrows(ExecutionException.class,
-                () -> cca.acquireToken(parameters).get());
-        assertInstanceOf(MsalClientException.class, ex.getCause());
-    }
-
-    @Test
-    void appTokenProvider_NegativeExpiry_Throws() throws Exception {
-        TokenProviderResult result = validTokenProviderResult();
-        result.setExpiresInSeconds(-1);
-
-        ConfidentialClientApplication cca = buildCcaWithProvider(providerReturning(result));
-
-        ClientCredentialParameters parameters = ClientCredentialParameters
-                .builder(Collections.singleton("scope/.default"))
-                .build();
-
-        ExecutionException ex = assertThrows(ExecutionException.class,
-                () -> cca.acquireToken(parameters).get());
-        assertInstanceOf(MsalClientException.class, ex.getCause());
-    }
-
-    // ========================================================================
-    // Validation: null/empty tenant ID
-    // ========================================================================
-
-    @Test
-    void appTokenProvider_NullTenantId_Throws() throws Exception {
-        TokenProviderResult result = validTokenProviderResult();
-        result.setTenantId(null);
-
-        ConfidentialClientApplication cca = buildCcaWithProvider(providerReturning(result));
-
-        ClientCredentialParameters parameters = ClientCredentialParameters
-                .builder(Collections.singleton("scope/.default"))
-                .build();
-
-        ExecutionException ex = assertThrows(ExecutionException.class,
-                () -> cca.acquireToken(parameters).get());
-        assertInstanceOf(MsalClientException.class, ex.getCause());
-    }
-
-    @Test
-    void appTokenProvider_EmptyTenantId_Throws() throws Exception {
-        TokenProviderResult result = validTokenProviderResult();
-        result.setTenantId("");
-
-        ConfidentialClientApplication cca = buildCcaWithProvider(providerReturning(result));
-
-        ClientCredentialParameters parameters = ClientCredentialParameters
-                .builder(Collections.singleton("scope/.default"))
-                .build();
-
-        ExecutionException ex = assertThrows(ExecutionException.class,
-                () -> cca.acquireToken(parameters).get());
-        assertInstanceOf(MsalClientException.class, ex.getCause());
+    private static Stream<Arguments> invalidTokenProviderResults() {
+        return Stream.of(
+                Arguments.of("NullAccessToken", invalidResult(r -> r.setAccessToken(null))),
+                Arguments.of("EmptyAccessToken", invalidResult(r -> r.setAccessToken(""))),
+                Arguments.of("ZeroExpiry", invalidResult(r -> r.setExpiresInSeconds(0))),
+                Arguments.of("NegativeExpiry", invalidResult(r -> r.setExpiresInSeconds(-1))),
+                Arguments.of("NullTenantId", invalidResult(r -> r.setTenantId(null))),
+                Arguments.of("EmptyTenantId", invalidResult(r -> r.setTenantId("")))
+        );
     }
 
     // ========================================================================
@@ -282,16 +177,13 @@ class AppTokenProviderTest {
         providerResult.setExpiresInSeconds(TWO_HOURS_SECONDS);
         providerResult.setRefreshInSeconds(0);
 
-        ConfidentialClientApplication cca = buildCcaWithProvider(providerReturning(providerResult));
+        ConfidentialClientApplication cca = TestHelper.buildCcaWithAppTokenProvider(
+                providerReturning(providerResult));
 
-        ClientCredentialParameters parameters = ClientCredentialParameters
-                .builder(Collections.singleton("scope/.default"))
-                .build();
-
-        IAuthenticationResult result = cca.acquireToken(parameters).get();
+        IAuthenticationResult result = cca.acquireToken(
+                ClientCredentialParameters.builder(TestHelper.TEST_SCOPE_SET).build()).get();
 
         assertEquals(VALID_ACCESS_TOKEN, result.accessToken());
-        // refreshOn in metadata should be set to half of expiry (7200/2 = 3600)
         assertTrue(result.metadata().refreshOn() > 0,
                 "refreshOn should be auto-calculated when expiresIn >= 2 hours");
     }
@@ -302,13 +194,11 @@ class AppTokenProviderTest {
         providerResult.setExpiresInSeconds(TWO_HOURS_SECONDS - 1);
         providerResult.setRefreshInSeconds(0);
 
-        ConfidentialClientApplication cca = buildCcaWithProvider(providerReturning(providerResult));
+        ConfidentialClientApplication cca = TestHelper.buildCcaWithAppTokenProvider(
+                providerReturning(providerResult));
 
-        ClientCredentialParameters parameters = ClientCredentialParameters
-                .builder(Collections.singleton("scope/.default"))
-                .build();
-
-        IAuthenticationResult result = cca.acquireToken(parameters).get();
+        IAuthenticationResult result = cca.acquireToken(
+                ClientCredentialParameters.builder(TestHelper.TEST_SCOPE_SET).build()).get();
 
         assertEquals(VALID_ACCESS_TOKEN, result.accessToken());
         assertEquals(0, result.metadata().refreshOn(),
@@ -321,13 +211,11 @@ class AppTokenProviderTest {
         providerResult.setExpiresInSeconds(TWO_HOURS_SECONDS);
         providerResult.setRefreshInSeconds(1800); // explicit 30-minute refresh
 
-        ConfidentialClientApplication cca = buildCcaWithProvider(providerReturning(providerResult));
+        ConfidentialClientApplication cca = TestHelper.buildCcaWithAppTokenProvider(
+                providerReturning(providerResult));
 
-        ClientCredentialParameters parameters = ClientCredentialParameters
-                .builder(Collections.singleton("scope/.default"))
-                .build();
-
-        IAuthenticationResult result = cca.acquireToken(parameters).get();
+        IAuthenticationResult result = cca.acquireToken(
+                ClientCredentialParameters.builder(TestHelper.TEST_SCOPE_SET).build()).get();
 
         assertEquals(VALID_ACCESS_TOKEN, result.accessToken());
         // Auto-calculation only triggers when refreshInSeconds == 0
@@ -347,14 +235,11 @@ class AppTokenProviderTest {
                     return future;
                 };
 
-        ConfidentialClientApplication cca = buildCcaWithProvider(throwingProvider);
-
-        ClientCredentialParameters parameters = ClientCredentialParameters
-                .builder(Collections.singleton("scope/.default"))
-                .build();
+        ConfidentialClientApplication cca = TestHelper.buildCcaWithAppTokenProvider(throwingProvider);
 
         ExecutionException ex = assertThrows(ExecutionException.class,
-                () -> cca.acquireToken(parameters).get());
+                () -> cca.acquireToken(
+                        ClientCredentialParameters.builder(TestHelper.TEST_SCOPE_SET).build()).get());
         assertInstanceOf(MsalAzureSDKException.class, ex.getCause());
     }
 }

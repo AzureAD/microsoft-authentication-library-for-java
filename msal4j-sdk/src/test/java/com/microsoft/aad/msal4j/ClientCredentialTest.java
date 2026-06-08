@@ -48,17 +48,11 @@ class ClientCredentialTest {
     void clientCredential_InternalCacheLookup_Success() throws Exception {
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(HttpStatus.HTTP_OK, TestHelper.getSuccessfulTokenResponse(new HashMap<>())));
+        TestHelper.mockSuccessfulTokenResponse(httpClientMock);
 
-        ConfidentialClientApplication cca =
-                ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromSecret("password"))
-                        .authority("https://login.microsoftonline.com/tenant/")
-                        .instanceDiscovery(false)
-                        .validateAuthority(false)
-                        .httpClient(httpClientMock)
-                        .build();
+        ConfidentialClientApplication cca = TestHelper.buildCca(httpClientMock);
 
-        ClientCredentialParameters parameters = ClientCredentialParameters.builder(Collections.singleton("scopes")).build();
+        ClientCredentialParameters parameters = ClientCredentialParameters.builder(TestHelper.TEST_SCOPE_SET).build();
 
         IAuthenticationResult result = cca.acquireToken(parameters).get();
         IAuthenticationResult result2 = cca.acquireToken(parameters).get();
@@ -72,19 +66,13 @@ class ClientCredentialTest {
     void clientCredential_TenantOverride() throws Exception {
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        ConfidentialClientApplication cca =
-                ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromSecret("password"))
-                        .authority("https://login.microsoftonline.com/tenant")
-                        .instanceDiscovery(false)
-                        .validateAuthority(false)
-                        .httpClient(httpClientMock)
-                        .build();
+        ConfidentialClientApplication cca = TestHelper.buildCca(httpClientMock);
 
         HashMap<String, String> tokenResponseValues = new HashMap<>();
         tokenResponseValues.put("access_token", "accessTokenFirstCall");
 
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(HttpStatus.HTTP_OK, TestHelper.getSuccessfulTokenResponse(tokenResponseValues)));
-        ClientCredentialParameters parameters = ClientCredentialParameters.builder(Collections.singleton("scopes")).build();
+        TestHelper.mockSuccessfulTokenResponse(httpClientMock, tokenResponseValues);
+        ClientCredentialParameters parameters = ClientCredentialParameters.builder(TestHelper.TEST_SCOPE_SET).build();
 
         //The two acquireToken calls have the same parameters...
         IAuthenticationResult resultAppLevelTenant = cca.acquireToken(parameters).get();
@@ -96,8 +84,8 @@ class ClientCredentialTest {
 
         tokenResponseValues.put("access_token", "accessTokenSecondCall");
 
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(HttpStatus.HTTP_OK, TestHelper.getSuccessfulTokenResponse(tokenResponseValues)));
-        parameters = ClientCredentialParameters.builder(Collections.singleton("scopes")).tenant("otherTenant").build();
+        TestHelper.mockSuccessfulTokenResponse(httpClientMock, tokenResponseValues);
+        parameters = ClientCredentialParameters.builder(TestHelper.TEST_SCOPE_SET).tenant("otherTenant").build();
 
         //Overriding the tenant parameter in the request should lead to a new token call being made...
         IAuthenticationResult resultRequestLevelTenant = cca.acquireToken(parameters).get();

@@ -117,13 +117,7 @@ class AcquireTokenSilentlyTest {
     void testTokenRefreshReasons() throws Exception {
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        ConfidentialClientApplication cca =
-                ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromSecret("password"))
-                        .authority("https://login.microsoftonline.com/tenant/")
-                        .instanceDiscovery(false)
-                        .validateAuthority(false)
-                        .httpClient(httpClientMock)
-                        .build();
+        ConfidentialClientApplication cca = TestHelper.buildCca(httpClientMock);
 
         HashMap<String, String> responseParameters = new HashMap<>();
 
