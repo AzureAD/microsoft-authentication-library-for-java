@@ -9,7 +9,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -20,7 +19,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ClientCredentialTest {
 
     @Test
@@ -47,7 +45,7 @@ class ClientCredentialTest {
     }
 
     @Test
-    void OnBehalfOf_InternalCacheLookup_Success() throws Exception {
+    void clientCredential_InternalCacheLookup_Success() throws Exception {
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
         when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(HttpStatus.HTTP_OK, TestHelper.getSuccessfulTokenResponse(new HashMap<>())));
@@ -71,7 +69,7 @@ class ClientCredentialTest {
     }
 
     @Test
-    void OnBehalfOf_TenantOverride() throws Exception {
+    void clientCredential_TenantOverride() throws Exception {
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
         ConfidentialClientApplication cca =
