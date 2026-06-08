@@ -63,7 +63,7 @@ class ClientCredentialTest {
         IAuthenticationResult result = cca.acquireToken(parameters).get();
         IAuthenticationResult result2 = cca.acquireToken(parameters).get();
 
-        //OBO flow should perform an internal cache lookup, so similar parameters should only cause one HTTP client call
+        //Client credential flow should perform an internal cache lookup, so similar parameters should only cause one HTTP client call
         assertEquals(result.accessToken(), result2.accessToken());
         verify(httpClientMock, times(1)).send(any());
     }

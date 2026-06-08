@@ -4,7 +4,6 @@
 package com.microsoft.aad.msal4j;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -20,7 +19,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class AcquireTokenSilentlyTest {
 
     Account basicAccount = new Account("home_account_id", "login.windows.net", "username", null);
