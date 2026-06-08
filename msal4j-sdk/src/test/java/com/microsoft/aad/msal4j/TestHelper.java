@@ -3,9 +3,16 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.azure.json.JsonProviders;
+import com.azure.json.JsonReader;
+import com.azure.json.JsonSerializable;
+import com.azure.json.JsonWriter;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -350,5 +357,33 @@ class TestHelper {
         }
 
         return privateKey;
+    }
+
+    // --- JSON parsing/serialization helpers ---
+
+    @FunctionalInterface
+    interface JsonParser<T> {
+        T parse(JsonReader reader) throws IOException;
+    }
+
+    /**
+     * Parses a JSON string into an object using the provided parser function.
+     * Handles JsonReader lifecycle automatically.
+     */
+    static <T> T parseJson(String json, JsonParser<T> parser) throws IOException {
+        try (JsonReader reader = JsonProviders.createReader(new StringReader(json))) {
+            return parser.parse(reader);
+        }
+    }
+
+    /**
+     * Serializes a JsonSerializable object to a JSON string.
+     */
+    static <T extends JsonSerializable<T>> String writeToJson(T serializable) throws IOException {
+        StringWriter sw = new StringWriter();
+        try (JsonWriter writer = JsonProviders.createWriter(sw)) {
+            serializable.toJson(writer);
+        }
+        return sw.toString();
     }
 }

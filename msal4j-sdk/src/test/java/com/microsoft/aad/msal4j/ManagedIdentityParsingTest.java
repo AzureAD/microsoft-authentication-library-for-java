@@ -3,13 +3,9 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.azure.json.JsonProviders;
-import com.azure.json.JsonReader;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -27,7 +23,7 @@ class ManagedIdentityParsingTest {
                 + "\"client_id\":\"00000000-0000-0000-0000-000000000000\""
                 + "}";
 
-        ManagedIdentityResponse response = parseJson(json, ManagedIdentityResponse::fromJson);
+        ManagedIdentityResponse response = TestHelper.parseJson(json, ManagedIdentityResponse::fromJson);
 
         assertEquals("Bearer", response.getTokenType());
         assertEquals("eyJ0eXAiOiJKV1QiLCJhbGciOi...", response.getAccessToken());
@@ -40,7 +36,7 @@ class ManagedIdentityParsingTest {
     void managedIdentityResponse_fromJson_partialFields() throws IOException {
         String json = "{\"access_token\":\"token\",\"expires_on\":\"123456\"}";
 
-        ManagedIdentityResponse response = parseJson(json, ManagedIdentityResponse::fromJson);
+        ManagedIdentityResponse response = TestHelper.parseJson(json, ManagedIdentityResponse::fromJson);
 
         assertEquals("token", response.getAccessToken());
         assertEquals("123456", response.getExpiresOn());
@@ -53,7 +49,7 @@ class ManagedIdentityParsingTest {
     void managedIdentityResponse_fromJson_unknownFieldsSkipped() throws IOException {
         String json = "{\"access_token\":\"tok\",\"extra_field\":\"ignored\",\"nested\":{\"a\":1}}";
 
-        ManagedIdentityResponse response = parseJson(json, ManagedIdentityResponse::fromJson);
+        ManagedIdentityResponse response = TestHelper.parseJson(json, ManagedIdentityResponse::fromJson);
 
         assertEquals("tok", response.getAccessToken());
     }
@@ -67,7 +63,7 @@ class ManagedIdentityParsingTest {
         response.resource = "https://vault.azure.net/";
         response.clientId = "client-123";
 
-        String output = writeToJson(response);
+        String output = TestHelper.writeToJson(response);
 
         assertTrue(output.contains("\"token_type\":\"Bearer\""));
         assertTrue(output.contains("\"access_token\":\"test-token\""));
@@ -86,9 +82,9 @@ class ManagedIdentityParsingTest {
                 + "\"client_id\":\"cid-456\""
                 + "}";
 
-        ManagedIdentityResponse original = parseJson(json, ManagedIdentityResponse::fromJson);
-        String serialized = writeToJson(original);
-        ManagedIdentityResponse roundTripped = parseJson(serialized, ManagedIdentityResponse::fromJson);
+        ManagedIdentityResponse original = TestHelper.parseJson(json, ManagedIdentityResponse::fromJson);
+        String serialized = TestHelper.writeToJson(original);
+        ManagedIdentityResponse roundTripped = TestHelper.parseJson(serialized, ManagedIdentityResponse::fromJson);
 
         assertEquals(original.getTokenType(), roundTripped.getTokenType());
         assertEquals(original.getAccessToken(), roundTripped.getAccessToken());
@@ -119,7 +115,7 @@ class ManagedIdentityParsingTest {
                 + "\"correlationId\":\"corr-789\""
                 + "}";
 
-        ManagedIdentityErrorResponse response = parseJson(json, ManagedIdentityErrorResponse::fromJson);
+        ManagedIdentityErrorResponse response = TestHelper.parseJson(json, ManagedIdentityErrorResponse::fromJson);
 
         assertEquals("invalid_resource", response.getError());
         assertEquals("The resource requested is invalid.", response.getErrorDescription());
@@ -135,7 +131,7 @@ class ManagedIdentityParsingTest {
                 + "\"correlationId\":\"corr-nested\""
                 + "}";
 
-        ManagedIdentityErrorResponse response = parseJson(json, ManagedIdentityErrorResponse::fromJson);
+        ManagedIdentityErrorResponse response = TestHelper.parseJson(json, ManagedIdentityErrorResponse::fromJson);
 
         assertEquals("ManagedIdentityCredential", response.getError());
         assertEquals("Managed identity unavailable", response.getMessage());
@@ -146,7 +142,7 @@ class ManagedIdentityParsingTest {
     void managedIdentityErrorResponse_fromJson_errorAsString() throws IOException {
         String json = "{\"error\":\"unauthorized_client\"}";
 
-        ManagedIdentityErrorResponse response = parseJson(json, ManagedIdentityErrorResponse::fromJson);
+        ManagedIdentityErrorResponse response = TestHelper.parseJson(json, ManagedIdentityErrorResponse::fromJson);
 
         assertEquals("unauthorized_client", response.getError());
     }
@@ -155,7 +151,7 @@ class ManagedIdentityParsingTest {
     void managedIdentityErrorResponse_fromJson_unknownFieldsSkipped() throws IOException {
         String json = "{\"error\":\"test\",\"unknown_field\":42,\"nested_unknown\":{\"a\":1}}";
 
-        ManagedIdentityErrorResponse response = parseJson(json, ManagedIdentityErrorResponse::fromJson);
+        ManagedIdentityErrorResponse response = TestHelper.parseJson(json, ManagedIdentityErrorResponse::fromJson);
 
         assertEquals("test", response.getError());
     }
@@ -164,7 +160,7 @@ class ManagedIdentityParsingTest {
     void managedIdentityErrorResponse_fromJson_emptyObject() throws IOException {
         String json = "{}";
 
-        ManagedIdentityErrorResponse response = parseJson(json, ManagedIdentityErrorResponse::fromJson);
+        ManagedIdentityErrorResponse response = TestHelper.parseJson(json, ManagedIdentityErrorResponse::fromJson);
 
         assertNull(response.getError());
         assertNull(response.getErrorDescription());
@@ -181,8 +177,8 @@ class ManagedIdentityParsingTest {
                 + "\"error_description\":\"desc\""
                 + "}";
 
-        ManagedIdentityErrorResponse response = parseJson(json, ManagedIdentityErrorResponse::fromJson);
-        String output = writeToJson(response);
+        ManagedIdentityErrorResponse response = TestHelper.parseJson(json, ManagedIdentityErrorResponse::fromJson);
+        String output = TestHelper.writeToJson(response);
 
         assertTrue(output.contains("\"message\":\"Identity not found\""));
         assertTrue(output.contains("\"correlationId\":\"c-1\""));
@@ -199,35 +195,13 @@ class ManagedIdentityParsingTest {
                 + "\"error_description\":\"desc\""
                 + "}";
 
-        ManagedIdentityErrorResponse original = parseJson(json, ManagedIdentityErrorResponse::fromJson);
-        String serialized = writeToJson(original);
-        ManagedIdentityErrorResponse roundTripped = parseJson(serialized, ManagedIdentityErrorResponse::fromJson);
+        ManagedIdentityErrorResponse original = TestHelper.parseJson(json, ManagedIdentityErrorResponse::fromJson);
+        String serialized = TestHelper.writeToJson(original);
+        ManagedIdentityErrorResponse roundTripped = TestHelper.parseJson(serialized, ManagedIdentityErrorResponse::fromJson);
 
         assertEquals(original.getError(), roundTripped.getError());
         assertEquals(original.getErrorDescription(), roundTripped.getErrorDescription());
         assertEquals(original.getMessage(), roundTripped.getMessage());
         assertEquals(original.getCorrelationId(), roundTripped.getCorrelationId());
-    }
-
-    // ========== Helpers ==========
-
-    @FunctionalInterface
-    interface JsonParser<T> {
-        T parse(JsonReader reader) throws IOException;
-    }
-
-    private <T> T parseJson(String json, JsonParser<T> parser) throws IOException {
-        try (JsonReader reader = JsonProviders.createReader(new StringReader(json))) {
-            return parser.parse(reader);
-        }
-    }
-
-    private <T extends com.azure.json.JsonSerializable<T>> String writeToJson(T serializable)
-            throws IOException {
-        StringWriter sw = new StringWriter();
-        try (com.azure.json.JsonWriter writer = JsonProviders.createWriter(sw)) {
-            serializable.toJson(writer);
-        }
-        return sw.toString();
     }
 }

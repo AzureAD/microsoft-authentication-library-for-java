@@ -3,12 +3,9 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.azure.json.JsonProviders;
-import com.azure.json.JsonReader;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -30,10 +27,7 @@ class ResponseParsingTest {
                 + "\"correlation_id\":\"corr-456\","
                 + "\"claims\":\"{\\\"access_token\\\":{\\\"nbf\\\":{\\\"essential\\\":true}}}\"}";
 
-        ErrorResponse response;
-        try (JsonReader reader = JsonProviders.createReader(new StringReader(json))) {
-            response = ErrorResponse.fromJson(reader);
-        }
+        ErrorResponse response = TestHelper.parseJson(json, ErrorResponse::fromJson);
 
         assertEquals("invalid_grant", response.error());
         assertEquals("Token expired", response.errorDescription());
@@ -49,10 +43,7 @@ class ResponseParsingTest {
     void errorResponse_fromJson_minimalFields() throws IOException {
         String json = "{\"error\":\"server_error\"}";
 
-        ErrorResponse response;
-        try (JsonReader reader = JsonProviders.createReader(new StringReader(json))) {
-            response = ErrorResponse.fromJson(reader);
-        }
+        ErrorResponse response = TestHelper.parseJson(json, ErrorResponse::fromJson);
 
         assertEquals("server_error", response.error());
         assertNull(response.errorDescription());
@@ -68,10 +59,7 @@ class ResponseParsingTest {
     void errorResponse_fromJson_unknownFieldsSkipped() throws IOException {
         String json = "{\"error\":\"invalid_request\",\"unknown_field\":\"value\",\"another\":123}";
 
-        ErrorResponse response;
-        try (JsonReader reader = JsonProviders.createReader(new StringReader(json))) {
-            response = ErrorResponse.fromJson(reader);
-        }
+        ErrorResponse response = TestHelper.parseJson(json, ErrorResponse::fromJson);
 
         assertEquals("invalid_request", response.error());
     }
@@ -80,10 +68,7 @@ class ResponseParsingTest {
     void errorResponse_fromJson_emptyErrorCodes() throws IOException {
         String json = "{\"error\":\"test\",\"error_codes\":[]}";
 
-        ErrorResponse response;
-        try (JsonReader reader = JsonProviders.createReader(new StringReader(json))) {
-            response = ErrorResponse.fromJson(reader);
-        }
+        ErrorResponse response = TestHelper.parseJson(json, ErrorResponse::fromJson);
 
         assertNotNull(response.errorCodes());
         assertEquals(0, response.errorCodes().length);
@@ -124,7 +109,7 @@ class ResponseParsingTest {
         response.statusCode(400);
         response.error("invalid_grant");
 
-        assertThrows(IllegalStateException.class, () -> writeToJson(response),
+        assertThrows(IllegalStateException.class, () -> TestHelper.writeToJson(response),
                 "toJson has a double writeStartObject bug that causes IllegalStateException");
     }
 
@@ -135,7 +120,7 @@ class ResponseParsingTest {
         response.statusCode(500);
         response.error("server_error");
 
-        assertThrows(IllegalStateException.class, () -> writeToJson(response));
+        assertThrows(IllegalStateException.class, () -> TestHelper.writeToJson(response));
     }
 
     // ========== UserDiscoveryResponse ==========
@@ -149,10 +134,7 @@ class ResponseParsingTest {
                 + "\"federation_active_auth_url\":\"https://adfs.example.com/active\","
                 + "\"cloud_audience_urn\":\"urn:federation:MicrosoftOnline\"}";
 
-        UserDiscoveryResponse response;
-        try (JsonReader reader = JsonProviders.createReader(new StringReader(json))) {
-            response = UserDiscoveryResponse.fromJson(reader);
-        }
+        UserDiscoveryResponse response = TestHelper.parseJson(json, UserDiscoveryResponse::fromJson);
 
         assertEquals(1.0f, response.version(), 0.01f);
         assertEquals("Federated", response.accountType());
@@ -168,10 +150,7 @@ class ResponseParsingTest {
     void userDiscoveryResponse_fromJson_managedAccount() throws IOException {
         String json = "{\"ver\":\"1.0\",\"account_type\":\"Managed\"}";
 
-        UserDiscoveryResponse response;
-        try (JsonReader reader = JsonProviders.createReader(new StringReader(json))) {
-            response = UserDiscoveryResponse.fromJson(reader);
-        }
+        UserDiscoveryResponse response = TestHelper.parseJson(json, UserDiscoveryResponse::fromJson);
 
         assertTrue(response.isAccountManaged());
         assertFalse(response.isAccountFederated());
@@ -181,10 +160,7 @@ class ResponseParsingTest {
     void userDiscoveryResponse_fromJson_unknownAccountType() throws IOException {
         String json = "{\"ver\":\"2.0\",\"account_type\":\"Unknown\"}";
 
-        UserDiscoveryResponse response;
-        try (JsonReader reader = JsonProviders.createReader(new StringReader(json))) {
-            response = UserDiscoveryResponse.fromJson(reader);
-        }
+        UserDiscoveryResponse response = TestHelper.parseJson(json, UserDiscoveryResponse::fromJson);
 
         assertFalse(response.isAccountFederated());
         assertFalse(response.isAccountManaged());
@@ -203,10 +179,7 @@ class ResponseParsingTest {
     void userDiscoveryResponse_isAccountFederated_caseInsensitive() throws IOException {
         String json = "{\"ver\":\"1.0\",\"account_type\":\"fEdErAtEd\"}";
 
-        UserDiscoveryResponse response;
-        try (JsonReader reader = JsonProviders.createReader(new StringReader(json))) {
-            response = UserDiscoveryResponse.fromJson(reader);
-        }
+        UserDiscoveryResponse response = TestHelper.parseJson(json, UserDiscoveryResponse::fromJson);
 
         assertTrue(response.isAccountFederated());
     }
@@ -215,10 +188,7 @@ class ResponseParsingTest {
     void userDiscoveryResponse_isAccountManaged_caseInsensitive() throws IOException {
         String json = "{\"ver\":\"1.0\",\"account_type\":\"MANAGED\"}";
 
-        UserDiscoveryResponse response;
-        try (JsonReader reader = JsonProviders.createReader(new StringReader(json))) {
-            response = UserDiscoveryResponse.fromJson(reader);
-        }
+        UserDiscoveryResponse response = TestHelper.parseJson(json, UserDiscoveryResponse::fromJson);
 
         assertTrue(response.isAccountManaged());
     }
@@ -232,17 +202,11 @@ class ResponseParsingTest {
                 + "\"federation_active_auth_url\":\"https://adfs.example.com/active\","
                 + "\"cloud_audience_urn\":\"urn:federation:MicrosoftOnline\"}";
 
-        UserDiscoveryResponse original;
-        try (JsonReader reader = JsonProviders.createReader(new StringReader(json))) {
-            original = UserDiscoveryResponse.fromJson(reader);
-        }
+        UserDiscoveryResponse original = TestHelper.parseJson(json, UserDiscoveryResponse::fromJson);
 
-        String serialized = writeToJson(original);
+        String serialized = TestHelper.writeToJson(original);
 
-        UserDiscoveryResponse roundTripped;
-        try (JsonReader reader = JsonProviders.createReader(new StringReader(serialized))) {
-            roundTripped = UserDiscoveryResponse.fromJson(reader);
-        }
+        UserDiscoveryResponse roundTripped = TestHelper.parseJson(serialized, UserDiscoveryResponse::fromJson);
 
         assertEquals(original.accountType(), roundTripped.accountType());
         assertEquals(original.federationProtocol(), roundTripped.federationProtocol());
@@ -255,10 +219,7 @@ class ResponseParsingTest {
     void userDiscoveryResponse_fromJson_unknownFieldsSkipped() throws IOException {
         String json = "{\"ver\":\"1.0\",\"account_type\":\"Managed\",\"extra_field\":\"ignored\"}";
 
-        UserDiscoveryResponse response;
-        try (JsonReader reader = JsonProviders.createReader(new StringReader(json))) {
-            response = UserDiscoveryResponse.fromJson(reader);
-        }
+        UserDiscoveryResponse response = TestHelper.parseJson(json, UserDiscoveryResponse::fromJson);
 
         assertTrue(response.isAccountManaged());
     }
@@ -272,10 +233,7 @@ class ResponseParsingTest {
                 + "\"device_authorization_endpoint\":\"https://login.microsoftonline.com/common/oauth2/v2.0/devicecode\","
                 + "\"issuer\":\"https://login.microsoftonline.com/{tenantid}/v2.0\"}";
 
-        OidcDiscoveryResponse response;
-        try (JsonReader reader = JsonProviders.createReader(new StringReader(json))) {
-            response = OidcDiscoveryResponse.fromJson(reader);
-        }
+        OidcDiscoveryResponse response = TestHelper.parseJson(json, OidcDiscoveryResponse::fromJson);
 
         assertEquals("https://login.microsoftonline.com/common/oauth2/v2.0/authorize", response.authorizationEndpoint());
         assertEquals("https://login.microsoftonline.com/common/oauth2/v2.0/token", response.tokenEndpoint());
@@ -288,10 +246,7 @@ class ResponseParsingTest {
         String json = "{\"authorization_endpoint\":\"https://example.com/auth\","
                 + "\"token_endpoint\":\"https://example.com/token\"}";
 
-        OidcDiscoveryResponse response;
-        try (JsonReader reader = JsonProviders.createReader(new StringReader(json))) {
-            response = OidcDiscoveryResponse.fromJson(reader);
-        }
+        OidcDiscoveryResponse response = TestHelper.parseJson(json, OidcDiscoveryResponse::fromJson);
 
         assertEquals("https://example.com/auth", response.authorizationEndpoint());
         assertEquals("https://example.com/token", response.tokenEndpoint());
@@ -305,10 +260,7 @@ class ResponseParsingTest {
                 + "\"jwks_uri\":\"https://example.com/keys\","
                 + "\"response_types_supported\":[\"code\"]}";
 
-        OidcDiscoveryResponse response;
-        try (JsonReader reader = JsonProviders.createReader(new StringReader(json))) {
-            response = OidcDiscoveryResponse.fromJson(reader);
-        }
+        OidcDiscoveryResponse response = TestHelper.parseJson(json, OidcDiscoveryResponse::fromJson);
 
         assertEquals("https://example.com/auth", response.authorizationEndpoint());
     }
@@ -321,12 +273,9 @@ class ResponseParsingTest {
                 + "\"device_authorization_endpoint\":\"https://example.com/device\","
                 + "\"issuer\":\"https://example.com/issuer\"}";
 
-        OidcDiscoveryResponse response;
-        try (JsonReader reader = JsonProviders.createReader(new StringReader(json))) {
-            response = OidcDiscoveryResponse.fromJson(reader);
-        }
+        OidcDiscoveryResponse response = TestHelper.parseJson(json, OidcDiscoveryResponse::fromJson);
 
-        String output = writeToJson(response);
+        String output = TestHelper.writeToJson(response);
 
         assertTrue(output.contains("authorization_endpoint"));
         assertTrue(output.contains("token_endpoint"));
@@ -365,10 +314,8 @@ class ResponseParsingTest {
         // Wrap in outer object since fromJson expects to be positioned in a field context
         String json = "{\"essential\":true,\"value\":\"test-value\",\"values\":[\"v1\",\"v2\"]}";
 
-        RequestedClaimAdditionalInfo info = new RequestedClaimAdditionalInfo(false, null, null);
-        try (JsonReader reader = JsonProviders.createReader(new StringReader(json))) {
-            info = info.fromJson(reader);
-        }
+        RequestedClaimAdditionalInfo info = TestHelper.parseJson(json,
+                reader -> new RequestedClaimAdditionalInfo(false, null, null).fromJson(reader));
 
         assertTrue(info.isEssential());
         assertEquals("test-value", info.getValue());
@@ -379,10 +326,8 @@ class ResponseParsingTest {
     void requestedClaimAdditionalInfo_fromJson_essentialOnly() throws IOException {
         String json = "{\"essential\":true}";
 
-        RequestedClaimAdditionalInfo info = new RequestedClaimAdditionalInfo(false, null, null);
-        try (JsonReader reader = JsonProviders.createReader(new StringReader(json))) {
-            info = info.fromJson(reader);
-        }
+        RequestedClaimAdditionalInfo info = TestHelper.parseJson(json,
+                reader -> new RequestedClaimAdditionalInfo(false, null, null).fromJson(reader));
 
         assertTrue(info.isEssential());
         assertNull(info.getValue());
@@ -393,7 +338,7 @@ class ResponseParsingTest {
     void requestedClaimAdditionalInfo_toJson_essentialTrue() throws IOException {
         RequestedClaimAdditionalInfo info = new RequestedClaimAdditionalInfo(true, null, null);
 
-        String output = writeToJson(info);
+        String output = TestHelper.writeToJson(info);
 
         assertTrue(output.contains("\"essential\":true"));
         assertFalse(output.contains("\"value\""));
@@ -404,7 +349,7 @@ class ResponseParsingTest {
     void requestedClaimAdditionalInfo_toJson_essentialFalseOmitted() throws IOException {
         RequestedClaimAdditionalInfo info = new RequestedClaimAdditionalInfo(false, "v", null);
 
-        String output = writeToJson(info);
+        String output = TestHelper.writeToJson(info);
 
         // essential=false is omitted from serialization
         assertFalse(output.contains("essential"));
@@ -416,7 +361,7 @@ class ResponseParsingTest {
         RequestedClaimAdditionalInfo info = new RequestedClaimAdditionalInfo(
                 false, null, Arrays.asList("x", "y"));
 
-        String output = writeToJson(info);
+        String output = TestHelper.writeToJson(info);
 
         assertTrue(output.contains("\"values\""));
         assertTrue(output.contains("\"x\""));
@@ -428,7 +373,7 @@ class ResponseParsingTest {
         RequestedClaimAdditionalInfo info = new RequestedClaimAdditionalInfo(
                 false, null, Arrays.asList());
 
-        String output = writeToJson(info);
+        String output = TestHelper.writeToJson(info);
 
         // Empty list should be omitted (values != null but isEmpty())
         assertFalse(output.contains("values"));
@@ -492,7 +437,7 @@ class ResponseParsingTest {
         RequestedClaimAdditionalInfo info = new RequestedClaimAdditionalInfo(true, null, null);
         RequestedClaim claim = new RequestedClaim("sub", info);
 
-        assertThrows(IllegalStateException.class, () -> writeToJson(claim),
+        assertThrows(IllegalStateException.class, () -> TestHelper.writeToJson(claim),
                 "toJson writes a raw string in object context, causing IllegalStateException");
     }
 
@@ -500,20 +445,10 @@ class ResponseParsingTest {
     void requestedClaim_toJson_nullNameAndInfo_writesEmptyObject() throws IOException {
         RequestedClaim claim = new RequestedClaim(null, null);
 
-        String output = writeToJson(claim);
+        String output = TestHelper.writeToJson(claim);
 
         // When name or info is null, toJson skips writing the content
         assertEquals("{}", output);
     }
 
-    // ========== Helper ==========
-
-    private <T extends com.azure.json.JsonSerializable<T>> String writeToJson(T serializable)
-            throws IOException {
-        java.io.StringWriter sw = new java.io.StringWriter();
-        try (com.azure.json.JsonWriter writer = JsonProviders.createWriter(sw)) {
-            serializable.toJson(writer);
-        }
-        return sw.toString();
-    }
 }

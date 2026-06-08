@@ -3,13 +3,9 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.azure.json.JsonProviders;
-import com.azure.json.JsonReader;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -34,7 +30,7 @@ class InstanceDiscoveryParsingTest {
                 + "\"correlation_id\":\"corr-123\""
                 + "}";
 
-        AadInstanceDiscoveryResponse response = parseJson(json, AadInstanceDiscoveryResponse::fromJson);
+        AadInstanceDiscoveryResponse response = TestHelper.parseJson(json, AadInstanceDiscoveryResponse::fromJson);
 
         assertEquals("https://login.microsoftonline.com/tenant/.well-known/openid-configuration",
                 response.tenantDiscoveryEndpoint());
@@ -54,7 +50,7 @@ class InstanceDiscoveryParsingTest {
                 + "\"correlation_id\":\"corr-err\""
                 + "}";
 
-        AadInstanceDiscoveryResponse response = parseJson(json, AadInstanceDiscoveryResponse::fromJson);
+        AadInstanceDiscoveryResponse response = TestHelper.parseJson(json, AadInstanceDiscoveryResponse::fromJson);
 
         assertEquals("invalid_instance", response.error());
         assertEquals("AADSTS50049: Unknown or invalid instance.", response.errorDescription());
@@ -76,7 +72,7 @@ class InstanceDiscoveryParsingTest {
                 + "]"
                 + "}";
 
-        AadInstanceDiscoveryResponse response = parseJson(json, AadInstanceDiscoveryResponse::fromJson);
+        AadInstanceDiscoveryResponse response = TestHelper.parseJson(json, AadInstanceDiscoveryResponse::fromJson);
 
         assertEquals(2, response.metadata().size());
         assertEquals("login.microsoftonline.com", response.metadata().get(0).preferredNetwork());
@@ -87,7 +83,7 @@ class InstanceDiscoveryParsingTest {
     void aadInstanceDiscoveryResponse_fromJson_unknownFieldsSkipped() throws IOException {
         String json = "{\"error\":\"test\",\"api-version\":\"1.1\",\"extra\":true}";
 
-        AadInstanceDiscoveryResponse response = parseJson(json, AadInstanceDiscoveryResponse::fromJson);
+        AadInstanceDiscoveryResponse response = TestHelper.parseJson(json, AadInstanceDiscoveryResponse::fromJson);
 
         assertEquals("test", response.error());
     }
@@ -105,8 +101,8 @@ class InstanceDiscoveryParsingTest {
                 + "\"correlation_id\":\"c-1\""
                 + "}";
 
-        AadInstanceDiscoveryResponse original = parseJson(json, AadInstanceDiscoveryResponse::fromJson);
-        String serialized = writeToJson(original);
+        AadInstanceDiscoveryResponse original = TestHelper.parseJson(json, AadInstanceDiscoveryResponse::fromJson);
+        String serialized = TestHelper.writeToJson(original);
 
         assertTrue(serialized.contains("tenant_discovery_endpoint"));
         assertTrue(serialized.contains("login.microsoftonline.com"));
@@ -117,7 +113,7 @@ class InstanceDiscoveryParsingTest {
     void aadInstanceDiscoveryResponse_getters_defaultNull() throws IOException {
         String json = "{}";
 
-        AadInstanceDiscoveryResponse response = parseJson(json, AadInstanceDiscoveryResponse::fromJson);
+        AadInstanceDiscoveryResponse response = TestHelper.parseJson(json, AadInstanceDiscoveryResponse::fromJson);
 
         assertNull(response.tenantDiscoveryEndpoint());
         assertNull(response.metadata());
@@ -137,7 +133,7 @@ class InstanceDiscoveryParsingTest {
                 + "\"aliases\":[\"login.microsoftonline.com\",\"login.windows.net\",\"login.microsoft.com\"]"
                 + "}";
 
-        InstanceDiscoveryMetadataEntry entry = parseJson(json, InstanceDiscoveryMetadataEntry::fromJson);
+        InstanceDiscoveryMetadataEntry entry = TestHelper.parseJson(json, InstanceDiscoveryMetadataEntry::fromJson);
 
         assertEquals("login.microsoftonline.com", entry.preferredNetwork());
         assertEquals("login.windows.net", entry.preferredCache());
@@ -175,10 +171,10 @@ class InstanceDiscoveryParsingTest {
                 + "\"aliases\":[\"login.microsoftonline.com\"]"
                 + "}";
 
-        InstanceDiscoveryMetadataEntry original = parseJson(json, InstanceDiscoveryMetadataEntry::fromJson);
-        String serialized = writeToJson(original);
+        InstanceDiscoveryMetadataEntry original = TestHelper.parseJson(json, InstanceDiscoveryMetadataEntry::fromJson);
+        String serialized = TestHelper.writeToJson(original);
 
-        InstanceDiscoveryMetadataEntry roundTripped = parseJson(serialized, InstanceDiscoveryMetadataEntry::fromJson);
+        InstanceDiscoveryMetadataEntry roundTripped = TestHelper.parseJson(serialized, InstanceDiscoveryMetadataEntry::fromJson);
 
         assertEquals(original.preferredNetwork(), roundTripped.preferredNetwork());
         assertEquals(original.preferredCache(), roundTripped.preferredCache());
@@ -189,30 +185,8 @@ class InstanceDiscoveryParsingTest {
     void instanceDiscoveryMetadataEntry_fromJson_unknownFieldsSkipped() throws IOException {
         String json = "{\"preferred_network\":\"host\",\"extra_field\":123}";
 
-        InstanceDiscoveryMetadataEntry entry = parseJson(json, InstanceDiscoveryMetadataEntry::fromJson);
+        InstanceDiscoveryMetadataEntry entry = TestHelper.parseJson(json, InstanceDiscoveryMetadataEntry::fromJson);
 
         assertEquals("host", entry.preferredNetwork());
-    }
-
-    // ========== Helpers ==========
-
-    @FunctionalInterface
-    interface JsonParser<T> {
-        T parse(JsonReader reader) throws IOException;
-    }
-
-    private <T> T parseJson(String json, JsonParser<T> parser) throws IOException {
-        try (JsonReader reader = JsonProviders.createReader(new StringReader(json))) {
-            return parser.parse(reader);
-        }
-    }
-
-    private <T extends com.azure.json.JsonSerializable<T>> String writeToJson(T serializable)
-            throws IOException {
-        StringWriter sw = new StringWriter();
-        try (com.azure.json.JsonWriter writer = JsonProviders.createWriter(sw)) {
-            serializable.toJson(writer);
-        }
-        return sw.toString();
     }
 }

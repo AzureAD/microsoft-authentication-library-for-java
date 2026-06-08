@@ -3,13 +3,9 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.azure.json.JsonProviders;
-import com.azure.json.JsonReader;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,7 +24,7 @@ class WsTrustFederationTest {
                 + "\"user_assertion_hash\":\"hash-abc\""
                 + "}";
 
-        Credential cred = parseJson(json, Credential::fromJson);
+        Credential cred = TestHelper.parseJson(json, Credential::fromJson);
 
         assertEquals("uid.utid", cred.homeAccountId());
         assertEquals("login.microsoftonline.com", cred.environment());
@@ -41,7 +37,7 @@ class WsTrustFederationTest {
     void credential_fromJson_partialFields() throws IOException {
         String json = "{\"home_account_id\":\"uid\",\"environment\":\"env\"}";
 
-        Credential cred = parseJson(json, Credential::fromJson);
+        Credential cred = TestHelper.parseJson(json, Credential::fromJson);
 
         assertEquals("uid", cred.homeAccountId());
         assertEquals("env", cred.environment());
@@ -54,7 +50,7 @@ class WsTrustFederationTest {
     void credential_fromJson_unknownFieldsSkipped() throws IOException {
         String json = "{\"home_account_id\":\"uid\",\"extra\":123}";
 
-        Credential cred = parseJson(json, Credential::fromJson);
+        Credential cred = TestHelper.parseJson(json, Credential::fromJson);
 
         assertEquals("uid", cred.homeAccountId());
     }
@@ -85,7 +81,7 @@ class WsTrustFederationTest {
         cred.secret("sec");
         cred.userAssertionHash("hash");
 
-        String output = writeToJson(cred);
+        String output = TestHelper.writeToJson(cred);
 
         assertTrue(output.contains("\"home_account_id\":\"uid.utid\""));
         assertTrue(output.contains("\"environment\":\"login.microsoftonline.com\""));
@@ -104,9 +100,9 @@ class WsTrustFederationTest {
                 + "\"user_assertion_hash\":\"hash\""
                 + "}";
 
-        Credential original = parseJson(json, Credential::fromJson);
-        String serialized = writeToJson(original);
-        Credential roundTripped = parseJson(serialized, Credential::fromJson);
+        Credential original = TestHelper.parseJson(json, Credential::fromJson);
+        String serialized = TestHelper.writeToJson(original);
+        Credential roundTripped = TestHelper.parseJson(serialized, Credential::fromJson);
 
         assertEquals(original.homeAccountId(), roundTripped.homeAccountId());
         assertEquals(original.environment(), roundTripped.environment());
@@ -194,7 +190,7 @@ class WsTrustFederationTest {
                 + "\"unique_name\":\"testuser\""
                 + "}";
 
-        IdToken idToken = parseJson(json, IdToken::fromJson);
+        IdToken idToken = TestHelper.parseJson(json, IdToken::fromJson);
 
         assertEquals("https://login.microsoftonline.com/tenant/v2.0", idToken.issuer);
         assertEquals("sub-123", idToken.subject);
@@ -214,7 +210,7 @@ class WsTrustFederationTest {
     void idToken_fromJson_partialFields() throws IOException {
         String json = "{\"iss\":\"issuer\",\"sub\":\"subject\",\"aud\":\"audience\"}";
 
-        IdToken idToken = parseJson(json, IdToken::fromJson);
+        IdToken idToken = TestHelper.parseJson(json, IdToken::fromJson);
 
         assertEquals("issuer", idToken.issuer);
         assertEquals("subject", idToken.subject);
@@ -234,7 +230,7 @@ class WsTrustFederationTest {
     void idToken_fromJson_unknownFieldsSkipped() throws IOException {
         String json = "{\"iss\":\"issuer\",\"nonce\":\"abc\",\"email\":\"user@test.com\"}";
 
-        IdToken idToken = parseJson(json, IdToken::fromJson);
+        IdToken idToken = TestHelper.parseJson(json, IdToken::fromJson);
 
         assertEquals("issuer", idToken.issuer);
     }
@@ -255,7 +251,7 @@ class WsTrustFederationTest {
         idToken.upn = "user@example.com";
         idToken.uniqueName = "unique";
 
-        String output = writeToJson(idToken);
+        String output = TestHelper.writeToJson(idToken);
 
         assertTrue(output.contains("\"iss\":\"iss\""));
         assertTrue(output.contains("\"sub\":\"sub\""));
@@ -285,9 +281,9 @@ class WsTrustFederationTest {
                 + "\"unique_name\":\"unique-1\""
                 + "}";
 
-        IdToken original = parseJson(json, IdToken::fromJson);
-        String serialized = writeToJson(original);
-        IdToken roundTripped = parseJson(serialized, IdToken::fromJson);
+        IdToken original = TestHelper.parseJson(json, IdToken::fromJson);
+        String serialized = TestHelper.writeToJson(original);
+        IdToken roundTripped = TestHelper.parseJson(serialized, IdToken::fromJson);
 
         assertEquals(original.issuer, roundTripped.issuer);
         assertEquals(original.subject, roundTripped.subject);
@@ -321,27 +317,5 @@ class WsTrustFederationTest {
                 .contains("RequestSecurityTokenResponseCollection"));
         assertTrue(WSTrustVersion.WSTRUST13.responseSecurityTokenPath()
                 .contains("RequestedSecurityToken"));
-    }
-
-    // ========== Helpers ==========
-
-    @FunctionalInterface
-    interface JsonParser<T> {
-        T parse(JsonReader reader) throws IOException;
-    }
-
-    private <T> T parseJson(String json, JsonParser<T> parser) throws IOException {
-        try (JsonReader reader = JsonProviders.createReader(new StringReader(json))) {
-            return parser.parse(reader);
-        }
-    }
-
-    private <T extends com.azure.json.JsonSerializable<T>> String writeToJson(T serializable)
-            throws IOException {
-        StringWriter sw = new StringWriter();
-        try (com.azure.json.JsonWriter writer = JsonProviders.createWriter(sw)) {
-            serializable.toJson(writer);
-        }
-        return sw.toString();
     }
 }
