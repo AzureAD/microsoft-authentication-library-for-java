@@ -391,6 +391,57 @@ class ApplicationBuilderTest {
         assertEquals("westus", pca.azureRegion());
     }
 
+    // ========================================================================
+    // InteractiveRequest redirect URI validation
+    // Only rejection cases are testable as unit tests — valid URIs proceed
+    // to open a real browser, making them integration test territory.
+    // ========================================================================
+
+    @Test
+    void interactiveRequest_HttpsScheme_ThrowsMsalClientException() throws Exception {
+        PublicClientApplication pca = PublicClientApplication.builder(CLIENT_ID)
+                .instanceDiscovery(false)
+                .build();
+
+        InteractiveRequestParameters params = InteractiveRequestParameters
+                .builder(new URI("https://localhost"))
+                .scopes(Collections.singleton("scope"))
+                .build();
+
+        MsalClientException ex = assertThrows(MsalClientException.class, () -> pca.acquireToken(params));
+        assertEquals(AuthenticationErrorCode.LOOPBACK_REDIRECT_URI, ex.errorCode());
+    }
+
+    @Test
+    void interactiveRequest_CustomScheme_ThrowsMsalClientException() throws Exception {
+        PublicClientApplication pca = PublicClientApplication.builder(CLIENT_ID)
+                .instanceDiscovery(false)
+                .build();
+
+        InteractiveRequestParameters params = InteractiveRequestParameters
+                .builder(new URI("myapp://callback"))
+                .scopes(Collections.singleton("scope"))
+                .build();
+
+        MsalClientException ex = assertThrows(MsalClientException.class, () -> pca.acquireToken(params));
+        assertEquals(AuthenticationErrorCode.LOOPBACK_REDIRECT_URI, ex.errorCode());
+    }
+
+    @Test
+    void interactiveRequest_NonLoopbackHost_ThrowsMsalClientException() throws Exception {
+        PublicClientApplication pca = PublicClientApplication.builder(CLIENT_ID)
+                .instanceDiscovery(false)
+                .build();
+
+        InteractiveRequestParameters params = InteractiveRequestParameters
+                .builder(new URI("http://example.com"))
+                .scopes(Collections.singleton("scope"))
+                .build();
+
+        MsalClientException ex = assertThrows(MsalClientException.class, () -> pca.acquireToken(params));
+        assertEquals(AuthenticationErrorCode.LOOPBACK_REDIRECT_URI, ex.errorCode());
+    }
+
     @Test
     void builder_InstanceDiscovery_PropagatedToApp() {
         PublicClientApplication pca = PublicClientApplication.builder(CLIENT_ID)
