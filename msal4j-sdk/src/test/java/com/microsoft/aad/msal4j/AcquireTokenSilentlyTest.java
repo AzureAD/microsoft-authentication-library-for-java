@@ -197,4 +197,96 @@ class AcquireTokenSilentlyTest {
         assertEquals(expectedToken, result.accessToken());
         assertEquals(expectedReason, result.metadata().cacheRefreshReason());
     }
+
+    // ========== SilentRequestHelper ==========
+
+    @Test
+    void getCacheRefreshReason_claimsPresent_returnsClaims() {
+        SilentParameters params = SilentParameters.builder(
+                        Collections.singleton("scope"),
+                        mock(IAccount.class))
+                .claims(new ClaimsRequest())
+                .build();
+
+        AuthenticationResult cachedResult = mock(AuthenticationResult.class);
+        when(cachedResult.accessToken()).thenReturn("valid-token");
+        when(cachedResult.expiresOn()).thenReturn(System.currentTimeMillis() / 1000 + 3600);
+
+        org.slf4j.Logger log = mock(org.slf4j.Logger.class);
+
+        assertEquals(CacheRefreshReason.CLAIMS,
+                SilentRequestHelper.getCacheRefreshReasonIfApplicable(params, cachedResult, log));
+    }
+
+    @Test
+    void getCacheRefreshReason_expiredToken_returnsExpired() {
+        SilentParameters params = SilentParameters.builder(
+                        Collections.singleton("scope"),
+                        mock(IAccount.class))
+                .build();
+
+        AuthenticationResult cachedResult = mock(AuthenticationResult.class);
+        when(cachedResult.accessToken()).thenReturn("expired-token");
+        when(cachedResult.expiresOn()).thenReturn(System.currentTimeMillis() / 1000 - 600);
+
+        org.slf4j.Logger log = mock(org.slf4j.Logger.class);
+
+        assertEquals(CacheRefreshReason.EXPIRED,
+                SilentRequestHelper.getCacheRefreshReasonIfApplicable(params, cachedResult, log));
+    }
+
+    @Test
+    void getCacheRefreshReason_proactiveRefresh_returnsProactiveRefresh() {
+        SilentParameters params = SilentParameters.builder(
+                        Collections.singleton("scope"),
+                        mock(IAccount.class))
+                .build();
+
+        long now = System.currentTimeMillis() / 1000;
+        AuthenticationResult cachedResult = mock(AuthenticationResult.class);
+        when(cachedResult.accessToken()).thenReturn("valid-token");
+        when(cachedResult.expiresOn()).thenReturn(now + 3600);
+        when(cachedResult.refreshOn()).thenReturn(now - 600);
+
+        org.slf4j.Logger log = mock(org.slf4j.Logger.class);
+
+        assertEquals(CacheRefreshReason.PROACTIVE_REFRESH,
+                SilentRequestHelper.getCacheRefreshReasonIfApplicable(params, cachedResult, log));
+    }
+
+    @Test
+    void getCacheRefreshReason_noAccessTokenWithRefreshToken_returnsNoCachedAccessToken() {
+        SilentParameters params = SilentParameters.builder(
+                        Collections.singleton("scope"),
+                        mock(IAccount.class))
+                .build();
+
+        AuthenticationResult cachedResult = mock(AuthenticationResult.class);
+        when(cachedResult.accessToken()).thenReturn(null);
+        when(cachedResult.refreshToken()).thenReturn("refresh-token-value");
+
+        org.slf4j.Logger log = mock(org.slf4j.Logger.class);
+
+        assertEquals(CacheRefreshReason.NO_CACHED_ACCESS_TOKEN,
+                SilentRequestHelper.getCacheRefreshReasonIfApplicable(params, cachedResult, log));
+    }
+
+    @Test
+    void getCacheRefreshReason_validToken_returnsNotApplicable() {
+        SilentParameters params = SilentParameters.builder(
+                        Collections.singleton("scope"),
+                        mock(IAccount.class))
+                .build();
+
+        long now = System.currentTimeMillis() / 1000;
+        AuthenticationResult cachedResult = mock(AuthenticationResult.class);
+        when(cachedResult.accessToken()).thenReturn("valid-token");
+        when(cachedResult.expiresOn()).thenReturn(now + 3600);
+        when(cachedResult.refreshOn()).thenReturn(null);
+
+        org.slf4j.Logger log = mock(org.slf4j.Logger.class);
+
+        assertEquals(CacheRefreshReason.NOT_APPLICABLE,
+                SilentRequestHelper.getCacheRefreshReasonIfApplicable(params, cachedResult, log));
+    }
 }

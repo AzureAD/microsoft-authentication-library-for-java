@@ -7,10 +7,14 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class ResponseParsingTest {
 
@@ -449,6 +453,214 @@ class ResponseParsingTest {
 
         // When name or info is null, toJson skips writing the content
         assertEquals("{}", output);
+    }
+
+    // ========== ClientInfo ==========
+
+    @Test
+    void clientInfo_createFromJson_validBase64() {
+        String json = "{\"uid\":\"user-id\",\"utid\":\"tenant-id\"}";
+        String base64 = java.util.Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        ClientInfo info = ClientInfo.createFromJson(base64);
+
+        assertNotNull(info);
+        assertEquals("user-id", info.getUniqueIdentifier());
+        assertEquals("tenant-id", info.getUniqueTenantIdentifier());
+        assertEquals("user-id.tenant-id", info.toAccountIdentifier());
+    }
+
+    @Test
+    void clientInfo_createFromJson_blankInput_returnsNull() {
+        assertNull(ClientInfo.createFromJson(null));
+        assertNull(ClientInfo.createFromJson(""));
+        assertNull(ClientInfo.createFromJson("   "));
+    }
+
+    @Test
+    void clientInfo_toJson_roundTrip() throws IOException {
+        String json = "{\"uid\":\"uid-1\",\"utid\":\"utid-1\"}";
+        ClientInfo original = TestHelper.parseJson(json, ClientInfo::fromJson);
+
+        String serialized = TestHelper.writeToJson(original);
+
+        assertTrue(serialized.contains("\"uid\":\"uid-1\""));
+        assertTrue(serialized.contains("\"utid\":\"utid-1\""));
+
+        ClientInfo roundTripped = TestHelper.parseJson(serialized, ClientInfo::fromJson);
+        assertEquals(original.getUniqueIdentifier(), roundTripped.getUniqueIdentifier());
+        assertEquals(original.getUniqueTenantIdentifier(), roundTripped.getUniqueTenantIdentifier());
+    }
+
+    @Test
+    void clientInfo_fromJson_unknownFieldsSkipped() throws IOException {
+        String json = "{\"uid\":\"u\",\"utid\":\"t\",\"extra\":\"ignored\"}";
+
+        ClientInfo info = TestHelper.parseJson(json, ClientInfo::fromJson);
+
+        assertEquals("u", info.getUniqueIdentifier());
+        assertEquals("t", info.getUniqueTenantIdentifier());
+    }
+
+    // ========== MsalServiceException ==========
+
+    @Test
+    void msalServiceException_errorResponseConstructor() {
+        ErrorResponse errorResponse = new ErrorResponse();
+        errorResponse.statusCode(401);
+        errorResponse.statusMessage("Unauthorized");
+        errorResponse.error("invalid_token");
+        errorResponse.errorDescription("Token is expired");
+        errorResponse.subError("token_expired");
+        errorResponse.correlation_id("corr-123");
+        errorResponse.claims("{\"access_token\":{}}");
+
+        Map<String, List<String>> headers = new HashMap<>();
+        headers.put("WWW-Authenticate", Collections.singletonList("Bearer"));
+
+        MsalServiceException ex = new MsalServiceException(errorResponse, headers);
+
+        assertEquals(401, ex.statusCode().intValue());
+        assertEquals("Unauthorized", ex.statusMessage());
+        assertEquals("invalid_token", ex.errorCode());
+        assertEquals("Token is expired", ex.getMessage());
+        assertEquals("token_expired", ex.subError());
+        assertEquals("corr-123", ex.correlationId());
+        assertEquals("{\"access_token\":{}}", ex.claims());
+        assertNotNull(ex.headers());
+        assertTrue(ex.headers().containsKey("WWW-Authenticate"));
+    }
+
+    @Test
+    void msalServiceException_discoveryResponseConstructor() throws IOException {
+        String json = "{\"error\":\"invalid_instance\","
+                + "\"error_description\":\"AADSTS50049: Unknown instance.\","
+                + "\"correlation_id\":\"disc-corr\"}";
+
+        AadInstanceDiscoveryResponse discoveryResponse =
+                TestHelper.parseJson(json, AadInstanceDiscoveryResponse::fromJson);
+
+        MsalServiceException ex = new MsalServiceException(discoveryResponse);
+
+        assertEquals("invalid_instance", ex.errorCode());
+        assertEquals("AADSTS50049: Unknown instance.", ex.getMessage());
+        assertEquals("disc-corr", ex.correlationId());
+        assertNull(ex.statusCode());
+        assertNull(ex.headers());
+    }
+
+    @Test
+    void msalServiceException_managedIdentityConstructor() {
+        MsalServiceException ex = new MsalServiceException(
+                "MI error", "managed_identity_error",
+                ManagedIdentitySourceType.APP_SERVICE);
+
+        assertEquals("MI error", ex.getMessage());
+        assertEquals("managed_identity_error", ex.errorCode());
+        assertEquals("APP_SERVICE", ex.managedIdentitySource());
+    }
+
+    // ========== MsalServiceExceptionFactory ==========
+
+    @Test
+    void msalServiceExceptionFactory_blankBody_returnsUnknownError() {
+        IHttpResponse response = mock(IHttpResponse.class);
+        when(response.body()).thenReturn("");
+        when(response.statusCode()).thenReturn(500);
+
+        MsalServiceException ex = MsalServiceExceptionFactory.fromHttpResponse(response);
+
+        assertEquals(AuthenticationErrorCode.UNKNOWN, ex.errorCode());
+        assertTrue(ex.getMessage().contains("500"));
+        assertTrue(ex.getMessage().contains("no response body"));
+    }
+
+    @Test
+    void msalServiceExceptionFactory_nullBody_returnsUnknownError() {
+        IHttpResponse response = mock(IHttpResponse.class);
+        when(response.body()).thenReturn(null);
+        when(response.statusCode()).thenReturn(503);
+
+        MsalServiceException ex = MsalServiceExceptionFactory.fromHttpResponse(response);
+
+        assertEquals(AuthenticationErrorCode.UNKNOWN, ex.errorCode());
+        assertTrue(ex.getMessage().contains("503"));
+    }
+
+    @Test
+    void msalServiceExceptionFactory_invalidGrant_interactionRequired() {
+        String body = "{\"error\":\"invalid_grant\","
+                + "\"error_description\":\"AADSTS50076: needs MFA\","
+                + "\"suberror\":\"basic_action\"}";
+
+        Map<String, List<String>> headers = new HashMap<>();
+        headers.put("Content-Type", Collections.singletonList("application/json"));
+
+        IHttpResponse response = mock(IHttpResponse.class);
+        when(response.body()).thenReturn(body);
+        when(response.statusCode()).thenReturn(400);
+        when(response.headers()).thenReturn(headers);
+
+        MsalServiceException ex = MsalServiceExceptionFactory.fromHttpResponse(response);
+
+        assertTrue(ex instanceof MsalInteractionRequiredException,
+                "invalid_grant with UI-required suberror should return MsalInteractionRequiredException");
+    }
+
+    @Test
+    void msalServiceExceptionFactory_invalidGrant_clientMismatch_notInteractionRequired() {
+        String body = "{\"error\":\"invalid_grant\","
+                + "\"error_description\":\"Client mismatch\","
+                + "\"suberror\":\"client_mismatch\"}";
+
+        Map<String, List<String>> headers = new HashMap<>();
+        headers.put("Content-Type", Collections.singletonList("application/json"));
+
+        IHttpResponse response = mock(IHttpResponse.class);
+        when(response.body()).thenReturn(body);
+        when(response.statusCode()).thenReturn(400);
+        when(response.headers()).thenReturn(headers);
+
+        MsalServiceException ex = MsalServiceExceptionFactory.fromHttpResponse(response);
+
+        assertFalse(ex instanceof MsalInteractionRequiredException,
+                "client_mismatch suberror should NOT return MsalInteractionRequiredException");
+        assertEquals(400, ex.statusCode().intValue());
+    }
+
+    @Test
+    void msalServiceExceptionFactory_invalidGrant_protectionPolicyRequired_notInteractionRequired() {
+        String body = "{\"error\":\"invalid_grant\","
+                + "\"error_description\":\"Protection policy required\","
+                + "\"suberror\":\"protection_policy_required\"}";
+
+        Map<String, List<String>> headers = new HashMap<>();
+        headers.put("Content-Type", Collections.singletonList("application/json"));
+
+        IHttpResponse response = mock(IHttpResponse.class);
+        when(response.body()).thenReturn(body);
+        when(response.statusCode()).thenReturn(400);
+        when(response.headers()).thenReturn(headers);
+
+        MsalServiceException ex = MsalServiceExceptionFactory.fromHttpResponse(response);
+
+        assertFalse(ex instanceof MsalInteractionRequiredException,
+                "protection_policy_required suberror should NOT return MsalInteractionRequiredException");
+    }
+
+    @Test
+    void msalServiceExceptionFactory_noErrorInBody_returnsUnknownError() {
+        String body = "{\"some_field\":\"some_value\"}";
+
+        IHttpResponse response = mock(IHttpResponse.class);
+        when(response.body()).thenReturn(body);
+        when(response.statusCode()).thenReturn(500);
+
+        MsalServiceException ex = MsalServiceExceptionFactory.fromHttpResponse(response);
+
+        assertEquals(AuthenticationErrorCode.UNKNOWN, ex.errorCode());
+        assertTrue(ex.getMessage().contains("500"));
     }
 
 }
