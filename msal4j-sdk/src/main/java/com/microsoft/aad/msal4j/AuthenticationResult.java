@@ -16,10 +16,10 @@ final class AuthenticationResult implements IAuthenticationResult {
     private final Long refreshOn;
     private final String familyId;
     private final String idToken;
-    private final IdToken idTokenObject = getIdTokenObj();
+    private final IdToken idTokenObject;
     private final AccountCacheEntity accountCacheEntity;
-    private final IAccount account = getAccount();
-    private final ITenantProfile tenantProfile = getTenantProfile();
+    private final IAccount account;
+    private final ITenantProfile tenantProfile;
     private String environment;
     private final Date expiresOnDate;
     private final String scopes;
@@ -40,6 +40,9 @@ final class AuthenticationResult implements IAuthenticationResult {
         this.metadata = metadata == null ? AuthenticationResultMetadata.builder().build() : metadata;
         this.isPopAuthorization = isPopAuthorization;
         this.expiresOnDate = new Date(expiresOn * 1000);
+        this.idTokenObject = getIdTokenObj();
+        this.account = getAccount();
+        this.tenantProfile = getTenantProfile();
     }
 
     private IdToken getIdTokenObj() {
@@ -47,7 +50,11 @@ final class AuthenticationResult implements IAuthenticationResult {
             return null;
         }
 
-        return JsonHelper.createIdTokenFromEncodedTokenString(idToken);
+        try {
+            return JsonHelper.createIdTokenFromEncodedTokenString(idToken);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private IAccount getAccount() {
@@ -62,7 +69,16 @@ final class AuthenticationResult implements IAuthenticationResult {
             return null;
         }
 
-        return new TenantProfile(JsonHelper.parseJsonToMap(JsonHelper.getTokenPayloadClaims(idToken)), getAccount().environment());
+        IAccount acct = getAccount();
+        if (acct == null) {
+            return null;
+        }
+
+        try {
+            return new TenantProfile(JsonHelper.parseJsonToMap(JsonHelper.getTokenPayloadClaims(idToken)), acct.environment());
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public String accessToken() {
@@ -114,7 +130,7 @@ final class AuthenticationResult implements IAuthenticationResult {
     }
 
     public IAccount account() {
-        return getAccount();
+        return this.account;
     }
 
     public ITenantProfile tenantProfile() {

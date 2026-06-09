@@ -25,16 +25,6 @@ class AuthenticationResultTest {
     private static final String ENVIRONMENT = "login.microsoftonline.com";
     private static final String SCOPES = "user.read openid";
 
-    // Metadata is shared across equals/hashCode tests because AuthenticationResultMetadata
-    // does not implement equals(), so two separately-constructed instances will fail
-    // reference equality even if all fields match.
-    private static final AuthenticationResultMetadata SHARED_METADATA =
-            AuthenticationResultMetadata.builder()
-                    .tokenSource(TokenSource.IDENTITY_PROVIDER)
-                    .refreshOn(REFRESH_ON)
-                    .cacheRefreshReason(CacheRefreshReason.NOT_APPLICABLE)
-                    .build();
-
     private static AccountCacheEntity buildAccountCacheEntity() {
         AccountCacheEntity entity = new AccountCacheEntity();
         entity.homeAccountId = "uid.utid";
@@ -46,11 +36,14 @@ class AuthenticationResultTest {
         return entity;
     }
 
-    /**
-     * Builds a result with no idToken (and thus no idTokenObject or tenantProfile), which
-     * is needed for equals/hashCode tests because IdToken and TenantProfile do not implement
-     * equals(). This ensures equals() comparisons are based on value equality of all fields.
-     */
+    private static AuthenticationResultMetadata buildMetadata() {
+        return AuthenticationResultMetadata.builder()
+                .tokenSource(TokenSource.IDENTITY_PROVIDER)
+                .refreshOn(REFRESH_ON)
+                .cacheRefreshReason(CacheRefreshReason.NOT_APPLICABLE)
+                .build();
+    }
+
     private static AuthenticationResult buildBaselineResult() {
         return AuthenticationResult.builder()
                 .accessToken(ACCESS_TOKEN)
@@ -62,7 +55,7 @@ class AuthenticationResultTest {
                 .accountCacheEntity(buildAccountCacheEntity())
                 .environment(ENVIRONMENT)
                 .scopes(SCOPES)
-                .metadata(SHARED_METADATA)
+                .metadata(buildMetadata())
                 .isPopAuthorization(false)
                 .build();
     }
@@ -141,17 +134,13 @@ class AuthenticationResultTest {
     // ========== Derived Field Tests ==========
 
     @Test
-    void build_WithIdToken_IdTokenObjectIsNull_DueToInitOrder() {
-        // Documents a known issue: field initializers run before the constructor body,
-        // so idTokenObject = getIdTokenObj() executes when this.idToken is still null.
-        // This means idTokenObject() always returns null regardless of the idToken value.
+    void build_WithIdToken_IdTokenObjectIsParsed() {
         AuthenticationResult result = AuthenticationResult.builder()
                 .idToken(TestHelper.ENCODED_JWT)
                 .build();
 
-        assertNull(result.idTokenObject(),
-                "idTokenObject is always null due to field initialization order");
-        // The idToken string itself is stored correctly
+        assertNotNull(result.idTokenObject(),
+                "idTokenObject should be parsed from the idToken string");
         assertEquals(TestHelper.ENCODED_JWT, result.idToken());
     }
 
@@ -165,9 +154,7 @@ class AuthenticationResultTest {
     }
 
     @Test
-    void build_WithAccountCacheEntity_PublicGetterRecomputesAccount() {
-        // The public account() getter calls getAccount() each time, so it works correctly
-        // despite the field initialization order bug (the private 'account' field is always null).
+    void build_WithAccountCacheEntity_AccountIsSet() {
         AccountCacheEntity entity = buildAccountCacheEntity();
 
         AuthenticationResult result = AuthenticationResult.builder()
@@ -191,10 +178,7 @@ class AuthenticationResultTest {
     }
 
     @Test
-    void build_WithIdTokenAndAccount_TenantProfileIsNull_DueToInitOrder() {
-        // Documents same initialization order issue: tenantProfile = getTenantProfile()
-        // runs before this.idToken is set, so StringHelper.isBlank(idToken) returns true
-        // and tenantProfile is always null.
+    void build_WithIdTokenAndAccount_TenantProfileIsSet() {
         AccountCacheEntity entity = buildAccountCacheEntity();
 
         AuthenticationResult result = AuthenticationResult.builder()
@@ -202,8 +186,24 @@ class AuthenticationResultTest {
                 .accountCacheEntity(entity)
                 .build();
 
+        assertNotNull(result.tenantProfile(),
+                "tenantProfile should be computed from idToken and account");
+        assertEquals(ENVIRONMENT, result.tenantProfile().environment());
+        assertNotNull(result.tenantProfile().getClaims());
+    }
+
+    @Test
+    void build_WithIdTokenButNullAccount_TenantProfileIsNull() {
+        // When idToken is present but accountCacheEntity is null, getTenantProfile()
+        // gracefully returns null instead of throwing NPE.
+        AuthenticationResult result = AuthenticationResult.builder()
+                .idToken(TestHelper.ENCODED_JWT)
+                .accountCacheEntity(null)
+                .build();
+
         assertNull(result.tenantProfile(),
-                "tenantProfile is always null due to field initialization order");
+                "tenantProfile should be null when no account is available");
+        assertEquals(TestHelper.ENCODED_JWT, result.idToken());
     }
 
     @Test
@@ -253,10 +253,6 @@ class AuthenticationResultTest {
 
     @Test
     void equals_IdenticalFields_NoIdToken_ReturnsTrue() {
-        // Two independently-constructed results with identical fields and shared metadata
-        // should be equal when idToken is blank (avoiding IdToken/TenantProfile reference
-        // equality issues). This is the only scenario where equals() works for separately
-        // constructed instances, because AuthenticationResultMetadata also lacks equals().
         AuthenticationResult result1 = buildBaselineResult();
         AuthenticationResult result2 = buildBaselineResult();
         assertEquals(result1, result2);
@@ -264,10 +260,7 @@ class AuthenticationResultTest {
 
     /**
      * Parameterized test that verifies each field in equals() by varying one field at a time
-     * from the baseline. Uses blank idToken and shared metadata to ensure reference equality
-     * issues in IdToken/TenantProfile/Metadata don't interfere.
-     *
-     * Each argument set contains: field name (for display), and a result with that field changed.
+     * from the baseline.
      */
     @ParameterizedTest(name = "equals returns false when {0} differs")
     @MethodSource("differentFieldProvider")
@@ -290,7 +283,9 @@ class AuthenticationResultTest {
                 Arguments.of("environment", buildWithOverride().environment("different.env").build()),
                 Arguments.of("scopes", buildWithOverride().scopes("different.scope").build()),
                 Arguments.of("isPopAuthorization", buildWithOverride().isPopAuthorization(true).build()),
-                Arguments.of("accountCacheEntity", buildWithOverride().accountCacheEntity(differentAccount).build())
+                Arguments.of("accountCacheEntity", buildWithOverride().accountCacheEntity(differentAccount).build()),
+                Arguments.of("metadata", buildWithOverride().metadata(
+                        AuthenticationResultMetadata.builder().tokenSource(TokenSource.CACHE).build()).build())
         );
     }
 
@@ -308,36 +303,30 @@ class AuthenticationResultTest {
                 .accountCacheEntity(buildAccountCacheEntity())
                 .environment(ENVIRONMENT)
                 .scopes(SCOPES)
-                .metadata(SHARED_METADATA)
+                .metadata(buildMetadata())
                 .isPopAuthorization(false);
     }
 
     @Test
-    void equals_IdTokenSetOnBoth_ReturnsTrue_BecauseIdTokenObjectAlwaysNull() {
-        // Despite IdToken lacking equals(), this comparison passes because the field
-        // initialization order bug means idTokenObject is always null for both results.
-        // The idToken string comparison (line 238) passes, and the idTokenObject comparison
-        // (line 239) passes because both are null.
+    void equals_IdTokenSetOnBoth_ReturnsTrue() {
         AccountCacheEntity entity = buildAccountCacheEntity();
         AuthenticationResult result1 = AuthenticationResult.builder()
                 .idToken(TestHelper.ENCODED_JWT)
                 .accountCacheEntity(entity)
-                .metadata(SHARED_METADATA)
+                .metadata(buildMetadata())
                 .build();
         AuthenticationResult result2 = AuthenticationResult.builder()
                 .idToken(TestHelper.ENCODED_JWT)
                 .accountCacheEntity(entity)
-                .metadata(SHARED_METADATA)
+                .metadata(buildMetadata())
                 .build();
 
         assertEquals(result1, result2,
-                "Results with same idToken are equal because idTokenObject is always null");
+                "Results with same idToken should be equal");
     }
 
     @Test
-    void equals_DifferentMetadataInstances_ReturnsFalse() {
-        // Documents that AuthenticationResultMetadata also lacks equals(), so two results
-        // with equivalent but separately-constructed metadata instances will not be equal.
+    void equals_EquivalentMetadataInstances_ReturnsTrue() {
         AuthenticationResultMetadata meta1 = AuthenticationResultMetadata.builder()
                 .tokenSource(TokenSource.CACHE).build();
         AuthenticationResultMetadata meta2 = AuthenticationResultMetadata.builder()
@@ -352,8 +341,28 @@ class AuthenticationResultTest {
                 .metadata(meta2)
                 .build();
 
+        assertEquals(result1, result2,
+                "Results with equivalent metadata instances should be equal");
+    }
+
+    @Test
+    void equals_DifferentMetadataValues_ReturnsFalse() {
+        AuthenticationResultMetadata meta1 = AuthenticationResultMetadata.builder()
+                .tokenSource(TokenSource.CACHE).build();
+        AuthenticationResultMetadata meta2 = AuthenticationResultMetadata.builder()
+                .tokenSource(TokenSource.IDENTITY_PROVIDER).build();
+
+        AuthenticationResult result1 = AuthenticationResult.builder()
+                .expiresOn(EXPIRES_ON)
+                .metadata(meta1)
+                .build();
+        AuthenticationResult result2 = AuthenticationResult.builder()
+                .expiresOn(EXPIRES_ON)
+                .metadata(meta2)
+                .build();
+
         assertNotEquals(result1, result2,
-                "Two results with equivalent metadata instances are not equal because AuthenticationResultMetadata lacks equals()");
+                "Results with different metadata values should not be equal");
     }
 
     @Test
@@ -398,7 +407,7 @@ class AuthenticationResultTest {
                 .accountCacheEntity(buildAccountCacheEntity())
                 .environment(ENVIRONMENT)
                 .scopes(SCOPES)
-                .metadata(SHARED_METADATA)
+                .metadata(buildMetadata())
                 .isPopAuthorization(true)
                 .build();
 
@@ -464,5 +473,41 @@ class AuthenticationResultTest {
         assertTrue(toString.contains("CACHE"));
         assertTrue(toString.contains("100"));
         assertTrue(toString.contains("EXPIRED"));
+    }
+
+    @Test
+    void metadata_Equals_SameValues_ReturnsTrue() {
+        AuthenticationResultMetadata meta1 = AuthenticationResultMetadata.builder()
+                .tokenSource(TokenSource.CACHE)
+                .refreshOn(100L)
+                .cacheRefreshReason(CacheRefreshReason.EXPIRED)
+                .build();
+        AuthenticationResultMetadata meta2 = AuthenticationResultMetadata.builder()
+                .tokenSource(TokenSource.CACHE)
+                .refreshOn(100L)
+                .cacheRefreshReason(CacheRefreshReason.EXPIRED)
+                .build();
+
+        assertEquals(meta1, meta2);
+        assertEquals(meta1.hashCode(), meta2.hashCode());
+    }
+
+    @Test
+    void metadata_Equals_DifferentTokenSource_ReturnsFalse() {
+        AuthenticationResultMetadata meta1 = AuthenticationResultMetadata.builder()
+                .tokenSource(TokenSource.CACHE).build();
+        AuthenticationResultMetadata meta2 = AuthenticationResultMetadata.builder()
+                .tokenSource(TokenSource.IDENTITY_PROVIDER).build();
+
+        assertNotEquals(meta1, meta2);
+    }
+
+    @Test
+    void metadata_Equals_NullAndWrongType() {
+        AuthenticationResultMetadata meta = AuthenticationResultMetadata.builder().build();
+
+        assertFalse(meta.equals(null));
+        assertFalse(meta.equals("not metadata"));
+        assertEquals(meta, meta);
     }
 }

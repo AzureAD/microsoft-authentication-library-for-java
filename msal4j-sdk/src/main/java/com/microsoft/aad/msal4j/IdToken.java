@@ -10,6 +10,7 @@ import com.azure.json.JsonWriter;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Objects;
 
 class IdToken implements Serializable, JsonSerializable<IdToken> {
 
@@ -100,5 +101,33 @@ class IdToken implements Serializable, JsonSerializable<IdToken> {
         jsonWriter.writeEndObject();
 
         return jsonWriter;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof IdToken)) return false;
+
+        IdToken other = (IdToken) o;
+
+        return Objects.equals(issuer, other.issuer)
+                && Objects.equals(subject, other.subject)
+                && Objects.equals(audience, other.audience)
+                && Objects.equals(expirationTime, other.expirationTime)
+                && Objects.equals(issuedAt, other.issuedAt)
+                && Objects.equals(notBefore, other.notBefore)
+                && Objects.equals(name, other.name)
+                && Objects.equals(preferredUsername, other.preferredUsername)
+                && Objects.equals(objectIdentifier, other.objectIdentifier)
+                && Objects.equals(tenantIdentifier, other.tenantIdentifier)
+                && Objects.equals(upn, other.upn)
+                && Objects.equals(uniqueName, other.uniqueName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(issuer, subject, audience, expirationTime, issuedAt,
+                notBefore, name, preferredUsername, objectIdentifier,
+                tenantIdentifier, upn, uniqueName);
     }
 }
