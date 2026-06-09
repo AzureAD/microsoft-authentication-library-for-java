@@ -5,11 +5,7 @@ package com.microsoft.aad.msal4j;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.Collections;
@@ -17,6 +13,8 @@ import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
 
 
 class AcquireTokenSilentlyTest {
@@ -212,7 +210,7 @@ class AcquireTokenSilentlyTest {
         when(cachedResult.accessToken()).thenReturn("valid-token");
         when(cachedResult.expiresOn()).thenReturn(System.currentTimeMillis() / 1000 + 3600);
 
-        org.slf4j.Logger log = mock(org.slf4j.Logger.class);
+        Logger log = mock(Logger.class);
 
         assertEquals(CacheRefreshReason.CLAIMS,
                 SilentRequestHelper.getCacheRefreshReasonIfApplicable(params, cachedResult, log));
@@ -229,7 +227,7 @@ class AcquireTokenSilentlyTest {
         when(cachedResult.accessToken()).thenReturn("expired-token");
         when(cachedResult.expiresOn()).thenReturn(System.currentTimeMillis() / 1000 - 600);
 
-        org.slf4j.Logger log = mock(org.slf4j.Logger.class);
+        Logger log = mock(Logger.class);
 
         assertEquals(CacheRefreshReason.EXPIRED,
                 SilentRequestHelper.getCacheRefreshReasonIfApplicable(params, cachedResult, log));
@@ -248,7 +246,7 @@ class AcquireTokenSilentlyTest {
         when(cachedResult.expiresOn()).thenReturn(now + 3600);
         when(cachedResult.refreshOn()).thenReturn(now - 600);
 
-        org.slf4j.Logger log = mock(org.slf4j.Logger.class);
+        Logger log = mock(Logger.class);
 
         assertEquals(CacheRefreshReason.PROACTIVE_REFRESH,
                 SilentRequestHelper.getCacheRefreshReasonIfApplicable(params, cachedResult, log));
@@ -265,7 +263,7 @@ class AcquireTokenSilentlyTest {
         when(cachedResult.accessToken()).thenReturn(null);
         when(cachedResult.refreshToken()).thenReturn("refresh-token-value");
 
-        org.slf4j.Logger log = mock(org.slf4j.Logger.class);
+        Logger log = mock(Logger.class);
 
         assertEquals(CacheRefreshReason.NO_CACHED_ACCESS_TOKEN,
                 SilentRequestHelper.getCacheRefreshReasonIfApplicable(params, cachedResult, log));
@@ -284,7 +282,7 @@ class AcquireTokenSilentlyTest {
         when(cachedResult.expiresOn()).thenReturn(now + 3600);
         when(cachedResult.refreshOn()).thenReturn(null);
 
-        org.slf4j.Logger log = mock(org.slf4j.Logger.class);
+        Logger log = mock(Logger.class);
 
         assertEquals(CacheRefreshReason.NOT_APPLICABLE,
                 SilentRequestHelper.getCacheRefreshReasonIfApplicable(params, cachedResult, log));

@@ -6,7 +6,9 @@ package com.microsoft.aad.msal4j;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -460,8 +462,8 @@ class ResponseParsingTest {
     @Test
     void clientInfo_createFromJson_validBase64() {
         String json = "{\"uid\":\"user-id\",\"utid\":\"tenant-id\"}";
-        String base64 = java.util.Base64.getUrlEncoder().withoutPadding()
-                .encodeToString(json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        String base64 = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(json.getBytes(StandardCharsets.UTF_8));
 
         ClientInfo info = ClientInfo.createFromJson(base64);
 
@@ -563,13 +565,31 @@ class ResponseParsingTest {
 
     // ========== MsalServiceExceptionFactory ==========
 
+    private IHttpResponse mockHttpResponse(String body, int statusCode) {
+        return mockHttpResponse(body, statusCode, null);
+    }
+
+    private IHttpResponse mockHttpResponse(String body, int statusCode,
+                                           Map<String, List<String>> headers) {
+        IHttpResponse response = mock(IHttpResponse.class);
+        when(response.body()).thenReturn(body);
+        when(response.statusCode()).thenReturn(statusCode);
+        if (headers != null) {
+            when(response.headers()).thenReturn(headers);
+        }
+        return response;
+    }
+
+    private Map<String, List<String>> jsonContentTypeHeaders() {
+        Map<String, List<String>> headers = new HashMap<>();
+        headers.put("Content-Type", Collections.singletonList("application/json"));
+        return headers;
+    }
+
     @Test
     void msalServiceExceptionFactory_blankBody_returnsUnknownError() {
-        IHttpResponse response = mock(IHttpResponse.class);
-        when(response.body()).thenReturn("");
-        when(response.statusCode()).thenReturn(500);
-
-        MsalServiceException ex = MsalServiceExceptionFactory.fromHttpResponse(response);
+        MsalServiceException ex = MsalServiceExceptionFactory.fromHttpResponse(
+                mockHttpResponse("", 500));
 
         assertEquals(AuthenticationErrorCode.UNKNOWN, ex.errorCode());
         assertTrue(ex.getMessage().contains("500"));
@@ -578,11 +598,8 @@ class ResponseParsingTest {
 
     @Test
     void msalServiceExceptionFactory_nullBody_returnsUnknownError() {
-        IHttpResponse response = mock(IHttpResponse.class);
-        when(response.body()).thenReturn(null);
-        when(response.statusCode()).thenReturn(503);
-
-        MsalServiceException ex = MsalServiceExceptionFactory.fromHttpResponse(response);
+        MsalServiceException ex = MsalServiceExceptionFactory.fromHttpResponse(
+                mockHttpResponse(null, 503));
 
         assertEquals(AuthenticationErrorCode.UNKNOWN, ex.errorCode());
         assertTrue(ex.getMessage().contains("503"));
@@ -594,15 +611,8 @@ class ResponseParsingTest {
                 + "\"error_description\":\"AADSTS50076: needs MFA\","
                 + "\"suberror\":\"basic_action\"}";
 
-        Map<String, List<String>> headers = new HashMap<>();
-        headers.put("Content-Type", Collections.singletonList("application/json"));
-
-        IHttpResponse response = mock(IHttpResponse.class);
-        when(response.body()).thenReturn(body);
-        when(response.statusCode()).thenReturn(400);
-        when(response.headers()).thenReturn(headers);
-
-        MsalServiceException ex = MsalServiceExceptionFactory.fromHttpResponse(response);
+        MsalServiceException ex = MsalServiceExceptionFactory.fromHttpResponse(
+                mockHttpResponse(body, 400, jsonContentTypeHeaders()));
 
         assertTrue(ex instanceof MsalInteractionRequiredException,
                 "invalid_grant with UI-required suberror should return MsalInteractionRequiredException");
@@ -614,15 +624,8 @@ class ResponseParsingTest {
                 + "\"error_description\":\"Client mismatch\","
                 + "\"suberror\":\"client_mismatch\"}";
 
-        Map<String, List<String>> headers = new HashMap<>();
-        headers.put("Content-Type", Collections.singletonList("application/json"));
-
-        IHttpResponse response = mock(IHttpResponse.class);
-        when(response.body()).thenReturn(body);
-        when(response.statusCode()).thenReturn(400);
-        when(response.headers()).thenReturn(headers);
-
-        MsalServiceException ex = MsalServiceExceptionFactory.fromHttpResponse(response);
+        MsalServiceException ex = MsalServiceExceptionFactory.fromHttpResponse(
+                mockHttpResponse(body, 400, jsonContentTypeHeaders()));
 
         assertFalse(ex instanceof MsalInteractionRequiredException,
                 "client_mismatch suberror should NOT return MsalInteractionRequiredException");
@@ -635,15 +638,8 @@ class ResponseParsingTest {
                 + "\"error_description\":\"Protection policy required\","
                 + "\"suberror\":\"protection_policy_required\"}";
 
-        Map<String, List<String>> headers = new HashMap<>();
-        headers.put("Content-Type", Collections.singletonList("application/json"));
-
-        IHttpResponse response = mock(IHttpResponse.class);
-        when(response.body()).thenReturn(body);
-        when(response.statusCode()).thenReturn(400);
-        when(response.headers()).thenReturn(headers);
-
-        MsalServiceException ex = MsalServiceExceptionFactory.fromHttpResponse(response);
+        MsalServiceException ex = MsalServiceExceptionFactory.fromHttpResponse(
+                mockHttpResponse(body, 400, jsonContentTypeHeaders()));
 
         assertFalse(ex instanceof MsalInteractionRequiredException,
                 "protection_policy_required suberror should NOT return MsalInteractionRequiredException");
@@ -651,13 +647,8 @@ class ResponseParsingTest {
 
     @Test
     void msalServiceExceptionFactory_noErrorInBody_returnsUnknownError() {
-        String body = "{\"some_field\":\"some_value\"}";
-
-        IHttpResponse response = mock(IHttpResponse.class);
-        when(response.body()).thenReturn(body);
-        when(response.statusCode()).thenReturn(500);
-
-        MsalServiceException ex = MsalServiceExceptionFactory.fromHttpResponse(response);
+        MsalServiceException ex = MsalServiceExceptionFactory.fromHttpResponse(
+                mockHttpResponse("{\"some_field\":\"some_value\"}", 500));
 
         assertEquals(AuthenticationErrorCode.UNKNOWN, ex.errorCode());
         assertTrue(ex.getMessage().contains("500"));
