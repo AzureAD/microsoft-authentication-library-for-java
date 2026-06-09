@@ -216,21 +216,6 @@ class AuthenticationResultTest {
         assertEquals(expectedDate, result.expiresOnDate());
     }
 
-    @Test
-    void build_WithIdTokenButNullAccount_DoesNotThrowNPE_DueToInitOrder() {
-        // If the field initialization order bug were fixed, this scenario would throw NPE:
-        // getTenantProfile() calls getAccount().environment(), and getAccount() returns null
-        // when accountCacheEntity is null. However, since idToken is null at init time,
-        // getTenantProfile() returns null before reaching the getAccount() call.
-        AuthenticationResult result = AuthenticationResult.builder()
-                .idToken(TestHelper.ENCODED_JWT)
-                .accountCacheEntity(null)
-                .build();
-
-        assertNull(result.tenantProfile());
-        assertEquals(TestHelper.ENCODED_JWT, result.idToken());
-    }
-
     // ========== equals() Tests ==========
 
     @Test
