@@ -113,7 +113,7 @@ public class RefreshTokenParameters implements IAcquireTokenParameters {
          * Cannot be null.
          */
         public RefreshTokenParametersBuilder refreshToken(String refreshToken) {
-            validateNotNull("refreshToken", scopes);
+            validateNotNull("refreshToken", refreshToken);
 
             this.refreshToken = refreshToken;
             return this;

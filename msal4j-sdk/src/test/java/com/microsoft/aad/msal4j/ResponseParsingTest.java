@@ -108,25 +108,47 @@ class ResponseParsingTest {
     }
 
     @Test
-    void errorResponse_toJson_throwsDueToDoubleStartObject() {
-        // Bug: ErrorResponse.toJson() calls writeStartObject() twice (lines 68, 70)
-        // which causes an IllegalStateException from the JSON writer
+    void errorResponse_toJson_allFields() throws IOException {
         ErrorResponse response = new ErrorResponse();
         response.statusCode(400);
         response.error("invalid_grant");
+        response.errorDescription("Token expired");
+        response.subError("token_expired");
+        response.correlation_id("corr-123");
+        response.claims("{\"access_token\":{}}");
 
-        assertThrows(IllegalStateException.class, () -> TestHelper.writeToJson(response),
-                "toJson has a double writeStartObject bug that causes IllegalStateException");
+        String output = TestHelper.writeToJson(response);
+
+        assertTrue(output.contains("\"statusCode\":400"));
+        assertTrue(output.contains("\"error\":\"invalid_grant\""));
+        assertTrue(output.contains("\"error_description\":\"Token expired\""));
+        assertTrue(output.contains("\"suberror\":\"token_expired\""));
+        assertTrue(output.contains("\"correlation_id\":\"corr-123\""));
+        assertTrue(output.contains("\"claims\":\"{\\\"access_token\\\":{}}\""));
     }
 
     @Test
-    void errorResponse_toJson_nullErrorCodes_throwsDueToDoubleStartObject() {
-        // Same double writeStartObject bug affects all toJson calls
+    void errorResponse_toJson_nullErrorCodes_writesNull() throws IOException {
         ErrorResponse response = new ErrorResponse();
         response.statusCode(500);
         response.error("server_error");
 
-        assertThrows(IllegalStateException.class, () -> TestHelper.writeToJson(response));
+        String output = TestHelper.writeToJson(response);
+
+        assertTrue(output.contains("\"error\":\"server_error\""));
+        assertTrue(output.contains("\"error_codes\":null"));
+    }
+
+    @Test
+    void errorResponse_toJson_withErrorCodes() throws IOException {
+        ErrorResponse response = new ErrorResponse();
+        response.statusCode(400);
+        response.error("invalid_request");
+        response.errorCodes(new long[]{50076, 700082});
+
+        String output = TestHelper.writeToJson(response);
+
+        assertTrue(output.contains("\"error_codes\":[50076,700082]"));
     }
 
     // ========== UserDiscoveryResponse ==========
@@ -272,8 +294,7 @@ class ResponseParsingTest {
     }
 
     @Test
-    void oidcDiscoveryResponse_toJson_doesNotIncludeIssuer() throws IOException {
-        // Note: toJson() intentionally omits the issuer field — this test documents that behavior
+    void oidcDiscoveryResponse_toJson_includesIssuer() throws IOException {
         String json = "{\"authorization_endpoint\":\"https://example.com/auth\","
                 + "\"token_endpoint\":\"https://example.com/token\","
                 + "\"device_authorization_endpoint\":\"https://example.com/device\","
@@ -283,11 +304,10 @@ class ResponseParsingTest {
 
         String output = TestHelper.writeToJson(response);
 
-        assertTrue(output.contains("authorization_endpoint"));
-        assertTrue(output.contains("token_endpoint"));
-        assertTrue(output.contains("device_authorization_endpoint"));
-        // toJson does not write the issuer field
-        assertFalse(output.contains("\"issuer\""));
+        assertTrue(output.contains("\"issuer\":\"https://example.com/issuer\""));
+        assertTrue(output.contains("\"authorization_endpoint\":\"https://example.com/auth\""));
+        assertTrue(output.contains("\"token_endpoint\":\"https://example.com/token\""));
+        assertTrue(output.contains("\"device_authorization_endpoint\":\"https://example.com/device\""));
     }
 
     // ========== RequestedClaimAdditionalInfo ==========
@@ -437,14 +457,15 @@ class ResponseParsingTest {
     }
 
     @Test
-    void requestedClaim_toJson_withNameAndInfo_throwsDueToBadStringWrite() {
-        // Bug: RequestedClaim.toJson() calls writeString(name) inside an object context,
-        // which is invalid JSON (a raw string value where a field name is expected)
+    void requestedClaim_toJson_withNameAndInfo_writesFieldWithObject() throws IOException {
         RequestedClaimAdditionalInfo info = new RequestedClaimAdditionalInfo(true, null, null);
         RequestedClaim claim = new RequestedClaim("sub", info);
 
-        assertThrows(IllegalStateException.class, () -> TestHelper.writeToJson(claim),
-                "toJson writes a raw string in object context, causing IllegalStateException");
+        String output = TestHelper.writeToJson(claim);
+
+        // Should produce: {"sub":{"essential":true}}
+        assertTrue(output.contains("\"sub\""));
+        assertTrue(output.contains("\"essential\":true"));
     }
 
     @Test

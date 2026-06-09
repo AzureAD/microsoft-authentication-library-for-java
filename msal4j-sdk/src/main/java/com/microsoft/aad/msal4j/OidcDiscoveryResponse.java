@@ -47,6 +47,7 @@ class OidcDiscoveryResponse implements JsonSerializable<OidcDiscoveryResponse> {
 
     public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
         jsonWriter.writeStartObject();
+        jsonWriter.writeStringField("issuer", issuer);
         jsonWriter.writeStringField("authorization_endpoint", authorizationEndpoint);
         jsonWriter.writeStringField("token_endpoint", tokenEndpoint);
         jsonWriter.writeStringField("device_authorization_endpoint", deviceCodeEndpoint);

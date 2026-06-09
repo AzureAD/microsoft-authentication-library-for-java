@@ -72,17 +72,12 @@ class ParameterBuilderTest {
     }
 
     @Test
-    void deviceCodeFlow_DeviceCodeConsumerValidation_ValidatesWrongField() {
-        // BUG: DeviceCodeFlowParameters.Builder.deviceCodeConsumer() validates scopes
-        // instead of the deviceCodeConsumer parameter (copy-paste bug on line 118).
-        // Since scopes was already set by builder(scopes, consumer), passing null consumer
-        // does NOT throw — it silently accepts null.
-        DeviceCodeFlowParameters params = DeviceCodeFlowParameters
-                .builder(SCOPES, dc -> {})
-                .deviceCodeConsumer(null)
-                .build();
-
-        assertNull(params.deviceCodeConsumer());
+    void deviceCodeFlow_DeviceCodeConsumerValidation_RejectsNull() {
+        assertThrows(IllegalArgumentException.class, () ->
+                DeviceCodeFlowParameters
+                        .builder(SCOPES, dc -> {})
+                        .deviceCodeConsumer(null)
+                        .build());
     }
 
     // ========== IntegratedWindowsAuthenticationParameters ==========
@@ -505,17 +500,12 @@ class ParameterBuilderTest {
     }
 
     @Test
-    void refreshToken_BuilderRefreshTokenValidation_ValidatesWrongField() {
-        // BUG: RefreshTokenParameters.Builder.refreshToken() validates scopes
-        // instead of the refreshToken parameter (copy-paste bug on line 116).
-        // Since scopes was already set by builder(scopes, token), passing null
-        // to the builder setter does NOT throw.
-        RefreshTokenParameters params = RefreshTokenParameters
-                .builder(SCOPES, "initial-token")
-                .refreshToken(null)
-                .build();
-
-        assertNull(params.refreshToken());
+    void refreshToken_BuilderRefreshTokenValidation_RejectsNull() {
+        assertThrows(IllegalArgumentException.class, () ->
+                RefreshTokenParameters
+                        .builder(SCOPES, "initial-token")
+                        .refreshToken(null)
+                        .build());
     }
 
     // ========== AuthorizationCodeParameters ==========
