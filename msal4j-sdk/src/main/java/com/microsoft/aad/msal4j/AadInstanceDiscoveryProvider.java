@@ -28,8 +28,8 @@ class AadInstanceDiscoveryProvider {
     private static final int PORT_NOT_SET = -1;
 
     // For information of the current api-version refer: https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service#versioning
-    private static final String DEFAULT_API_VERSION = "2020-06-01";
-    private static final String IMDS_ENDPOINT = "http://169.254.169.254/metadata/instance/compute/location?api-version=" + DEFAULT_API_VERSION + "&format=text";
+    private static final String DEFAULT_API_VERSION = "2021-02-01";
+    private static final String IMDS_ENDPOINT = "http://169.254.169.254/metadata/instance/compute?api-version=" + DEFAULT_API_VERSION;
 
     private static final int IMDS_TIMEOUT = 2;
     private static final TimeUnit IMDS_TIMEOUT_UNIT = TimeUnit.SECONDS;
@@ -319,14 +319,17 @@ class AadInstanceDiscoveryProvider {
         try {
             LOG.info("Starting call to IMDS endpoint.");
             IHttpResponse httpResponse = future.get(IMDS_TIMEOUT, IMDS_TIMEOUT_UNIT);
-            //If call to IMDS endpoint was successful, return region from response body
-            if (httpResponse.statusCode() == HttpStatus.HTTP_OK && !httpResponse.body().isEmpty()) {
-                LOG.info("Region retrieved from IMDS endpoint: {}", httpResponse.body());
-                currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_IMDS.telemetryValue);
+            //If call to IMDS endpoint was successful, parse the region from the JSON response body
+            if (httpResponse.statusCode() == HttpStatus.HTTP_OK) {
+                String region = parseRegionFromImdsResponse(httpResponse.body());
+                if (!StringHelper.isBlank(region)) {
+                    LOG.info("Region retrieved from IMDS endpoint: {}", region);
+                    currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_IMDS.telemetryValue);
 
-                return httpResponse.body();
+                    return region;
+                }
             }
-            LOG.warn("Call to local IMDS failed with status code: {}, or response was empty", httpResponse.statusCode());
+            LOG.warn("Call to local IMDS failed with status code: {}, or response was empty or missing a region", httpResponse.statusCode());
             currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_FAILED_AUTODETECT.telemetryValue);
         } catch (Exception ex) {
             // handle other exceptions
@@ -342,6 +345,30 @@ class AadInstanceDiscoveryProvider {
         }
 
         return null;
+    }
+
+    /**
+     * Parses the region from the IMDS {@code /compute} JSON response body, reading the
+     * {@code location} field. Returns {@code null} when the body is blank, the
+     * {@code location} field is missing/null, or the body is not valid JSON, so that all
+     * unusable responses funnel into the same failed-autodetection path.
+     */
+    static String parseRegionFromImdsResponse(String responseBody) {
+        if (StringHelper.isBlank(responseBody)) {
+            return null;
+        }
+
+        try {
+            ImdsComputeResponse computeResponse = JsonHelper.convertJsonStringToJsonSerializableObject(
+                    responseBody, ImdsComputeResponse::fromJson);
+
+            return computeResponse == null ? null : computeResponse.location();
+        } catch (Exception ex) {
+            //Malformed JSON: treat as an unusable response (region stays null) so the failure
+            //  is consistent with the empty/missing-location cases instead of surfacing a parse error
+            LOG.warn("Failed to parse IMDS compute response: {}", ex.getMessage());
+            return null;
+        }
     }
 
     private static void doInstanceDiscoveryAndCache(URL authorityUrl,
