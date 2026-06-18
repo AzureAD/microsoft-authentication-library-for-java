@@ -320,7 +320,7 @@ class AadInstanceDiscoveryProvider {
             LOG.info("Starting call to IMDS endpoint.");
             IHttpResponse httpResponse = future.get(IMDS_TIMEOUT, IMDS_TIMEOUT_UNIT);
             //If call to IMDS endpoint was successful, parse the region from the JSON response body
-            if (httpResponse.statusCode() == HttpStatus.HTTP_OK && !httpResponse.body().isEmpty()) {
+            if (httpResponse.statusCode() == HttpStatus.HTTP_OK) {
                 String region = parseRegionFromImdsResponse(httpResponse.body());
                 if (!StringHelper.isBlank(region)) {
                     LOG.info("Region retrieved from IMDS endpoint: {}", region);
