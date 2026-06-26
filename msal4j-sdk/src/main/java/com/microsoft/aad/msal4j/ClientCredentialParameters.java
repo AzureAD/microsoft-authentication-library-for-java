@@ -164,13 +164,6 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
      * The result is memoized since ClientCredentialParameters is immutable after construction.
      * Used by both cache writes ({@link TokenCache}) and cache reads (silent lookup).
      */
-    /**
-     * Computes the extended cache key hash from all cache key components.
-     * Returns an empty string if no components are present.
-     * <p>
-     * The result is memoized since ClientCredentialParameters is immutable after construction.
-     * Used by both cache writes ({@link TokenCache}) and cache reads (silent lookup).
-     */
     @Override
     public String computeExtCacheKeyHash() {
         if (extCacheKeyHashCache != null) {

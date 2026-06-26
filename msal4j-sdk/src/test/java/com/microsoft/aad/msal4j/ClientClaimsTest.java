@@ -149,6 +149,26 @@ class ClientClaimsTest {
     }
 
     @Test
+    void builders_trailingTokensAfterObject_throwInvalidJson() {
+        // A valid object followed by any trailing tokens is not a single well-formed JSON value
+        // and must be rejected up front rather than forwarded on the wire.
+        for (String invalid : new String[]{"{\"a\":1} garbage", "{}{}", "{},123", "{} \"x\""}) {
+            MsalClientException ex = assertThrows(MsalClientException.class, () ->
+                    ClientCredentialParameters.builder(Collections.singleton("scope")).claimsFromClient(invalid));
+            assertEquals(AuthenticationErrorCode.INVALID_JSON, ex.errorCode());
+        }
+    }
+
+    @Test
+    void builders_invalidClaims_exceptionMessageDoesNotLeakPayload() {
+        // The claims payload may contain sensitive data and must never appear in the error message.
+        String secret = "{\"sensitive_secret_value\":";
+        MsalClientException ex = assertThrows(MsalClientException.class, () ->
+                ClientCredentialParameters.builder(Collections.singleton("scope")).claimsFromClient(secret));
+        assertFalse(ex.getMessage().contains("sensitive_secret_value"));
+    }
+
+    @Test
     void clientClaims_distinctValues_produceDistinctCacheKeyHashes() {
         ClientCredentialParameters a = ClientCredentialParameters
                 .builder(Collections.singleton("scope")).claimsFromClient(CLAIMS_A).build();
