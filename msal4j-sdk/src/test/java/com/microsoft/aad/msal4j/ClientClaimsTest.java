@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 
@@ -123,6 +124,14 @@ class ClientClaimsTest {
                 .build();
         assertNull(fic.clientClaims());
         assertEquals("", fic.computeExtCacheKeyHash());
+
+        AuthorizationCodeParameters ac = AuthorizationCodeParameters
+                .builder("code", URI.create("https://localhost/redirect"))
+                .scopes(Collections.singleton("scope"))
+                .claimsFromClient(null)
+                .build();
+        assertNull(ac.clientClaims());
+        assertEquals("", ac.computeExtCacheKeyHash());
     }
 
     @Test
@@ -135,6 +144,8 @@ class ClientClaimsTest {
                 ManagedIdentityParameters.builder("resource").claimsFromClient("nope")).errorCode());
         assertEquals(AuthenticationErrorCode.INVALID_JSON, assertThrows(MsalClientException.class, () ->
                 UserFederatedIdentityCredentialParameters.builder(Collections.singleton("scope"), "user@contoso.com", "assertion").claimsFromClient("nope")).errorCode());
+        assertEquals(AuthenticationErrorCode.INVALID_JSON, assertThrows(MsalClientException.class, () ->
+                AuthorizationCodeParameters.builder("code", URI.create("https://localhost/redirect")).claimsFromClient("nope")).errorCode());
     }
 
     @Test
@@ -273,5 +284,29 @@ class ClientClaimsTest {
         assertEquals(result1.accessToken(), result2.accessToken());
         assertEquals(1, cca.tokenCache.accessTokens.size());
         verify(httpClientMock, times(1)).send(any());
+    }
+
+    // ========================================================================
+    // Authorization code (confidential client / web app) — wire
+    // ========================================================================
+
+    @Test
+    void authorizationCode_clientClaims_sentAsClaimsBodyParam() throws Exception {
+        DefaultHttpClient httpClientMock = mockHttpClient();
+        ConfidentialClientApplication cca = buildCca(httpClientMock);
+
+        AuthorizationCodeParameters parameters = AuthorizationCodeParameters
+                .builder("auth-code-123", URI.create("https://localhost/redirect"))
+                .scopes(Collections.singleton("scope"))
+                .claimsFromClient(CLAIMS_A)
+                .build();
+
+        cca.acquireToken(parameters).get();
+
+        verify(httpClientMock).send(argThat(request -> {
+            String body = request.body();
+            return body.contains("claims=") && body.contains("claimA")
+                    && body.contains("grant_type=authorization_code");
+        }));
     }
 }
