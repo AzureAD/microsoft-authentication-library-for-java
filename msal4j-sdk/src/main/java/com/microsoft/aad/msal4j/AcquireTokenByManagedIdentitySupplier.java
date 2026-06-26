@@ -67,6 +67,12 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
                     context,
                     null);
 
+            // Propagate ext_cache_key_hash for cache isolation (e.g., client_claims)
+            String extCacheKeyHash = managedIdentityParameters.computeExtCacheKeyHash();
+            if (!StringHelper.isBlank(extCacheKeyHash)) {
+                silentRequest.extCacheKeyHash(extCacheKeyHash);
+            }
+
             AcquireTokenSilentSupplier supplier = new AcquireTokenSilentSupplier(
                     this.clientApplication,
                     silentRequest);

@@ -9,12 +9,18 @@ import org.slf4j.LoggerFactory;
 import java.net.HttpURLConnection;
 import java.net.SocketException;
 import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 
 //base class for all sources that support managed identity
 abstract class AbstractManagedIdentitySource {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractManagedIdentitySource.class);
     private static final String MANAGED_IDENTITY_NO_RESPONSE_RECEIVED = "[Managed Identity] Authentication unavailable. No response received from the managed identity endpoint.";
+
+    // IMDS (MSIv1) only supports this single custom claim. Any other top-level key causes IMDS to
+    // return HTTP 400 with no useful diagnostic, so it is rejected client-side before the network call.
+    private static final String XMS_AZ_NWPERIMID = "xms_az_nwperimid";
 
     protected final ManagedIdentityRequest managedIdentityRequest;
     protected final ServiceBundle serviceBundle;
@@ -42,6 +48,7 @@ abstract class AbstractManagedIdentitySource {
 
         createManagedIdentityRequest(parameters.resource);
         managedIdentityRequest.addTokenRevocationParametersToQuery(parameters);
+        addClientClaimsToRequest(parameters);
         IHttpResponse response;
 
         try {
@@ -60,6 +67,59 @@ abstract class AbstractManagedIdentitySource {
         }
 
         return handleResponse(parameters, response);
+    }
+
+    /**
+     * Forwards client-originated claims (set via
+     * {@link ManagedIdentityParameters.ManagedIdentityParametersBuilder#claimsFromClient(String)}) to
+     * the managed identity endpoint. Only IMDS-based managed identity is supported; other sources fail
+     * fast rather than silently dropping the value (which would also pollute the cache with a key the
+     * endpoint never saw). For IMDS (a GET request) the claims are added as a query parameter; for any
+     * POST-based source they would be added to the body.
+     */
+    private void addClientClaimsToRequest(ManagedIdentityParameters parameters) {
+        if (StringHelper.isNullOrBlank(parameters.clientClaims)) {
+            return;
+        }
+
+        if (managedIdentitySourceType != ManagedIdentitySourceType.IMDS) {
+            throw new MsalClientException(
+                    String.format("claimsFromClient is only supported for IMDS-based managed identity sources. "
+                            + "The detected source is %s.", managedIdentitySourceType),
+                    AuthenticationErrorCode.INVALID_REQUEST);
+        }
+
+        // IMDS == MSIv1: validate that the only top-level claim key is xms_az_nwperimid.
+        validateMsiv1Claims(parameters.clientClaims);
+
+        if (managedIdentityRequest.method == HttpMethod.GET) {
+            if (managedIdentityRequest.queryParameters == null) {
+                managedIdentityRequest.queryParameters = new HashMap<>();
+            }
+            // The value is URL-encoded later by StringHelper.serializeQueryParameters.
+            managedIdentityRequest.queryParameters.put("claims", parameters.clientClaims);
+            LOG.info("[Managed Identity] Adding client claims to IMDS request as query parameter.");
+        } else {
+            if (managedIdentityRequest.bodyParameters == null) {
+                managedIdentityRequest.bodyParameters = new HashMap<>();
+            }
+            managedIdentityRequest.bodyParameters.put("claims", parameters.clientClaims);
+            LOG.info("[Managed Identity] Adding client claims to request body.");
+        }
+    }
+
+    private static void validateMsiv1Claims(String claimsJson) {
+        Map<String, Object> parsed = JsonHelper.parseJsonToMap(claimsJson);
+        for (String key : parsed.keySet()) {
+            if (!XMS_AZ_NWPERIMID.equals(key)) {
+                throw new MsalClientException(
+                        String.format("MSIv1 (IMDS v1) only supports the `%s` custom claim. "
+                                + "The claims JSON contained the unsupported key `%s`. "
+                                + "Remove all keys other than `%s` when using claimsFromClient with MSIv1.",
+                                XMS_AZ_NWPERIMID, key, XMS_AZ_NWPERIMID),
+                        AuthenticationErrorCode.INVALID_REQUEST);
+            }
+        }
     }
 
     public ManagedIdentityResponse handleResponse(

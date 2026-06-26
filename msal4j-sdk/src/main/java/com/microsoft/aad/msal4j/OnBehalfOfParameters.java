@@ -5,6 +5,8 @@ package com.microsoft.aad.msal4j;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotNull;
 
@@ -23,8 +25,16 @@ public class OnBehalfOfParameters implements IAcquireTokenParameters {
     private Map<String, String> extraHttpHeaders;
     private Map<String, String> extraQueryParameters;
     private String tenant;
+    private String clientClaims;
 
-    private OnBehalfOfParameters(Set<String> scopes, Boolean skipCache, IUserAssertion userAssertion, ClaimsRequest claims, Map<String, String> extraHttpHeaders, Map<String, String> extraQueryParameters, String tenant) {
+    // Generic extended cache key components. The hash of these components isolates cache
+    // entries so that requests with different client-claims values do not collide.
+    private SortedMap<String, String> cacheKeyComponents;
+
+    // Memoized hash of cacheKeyComponents (computed once since parameters are immutable).
+    private String extCacheKeyHashCache;
+
+    private OnBehalfOfParameters(Set<String> scopes, Boolean skipCache, IUserAssertion userAssertion, ClaimsRequest claims, Map<String, String> extraHttpHeaders, Map<String, String> extraQueryParameters, String tenant, String clientClaims) {
         this.scopes = scopes;
         //Legacy code that made the public parameter take the Boolean class instead of the primitive, so we need a null check
         this.skipCache = skipCache != null && skipCache;
@@ -33,6 +43,10 @@ public class OnBehalfOfParameters implements IAcquireTokenParameters {
         this.extraHttpHeaders = extraHttpHeaders;
         this.extraQueryParameters = extraQueryParameters;
         this.tenant = tenant;
+        this.clientClaims = clientClaims;
+
+        // Build cache key components from any parameters that require cache isolation.
+        this.cacheKeyComponents = buildCacheKeyComponents();
     }
 
     private static OnBehalfOfParametersBuilder builder() {
@@ -88,6 +102,50 @@ public class OnBehalfOfParameters implements IAcquireTokenParameters {
         return this.tenant;
     }
 
+    /**
+     * Client-originated claims set via {@link OnBehalfOfParametersBuilder#claimsFromClient(String)}.
+     * Forwarded to the token endpoint as the OAuth {@code claims} parameter and used as part of the
+     * extended cache key so that distinct claim values are cached separately.
+     */
+    @Override
+    public String clientClaims() {
+        return this.clientClaims;
+    }
+
+    /**
+     * Builds the sorted map of cache key components from the parameters that require cache isolation.
+     * Returns null if no components are present.
+     */
+    private SortedMap<String, String> buildCacheKeyComponents() {
+        TreeMap<String, String> components = null;
+        if (!StringHelper.isBlank(clientClaims)) {
+            components = new TreeMap<>();
+            components.put("client_claims", clientClaims);
+        }
+        return components;
+    }
+
+    /**
+     * Returns the extended cache key components for this request, if any.
+     * Used by {@link TokenCache} for both cache writes and reads.
+     */
+    SortedMap<String, String> cacheKeyComponents() {
+        return this.cacheKeyComponents;
+    }
+
+    /**
+     * Computes the extended cache key hash from all cache key components, or an empty string when
+     * there are none. The result is memoized since the parameters are immutable after construction.
+     */
+    @Override
+    public String computeExtCacheKeyHash() {
+        if (extCacheKeyHashCache != null) {
+            return extCacheKeyHashCache;
+        }
+        extCacheKeyHashCache = StringHelper.computeExtCacheKeyHash(cacheKeyComponents);
+        return extCacheKeyHashCache;
+    }
+
     public static class OnBehalfOfParametersBuilder {
         private Set<String> scopes;
         private Boolean skipCache;
@@ -96,6 +154,7 @@ public class OnBehalfOfParameters implements IAcquireTokenParameters {
         private Map<String, String> extraHttpHeaders;
         private Map<String, String> extraQueryParameters;
         private String tenant;
+        private String clientClaims;
 
         OnBehalfOfParametersBuilder() {
         }
@@ -156,8 +215,29 @@ public class OnBehalfOfParameters implements IAcquireTokenParameters {
             return this;
         }
 
+        /**
+         * Specifies client-originated claims (a raw JSON object string) to forward to the token
+         * endpoint as the OAuth {@code claims} request parameter. Unlike {@link #claims(ClaimsRequest)}
+         * (server-issued claims challenges, which bypass the cache), tokens acquired with client claims
+         * are cached and the cache entry is keyed on the claims value, so distinct claim values produce
+         * separate cache entries. Use stable, non-dynamic values to avoid cache fragmentation.
+         * A blank value is ignored; an invalid JSON object throws {@link MsalClientException}.
+         *
+         * @param claimsJson a valid JSON object string containing the client claims
+         * @return this builder instance
+         */
+        public OnBehalfOfParametersBuilder claimsFromClient(String claimsJson) {
+            if (StringHelper.isBlank(claimsJson)) {
+                return this;
+            }
+
+            JsonHelper.validateJsonObjectFormat(claimsJson);
+            this.clientClaims = claimsJson;
+            return this;
+        }
+
         public OnBehalfOfParameters build() {
-            return new OnBehalfOfParameters(this.scopes, this.skipCache, this.userAssertion, this.claims, this.extraHttpHeaders, this.extraQueryParameters, this.tenant);
+            return new OnBehalfOfParameters(this.scopes, this.skipCache, this.userAssertion, this.claims, this.extraHttpHeaders, this.extraQueryParameters, this.tenant, this.clientClaims);
         }
 
         public String toString() {

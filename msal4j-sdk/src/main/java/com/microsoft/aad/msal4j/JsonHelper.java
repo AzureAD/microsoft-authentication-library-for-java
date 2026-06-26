@@ -157,6 +157,28 @@ class JsonHelper {
         }
     }
 
+    /**
+     * Validates that the supplied string is a well-formed JSON object (the root token is
+     * {@code {}}). Throws {@link MsalClientException} with {@link AuthenticationErrorCode#INVALID_JSON}
+     * otherwise. The raw value is never included in the exception message, since claims payloads may
+     * contain sensitive data.
+     */
+    static void validateJsonObjectFormat(String jsonString) {
+        try (JsonReader reader = JsonProviders.createReader(jsonString)) {
+            if (reader.nextToken() != JsonToken.START_OBJECT) {
+                throw new MsalClientException(
+                        "The claims value is not a valid JSON object. " +
+                                "See https://openid.net/specs/openid-connect-core-1_0.html#ClaimsParameter.",
+                        AuthenticationErrorCode.INVALID_JSON);
+            }
+            reader.skipChildren();
+        } catch (IOException e) {
+            throw new MsalClientException(
+                    "The claims value is not a valid JSON object: " + e.getMessage(),
+                    AuthenticationErrorCode.INVALID_JSON);
+        }
+    }
+
     public static String formCapabilitiesJson(Set<String> clientCapabilities) {
         if (clientCapabilities == null || clientCapabilities.isEmpty()) {
             return null;

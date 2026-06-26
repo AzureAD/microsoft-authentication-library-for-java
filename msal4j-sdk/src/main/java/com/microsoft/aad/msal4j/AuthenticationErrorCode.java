@@ -166,4 +166,11 @@ public class AuthenticationErrorCode {
      * This is returned by the instance discovery endpoint when the provided authority host is unknown.
      */
     public static final String INVALID_INSTANCE = "invalid_instance";
+
+    /**
+     * Indicates that the request is malformed or uses an unsupported parameter combination, for
+     * example when client-originated claims are supplied to a managed identity source that does not
+     * support them, or when an unsupported claim key is used.
+     */
+    public static final String INVALID_REQUEST = "invalid_request";
 }

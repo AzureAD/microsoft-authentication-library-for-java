@@ -32,6 +32,8 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
 
     private String fmiPath;
 
+    private String clientClaims;
+
     // Generic extended cache key components. Any optional or flow-specific parameters 
     // that should influence token cache isolation adds an entry here. The hash of these
     // components is used as part of the cache key in relevant scenarios entries.
@@ -40,7 +42,7 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
     // Memoized hash of cacheKeyComponents (computed once since parameters are immutable).
     private String extCacheKeyHashCache;
 
-    private ClientCredentialParameters(Set<String> scopes, Boolean skipCache, ClaimsRequest claims, Map<String, String> extraHttpHeaders, Map<String, String> extraQueryParameters, String tenant, IClientCredential clientCredential, String fmiPath) {
+    private ClientCredentialParameters(Set<String> scopes, Boolean skipCache, ClaimsRequest claims, Map<String, String> extraHttpHeaders, Map<String, String> extraQueryParameters, String tenant, IClientCredential clientCredential, String fmiPath, String clientClaims) {
         this.scopes = scopes;
         this.skipCache = skipCache;
         this.claims = claims;
@@ -49,6 +51,7 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         this.tenant = tenant;
         this.clientCredential = clientCredential;
         this.fmiPath = fmiPath;
+        this.clientClaims = clientClaims;
 
         // Build cache key components from any parameters that require cache isolation.
         this.cacheKeyComponents = buildCacheKeyComponents();
@@ -115,6 +118,16 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
     }
 
     /**
+     * Client-originated claims set via {@link ClientCredentialParametersBuilder#claimsFromClient(String)}.
+     * Forwarded to the token endpoint as the OAuth {@code claims} parameter and used as part of the
+     * extended cache key so that distinct claim values are cached separately.
+     */
+    @Override
+    public String clientClaims() {
+        return this.clientClaims;
+    }
+
+    /**
      * Builds the sorted map of cache key components from the parameters that require
      * cache isolation. Returns null if no components are present.
      * <p>
@@ -126,6 +139,12 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         if (!StringHelper.isBlank(fmiPath)) {
             components = new TreeMap<>();
             components.put("fmi_path", fmiPath);
+        }
+        if (!StringHelper.isBlank(clientClaims)) {
+            if (components == null) {
+                components = new TreeMap<>();
+            }
+            components.put("client_claims", clientClaims);
         }
         return components;
     }
@@ -145,7 +164,15 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
      * The result is memoized since ClientCredentialParameters is immutable after construction.
      * Used by both cache writes ({@link TokenCache}) and cache reads (silent lookup).
      */
-    String computeExtCacheKeyHash() {
+    /**
+     * Computes the extended cache key hash from all cache key components.
+     * Returns an empty string if no components are present.
+     * <p>
+     * The result is memoized since ClientCredentialParameters is immutable after construction.
+     * Used by both cache writes ({@link TokenCache}) and cache reads (silent lookup).
+     */
+    @Override
+    public String computeExtCacheKeyHash() {
         if (extCacheKeyHashCache != null) {
             return extCacheKeyHashCache;
         }
@@ -162,6 +189,7 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         private String tenant;
         private IClientCredential clientCredential;
         private String fmiPath;
+        private String clientClaims;
 
         ClientCredentialParametersBuilder() {
         }
@@ -245,8 +273,29 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
             return this;
         }
 
+        /**
+         * Specifies client-originated claims (a raw JSON object string) to forward to the token
+         * endpoint as the OAuth {@code claims} request parameter. Unlike {@link #claims(ClaimsRequest)}
+         * (server-issued claims challenges, which bypass the cache), tokens acquired with client claims
+         * are cached and the cache entry is keyed on the claims value, so distinct claim values produce
+         * separate cache entries. Use stable, non-dynamic values to avoid cache fragmentation.
+         * A blank value is ignored; an invalid JSON object throws {@link MsalClientException}.
+         *
+         * @param claimsJson a valid JSON object string containing the client claims
+         * @return builder that can be used to construct ClientCredentialParameters
+         */
+        public ClientCredentialParametersBuilder claimsFromClient(String claimsJson) {
+            if (StringHelper.isBlank(claimsJson)) {
+                return this;
+            }
+
+            JsonHelper.validateJsonObjectFormat(claimsJson);
+            this.clientClaims = claimsJson;
+            return this;
+        }
+
         public ClientCredentialParameters build() {
-            return new ClientCredentialParameters(this.scopes, this.skipCache, this.claims, this.extraHttpHeaders, this.extraQueryParameters, this.tenant, this.clientCredential, this.fmiPath);
+            return new ClientCredentialParameters(this.scopes, this.skipCache, this.claims, this.extraHttpHeaders, this.extraQueryParameters, this.tenant, this.clientCredential, this.fmiPath, this.clientClaims);
         }
 
         public String toString() {

@@ -930,4 +930,89 @@ class ManagedIdentityTests {
             assertTrue(ex.getMessage().contains(message));
         }
     }
+
+    @Nested
+    class ClientClaimsTests extends BaseManagedIdentityTest {
+        // Client-originated claims (claimsFromClient) for managed identity. Unlike server-issued
+        // `claims` challenges (which bypass the cache), client claims are forwarded on the wire and
+        // cached, keyed on the claims value. Only IMDS (MSIv1) is supported, and MSIv1 only permits
+        // the `xms_az_nwperimid` custom claim.
+
+        private final String nwperimidEssential = "{\"xms_az_nwperimid\":{\"essential\":true}}";
+        private final String nwperimidValues = "{\"xms_az_nwperimid\":{\"values\":[\"perimid-1234\"]}}";
+
+        @Test
+        void imds_clientClaims_sentAsQueryParameter() throws Exception {
+            setUpCommonTest(IMDS, ManagedIdentityTestConstants.IMDS_ENDPOINT, ManagedIdentityId.systemAssigned());
+            when(httpClientMock.send(any())).thenReturn(expectedResponse(HttpStatus.HTTP_OK, getSuccessfulResponse(ManagedIdentityTestConstants.RESOURCE)));
+
+            miApp.acquireTokenForManagedIdentity(
+                    ManagedIdentityParameters.builder(ManagedIdentityTestConstants.RESOURCE)
+                            .claimsFromClient(nwperimidEssential)
+                            .build()).get();
+
+            ArgumentCaptor<HttpRequest> captor = ArgumentCaptor.forClass(HttpRequest.class);
+            verify(httpClientMock).send(captor.capture());
+            String url = captor.getValue().url().toString();
+            assertTrue(url.contains("claims="), "IMDS request URL should carry the claims query parameter");
+            assertTrue(url.contains("xms_az_nwperimid"), "claims value should be present in the URL");
+        }
+
+        @Test
+        void imds_distinctClaims_isolateCache() throws Exception {
+            setUpCommonTest(IMDS, ManagedIdentityTestConstants.IMDS_ENDPOINT, ManagedIdentityId.systemAssigned());
+            when(httpClientMock.send(any())).thenReturn(expectedResponse(HttpStatus.HTTP_OK, getSuccessfulResponse(ManagedIdentityTestConstants.RESOURCE)));
+
+            miApp.acquireTokenForManagedIdentity(ManagedIdentityParameters.builder(ManagedIdentityTestConstants.RESOURCE)
+                    .claimsFromClient(nwperimidEssential).build()).get();
+            miApp.acquireTokenForManagedIdentity(ManagedIdentityParameters.builder(ManagedIdentityTestConstants.RESOURCE)
+                    .claimsFromClient(nwperimidValues).build()).get();
+
+            assertEquals(2, miApp.tokenCache().accessTokens.size(), "Distinct client claims should produce distinct cache entries");
+            verify(httpClientMock, times(2)).send(any());
+        }
+
+        @Test
+        void imds_sameClaims_cacheHit() throws Exception {
+            setUpCommonTest(IMDS, ManagedIdentityTestConstants.IMDS_ENDPOINT, ManagedIdentityId.systemAssigned());
+            when(httpClientMock.send(any())).thenReturn(expectedResponse(HttpStatus.HTTP_OK, getSuccessfulResponse(ManagedIdentityTestConstants.RESOURCE)));
+
+            ManagedIdentityParameters params = ManagedIdentityParameters.builder(ManagedIdentityTestConstants.RESOURCE)
+                    .claimsFromClient(nwperimidEssential).build();
+
+            IAuthenticationResult first = miApp.acquireTokenForManagedIdentity(params).get();
+            assertTokenFromIdentityProvider(first);
+            IAuthenticationResult second = miApp.acquireTokenForManagedIdentity(params).get();
+            assertTokenFromCache(second);
+
+            assertEquals(1, miApp.tokenCache().accessTokens.size());
+            verify(httpClientMock, times(1)).send(any());
+        }
+
+        @Test
+        void unsupportedSource_withClientClaims_throwsInvalidRequest() throws Exception {
+            setUpCommonTest(APP_SERVICE, ManagedIdentityTestConstants.APP_SERVICE_ENDPOINT, ManagedIdentityId.systemAssigned());
+
+            CompletableFuture<IAuthenticationResult> future = miApp.acquireTokenForManagedIdentity(
+                    ManagedIdentityParameters.builder(ManagedIdentityTestConstants.RESOURCE)
+                            .claimsFromClient(nwperimidEssential)
+                            .build());
+
+            assertMsalClientException(future, AuthenticationErrorCode.INVALID_REQUEST);
+            verify(httpClientMock, never()).send(any());
+        }
+
+        @Test
+        void imds_disallowedMsiv1Key_throwsInvalidRequest() throws Exception {
+            setUpCommonTest(IMDS, ManagedIdentityTestConstants.IMDS_ENDPOINT, ManagedIdentityId.systemAssigned());
+
+            CompletableFuture<IAuthenticationResult> future = miApp.acquireTokenForManagedIdentity(
+                    ManagedIdentityParameters.builder(ManagedIdentityTestConstants.RESOURCE)
+                            .claimsFromClient("{\"other_claim\":{\"essential\":true}}")
+                            .build());
+
+            assertMsalClientException(future, AuthenticationErrorCode.INVALID_REQUEST);
+            verify(httpClientMock, never()).send(any());
+        }
+    }
 }

@@ -616,4 +616,84 @@ class UserFederatedIdentityCredentialTest {
         // Assert: Both accounts now in cache
         assertEquals(2, cca.getAccounts().get().size(), "Both Alice and Bob should be in cache");
     }
+
+    // ========================================================================
+    // Client claims (claimsFromClient) — wire and cache isolation
+    // ========================================================================
+
+    private static final String CLAIMS_A = "{\"claimA\":{\"essential\":true}}";
+    private static final String CLAIMS_B = "{\"claimB\":{\"values\":[\"v1\"]}}";
+
+    @Test
+    void userFic_clientClaims_sentAsClaimsBodyParam() throws Exception {
+        // Arrange
+        String oid = "oid-user-claims";
+        String tid = "f645ad92-e38d-4d1a-b510-d1b09a74a8ca";
+        when(httpClientMock.send(any(HttpRequest.class)))
+                .thenReturn(createUserResponse(oid, TEST_UPN, "access-token", tid));
+
+        UserFederatedIdentityCredentialParameters parameters = UserFederatedIdentityCredentialParameters
+                .builder(SCOPES, TEST_UPN, FAKE_ASSERTION)
+                .claimsFromClient(CLAIMS_A)
+                .build();
+
+        // Act
+        cca.acquireToken(parameters).get();
+
+        // Assert — client claims are forwarded as a standard OAuth claims body parameter
+        verify(httpClientMock).send(argThat(request -> {
+            String body = request.body();
+            return body.contains("claims=") && body.contains("claimA");
+        }));
+    }
+
+    @Test
+    void userFic_distinctClaims_isolateCache() throws Exception {
+        // Arrange — same user (same OID/UPN/tid); only the client claims differ
+        String oid = "oid-user-claims";
+        String tid = "f645ad92-e38d-4d1a-b510-d1b09a74a8ca";
+        AtomicInteger callCount = new AtomicInteger(0);
+        when(httpClientMock.send(any(HttpRequest.class))).thenAnswer(invocation -> {
+            int n = callCount.incrementAndGet();
+            return createUserResponse(oid, TEST_UPN, "token-" + n, tid);
+        });
+
+        // Act 1 — claims A populates the cache
+        IAuthenticationResult resultA = cca.acquireToken(UserFederatedIdentityCredentialParameters
+                .builder(SCOPES, TEST_UPN, FAKE_ASSERTION).claimsFromClient(CLAIMS_A).build()).get();
+        assertEquals(1, callCount.get(), "First call (claims A) should hit the IdP");
+
+        // Act 2 — claims B for the same user must NOT reuse the claims-A token
+        IAuthenticationResult resultB = cca.acquireToken(UserFederatedIdentityCredentialParameters
+                .builder(SCOPES, TEST_UPN, FAKE_ASSERTION).claimsFromClient(CLAIMS_B).build()).get();
+
+        // Assert — distinct claims produce distinct cache entries and a fresh network call
+        assertEquals(2, callCount.get(), "Second call (claims B) should hit the IdP, not reuse claims-A token");
+        assertNotEquals(resultA.accessToken(), resultB.accessToken());
+        assertEquals(2, cca.tokenCache.accessTokens.size(), "Distinct claims should yield two cached access tokens");
+    }
+
+    @Test
+    void userFic_sameClaims_cacheHit() throws Exception {
+        // Arrange — same user, same client claims on both calls
+        String oid = "oid-user-claims";
+        String tid = "f645ad92-e38d-4d1a-b510-d1b09a74a8ca";
+        AtomicInteger callCount = new AtomicInteger(0);
+        when(httpClientMock.send(any(HttpRequest.class))).thenAnswer(invocation -> {
+            callCount.incrementAndGet();
+            return createUserResponse(oid, TEST_UPN, "token-cached", tid);
+        });
+
+        UserFederatedIdentityCredentialParameters params = UserFederatedIdentityCredentialParameters
+                .builder(SCOPES, TEST_UPN, FAKE_ASSERTION).claimsFromClient(CLAIMS_A).build();
+
+        // Act
+        cca.acquireToken(params).get();
+        assertEquals(1, callCount.get(), "First call should hit the IdP");
+        cca.acquireToken(params).get();
+
+        // Assert — identical claims hit the cache (no second network call)
+        assertEquals(1, callCount.get(), "Second call with identical claims should be served from cache");
+        assertEquals(1, cca.tokenCache.accessTokens.size());
+    }
 }
