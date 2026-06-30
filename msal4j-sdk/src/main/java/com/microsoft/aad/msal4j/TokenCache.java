@@ -341,8 +341,8 @@ public class TokenCache implements ITokenCache {
      * Computes the extended cache key hash for a request, if applicable.
      * Delegates to the generic cache key components exposed by the request's parameters object
      * ({@link IAcquireTokenParameters#computeExtCacheKeyHash()}), which covers client credentials,
-     * managed identity, on-behalf-of and user-FIC. Parameter types without extended cache-key
-     * components return an empty string via the interface default.
+     * managed identity, on-behalf-of, user-FIC and authorization-code redemption. Parameter types
+     * without extended cache-key components return an empty string via the interface default.
      * The algorithm uses sorted key-value concatenation → SHA-256 → Base64URL (cross-SDK compatible).
      */
     private static String computeExtCacheKeyHashForRequest(MsalRequest msalRequest) {

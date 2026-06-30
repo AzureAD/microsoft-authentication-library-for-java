@@ -261,6 +261,15 @@ public class AuthorizationCodeParameters implements IAcquireTokenParameters {
          * are cached and the cache entry is keyed on the claims value, so distinct claim values produce
          * separate cache entries. Use stable, non-dynamic values to avoid cache fragmentation.
          * A blank value is ignored; an invalid JSON object throws {@link MsalClientException}.
+         * <p>
+         * Client claims are primarily intended for confidential-client web apps. Because
+         * {@code AuthorizationCodeParameters} is also accepted by {@link PublicClientApplication}, this
+         * method is visible there too, but note the cache caveat: a public-client token acquired with
+         * client claims is stored under the extended cache key, while a later
+         * {@code acquireTokenSilently} call (which uses {@link SilentParameters} and cannot carry client
+         * claims) will not match that entry and will instead refresh without the client claims. On a
+         * confidential client this matters less, since auth-code redemption always calls the token
+         * endpoint; the value here is wire forwarding plus cache-key isolation between distinct claims.
          *
          * @param claimsJson a valid JSON object string containing the client claims
          * @return this builder instance

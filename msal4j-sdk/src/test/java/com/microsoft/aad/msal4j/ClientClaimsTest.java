@@ -66,29 +66,20 @@ class ClientClaimsTest {
     // ========================================================================
 
     @Test
-    void validateJsonObjectFormat_validObject_doesNotThrow() {
+    void validateJsonObjectFormat_acceptsSingleObject_rejectsEverythingElse() {
+        // Valid single JSON objects pass.
         assertDoesNotThrow(() -> JsonHelper.validateJsonObjectFormat(CLAIMS_A));
         assertDoesNotThrow(() -> JsonHelper.validateJsonObjectFormat("{\"xms_az_nwperimid\":{\"essential\":true}}"));
-    }
 
-    @Test
-    void validateJsonObjectFormat_malformedJson_throwsInvalidJson() {
-        MsalClientException ex = assertThrows(MsalClientException.class,
-                () -> JsonHelper.validateJsonObjectFormat("not json at all"));
-        assertEquals(AuthenticationErrorCode.INVALID_JSON, ex.errorCode());
-    }
-
-    @Test
-    void validateJsonObjectFormat_nonObjectJson_throwsInvalidJson() {
-        // A JSON array is valid JSON but not a JSON object.
-        MsalClientException arrayEx = assertThrows(MsalClientException.class,
-                () -> JsonHelper.validateJsonObjectFormat("[1,2,3]"));
-        assertEquals(AuthenticationErrorCode.INVALID_JSON, arrayEx.errorCode());
-
-        // A bare scalar is likewise not a JSON object.
-        MsalClientException scalarEx = assertThrows(MsalClientException.class,
-                () -> JsonHelper.validateJsonObjectFormat("\"justAString\""));
-        assertEquals(AuthenticationErrorCode.INVALID_JSON, scalarEx.errorCode());
+        // Rejected: malformed input, valid-but-non-object JSON (array/scalar), and a valid object
+        // followed by trailing tokens (e.g. "{}{}") which is not a single well-formed JSON value.
+        for (String invalid : new String[]{
+                "not json at all", "[1,2,3]", "\"justAString\"",
+                "{\"a\":1} garbage", "{}{}", "{},123"}) {
+            MsalClientException ex = assertThrows(MsalClientException.class,
+                    () -> JsonHelper.validateJsonObjectFormat(invalid));
+            assertEquals(AuthenticationErrorCode.INVALID_JSON, ex.errorCode());
+        }
     }
 
     // ========================================================================
@@ -149,17 +140,6 @@ class ClientClaimsTest {
     }
 
     @Test
-    void builders_trailingTokensAfterObject_throwInvalidJson() {
-        // A valid object followed by any trailing tokens is not a single well-formed JSON value
-        // and must be rejected up front rather than forwarded on the wire.
-        for (String invalid : new String[]{"{\"a\":1} garbage", "{}{}", "{},123", "{} \"x\""}) {
-            MsalClientException ex = assertThrows(MsalClientException.class, () ->
-                    ClientCredentialParameters.builder(Collections.singleton("scope")).claimsFromClient(invalid));
-            assertEquals(AuthenticationErrorCode.INVALID_JSON, ex.errorCode());
-        }
-    }
-
-    @Test
     void builders_invalidClaims_exceptionMessageDoesNotLeakPayload() {
         // The claims payload may contain sensitive data and must never appear in the error message.
         String secret = "{\"sensitive_secret_value\":";
@@ -200,6 +180,39 @@ class ClientClaimsTest {
             return body.contains("claims=") && body.contains("claimA")
                     && body.contains("grant_type=client_credentials");
         }));
+    }
+
+    @Test
+    void clientCredential_serverClaimsAndClientClaims_areMergedOnWire() throws Exception {
+        DefaultHttpClient httpClientMock = mockHttpClient();
+        ConfidentialClientApplication cca = buildCca(httpClientMock);
+
+        ClaimsRequest serverClaims = new ClaimsRequest();
+        serverClaims.requestClaimInAccessToken("given_name", new RequestedClaimAdditionalInfo(true, null, null));
+
+        ClientCredentialParameters parameters = ClientCredentialParameters
+                .builder(Collections.singleton("scope"))
+                .claims(serverClaims)
+                .claimsFromClient(CLAIMS_A)
+                .build();
+
+        cca.acquireToken(parameters).get();
+
+        // Both the server-issued claim (given_name) and the client claim (claimA) appear in the single
+        // merged OAuth "claims" parameter — client claims do not replace server claims, they merge in.
+        verify(httpClientMock).send(argThat(request -> {
+            String body = request.body();
+            return body.contains("claims=") && body.contains("given_name") && body.contains("claimA");
+        }));
+    }
+
+    @Test
+    void clientClaims_overrideServerClaims_onLeafConflict() {
+        // On a conflicting leaf key the client-supplied value wins; nested objects deep-merge.
+        // This is the precedence behavior used when claims() and claimsFromClient() overlap.
+        assertEquals("{\"a\":2}", JsonHelper.mergeJSONString("{\"a\":1}", "{\"a\":2}"));
+        assertTrue(JsonHelper.mergeJSONString("{\"o\":{\"x\":1}}", "{\"o\":{\"y\":2}}").contains("\"x\":1"));
+        assertTrue(JsonHelper.mergeJSONString("{\"o\":{\"x\":1}}", "{\"o\":{\"y\":2}}").contains("\"y\":2"));
     }
 
     @Test
