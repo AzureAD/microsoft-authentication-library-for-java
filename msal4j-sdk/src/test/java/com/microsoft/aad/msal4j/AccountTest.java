@@ -4,32 +4,19 @@
 package com.microsoft.aad.msal4j;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
 import static com.microsoft.aad.msal4j.Constants.POINT_DELIMITER;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class AccountTest {
 
-    String getEmptyBase64EncodedJson() {
-        return new String(Base64.getEncoder().encode("{}".getBytes()));
-    }
-
-    String getJWTHeaderBase64EncodedJson() {
-        return new String(Base64.getEncoder().encode("{\"alg\": \"HS256\", \"typ\": \"JWT\"}".getBytes()));
-    }
-
-    private String getTestIdToken(String environment, String tenant) throws IOException, URISyntaxException {
+    private static String getTestIdToken(String environment, String tenant) {
         String claims = "{\n" +
                 "  \"iss\": \"" + environment + "\",\n" +
                 "  \"tid\": \"" + tenant + "\"\n" +
@@ -37,15 +24,15 @@ class AccountTest {
 
         String encodedIdToken = new String(Base64.getEncoder().encode(claims.getBytes()), StandardCharsets.UTF_8);
 
-        encodedIdToken = getJWTHeaderBase64EncodedJson() + POINT_DELIMITER +
+        encodedIdToken = TestHelper.getJWTHeaderBase64EncodedJson() + POINT_DELIMITER +
                 encodedIdToken + POINT_DELIMITER +
-                getEmptyBase64EncodedJson();
+                TestHelper.getEmptyBase64EncodedJson();
 
         return encodedIdToken;
     }
 
     @Test
-    void multiCloudAccount_aggregatedInGetAccountsRemoveAccountApis() throws IOException, URISyntaxException {
+    void multiCloudAccount_aggregatedInGetAccountsRemoveAccountApis() throws Exception {
         String BLACK_FORESRT_TENANT = "de_tid";
         String WW_TENTANT = "tid";
         String BLACK_FOREST_ENV = "login.microsoftonline.de";

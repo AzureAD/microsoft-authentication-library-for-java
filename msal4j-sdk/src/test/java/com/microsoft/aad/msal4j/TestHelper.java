@@ -3,9 +3,17 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.azure.json.JsonProviders;
+import com.azure.json.JsonReader;
+import com.azure.json.JsonSerializable;
+import com.azure.json.JsonWriter;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -17,11 +25,86 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.when;
 
 class TestHelper {
+
+    // --- Common test constants ---
+
+    static final String TEST_CLIENT_ID = "test-client-id";
+    static final String TEST_SECRET = "test-secret";
+    static final String TEST_AUTHORITY = "https://login.microsoftonline.com/test-tenant/";
+    static final String TEST_SCOPE = "scope/.default";
+    static final Set<String> TEST_SCOPE_SET = Collections.singleton(TEST_SCOPE);
+
+    // --- Application builder helpers ---
+
+    /**
+     * Builds a CCA with common test defaults: fixed client ID/secret, test authority,
+     * instanceDiscovery=false, validateAuthority=false, and a mocked HTTP client.
+     */
+    static ConfidentialClientApplication buildCca(IHttpClient httpClientMock) {
+        try {
+            return ConfidentialClientApplication
+                    .builder(TEST_CLIENT_ID, ClientCredentialFactory.createFromSecret(TEST_SECRET))
+                    .authority(TEST_AUTHORITY)
+                    .instanceDiscovery(false)
+                    .validateAuthority(false)
+                    .httpClient(httpClientMock)
+                    .build();
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Builds a CCA with a custom credential and mocked HTTP client.
+     * Use when the test needs to verify which credential is sent (e.g., credential precedence tests).
+     */
+    static ConfidentialClientApplication buildCca(IClientCredential credential, IHttpClient httpClientMock) {
+        try {
+            return ConfidentialClientApplication
+                    .builder(TEST_CLIENT_ID, credential)
+                    .authority(TEST_AUTHORITY)
+                    .instanceDiscovery(false)
+                    .validateAuthority(false)
+                    .httpClient(httpClientMock)
+                    .build();
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Builds a CCA with an appTokenProvider for testing the app token provider flow.
+     */
+    static ConfidentialClientApplication buildCcaWithAppTokenProvider(
+            Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> provider) {
+        try {
+            return ConfidentialClientApplication
+                    .builder(TEST_CLIENT_ID, ClientCredentialFactory.createFromSecret(TEST_SECRET))
+                    .appTokenProvider(provider)
+                    .authority(TEST_AUTHORITY)
+                    .instanceDiscovery(false)
+                    .validateAuthority(false)
+                    .build();
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /** Builds a PCA with common test defaults: fixed client ID, instanceDiscovery=false. */
+    static PublicClientApplication buildPca() {
+        return PublicClientApplication.builder(TEST_CLIENT_ID)
+                .instanceDiscovery(false)
+                .build();
+    }
 
     //Signed JWT which should be enough to pass the parsing/validation in the library, useful if a unit test needs an
     // assertion but that is not the focus of the test
@@ -73,6 +156,14 @@ class TestHelper {
             "\"sub\": \"%s\"," +
             "\"tid\": \"%s\"," +
             "\"ver\": \"2.0\"}";
+
+    static String getEmptyBase64EncodedJson() {
+        return new String(Base64.getEncoder().encode("{}".getBytes()));
+    }
+
+    static String getJWTHeaderBase64EncodedJson() {
+        return new String(Base64.getEncoder().encode("{\"alg\": \"HS256\", \"typ\": \"JWT\"}".getBytes()));
+    }
 
     static X509Certificate x509Cert = getX509Cert();
     static PrivateKey privateKey = getPrivateKey();
@@ -153,7 +244,7 @@ class TestHelper {
                 Long.parseLong(responseValues.get("expires_in")) :
                 3600;
         long expiresOn = responseValues.containsKey("expires_on")
-                ? Long.parseLong(responseValues.get("expires_0n")) :
+                ? Long.parseLong(responseValues.get("expires_on")) :
                 (System.currentTimeMillis() / 1000) + expiresIn;
         long refreshIn = responseValues.containsKey("refresh_in")
                 ? Long.parseLong(responseValues.get("refresh_in")) :
@@ -189,6 +280,28 @@ class TestHelper {
         try {
             when(httpClientMock.send(argThat(httpRequest -> httpRequest != null && httpRequest.url().getPath().contains("oauth2/v2.0/token"))))
                     .thenReturn(TestHelper.expectedResponse(statusCode, expectedResponse));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Sets up a mocked HTTP client to return a successful token response for any request.
+     * Use when the test doesn't need to customize the response values.
+     */
+    static void mockSuccessfulTokenResponse(IHttpClient httpClientMock) {
+        mockSuccessfulTokenResponse(httpClientMock, new HashMap<>());
+    }
+
+    /**
+     * Sets up a mocked HTTP client to return a successful token response with custom values.
+     * Replaces the common 3-line pattern:
+     * {@code when(httpClientMock.send(any())).thenReturn(TestHelper.expectedResponse(...))}
+     */
+    static void mockSuccessfulTokenResponse(IHttpClient httpClientMock, HashMap<String, String> responseValues) {
+        try {
+            when(httpClientMock.send(any(HttpRequest.class)))
+                    .thenReturn(expectedResponse(HttpStatus.HTTP_OK, getSuccessfulTokenResponse(responseValues)));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -244,5 +357,33 @@ class TestHelper {
         }
 
         return privateKey;
+    }
+
+    // --- JSON parsing/serialization helpers ---
+
+    @FunctionalInterface
+    interface JsonParser<T> {
+        T parse(JsonReader reader) throws IOException;
+    }
+
+    /**
+     * Parses a JSON string into an object using the provided parser function.
+     * Handles JsonReader lifecycle automatically.
+     */
+    static <T> T parseJson(String json, JsonParser<T> parser) throws IOException {
+        try (JsonReader reader = JsonProviders.createReader(new StringReader(json))) {
+            return parser.parse(reader);
+        }
+    }
+
+    /**
+     * Serializes a JsonSerializable object to a JSON string.
+     */
+    static <T extends JsonSerializable<T>> String writeToJson(T serializable) throws IOException {
+        StringWriter sw = new StringWriter();
+        try (JsonWriter writer = JsonProviders.createWriter(sw)) {
+            serializable.toJson(writer);
+        }
+        return sw.toString();
     }
 }

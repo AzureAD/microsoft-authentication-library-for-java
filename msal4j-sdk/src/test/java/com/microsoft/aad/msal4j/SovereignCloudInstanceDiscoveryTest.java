@@ -5,7 +5,6 @@ package com.microsoft.aad.msal4j;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import org.mockito.ArgumentCaptor;
 
 import java.util.ArrayList;
@@ -24,7 +23,6 @@ import static org.mockito.Mockito.*;
  * mock only the HTTP layer, and verify that all HTTP requests are routed to the
  * correct sovereign host — not to login.microsoftonline.com or any other host.
  */
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SovereignCloudInstanceDiscoveryTest {
 
     private static final String SOVEREIGN_HOST = "login.sovcloud-identity.fr";

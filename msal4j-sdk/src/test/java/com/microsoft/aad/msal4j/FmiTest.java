@@ -4,7 +4,6 @@
 package com.microsoft.aad.msal4j;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -21,7 +20,6 @@ import static org.mockito.Mockito.*;
  * Covers fmi_path body parameter injection, cache key isolation via ext_cache_key,
  * and assertion context (AssertionRequestOptions) propagation.
  */
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class FmiTest {
 
     // ========================================================================

@@ -3,7 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import java.util.Collections;
 import java.util.HashMap;
 
 import org.junit.jupiter.api.Test;
@@ -15,7 +14,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class OnBehalfOfTest {
@@ -24,17 +22,11 @@ class OnBehalfOfTest {
     void OnBehalfOf_InternalCacheLookup_Success() throws Exception {
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(HttpStatus.HTTP_OK, TestHelper.getSuccessfulTokenResponse(new HashMap<>())));
+        TestHelper.mockSuccessfulTokenResponse(httpClientMock);
 
-        ConfidentialClientApplication cca =
-                ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromSecret("password"))
-                                .authority("https://login.microsoftonline.com/tenant/")
-                        .instanceDiscovery(false)
-                        .validateAuthority(false)
-                        .httpClient(httpClientMock)
-                        .build();
+        ConfidentialClientApplication cca = TestHelper.buildCca(httpClientMock);
 
-        OnBehalfOfParameters parameters = OnBehalfOfParameters.builder(Collections.singleton("scopes"), new UserAssertion(TestHelper.signedAssertion)).build();
+        OnBehalfOfParameters parameters = OnBehalfOfParameters.builder(TestHelper.TEST_SCOPE_SET, new UserAssertion(TestHelper.signedAssertion)).build();
 
         IAuthenticationResult result = cca.acquireToken(parameters).get();
         IAuthenticationResult result2 = cca.acquireToken(parameters).get();
@@ -48,19 +40,13 @@ class OnBehalfOfTest {
     void OnBehalfOf_TenantOverride() throws Exception {
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        ConfidentialClientApplication cca =
-                ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromSecret("password"))
-                        .authority("https://login.microsoftonline.com/tenant")
-                        .instanceDiscovery(false)
-                        .validateAuthority(false)
-                        .httpClient(httpClientMock)
-                        .build();
+        ConfidentialClientApplication cca = TestHelper.buildCca(httpClientMock);
 
         HashMap<String, String> tokenResponseValues = new HashMap<>();
         tokenResponseValues.put("access_token", "accessTokenFirstCall");
 
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(HttpStatus.HTTP_OK, TestHelper.getSuccessfulTokenResponse(tokenResponseValues)));
-        OnBehalfOfParameters parameters = OnBehalfOfParameters.builder(Collections.singleton("scopes"), new UserAssertion(TestHelper.signedAssertion)).build();
+        TestHelper.mockSuccessfulTokenResponse(httpClientMock, tokenResponseValues);
+        OnBehalfOfParameters parameters = OnBehalfOfParameters.builder(TestHelper.TEST_SCOPE_SET, new UserAssertion(TestHelper.signedAssertion)).build();
 
         //The two acquireToken calls have the same parameters...
         IAuthenticationResult resultAppLevelTenant = cca.acquireToken(parameters).get();
@@ -72,8 +58,8 @@ class OnBehalfOfTest {
 
         tokenResponseValues.put("access_token", "accessTokenSecondCall");
 
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(HttpStatus.HTTP_OK, TestHelper.getSuccessfulTokenResponse(tokenResponseValues)));
-        parameters = OnBehalfOfParameters.builder(Collections.singleton("scopes"), new UserAssertion(TestHelper.signedAssertion)).tenant("otherTenant").build();
+        TestHelper.mockSuccessfulTokenResponse(httpClientMock, tokenResponseValues);
+        parameters = OnBehalfOfParameters.builder(TestHelper.TEST_SCOPE_SET, new UserAssertion(TestHelper.signedAssertion)).tenant("otherTenant").build();
 
         //Overriding the tenant parameter in the request should lead to a new token call being made...
         IAuthenticationResult resultRequestLevelTenant = cca.acquireToken(parameters).get();

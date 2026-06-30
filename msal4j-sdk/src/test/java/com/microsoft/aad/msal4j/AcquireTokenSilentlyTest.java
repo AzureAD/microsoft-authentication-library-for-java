@@ -4,13 +4,8 @@
 package com.microsoft.aad.msal4j;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.Collections;
@@ -19,8 +14,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+
 class AcquireTokenSilentlyTest {
 
     Account basicAccount = new Account("home_account_id", "login.windows.net", "username", null);
@@ -119,13 +115,7 @@ class AcquireTokenSilentlyTest {
     void testTokenRefreshReasons() throws Exception {
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        ConfidentialClientApplication cca =
-                ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromSecret("password"))
-                        .authority("https://login.microsoftonline.com/tenant/")
-                        .instanceDiscovery(false)
-                        .validateAuthority(false)
-                        .httpClient(httpClientMock)
-                        .build();
+        ConfidentialClientApplication cca = TestHelper.buildCca(httpClientMock);
 
         HashMap<String, String> responseParameters = new HashMap<>();
 
@@ -204,5 +194,97 @@ class AcquireTokenSilentlyTest {
         assertEquals(1, cacheSize);
         assertEquals(expectedToken, result.accessToken());
         assertEquals(expectedReason, result.metadata().cacheRefreshReason());
+    }
+
+    // ========== SilentRequestHelper ==========
+
+    @Test
+    void getCacheRefreshReason_claimsPresent_returnsClaims() {
+        SilentParameters params = SilentParameters.builder(
+                        Collections.singleton("scope"),
+                        mock(IAccount.class))
+                .claims(new ClaimsRequest())
+                .build();
+
+        AuthenticationResult cachedResult = mock(AuthenticationResult.class);
+        when(cachedResult.accessToken()).thenReturn("valid-token");
+        when(cachedResult.expiresOn()).thenReturn(System.currentTimeMillis() / 1000 + 3600);
+
+        Logger log = mock(Logger.class);
+
+        assertEquals(CacheRefreshReason.CLAIMS,
+                SilentRequestHelper.getCacheRefreshReasonIfApplicable(params, cachedResult, log));
+    }
+
+    @Test
+    void getCacheRefreshReason_expiredToken_returnsExpired() {
+        SilentParameters params = SilentParameters.builder(
+                        Collections.singleton("scope"),
+                        mock(IAccount.class))
+                .build();
+
+        AuthenticationResult cachedResult = mock(AuthenticationResult.class);
+        when(cachedResult.accessToken()).thenReturn("expired-token");
+        when(cachedResult.expiresOn()).thenReturn(System.currentTimeMillis() / 1000 - 600);
+
+        Logger log = mock(Logger.class);
+
+        assertEquals(CacheRefreshReason.EXPIRED,
+                SilentRequestHelper.getCacheRefreshReasonIfApplicable(params, cachedResult, log));
+    }
+
+    @Test
+    void getCacheRefreshReason_proactiveRefresh_returnsProactiveRefresh() {
+        SilentParameters params = SilentParameters.builder(
+                        Collections.singleton("scope"),
+                        mock(IAccount.class))
+                .build();
+
+        long now = System.currentTimeMillis() / 1000;
+        AuthenticationResult cachedResult = mock(AuthenticationResult.class);
+        when(cachedResult.accessToken()).thenReturn("valid-token");
+        when(cachedResult.expiresOn()).thenReturn(now + 3600);
+        when(cachedResult.refreshOn()).thenReturn(now - 600);
+
+        Logger log = mock(Logger.class);
+
+        assertEquals(CacheRefreshReason.PROACTIVE_REFRESH,
+                SilentRequestHelper.getCacheRefreshReasonIfApplicable(params, cachedResult, log));
+    }
+
+    @Test
+    void getCacheRefreshReason_noAccessTokenWithRefreshToken_returnsNoCachedAccessToken() {
+        SilentParameters params = SilentParameters.builder(
+                        Collections.singleton("scope"),
+                        mock(IAccount.class))
+                .build();
+
+        AuthenticationResult cachedResult = mock(AuthenticationResult.class);
+        when(cachedResult.accessToken()).thenReturn(null);
+        when(cachedResult.refreshToken()).thenReturn("refresh-token-value");
+
+        Logger log = mock(Logger.class);
+
+        assertEquals(CacheRefreshReason.NO_CACHED_ACCESS_TOKEN,
+                SilentRequestHelper.getCacheRefreshReasonIfApplicable(params, cachedResult, log));
+    }
+
+    @Test
+    void getCacheRefreshReason_validToken_returnsNotApplicable() {
+        SilentParameters params = SilentParameters.builder(
+                        Collections.singleton("scope"),
+                        mock(IAccount.class))
+                .build();
+
+        long now = System.currentTimeMillis() / 1000;
+        AuthenticationResult cachedResult = mock(AuthenticationResult.class);
+        when(cachedResult.accessToken()).thenReturn("valid-token");
+        when(cachedResult.expiresOn()).thenReturn(now + 3600);
+        when(cachedResult.refreshOn()).thenReturn(null);
+
+        Logger log = mock(Logger.class);
+
+        assertEquals(CacheRefreshReason.NOT_APPLICABLE,
+                SilentRequestHelper.getCacheRefreshReasonIfApplicable(params, cachedResult, log));
     }
 }

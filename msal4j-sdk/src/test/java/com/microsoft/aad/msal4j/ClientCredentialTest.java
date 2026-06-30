@@ -7,11 +7,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -20,7 +22,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ClientCredentialTest {
 
     @Test
@@ -47,46 +48,34 @@ class ClientCredentialTest {
     }
 
     @Test
-    void OnBehalfOf_InternalCacheLookup_Success() throws Exception {
+    void clientCredential_InternalCacheLookup_Success() throws Exception {
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(HttpStatus.HTTP_OK, TestHelper.getSuccessfulTokenResponse(new HashMap<>())));
+        TestHelper.mockSuccessfulTokenResponse(httpClientMock);
 
-        ConfidentialClientApplication cca =
-                ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromSecret("password"))
-                        .authority("https://login.microsoftonline.com/tenant/")
-                        .instanceDiscovery(false)
-                        .validateAuthority(false)
-                        .httpClient(httpClientMock)
-                        .build();
+        ConfidentialClientApplication cca = TestHelper.buildCca(httpClientMock);
 
-        ClientCredentialParameters parameters = ClientCredentialParameters.builder(Collections.singleton("scopes")).build();
+        ClientCredentialParameters parameters = ClientCredentialParameters.builder(TestHelper.TEST_SCOPE_SET).build();
 
         IAuthenticationResult result = cca.acquireToken(parameters).get();
         IAuthenticationResult result2 = cca.acquireToken(parameters).get();
 
-        //OBO flow should perform an internal cache lookup, so similar parameters should only cause one HTTP client call
+        //Client credential flow should perform an internal cache lookup, so similar parameters should only cause one HTTP client call
         assertEquals(result.accessToken(), result2.accessToken());
         verify(httpClientMock, times(1)).send(any());
     }
 
     @Test
-    void OnBehalfOf_TenantOverride() throws Exception {
+    void clientCredential_TenantOverride() throws Exception {
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
 
-        ConfidentialClientApplication cca =
-                ConfidentialClientApplication.builder("clientId", ClientCredentialFactory.createFromSecret("password"))
-                        .authority("https://login.microsoftonline.com/tenant")
-                        .instanceDiscovery(false)
-                        .validateAuthority(false)
-                        .httpClient(httpClientMock)
-                        .build();
+        ConfidentialClientApplication cca = TestHelper.buildCca(httpClientMock);
 
         HashMap<String, String> tokenResponseValues = new HashMap<>();
         tokenResponseValues.put("access_token", "accessTokenFirstCall");
 
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(HttpStatus.HTTP_OK, TestHelper.getSuccessfulTokenResponse(tokenResponseValues)));
-        ClientCredentialParameters parameters = ClientCredentialParameters.builder(Collections.singleton("scopes")).build();
+        TestHelper.mockSuccessfulTokenResponse(httpClientMock, tokenResponseValues);
+        ClientCredentialParameters parameters = ClientCredentialParameters.builder(TestHelper.TEST_SCOPE_SET).build();
 
         //The two acquireToken calls have the same parameters...
         IAuthenticationResult resultAppLevelTenant = cca.acquireToken(parameters).get();
@@ -98,8 +87,8 @@ class ClientCredentialTest {
 
         tokenResponseValues.put("access_token", "accessTokenSecondCall");
 
-        when(httpClientMock.send(any(HttpRequest.class))).thenReturn(TestHelper.expectedResponse(HttpStatus.HTTP_OK, TestHelper.getSuccessfulTokenResponse(tokenResponseValues)));
-        parameters = ClientCredentialParameters.builder(Collections.singleton("scopes")).tenant("otherTenant").build();
+        TestHelper.mockSuccessfulTokenResponse(httpClientMock, tokenResponseValues);
+        parameters = ClientCredentialParameters.builder(TestHelper.TEST_SCOPE_SET).tenant("otherTenant").build();
 
         //Overriding the tenant parameter in the request should lead to a new token call being made...
         IAuthenticationResult resultRequestLevelTenant = cca.acquireToken(parameters).get();
@@ -217,5 +206,253 @@ class ClientCredentialTest {
         // Verify assertions are different from each other
         assertNotEquals(assertion1, assertion2, "First and second assertions should be different");
         assertNotEquals(assertion2, assertion3, "Second and third assertions should be different");
+    }
+
+    // ========== ClientAssertion: Context-Aware Provider ==========
+
+    @Test
+    void clientAssertion_contextAwareProvider_returnsAssertion() {
+        Function<AssertionRequestOptions, String> provider = options -> "context-assertion";
+        ClientAssertion assertion = new ClientAssertion(provider);
+
+        AssertionRequestOptions options = new AssertionRequestOptions("client-id", "https://endpoint", "/fmi");
+        assertEquals("context-assertion", assertion.assertion(options));
+    }
+
+    @Test
+    void clientAssertion_contextAwareProvider_nullReturnThrows() {
+        Function<AssertionRequestOptions, String> provider = options -> null;
+        ClientAssertion assertion = new ClientAssertion(provider);
+
+        AssertionRequestOptions options = new AssertionRequestOptions("client-id", "https://endpoint", null);
+        MsalClientException ex = assertThrows(MsalClientException.class,
+                () -> assertion.assertion(options));
+        assertEquals(AuthenticationErrorCode.INVALID_JWT, ex.errorCode());
+    }
+
+    @Test
+    void clientAssertion_contextAwareProvider_emptyReturnThrows() {
+        Function<AssertionRequestOptions, String> provider = options -> "";
+        ClientAssertion assertion = new ClientAssertion(provider);
+
+        MsalClientException ex = assertThrows(MsalClientException.class,
+                () -> assertion.assertion(new AssertionRequestOptions(null, null, null)));
+        assertEquals(AuthenticationErrorCode.INVALID_JWT, ex.errorCode());
+    }
+
+    @Test
+    void clientAssertion_contextAwareProvider_exceptionWrapped() {
+        Function<AssertionRequestOptions, String> provider = options -> {
+            throw new RuntimeException("provider failed");
+        };
+        ClientAssertion assertion = new ClientAssertion(provider);
+
+        MsalClientException ex = assertThrows(MsalClientException.class,
+                () -> assertion.assertion(new AssertionRequestOptions(null, null, null)));
+        assertTrue(ex.getCause() instanceof RuntimeException);
+    }
+
+    @Test
+    void clientAssertion_contextAwareProvider_noArgAssertionDelegatesToOptions() {
+        // assertion() with no args should delegate to assertion(options) with empty options
+        Function<AssertionRequestOptions, String> provider = options -> "from-no-arg";
+        ClientAssertion assertion = new ClientAssertion(provider);
+
+        assertEquals("from-no-arg", assertion.assertion());
+    }
+
+    @Test
+    void clientAssertion_isContextAware_trueForFunctionProvider() {
+        Function<AssertionRequestOptions, String> provider = options -> "test";
+        ClientAssertion assertion = new ClientAssertion(provider);
+        assertTrue(assertion.isContextAware());
+    }
+
+    @Test
+    void clientAssertion_isContextAware_falseForCallable() {
+        ClientAssertion assertion = new ClientAssertion((Callable<String>) () -> "test");
+        assertFalse(assertion.isContextAware());
+    }
+
+    @Test
+    void clientAssertion_isContextAware_falseForStaticString() {
+        ClientAssertion assertion = new ClientAssertion("static-assertion");
+        assertFalse(assertion.isContextAware());
+    }
+
+    // ========== ClientAssertion: Callable Error Paths ==========
+
+    @Test
+    void clientAssertion_callableReturnsNull_throwsMsalClientException() {
+        ClientAssertion assertion = new ClientAssertion((Callable<String>) () -> null);
+
+        MsalClientException ex = assertThrows(MsalClientException.class, assertion::assertion);
+        assertEquals(AuthenticationErrorCode.INVALID_JWT, ex.errorCode());
+    }
+
+    @Test
+    void clientAssertion_callableReturnsEmpty_throwsMsalClientException() {
+        ClientAssertion assertion = new ClientAssertion((Callable<String>) () -> "");
+
+        MsalClientException ex = assertThrows(MsalClientException.class, assertion::assertion);
+        assertEquals(AuthenticationErrorCode.INVALID_JWT, ex.errorCode());
+    }
+
+    @Test
+    void clientAssertion_callableThrowsException_wrappedInMsalClientException() {
+        ClientAssertion assertion = new ClientAssertion((Callable<String>) () -> {
+            throw new Exception("callable failed");
+        });
+
+        MsalClientException ex = assertThrows(MsalClientException.class, assertion::assertion);
+        assertTrue(ex.getCause().getMessage().contains("callable failed"));
+    }
+
+    @Test
+    void clientAssertion_nullCallable_throwsNullPointerException() {
+        assertThrows(NullPointerException.class,
+                () -> new ClientAssertion((Callable<String>) null));
+    }
+
+    @Test
+    void clientAssertion_nullFunction_throwsNullPointerException() {
+        assertThrows(NullPointerException.class,
+                () -> new ClientAssertion((Function<AssertionRequestOptions, String>) null));
+    }
+
+    // ========== ClientAssertion: Equals & HashCode ==========
+
+    @Test
+    void clientAssertion_equals_sameStaticAssertion() {
+        ClientAssertion a = new ClientAssertion("test-jwt");
+        ClientAssertion b = new ClientAssertion("test-jwt");
+
+        assertEquals(a, b);
+        assertEquals(a.hashCode(), b.hashCode());
+    }
+
+    @Test
+    void clientAssertion_equals_differentStaticAssertion() {
+        ClientAssertion a = new ClientAssertion("jwt-1");
+        ClientAssertion b = new ClientAssertion("jwt-2");
+
+        assertNotEquals(a, b);
+    }
+
+    @Test
+    void clientAssertion_equals_sameCallable() {
+        Callable<String> callable = () -> "test";
+        ClientAssertion a = new ClientAssertion(callable);
+        ClientAssertion b = new ClientAssertion(callable);
+
+        assertEquals(a, b);
+        assertEquals(a.hashCode(), b.hashCode());
+    }
+
+    @Test
+    void clientAssertion_equals_differentCallables() {
+        ClientAssertion a = new ClientAssertion((Callable<String>) () -> "test");
+        ClientAssertion b = new ClientAssertion((Callable<String>) () -> "test");
+
+        // Different callable instances are compared by identity, so they're not equal
+        assertNotEquals(a, b);
+    }
+
+    @Test
+    void clientAssertion_equals_sameContextAwareProvider() {
+        Function<AssertionRequestOptions, String> provider = opts -> "test";
+        ClientAssertion a = new ClientAssertion(provider);
+        ClientAssertion b = new ClientAssertion(provider);
+
+        assertEquals(a, b);
+        assertEquals(a.hashCode(), b.hashCode());
+    }
+
+    @Test
+    void clientAssertion_equals_differentContextAwareProviders() {
+        ClientAssertion a = new ClientAssertion((Function<AssertionRequestOptions, String>) opts -> "test");
+        ClientAssertion b = new ClientAssertion((Function<AssertionRequestOptions, String>) opts -> "test");
+
+        assertNotEquals(a, b);
+    }
+
+    @Test
+    void clientAssertion_equals_selfAndNull() {
+        ClientAssertion a = new ClientAssertion("jwt");
+        assertEquals(a, a);
+        assertFalse(a.equals(null));
+        assertFalse(a.equals("not-a-ClientAssertion"));
+    }
+
+    // ========== ClientSecret: Equals & HashCode ==========
+
+    @Test
+    void clientSecret_equals_sameSecret() {
+        ClientSecret a = new ClientSecret("secret-1");
+        ClientSecret b = new ClientSecret("secret-1");
+
+        assertEquals(a, b);
+        assertEquals(a.hashCode(), b.hashCode());
+    }
+
+    @Test
+    void clientSecret_equals_differentSecret() {
+        ClientSecret a = new ClientSecret("secret-1");
+        ClientSecret b = new ClientSecret("secret-2");
+
+        assertNotEquals(a, b);
+    }
+
+    @Test
+    void clientSecret_equals_selfAndNull() {
+        ClientSecret a = new ClientSecret("secret");
+        assertEquals(a, a);
+        assertFalse(a.equals(null));
+        assertFalse(a.equals("not-a-ClientSecret"));
+    }
+
+    // ========== ClientCredentialFactory ==========
+
+    @Test
+    void clientCredentialFactory_createFromCertificateChain_validInput() {
+        ClientCertificate cert = ClientCertificate.create(
+                TestHelper.getPrivateKey(), TestHelper.getX509Cert());
+
+        assertNotNull(cert);
+        assertNotNull(cert.privateKey());
+    }
+
+    @Test
+    void clientCredentialFactory_createFromCertificateChain_nullKey() {
+        assertThrows(IllegalArgumentException.class,
+                () -> ClientCredentialFactory.createFromCertificateChain(null,
+                        Collections.singletonList(TestHelper.getX509Cert())));
+    }
+
+    @Test
+    void clientCredentialFactory_createFromCertificateChain_nullChain() {
+        assertThrows(IllegalArgumentException.class,
+                () -> ClientCredentialFactory.createFromCertificateChain(
+                        TestHelper.getPrivateKey(), null));
+    }
+
+    @Test
+    void clientCredentialFactory_createFromCertificateChain_emptyChain() {
+        assertThrows(IllegalArgumentException.class,
+                () -> ClientCredentialFactory.createFromCertificateChain(
+                        TestHelper.getPrivateKey(), Collections.emptyList()));
+    }
+
+    @Test
+    void clientCredentialFactory_createFromCallback_nullCallable() {
+        assertThrows(NullPointerException.class,
+                () -> ClientCredentialFactory.createFromCallback((Callable<String>) null));
+    }
+
+    @Test
+    void clientCredentialFactory_createFromCallback_nullFunction() {
+        assertThrows(NullPointerException.class,
+                () -> ClientCredentialFactory.createFromCallback(
+                        (Function<AssertionRequestOptions, String>) null));
     }
 }

@@ -4,22 +4,21 @@
 package com.microsoft.aad.msal4j;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.*;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class AuthorizationRequestUrlParametersTest {
 
     @Test
-    void testBuilder_onlyRequiredParameters() throws UnsupportedEncodingException {
+    void testBuilder_onlyRequiredParameters() throws Exception {
         PublicClientApplication app = PublicClientApplication.builder("client_id").build();
 
         String redirectUri = "http://localhost:8080";
@@ -53,16 +52,7 @@ class AuthorizationRequestUrlParametersTest {
         assertEquals("login.microsoftonline.com", authorizationUrl.getHost());
         assertEquals("/common/oauth2/v2.0/authorize", authorizationUrl.getPath());
 
-        Map<String, String> queryParameters = new HashMap<>();
-        String query = authorizationUrl.getQuery();
-
-        String[] queryPairs = query.split("&");
-        for (String pair : queryPairs) {
-            int idx = pair.indexOf("=");
-            queryParameters.put(
-                    URLDecoder.decode(pair.substring(0, idx), "UTF-8"),
-                    URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
-        }
+        Map<String, String> queryParameters = parseQueryParameters(authorizationUrl);
 
         assertEquals("openid profile offline_access scope", queryParameters.get("scope"));
         assertEquals("code", queryParameters.get("response_type"));
@@ -85,6 +75,8 @@ class AuthorizationRequestUrlParametersTest {
 
     @Test
     void testBuilder_conflictingParameters() {
+        // Verifies that duplicate parameter keys (extra query params overriding built-in params)
+        // don't throw an exception — they log a warning and the extra value overwrites the built-in.
         String redirectUri = "http://localhost:8080";
         Set<String> scope = Collections.singleton("scope");
 
@@ -98,7 +90,7 @@ class AuthorizationRequestUrlParametersTest {
     }
 
     @Test
-    void testBuilder_responseMode() throws UnsupportedEncodingException {
+    void testBuilder_responseMode() throws Exception {
         PublicClientApplication app = PublicClientApplication.builder("client_id").build();
 
         String redirectUri = "http://localhost:8080";
@@ -127,9 +119,153 @@ class AuthorizationRequestUrlParametersTest {
         assertEquals("login.microsoftonline.com", authorizationUrl.getHost());
         assertEquals("/common/oauth2/v2.0/authorize", authorizationUrl.getPath());
 
-        Map<String, String> queryParameters = new HashMap<>();
-        String query = authorizationUrl.getQuery();
+        Map<String, String> queryParameters = parseQueryParameters(authorizationUrl);
 
+        assertEquals("openid profile offline_access scope", queryParameters.get("scope"));
+        assertEquals("code", queryParameters.get("response_type"));
+        assertEquals("http://localhost:8080", queryParameters.get("redirect_uri"));
+        assertEquals("client_id", queryParameters.get("client_id"));
+        assertEquals("form_post", queryParameters.get("response_mode"));
+    }
+
+    @Test
+    void testBuilder_allOptionalParams() throws Exception {
+        PublicClientApplication app = PublicClientApplication.builder("client_id").build();
+
+        String redirectUri = "http://localhost:8080";
+        Set<String> scope = Collections.singleton("scope");
+
+        AuthorizationRequestUrlParameters parameters =
+                AuthorizationRequestUrlParameters
+                        .builder(redirectUri, scope)
+                        .codeChallenge("challenge-value")
+                        .codeChallengeMethod("S256")
+                        .state("state-123")
+                        .nonce("nonce-456")
+                        .loginHint("user@contoso.com")
+                        .domainHint("contoso.com")
+                        .correlationId("corr-789")
+                        .instanceAware(true)
+                        .prompt(Prompt.CONSENT)
+                        .responseMode(ResponseMode.FORM_POST)
+                        .build();
+
+        assertEquals("challenge-value", parameters.codeChallenge());
+        assertEquals("S256", parameters.codeChallengeMethod());
+        assertEquals("state-123", parameters.state());
+        assertEquals("nonce-456", parameters.nonce());
+        assertEquals("corr-789", parameters.correlationId());
+        assertTrue(parameters.instanceAware());
+        assertEquals(Prompt.CONSENT, parameters.prompt());
+        assertEquals(ResponseMode.FORM_POST, parameters.responseMode());
+
+        URL authorizationUrl = app.getAuthorizationRequestUrl(parameters);
+        Map<String, String> queryParameters = parseQueryParameters(authorizationUrl);
+
+        assertEquals("challenge-value", queryParameters.get("code_challenge"));
+        assertEquals("S256", queryParameters.get("code_challenge_method"));
+        assertEquals("state-123", queryParameters.get("state"));
+        assertEquals("nonce-456", queryParameters.get("nonce"));
+        assertEquals("user@contoso.com", queryParameters.get("login_hint"));
+        assertEquals("contoso.com", queryParameters.get("domain_hint"));
+        assertEquals("corr-789", queryParameters.get("correlation_id"));
+        assertEquals("true", queryParameters.get("instance_aware"));
+        assertEquals("consent", queryParameters.get("prompt"));
+    }
+
+    @Test
+    void testBuilder_nullScopes_Throws() {
+        assertThrows(IllegalArgumentException.class, () ->
+                AuthorizationRequestUrlParameters.builder("http://localhost:8080", null));
+    }
+
+    @Test
+    void testBuilder_extraScopesToConsent() throws Exception {
+        PublicClientApplication app = PublicClientApplication.builder("client_id").build();
+
+        Set<String> scope = Collections.singleton("User.Read");
+        Set<String> extraScopes = new HashSet<>(Arrays.asList("Mail.Read", "Calendars.Read"));
+
+        AuthorizationRequestUrlParameters parameters =
+                AuthorizationRequestUrlParameters
+                        .builder("http://localhost:8080", scope)
+                        .extraScopesToConsent(extraScopes)
+                        .build();
+
+        // Scopes should include common scopes + requested + extra
+        Set<String> resultScopes = parameters.scopes();
+        assertTrue(resultScopes.contains("User.Read"));
+        assertTrue(resultScopes.contains("Mail.Read"));
+        assertTrue(resultScopes.contains("Calendars.Read"));
+        assertTrue(resultScopes.contains("openid"));
+
+        URL authorizationUrl = app.getAuthorizationRequestUrl(parameters);
+        Map<String, String> queryParameters = parseQueryParameters(authorizationUrl);
+
+        String scopeParam = queryParameters.get("scope");
+        assertTrue(scopeParam.contains("User.Read"));
+        assertTrue(scopeParam.contains("Mail.Read"));
+        assertTrue(scopeParam.contains("Calendars.Read"));
+    }
+
+    @Test
+    void testBuilder_loginHint_SetsAnchorMailbox() throws Exception {
+        PublicClientApplication app = PublicClientApplication.builder("client_id").build();
+
+        AuthorizationRequestUrlParameters parameters =
+                AuthorizationRequestUrlParameters
+                        .builder("http://localhost:8080", Collections.singleton("scope"))
+                        .loginHint("user@contoso.com")
+                        .build();
+
+        URL authorizationUrl = app.getAuthorizationRequestUrl(parameters);
+        Map<String, String> queryParameters = parseQueryParameters(authorizationUrl);
+
+        assertEquals("user@contoso.com", queryParameters.get("login_hint"));
+        // X-AnchorMailbox should be set for CCS routing with UPN format
+        assertEquals("upn:user@contoso.com", queryParameters.get("X-AnchorMailbox"));
+    }
+
+    @Test
+    void testBuilder_formPostResponseMode_ExplicitlySet() throws Exception {
+        PublicClientApplication app = PublicClientApplication.builder("client_id").build();
+
+        AuthorizationRequestUrlParameters parameters =
+                AuthorizationRequestUrlParameters
+                        .builder("http://localhost:8080", Collections.singleton("scope"))
+                        .responseMode(ResponseMode.FORM_POST)
+                        .build();
+
+        assertEquals(ResponseMode.FORM_POST, parameters.responseMode());
+
+        URL authorizationUrl = app.getAuthorizationRequestUrl(parameters);
+        Map<String, String> queryParameters = parseQueryParameters(authorizationUrl);
+
+        assertEquals("form_post", queryParameters.get("response_mode"));
+    }
+
+    @Test
+    void testBuilder_claimsChallenge() throws Exception {
+        PublicClientApplication app = PublicClientApplication.builder("client_id").build();
+
+        String claimsChallenge = "{\"access_token\":{\"nbf\":{\"essential\":true}}}";
+
+        AuthorizationRequestUrlParameters parameters =
+                AuthorizationRequestUrlParameters
+                        .builder("http://localhost:8080", Collections.singleton("scope"))
+                        .claimsChallenge(claimsChallenge)
+                        .build();
+
+        URL authorizationUrl = app.getAuthorizationRequestUrl(parameters);
+        Map<String, String> queryParameters = parseQueryParameters(authorizationUrl);
+
+        assertNotNull(queryParameters.get("claims"));
+        assertTrue(queryParameters.get("claims").contains("nbf"));
+    }
+
+    private static Map<String, String> parseQueryParameters(URL url) throws Exception {
+        Map<String, String> queryParameters = new HashMap<>();
+        String query = url.getQuery();
         String[] queryPairs = query.split("&");
         for (String pair : queryPairs) {
             int idx = pair.indexOf("=");
@@ -137,11 +273,6 @@ class AuthorizationRequestUrlParametersTest {
                     URLDecoder.decode(pair.substring(0, idx), "UTF-8"),
                     URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
         }
-
-        assertEquals("openid profile offline_access scope", queryParameters.get("scope"));
-        assertEquals("code", queryParameters.get("response_type"));
-        assertEquals("http://localhost:8080", queryParameters.get("redirect_uri"));
-        assertEquals("client_id", queryParameters.get("client_id"));
-        assertEquals("form_post", queryParameters.get("response_mode"));
+        return queryParameters;
     }
 }
