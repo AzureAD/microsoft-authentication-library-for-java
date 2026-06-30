@@ -5,9 +5,8 @@ package com.microsoft.aad.msal4j;
 
 import com.nimbusds.jwt.SignedJWT;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -20,11 +19,11 @@ import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.interfaces.RSAPrivateKey;
+import java.security.cert.X509Certificate;
 import java.util.*;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ClientCertificateTest {
 
     @Test
@@ -337,5 +336,85 @@ class ClientCertificateTest {
         public List<String> getEncodedPublicKeyCertificateChain() {
             return Collections.emptyList();
         }
+    }
+
+    // ========== ClientCertificate: SHA-1 Hash ==========
+
+    @Test
+    void testPublicCertificateHash_Sha1() throws Exception {
+        IClientCertificate cert = ClientCredentialFactory.createFromCertificate(
+                TestHelper.getPrivateKey(), TestHelper.getX509Cert());
+
+        String sha1Hash = cert.publicCertificateHash();
+
+        assertNotNull(sha1Hash, "SHA-1 hash should not be null");
+        assertFalse(sha1Hash.isEmpty(), "SHA-1 hash should not be empty");
+        // Base64-encoded SHA-1 is 28 characters
+        assertEquals(28, sha1Hash.length(), "Base64-encoded SHA-1 should be 28 chars");
+    }
+
+    @Test
+    void testPublicCertificateHash_Sha256DiffersFromSha1() throws Exception {
+        IClientCertificate cert = ClientCredentialFactory.createFromCertificate(
+                TestHelper.getPrivateKey(), TestHelper.getX509Cert());
+
+        String sha1Hash = cert.publicCertificateHash();
+        String sha256Hash = cert.publicCertificateHash256();
+
+        assertNotEquals(sha1Hash, sha256Hash,
+                "SHA-1 and SHA-256 hashes should be different");
+    }
+
+    // ========== ClientCertificate: Certificate Chain Encoding ==========
+
+    @Test
+    void testGetEncodedPublicKeyCertificateChain_singleCert() throws Exception {
+        ClientCertificate cert = ClientCertificate.create(
+                TestHelper.getPrivateKey(), TestHelper.getX509Cert());
+
+        List<String> chain = cert.getEncodedPublicKeyCertificateChain();
+
+        assertNotNull(chain);
+        assertEquals(1, chain.size(), "Single cert should produce chain of length 1");
+        assertFalse(chain.get(0).isEmpty(), "Encoded cert should not be empty");
+    }
+
+    @Test
+    void testGetEncodedPublicKeyCertificateChain_multiCert() throws Exception {
+        // Create a chain with the same cert repeated (simulates a CA chain)
+        List<X509Certificate> certChain = Arrays.asList(
+                TestHelper.getX509Cert(), TestHelper.getX509Cert());
+        ClientCertificate cert = new ClientCertificate(TestHelper.getPrivateKey(), certChain);
+
+        List<String> chain = cert.getEncodedPublicKeyCertificateChain();
+
+        assertEquals(2, chain.size(), "Chain with 2 certs should produce 2 encoded entries");
+    }
+
+    // ========== ClientCertificate: getAssertion ==========
+
+    @Test
+    void testGetAssertion_nullAuthority_throwsNullPointerException() {
+        ClientCertificate cert = ClientCertificate.create(
+                TestHelper.getPrivateKey(), TestHelper.getX509Cert());
+
+        assertThrows(NullPointerException.class,
+                () -> cert.getAssertion(null, "client-id", false));
+    }
+
+    @Test
+    void testGetAssertion_aadAuthority_usesSha256() throws Exception {
+        ClientCertificate cert = ClientCertificate.create(
+                TestHelper.getPrivateKey(), TestHelper.getX509Cert());
+
+        Authority authority = Authority.createAuthority(
+                new java.net.URL("https://login.microsoftonline.com/tenant/"));
+
+        String assertion = cert.getAssertion(authority, "client-id", false);
+
+        assertNotNull(assertion, "Assertion should not be null");
+        // Verify it's a valid JWT (3 dot-separated parts)
+        String[] parts = assertion.split("\\.");
+        assertEquals(3, parts.length, "JWT assertion should have 3 parts");
     }
 }

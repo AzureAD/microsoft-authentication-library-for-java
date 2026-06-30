@@ -860,4 +860,23 @@ class ParameterBuilderTest {
         assertThrows(IllegalArgumentException.class, () ->
                 ManagedIdentityParameters.builder("https://management.azure.com").claims("   "));
     }
+
+    // ========== ParameterValidationUtils ==========
+
+    @Test
+    void validateNotEmpty_set_nullThrows() {
+        assertThrows(IllegalArgumentException.class,
+                () -> ParameterValidationUtils.validateNotEmpty("scopes", (Set<String>) null));
+    }
+
+    @Test
+    void validateNotEmpty_set_emptyThrows() {
+        assertThrows(IllegalArgumentException.class,
+                () -> ParameterValidationUtils.validateNotEmpty("scopes", new HashSet<>()));
+    }
+
+    @Test
+    void validateNotEmpty_set_nonEmptyPasses() {
+        ParameterValidationUtils.validateNotEmpty("scopes", Collections.singleton("openid"));
+    }
 }

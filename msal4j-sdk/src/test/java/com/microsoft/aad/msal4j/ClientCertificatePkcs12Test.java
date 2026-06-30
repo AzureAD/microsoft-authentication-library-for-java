@@ -5,7 +5,6 @@ package com.microsoft.aad.msal4j;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -21,7 +20,6 @@ import java.util.Arrays;
 import java.util.Collections;
 
 @ExtendWith(MockitoExtension.class)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ClientCertificatePkcs12Test {
 
     private KeyStoreSpi keyStoreSpi;
