@@ -264,14 +264,14 @@ public class AuthorizationCodeParameters implements IAcquireTokenParameters {
          * omitting it routes the request to a different cache partition.
          * A blank value is ignored; an invalid JSON object throws {@link MsalClientException}.
          * <p>
-         * Client claims are primarily intended for confidential-client web apps. Because
-         * {@code AuthorizationCodeParameters} is also accepted by {@link PublicClientApplication}, this
-         * method is visible there too, but note the cache caveat: a public-client token acquired with
-         * client claims is stored under the extended cache key, while a later
+         * Client claims are primarily intended for confidential-client web apps, but
+         * {@code AuthorizationCodeParameters} is also accepted by {@link PublicClientApplication}, so this
+         * method is visible there too. The same cache caveat applies to <em>both</em> application types: a
+         * token acquired with client claims is stored under the extended cache key, while a later
          * {@code acquireTokenSilently} call (which uses {@link SilentParameters} and cannot carry client
-         * claims) will not match that entry and will instead refresh without the client claims. On a
-         * confidential client this matters less, since auth-code redemption always calls the token
-         * endpoint; the value here is wire forwarding plus cache-key isolation between distinct claims.
+         * claims) will not match that entry and will instead refresh without the client claims. The claims
+         * are applied only on the acquire/redemption call that sets them; to apply them again, redeem
+         * through this builder rather than relying on a silent refresh.
          *
          * @param claimsJson a valid JSON object string containing the client claims
          * @return this builder instance
