@@ -696,4 +696,69 @@ class UserFederatedIdentityCredentialTest {
         assertEquals(1, callCount.get(), "Second call with identical claims should be served from cache");
         assertEquals(1, cca.tokenCache.accessTokens.size());
     }
+
+    @Test
+    void userFic_refreshedToken_staysInClientClaimsPartition() throws Exception {
+        // Regression: a refreshed access token must be written back to the SAME ext-cache-key
+        // partition as the original. A RefreshTokenRequest inherits the silent request's
+        // SilentParameters, which carry no client claims, so unless the parent silent request's ext
+        // hash is threaded through, the refreshed token leaks into the default partition (leaving two
+        // cache entries and breaking isolation).
+        String oid = "oid-user-claims";
+        String tid = "f645ad92-e38d-4d1a-b510-d1b09a74a8ca";
+        AtomicInteger callCount = new AtomicInteger(0);
+        when(httpClientMock.send(any(HttpRequest.class))).thenAnswer(invocation -> {
+            int n = callCount.incrementAndGet();
+            // First token is already due for refresh (expires within the refresh buffer); the
+            // refresh response is long-lived.
+            return n == 1
+                    ? createUserResponseWithExpiry(oid, TEST_UPN, "at-original", tid, 1)
+                    : createUserResponseWithExpiry(oid, TEST_UPN, "at-refreshed", tid, 3600);
+        });
+
+        UserFederatedIdentityCredentialParameters params = UserFederatedIdentityCredentialParameters
+                .builder(SCOPES, TEST_UPN, FAKE_ASSERTION).claimsFromClient(CLAIMS_A).build();
+
+        // Act 1 — populate the cache with an (already-expiring) client-claims token + refresh token
+        cca.acquireToken(params).get();
+        assertEquals(1, callCount.get());
+
+        // Act 2 — same claims; the expired access token forces a refresh-token request
+        cca.acquireToken(params).get();
+        assertEquals(2, callCount.get(), "Expired access token should trigger a refresh");
+
+        // Assert — the refreshed token replaced the original in the same partition; it did not leak
+        // into the default partition (which would leave two cached access tokens).
+        String expectedHash = UserFederatedIdentityCredentialParameters
+                .builder(SCOPES, TEST_UPN, FAKE_ASSERTION).claimsFromClient(CLAIMS_A).build()
+                .computeExtCacheKeyHash();
+        assertEquals(1, cca.tokenCache.accessTokens.size(),
+                "Refreshed token must stay in the client-claims partition, not leak into the default one");
+        AccessTokenCacheEntity refreshed = cca.tokenCache.accessTokens.values().iterator().next();
+        assertEquals(expectedHash, refreshed.extCacheKeyHash(),
+                "Refreshed access token must retain the client-claims ext-cache-key hash");
+        assertEquals("at-refreshed", refreshed.secret(), "Cache should hold the refreshed access token");
+    }
+
+    private HttpResponse createUserResponseWithExpiry(String oid, String preferredUsername,
+                                                      String accessToken, String tid, long expiresInSeconds) {
+        String clientInfoJson = String.format("{\"uid\":\"%s\",\"utid\":\"%s\"}", oid, tid);
+        String clientInfo = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(clientInfoJson.getBytes(StandardCharsets.UTF_8));
+
+        HashMap<String, String> idTokenValues = new HashMap<>();
+        idTokenValues.put("oid", oid);
+        idTokenValues.put("preferred_username", preferredUsername);
+        idTokenValues.put("tid", tid);
+        String idToken = TestHelper.createIdToken(idTokenValues);
+
+        HashMap<String, String> responseValues = new HashMap<>();
+        responseValues.put("access_token", accessToken);
+        responseValues.put("id_token", idToken);
+        responseValues.put("client_info", clientInfo);
+        responseValues.put("expires_in", Long.toString(expiresInSeconds));
+
+        return TestHelper.expectedResponse(HttpStatus.HTTP_OK,
+                TestHelper.getSuccessfulTokenResponse(responseValues));
+    }
 }

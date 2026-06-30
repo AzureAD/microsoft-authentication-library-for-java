@@ -346,6 +346,18 @@ public class TokenCache implements ITokenCache {
      * The algorithm uses sorted key-value concatenation → SHA-256 → Base64URL (cross-SDK compatible).
      */
     private static String computeExtCacheKeyHashForRequest(MsalRequest msalRequest) {
+        // A RefreshTokenRequest inherits the parent silent request's RequestContext, whose
+        // apiParameters (SilentParameters) carries no client-originated claims and would therefore
+        // return an empty hash. Prefer the hash threaded onto the parent silent request so a refreshed
+        // token is written back to the same cache partition as the original (e.g. client_claims /
+        // user-FIC) instead of leaking into the default partition.
+        if (msalRequest instanceof RefreshTokenRequest) {
+            String parentHash = ((RefreshTokenRequest) msalRequest).extCacheKeyHash();
+            if (!StringHelper.isBlank(parentHash)) {
+                return parentHash;
+            }
+        }
+
         IAcquireTokenParameters apiParameters = msalRequest.requestContext().apiParameters();
         if (apiParameters != null) {
             return apiParameters.computeExtCacheKeyHash();
