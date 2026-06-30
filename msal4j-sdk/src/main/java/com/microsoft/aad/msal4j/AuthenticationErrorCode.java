@@ -170,7 +170,7 @@ public class AuthenticationErrorCode {
     /**
      * Indicates that the request is malformed or uses an unsupported parameter combination, for
      * example when client-originated claims are supplied to a managed identity source that does not
-     * support them, or when an unsupported claim key is used.
+     * support them.
      */
     public static final String INVALID_REQUEST = "invalid_request";
 }
