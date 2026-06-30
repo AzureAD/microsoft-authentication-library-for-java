@@ -271,7 +271,9 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
          * endpoint as the OAuth {@code claims} request parameter. Unlike {@link #claims(ClaimsRequest)}
          * (server-issued claims challenges, which bypass the cache), tokens acquired with client claims
          * are cached and the cache entry is keyed on the claims value, so distinct claim values produce
-         * separate cache entries. Use stable, non-dynamic values to avoid cache fragmentation.
+         * separate cache entries. Use stable, non-dynamic values to avoid cache fragmentation. Send the identical value on every
+         * request for a given token; because the raw value is part of the cache key, changing or
+         * omitting it routes the request to a different cache partition.
          * A blank value is ignored; an invalid JSON object throws {@link MsalClientException}.
          *
          * @param claimsJson a valid JSON object string containing the client claims

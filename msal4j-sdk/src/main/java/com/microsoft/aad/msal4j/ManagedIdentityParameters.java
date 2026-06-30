@@ -182,11 +182,13 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
          * endpoint. Unlike {@link #claims(String)} (server-issued claims challenges, which bypass the
          * cache), tokens acquired with client claims are cached and the cache entry is keyed on the
          * claims value. Different claim values produce separate cache entries, so use stable,
-         * non-dynamic values to avoid cache fragmentation.
+         * non-dynamic values to avoid cache fragmentation. Send the identical value on every request
+         * for a given token; because the raw value is part of the cache key, changing or omitting it
+         * routes the request to a different cache partition.
          * <p>
-         * Only IMDS-based managed identity is supported, and IMDS (MSIv1) only accepts the single
-         * custom claim {@code xms_az_nwperimid}; any other source or claim key causes the request to
-         * fail with an {@link MsalClientException}. A blank value is ignored.
+         * Only IMDS-based managed identity is supported; any other source causes the request to fail
+         * with an {@link MsalClientException}. The claims object is forwarded to IMDS as-is, which
+         * accepts or rejects its contents. A blank value is ignored.
          *
          * @param claimsJson a valid JSON object string containing the client claims
          * @return this builder instance

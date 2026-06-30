@@ -935,8 +935,8 @@ class ManagedIdentityTests {
     class ClientClaimsTests extends BaseManagedIdentityTest {
         // Client-originated claims (claimsFromClient) for managed identity. Unlike server-issued
         // `claims` challenges (which bypass the cache), client claims are forwarded on the wire and
-        // cached, keyed on the claims value. Only IMDS (MSIv1) is supported, and MSIv1 only permits
-        // the `xms_az_nwperimid` custom claim.
+        // cached, keyed on the claims value. Only IMDS is supported; the claims object is forwarded to
+        // IMDS as-is (MSAL does not restrict which keys it contains).
 
         private final String nwperimidEssential = "{\"xms_az_nwperimid\":{\"essential\":true}}";
         private final String nwperimidValues = "{\"xms_az_nwperimid\":{\"values\":[\"perimid-1234\"]}}";
@@ -1003,16 +1003,22 @@ class ManagedIdentityTests {
         }
 
         @Test
-        void imds_disallowedMsiv1Key_throwsInvalidRequest() throws Exception {
+        void imds_nonNwperimidKey_isForwarded() throws Exception {
+            // MSAL no longer enforces an MSIv1 allow-list; any JSON object is forwarded to IMDS as-is,
+            // and IMDS decides whether to accept it.
             setUpCommonTest(IMDS, ManagedIdentityTestConstants.IMDS_ENDPOINT, ManagedIdentityId.systemAssigned());
+            when(httpClientMock.send(any())).thenReturn(expectedResponse(HttpStatus.HTTP_OK, getSuccessfulResponse(ManagedIdentityTestConstants.RESOURCE)));
 
-            CompletableFuture<IAuthenticationResult> future = miApp.acquireTokenForManagedIdentity(
+            miApp.acquireTokenForManagedIdentity(
                     ManagedIdentityParameters.builder(ManagedIdentityTestConstants.RESOURCE)
                             .claimsFromClient("{\"other_claim\":{\"essential\":true}}")
-                            .build());
+                            .build()).get();
 
-            assertMsalClientException(future, AuthenticationErrorCode.INVALID_REQUEST);
-            verify(httpClientMock, never()).send(any());
+            ArgumentCaptor<HttpRequest> captor = ArgumentCaptor.forClass(HttpRequest.class);
+            verify(httpClientMock).send(captor.capture());
+            String url = captor.getValue().url().toString();
+            assertTrue(url.contains("claims="), "IMDS request URL should carry the claims query parameter");
+            assertTrue(url.contains("other_claim"), "non-nwperimid claim should be forwarded as-is");
         }
     }
 }

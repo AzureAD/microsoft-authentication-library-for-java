@@ -10,17 +10,12 @@ import java.net.HttpURLConnection;
 import java.net.SocketException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
-import java.util.Map;
 
 //base class for all sources that support managed identity
 abstract class AbstractManagedIdentitySource {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractManagedIdentitySource.class);
     private static final String MANAGED_IDENTITY_NO_RESPONSE_RECEIVED = "[Managed Identity] Authentication unavailable. No response received from the managed identity endpoint.";
-
-    // IMDS (MSIv1) only supports this single custom claim. Any other top-level key causes IMDS to
-    // return HTTP 400 with no useful diagnostic, so it is rejected client-side before the network call.
-    private static final String XMS_AZ_NWPERIMID = "xms_az_nwperimid";
 
     protected final ManagedIdentityRequest managedIdentityRequest;
     protected final ServiceBundle serviceBundle;
@@ -82,15 +77,10 @@ abstract class AbstractManagedIdentitySource {
             return;
         }
 
-        if (managedIdentitySourceType != ManagedIdentitySourceType.IMDS) {
-            throw new MsalClientException(
-                    String.format("claimsFromClient is only supported for IMDS-based managed identity sources. "
-                            + "The detected source is %s.", managedIdentitySourceType),
-                    AuthenticationErrorCode.INVALID_REQUEST);
-        }
-
-        // IMDS == MSIv1: validate that the only top-level claim key is xms_az_nwperimid.
-        validateMsiv1Claims(parameters.clientClaims);
+        // Defense-in-depth: AcquireTokenByManagedIdentitySupplier already rejects non-IMDS sources
+        // before the cache read. Re-check here in case the transport path is reached directly. The
+        // claims object is forwarded to IMDS as-is; IMDS decides which keys it accepts.
+        validateClientClaimsSource(managedIdentitySourceType, parameters.clientClaims);
 
         if (managedIdentityRequest.method == HttpMethod.GET) {
             if (managedIdentityRequest.queryParameters == null) {
@@ -108,17 +98,23 @@ abstract class AbstractManagedIdentitySource {
         }
     }
 
-    private static void validateMsiv1Claims(String claimsJson) {
-        Map<String, Object> parsed = JsonHelper.parseJsonToMap(claimsJson);
-        for (String key : parsed.keySet()) {
-            if (!XMS_AZ_NWPERIMID.equals(key)) {
-                throw new MsalClientException(
-                        String.format("MSIv1 (IMDS v1) only supports the `%s` custom claim. "
-                                + "The claims JSON contained the unsupported key `%s`. "
-                                + "Remove all keys other than `%s` when using claimsFromClient with MSIv1.",
-                                XMS_AZ_NWPERIMID, key, XMS_AZ_NWPERIMID),
-                        AuthenticationErrorCode.INVALID_REQUEST);
-            }
+    /**
+     * Validates that client-originated claims are only used with IMDS (MSIv1) managed identity. Other
+     * sources fail fast rather than silently dropping the value (which would also pollute the cache
+     * with a key the endpoint never saw). MSAL does not otherwise restrict the claim contents — the
+     * JSON object is forwarded to IMDS as-is, and IMDS accepts or rejects it. A blank value is a no-op.
+     * Shared by the pre-cache guard and the transport layer so the rule has a single definition.
+     */
+    static void validateClientClaimsSource(ManagedIdentitySourceType source, String clientClaims) {
+        if (StringHelper.isNullOrBlank(clientClaims)) {
+            return;
+        }
+
+        if (source != ManagedIdentitySourceType.IMDS && source != ManagedIdentitySourceType.DEFAULT_TO_IMDS) {
+            throw new MsalClientException(
+                    String.format("claimsFromClient is only supported for IMDS-based managed identity sources. "
+                            + "The detected source is %s.", source),
+                    AuthenticationErrorCode.INVALID_REQUEST);
         }
     }
 
