@@ -21,6 +21,7 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
 
     IClientCredential clientCredential;
     private boolean sendX5c;
+    IClientCertificate mtlsBindingCertificate;
 
     /** AppTokenProvider creates a Credential from a function that provides access tokens. The function
      must be concurrency safe. This is intended only to allow the Azure SDK to cache MSI tokens. It isn't
@@ -89,6 +90,7 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
         log = LoggerFactory.getLogger(ConfidentialClientApplication.class);
 
         this.clientCredential = builder.clientCredential;
+        this.mtlsBindingCertificate = builder.mtlsBindingCertificate;
 
         this.tenant = this.authenticationAuthority.tenant;
     }
@@ -110,11 +112,22 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
         return this.sendX5c;
     }
 
+    /**
+     * @return the certificate used as the client TLS certificate for mTLS Proof-of-Possession requests
+     * when the application's authentication credential is not itself a certificate (e.g. FIC Leg 2, where
+     * authentication is a federated assertion), or null if not configured.
+     */
+    public IClientCertificate mtlsBindingCertificate() {
+        return this.mtlsBindingCertificate;
+    }
+
     public static class Builder extends AbstractClientApplicationBase.Builder<Builder> {
 
         private IClientCredential clientCredential;
 
         private boolean sendX5c = true;
+
+        private IClientCertificate mtlsBindingCertificate;
 
         private Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> appTokenProvider;
 
@@ -135,6 +148,31 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
          */
         public ConfidentialClientApplication.Builder sendX5c(boolean val) {
             this.sendX5c = val;
+
+            return self();
+        }
+
+        /**
+         * Configures a certificate to present as the client TLS certificate in the mutual-TLS handshake
+         * for mTLS Proof-of-Possession requests (see
+         * {@link ClientCredentialParameters.ClientCredentialParametersBuilder#mtlsProofOfPossession()}).
+         * <p>
+         * This is required only when the application authenticates with a credential that is <b>not</b>
+         * itself a certificate — for example, FIC Leg 2, where the application authenticates with a
+         * federated assertion ({@link ClientCredentialFactory#createFromClientAssertion(String)}) but must
+         * still bind the resulting token to a certificate. When the application's authentication credential
+         * is already an {@link IClientCertificate} (direct SN/I cert or FIC Leg 1), that same certificate is
+         * used as the binding certificate and this option is unnecessary.
+         * <p>
+         * Only the certificate's public material is ever surfaced on the result (see
+         * {@link AuthenticationResultMetadata#bindingCertificate()}); the private key is never exposed.
+         *
+         * @param val the binding certificate
+         * @return instance of the Builder on which method was called
+         */
+        public ConfidentialClientApplication.Builder mtlsBindingCertificate(IClientCertificate val) {
+            validateNotNull("mtlsBindingCertificate", val);
+            this.mtlsBindingCertificate = val;
 
             return self();
         }

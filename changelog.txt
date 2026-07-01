@@ -1,5 +1,6 @@
 Version 1.25.0
 =============
+- Add SN/I certificate support over mTLS Proof-of-Possession (PoP) for confidential clients, presenting the certificate as the client TLS cert to obtain an mTLS-bound token; includes the 2-leg Federated Identity Credential (FIC) flow where both legs are mTLS PoP
 - Add Federated Managed Identity (FMI) support for client credentials flow (#1025)
 - Add User Federated Identity Credential (user_fic) grant type support (#1026)
 - Add MSAL client metadata headers to IMDS managed identity requests (#1024)

@@ -19,6 +19,16 @@ class AcquireTokenByClientCredentialSupplier extends AuthenticationResultSupplie
 
     @Override
     AuthenticationResult execute() throws Exception {
+        // For mTLS Proof-of-Possession, isolate the access token in the cache by the binding certificate's
+        // KeyId (x5t#S256) in addition to the token_type dimension, so PoP tokens bound to different
+        // certificates never alias. Stamped before the cache lookup so reads and writes hash identically.
+        if (clientCredentialRequest.parameters.mtlsProofOfPossession()) {
+            IClientCertificate bindingCertificate = MtlsClientCertificateHelper.resolveBindingCertificate(
+                    (ConfidentialClientApplication) this.clientApplication, clientCredentialRequest.parameters);
+            clientCredentialRequest.parameters.bindingCertificateKeyId(
+                    MtlsClientCertificateHelper.computeCertificateKeyId(bindingCertificate));
+        }
+
         if (clientCredentialRequest.parameters.skipCache() != null &&
                 !clientCredentialRequest.parameters.skipCache()) {
             LOG.debug("SkipCache set to false. Attempting cache lookup");

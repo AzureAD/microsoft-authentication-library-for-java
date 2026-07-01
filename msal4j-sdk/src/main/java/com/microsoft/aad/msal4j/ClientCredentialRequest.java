@@ -34,6 +34,10 @@ class ClientCredentialRequest extends MsalRequest {
             params.put("fmi_path", parameters.fmiPath());
         }
 
+        if (parameters.mtlsProofOfPossession()) {
+            params.put("token_type", TokenType.MTLS_POP.value());
+        }
+
         return new OAuthAuthorizationGrant(params, parameters.scopes(), parameters.claims());
     }
 }
