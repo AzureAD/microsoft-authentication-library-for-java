@@ -67,8 +67,6 @@ class ErrorResponse implements JsonSerializable<ErrorResponse> {
     public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
         jsonWriter.writeStartObject();
 
-        jsonWriter.writeStartObject();
-
         jsonWriter.writeNumberField("statusCode", statusCode);
         jsonWriter.writeStringField("statusMessage", statusMessage);
         jsonWriter.writeStringField("error", error);

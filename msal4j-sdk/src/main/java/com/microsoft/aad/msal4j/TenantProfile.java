@@ -4,6 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Representation of a single tenant profile
@@ -39,5 +40,21 @@ class TenantProfile implements ITenantProfile {
     public TenantProfile environment(String environment) {
         this.environment = environment;
         return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof TenantProfile)) return false;
+
+        TenantProfile other = (TenantProfile) o;
+
+        return Objects.equals(idTokenClaims, other.idTokenClaims)
+                && Objects.equals(environment, other.environment);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(idTokenClaims, environment);
     }
 }

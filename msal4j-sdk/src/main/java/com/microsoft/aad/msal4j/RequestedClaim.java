@@ -50,7 +50,7 @@ public class RequestedClaim implements JsonSerializable<RequestedClaim> {
         jsonWriter.writeStartObject();
 
         if (name != null && requestedClaimAdditionalInfo != null) {
-            jsonWriter.writeString(name);
+            jsonWriter.writeFieldName(name);
             requestedClaimAdditionalInfo.toJson(jsonWriter);
         }
 

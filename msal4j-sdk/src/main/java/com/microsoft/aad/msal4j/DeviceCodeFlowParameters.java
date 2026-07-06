@@ -115,7 +115,7 @@ public class DeviceCodeFlowParameters implements IAcquireTokenParameters {
          * Cannot be null.
          */
         public DeviceCodeFlowParametersBuilder deviceCodeConsumer(Consumer<DeviceCode> deviceCodeConsumer) {
-            validateNotNull("deviceCodeConsumer", scopes);
+            validateNotNull("deviceCodeConsumer", deviceCodeConsumer);
 
             this.deviceCodeConsumer = deviceCodeConsumer;
             return this;

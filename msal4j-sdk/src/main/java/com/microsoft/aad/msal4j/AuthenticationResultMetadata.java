@@ -4,6 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * Contains metadata and additional context for the contents of an AuthenticationResult
@@ -57,6 +58,26 @@ public class AuthenticationResultMetadata implements Serializable {
 
     void cacheRefreshReason(CacheRefreshReason cacheRefreshReason) {
         this.cacheRefreshReason = cacheRefreshReason;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof AuthenticationResultMetadata)) return false;
+
+        AuthenticationResultMetadata other = (AuthenticationResultMetadata) o;
+
+        return Objects.equals(tokenSource, other.tokenSource)
+                && Objects.equals(refreshOn, other.refreshOn)
+                && Objects.equals(cacheRefreshReason, other.cacheRefreshReason);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = tokenSource == null ? 0 : tokenSource.hashCode();
+        result = 31 * result + (refreshOn == null ? 0 : refreshOn.hashCode());
+        result = 31 * result + (cacheRefreshReason == null ? 0 : cacheRefreshReason.hashCode());
+        return result;
     }
 
     public static class AuthenticationResultMetadataBuilder {
