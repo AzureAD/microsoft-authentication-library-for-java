@@ -167,7 +167,6 @@ class TokenRequestExecutor {
         } else if (credentialToUse instanceof ClientAssertion) {
             // For client assertion, add client_assertion and client_assertion_type parameters
             ClientAssertion clientAssertion = (ClientAssertion) credentialToUse;
-            String assertion;
             if (clientAssertion.isContextAware()) {
                 // Build assertion context with client assertion FMI path if available
                 String clientAssertionFmiPath = null;
@@ -184,18 +183,12 @@ class TokenRequestExecutor {
                 AssertionRequestOptions options = new AssertionRequestOptions(
                         application.clientId(),
                         tokenEndpoint,
-                        clientAssertionFmiPath,
-                        mtlsPoP);
+                        clientAssertionFmiPath);
 
-                assertion = clientAssertion.assertion(options);
+                addJWTBearerAssertionParams(queryParameters, clientAssertion.assertion(options));
             } else {
-                assertion = clientAssertion.assertion();
+                addJWTBearerAssertionParams(queryParameters, clientAssertion.assertion());
             }
-
-            // For mTLS PoP (FIC Leg 2), the assertion is authenticated with the jwt-pop assertion type and
-            // the binding certificate is presented on the TLS handshake.
-            addJWTAssertionParams(queryParameters, assertion,
-                    mtlsPoP ? ClientAssertion.ASSERTION_TYPE_JWT_POP : ClientAssertion.ASSERTION_TYPE_JWT_BEARER);
         } else if (credentialToUse instanceof ClientCertificate) {
             if (mtlsPoP) {
                 // For mTLS PoP (direct SN/I cert / FIC Leg 1), the certificate is presented as the client
@@ -220,19 +213,8 @@ class TokenRequestExecutor {
      * @param assertion The JWT assertion string
      */
     private void addJWTBearerAssertionParams(Map<String, String> queryParameters, String assertion) {
-        addJWTAssertionParams(queryParameters, assertion, ClientAssertion.ASSERTION_TYPE_JWT_BEARER);
-    }
-
-    /**
-     * Adds the JWT assertion parameters to the request with the given client_assertion_type.
-     *
-     * @param queryParameters The map of query parameters to add to
-     * @param assertion The JWT assertion string
-     * @param assertionType The client_assertion_type value (jwt-bearer for Bearer, jwt-pop for mTLS PoP)
-     */
-    private void addJWTAssertionParams(Map<String, String> queryParameters, String assertion, String assertionType) {
         queryParameters.put("client_assertion", assertion);
-        queryParameters.put("client_assertion_type", assertionType);
+        queryParameters.put("client_assertion_type", ClientAssertion.ASSERTION_TYPE_JWT_BEARER);
     }
 
     /**
@@ -246,8 +228,7 @@ class TokenRequestExecutor {
 
     /**
      * Resolves the certificate to present as the client TLS certificate for an mTLS PoP request: the
-     * request/app authentication credential if it is a certificate (direct SN/I cert or FIC Leg 1),
-     * otherwise the configured {@code mtlsBindingCertificate} (FIC Leg 2, assertion-authenticated).
+     * request/app authentication credential when it is a certificate (direct SN/I cert or FIC Leg 1).
      */
     private IClientCertificate resolveBindingCertificate(ConfidentialClientApplication application) {
         ClientCredentialParameters parameters = msalRequest instanceof ClientCredentialRequest

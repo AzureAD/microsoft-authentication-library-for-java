@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 import com.microsoft.aad.msal4j.BindingCertificate;
-import com.microsoft.aad.msal4j.ClientCredentialFactory;
 import com.microsoft.aad.msal4j.ClientCredentialParameters;
 import com.microsoft.aad.msal4j.ConfidentialClientApplication;
 import com.microsoft.aad.msal4j.IAuthenticationResult;
@@ -52,7 +51,6 @@ class ClientCredentialMtlsProofOfPossession {
         IClientCertificate sniCert = loadSniCertificate();
 
         directSniCertMtlsPop(sniCert);
-        twoLegFicMtlsPop(sniCert);
     }
 
     /**
@@ -84,65 +82,6 @@ class ClientCredentialMtlsProofOfPossession {
         // The binding certificate exposes public material only (x5c chain + SHA-256 thumbprint).
         BindingCertificate binding = result.metadata().bindingCertificate();
         System.out.println("Bound to cert x5t#S256: " + binding.thumbprintSha256());
-    }
-
-    /**
-     * Scenario 2 — Developer-orchestrated 2-leg Federated Identity Credential (FIC) over mTLS PoP.
-     * Both legs are mTLS-PoP requests, and the final token is bound to the Leg-1 certificate.
-     *
-     * <p>Leg 1: the SN/I-cert app mints a federated credential (T1) by presenting the cert on the TLS
-     * handshake ({@code fmiPath(...)} + {@code mtlsProofOfPossession()}). T1 is itself cert-bound.
-     *
-     * <p>Leg 2: the consuming app authenticates with {@code client_assertion = T1}
-     * ({@code client_assertion_type = ...:jwt-pop}) <i>and</i> presents a binding certificate on the TLS
-     * handshake via {@code mtlsBindingCertificate(...)}. The final token (T2) is also cert-bound.
-     */
-    private static void twoLegFicMtlsPop(IClientCertificate sniCert) throws Exception {
-        // Exchange audience is CALLER-SUPPLIED (not SDK-hardcoded):
-        //   generic S2S FIC : "api://AzureADTokenExchange"
-        //   FMI variant     : "api://AzureFMITokenExchange" (client id "urn:microsoft:identity:fmi"),
-        //                      driven by fmiPath(...)
-        Set<String> exchangeScope = Collections.singleton("api://AzureADTokenExchange/.default");
-
-        // LEG 1 — SN/I cert (blueprint/RMA) mints a federated credential over mTLS PoP.
-        ConfidentialClientApplication rma =
-                ConfidentialClientApplication
-                        .builder("<blueprint-or-rma-client-id>", sniCert)
-                        .authority(AUTHORITY)               // tenanted
-                        // .azureRegion("westus")           // OPTIONAL
-                        .build();
-
-        IAuthenticationResult leg1 = rma.acquireToken(
-                ClientCredentialParameters
-                        .builder(exchangeScope)
-                        .fmiPath("SomeFmiPath/FmiCredentialPath")   // FMI variant only; omit for generic S2S FIC
-                        .mtlsProofOfPossession()                    // Leg 1 over mTLS PoP -> mints the cnf
-                        .build())
-                .join();
-
-        String t1 = leg1.accessToken();                             // cert-bound federated credential
-        System.out.println("Leg 1 token type: " + leg1.metadata().tokenType()); // MTLS_POP
-
-        // LEG 2 — consuming app authenticates with T1 AND presents the binding cert on TLS.
-        // The final resource must be an ESTS allow-listed resource (e.g. MS Graph / Key Vault).
-        ConfidentialClientApplication agent =
-                ConfidentialClientApplication
-                        .builder("<agent-client-id>", ClientCredentialFactory.createFromClientAssertion(t1))
-                        .authority(AUTHORITY)
-                        .mtlsBindingCertificate(sniCert)            // binding cert for the mTLS handshake
-                        .build();
-
-        IAuthenticationResult leg2 = agent.acquireToken(
-                ClientCredentialParameters
-                        .builder(SCOPE)                             // allow-listed resource
-                        .mtlsProofOfPossession()                    // Leg 2 also over mTLS PoP
-                        .build())
-                .join();
-
-        System.out.println("Leg 2 access token: " + leg2.accessToken());
-        System.out.println("Leg 2 token type:   " + leg2.metadata().tokenType()); // MTLS_POP
-        System.out.println("Final token bound to cert x5t#S256: "
-                + leg2.metadata().bindingCertificate().thumbprintSha256());
     }
 
     /**

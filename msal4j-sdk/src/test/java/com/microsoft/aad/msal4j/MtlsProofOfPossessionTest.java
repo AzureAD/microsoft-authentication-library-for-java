@@ -34,8 +34,6 @@ class MtlsProofOfPossessionTest {
     private static final String PKCS12_RESOURCE = "/mtls_test_cert.p12";
     private static final String PKCS12_PASSWORD = "password";
     private static final String AUTHORITY = "https://login.microsoftonline.com/contoso.onmicrosoft.com/";
-    private static final String JWT_POP_ASSERTION_TYPE =
-            "urn:ietf:params:oauth:client-assertion-type:jwt-pop";
 
     private IClientCertificate certificate;
 
@@ -130,47 +128,6 @@ class MtlsProofOfPossessionTest {
         // Result: cert-bound PoP token, binding cert surfaced as public material only.
         assertEquals(TokenType.MTLS_POP, result.metadata().tokenType());
         assertNotNull(result.metadata().bindingCertificate());
-        assertEquals(MtlsClientCertificateHelper.computeCertificateKeyId(certificate),
-                result.metadata().bindingCertificate().thumbprintSha256());
-    }
-
-    @Test
-    void ficLeg2_assertionWithBindingCert_usesJwtPopAssertionType() throws Exception {
-        String leg1Token = TestHelper.signedAssertion;
-
-        ConfidentialClientApplication app = ConfidentialClientApplication.builder("agentClientId",
-                        ClientCredentialFactory.createFromClientAssertion(leg1Token))
-                .authority(AUTHORITY)
-                .mtlsBindingCertificate(certificate)
-                .instanceDiscovery(false)
-                .validateAuthority(false)
-                .executorService(SAME_THREAD_EXECUTOR)
-                .httpClient(mock(IHttpClient.class))
-                .build();
-
-        HttpRequest captured;
-        IAuthenticationResult result;
-        try (MockedConstruction<DefaultHttpClient> mocked = mockConstruction(DefaultHttpClient.class,
-                (m, ctx) -> when(m.send(any(HttpRequest.class))).thenReturn(successResponse("leg2-token")))) {
-
-            result = app.acquireToken(ClientCredentialParameters.builder(Collections.singleton("https://graph.microsoft.com/.default"))
-                    .mtlsProofOfPossession()
-                    .skipCache(true)
-                    .build()).get();
-
-            ArgumentCaptor<HttpRequest> requestCaptor = ArgumentCaptor.forClass(HttpRequest.class);
-            verify(mocked.constructed().get(0)).send(requestCaptor.capture());
-            captured = requestCaptor.getValue();
-        }
-
-        assertEquals("mtlsauth.microsoft.com", captured.url().getHost());
-
-        String body = captured.body();
-        assertTrue(body.contains("client_assertion=" + leg1Token), "Leg 2 must authenticate with the Leg-1 token");
-        assertTrue(body.contains("jwt-pop"), "Leg 2 must use the jwt-pop client_assertion_type");
-        assertTrue(body.contains("token_type=mtls_pop"));
-
-        assertEquals(TokenType.MTLS_POP, result.metadata().tokenType());
         assertEquals(MtlsClientCertificateHelper.computeCertificateKeyId(certificate),
                 result.metadata().bindingCertificate().thumbprintSha256());
     }

@@ -93,19 +93,6 @@ class MtlsClientCertificateHelperTest {
     }
 
     @Test
-    void resolveBindingCertificate_assertionWithBindingCert_returnsBindingCert() throws Exception {
-        ConfidentialClientApplication app = ConfidentialClientApplication.builder("clientId",
-                        ClientCredentialFactory.createFromClientAssertion(TestHelper.signedAssertion))
-                .authority(AUTHORITY)
-                .mtlsBindingCertificate(certificate)
-                .instanceDiscovery(false)
-                .validateAuthority(false)
-                .build();
-
-        assertEquals(certificate, MtlsClientCertificateHelper.resolveBindingCertificate(app, null));
-    }
-
-    @Test
     void resolveBindingCertificate_assertionWithoutBindingCert_throwsMtlsPopError() throws Exception {
         ConfidentialClientApplication app = ConfidentialClientApplication.builder("clientId",
                         ClientCredentialFactory.createFromClientAssertion(TestHelper.signedAssertion))
