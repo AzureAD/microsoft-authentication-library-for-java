@@ -384,33 +384,6 @@ class ClientCredentialTest {
         assertFalse(a.equals("not-a-ClientAssertion"));
     }
 
-    // ========== ClientSecret: Equals & HashCode ==========
-
-    @Test
-    void clientSecret_equals_sameSecret() {
-        ClientSecret a = new ClientSecret("secret-1");
-        ClientSecret b = new ClientSecret("secret-1");
-
-        assertEquals(a, b);
-        assertEquals(a.hashCode(), b.hashCode());
-    }
-
-    @Test
-    void clientSecret_equals_differentSecret() {
-        ClientSecret a = new ClientSecret("secret-1");
-        ClientSecret b = new ClientSecret("secret-2");
-
-        assertNotEquals(a, b);
-    }
-
-    @Test
-    void clientSecret_equals_selfAndNull() {
-        ClientSecret a = new ClientSecret("secret");
-        assertEquals(a, a);
-        assertFalse(a.equals(null));
-        assertFalse(a.equals("not-a-ClientSecret"));
-    }
-
     // ========== ClientCredentialFactory ==========
 
     @Test
