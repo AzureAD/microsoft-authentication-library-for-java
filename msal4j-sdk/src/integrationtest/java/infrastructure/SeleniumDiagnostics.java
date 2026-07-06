@@ -106,7 +106,7 @@ public final class SeleniumDiagnostics {
             StringBuilder content = new StringBuilder();
             content.append("<!-- URL: ").append(redactedUrl).append(" -->\n");
             content.append("<!-- Title: ").append(driver.getTitle()).append(" -->\n");
-            content.append(pageSource);
+            content.append(redactSensitiveParams(pageSource));
 
             Path destination = getOutputPath(filePrefix + ".html");
             Files.write(destination, content.toString().getBytes(StandardCharsets.UTF_8));

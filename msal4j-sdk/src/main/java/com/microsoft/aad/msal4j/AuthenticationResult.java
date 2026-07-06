@@ -52,7 +52,7 @@ final class AuthenticationResult implements IAuthenticationResult {
 
         try {
             return JsonHelper.createIdTokenFromEncodedTokenString(idToken);
-        } catch (Exception e) {
+        } catch (MsalException e) {
             return null;
         }
     }
@@ -76,7 +76,7 @@ final class AuthenticationResult implements IAuthenticationResult {
 
         try {
             return new TenantProfile(JsonHelper.parseJsonToMap(JsonHelper.getTokenPayloadClaims(idToken)), acct.environment());
-        } catch (Exception e) {
+        } catch (MsalException e) {
             return null;
         }
     }
