@@ -3,17 +3,18 @@
 
 package com.microsoft.aad.msal4j;
 
-import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.X509ExtendedKeyManager;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
+import java.net.Socket;
 import java.security.GeneralSecurityException;
-import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
 import java.security.PrivateKey;
-import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -21,7 +22,6 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Builds the TLS material needed to present an {@link IClientCertificate} as the client certificate in a
@@ -29,7 +29,8 @@ import java.util.UUID;
  * {@link BindingCertificate} on the result.
  *
  * <p>The source certificate is resolved from the request/app credential (direct SN/I cert or FIC Leg 1).
- * Only public material is ever surfaced; the private key stays inside the in-memory key store.
+ * Only public material is ever surfaced; the private key is used in place (through its own provider)
+ * and is never exported or copied into a key store.
  */
 final class MtlsClientCertificateHelper {
 
@@ -87,26 +88,23 @@ final class MtlsClientCertificateHelper {
                         AuthenticationErrorCode.MTLS_POP_ERROR);
             }
 
-            // The key store is in-memory and transient (never persisted), so the password value is
-            // irrelevant to security. It must, however, be non-empty: on some JDKs (notably 8) a
-            // zero-length password makes PKCS12 setKeyEntry fail with
-            // "Key protection algorithm not found: java.lang.NullPointerException".
-            char[] password = UUID.randomUUID().toString().toCharArray();
-            KeyStore keyStore = KeyStore.getInstance("PKCS12");
-            keyStore.load(null, null);
-            keyStore.setKeyEntry(KEY_ENTRY_ALIAS, privateKey, password, chain.toArray(new Certificate[0]));
-
-            KeyManagerFactory keyManagerFactory =
-                    KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            keyManagerFactory.init(keyStore, password);
+            // Present the certificate to the TLS layer through a KeyManager that holds the live private
+            // key object directly, instead of importing it into a PKCS12 KeyStore. The key may be a
+            // non-exportable handle (e.g. a Windows-MY / SunMSCAPI or HSM key) whose getEncoded()
+            // returns null and which therefore cannot be added to a KeyStore; the TLS handshake can
+            // still sign through the key's own provider. Ordinary exportable keys use the same path.
+            KeyManager[] keyManagers = {
+                    new SingleCertificateKeyManager(KEY_ENTRY_ALIAS, privateKey,
+                            chain.toArray(new X509Certificate[0]))
+            };
 
             SSLContext sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(keyManagerFactory.getKeyManagers(), null, null);
+            sslContext.init(keyManagers, null, null);
 
             return sslContext.getSocketFactory();
         } catch (MsalClientException e) {
             throw e;
-        } catch (GeneralSecurityException | IOException e) {
+        } catch (GeneralSecurityException e) {
             throw new MsalClientException(
                     "Failed to build the mTLS client certificate socket factory: " + e.getMessage(),
                     AuthenticationErrorCode.MTLS_POP_ERROR);
@@ -179,5 +177,65 @@ final class MtlsClientCertificateHelper {
             chain.add((X509Certificate) certificateFactory.generateCertificate(new ByteArrayInputStream(der)));
         }
         return chain;
+    }
+
+    /**
+     * An {@link X509ExtendedKeyManager} that always presents a single, pre-resolved client certificate
+     * and its private key during a TLS handshake. It holds the live {@link PrivateKey} reference rather
+     * than importing the key into a {@link java.security.KeyStore}, so it works with non-exportable keys
+     * (e.g. Windows-MY / SunMSCAPI or HSM-backed keys) whose {@code getEncoded()} returns {@code null}.
+     * Signing is delegated to the key's own provider by the SSL engine.
+     */
+    private static final class SingleCertificateKeyManager extends X509ExtendedKeyManager {
+
+        private final String alias;
+        private final PrivateKey privateKey;
+        private final X509Certificate[] chain;
+
+        SingleCertificateKeyManager(String alias, PrivateKey privateKey, X509Certificate[] chain) {
+            this.alias = alias;
+            this.privateKey = privateKey;
+            this.chain = chain;
+        }
+
+        @Override
+        public String[] getClientAliases(String keyType, Principal[] issuers) {
+            return new String[]{alias};
+        }
+
+        @Override
+        public String chooseClientAlias(String[] keyType, Principal[] issuers, Socket socket) {
+            return alias;
+        }
+
+        @Override
+        public String chooseEngineClientAlias(String[] keyType, Principal[] issuers, SSLEngine engine) {
+            return alias;
+        }
+
+        @Override
+        public String[] getServerAliases(String keyType, Principal[] issuers) {
+            return null;
+        }
+
+        @Override
+        public String chooseServerAlias(String keyType, Principal[] issuers, Socket socket) {
+            return null;
+        }
+
+        @Override
+        public String chooseEngineServerAlias(String keyType, Principal[] issuers, SSLEngine engine) {
+            return null;
+        }
+
+        @Override
+        public X509Certificate[] getCertificateChain(String alias) {
+            return chain.clone();
+        }
+
+        @Override
+        public PrivateKey getPrivateKey(String alias) {
+            return privateKey;
+        }
     }
 }
