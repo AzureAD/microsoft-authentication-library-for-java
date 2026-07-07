@@ -448,7 +448,7 @@ class AuthenticationResultTest {
     }
 
     @Test
-    void metadata_ToString_ContainsFieldValues() {
+    void metadata_BuilderToString_ContainsFieldValues() {
         String toString = AuthenticationResultMetadata.builder()
                 .tokenSource(TokenSource.CACHE)
                 .refreshOn(100L)

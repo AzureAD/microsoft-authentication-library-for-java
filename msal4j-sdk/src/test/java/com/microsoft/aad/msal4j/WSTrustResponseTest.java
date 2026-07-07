@@ -84,7 +84,7 @@ class WSTrustResponseTest {
     }
 
     @Test
-    void isTokenSaml2_nonSaml1Type_returnsTrue() {
+    void isTokenSaml2_nonSaml1Type_returnsFalse() {
         // Token from test XML is SAML 1.0
         assertFalse(successResponse.isTokenSaml2());
 
