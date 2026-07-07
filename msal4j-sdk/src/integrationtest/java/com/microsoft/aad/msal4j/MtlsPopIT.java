@@ -3,7 +3,6 @@
 
 package com.microsoft.aad.msal4j;
 
-import com.microsoft.aad.msal4j.labapi.KeyVaultRegistry;
 import com.microsoft.aad.msal4j.labapi.KeyVaultSecretsProvider;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -49,9 +48,21 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * OS keystore alias {@link KeyVaultSecretsProvider#CERTIFICATE_ALIAS}). They require lab credentials and
  * network access and only pass in CI (like the other {@code *IT} tests, they are not run by the unit-test
  * surefire pass).
+ *
+ * <p><b>App/tenant requirement:</b> ESTS only issues mTLS PoP tokens for the SN/I-allow-listed app in the
+ * MSI team tenant. This mirrors MSAL .NET's {@code ClientCredentialsMtlsPopTests}: any other app (e.g. the
+ * general {@code LabVaultAppID}) is rejected with {@code AADSTS700025: Client is public...}. The lab cert
+ * ({@link KeyVaultSecretsProvider#CERTIFICATE_ALIAS}) is registered for SN/I on this app.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class MtlsPopIT {
+
+    // SN/I-allow-listed app and MSI team tenant. mTLS PoP only works on this app/tenant pair; mirrors
+    // MSAL .NET's ClientCredentialsMtlsPopTests. App and tenant IDs are public identifiers, not secrets.
+    private static final String SNI_ALLOWLISTED_APP_ID = "163ffef9-a313-45b4-ab2f-c7e2f5e0e23e";
+    private static final String SNI_ALLOWLISTED_AUTHORITY =
+            "https://login.microsoftonline.com/bea21ebe-8b64-4d06-9f6d-6a889b120a7c";
+    private static final String TEST_SLICE_REGION = "westus3";
 
     private PrivateKey privateKey;
     private X509Certificate publicCertificate;
@@ -80,11 +91,8 @@ class MtlsPopIT {
      */
     @Test
     void acquireTokenClientCredentials_Certificate_MtlsPop() throws Exception {
-        final String clientId = KeyVaultRegistry.getMsidLabProvider()
-                .getSecretByName("LabVaultAppID").getValue();
-
-        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(clientId, certificate)
-                .authority(TestConstants.MICROSOFT_AUTHORITY)   // tenanted authority (required for mTLS PoP)
+        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(SNI_ALLOWLISTED_APP_ID, certificate)
+                .authority(SNI_ALLOWLISTED_AUTHORITY)   // tenanted authority (required for mTLS PoP)
                 .build();
 
         IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
@@ -103,12 +111,9 @@ class MtlsPopIT {
      */
     @Test
     void acquireTokenClientCredentials_Certificate_MtlsPop_Regional() throws Exception {
-        final String clientId = KeyVaultRegistry.getMsidLabProvider()
-                .getSecretByName("LabVaultAppID").getValue();
-
-        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(clientId, certificate)
-                .authority(TestConstants.MICROSOFT_AUTHORITY)
-                .azureRegion("westus")
+        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(SNI_ALLOWLISTED_APP_ID, certificate)
+                .authority(SNI_ALLOWLISTED_AUTHORITY)
+                .azureRegion(TEST_SLICE_REGION)
                 .build();
 
         IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
@@ -137,11 +142,8 @@ class MtlsPopIT {
      */
     @Test
     void acquireTokenClientCredentials_BearerAndMtlsPop_AreCacheIsolated() throws Exception {
-        final String clientId = KeyVaultRegistry.getMsidLabProvider()
-                .getSecretByName("LabVaultAppID").getValue();
-
-        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(clientId, certificate)
-                .authority(TestConstants.MICROSOFT_AUTHORITY)
+        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(SNI_ALLOWLISTED_APP_ID, certificate)
+                .authority(SNI_ALLOWLISTED_AUTHORITY)
                 .build();
 
         // Existing SNI + Bearer path (unchanged).
