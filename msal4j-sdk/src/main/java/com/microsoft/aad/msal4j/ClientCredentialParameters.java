@@ -37,10 +37,11 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
     // Generic extended cache key components. Any optional or flow-specific parameters 
     // that should influence token cache isolation adds an entry here. The hash of these
     // components is used as part of the cache key in relevant scenarios entries.
-    private SortedMap<String, String> cacheKeyComponents;
+    private volatile SortedMap<String, String> cacheKeyComponents;
 
-    // Memoized hash of cacheKeyComponents (computed once since parameters are immutable).
-    private String extCacheKeyHashCache;
+    // Lazily memoized hash of cacheKeyComponents. Invalidated (set to null) whenever the
+    // components change (e.g. bindingCertificateKeyId adds the cert KeyId) so it is recomputed.
+    private volatile String extCacheKeyHashCache;
 
     private ClientCredentialParameters(Set<String> scopes, Boolean skipCache, ClaimsRequest claims, Map<String, String> extraHttpHeaders, Map<String, String> extraQueryParameters, String tenant, IClientCredential clientCredential, String fmiPath, boolean mtlsProofOfPossession) {
         this.scopes = scopes;
@@ -133,17 +134,23 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
      * token is cache-isolated by certificate, in addition to the {@code token_type} dimension.
      * <p>
      * Called once (before the silent cache lookup) so both cache reads and writes observe the same
-     * components. Clears the memoized hash so it is recomputed with the added component.
+     * components. This params instance may be reused across concurrent acquireToken calls, so the
+     * update is copy-on-write and synchronized, and clears the memoized hash so it is recomputed.
      */
     void bindingCertificateKeyId(String keyId) {
         if (StringHelper.isBlank(keyId)) {
             return;
         }
-        if (this.cacheKeyComponents == null) {
-            this.cacheKeyComponents = new TreeMap<>();
+        synchronized (this) {
+            // Copy-on-write: never mutate a map that another thread may be reading. Swap in a fresh
+            // map and invalidate the memoized hash so it is recomputed with the added component.
+            TreeMap<String, String> updated = this.cacheKeyComponents == null
+                    ? new TreeMap<>()
+                    : new TreeMap<>(this.cacheKeyComponents);
+            updated.put("cert_kid", keyId);
+            this.cacheKeyComponents = updated;
+            this.extCacheKeyHashCache = null;
         }
-        this.cacheKeyComponents.put("cert_kid", keyId);
-        this.extCacheKeyHashCache = null;
     }
 
     /**
@@ -180,15 +187,18 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
      * Computes the extended cache key hash from all cache key components.
      * Returns an empty string if no components are present.
      * <p>
-     * The result is memoized since ClientCredentialParameters is immutable after construction.
+     * The result is lazily memoized and invalidated whenever the cache key components change
+     * (see {@link #bindingCertificateKeyId(String)}).
      * Used by both cache writes ({@link TokenCache}) and cache reads (silent lookup).
      */
     String computeExtCacheKeyHash() {
-        if (extCacheKeyHashCache != null) {
-            return extCacheKeyHashCache;
+        String cached = extCacheKeyHashCache;
+        if (cached != null) {
+            return cached;
         }
-        extCacheKeyHashCache = StringHelper.computeExtCacheKeyHash(cacheKeyComponents);
-        return extCacheKeyHashCache;
+        String computed = StringHelper.computeExtCacheKeyHash(cacheKeyComponents);
+        extCacheKeyHashCache = computed;
+        return computed;
     }
 
     public static class ClientCredentialParametersBuilder {
