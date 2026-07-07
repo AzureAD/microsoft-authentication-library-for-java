@@ -12,6 +12,7 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
@@ -20,6 +21,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Builds the TLS material needed to present an {@link IClientCertificate} as the client certificate in a
@@ -78,10 +80,21 @@ final class MtlsClientCertificateHelper {
                         AuthenticationErrorCode.MTLS_POP_ERROR);
             }
 
-            char[] password = new char[0];
+            PrivateKey privateKey = certificate.privateKey();
+            if (privateKey == null) {
+                throw new MsalClientException(
+                        "mTLS Proof-of-Possession requires a certificate with an accessible private key.",
+                        AuthenticationErrorCode.MTLS_POP_ERROR);
+            }
+
+            // The key store is in-memory and transient (never persisted), so the password value is
+            // irrelevant to security. It must, however, be non-empty: on some JDKs (notably 8) a
+            // zero-length password makes PKCS12 setKeyEntry fail with
+            // "Key protection algorithm not found: java.lang.NullPointerException".
+            char[] password = UUID.randomUUID().toString().toCharArray();
             KeyStore keyStore = KeyStore.getInstance("PKCS12");
             keyStore.load(null, null);
-            keyStore.setKeyEntry(KEY_ENTRY_ALIAS, certificate.privateKey(), password, chain.toArray(new Certificate[0]));
+            keyStore.setKeyEntry(KEY_ENTRY_ALIAS, privateKey, password, chain.toArray(new Certificate[0]));
 
             KeyManagerFactory keyManagerFactory =
                     KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
