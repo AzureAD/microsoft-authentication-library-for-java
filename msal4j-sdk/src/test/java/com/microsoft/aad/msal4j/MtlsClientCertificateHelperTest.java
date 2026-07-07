@@ -10,6 +10,9 @@ import org.junit.jupiter.api.TestInstance;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.InputStream;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.List;
@@ -48,6 +51,56 @@ class MtlsClientCertificateHelperTest {
         MsalClientException ex = assertThrows(MsalClientException.class, () ->
                 MtlsClientCertificateHelper.createMtlsSocketFactory(null));
         assertEquals(AuthenticationErrorCode.MTLS_POP_ERROR, ex.errorCode());
+    }
+
+    // Regression for the mTLS PoP integration tests on CI (Windows + JDK 8): the lab certificate is
+    // loaded from the Windows-MY store via SunMSCAPI, so its private key is a non-exportable handle
+    // whose getEncoded()/getFormat() return null. Importing such a key into a PKCS12 KeyStore fails
+    // ("Key protection algorithm not found: java.lang.NullPointerException"). Building the socket
+    // factory must instead hold the live key and delegate signing to its provider, so it succeeds.
+    @Test
+    void createMtlsSocketFactory_nonExportablePrivateKey_buildsFactory() {
+        IClientCertificate nonExportable = withNonExportableKey(certificate);
+        SSLSocketFactory factory = MtlsClientCertificateHelper.createMtlsSocketFactory(nonExportable);
+        assertNotNull(factory);
+    }
+
+    // Wraps a certificate so its private key mimics a non-exportable OS/HSM key handle: the public
+    // chain still resolves, but getEncoded()/getFormat() return null (as SunMSCAPI keys do).
+    private static IClientCertificate withNonExportableKey(IClientCertificate delegate) {
+        PrivateKey nonExportableKey = new PrivateKey() {
+            @Override
+            public String getAlgorithm() {
+                return delegate.privateKey().getAlgorithm();
+            }
+
+            @Override
+            public String getFormat() {
+                return null;
+            }
+
+            @Override
+            public byte[] getEncoded() {
+                return null;
+            }
+        };
+
+        return new IClientCertificate() {
+            @Override
+            public PrivateKey privateKey() {
+                return nonExportableKey;
+            }
+
+            @Override
+            public String publicCertificateHash() throws CertificateEncodingException, NoSuchAlgorithmException {
+                return delegate.publicCertificateHash();
+            }
+
+            @Override
+            public List<String> getEncodedPublicKeyCertificateChain() throws CertificateEncodingException {
+                return delegate.getEncodedPublicKeyCertificateChain();
+            }
+        };
     }
 
     @Test
