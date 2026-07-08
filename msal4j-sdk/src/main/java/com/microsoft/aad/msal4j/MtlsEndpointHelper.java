@@ -18,15 +18,30 @@ import java.util.Locale;
  * </ul>
  *
  * <p>Region is OPTIONAL — there is no "region required" error path. The authority must be tenanted
- * ({@code /common} and {@code /organizations} are rejected). US Gov / China (and other sovereign clouds)
- * are fail-fast for now; the guardrail is isolated in {@link #isMtlsPoPUnsupportedCloud(String)} so it is
- * trivial to lift per-cloud once {@code mtlsauth.*} lands there.
+ * ({@code /common} and {@code /organizations} are rejected).
+ *
+ * <p>Cloud boundaries are enforced so a request is never rewritten to (and its client certificate never
+ * presented at) a host in a different cloud:
+ * <ul>
+ *   <li>Sovereign clouds (US Gov, China, and other national clouds) are fail-fast for now — the guardrail
+ *   is isolated in {@link #isMtlsPoPUnsupportedCloud(String)}, backed by the authoritative sovereign-host
+ *   set so no sovereign host can fall through, and is trivial to lift per-cloud once {@code mtlsauth.*}
+ *   lands there.</li>
+ *   <li>Public global hosts collapse to {@code mtlsauth.microsoft.com}; any other {@code login.*} host is
+ *   rewritten domain-preserving ({@code login} &rarr; {@code mtlsauth}) so it stays within its own cloud
+ *   boundary rather than being sent to the public endpoint (mirrors MSAL.NET).</li>
+ *   <li>A host that is not a recognizable {@code login.*} host is rejected.</li>
+ * </ul>
  */
 final class MtlsEndpointHelper {
 
     static final String GLOBAL_MTLS_HOST = "mtlsauth.microsoft.com";
 
     private static final String REGIONAL_LOGIN_SUFFIX = ".login.microsoft.com";
+
+    private static final String LOGIN_LABEL = "login";
+    private static final String MTLS_LABEL = "mtlsauth";
+    private static final String LOGIN_LABEL_PREFIX = LOGIN_LABEL + ".";
 
     private MtlsEndpointHelper() {
     }
@@ -50,6 +65,13 @@ final class MtlsEndpointHelper {
         }
 
         String mtlsHost = deriveMtlsHost(host);
+        if (mtlsHost == null) {
+            throw new MsalClientException(
+                    "mTLS Proof-of-Possession requires a Microsoft Entra 'login.*' authority host, but the " +
+                            "token endpoint host '" + host + "' is not recognized. Configure a public-cloud " +
+                            "Microsoft Entra authority.",
+                    AuthenticationErrorCode.MTLS_POP_ERROR);
+        }
 
         try {
             return new URL(tokenEndpoint.getProtocol(), mtlsHost, tokenEndpoint.getPort(), tokenEndpoint.getFile());
@@ -78,7 +100,19 @@ final class MtlsEndpointHelper {
     }
 
     /**
-     * Rewrites a {@code login.*} host to its {@code mtlsauth.*} equivalent, preserving any regional prefix.
+     * Rewrites a {@code login.*} host to its {@code mtlsauth.*} equivalent, preserving both any regional
+     * prefix and the cloud domain.
+     *
+     * <ul>
+     *   <li>Regionalized public host {@code <region>.login.microsoft.com} &rarr; {@code <region>.mtlsauth.microsoft.com}.</li>
+     *   <li>Public global hosts (e.g. {@code login.microsoftonline.com}, {@code login.windows.net},
+     *   {@code login.microsoft.com}, {@code sts.windows.net}) &rarr; {@code mtlsauth.microsoft.com}.</li>
+     *   <li>Any other {@code login.*} host &rarr; domain-preserving swap ({@code login} &rarr; {@code mtlsauth}),
+     *   keeping the request within the same cloud boundary (mirrors MSAL.NET).</li>
+     * </ul>
+     *
+     * @return the {@code mtlsauth.*} host, or {@code null} if {@code loginHost} is not a recognizable
+     * {@code login.*} host and therefore cannot be safely rewritten
      */
     static String deriveMtlsHost(String loginHost) {
         String lower = loginHost.toLowerCase(Locale.ROOT);
@@ -89,22 +123,50 @@ final class MtlsEndpointHelper {
             return region + "." + GLOBAL_MTLS_HOST;
         }
 
-        // Global public hosts (login.microsoftonline.com, login.microsoft.com, login.windows.net, etc.)
-        return GLOBAL_MTLS_HOST;
+        // Public global hosts all resolve to the single public mTLS host.
+        if (isPublicHost(lower)) {
+            return GLOBAL_MTLS_HOST;
+        }
+
+        // Any other login.* host: preserve the domain and only swap the leading "login" label for
+        // "mtlsauth", so the request stays within the same cloud boundary (never rewritten to the public
+        // endpoint). Mirrors MSAL.NET's domain-preserving rewrite.
+        if (lower.startsWith(LOGIN_LABEL_PREFIX)) {
+            return MTLS_LABEL + lower.substring(LOGIN_LABEL.length());
+        }
+
+        // Not a recognizable login.* host: cannot safely derive an mTLS host.
+        return null;
+    }
+
+    /**
+     * @return {@code true} if {@code host} is a known public (non-sovereign) Microsoft Entra host that
+     * should resolve to the global public mTLS host {@code mtlsauth.microsoft.com}.
+     */
+    private static boolean isPublicHost(String host) {
+        return AadInstanceDiscoveryProvider.TRUSTED_HOSTS_SET.contains(host)
+                && !AadInstanceDiscoveryProvider.TRUSTED_SOVEREIGN_HOSTS_SET.contains(host);
     }
 
     /**
      * Isolated sovereign-cloud guardrail. Returns {@code true} for clouds where mTLS PoP is not yet
-     * supported (US Gov, China). Keep this as the single point of truth so it is trivial to lift per-cloud.
+     * supported (US Gov, China, and other national clouds). Backed by the authoritative
+     * {@link AadInstanceDiscoveryProvider#TRUSTED_SOVEREIGN_HOSTS_SET} — including regionalized forms —
+     * so no sovereign host can fall through to the public mTLS endpoint. Keep this as the single point of
+     * truth so it is trivial to lift per-cloud once {@code mtlsauth.*} lands there.
      */
     static boolean isMtlsPoPUnsupportedCloud(String host) {
         String lower = host.toLowerCase(Locale.ROOT);
-        return lower.endsWith(".us")
-                || lower.endsWith(".cn")
-                || lower.contains("usgovcloudapi")
-                || lower.contains("microsoftonline.us")
-                || lower.contains("chinacloudapi.cn")
-                || lower.contains("partner.microsoftonline.cn");
+        if (AadInstanceDiscoveryProvider.TRUSTED_SOVEREIGN_HOSTS_SET.contains(lower)) {
+            return true;
+        }
+        // Also reject regionalized sovereign hosts, e.g. <region>.login.microsoftonline.us.
+        for (String sovereignHost : AadInstanceDiscoveryProvider.TRUSTED_SOVEREIGN_HOSTS_SET) {
+            if (lower.endsWith("." + sovereignHost.toLowerCase(Locale.ROOT))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void validateTenanted(String tenant) {

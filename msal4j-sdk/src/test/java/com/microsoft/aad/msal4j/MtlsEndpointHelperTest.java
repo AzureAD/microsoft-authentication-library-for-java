@@ -10,6 +10,7 @@ import java.net.URL;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -99,5 +100,79 @@ class MtlsEndpointHelperTest {
         assertTrue(MtlsEndpointHelper.isMtlsPoPUnsupportedCloud("login.microsoftonline.us"));
         assertTrue(MtlsEndpointHelper.isMtlsPoPUnsupportedCloud("login.partner.microsoftonline.cn"));
         assertTrue(MtlsEndpointHelper.isMtlsPoPUnsupportedCloud("login.chinacloudapi.cn"));
+    }
+
+    // Regression: every sovereign host in the trusted set must fail fast (none may fall through to the
+    // public mtlsauth endpoint). The last five previously slipped past the substring denylist.
+    @Test
+    void isMtlsPoPUnsupportedCloud_coversAllSovereignHosts() {
+        String[] sovereignHosts = {
+                "login.chinacloudapi.cn",
+                "login.partner.microsoftonline.cn",
+                "login-us.microsoftonline.com",
+                "login.microsoftonline.de",
+                "login.microsoftonline.us",
+                "login.usgovcloudapi.net",
+                "login.sovcloud-identity.fr",
+                "login.sovcloud-identity.de",
+                "login.sovcloud-identity.sg"
+        };
+        for (String host : sovereignHosts) {
+            assertTrue(MtlsEndpointHelper.isMtlsPoPUnsupportedCloud(host),
+                    host + " must be treated as an unsupported (sovereign) cloud");
+        }
+        // Regionalized sovereign hosts must also fail fast.
+        assertTrue(MtlsEndpointHelper.isMtlsPoPUnsupportedCloud("westus.login.microsoftonline.us"));
+    }
+
+    @Test
+    void deriveMtlsTokenEndpoint_germanCloud_failsFast() {
+        MsalClientException ex = assertThrows(MsalClientException.class, () ->
+                MtlsEndpointHelper.deriveMtlsTokenEndpoint(
+                        url("https://login.microsoftonline.de/contoso/oauth2/v2.0/token")));
+
+        assertEquals(AuthenticationErrorCode.MTLS_POP_ERROR, ex.errorCode());
+        assertTrue(ex.getMessage().toLowerCase().contains("cloud"));
+    }
+
+    @Test
+    void deriveMtlsTokenEndpoint_legacyUsCloud_failsFast() {
+        MsalClientException ex = assertThrows(MsalClientException.class, () ->
+                MtlsEndpointHelper.deriveMtlsTokenEndpoint(
+                        url("https://login-us.microsoftonline.com/contoso/oauth2/v2.0/token")));
+
+        assertEquals(AuthenticationErrorCode.MTLS_POP_ERROR, ex.errorCode());
+    }
+
+    @Test
+    void deriveMtlsTokenEndpoint_sovereignFranceCloud_failsFast() {
+        MsalClientException ex = assertThrows(MsalClientException.class, () ->
+                MtlsEndpointHelper.deriveMtlsTokenEndpoint(
+                        url("https://login.sovcloud-identity.fr/contoso/oauth2/v2.0/token")));
+
+        assertEquals(AuthenticationErrorCode.MTLS_POP_ERROR, ex.errorCode());
+    }
+
+    // A non-"login.*" host must be rejected rather than rewritten to (and its client cert presented at)
+    // the public mtlsauth endpoint.
+    @Test
+    void deriveMtlsTokenEndpoint_nonLoginHost_isRejected() {
+        MsalClientException ex = assertThrows(MsalClientException.class, () ->
+                MtlsEndpointHelper.deriveMtlsTokenEndpoint(
+                        url("https://contoso.example.com/contoso/oauth2/v2.0/token")));
+
+        assertEquals(AuthenticationErrorCode.MTLS_POP_ERROR, ex.errorCode());
+    }
+
+    // An unrecognized but "login.*"-shaped host keeps its own domain (login -> mtlsauth) rather than
+    // collapsing to the public host, so the request stays within its cloud boundary.
+    @Test
+    void deriveMtlsHost_unknownLoginHost_preservesDomain() {
+        assertEquals("mtlsauth.example.com", MtlsEndpointHelper.deriveMtlsHost("login.example.com"));
+    }
+
+    @Test
+    void deriveMtlsHost_nonLoginHost_returnsNull() {
+        assertNull(MtlsEndpointHelper.deriveMtlsHost("contoso.example.com"));
     }
 }
