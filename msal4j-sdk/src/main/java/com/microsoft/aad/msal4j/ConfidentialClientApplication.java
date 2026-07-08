@@ -21,7 +21,7 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
 
     IClientCredential clientCredential;
     private boolean sendX5c;
-    IClientCertificate mtlsBindingCertificate;
+    private IClientCertificate mtlsBindingCertificate;
 
     /** AppTokenProvider creates a Credential from a function that provides access tokens. The function
      must be concurrency safe. This is intended only to allow the Azure SDK to cache MSI tokens. It isn't

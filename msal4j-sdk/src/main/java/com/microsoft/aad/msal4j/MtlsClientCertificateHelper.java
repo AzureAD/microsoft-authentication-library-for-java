@@ -58,7 +58,7 @@ final class MtlsClientCertificateHelper {
             return (IClientCertificate) credential;
         }
 
-        if (application.mtlsBindingCertificate() != null) {
+        if (credential instanceof IClientAssertion && application.mtlsBindingCertificate() != null) {
             return application.mtlsBindingCertificate();
         }
 
