@@ -18,20 +18,18 @@ public enum TokenType {
     /**
      * A standard Bearer access token. This is the default token type.
      */
-    BEARER("Bearer", 2),
+    BEARER("Bearer"),
 
     /**
      * A mutual-TLS Proof-of-Possession access token, cryptographically bound to the client certificate
      * presented on the TLS handshake to the token endpoint (bound via {@code cnf}/{@code x5t#S256}).
      */
-    MTLS_POP("mtls_pop", 6);
+    MTLS_POP("mtls_pop");
 
     private final String value;
-    private final int telemetryValue;
 
-    TokenType(String value, int telemetryValue) {
+    TokenType(String value) {
         this.value = value;
-        this.telemetryValue = telemetryValue;
     }
 
     /**
@@ -39,15 +37,6 @@ public enum TokenType {
      */
     public String value() {
         return value;
-    }
-
-    /**
-     * @return the numeric telemetry value for this token type. This value is kept in parity with the
-     * other MSAL SDKs (for example MSAL.NET's {@code TelemetryTokenTypeConstants}, where mTLS PoP is
-     * {@code 6}) so that ESTS/telemetry dashboards attribute the request consistently across SDKs.
-     */
-    int telemetryValue() {
-        return telemetryValue;
     }
 
     /**
