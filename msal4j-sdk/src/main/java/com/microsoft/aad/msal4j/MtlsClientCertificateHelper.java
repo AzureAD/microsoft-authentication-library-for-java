@@ -180,7 +180,13 @@ final class MtlsClientCertificateHelper {
         List<X509Certificate> chain = new ArrayList<>();
         CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
         for (String encoded : certificate.getEncodedPublicKeyCertificateChain()) {
-            byte[] der = Base64.getDecoder().decode(encoded);
+            byte[] der;
+            try {
+                der = Base64.getDecoder().decode(encoded);
+            } catch (IllegalArgumentException e) {
+                throw new CertificateException(
+                        "mTLS binding certificate chain contains an x5c entry that is not valid base64.", e);
+            }
             chain.add((X509Certificate) certificateFactory.generateCertificate(new ByteArrayInputStream(der)));
         }
         return chain;

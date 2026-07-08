@@ -171,4 +171,44 @@ class MtlsClientCertificateHelperTest {
                 MtlsClientCertificateHelper.resolveBindingCertificate(app, null));
         assertEquals(AuthenticationErrorCode.MTLS_POP_ERROR, ex.errorCode());
     }
+
+    // Regression: a custom IClientCertificate returning a non-base64 x5c entry must surface as a
+    // MsalClientException(MTLS_POP_ERROR), not a raw IllegalArgumentException from Base64 decoding.
+    @Test
+    void buildBindingCertificate_nonBase64Chain_throwsMtlsPopError() {
+        IClientCertificate badChain = withCertificateChain("this is not base64!!!");
+
+        MsalClientException ex = assertThrows(MsalClientException.class, () ->
+                MtlsClientCertificateHelper.buildBindingCertificate(badChain));
+        assertEquals(AuthenticationErrorCode.MTLS_POP_ERROR, ex.errorCode());
+    }
+
+    @Test
+    void computeCertificateKeyId_nonBase64Chain_throwsMtlsPopError() {
+        IClientCertificate badChain = withCertificateChain("also not base64 %%%");
+
+        MsalClientException ex = assertThrows(MsalClientException.class, () ->
+                MtlsClientCertificateHelper.computeCertificateKeyId(badChain));
+        assertEquals(AuthenticationErrorCode.MTLS_POP_ERROR, ex.errorCode());
+    }
+
+    // Stub whose public chain contains the given (possibly invalid) x5c entries; the private key is unused.
+    private static IClientCertificate withCertificateChain(String... encodedChain) {
+        return new IClientCertificate() {
+            @Override
+            public PrivateKey privateKey() {
+                return null;
+            }
+
+            @Override
+            public String publicCertificateHash() {
+                return null;
+            }
+
+            @Override
+            public List<String> getEncodedPublicKeyCertificateChain() {
+                return java.util.Arrays.asList(encodedChain);
+            }
+        };
+    }
 }
