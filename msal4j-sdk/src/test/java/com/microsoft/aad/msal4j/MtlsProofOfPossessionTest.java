@@ -309,4 +309,60 @@ class MtlsProofOfPossessionTest {
         assertTrue(body.contains("fmi_path"), "FIC Leg 1 should still send fmi_path alongside mTLS PoP");
         assertFalse(body.contains("client_assertion"), "FIC Leg 1 (cert) must not send a client_assertion");
     }
+
+    @Test
+    void mtlsPop_serverReturnsShrPopTokenType_failsClosed() throws Exception {
+        ConfidentialClientApplication app = baseCertAppBuilder().build();
+
+        // ESTS returned token_type=pop (an SHR/bearer-style PoP), which is NOT a certificate-bound
+        // mtls_pop token. MSAL must fail closed rather than surface it as MTLS_POP (the "pop" alias must
+        // not satisfy the mTLS PoP fail-closed check).
+        try (MockedConstruction<DefaultHttpClient> mocked = mockConstruction(DefaultHttpClient.class,
+                (m, ctx) -> when(m.send(any(HttpRequest.class))).thenReturn(successResponse("shr-pop-token", "pop")))) {
+
+            ExecutionException ex = assertThrows(ExecutionException.class, () ->
+                    app.acquireToken(ClientCredentialParameters.builder(Collections.singleton("https://graph.microsoft.com/.default"))
+                            .mtlsProofOfPossession()
+                            .skipCache(true)
+                            .build()).get());
+
+            assertInstanceOf(MsalClientException.class, ex.getCause());
+            assertEquals(AuthenticationErrorCode.TOKEN_TYPE_MISMATCH,
+                    ((MsalClientException) ex.getCause()).errorCode());
+        }
+    }
+
+    @Test
+    void mtlsPop_cacheHit_restoresTokenTypeAndBindingCertificate() throws Exception {
+        ConfidentialClientApplication app = baseCertAppBuilder().build();
+
+        IAuthenticationResult networkResult;
+        IAuthenticationResult cachedResult;
+        try (MockedConstruction<DefaultHttpClient> mocked = mockConstruction(DefaultHttpClient.class,
+                (m, ctx) -> when(m.send(any(HttpRequest.class))).thenReturn(successResponse("mtls-pop-token", "mtls_pop")))) {
+
+            // First call: the cache is empty, so this goes to the (mocked) network and caches the PoP token.
+            networkResult = app.acquireToken(mtlsPopCacheableParams()).get();
+            // Second call: served from the cache (no additional mTLS network client is constructed).
+            cachedResult = app.acquireToken(mtlsPopCacheableParams()).get();
+
+            assertEquals(1, mocked.constructed().size(),
+                    "Second acquireToken must be served from the cache, not the network");
+        }
+
+        assertEquals(TokenType.MTLS_POP, networkResult.metadata().tokenType());
+
+        // The cache hit must report the same PoP metadata rather than defaulting to Bearer / null.
+        assertEquals(TokenType.MTLS_POP, cachedResult.metadata().tokenType());
+        assertNotNull(cachedResult.metadata().bindingCertificate());
+        assertEquals(MtlsClientCertificateHelper.computeCertificateKeyId(certificate),
+                cachedResult.metadata().bindingCertificate().thumbprintSha256());
+    }
+
+    private static ClientCredentialParameters mtlsPopCacheableParams() {
+        return ClientCredentialParameters.builder(Collections.singleton("https://graph.microsoft.com/.default"))
+                .mtlsProofOfPossession()
+                .skipCache(false)
+                .build();
+    }
 }

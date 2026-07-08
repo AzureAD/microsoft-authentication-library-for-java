@@ -43,6 +43,11 @@ public enum TokenType {
      * Maps a token_type string (as returned in a token response) to a {@link TokenType}.
      * Unknown or null values map to {@link #BEARER}.
      *
+     * <p>The match is an exact (case-insensitive) comparison against {@code mtls_pop}; the SHR-style
+     * {@code pop} token type is intentionally NOT treated as {@link #MTLS_POP}, so a non-certificate-bound
+     * {@code pop} response cannot pass the mTLS Proof-of-Possession fail-closed check. Mirrors MSAL.NET,
+     * which compares the response {@code token_type} exactly against the requested scheme.
+     *
      * @param tokenType the token_type string from a token response
      * @return the corresponding {@link TokenType}, defaulting to {@link #BEARER}
      */
@@ -51,7 +56,7 @@ public enum TokenType {
             return BEARER;
         }
 
-        if (MTLS_POP.value.equalsIgnoreCase(tokenType) || "pop".equalsIgnoreCase(tokenType)) {
+        if (MTLS_POP.value.equalsIgnoreCase(tokenType)) {
             return MTLS_POP;
         }
 
