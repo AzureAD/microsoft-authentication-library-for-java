@@ -74,67 +74,87 @@ class MtlsEndpointHelperTest {
     }
 
     @Test
-    void deriveMtlsTokenEndpoint_usGovCloud_failsFast() {
-        MsalClientException ex = assertThrows(MsalClientException.class, () ->
-                MtlsEndpointHelper.deriveMtlsTokenEndpoint(
-                        url("https://login.microsoftonline.us/contoso.onmicrosoft.com/oauth2/v2.0/token")));
+    void deriveMtlsTokenEndpoint_azureUsGovCloud_rewritesDomainPreserving() throws Exception {
+        URL result = MtlsEndpointHelper.deriveMtlsTokenEndpoint(
+                url("https://login.microsoftonline.us/contoso.onmicrosoft.com/oauth2/v2.0/token"));
 
-        assertEquals(AuthenticationErrorCode.MTLS_POP_ERROR, ex.errorCode());
-        assertTrue(ex.getMessage().toLowerCase().contains("cloud"));
+        assertEquals("mtlsauth.microsoftonline.us", result.getHost());
+        assertEquals("/contoso.onmicrosoft.com/oauth2/v2.0/token", result.getPath());
     }
 
     @Test
-    void deriveMtlsTokenEndpoint_chinaCloud_failsFast() {
+    void deriveMtlsTokenEndpoint_currentChinaCloud_rewritesDomainPreserving() throws Exception {
+        URL result = MtlsEndpointHelper.deriveMtlsTokenEndpoint(
+                url("https://login.partner.microsoftonline.cn/contoso/oauth2/v2.0/token"));
+
+        assertEquals("mtlsauth.partner.microsoftonline.cn", result.getHost());
+    }
+
+    @Test
+    void deriveMtlsTokenEndpoint_legacyUsGovCloudApiHost_failsFast() {
         MsalClientException ex = assertThrows(MsalClientException.class, () ->
                 MtlsEndpointHelper.deriveMtlsTokenEndpoint(
-                        url("https://login.partner.microsoftonline.cn/contoso/oauth2/v2.0/token")));
+                        url("https://login.usgovcloudapi.net/contoso/oauth2/v2.0/token")));
 
         assertEquals(AuthenticationErrorCode.MTLS_POP_ERROR, ex.errorCode());
+        assertTrue(ex.getMessage().toLowerCase().contains("legacy"));
+    }
+
+    @Test
+    void deriveMtlsTokenEndpoint_legacyChinaCloudApiHost_failsFast() {
+        MsalClientException ex = assertThrows(MsalClientException.class, () ->
+                MtlsEndpointHelper.deriveMtlsTokenEndpoint(
+                        url("https://login.chinacloudapi.cn/contoso/oauth2/v2.0/token")));
+
+        assertEquals(AuthenticationErrorCode.MTLS_POP_ERROR, ex.errorCode());
+        assertTrue(ex.getMessage().toLowerCase().contains("legacy"));
     }
 
     @Test
     void isMtlsPoPUnsupportedCloud_predicate() {
+        // Supported: public, regional public, Azure Gov, and current national clouds.
         assertFalse(MtlsEndpointHelper.isMtlsPoPUnsupportedCloud("login.microsoftonline.com"));
         assertFalse(MtlsEndpointHelper.isMtlsPoPUnsupportedCloud("westus.login.microsoft.com"));
+        assertFalse(MtlsEndpointHelper.isMtlsPoPUnsupportedCloud("login.microsoftonline.us"));
+        assertFalse(MtlsEndpointHelper.isMtlsPoPUnsupportedCloud("login.partner.microsoftonline.cn"));
+        assertFalse(MtlsEndpointHelper.isMtlsPoPUnsupportedCloud("login.microsoftonline.de"));
 
-        assertTrue(MtlsEndpointHelper.isMtlsPoPUnsupportedCloud("login.microsoftonline.us"));
-        assertTrue(MtlsEndpointHelper.isMtlsPoPUnsupportedCloud("login.partner.microsoftonline.cn"));
+        // Unsupported: only the two legacy sovereign hosts (no mtlsauth.* endpoint).
+        assertTrue(MtlsEndpointHelper.isMtlsPoPUnsupportedCloud("login.usgovcloudapi.net"));
         assertTrue(MtlsEndpointHelper.isMtlsPoPUnsupportedCloud("login.chinacloudapi.cn"));
     }
 
-    // Regression: every sovereign host in the trusted set must fail fast (none may fall through to the
-    // public mtlsauth endpoint). The last five previously slipped past the substring denylist.
+    // Only the two legacy sovereign hosts (which have no mtlsauth.* endpoint) are denied by the predicate;
+    // every other login.* host — including Azure Gov and the current national clouds — is supported and
+    // rewritten domain-preserving. Mirrors MSAL.NET's two-host denylist.
     @Test
-    void isMtlsPoPUnsupportedCloud_coversAllSovereignHosts() {
-        String[] sovereignHosts = {
-                "login.chinacloudapi.cn",
+    void isMtlsPoPUnsupportedCloud_deniesOnlyLegacyHosts() {
+        assertTrue(MtlsEndpointHelper.isMtlsPoPUnsupportedCloud("login.usgovcloudapi.net"));
+        assertTrue(MtlsEndpointHelper.isMtlsPoPUnsupportedCloud("login.chinacloudapi.cn"));
+
+        String[] supportedSovereignHosts = {
                 "login.partner.microsoftonline.cn",
-                "login-us.microsoftonline.com",
                 "login.microsoftonline.de",
                 "login.microsoftonline.us",
-                "login.usgovcloudapi.net",
                 "login.sovcloud-identity.fr",
                 "login.sovcloud-identity.de",
                 "login.sovcloud-identity.sg"
         };
-        for (String host : sovereignHosts) {
-            assertTrue(MtlsEndpointHelper.isMtlsPoPUnsupportedCloud(host),
-                    host + " must be treated as an unsupported (sovereign) cloud");
+        for (String host : supportedSovereignHosts) {
+            assertFalse(MtlsEndpointHelper.isMtlsPoPUnsupportedCloud(host),
+                    host + " must be supported (allowed + domain-preserving rewrite)");
         }
-        // Regionalized sovereign hosts must also fail fast.
-        assertTrue(MtlsEndpointHelper.isMtlsPoPUnsupportedCloud("westus.login.microsoftonline.us"));
     }
 
     @Test
-    void deriveMtlsTokenEndpoint_germanCloud_failsFast() {
-        MsalClientException ex = assertThrows(MsalClientException.class, () ->
-                MtlsEndpointHelper.deriveMtlsTokenEndpoint(
-                        url("https://login.microsoftonline.de/contoso/oauth2/v2.0/token")));
+    void deriveMtlsTokenEndpoint_germanCloud_rewritesDomainPreserving() throws Exception {
+        URL result = MtlsEndpointHelper.deriveMtlsTokenEndpoint(
+                url("https://login.microsoftonline.de/contoso/oauth2/v2.0/token"));
 
-        assertEquals(AuthenticationErrorCode.MTLS_POP_ERROR, ex.errorCode());
-        assertTrue(ex.getMessage().toLowerCase().contains("cloud"));
+        assertEquals("mtlsauth.microsoftonline.de", result.getHost());
     }
 
+    // Legacy US host is not a "login." host (it is "login-us."), so it is rejected during host derivation.
     @Test
     void deriveMtlsTokenEndpoint_legacyUsCloud_failsFast() {
         MsalClientException ex = assertThrows(MsalClientException.class, () ->
@@ -145,12 +165,11 @@ class MtlsEndpointHelperTest {
     }
 
     @Test
-    void deriveMtlsTokenEndpoint_sovereignFranceCloud_failsFast() {
-        MsalClientException ex = assertThrows(MsalClientException.class, () ->
-                MtlsEndpointHelper.deriveMtlsTokenEndpoint(
-                        url("https://login.sovcloud-identity.fr/contoso/oauth2/v2.0/token")));
+    void deriveMtlsTokenEndpoint_sovereignFranceCloud_rewritesDomainPreserving() throws Exception {
+        URL result = MtlsEndpointHelper.deriveMtlsTokenEndpoint(
+                url("https://login.sovcloud-identity.fr/contoso/oauth2/v2.0/token"));
 
-        assertEquals(AuthenticationErrorCode.MTLS_POP_ERROR, ex.errorCode());
+        assertEquals("mtlsauth.sovcloud-identity.fr", result.getHost());
     }
 
     // A non-"login.*" host must be rejected rather than rewritten to (and its client cert presented at)

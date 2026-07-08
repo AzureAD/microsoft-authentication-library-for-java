@@ -5,7 +5,11 @@ package com.microsoft.aad.msal4j;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * Derives the mutual-TLS (mTLS) token endpoint used for mTLS Proof-of-Possession requests by rewriting the
@@ -23,12 +27,12 @@ import java.util.Locale;
  * <p>Cloud boundaries are enforced so a request is never rewritten to (and its client certificate never
  * presented at) a host in a different cloud:
  * <ul>
- *   <li>Sovereign clouds (US Gov, China, and other national clouds) are fail-fast for now — the guardrail
- *   is isolated in {@link #isMtlsPoPUnsupportedCloud(String)}, backed by the authoritative sovereign-host
- *   set so no sovereign host can fall through, and is trivial to lift per-cloud once {@code mtlsauth.*}
- *   lands there.</li>
- *   <li>Public global hosts collapse to {@code mtlsauth.microsoft.com}; any other {@code login.*} host is
- *   rewritten domain-preserving ({@code login} &rarr; {@code mtlsauth}) so it stays within its own cloud
+ *   <li>Two legacy sovereign hosts that have no {@code mtlsauth.*} endpoint — {@code login.usgovcloudapi.net}
+ *   and {@code login.chinacloudapi.cn} — are rejected fast by {@link #isMtlsPoPUnsupportedCloud(String)}
+ *   (mirrors MSAL.NET's {@code s_unsupportedMtlsHosts} denylist).</li>
+ *   <li>Every other {@code login.*} host — including Azure Government and the current national clouds — is
+ *   allowed: public global hosts collapse to {@code mtlsauth.microsoft.com}; any other {@code login.*} host
+ *   is rewritten domain-preserving ({@code login} &rarr; {@code mtlsauth}) so it stays within its own cloud
  *   boundary rather than being sent to the public endpoint (mirrors MSAL.NET).</li>
  *   <li>A host that is not a recognizable {@code login.*} host is rejected.</li>
  * </ul>
@@ -42,6 +46,13 @@ final class MtlsEndpointHelper {
     private static final String LOGIN_LABEL = "login";
     private static final String MTLS_LABEL = "mtlsauth";
     private static final String LOGIN_LABEL_PREFIX = LOGIN_LABEL + ".";
+
+    // mTLS PoP is unsupported ONLY for these two legacy sovereign hosts (they have no mtlsauth.* endpoint).
+    // Every other login.* host — including Azure Government and the current national clouds — is allowed and
+    // rewritten domain-preserving. Mirrors MSAL.NET's s_unsupportedMtlsHosts denylist. Hosts are lowercase;
+    // callers lowercase the input before lookup.
+    private static final Set<String> MTLS_UNSUPPORTED_HOSTS = Collections.unmodifiableSet(new HashSet<>(
+            Arrays.asList("login.usgovcloudapi.net", "login.chinacloudapi.cn")));
 
     private MtlsEndpointHelper() {
     }
@@ -59,8 +70,8 @@ final class MtlsEndpointHelper {
         String host = tokenEndpoint.getHost();
         if (isMtlsPoPUnsupportedCloud(host)) {
             throw new MsalClientException(
-                    "mTLS Proof-of-Possession is not supported in this cloud (host: " + host + "). " +
-                            "It is currently available in the public cloud only.",
+                    "mTLS Proof-of-Possession is not supported for the legacy sovereign host '" + host +
+                            "'. This host has no mtlsauth.* endpoint.",
                     AuthenticationErrorCode.MTLS_POP_ERROR);
         }
 
@@ -149,24 +160,14 @@ final class MtlsEndpointHelper {
     }
 
     /**
-     * Isolated sovereign-cloud guardrail. Returns {@code true} for clouds where mTLS PoP is not yet
-     * supported (US Gov, China, and other national clouds). Backed by the authoritative
-     * {@link AadInstanceDiscoveryProvider#TRUSTED_SOVEREIGN_HOSTS_SET} — including regionalized forms —
-     * so no sovereign host can fall through to the public mTLS endpoint. Keep this as the single point of
-     * truth so it is trivial to lift per-cloud once {@code mtlsauth.*} lands there.
+     * Isolated sovereign-cloud guardrail. Returns {@code true} only for the two legacy sovereign hosts that
+     * have no {@code mtlsauth.*} endpoint ({@code login.usgovcloudapi.net}, {@code login.chinacloudapi.cn}).
+     * Every other {@code login.*} host — including Azure Government and the current national clouds — is
+     * supported and rewritten domain-preserving by {@link #deriveMtlsHost(String)}. Mirrors MSAL.NET's
+     * {@code s_unsupportedMtlsHosts} denylist; keep this as the single point of truth.
      */
     static boolean isMtlsPoPUnsupportedCloud(String host) {
-        String lower = host.toLowerCase(Locale.ROOT);
-        if (AadInstanceDiscoveryProvider.TRUSTED_SOVEREIGN_HOSTS_SET.contains(lower)) {
-            return true;
-        }
-        // Also reject regionalized sovereign hosts, e.g. <region>.login.microsoftonline.us.
-        for (String sovereignHost : AadInstanceDiscoveryProvider.TRUSTED_SOVEREIGN_HOSTS_SET) {
-            if (lower.endsWith("." + sovereignHost.toLowerCase(Locale.ROOT))) {
-                return true;
-            }
-        }
-        return false;
+        return MTLS_UNSUPPORTED_HOSTS.contains(host.toLowerCase(Locale.ROOT));
     }
 
     private static void validateTenanted(String tenant) {
