@@ -286,10 +286,22 @@ class TokenRequestExecutor {
             }
             long currTimestampSec = new Date().getTime() / 1000;
 
-            TokenType tokenType = TokenType.BEARER;
+            // The token type is taken from the identity provider's response, never assumed from the request.
+            TokenType tokenType = TokenType.fromString(response.tokenType());
             BindingCertificate bindingCertificate = null;
             if (isMtlsProofOfPossession()) {
-                tokenType = TokenType.MTLS_POP;
+                // Fail closed: an mTLS Proof-of-Possession request MUST come back as an mtls_pop
+                // (certificate-bound) token. If ESTS returns a different token_type (for example a Bearer
+                // downgrade), the access token is not bound to the certificate; surfacing it as MTLS_POP
+                // would mask the downgrade, so reject it instead.
+                if (tokenType != TokenType.MTLS_POP) {
+                    throw new MsalClientException(
+                            String.format("An mTLS Proof-of-Possession token was requested, but the identity " +
+                                    "provider returned token_type '%s' instead of 'mtls_pop'. The access token is " +
+                                    "not certificate-bound.", response.tokenType()),
+                            AuthenticationErrorCode.TOKEN_TYPE_MISMATCH);
+                }
+                // Surface the binding certificate only after the token type has been validated.
                 bindingCertificate = MtlsClientCertificateHelper.buildBindingCertificate(resolvedBindingCertificate);
             }
 

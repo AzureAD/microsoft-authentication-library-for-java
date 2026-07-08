@@ -169,6 +169,14 @@ public class AuthenticationErrorCode {
     public static final String MTLS_POP_ERROR = "mtls_pop_error";
 
     /**
+     * Indicates that an mTLS Proof-of-Possession token was requested, but the identity provider returned
+     * a token with a different {@code token_type} (for example, a Bearer downgrade). The returned access
+     * token is not certificate-bound, so MSAL fails closed rather than surfacing an unbound token as mTLS
+     * PoP. For more details, see https://aka.ms/msal4j-pop
+     */
+    public static final String TOKEN_TYPE_MISMATCH = "token_type_mismatch";
+
+    /**
      * Indicates that instance discovery failed because the authority is not a valid instance.
      * This is returned by the instance discovery endpoint when the provided authority host is unknown.
      */

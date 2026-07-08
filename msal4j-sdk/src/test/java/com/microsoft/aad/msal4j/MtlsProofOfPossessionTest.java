@@ -17,13 +17,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.AbstractExecutorService;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -95,8 +98,13 @@ class MtlsProofOfPossessionTest {
     }
 
     private static HttpResponse successResponse(String accessToken) {
+        return successResponse(accessToken, "Bearer");
+    }
+
+    private static HttpResponse successResponse(String accessToken, String tokenType) {
         HashMap<String, String> values = new HashMap<>();
         values.put("access_token", accessToken);
+        values.put("token_type", tokenType);
         return TestHelper.expectedResponse(HttpStatus.HTTP_OK, TestHelper.getSuccessfulTokenResponse(values));
     }
 
@@ -129,7 +137,7 @@ class MtlsProofOfPossessionTest {
         HttpRequest captured;
         IAuthenticationResult result;
         try (MockedConstruction<DefaultHttpClient> mocked = mockConstruction(DefaultHttpClient.class,
-                (m, ctx) -> when(m.send(any(HttpRequest.class))).thenReturn(successResponse("mtls-pop-token")))) {
+                (m, ctx) -> when(m.send(any(HttpRequest.class))).thenReturn(successResponse("mtls-pop-token", "mtls_pop")))) {
 
             result = app.acquireToken(ClientCredentialParameters.builder(Collections.singleton("https://graph.microsoft.com/.default"))
                     .mtlsProofOfPossession()
@@ -176,7 +184,7 @@ class MtlsProofOfPossessionTest {
         HttpRequest captured;
         IAuthenticationResult result;
         try (MockedConstruction<DefaultHttpClient> mocked = mockConstruction(DefaultHttpClient.class,
-                (m, ctx) -> when(m.send(any(HttpRequest.class))).thenReturn(successResponse("leg2-token")))) {
+                (m, ctx) -> when(m.send(any(HttpRequest.class))).thenReturn(successResponse("leg2-token", "mtls_pop")))) {
 
             result = app.acquireToken(ClientCredentialParameters.builder(Collections.singleton("https://graph.microsoft.com/.default"))
                     .mtlsProofOfPossession()
@@ -200,6 +208,27 @@ class MtlsProofOfPossessionTest {
         assertEquals(TokenType.MTLS_POP, result.metadata().tokenType());
         assertEquals(MtlsClientCertificateHelper.computeCertificateKeyId(certificate),
                 result.metadata().bindingCertificate().thumbprintSha256());
+    }
+
+    @Test
+    void mtlsPop_serverDowngradesToBearer_failsClosed() throws Exception {
+        ConfidentialClientApplication app = baseCertAppBuilder().build();
+
+        // ESTS honored the request path but returned a Bearer token_type instead of mtls_pop, so the
+        // access token is not certificate-bound. MSAL must fail closed rather than mislabel it as MTLS_POP.
+        try (MockedConstruction<DefaultHttpClient> mocked = mockConstruction(DefaultHttpClient.class,
+                (m, ctx) -> when(m.send(any(HttpRequest.class))).thenReturn(successResponse("downgraded-token", "Bearer")))) {
+
+            ExecutionException ex = assertThrows(ExecutionException.class, () ->
+                    app.acquireToken(ClientCredentialParameters.builder(Collections.singleton("https://graph.microsoft.com/.default"))
+                            .mtlsProofOfPossession()
+                            .skipCache(true)
+                            .build()).get());
+
+            assertInstanceOf(MsalClientException.class, ex.getCause());
+            assertEquals(AuthenticationErrorCode.TOKEN_TYPE_MISMATCH,
+                    ((MsalClientException) ex.getCause()).errorCode());
+        }
     }
 
     @Test
@@ -261,7 +290,7 @@ class MtlsProofOfPossessionTest {
 
         HttpRequest captured;
         try (MockedConstruction<DefaultHttpClient> mocked = mockConstruction(DefaultHttpClient.class,
-                (m, ctx) -> when(m.send(any(HttpRequest.class))).thenReturn(successResponse("fic-leg1-token")))) {
+                (m, ctx) -> when(m.send(any(HttpRequest.class))).thenReturn(successResponse("fic-leg1-token", "mtls_pop")))) {
 
             app.acquireToken(ClientCredentialParameters.builder(Collections.singleton("api://AzureADTokenExchange/.default"))
                     .fmiPath("SomeFmiPath/CredentialPath")

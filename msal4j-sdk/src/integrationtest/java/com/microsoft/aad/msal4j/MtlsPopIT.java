@@ -4,6 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import com.microsoft.aad.msal4j.labapi.KeyVaultSecretsProvider;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -18,6 +19,7 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
 
 import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -100,11 +102,10 @@ class MtlsPopIT {
                 .authority(SNI_ALLOWLISTED_AUTHORITY)   // tenanted authority (required for mTLS PoP)
                 .build();
 
-        IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
+        IAuthenticationResult result = acquireMtlsPopOrSkipOnDowngrade(cca, ClientCredentialParameters
                         .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
                         .mtlsProofOfPossession()
-                        .build())
-                .get();
+                        .build());
 
         assertMtlsPopResult(result, expectedLabThumbprint());
     }
@@ -121,20 +122,18 @@ class MtlsPopIT {
                 .azureRegion(TEST_SLICE_REGION)
                 .build();
 
-        IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
+        IAuthenticationResult result = acquireMtlsPopOrSkipOnDowngrade(cca, ClientCredentialParameters
                         .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
                         .mtlsProofOfPossession()
-                        .build())
-                .get();
+                        .build());
 
         assertMtlsPopResult(result, expectedLabThumbprint());
 
         // The mTLS-PoP token must be cached under {token_type + cert KeyId} and returned on lookup.
-        IAuthenticationResult cached = cca.acquireToken(ClientCredentialParameters
+        IAuthenticationResult cached = acquireMtlsPopOrSkipOnDowngrade(cca, ClientCredentialParameters
                         .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
                         .mtlsProofOfPossession()
-                        .build())
-                .get();
+                        .build());
 
         assertEquals(result.accessToken(), cached.accessToken(),
                 "Second mTLS-PoP request should return the cached bound token");
@@ -159,11 +158,10 @@ class MtlsPopIT {
         assertEquals(TokenType.BEARER, bearer.metadata().tokenType());
 
         // New SNI + mTLS PoP path.
-        IAuthenticationResult pop = cca.acquireToken(ClientCredentialParameters
+        IAuthenticationResult pop = acquireMtlsPopOrSkipOnDowngrade(cca, ClientCredentialParameters
                         .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
                         .mtlsProofOfPossession()
-                        .build())
-                .get();
+                        .build());
         assertEquals(TokenType.MTLS_POP, pop.metadata().tokenType());
 
         assertNotEquals(bearer.accessToken(), pop.accessToken(),
@@ -193,12 +191,11 @@ class MtlsPopIT {
                 .azureRegion(TestConstants.AGENTIC_AZURE_REGION)
                 .build();
 
-        IAuthenticationResult leg1 = blueprint.acquireToken(ClientCredentialParameters
+        IAuthenticationResult leg1 = acquireMtlsPopOrSkipOnDowngrade(blueprint, ClientCredentialParameters
                         .builder(Collections.singleton(TestConstants.AGENTIC_TOKEN_EXCHANGE_SCOPE))
                         .fmiPath(TestConstants.AGENTIC_AGENT_APP_ID)
                         .mtlsProofOfPossession()
-                        .build())
-                .get();
+                        .build());
 
         assertNotNull(leg1, "Leg 1 result should not be null");
         assertNotNull(leg1.accessToken(), "Leg 1 (T1) access token should not be null");
@@ -217,11 +214,10 @@ class MtlsPopIT {
                 .mtlsBindingCertificate(certificate)
                 .build();
 
-        IAuthenticationResult leg2 = agent.acquireToken(ClientCredentialParameters
+        IAuthenticationResult leg2 = acquireMtlsPopOrSkipOnDowngrade(agent, ClientCredentialParameters
                         .builder(Collections.singleton(TestConstants.AGENTIC_GRAPH_SCOPE))   // allow-listed resource
                         .mtlsProofOfPossession()
-                        .build())
-                .get();
+                        .build());
 
         assertNotNull(leg2, "Leg 2 result should not be null");
         assertNotNull(leg2.accessToken(), "Leg 2 (T2) access token should not be null");
@@ -231,6 +227,25 @@ class MtlsPopIT {
         assertNotNull(leg2.metadata().bindingCertificate(), "Leg 2 must expose its binding certificate");
         assertEquals(expectedLabThumbprint(), leg2.metadata().bindingCertificate().thumbprintSha256(),
                 "Final token (T2) must be bound to the Leg-1 certificate thumbprint");
+    }
+
+    // ESTS's mTLS PoP test slice is a known intermittent token_type downgrader. When it returns a
+    // non-mtls_pop token the access token is not certificate-bound, and MSAL now fails closed with
+    // TOKEN_TYPE_MISMATCH. Treat that specific outcome as inconclusive (skip) rather than a hard failure,
+    // mirroring MSAL .NET's ExecuteOrInconclusiveOnTokenTypeMismatchAsync.
+    private static IAuthenticationResult acquireMtlsPopOrSkipOnDowngrade(
+            ConfidentialClientApplication cca, ClientCredentialParameters parameters) throws Exception {
+        try {
+            return cca.acquireToken(parameters).get();
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof MsalClientException
+                    && AuthenticationErrorCode.TOKEN_TYPE_MISMATCH.equals(
+                            ((MsalClientException) e.getCause()).errorCode())) {
+                Assumptions.abort("ESTS returned a non-mtls_pop token_type (downgrade); treating as "
+                        + "inconclusive: " + e.getCause().getMessage());
+            }
+            throw e;
+        }
     }
 
     private void assertMtlsPopResult(IAuthenticationResult result, String expectedThumbprint) {

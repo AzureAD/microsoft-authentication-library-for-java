@@ -1,6 +1,6 @@
 Version 1.25.0
 =============
-- Add SN/I certificate support over mTLS Proof-of-Possession (PoP) for confidential clients, presenting the certificate as the client TLS cert to obtain an mTLS-bound token
+- Add SN/I certificate support over mTLS Proof-of-Possession (PoP) for confidential clients, presenting the certificate as the client TLS cert to obtain an mTLS-bound token. The response token_type is validated, so a request that is not honored as mtls_pop fails closed rather than surfacing an unbound token
 - Add 2-leg Federated Identity Credential (FIC) over mTLS Proof-of-Possession: bind an assertion-authenticated app to a certificate via mtlsBindingCertificate(...) (client_assertion_type=jwt-pop)
 - Add Federated Managed Identity (FMI) support for client credentials flow (#1025)
 - Add User Federated Identity Credential (user_fic) grant type support (#1026)
