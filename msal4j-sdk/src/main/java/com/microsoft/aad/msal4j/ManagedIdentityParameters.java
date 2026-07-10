@@ -5,8 +5,6 @@ package com.microsoft.aad.msal4j;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 /**
  * Object containing parameters for managed identity flow. Can be used as parameter to
@@ -17,24 +15,12 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
     String resource;
     boolean forceRefresh;
     String claims;
-    String clientClaims;
     String revokedTokenHash;
-
-    // Generic extended cache key components. The hash of these components isolates cache
-    // entries so that requests with different client-claims values do not collide.
-    private SortedMap<String, String> cacheKeyComponents;
-
-    // Memoized hash of cacheKeyComponents (computed once since parameters are immutable).
-    private String extCacheKeyHashCache;
-
-    private ManagedIdentityParameters(String resource, boolean forceRefresh, String claims, String clientClaims) {
+    
+    private ManagedIdentityParameters(String resource, boolean forceRefresh, String claims) {
         this.resource = resource;
         this.forceRefresh = forceRefresh;
         this.claims = claims;
-        this.clientClaims = clientClaims;
-
-        // Build cache key components from any parameters that require cache isolation.
-        this.cacheKeyComponents = buildCacheKeyComponents();
     }
 
     @Override
@@ -97,55 +83,10 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
         return this.revokedTokenHash;
     }
 
-    /**
-     * Client-originated claims set via {@link ManagedIdentityParametersBuilder#claimsFromClient(String)}.
-     * Unlike {@link #claims()} (server-issued, cache-bypassing), these are cached and keyed on the
-     * raw claims string as passed by the caller.
-     */
-    @Override
-    public String clientClaims() {
-        return this.clientClaims;
-    }
-
-    /**
-     * Builds the sorted map of cache key components from the parameters that require cache isolation.
-     * Returns null if no components are present.
-     */
-    private SortedMap<String, String> buildCacheKeyComponents() {
-        TreeMap<String, String> components = null;
-        if (!StringHelper.isNullOrBlank(clientClaims)) {
-            components = new TreeMap<>();
-            components.put("client_claims", clientClaims);
-        }
-        return components;
-    }
-
-    /**
-     * Returns the extended cache key components for this request, if any.
-     * Used by {@link TokenCache} for both cache writes and reads.
-     */
-    SortedMap<String, String> cacheKeyComponents() {
-        return this.cacheKeyComponents;
-    }
-
-    /**
-     * Computes the extended cache key hash from all cache key components, or an empty string when
-     * there are none. The result is memoized since the parameters are immutable after construction.
-     */
-    @Override
-    public String computeExtCacheKeyHash() {
-        if (extCacheKeyHashCache != null) {
-            return extCacheKeyHashCache;
-        }
-        extCacheKeyHashCache = StringHelper.computeExtCacheKeyHash(cacheKeyComponents);
-        return extCacheKeyHashCache;
-    }
-
     public static class ManagedIdentityParametersBuilder {
         private String resource;
         private boolean forceRefresh;
         private String claims;
-        private String clientClaims;
 
         ManagedIdentityParametersBuilder() {
         }
@@ -177,34 +118,8 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
             return this;
         }
 
-        /**
-         * Specifies client-originated claims (a raw JSON object string) to forward to the identity
-         * endpoint. Unlike {@link #claims(String)} (server-issued claims challenges, which bypass the
-         * cache), tokens acquired with client claims are cached and the cache entry is keyed on the
-         * claims value. Different claim values produce separate cache entries, so use stable,
-         * non-dynamic values to avoid cache fragmentation. Send the identical value on every request
-         * for a given token; because the raw value is part of the cache key, changing or omitting it
-         * routes the request to a different cache partition.
-         * <p>
-         * Only IMDS-based managed identity is supported; any other source causes the request to fail
-         * with an {@link MsalClientException}. The claims object is forwarded to IMDS as-is, which
-         * accepts or rejects its contents. A blank value is ignored.
-         *
-         * @param claimsJson a valid JSON object string containing the client claims
-         * @return this builder instance
-         */
-        public ManagedIdentityParametersBuilder claimsFromClient(String claimsJson) {
-            if (StringHelper.isNullOrBlank(claimsJson)) {
-                return this;
-            }
-
-            JsonHelper.validateJsonObjectFormat(claimsJson);
-            this.clientClaims = claimsJson;
-            return this;
-        }
-
         public ManagedIdentityParameters build() {
-            return new ManagedIdentityParameters(this.resource, this.forceRefresh, this.claims, this.clientClaims);
+            return new ManagedIdentityParameters(this.resource, this.forceRefresh, this.claims);
         }
 
         public String toString() {

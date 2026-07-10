@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import java.net.HttpURLConnection;
 import java.net.SocketException;
 import java.net.URISyntaxException;
-import java.util.HashMap;
 
 //base class for all sources that support managed identity
 abstract class AbstractManagedIdentitySource {
@@ -43,7 +42,6 @@ abstract class AbstractManagedIdentitySource {
 
         createManagedIdentityRequest(parameters.resource);
         managedIdentityRequest.addTokenRevocationParametersToQuery(parameters);
-        addClientClaimsToRequest(parameters);
         IHttpResponse response;
 
         try {
@@ -62,60 +60,6 @@ abstract class AbstractManagedIdentitySource {
         }
 
         return handleResponse(parameters, response);
-    }
-
-    /**
-     * Forwards client-originated claims (set via
-     * {@link ManagedIdentityParameters.ManagedIdentityParametersBuilder#claimsFromClient(String)}) to
-     * the managed identity endpoint. Only IMDS-based managed identity is supported; other sources fail
-     * fast rather than silently dropping the value (which would also pollute the cache with a key the
-     * endpoint never saw). For IMDS (a GET request) the claims are added as a query parameter; for any
-     * POST-based source they would be added to the body.
-     */
-    private void addClientClaimsToRequest(ManagedIdentityParameters parameters) {
-        if (StringHelper.isNullOrBlank(parameters.clientClaims)) {
-            return;
-        }
-
-        // Defense-in-depth: AcquireTokenByManagedIdentitySupplier already rejects non-IMDS sources
-        // before the cache read. Re-check here in case the transport path is reached directly. The
-        // claims object is forwarded to IMDS as-is; IMDS decides which keys it accepts.
-        validateClientClaimsSource(managedIdentitySourceType, parameters.clientClaims);
-
-        if (managedIdentityRequest.method == HttpMethod.GET) {
-            if (managedIdentityRequest.queryParameters == null) {
-                managedIdentityRequest.queryParameters = new HashMap<>();
-            }
-            // The value is URL-encoded later by StringHelper.serializeQueryParameters.
-            managedIdentityRequest.queryParameters.put("claims", parameters.clientClaims);
-            LOG.info("[Managed Identity] Adding client claims to IMDS request as query parameter.");
-        } else {
-            if (managedIdentityRequest.bodyParameters == null) {
-                managedIdentityRequest.bodyParameters = new HashMap<>();
-            }
-            managedIdentityRequest.bodyParameters.put("claims", parameters.clientClaims);
-            LOG.info("[Managed Identity] Adding client claims to request body.");
-        }
-    }
-
-    /**
-     * Validates that client-originated claims are only used with IMDS (MSIv1) managed identity. Other
-     * sources fail fast rather than silently dropping the value (which would also pollute the cache
-     * with a key the endpoint never saw). MSAL does not otherwise restrict the claim contents — the
-     * JSON object is forwarded to IMDS as-is, and IMDS accepts or rejects it. A blank value is a no-op.
-     * Shared by the pre-cache guard and the transport layer so the rule has a single definition.
-     */
-    static void validateClientClaimsSource(ManagedIdentitySourceType source, String clientClaims) {
-        if (StringHelper.isNullOrBlank(clientClaims)) {
-            return;
-        }
-
-        if (source != ManagedIdentitySourceType.IMDS && source != ManagedIdentitySourceType.DEFAULT_TO_IMDS) {
-            throw new MsalClientException(
-                    String.format("claimsFromClient is only supported for IMDS-based managed identity sources. "
-                            + "The detected source is %s.", source),
-                    AuthenticationErrorCode.INVALID_REQUEST);
-        }
     }
 
     public ManagedIdentityResponse handleResponse(

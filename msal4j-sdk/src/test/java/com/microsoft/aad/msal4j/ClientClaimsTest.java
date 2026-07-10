@@ -102,13 +102,6 @@ class ClientClaimsTest {
         assertNull(obo.clientClaims());
         assertEquals("", obo.computeExtCacheKeyHash());
 
-        ManagedIdentityParameters mi = ManagedIdentityParameters
-                .builder("resource")
-                .claimsFromClient("")
-                .build();
-        assertNull(mi.clientClaims());
-        assertEquals("", mi.computeExtCacheKeyHash());
-
         UserFederatedIdentityCredentialParameters fic = UserFederatedIdentityCredentialParameters
                 .builder(Collections.singleton("scope"), "user@contoso.com", "assertion")
                 .claimsFromClient("   ")
@@ -131,8 +124,6 @@ class ClientClaimsTest {
                 ClientCredentialParameters.builder(Collections.singleton("scope")).claimsFromClient("nope")).errorCode());
         assertEquals(AuthenticationErrorCode.INVALID_JSON, assertThrows(MsalClientException.class, () ->
                 OnBehalfOfParameters.builder(Collections.singleton("scope"), new UserAssertion(TestHelper.signedAssertion)).claimsFromClient("[1]")).errorCode());
-        assertEquals(AuthenticationErrorCode.INVALID_JSON, assertThrows(MsalClientException.class, () ->
-                ManagedIdentityParameters.builder("resource").claimsFromClient("nope")).errorCode());
         assertEquals(AuthenticationErrorCode.INVALID_JSON, assertThrows(MsalClientException.class, () ->
                 UserFederatedIdentityCredentialParameters.builder(Collections.singleton("scope"), "user@contoso.com", "assertion").claimsFromClient("nope")).errorCode());
         assertEquals(AuthenticationErrorCode.INVALID_JSON, assertThrows(MsalClientException.class, () ->

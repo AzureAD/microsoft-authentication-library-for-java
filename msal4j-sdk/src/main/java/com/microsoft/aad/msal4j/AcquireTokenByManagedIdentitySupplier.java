@@ -32,12 +32,6 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
                     MsalErrorMessage.SCOPES_REQUIRED);
         }
 
-        // Fail fast before the cache lookup: client-originated claims are only supported on IMDS.
-        // Validating the source here (not just on the network path) ensures an unsupported source can
-        // never return a cached token and never reaches the wire.
-        AbstractManagedIdentitySource.validateClientClaimsSource(
-                ManagedIdentityClient.getManagedIdentitySource(), managedIdentityParameters.clientClaims);
-
         TokenRequestExecutor tokenRequestExecutor = new TokenRequestExecutor(
                 clientApplication.authenticationAuthority,
                 msalRequest,
@@ -72,12 +66,6 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
                     this.clientApplication,
                     context,
                     null);
-
-            // Propagate ext_cache_key_hash for cache isolation (e.g., client_claims)
-            String extCacheKeyHash = managedIdentityParameters.computeExtCacheKeyHash();
-            if (!StringHelper.isBlank(extCacheKeyHash)) {
-                silentRequest.extCacheKeyHash(extCacheKeyHash);
-            }
 
             AcquireTokenSilentSupplier supplier = new AcquireTokenSilentSupplier(
                     this.clientApplication,
