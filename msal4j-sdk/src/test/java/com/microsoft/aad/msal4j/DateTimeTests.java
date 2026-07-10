@@ -24,6 +24,19 @@ class DateTimeTests {
     }
 
     @Test
+    void parsePastUnixTimestampIsNotInflated() {
+        // A past absolute expires_on must be returned as an absolute epoch value that is
+        // still in the past, so downstream cache validation treats the token as expired.
+        // It must NOT be converted into a future/inflated expiry.
+        long now = System.currentTimeMillis() / 1000;
+        long pastTimestamp = now - 3600; // 1 hour ago
+        long result = AcquireTokenByManagedIdentitySupplier.getExpiresOnFromManagedIdentityTimestamp(String.valueOf(pastTimestamp));
+
+        assertEquals(pastTimestamp, result, "A past Unix timestamp should be returned as its absolute value");
+        assertTrue(result < now, "A past expires_on must not be turned into a future/inflated expiry");
+    }
+
+    @Test
     void parseIso8601Format() {
         // Creates a timestamp in ISO 8601 format, with 24 hours added to it to represent a 24-hour token
         String timestamp = DateTimeFormatter.ISO_INSTANT.format(Instant.now().plus(24, ChronoUnit.HOURS));
