@@ -33,7 +33,7 @@ class DateTimeTests {
         long result = AcquireTokenByManagedIdentitySupplier.getExpiresOnFromManagedIdentityTimestamp(String.valueOf(pastTimestamp));
 
         assertEquals(pastTimestamp, result, "A past Unix timestamp should be returned as its absolute value");
-        assertTrue(result <= now, "A past expires_on must not be turned into a future/inflated expiry");
+        assertTrue(result < now, "A past expires_on must not be turned into a future/inflated expiry");
     }
 
     @Test
