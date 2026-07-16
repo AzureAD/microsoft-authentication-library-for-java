@@ -21,6 +21,12 @@ import java.util.*;
 class JsonHelper {
     private static final Logger LOG = LoggerFactory.getLogger(JsonHelper.class);
 
+    // Constant, payload-free message for client-claims validation failures. The raw claims value
+    // and parser details are deliberately excluded since the payload may contain sensitive data.
+    private static final String INVALID_CLAIMS_OBJECT_MESSAGE =
+            "The claims value is not a valid JSON object. " +
+                    "See https://openid.net/specs/openid-connect-core-1_0.html#ClaimsParameter.";
+
     private JsonHelper() {
     }
 
@@ -154,6 +160,29 @@ class JsonHelper {
             }
         } catch (IOException e) {
             throw new MsalClientException(e.getMessage(), AuthenticationErrorCode.INVALID_JSON);
+        }
+    }
+
+    /**
+     * Validates that the supplied string is a well-formed JSON object (the root token is
+     * {@code {}}) and that there are no trailing tokens after it. Throws {@link MsalClientException}
+     * with {@link AuthenticationErrorCode#INVALID_JSON} otherwise. The raw value and the underlying
+     * parser message are never included in the exception message, since claims payloads may contain
+     * sensitive data.
+     */
+    static void validateJsonObjectFormat(String jsonString) {
+        try (JsonReader reader = JsonProviders.createReader(jsonString)) {
+            if (reader.nextToken() != JsonToken.START_OBJECT) {
+                throw new MsalClientException(INVALID_CLAIMS_OBJECT_MESSAGE, AuthenticationErrorCode.INVALID_JSON);
+            }
+            reader.skipChildren();
+            // Ensure the object is the entire document; reject a valid object followed by any
+            // trailing tokens (e.g. "{}{}" or "{} garbage"), which is not a single JSON value.
+            if (reader.nextToken() != JsonToken.END_DOCUMENT) {
+                throw new MsalClientException(INVALID_CLAIMS_OBJECT_MESSAGE, AuthenticationErrorCode.INVALID_JSON);
+            }
+        } catch (IOException e) {
+            throw new MsalClientException(INVALID_CLAIMS_OBJECT_MESSAGE, AuthenticationErrorCode.INVALID_JSON);
         }
     }
 

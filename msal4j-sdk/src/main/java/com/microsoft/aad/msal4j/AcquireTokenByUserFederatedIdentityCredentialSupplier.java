@@ -48,6 +48,14 @@ class AcquireTokenByUserFederatedIdentityCredentialSupplier extends Authenticati
                             context,
                             null);
 
+                    // Propagate ext_cache_key_hash for cache isolation (e.g., client_claims).
+                    // User-FIC tokens are account-scoped, so the user-token read path in TokenCache
+                    // must also filter on this hash for the isolation to take effect.
+                    String extCacheKeyHash = this.userFicRequest.parameters.computeExtCacheKeyHash();
+                    if (!StringHelper.isBlank(extCacheKeyHash)) {
+                        silentRequest.extCacheKeyHash(extCacheKeyHash);
+                    }
+
                     AcquireTokenSilentSupplier supplier = new AcquireTokenSilentSupplier(
                             this.clientApplication,
                             silentRequest);

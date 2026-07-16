@@ -39,7 +39,8 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
                     silentRequest.parameters().account(),
                     requestAuthority,
                     silentRequest.parameters().scopes(),
-                    clientApplication.clientId());
+                    clientApplication.clientId(),
+                    silentRequest.extCacheKeyHash());
 
             if (res == null) {
                 throw new MsalClientException(AuthenticationErrorMessage.NO_TOKEN_IN_CACHE, AuthenticationErrorCode.CACHE_MISS);

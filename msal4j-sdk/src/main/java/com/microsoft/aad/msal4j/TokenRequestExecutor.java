@@ -63,6 +63,22 @@ class TokenRequestExecutor {
             params.put("claims", claimsRequest);
         }
 
+        // Client-originated claims (claimsFromClient) are forwarded on the wire as a standard OAuth
+        // "claims" parameter. They are merged here, after the capabilities/server-claims merge above,
+        // because that logic rebuilds the "claims" param and would otherwise clobber an earlier value.
+        // This single point covers every flow whose parameters expose clientClaims(): the
+        // confidential-client flows (client credentials, OBO, user-FIC) and the authorization-code
+        // flow (web-app code redemption, on either a confidential or public client). Flows that do
+        // not set client claims return null/blank here and are unaffected.
+        String clientClaims = msalRequest.requestContext().apiParameters().clientClaims();
+        if (!StringHelper.isBlank(clientClaims)) {
+            if (params.get("claims") != null) {
+                params.put("claims", JsonHelper.mergeJSONString(params.get("claims"), clientClaims));
+            } else {
+                params.put("claims", clientClaims);
+            }
+        }
+
         if(msalRequest.requestContext().apiParameters().extraQueryParameters() != null ){
             for(String key: msalRequest.requestContext().apiParameters().extraQueryParameters().keySet()){
                     if(params.containsKey(key)){

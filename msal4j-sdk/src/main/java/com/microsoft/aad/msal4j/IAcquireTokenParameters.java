@@ -67,4 +67,30 @@ interface IAcquireTokenParameters {
      */
     @Deprecated
     Map<String, String> extraQueryParameters();
+
+    /**
+     * Gets the client-originated claims (a raw JSON string) set via the per-request
+     * {@code claimsFromClient(...)} builder method.
+     * <p>
+     * Unlike {@link #claims()} (server-issued claims challenges, which bypass/refresh the cache),
+     * client claims are cached and the cache entry is keyed on the claims value, and they are sent on
+     * the wire as a standard OAuth {@code claims} parameter.
+     *
+     * @return the client-originated claims JSON, or null if none were provided.
+     */
+    default String clientClaims() {
+        return null;
+    }
+
+    /**
+     * Computes the extended cache-key hash contributed by this request's parameters (for example
+     * {@code fmi_path} or {@code client_claims}). The hash isolates cache entries so that requests
+     * with different component values do not collide. Returns an empty string when there are no
+     * extended cache-key components.
+     *
+     * @return the Base64URL-encoded SHA-256 hash of the cache-key components, or an empty string.
+     */
+    default String computeExtCacheKeyHash() {
+        return "";
+    }
 }

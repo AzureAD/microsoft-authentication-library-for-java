@@ -40,6 +40,12 @@ class AcquireTokenByOnBehalfOfSupplier extends AuthenticationResultSupplier {
                         context,
                         onBehalfOfRequest.parameters.userAssertion());
 
+                // Propagate ext_cache_key_hash for cache isolation (e.g., client_claims)
+                String extCacheKeyHash = this.onBehalfOfRequest.parameters.computeExtCacheKeyHash();
+                if (!StringHelper.isBlank(extCacheKeyHash)) {
+                    silentRequest.extCacheKeyHash(extCacheKeyHash);
+                }
+
                 AcquireTokenSilentSupplier supplier = new AcquireTokenSilentSupplier(
                         this.clientApplication,
                         silentRequest);
