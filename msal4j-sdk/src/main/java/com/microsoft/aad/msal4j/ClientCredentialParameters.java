@@ -34,13 +34,10 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
 
     private String clientClaims;
 
-    // Generic extended cache key components. Any optional or flow-specific parameters 
-    // that should influence token cache isolation adds an entry here. The hash of these
-    // components is used as part of the cache key in relevant scenarios entries.
-    private SortedMap<String, String> cacheKeyComponents;
-
-    // Memoized hash of cacheKeyComponents (computed once since parameters are immutable).
-    private String extCacheKeyHashCache;
+    // Generic extended cache key. Any optional or flow-specific parameters that should influence
+    // token cache isolation are contributed via buildCacheKeyComponents(); the hash of those
+    // components is used as part of the cache key in relevant scenarios.
+    private final ExtendedCacheKey extendedCacheKey;
 
     private ClientCredentialParameters(Set<String> scopes, Boolean skipCache, ClaimsRequest claims, Map<String, String> extraHttpHeaders, Map<String, String> extraQueryParameters, String tenant, IClientCredential clientCredential, String fmiPath, String clientClaims) {
         this.scopes = scopes;
@@ -54,7 +51,7 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         this.clientClaims = clientClaims;
 
         // Build cache key components from any parameters that require cache isolation.
-        this.cacheKeyComponents = buildCacheKeyComponents();
+        this.extendedCacheKey = new ExtendedCacheKey(buildCacheKeyComponents());
     }
 
     private static ClientCredentialParametersBuilder builder() {
@@ -150,14 +147,6 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
     }
 
     /**
-     * Returns the extended cache key components for this request, if any.
-     * Used by {@link TokenCache} for both cache writes and reads.
-     */
-    SortedMap<String, String> cacheKeyComponents() {
-        return this.cacheKeyComponents;
-    }
-
-    /**
      * Computes the extended cache key hash from all cache key components.
      * Returns an empty string if no components are present.
      * <p>
@@ -166,11 +155,7 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
      */
     @Override
     public String computeExtCacheKeyHash() {
-        if (extCacheKeyHashCache != null) {
-            return extCacheKeyHashCache;
-        }
-        extCacheKeyHashCache = StringHelper.computeExtCacheKeyHash(cacheKeyComponents);
-        return extCacheKeyHashCache;
+        return extendedCacheKey.computeHash();
     }
 
     public static class ClientCredentialParametersBuilder {
