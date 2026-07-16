@@ -37,12 +37,9 @@ public class AuthorizationCodeParameters implements IAcquireTokenParameters {
 
     private String clientClaims;
 
-    // Generic extended cache key components. The hash of these components isolates cache
+    // Generic extended cache key. The hash of the contributed components isolates cache
     // entries so that requests with different client-claims values do not collide.
-    private SortedMap<String, String> cacheKeyComponents;
-
-    // Memoized hash of cacheKeyComponents (computed once since parameters are immutable).
-    private String extCacheKeyHashCache;
+    private final ExtendedCacheKey extendedCacheKey;
 
     private AuthorizationCodeParameters(String authorizationCode, URI redirectUri,
                                         Set<String> scopes, ClaimsRequest claims,
@@ -60,7 +57,7 @@ public class AuthorizationCodeParameters implements IAcquireTokenParameters {
         this.clientClaims = clientClaims;
 
         // Build cache key components from any parameters that require cache isolation.
-        this.cacheKeyComponents = buildCacheKeyComponents();
+        this.extendedCacheKey = new ExtendedCacheKey(buildCacheKeyComponents());
     }
 
     private static AuthorizationCodeParametersBuilder builder() {
@@ -144,24 +141,12 @@ public class AuthorizationCodeParameters implements IAcquireTokenParameters {
     }
 
     /**
-     * Returns the extended cache key components for this request, if any.
-     * Used by {@link TokenCache} for both cache writes and reads.
-     */
-    SortedMap<String, String> cacheKeyComponents() {
-        return this.cacheKeyComponents;
-    }
-
-    /**
      * Computes the extended cache key hash from all cache key components, or an empty string when
      * there are none. The result is memoized since the parameters are immutable after construction.
      */
     @Override
     public String computeExtCacheKeyHash() {
-        if (extCacheKeyHashCache != null) {
-            return extCacheKeyHashCache;
-        }
-        extCacheKeyHashCache = StringHelper.computeExtCacheKeyHash(cacheKeyComponents);
-        return extCacheKeyHashCache;
+        return extendedCacheKey.computeHash();
     }
 
     public static class AuthorizationCodeParametersBuilder {
