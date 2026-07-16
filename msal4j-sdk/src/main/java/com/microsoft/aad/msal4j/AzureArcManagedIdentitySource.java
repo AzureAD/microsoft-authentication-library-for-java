@@ -19,7 +19,7 @@ import java.util.*;
 class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
 
     private static final Logger LOG = LoggerFactory.getLogger(AzureArcManagedIdentitySource.class);
-    private static final String ARC_API_VERSION = "2019-11-01";
+    private static final String ARC_API_VERSION = "2020-06-01";
     private static final String AZURE_ARC = "Azure Arc";
     private static final String WINDOWS_PATH = System.getenv("ProgramData") + "/AzureConnectedMachineAgent/Tokens/";
     private static final String LINUX_PATH = "/var/opt/azcmagent/tokens/";
