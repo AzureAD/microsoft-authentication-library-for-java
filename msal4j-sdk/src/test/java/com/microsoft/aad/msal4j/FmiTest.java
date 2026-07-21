@@ -8,6 +8,9 @@ import org.junit.jupiter.api.TestInstance;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -375,7 +378,7 @@ class FmiTest {
         // This test verifies that the internal cache key produced by Java uses the correct
         // format: "-{env}-atext-{clientId}-{tenantId}-{scopes}-{hash}"
         // Using the same fmi_path as other SDKs' integration tests: "SomeFmiPath/FmiCredentialPath"
-        // Expected hash (case-sensitive): zm2n0E62zwTsnNsozptLsoOoB_C7i-GfpxHYQQINJUw
+        // Expected hash (case-sensitive): cojvFy5tZae3nJPKVceBguvVx5vvMNJ8hPHQRbOgjOI
         // The full cache key is lowercased.
         // Java resolves login.microsoftonline.com → login.windows.net (preferred alias).
         DefaultHttpClient httpClientMock = mock(DefaultHttpClient.class);
@@ -405,7 +408,7 @@ class FmiTest {
         String cacheKey = cca.tokenCache.accessTokens.keySet().iterator().next();
 
         String expectedKey = "-login.windows.net-atext-3bf56293-fbb5-42bd-a407-248ba7431a8c-10c419d4-4a50-45b2-aa4e-919fb84df24f-openid profile offline_access api://azurefmitokenexchange/.default-"
-                + "zm2n0E62zwTsnNsozptLsoOoB_C7i-GfpxHYQQINJUw".toLowerCase();
+                + "cojvFy5tZae3nJPKVceBguvVx5vvMNJ8hPHQRbOgjOI".toLowerCase();
         assertEquals(expectedKey, cacheKey, "Full cache key should match expected format");
     }
 
@@ -416,7 +419,7 @@ class FmiTest {
         components.put("fmi_path", "SomeFmiPath/FmiCredentialPath");
 
         String hash = StringHelper.computeExtCacheKeyHash(components);
-        assertEquals("zm2n0E62zwTsnNsozptLsoOoB_C7i-GfpxHYQQINJUw", hash,
+        assertEquals("cojvFy5tZae3nJPKVceBguvVx5vvMNJ8hPHQRbOgjOI", hash,
                 "Hash for 'SomeFmiPath/FmiCredentialPath' should match expected value");
 
         // Second known value
@@ -424,7 +427,7 @@ class FmiTest {
         components2.put("fmi_path", "SomeFmiPath/Path");
 
         String hash2 = StringHelper.computeExtCacheKeyHash(components2);
-        assertEquals("7CX57Q63os7benQ6ER0sxgJPtNQSv7TGb5zexcidFoI", hash2,
+        assertEquals("HaI-Va57U1u3bj1ELRa_dz5BpgHfTDMYv5vUyFoPBQo", hash2,
                 "Hash for 'SomeFmiPath/Path' should match expected value");
     }
 
@@ -572,6 +575,187 @@ class FmiTest {
         // Each fmi_path produces a different hash → different cache key → 2 entries
         assertEquals(2, cca.tokenCache.accessTokens.size(),
                 "Different fmi_path values should produce separate cache entries");
+    }
+
+    // ========================================================================
+    // Extended cache-key hash: collision resistance & cross-SDK consistency
+    //
+    // computeExtCacheKeyHash serializes each sorted entry as
+    // "<utf8ByteLen(key)>:<key><utf8ByteLen(value)>:<value>" then SHA-256 → Base64URL (no pad).
+    // The length prefixes make it injective, so distinct component sets never collide.
+    // ========================================================================
+
+    // A deliberately adversarial alphabet: the encoding's own delimiter/digit characters,
+    // escapes, the empty string, and multibyte characters (2-byte 'é', a combining sequence,
+    // and a 4-byte emoji) that expose UTF-16-vs-UTF-8 length bugs.
+    private static final String[] ADVERSARIAL_TOKENS = {
+            "", "0", "1", "9", ":", "|", "\\", "a", "ab",
+            "\u00e9",            // 'é' as a single 2-byte code point (U+00E9)
+            "e\u0301",           // 'e' + combining acute accent (U+0301), 3 bytes, 2 UTF-16 units
+            "\uD83D\uDE00"       // 😀 emoji, 4 bytes, 2 UTF-16 units (surrogate pair)
+    };
+
+    private static String stripPadding(String s) {
+        int end = s.length();
+        while (end > 0 && s.charAt(end - 1) == '=') {
+            end--;
+        }
+        return s.substring(0, end);
+    }
+
+    private static SortedMap<String, String> map(String... kv) {
+        TreeMap<String, String> m = new TreeMap<>();
+        for (int i = 0; i < kv.length; i += 2) {
+            m.put(kv[i], kv[i + 1]);
+        }
+        return m;
+    }
+
+    @Test
+    void extCacheKeyHash_Injectivity_NoCollisionsOverAdversarialAlphabet() {
+        // Build a large set of DISTINCT component maps over the adversarial alphabet. Because the
+        // encoding is injective, every distinct map must produce a distinct hash. Using a Set of
+        // TreeMaps de-duplicates inputs by value (AbstractMap.equals), so any shortfall between the
+        // number of distinct inputs and the number of distinct hashes is a genuine collision.
+        Set<SortedMap<String, String>> inputs = new HashSet<>();
+
+        // Single-entry maps: every (key, value) pair.
+        for (String k : ADVERSARIAL_TOKENS) {
+            for (String v : ADVERSARIAL_TOKENS) {
+                inputs.add(map(k, v));
+            }
+        }
+
+        // Two-entry maps: distinct keys with a couple of value assignments, including values that
+        // themselves look like length prefixes ("1:x") to stress boundary ambiguity.
+        String[] values = {"", "x", "1:x", ":", "9"};
+        for (int i = 0; i < ADVERSARIAL_TOKENS.length; i++) {
+            for (int j = i + 1; j < ADVERSARIAL_TOKENS.length; j++) {
+                String k1 = ADVERSARIAL_TOKENS[i];
+                String k2 = ADVERSARIAL_TOKENS[j];
+                if (k1.equals(k2)) {
+                    continue;
+                }
+                for (String v : values) {
+                    inputs.add(map(k1, v, k2, "z"));
+                    inputs.add(map(k1, "z", k2, v));
+                }
+            }
+        }
+
+        Set<String> hashes = new HashSet<>();
+        for (SortedMap<String, String> input : inputs) {
+            hashes.add(StringHelper.computeExtCacheKeyHash(input));
+        }
+
+        assertEquals(inputs.size(), hashes.size(),
+                "Every distinct component map must hash to a distinct value (no collisions)");
+    }
+
+    @Test
+    void extCacheKeyHash_KeyValueBoundaryAmbiguity_ProducesDistinctHashes() {
+        // The classic delimiter-less bug: {fmi_path:"value"} and {fmi_pat:"hvalue"} both used to
+        // serialize to "fmi_pathvalue". Length prefixes disambiguate them.
+        assertNotEquals(
+                StringHelper.computeExtCacheKeyHash(map("fmi_path", "value")),
+                StringHelper.computeExtCacheKeyHash(map("fmi_pat", "hvalue")),
+                "Key/value boundary-ambiguous inputs must not collide");
+
+        // Multi-entry boundary ambiguity: {a:"b", cd:"e"} vs {ab:"c", d:"e"}.
+        assertNotEquals(
+                StringHelper.computeExtCacheKeyHash(map("a", "b", "cd", "e")),
+                StringHelper.computeExtCacheKeyHash(map("ab", "c", "d", "e")),
+                "Multi-entry boundary-ambiguous inputs must not collide");
+    }
+
+    @Test
+    void extCacheKeyHash_InputOrderIndependent() {
+        // Same components inserted in different orders must yield the same hash (the map is sorted).
+        TreeMap<String, String> forward = new TreeMap<>();
+        forward.put("a", "1");
+        forward.put("b", "2");
+        forward.put("fmi_path", "p");
+
+        TreeMap<String, String> reverse = new TreeMap<>();
+        reverse.put("fmi_path", "p");
+        reverse.put("b", "2");
+        reverse.put("a", "1");
+
+        assertEquals(
+                StringHelper.computeExtCacheKeyHash(forward),
+                StringHelper.computeExtCacheKeyHash(reverse),
+                "Hash must depend only on the sorted components, not insertion order");
+    }
+
+    @Test
+    void extCacheKeyHash_UsesUtf8ByteLength_NotStringLength() {
+        // 'é' (U+00E9) is 1 UTF-16 unit but 2 UTF-8 bytes; 'e' + combining accent (U+0301) is
+        // 2 UTF-16 units and 3 UTF-8 bytes. If the encoding used String.length() (UTF-16 units)
+        // instead of UTF-8 byte length, these could alias. They must not collide, and neither may
+        // collide with plain ASCII "e".
+        String precomposed = StringHelper.computeExtCacheKeyHash(map("\u00e9", "\u00e9"));
+        String decomposed = StringHelper.computeExtCacheKeyHash(map("e\u0301", "e\u0301"));
+        String ascii = StringHelper.computeExtCacheKeyHash(map("e", "e"));
+
+        assertNotEquals(precomposed, decomposed,
+                "Precomposed 'é' and 'e' + combining accent must hash differently (UTF-8 byte length)");
+        assertNotEquals(precomposed, ascii);
+        assertNotEquals(decomposed, ascii);
+
+        // A 4-byte emoji vs its concatenation with an extra char must also stay distinct.
+        assertNotEquals(
+                StringHelper.computeExtCacheKeyHash(map("k", "\uD83D\uDE00")),
+                StringHelper.computeExtCacheKeyHash(map("k", "\uD83D\uDE00x")));
+    }
+
+    @Test
+    void extCacheKeyHash_EmptyAndSingleEntryEdges() {
+        // Null and empty map short-circuit to "".
+        assertEquals("", StringHelper.computeExtCacheKeyHash(null));
+        assertEquals("", StringHelper.computeExtCacheKeyHash(new TreeMap<>()));
+
+        // Single entry and empty-value entries are all distinct and non-empty.
+        String single = StringHelper.computeExtCacheKeyHash(map("fmi_path", "p"));
+        String emptyValue = StringHelper.computeExtCacheKeyHash(map("fmi_path", ""));
+        String emptyKey = StringHelper.computeExtCacheKeyHash(map("", "p"));
+
+        assertNotEquals("", single);
+        assertNotEquals("", emptyValue);
+        assertNotEquals("", emptyKey);
+        assertNotEquals(single, emptyValue);
+        assertNotEquals(single, emptyKey);
+        assertNotEquals(emptyValue, emptyKey);
+    }
+
+    @Test
+    void extCacheKeyHash_IsBase64UrlWithoutPadding() {
+        String hash = StringHelper.computeExtCacheKeyHash(map("fmi_path", "agent-app-id"));
+        assertFalse(hash.contains("="), "Hash must be Base64URL without padding");
+        assertFalse(hash.contains("+"), "Hash must use the URL-safe alphabet (no '+')");
+        assertFalse(hash.contains("/"), "Hash must use the URL-safe alphabet (no '/')");
+    }
+
+    @Test
+    void extCacheKeyHash_GoldenVectors_MatchCrossSdk() {
+        // Byte-identical across MSAL SDKs (Go/.NET/Python/JS share the length-prefix fix). Reference
+        // vectors are lowercased Base64URL-no-pad; this method preserves the encoder's mixed case,
+        // so compare case-insensitively (padding already absent, but strip defensively).
+        assertGoldenVector(map("fmi_path", "agent-app-id"),
+                "a0ry_zl4gccsdp7gnw927x8s0mrmnodv6tyilt0u07m");
+        assertGoldenVector(map("a", "b", "cd", "e"),
+                "cybgactkrvlzlen1aiwzwl3ay5krkyixommrobc-ri4");
+        assertGoldenVector(map("fmi_path", "value"),
+                "n_lucewkadzv_nybtg-2wtorgf2nrns6ihlfa7vbuzg");
+        assertGoldenVector(map("fmi_pat", "hvalue"),
+                "tjtm16m-suk2_bkniblr25lyuki40qyceco7knuyu0k");
+        assertGoldenVector(map("\u00e9", "\u00e9"),
+                "xskzaoz4ibr3mznftyxctvg1ptuh-0fuzpty7ndbfls");
+    }
+
+    private static void assertGoldenVector(SortedMap<String, String> components, String expectedLower) {
+        String actual = stripPadding(StringHelper.computeExtCacheKeyHash(components));
+        assertTrue(expectedLower.equalsIgnoreCase(actual),
+                "Cross-SDK golden vector mismatch: expected " + expectedLower + " but got " + actual);
     }
 
 }
