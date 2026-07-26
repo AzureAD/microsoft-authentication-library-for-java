@@ -562,7 +562,7 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
         super.serviceBundle = new ServiceBundle(
                 builder.executorService,
                 new TelemetryManager(telemetryConsumer, builder.onlySendFailureTelemetry),
-                new HttpHelper(this, new DefaultRetryPolicy())
+                new ThrottlingRequestChain(this, new DefaultRetryPolicy())
         );
 
         if (aadAadInstanceDiscoveryResponse != null) {

@@ -9,10 +9,10 @@ class ServiceBundle {
 
     private ExecutorService executorService;
     private TelemetryManager telemetryManager;
-    private IHttpHelper httpHelper;
+    private ThrottlingRequestChain httpHelper;
     private ServerSideTelemetry serverSideTelemetry;
 
-    ServiceBundle(ExecutorService executorService, TelemetryManager telemetryManager, IHttpHelper httpHelper) {
+    ServiceBundle(ExecutorService executorService, TelemetryManager telemetryManager, ThrottlingRequestChain httpHelper) {
         this.executorService = executorService;
         this.telemetryManager = telemetryManager;
         this.httpHelper = httpHelper;
@@ -28,7 +28,7 @@ class ServiceBundle {
         return telemetryManager;
     }
 
-    IHttpHelper getHttpHelper() {
+    ThrottlingRequestChain getHttpHelper() {
         return httpHelper;
     }
 

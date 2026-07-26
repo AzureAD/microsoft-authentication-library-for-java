@@ -4,25 +4,25 @@
 package com.microsoft.aad.msal4j;
 
 /**
- * Interface representing the HTTP helper component that handles network communications.
+ * Interface representing a link in the HTTP request chain (throttling, telemetry, correlation-id
+ * verification, retry, sending).
  * <p>
- * This interface abstracts the HTTP communication layer used for sending requests.
- * It's used internally by the library to execute HTTP requests during various operations.
+ * Each link in the chain implements this interface and delegates to its successor, referenced only
+ * through this interface, so that the request/response flows through all of them in sequence.
  */
-interface IHttpHelper {
+interface IRequestChain {
 
     /**
      * Executes an HTTP request.
-     * <p>
-     * This method handles all aspects of sending the HTTP request and processing the response,
-     * such as applying retry policies and handling errors.
      *
      * @param httpRequest The HTTP request to be executed
      * @param requestContext Context information about the current request, including correlation IDs for telemetry
      * @param serviceBundle Bundle of services that may be needed during request execution, such as retry policies
      * @return An {@link IHttpResponse} object containing the response
+     * @throws Exception Implementations further down the chain (e.g. the actual send) may throw; implementations
+     *                    that handle/wrap exceptions themselves (e.g. telemetry) do not declare this.
      */
     IHttpResponse executeHttpRequest(HttpRequest httpRequest,
                                      RequestContext requestContext,
-                                     ServiceBundle serviceBundle);
+                                     ServiceBundle serviceBundle) throws Exception;
 }

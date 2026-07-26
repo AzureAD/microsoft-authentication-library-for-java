@@ -10,7 +10,7 @@ class OidcDiscoveryProvider {
                 HttpMethod.GET,
                 authority.canonicalAuthorityUrl.toString());
 
-        IHttpResponse httpResponse = ((HttpHelper)clientApplication.serviceBundle.getHttpHelper()).executeHttpRequest(httpRequest);
+        IHttpResponse httpResponse = clientApplication.serviceBundle.getHttpHelper().executeHttpRequest(httpRequest);
 
         OidcDiscoveryResponse response = JsonHelper.convertJsonStringToJsonSerializableObject(httpResponse.body(), OidcDiscoveryResponse::fromJson);
 

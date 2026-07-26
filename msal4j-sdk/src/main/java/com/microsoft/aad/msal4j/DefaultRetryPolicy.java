@@ -13,7 +13,7 @@ class DefaultRetryPolicy implements IRetryPolicy {
     @Override
     public boolean isRetryable(IHttpResponse httpResponse) {
         return HttpStatus.isServerError(httpResponse.statusCode()) &&
-                HttpHelper.getRetryAfterHeader(httpResponse) == null;
+                ThrottlingRequestChain.getRetryAfterHeader(httpResponse) == null;
     }
 
     @Override

@@ -815,7 +815,8 @@ class ManagedIdentityTests {
 
             assertMsalServiceException(acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE), source, MsalError.MANAGED_IDENTITY_UNREACHABLE_NETWORK);
 
-            verify(httpClientMock, times(1)).send(any());
+            // SocketException is now retried once (DefaultRetryableExceptionPolicy) before failing
+            verify(httpClientMock, times(2)).send(any());
         }
 
         @ParameterizedTest
