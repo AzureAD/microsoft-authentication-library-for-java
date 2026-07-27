@@ -125,18 +125,19 @@ class HttpHelper implements IHttpHelper {
 
     private String getRequestThumbprint(RequestContext requestContext) {
         StringBuilder sb = new StringBuilder();
-        sb.append(requestContext.clientId() + POINT_DELIMITER);
-        sb.append(requestContext.authority() + POINT_DELIMITER);
+        sb.append(requestContext.clientId()).append(POINT_DELIMITER);
+        sb.append(requestContext.authority()).append(POINT_DELIMITER);
 
-        IAcquireTokenParameters apiParameters = requestContext.apiParameters();
-
-        if (apiParameters instanceof SilentParameters) {
-            IAccount account = ((SilentParameters) apiParameters).account();
-            if (account != null) {
-                sb.append(account.homeAccountId() + POINT_DELIMITER);
+        UserIdentifier userIdentifier = requestContext.userIdentifier();
+        if (userIdentifier != null) {
+            if (!StringHelper.isBlank(userIdentifier.upn())) {
+                sb.append(userIdentifier.upn()).append(POINT_DELIMITER);
+            } else if (!StringHelper.isBlank(userIdentifier.oid())) {
+                sb.append(userIdentifier.oid()).append(POINT_DELIMITER);
             }
         }
 
+        IAcquireTokenParameters apiParameters = requestContext.apiParameters();
         Set<String> sortedScopes = new TreeSet<>(apiParameters.scopes());
         sb.append(String.join(" ", sortedScopes));
 
