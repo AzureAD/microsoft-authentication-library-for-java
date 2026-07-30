@@ -339,12 +339,28 @@ public class TokenCache implements ITokenCache {
 
     /**
      * Computes the extended cache key hash for a request, if applicable.
-     * Delegates to the generic cache key components on the parameters object.
+     * Delegates to the generic cache key components exposed by the request's parameters object
+     * ({@link IAcquireTokenParameters#computeExtCacheKeyHash()}), which covers client credentials,
+     * managed identity, on-behalf-of, user-FIC and authorization-code redemption. Parameter types
+     * without extended cache-key components return an empty string via the interface default.
      * The algorithm uses sorted key-value concatenation → SHA-256 → Base64URL (cross-SDK compatible).
      */
     private static String computeExtCacheKeyHashForRequest(MsalRequest msalRequest) {
-        if (msalRequest instanceof ClientCredentialRequest) {
-            return ((ClientCredentialRequest) msalRequest).parameters.computeExtCacheKeyHash();
+        // A RefreshTokenRequest inherits the parent silent request's RequestContext, whose
+        // apiParameters (SilentParameters) carries no client-originated claims and would therefore
+        // return an empty hash. Prefer the hash threaded onto the parent silent request so a refreshed
+        // token is written back to the same cache partition as the original (e.g. client_claims /
+        // user-FIC) instead of leaking into the default partition.
+        if (msalRequest instanceof RefreshTokenRequest) {
+            String parentHash = ((RefreshTokenRequest) msalRequest).extCacheKeyHash();
+            if (!StringHelper.isBlank(parentHash)) {
+                return parentHash;
+            }
+        }
+
+        IAcquireTokenParameters apiParameters = msalRequest.requestContext().apiParameters();
+        if (apiParameters != null) {
+            return apiParameters.computeExtCacheKeyHash();
         }
         return "";
     }
@@ -544,11 +560,22 @@ public class TokenCache implements ITokenCache {
             Set<String> scopes,
             String clientId,
             Set<String> environmentAliases) {
+        return getAccessTokenCacheEntity(account, authority, scopes, clientId, environmentAliases, null);
+    }
+
+    private Optional<AccessTokenCacheEntity> getAccessTokenCacheEntity(
+            IAccount account,
+            Authority authority,
+            Set<String> scopes,
+            String clientId,
+            Set<String> environmentAliases,
+            String extCacheKeyHash) {
 
         return accessTokens.values().stream().filter(
                 accessToken ->
                         accessToken.homeAccountId != null &&
                                 accessToken.homeAccountId.equals(account.homeAccountId()) &&
+                                extCacheKeyHashMatches(accessToken, extCacheKeyHash) &&
                                 environmentAliases.contains(accessToken.environment) &&
                                 accessToken.realm.equals(authority.tenant()) &&
                                 accessToken.clientId.equals(clientId) &&
@@ -686,6 +713,15 @@ public class TokenCache implements ITokenCache {
             Authority authority,
             Set<String> scopes,
             String clientId) {
+        return getCachedAuthenticationResult(account, authority, scopes, clientId, null);
+    }
+
+    AuthenticationResult getCachedAuthenticationResult(
+            IAccount account,
+            Authority authority,
+            Set<String> scopes,
+            String clientId,
+            String extCacheKeyHash) {
 
         AuthenticationResult.AuthenticationResultBuilder builder = AuthenticationResult.builder();
 
@@ -704,7 +740,7 @@ public class TokenCache implements ITokenCache {
                         getAccountCacheEntity(account, environmentAliases);
 
                 Optional<AccessTokenCacheEntity> atCacheEntity =
-                        getAccessTokenCacheEntity(account, authority, scopes, clientId, environmentAliases);
+                        getAccessTokenCacheEntity(account, authority, scopes, clientId, environmentAliases, extCacheKeyHash);
 
                 Optional<IdTokenCacheEntity> idTokenCacheEntity =
                         getIdTokenCacheEntity(account, authority, clientId, environmentAliases);

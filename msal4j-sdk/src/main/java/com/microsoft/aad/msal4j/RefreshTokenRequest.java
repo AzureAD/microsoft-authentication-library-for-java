@@ -39,6 +39,10 @@ class RefreshTokenRequest extends MsalRequest {
         return new OAuthAuthorizationGrant(params, parameters.scopes(), parameters.claims());
     }
 
+    String extCacheKeyHash() {
+        return parentSilentRequest != null ? parentSilentRequest.extCacheKeyHash() : null;
+    }
+
     String getFullThumbprint() {
         StringBuilder sb = new StringBuilder();
 
