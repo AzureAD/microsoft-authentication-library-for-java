@@ -65,6 +65,10 @@ class MtlsPopIT {
     private static final String SNI_ALLOWLISTED_APP_ID = "163ffef9-a313-45b4-ab2f-c7e2f5e0e23e";
     private static final String SNI_ALLOWLISTED_AUTHORITY =
             "https://login.microsoftonline.com/bea21ebe-8b64-4d06-9f6d-6a889b120a7c";
+    // ESTS test-slice region. Used ONLY by the deterministic Bearer cell to exercise the regional
+    // mtlsauth endpoint live; the mtls_pop cells stay global because this slice intermittently
+    // downgrades the mtls_pop token_type (a downgrade must never be masked as a regional quirk).
+    private static final String TEST_SLICE_REGION = "westus3";
 
     // mTLS-enabled MS Graph host (NOT plain graph.microsoft.com, which does not perform the client-cert
     // handshake). A token bound to the presented certificate is accepted here with HTTP 200.
@@ -138,6 +142,7 @@ class MtlsPopIT {
     void Credential_X509_Output_Bearer() throws Exception {
         ConfidentialClientApplication cca = ConfidentialClientApplication.builder(SNI_ALLOWLISTED_APP_ID, certificate)
                 .authority(SNI_ALLOWLISTED_AUTHORITY)
+                .azureRegion(TEST_SLICE_REGION)   // regional endpoint is safe here (token type is deterministic)
                 .build();
 
         IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
