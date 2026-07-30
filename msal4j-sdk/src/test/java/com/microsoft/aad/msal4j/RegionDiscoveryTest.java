@@ -5,9 +5,14 @@ package com.microsoft.aad.msal4j;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RegionDiscoveryTest {
@@ -53,5 +58,39 @@ class RegionDiscoveryTest {
     void parseRegionFromImdsResponse_emptyBody_returnsNull() {
         assertNull(AadInstanceDiscoveryProvider.parseRegionFromImdsResponse(""));
         assertNull(AadInstanceDiscoveryProvider.parseRegionFromImdsResponse(null));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"eastus", "westus2", "east-us-2", "centralus", "a", "a1", "a-1"})
+    void isValidRegion_validRegionNames_returnsTrue(String region) {
+        assertTrue(AadInstanceDiscoveryProvider.isValidRegion(region));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "east.us",      //dot would add a subdomain to the authority host
+            "east/us",      //slash would add a path segment to the authority URL
+            "../evil",      //path traversal attempt
+            "EastUS",       //uppercase characters
+            "east us",      //whitespace
+            "1eastus",      //does not start with a letter
+            "-eastus",      //does not start with a letter
+            "east_us",      //underscore
+            "east$us"})     //other special characters
+    void isValidRegion_invalidRegionNames_returnsFalse(String region) {
+        assertFalse(AadInstanceDiscoveryProvider.isValidRegion(region));
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    void isValidRegion_nullOrEmpty_returnsFalse(String region) {
+        assertFalse(AadInstanceDiscoveryProvider.isValidRegion(region));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"West US", "West US 2"})
+    void isValidRegion_displayName_returnsFalse(String region) {
+        //Regions must be given as their short name ("westus"), not their display name ("West US")
+        assertFalse(AadInstanceDiscoveryProvider.isValidRegion(region));
     }
 }
