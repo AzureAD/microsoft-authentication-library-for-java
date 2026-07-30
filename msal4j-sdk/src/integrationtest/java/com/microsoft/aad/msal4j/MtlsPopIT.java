@@ -19,7 +19,6 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
-import java.util.concurrent.ExecutionException;
 
 import static com.microsoft.aad.msal4j.TestConstants.AGENTIC_GRAPH_SCOPE;
 import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
@@ -66,7 +65,6 @@ class MtlsPopIT {
     private static final String SNI_ALLOWLISTED_APP_ID = "163ffef9-a313-45b4-ab2f-c7e2f5e0e23e";
     private static final String SNI_ALLOWLISTED_AUTHORITY =
             "https://login.microsoftonline.com/bea21ebe-8b64-4d06-9f6d-6a889b120a7c";
-    private static final String TEST_SLICE_REGION = "westus3";
 
     // mTLS-enabled MS Graph host (NOT plain graph.microsoft.com, which does not perform the client-cert
     // handshake). A token bound to the presented certificate is accepted here with HTTP 200.
@@ -115,10 +113,11 @@ class MtlsPopIT {
                 .authority(SNI_ALLOWLISTED_AUTHORITY)   // tenanted authority (required for mTLS PoP)
                 .build();
 
-        IAuthenticationResult result = acquireMtlsPopOrSkipOnDowngrade(cca, ClientCredentialParameters
+        IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
                         .builder(Collections.singleton(AGENTIC_GRAPH_SCOPE))
                         .mtlsProofOfPossession()
-                        .build());
+                        .build())
+                .get();
 
         assertMtlsPopResult(result, expectedLabThumbprint());
 
@@ -153,29 +152,32 @@ class MtlsPopIT {
     }
 
     /**
-     * {@code Credential_X509_Output_Pop} over the regional endpoint: with a region configured the
-     * request targets {@code <region>.mtlsauth.microsoft.com}, and the bound token is cached under
-     * {@code {token_type + cert KeyId}} and returned on a second call.
+     * {@code Credential_X509_Output_Pop} cache behavior: a bound mTLS-PoP token is cached under
+     * {@code {token_type + cert KeyId}} and returned on a second acquisition for the same scope. Uses
+     * the global {@code mtlsauth.microsoft.com} endpoint so the {@code mtls_pop} token type can be
+     * asserted directly &mdash; the {@code westus3} test slice intermittently downgrades the token type
+     * and is therefore never used for token-type assertions.
      */
     @Test
-    void Credential_X509_Output_Pop_Regional() throws Exception {
+    void Credential_X509_Output_Pop_CacheHit() throws Exception {
         ConfidentialClientApplication cca = ConfidentialClientApplication.builder(SNI_ALLOWLISTED_APP_ID, certificate)
                 .authority(SNI_ALLOWLISTED_AUTHORITY)
-                .azureRegion(TEST_SLICE_REGION)
                 .build();
 
-        IAuthenticationResult result = acquireMtlsPopOrSkipOnDowngrade(cca, ClientCredentialParameters
+        IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
                         .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
                         .mtlsProofOfPossession()
-                        .build());
+                        .build())
+                .get();
 
         assertMtlsPopResult(result, expectedLabThumbprint());
 
         // The mTLS-PoP token must be cached under {token_type + cert KeyId} and returned on lookup.
-        IAuthenticationResult cached = acquireMtlsPopOrSkipOnDowngrade(cca, ClientCredentialParameters
+        IAuthenticationResult cached = cca.acquireToken(ClientCredentialParameters
                         .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
                         .mtlsProofOfPossession()
-                        .build());
+                        .build())
+                .get();
 
         assertEquals(result.accessToken(), cached.accessToken(),
                 "Second mTLS-PoP request should return the cached bound token");
@@ -200,35 +202,17 @@ class MtlsPopIT {
         assertEquals(TokenType.BEARER, bearer.metadata().tokenType());
 
         // New SNI + mTLS PoP path.
-        IAuthenticationResult pop = acquireMtlsPopOrSkipOnDowngrade(cca, ClientCredentialParameters
+        IAuthenticationResult pop = cca.acquireToken(ClientCredentialParameters
                         .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
                         .mtlsProofOfPossession()
-                        .build());
+                        .build())
+                .get();
         assertEquals(TokenType.MTLS_POP, pop.metadata().tokenType());
 
         assertNotEquals(bearer.accessToken(), pop.accessToken(),
                 "Bearer and mTLS-PoP tokens for the same scope must be distinct cache entries");
         assertEquals(2, cca.tokenCache.accessTokens.size(),
                 "Bearer and mTLS-PoP tokens must occupy separate cache entries");
-    }
-
-    // ESTS's mTLS PoP test slice is a known intermittent token_type downgrader. When it returns a
-    // non-mtls_pop token the access token is not certificate-bound, and MSAL now fails closed with
-    // TOKEN_TYPE_MISMATCH. Treat that specific outcome as inconclusive (skip) rather than a hard failure,
-    // mirroring MSAL .NET's ExecuteOrInconclusiveOnTokenTypeMismatchAsync.
-    private static IAuthenticationResult acquireMtlsPopOrSkipOnDowngrade(
-            ConfidentialClientApplication cca, ClientCredentialParameters parameters) throws Exception {
-        try {
-            return cca.acquireToken(parameters).get();
-        } catch (ExecutionException e) {
-            if (e.getCause() instanceof MsalClientException
-                    && AuthenticationErrorCode.TOKEN_TYPE_MISMATCH.equals(
-                            ((MsalClientException) e.getCause()).errorCode())) {
-                Assumptions.abort("ESTS returned a non-mtls_pop token_type (downgrade); treating as "
-                        + "inconclusive: " + e.getCause().getMessage());
-            }
-            throw e;
-        }
     }
 
     private void assertMtlsPopResult(IAuthenticationResult result, String expectedThumbprint) {
