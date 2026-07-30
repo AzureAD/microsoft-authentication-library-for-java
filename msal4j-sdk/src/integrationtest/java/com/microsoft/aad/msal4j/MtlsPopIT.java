@@ -132,11 +132,14 @@ class MtlsPopIT {
 
         assertMtlsPopResult(result, expectedLabThumbprint());
 
-        int status = MtlsResourceCaller.callResourceWithMtlsToken(
+        MtlsResourceCaller.Response resourceResponse = MtlsResourceCaller.callResourceWithMtlsToken(
                 MTLS_GRAPH_RESOURCE, result.accessToken(), certificate);
-        assertEquals(200, status,
-                "mTLS-enabled resource must accept the bound PoP token (HTTP 200); 401/403 means the "
-                        + "binding certificate was not presented on the handshake or the mtls_pop scheme was wrong");
+        assertEquals(200, resourceResponse.statusCode(),
+                "mTLS-enabled resource must accept the bound PoP token (HTTP 200). A 401/403 means the "
+                        + "binding certificate was not presented on the handshake or the mtls_pop scheme was "
+                        + "wrong; a 400 means the request reached the resource but was rejected as malformed "
+                        + "(e.g. token audience/shape). Status " + resourceResponse.statusCode()
+                        + ", error body: " + resourceResponse.errorBody());
     }
 
     /**
