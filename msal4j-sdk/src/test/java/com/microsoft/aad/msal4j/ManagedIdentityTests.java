@@ -135,7 +135,7 @@ class ManagedIdentityTests {
                 return ManagedIdentityTestConstants.CLOUDSHELL_ENDPOINT;
 
             case AZURE_ARC:
-                queryParameters.put("api-version", "2019-11-01");
+                queryParameters.put("api-version", "2020-06-01");
                 headers.put("Metadata", "true");
                 return ManagedIdentityTestConstants.AZURE_ARC_ENDPOINT;
 

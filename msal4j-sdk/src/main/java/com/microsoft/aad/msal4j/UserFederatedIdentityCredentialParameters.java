@@ -5,6 +5,8 @@ package com.microsoft.aad.msal4j;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.UUID;
 
 import static com.microsoft.aad.msal4j.ParameterValidationUtils.validateNotBlank;
@@ -29,6 +31,11 @@ public class UserFederatedIdentityCredentialParameters implements IAcquireTokenP
     private Map<String, String> extraHttpHeaders;
     private Map<String, String> extraQueryParameters;
     private String tenant;
+    private String clientClaims;
+
+    // Generic extended cache key. The hash of the contributed components isolates cache
+    // entries so that requests with different client-claims values do not collide.
+    private final ExtendedCacheKey extendedCacheKey;
 
     private UserFederatedIdentityCredentialParameters(
             Set<String> scopes,
@@ -39,7 +46,8 @@ public class UserFederatedIdentityCredentialParameters implements IAcquireTokenP
             ClaimsRequest claims,
             Map<String, String> extraHttpHeaders,
             Map<String, String> extraQueryParameters,
-            String tenant) {
+            String tenant,
+            String clientClaims) {
         this.scopes = scopes;
         this.username = username;
         this.userObjectId = userObjectId;
@@ -49,6 +57,10 @@ public class UserFederatedIdentityCredentialParameters implements IAcquireTokenP
         this.extraHttpHeaders = extraHttpHeaders;
         this.extraQueryParameters = extraQueryParameters;
         this.tenant = tenant;
+        this.clientClaims = clientClaims;
+
+        // Build cache key components from any parameters that require cache isolation.
+        this.extendedCacheKey = new ExtendedCacheKey(buildCacheKeyComponents());
     }
 
     /**
@@ -145,6 +157,39 @@ public class UserFederatedIdentityCredentialParameters implements IAcquireTokenP
         return this.tenant;
     }
 
+    /**
+     * Client-originated claims set via
+     * {@link UserFederatedIdentityCredentialParametersBuilder#claimsFromClient(String)}.
+     * Forwarded to the token endpoint as the OAuth {@code claims} parameter and used as part of the
+     * extended cache key so that distinct claim values are cached separately.
+     */
+    @Override
+    public String clientClaims() {
+        return this.clientClaims;
+    }
+
+    /**
+     * Builds the sorted map of cache key components from the parameters that require cache isolation.
+     * Returns null if no components are present.
+     */
+    private SortedMap<String, String> buildCacheKeyComponents() {
+        TreeMap<String, String> components = null;
+        if (!StringHelper.isBlank(clientClaims)) {
+            components = new TreeMap<>();
+            components.put("client_claims", clientClaims);
+        }
+        return components;
+    }
+
+    /**
+     * Computes the extended cache key hash from all cache key components, or an empty string when
+     * there are none. The result is memoized since the parameters are immutable after construction.
+     */
+    @Override
+    public String computeExtCacheKeyHash() {
+        return extendedCacheKey.computeHash();
+    }
+
     public static class UserFederatedIdentityCredentialParametersBuilder {
         private Set<String> scopes;
         private String username;
@@ -155,6 +200,7 @@ public class UserFederatedIdentityCredentialParameters implements IAcquireTokenP
         private Map<String, String> extraHttpHeaders;
         private Map<String, String> extraQueryParameters;
         private String tenant;
+        private String clientClaims;
 
         UserFederatedIdentityCredentialParametersBuilder() {
         }
@@ -225,11 +271,34 @@ public class UserFederatedIdentityCredentialParameters implements IAcquireTokenP
             return this;
         }
 
+        /**
+         * Specifies client-originated claims (a raw JSON object string) to forward to the token
+         * endpoint as the OAuth {@code claims} request parameter. Unlike {@link #claims(ClaimsRequest)}
+         * (server-issued claims challenges, which bypass the cache), tokens acquired with client claims
+         * are cached and the cache entry is keyed on the claims value, so distinct claim values produce
+         * separate cache entries. Use stable, non-dynamic values to avoid cache fragmentation. Send the identical value on every
+         * request for a given token; because the raw value is part of the cache key, changing or
+         * omitting it routes the request to a different cache partition.
+         * A blank value is ignored; an invalid JSON object throws {@link MsalClientException}.
+         *
+         * @param claimsJson a valid JSON object string containing the client claims
+         * @return the builder
+         */
+        public UserFederatedIdentityCredentialParametersBuilder claimsFromClient(String claimsJson) {
+            if (StringHelper.isBlank(claimsJson)) {
+                return this;
+            }
+
+            JsonHelper.validateJsonObjectFormat(claimsJson);
+            this.clientClaims = claimsJson;
+            return this;
+        }
+
         public UserFederatedIdentityCredentialParameters build() {
             return new UserFederatedIdentityCredentialParameters(
                     this.scopes, this.username, this.userObjectId, this.assertion,
                     this.forceRefresh, this.claims, this.extraHttpHeaders,
-                    this.extraQueryParameters, this.tenant);
+                    this.extraQueryParameters, this.tenant, this.clientClaims);
         }
     }
 }

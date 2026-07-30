@@ -34,16 +34,14 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
 
     private boolean mtlsProofOfPossession;
 
-    // Generic extended cache key components. Any optional or flow-specific parameters 
-    // that should influence token cache isolation adds an entry here. The hash of these
-    // components is used as part of the cache key in relevant scenarios entries.
-    private volatile SortedMap<String, String> cacheKeyComponents;
+    private String clientClaims;
 
-    // Lazily memoized hash of cacheKeyComponents. Invalidated (set to null) whenever the
-    // components change (e.g. bindingCertificateKeyId adds the cert KeyId) so it is recomputed.
-    private volatile String extCacheKeyHashCache;
+    // Generic extended cache key. Any optional or flow-specific parameters that should influence
+    // token cache isolation are contributed via buildCacheKeyComponents(); the hash of those
+    // components is used as part of the cache key in relevant scenarios.
+    private final ExtendedCacheKey extendedCacheKey;
 
-    private ClientCredentialParameters(Set<String> scopes, Boolean skipCache, ClaimsRequest claims, Map<String, String> extraHttpHeaders, Map<String, String> extraQueryParameters, String tenant, IClientCredential clientCredential, String fmiPath, boolean mtlsProofOfPossession) {
+    private ClientCredentialParameters(Set<String> scopes, Boolean skipCache, ClaimsRequest claims, Map<String, String> extraHttpHeaders, Map<String, String> extraQueryParameters, String tenant, IClientCredential clientCredential, String fmiPath, String clientClaims, boolean mtlsProofOfPossession) {
         this.scopes = scopes;
         this.skipCache = skipCache;
         this.claims = claims;
@@ -52,10 +50,11 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         this.tenant = tenant;
         this.clientCredential = clientCredential;
         this.fmiPath = fmiPath;
+        this.clientClaims = clientClaims;
         this.mtlsProofOfPossession = mtlsProofOfPossession;
 
         // Build cache key components from any parameters that require cache isolation.
-        this.cacheKeyComponents = buildCacheKeyComponents();
+        this.extendedCacheKey = new ExtendedCacheKey(buildCacheKeyComponents());
     }
 
     private static ClientCredentialParametersBuilder builder() {
@@ -119,11 +118,21 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
     }
 
     /**
+     * Client-originated claims set via {@link ClientCredentialParametersBuilder#claimsFromClient(String)}.
+     * Forwarded to the token endpoint as the OAuth {@code claims} parameter and used as part of the
+     * extended cache key so that distinct claim values are cached separately.
+     */
+    @Override
+    public String clientClaims() {
+        return this.clientClaims;
+    }
+
+    /**
      * Indicates whether this request should acquire a mutual-TLS Proof-of-Possession (mTLS PoP) token,
      * where the client certificate is presented on the TLS handshake to the token endpoint and the
      * resulting token is cryptographically bound to that certificate.
      *
-     * @return true if mTLS Proof-of-Possession was requested, false for a standard Bearer token
+     * @return true if mTLS Proof-of-Possession was requested, false for a standard bearer token
      */
     public boolean mtlsProofOfPossession() {
         return this.mtlsProofOfPossession;
@@ -134,23 +143,14 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
      * token is cache-isolated by certificate, in addition to the {@code token_type} dimension.
      * <p>
      * Called once (before the silent cache lookup) so both cache reads and writes observe the same
-     * components. This params instance may be reused across concurrent acquireToken calls, so the
-     * update is copy-on-write and synchronized, and clears the memoized hash so it is recomputed.
+     * components. The underlying {@link ExtendedCacheKey#putComponent(String, String)} update is
+     * copy-on-write and synchronized, and clears the memoized hash so it is recomputed.
      */
     void bindingCertificateKeyId(String keyId) {
         if (StringHelper.isBlank(keyId)) {
             return;
         }
-        synchronized (this) {
-            // Copy-on-write: never mutate a map that another thread may be reading. Swap in a fresh
-            // map and invalidate the memoized hash so it is recomputed with the added component.
-            TreeMap<String, String> updated = this.cacheKeyComponents == null
-                    ? new TreeMap<>()
-                    : new TreeMap<>(this.cacheKeyComponents);
-            updated.put("cert_kid", keyId);
-            this.cacheKeyComponents = updated;
-            this.extCacheKeyHashCache = null;
-        }
+        extendedCacheKey.putComponent("cert_kid", keyId);
     }
 
     /**
@@ -166,6 +166,12 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
             components = new TreeMap<>();
             components.put("fmi_path", fmiPath);
         }
+        if (!StringHelper.isBlank(clientClaims)) {
+            if (components == null) {
+                components = new TreeMap<>();
+            }
+            components.put("client_claims", clientClaims);
+        }
         if (mtlsProofOfPossession) {
             if (components == null) {
                 components = new TreeMap<>();
@@ -176,29 +182,16 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
     }
 
     /**
-     * Returns the extended cache key components for this request, if any.
-     * Used by {@link TokenCache} for both cache writes and reads.
-     */
-    SortedMap<String, String> cacheKeyComponents() {
-        return this.cacheKeyComponents;
-    }
-
-    /**
      * Computes the extended cache key hash from all cache key components.
      * Returns an empty string if no components are present.
      * <p>
-     * The result is lazily memoized and invalidated whenever the cache key components change
-     * (see {@link #bindingCertificateKeyId(String)}).
+     * The result is lazily memoized; the memoized value is invalidated when a component is stamped
+     * after construction (see {@link #bindingCertificateKeyId(String)}) so it is recomputed.
      * Used by both cache writes ({@link TokenCache}) and cache reads (silent lookup).
      */
-    String computeExtCacheKeyHash() {
-        String cached = extCacheKeyHashCache;
-        if (cached != null) {
-            return cached;
-        }
-        String computed = StringHelper.computeExtCacheKeyHash(cacheKeyComponents);
-        extCacheKeyHashCache = computed;
-        return computed;
+    @Override
+    public String computeExtCacheKeyHash() {
+        return extendedCacheKey.computeHash();
     }
 
     public static class ClientCredentialParametersBuilder {
@@ -210,6 +203,7 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         private String tenant;
         private IClientCredential clientCredential;
         private String fmiPath;
+        private String clientClaims;
         private boolean mtlsProofOfPossession;
 
         ClientCredentialParametersBuilder() {
@@ -295,7 +289,30 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         }
 
         /**
-         * Requests a mutual-TLS Proof-of-Possession (mTLS PoP) token instead of a Bearer token.
+         * Specifies client-originated claims (a raw JSON object string) to forward to the token
+         * endpoint as the OAuth {@code claims} request parameter. Unlike {@link #claims(ClaimsRequest)}
+         * (server-issued claims challenges, which bypass the cache), tokens acquired with client claims
+         * are cached and the cache entry is keyed on the claims value, so distinct claim values produce
+         * separate cache entries. Use stable, non-dynamic values to avoid cache fragmentation. Send the identical value on every
+         * request for a given token; because the raw value is part of the cache key, changing or
+         * omitting it routes the request to a different cache partition.
+         * A blank value is ignored; an invalid JSON object throws {@link MsalClientException}.
+         *
+         * @param claimsJson a valid JSON object string containing the client claims
+         * @return builder that can be used to construct ClientCredentialParameters
+         */
+        public ClientCredentialParametersBuilder claimsFromClient(String claimsJson) {
+            if (StringHelper.isBlank(claimsJson)) {
+                return this;
+            }
+
+            JsonHelper.validateJsonObjectFormat(claimsJson);
+            this.clientClaims = claimsJson;
+            return this;
+        }
+
+        /**
+         * Requests a mutual-TLS Proof-of-Possession (mTLS PoP) token instead of a bearer token.
          * <p>
          * When set, the app's client certificate (a Subject-Name/Issuer cert configured on the
          * {@link ConfidentialClientApplication}, or a certificate configured via
@@ -318,7 +335,7 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         }
 
         public ClientCredentialParameters build() {
-            return new ClientCredentialParameters(this.scopes, this.skipCache, this.claims, this.extraHttpHeaders, this.extraQueryParameters, this.tenant, this.clientCredential, this.fmiPath, this.mtlsProofOfPossession);
+            return new ClientCredentialParameters(this.scopes, this.skipCache, this.claims, this.extraHttpHeaders, this.extraQueryParameters, this.tenant, this.clientCredential, this.fmiPath, this.clientClaims, this.mtlsProofOfPossession);
         }
 
         public String toString() {

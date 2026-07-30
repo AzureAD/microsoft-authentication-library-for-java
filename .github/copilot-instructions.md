@@ -6,7 +6,7 @@
 - **Main Package**: `com.microsoft.aad.msal4j`
 - **Three Application Types**: `PublicClientApplication`, `ConfidentialClientApplication`, `ManagedIdentityApplication`
 - **Pattern**: Each auth flow has `*Parameters` (public API), `*Request` (internal), `*Supplier` (executor)
-- **Current Version**: 1.25.0
+- **Current Version**: 1.25.1
 
 ---
 
@@ -16,7 +16,7 @@
 
 - **Language**: Java 8+
 - **Build Tool**: Maven
-- **Current Version**: 1.25.0
+- **Current Version**: 1.25.1
 - **Artifact**: `com.microsoft.azure:msal4j`
 - **Key Protocols**: OAuth2, OpenID Connect
 
