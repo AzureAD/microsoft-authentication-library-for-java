@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 import com.microsoft.aad.msal4j.BindingCertificate;
+import com.microsoft.aad.msal4j.ClientCredentialFactory;
 import com.microsoft.aad.msal4j.ClientCredentialParameters;
 import com.microsoft.aad.msal4j.ConfidentialClientApplication;
 import com.microsoft.aad.msal4j.IAuthenticationResult;

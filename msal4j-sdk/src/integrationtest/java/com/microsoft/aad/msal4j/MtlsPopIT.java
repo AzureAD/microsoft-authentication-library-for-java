@@ -21,11 +21,13 @@ import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
+import static com.microsoft.aad.msal4j.TestConstants.AGENTIC_GRAPH_SCOPE;
 import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * End-to-end integration tests for SN/I certificate over mTLS Proof-of-Possession (PoP).
@@ -66,6 +68,11 @@ class MtlsPopIT {
             "https://login.microsoftonline.com/bea21ebe-8b64-4d06-9f6d-6a889b120a7c";
     private static final String TEST_SLICE_REGION = "westus3";
 
+    // mTLS-enabled MS Graph host (NOT plain graph.microsoft.com, which does not perform the client-cert
+    // handshake). A token bound to the presented certificate is accepted here with HTTP 200.
+    private static final String MTLS_GRAPH_RESOURCE =
+            "https://mtlstb.graph.microsoft.com/v1.0/applications?$top=1";
+
     private PrivateKey privateKey;
     private X509Certificate publicCertificate;
     private IClientCertificate certificate;
@@ -79,39 +86,79 @@ class MtlsPopIT {
         privateKey = (PrivateKey) keystore.getKey(KeyVaultSecretsProvider.CERTIFICATE_ALIAS, null);
         publicCertificate = (X509Certificate) keystore.getCertificate(KeyVaultSecretsProvider.CERTIFICATE_ALIAS);
 
-        assertNotNull(privateKey, "Lab private key not found. Ensure the lab cert is installed.");
-        assertNotNull(publicCertificate, "Lab certificate not found. Ensure the lab cert is installed.");
+        // These are live-lab E2E tests (like the other *IT classes). Off-CI the lab SN/I cert is absent
+        // from the OS keystore, so SKIP the whole class rather than hard-failing it: a missing lab cert
+        // is an environment condition, not a product defect.
+        Assumptions.assumeTrue(privateKey != null && publicCertificate != null,
+                "Lab SN/I certificate not available (alias '" + KeyVaultSecretsProvider.CERTIFICATE_ALIAS
+                        + "'); skipping mTLS PoP E2E. Expected off-CI.");
 
         certificate = ClientCredentialFactory.createFromCertificate(privateKey, publicCertificate);
     }
 
     /**
-     * Direct SNI cert &rarr; mTLS PoP with <b>no region</b> (exercises the global
-     * {@code mtlsauth.microsoft.com} endpoint). The lab cert is presented as the client TLS certificate;
-     * the request carries {@code token_type=mtls_pop} and <b>no</b> client assertion. Requests an
-     * allow-listed resource (Key Vault) so ESTS issues the bound token.
+     * <b>X509 SNI cert &rarr; mTLS PoP, proven end to end.</b> Canonical matrix cell
+     * {@code Credential_X509_Output_Pop}: with <b>no region</b> configured (global
+     * {@code mtlsauth.microsoft.com} endpoint), the lab cert is presented as the client TLS certificate
+     * and the request carries {@code token_type=mtls_pop} with <b>no</b> client assertion.
+     *
+     * <p>Beyond asserting the token is issued and bound to the cert, this proves the bound token is
+     * <b>actually usable</b>: it is presented (with the binding cert on the TLS handshake) to an
+     * mTLS-enabled resource, which must return HTTP 200. A 401/403 would mean the certificate was not
+     * presented or the {@code mtls_pop} scheme was wrong. The MS Graph scope is used because Graph is an
+     * ESTS mTLS-PoP allow-listed resource whose {@code mtlstb.graph.microsoft.com} host performs the
+     * client-cert handshake (the app must be granted Graph {@code Application.Read.All}).
      */
     @Test
-    void acquireTokenClientCredentials_Certificate_MtlsPop() throws Exception {
+    void Credential_X509_Output_Pop() throws Exception {
         ConfidentialClientApplication cca = ConfidentialClientApplication.builder(SNI_ALLOWLISTED_APP_ID, certificate)
                 .authority(SNI_ALLOWLISTED_AUTHORITY)   // tenanted authority (required for mTLS PoP)
                 .build();
 
         IAuthenticationResult result = acquireMtlsPopOrSkipOnDowngrade(cca, ClientCredentialParameters
-                        .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                        .builder(Collections.singleton(AGENTIC_GRAPH_SCOPE))
                         .mtlsProofOfPossession()
                         .build());
 
         assertMtlsPopResult(result, expectedLabThumbprint());
+
+        int status = MtlsResourceCaller.callResourceWithMtlsToken(
+                MTLS_GRAPH_RESOURCE, result.accessToken(), certificate);
+        assertEquals(200, status,
+                "mTLS-enabled resource must accept the bound PoP token (HTTP 200); 401/403 means the "
+                        + "binding certificate was not presented on the handshake or the mtls_pop scheme was wrong");
     }
 
     /**
-     * Direct SNI cert &rarr; mTLS PoP with a region configured (exercises the regional
-     * {@code <region>.mtlsauth.microsoft.com} endpoint), and verifies the bound token is cached and
-     * retrieved on a second call.
+     * Canonical matrix cell {@code Credential_X509_Output_Bearer}: the same SN/I cert <b>without</b>
+     * {@code mtlsProofOfPossession()} yields the existing {@code Bearer} token (the cert signs a
+     * {@code private_key_jwt} client assertion) and exposes <b>no</b> binding certificate. This anchors
+     * that opting out of mTLS PoP leaves the legacy SNI+Bearer behaviour intact.
      */
     @Test
-    void acquireTokenClientCredentials_Certificate_MtlsPop_Regional() throws Exception {
+    void Credential_X509_Output_Bearer() throws Exception {
+        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(SNI_ALLOWLISTED_APP_ID, certificate)
+                .authority(SNI_ALLOWLISTED_AUTHORITY)
+                .build();
+
+        IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
+                        .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                        .build())   // no mtlsProofOfPossession() -> Bearer
+                .get();
+
+        assertNotNull(result.accessToken(), "Access token should not be null");
+        assertEquals(TokenType.BEARER, result.metadata().tokenType(), "Result token type should be BEARER");
+        assertNull(result.metadata().bindingCertificate(),
+                "Bearer result must not expose a binding certificate");
+    }
+
+    /**
+     * {@code Credential_X509_Output_Pop} over the regional endpoint: with a region configured the
+     * request targets {@code <region>.mtlsauth.microsoft.com}, and the bound token is cached under
+     * {@code {token_type + cert KeyId}} and returned on a second call.
+     */
+    @Test
+    void Credential_X509_Output_Pop_Regional() throws Exception {
         ConfidentialClientApplication cca = ConfidentialClientApplication.builder(SNI_ALLOWLISTED_APP_ID, certificate)
                 .authority(SNI_ALLOWLISTED_AUTHORITY)
                 .azureRegion(TEST_SLICE_REGION)
@@ -140,7 +187,7 @@ class MtlsPopIT {
      * aliases the existing SNI+Bearer path.
      */
     @Test
-    void acquireTokenClientCredentials_BearerAndMtlsPop_AreCacheIsolated() throws Exception {
+    void Credential_X509_Output_Pop_And_Bearer_CacheIsolated() throws Exception {
         ConfidentialClientApplication cca = ConfidentialClientApplication.builder(SNI_ALLOWLISTED_APP_ID, certificate)
                 .authority(SNI_ALLOWLISTED_AUTHORITY)
                 .build();
@@ -193,7 +240,6 @@ class MtlsPopIT {
 
         BindingCertificate binding = result.metadata().bindingCertificate();
         assertNotNull(binding, "mTLS-PoP result must expose a binding certificate");
-        assertNotNull(binding.thumbprintSha256(), "Binding certificate must expose its SHA-256 thumbprint");
         assertFalse(binding.certificateChain().isEmpty(), "Binding certificate must expose its x5c chain");
         assertEquals(expectedThumbprint, binding.thumbprintSha256(),
                 "Binding certificate thumbprint must match the lab SNI cert (x5t#S256)");
