@@ -40,6 +40,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
  * <p>The primary scenario is covered:
  * <ul>
  *   <li><b>Direct SNI cert &rarr; mTLS PoP</b> (client credentials), global and regional endpoints.</li>
+ *   <li><b>Bearer-over-mTLS</b> (Task 3): the same SNI cert is presented on the TLS handshake to the mTLS
+ *       token endpoint via {@code sendCertificateOverMtls(true)}, but a plain (unbound) {@code Bearer}
+ *       token is returned. Live client-credentials cell + a skip-gated OBO cell documenting the
+ *       user-flow allow-listing gap.</li>
  * </ul>
  *
  * <p><b>Testability gate (SME note A):</b> ESTS gates mTLS PoP on the <i>final resource audience</i>,
@@ -221,6 +225,90 @@ class MtlsPopIT {
                 "Bearer and mTLS-PoP tokens for the same scope must be distinct cache entries");
         assertEquals(2, cca.tokenCache.accessTokens.size(),
                 "Bearer and mTLS-PoP tokens must occupy separate cache entries");
+    }
+
+    /**
+     * <b>Bearer-over-mTLS (Task 3), proven end to end.</b> With {@code sendCertificateOverMtls(true)}
+     * (and <b>no</b> per-request {@code mtlsProofOfPossession()}), the lab SN/I cert is presented as the
+     * client TLS certificate on the handshake to the <b>mTLS</b> token endpoint, but the issued token is a
+     * plain <b>{@code Bearer}</b> access token that is <b>not</b> bound to the certificate (unlike mTLS
+     * PoP). This mirrors MSAL .NET's {@code Sni_Over_Mtls_Gets_Bearer_Token_Successfully} and uses the same
+     * live config: the SN/I-allow-listed app, {@code westus3} region, Key Vault scope.
+     *
+     * <p>The token-endpoint <i>wire</i> contract (routing to {@code mtlsauth.*}, {@code client_assertion}
+     * with the x5c chain forced on, no {@code token_type=mtls_pop} / {@code req_cnf}) is asserted at the
+     * unit level in {@code BearerOverMtlsTest} via {@code mockConstruction(DefaultHttpClient)} — the mTLS
+     * HTTP client is constructed internally by {@code TokenRequestExecutor} with the client-cert socket
+     * factory, so there is no factory injection point to record the live request here. This live cell
+     * therefore proves the complementary half: ESTS accepts the cert-over-mTLS handshake for this app and
+     * issues a usable, unbound {@code Bearer} token.
+     */
+    @Test
+    void Credential_X509_Output_BearerOverMtls() throws Exception {
+        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(SNI_ALLOWLISTED_APP_ID, certificate)
+                .authority(SNI_ALLOWLISTED_AUTHORITY)
+                .azureRegion(TEST_SLICE_REGION)   // regional endpoint is safe (Bearer token type is deterministic)
+                .sendCertificateOverMtls(true)    // route over mTLS, but keep a plain Bearer token
+                .build();
+
+        IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
+                        .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                        .build())                 // no mtlsProofOfPossession() -> Bearer, not mtls_pop
+                .get();
+
+        assertNotNull(result.accessToken(), "Access token should not be null");
+        assertFalse(result.accessToken().isEmpty(), "Access token should not be empty");
+        assertEquals(TokenType.BEARER, result.metadata().tokenType(),
+                "Bearer-over-mTLS must yield a plain Bearer token, not mtls_pop");
+        assertNull(result.metadata().bindingCertificate(),
+                "Bearer-over-mTLS token must not be bound to a certificate (no binding cert exposed)");
+    }
+
+    /**
+     * Bearer-over-mTLS cache behavior: the plain Bearer token is cached under the <b>standard</b> key (it
+     * is <b>not</b> thumbprint-fenced like mTLS PoP), so a second acquisition for the same scope is served
+     * from the cache and returns the same access token. This also guards the 2nd-call regression: after the
+     * first call the cached entry's environment is the mTLS host, and a second lookup must serve from cache
+     * without crashing on region / instance-metadata resolution.
+     */
+    @Test
+    void Credential_X509_Output_BearerOverMtls_CacheHit() throws Exception {
+        ConfidentialClientApplication cca = ConfidentialClientApplication.builder(SNI_ALLOWLISTED_APP_ID, certificate)
+                .authority(SNI_ALLOWLISTED_AUTHORITY)
+                .azureRegion(TEST_SLICE_REGION)
+                .sendCertificateOverMtls(true)
+                .build();
+
+        IAuthenticationResult result = cca.acquireToken(ClientCredentialParameters
+                        .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                        .build())
+                .get();
+        assertEquals(TokenType.BEARER, result.metadata().tokenType());
+
+        IAuthenticationResult cached = cca.acquireToken(ClientCredentialParameters
+                        .builder(Collections.singleton(KEYVAULT_DEFAULT_SCOPE))
+                        .build())
+                .get();
+
+        assertEquals(result.accessToken(), cached.accessToken(),
+                "Second Bearer-over-mTLS request for the same scope should be served from the cache");
+    }
+
+    /**
+     * <b>OBO Bearer-over-mTLS live acquisition — skip-gated (pending app mTLS-enablement).</b> Mirrors MSAL
+     * .NET's {@code [Ignore]}d OBO/refresh/auth-code Bearer-over-mTLS live tests: the on-behalf-of (and
+     * refresh-token / auth-code) apps are <b>not</b> mTLS-enabled, so a live acquisition is rejected with
+     * {@code AADSTS700027 / AADSTS392189} — the same class of allow-listing block as the FIC
+     * {@code AADSTS51000}. The MSAL request shape for these flows (mTLS endpoint, {@code client_assertion}
+     * with forced x5c, correct grant) is fully asserted in {@code BearerOverMtlsTest} unit cells; this cell
+     * documents that the live user-flow path cannot be exercised until the apps are enabled.
+     */
+    @Test
+    void Credential_Obo_Output_BearerOverMtls_LiveAcquire_SkipGated() {
+        Assumptions.assumeTrue(false,
+                "OBO/refresh/auth-code Bearer-over-mTLS live acquisition is pending app mTLS-enablement "
+                        + "(AADSTS700027 / AADSTS392189); the request shape is covered by BearerOverMtlsTest "
+                        + "unit cells via mockConstruction(DefaultHttpClient).");
     }
 
     private void assertMtlsPopResult(IAuthenticationResult result, String expectedThumbprint) {

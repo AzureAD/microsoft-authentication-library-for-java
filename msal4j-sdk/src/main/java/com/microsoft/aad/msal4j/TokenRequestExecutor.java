@@ -51,7 +51,7 @@ class TokenRequestExecutor {
         URL tokenEndpointUrl = requestAuthority.tokenEndpointUrl();
         IHttpClient mtlsHttpClient = null;
 
-        if (isMtlsProofOfPossession()) {
+        if (usesMtlsTransport()) {
             ConfidentialClientApplication application = (ConfidentialClientApplication) msalRequest.application();
             this.resolvedBindingCertificate = resolveBindingCertificate(application);
             tokenEndpointUrl = MtlsEndpointHelper.deriveMtlsTokenEndpoint(tokenEndpointUrl);
@@ -62,7 +62,7 @@ class TokenRequestExecutor {
                     mtlsSocketFactory,
                     application.connectTimeoutForDefaultHttpClient(),
                     application.readTimeoutForDefaultHttpClient());
-            LOG.debug("mTLS Proof-of-Possession requested; using mTLS token endpoint: {}", tokenEndpointUrl);
+            LOG.debug("mTLS transport requested; using mTLS token endpoint: {}", tokenEndpointUrl);
         }
 
         final OAuthHttpRequest oauthHttpRequest = new OAuthHttpRequest(
@@ -212,12 +212,15 @@ class TokenRequestExecutor {
                 // SN/I trust from the TLS-presented certificate and binds the token via x5t#S256/cnf).
                 return;
             }
-            // For client certificate, generate a new assertion and add it to the request
+            // For client certificate, generate a new assertion and add it to the request. For
+            // Bearer-over-mTLS the certificate is ALSO presented on the TLS handshake, so the x5c issuer
+            // chain is forced on the assertion (regardless of the app's sendX5c setting) so ESTS can do
+            // SN/I subject+issuer matching over the mTLS channel.
             ClientCertificate certificate = (ClientCertificate) credentialToUse;
             String assertion = certificate.getAssertion(
                 authorityToUse,
                 application.clientId(),
-                application.sendX5c());
+                application.sendX5c() || isBearerOverMtls());
             addJWTBearerAssertionParams(queryParameters, assertion);
         }
     }
@@ -240,6 +243,34 @@ class TokenRequestExecutor {
     private boolean isMtlsProofOfPossession() {
         return msalRequest instanceof ClientCredentialRequest
                 && ((ClientCredentialRequest) msalRequest).parameters.mtlsProofOfPossession();
+    }
+
+    /**
+     * @return true if this request must present the client certificate on the TLS handshake and route to
+     * the mTLS token endpoint — either because of per-request mTLS Proof-of-Possession or the app-level
+     * {@link ConfidentialClientApplication.Builder#sendCertificateOverMtls(boolean)} (Bearer-over-mTLS) flag.
+     */
+    private boolean usesMtlsTransport() {
+        return isMtlsProofOfPossession() || isBearerOverMtls();
+    }
+
+    /**
+     * @return true if the app-level {@code sendCertificateOverMtls} flag is set and this is a
+     * certificate-authenticated confidential client, and the request did NOT opt into per-request
+     * mTLS Proof-of-Possession (which always wins). Read from the application (not a request cast) so it is
+     * honored by every confidential flow: client credentials, on-behalf-of, refresh token, authorization code.
+     */
+    private boolean isBearerOverMtls() {
+        if (isMtlsProofOfPossession()) {
+            // A per-request mtls_pop opt-in always takes precedence over the app-level flag.
+            return false;
+        }
+        if (!(msalRequest.application() instanceof ConfidentialClientApplication)) {
+            return false;
+        }
+        ConfidentialClientApplication application = (ConfidentialClientApplication) msalRequest.application();
+        return application.sendCertificateOverMtls()
+                && application.clientCredential instanceof IClientCertificate;
     }
 
     /**
