@@ -493,6 +493,60 @@ class BearerOverMtlsTest {
     }
 
     @Test
+    void onBehalfOf_bearerOverMtls_secondCall_withInstanceDiscovery_cachedUnderLoginHost_noCrash() throws Exception {
+        // Regression guard for the Bearer-over-mTLS 2nd-call cache path with instance discovery ENABLED
+        // (mirrors .NET OboFlow_WithSendCertificateOverMtls_SecondCallDoesNotCrashAsync). In .NET the AT was
+        // cached under Environment = the rewritten mtlsauth host, so the 2nd call fed mtlsauth.* into
+        // instance/region metadata discovery — which only accepts login.* hosts — and threw. In msal4j this
+        // holds by construction: only the local token-endpoint URL is rewritten to mtlsauth, while the
+        // request authority (and therefore the cached AT's environment) stays the login host. The
+        // instanceDiscovery(false) sibling test skips discovery entirely, so this one enables it (seeding the
+        // login-host metadata to avoid a live IMDS call) to actually exercise the resolution path.
+        String loginHost = "login.microsoftonline.com";
+        AadInstanceDiscoveryProvider.cache.put(loginHost,
+                new InstanceDiscoveryMetadataEntry(loginHost, loginHost,
+                        new HashSet<>(Arrays.asList(loginHost))));
+        try {
+            ConfidentialClientApplication app = ConfidentialClientApplication.builder("clientId", certificate)
+                    .authority(AUTHORITY)
+                    .instanceDiscovery(true)
+                    .validateAuthority(false)
+                    .executorService(SAME_THREAD_EXECUTOR)
+                    .httpClient(mock(IHttpClient.class))
+                    .sendCertificateOverMtls(true)
+                    .build();
+
+            OnBehalfOfParameters params = OnBehalfOfParameters
+                    .builder(Collections.singleton(SCOPE), new UserAssertion(TestHelper.signedAssertion))
+                    .build();
+
+            IAuthenticationResult cachedResult;
+            try (MockedConstruction<DefaultHttpClient> mocked = mockConstruction(DefaultHttpClient.class,
+                    (m, ctx) -> when(m.send(any(HttpRequest.class))).thenReturn(successResponse("bearer-token", "Bearer")))) {
+
+                app.acquireToken(params).get();                 // 1st: mocked mTLS network, caches plain Bearer
+                cachedResult = app.acquireToken(params).get();  // 2nd: must serve from cache, no metadata crash
+
+                assertEquals(1, mocked.constructed().size(),
+                        "Second OBO call must be served from the cache even with instance discovery enabled");
+            }
+
+            assertEquals(TokenType.BEARER, cachedResult.metadata().tokenType());
+
+            // The AT is cached under the LOGIN host, never the rewritten mtlsauth host — the property that
+            // keeps the 2nd-call metadata resolution valid (the cache key embeds the environment).
+            assertEquals(1, app.tokenCache.accessTokens.size());
+            String cacheKey = app.tokenCache.accessTokens.keySet().iterator().next();
+            assertTrue(cacheKey.contains(loginHost),
+                    "Bearer-over-mTLS AT must be cached under the login host, got key: " + cacheKey);
+            assertFalse(cacheKey.contains("mtlsauth"),
+                    "Bearer-over-mTLS AT must NOT be cached under the rewritten mtlsauth host, got key: " + cacheKey);
+        } finally {
+            AadInstanceDiscoveryProvider.cache.remove(loginHost);
+        }
+    }
+
+    @Test
     void onBehalfOf_withoutFlag_usesLoginEndpoint() throws Exception {
         // Negative control: with the flag OFF, OBO uses the standard login endpoint and never presents the
         // certificate on an mTLS handshake (no mTLS DefaultHttpClient is constructed).
