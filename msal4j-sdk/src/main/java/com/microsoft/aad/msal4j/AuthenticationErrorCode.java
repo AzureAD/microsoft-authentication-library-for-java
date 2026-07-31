@@ -177,6 +177,14 @@ public class AuthenticationErrorCode {
     public static final String TOKEN_TYPE_MISMATCH = "token_type_mismatch";
 
     /**
+     * Indicates that {@code sendCertificateOverMtls(true)} was configured on a confidential client that is
+     * not authenticated with a certificate credential. Presenting a client certificate on the mTLS handshake
+     * requires an {@link IClientCertificate}; MSAL fails fast at build time rather than silently ignoring the
+     * option. For more details, see https://aka.ms/msal4j-pop
+     */
+    public static final String CERTIFICATE_REQUIRED_FOR_MTLS = "certificate_required_for_mtls";
+
+    /**
      * Indicates that instance discovery failed because the authority is not a valid instance.
      * This is returned by the instance discovery endpoint when the provided authority host is unknown.
      */

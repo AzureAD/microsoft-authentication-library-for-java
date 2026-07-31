@@ -21,6 +21,7 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
 
     IClientCredential clientCredential;
     private boolean sendX5c;
+    private boolean sendCertificateOverMtls;
 
     /** AppTokenProvider creates a Credential from a function that provides access tokens. The function
      must be concurrency safe. This is intended only to allow the Azure SDK to cache MSI tokens. It isn't
@@ -84,6 +85,7 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
     private ConfidentialClientApplication(Builder builder) {
         super(builder);
         sendX5c = builder.sendX5c;
+        sendCertificateOverMtls = builder.sendCertificateOverMtls;
         appTokenProvider = builder.appTokenProvider;
 
         log = LoggerFactory.getLogger(ConfidentialClientApplication.class);
@@ -110,11 +112,18 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
         return this.sendX5c;
     }
 
+    @Override
+    public boolean sendCertificateOverMtls() {
+        return this.sendCertificateOverMtls;
+    }
+
     public static class Builder extends AbstractClientApplicationBase.Builder<Builder> {
 
         private IClientCredential clientCredential;
 
         private boolean sendX5c = true;
+
+        private boolean sendCertificateOverMtls = false;
 
         private Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> appTokenProvider;
 
@@ -139,6 +148,32 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
             return self();
         }
 
+        /**
+         * Specifies whether the application's certificate credential is presented as the client certificate
+         * on the mutual-TLS (mTLS) handshake to the token endpoint. When enabled, requests are routed to the
+         * mTLS token endpoint ({@code mtlsauth.*}) and the identity provider returns a plain Bearer access
+         * token (the token is NOT bound to the certificate).
+         * <p>
+         * This is distinct from per-request mTLS Proof-of-Possession
+         * ({@link ClientCredentialParameters.ClientCredentialParametersBuilder#mtlsProofOfPossession()}),
+         * which binds the token to the certificate ({@code token_type=mtls_pop}); a per-request mtls_pop
+         * opt-in always takes precedence over this app-level flag. The flag is honored by every confidential
+         * flow (client credentials, on-behalf-of, refresh token, authorization code).
+         * <p>
+         * Default value is {@code false}. When enabled, the application MUST be configured with a certificate
+         * credential ({@link IClientCertificate}); otherwise {@link #build()} throws a
+         * {@link MsalClientException} with error code
+         * {@link AuthenticationErrorCode#CERTIFICATE_REQUIRED_FOR_MTLS}.
+         *
+         * @param val {@code true} to present the certificate over mTLS and receive a Bearer token
+         * @return instance of the Builder on which method was called
+         */
+        public ConfidentialClientApplication.Builder sendCertificateOverMtls(boolean val) {
+            this.sendCertificateOverMtls = val;
+
+            return self();
+        }
+
         /// <summary>
         /// Allows setting a callback which returns an access token, based on the passed-in parameters.
         /// MSAL will pass in its authentication parameters to the callback and it is expected that the callback
@@ -159,6 +194,13 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
 
         @Override
         public ConfidentialClientApplication build() {
+            if (sendCertificateOverMtls && !(clientCredential instanceof IClientCertificate)) {
+                throw new MsalClientException(
+                        "sendCertificateOverMtls(true) requires a certificate credential (IClientCertificate) " +
+                                "so it can be presented as the client certificate on the mTLS handshake. Configure " +
+                                "the application with a certificate credential or disable sendCertificateOverMtls.",
+                        AuthenticationErrorCode.CERTIFICATE_REQUIRED_FOR_MTLS);
+            }
 
             return new ConfidentialClientApplication(this);
         }

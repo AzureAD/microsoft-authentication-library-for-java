@@ -20,6 +20,14 @@ public interface IConfidentialClientApplication extends IClientApplicationBase {
     boolean sendX5c();
 
     /**
+     * @return {@code true} if the application should present its certificate credential as the client
+     * certificate on the mTLS handshake to the token endpoint (routing the request to the mTLS endpoint)
+     * and receive a plain Bearer access token. See
+     * {@link ConfidentialClientApplication.Builder#sendCertificateOverMtls(boolean)}.
+     */
+    boolean sendCertificateOverMtls();
+
+    /**
      * Acquires tokens from the authority configured in the application, for the confidential client
      * itself. It will by default attempt to get tokens from the token cache. If no tokens are found,
      * it falls back to acquiring them via client credentials from the STS
