@@ -56,6 +56,12 @@ final class MtlsResourceCaller {
             connection.setSSLSocketFactory(socketFactory);
             connection.setRequestMethod("GET");
             connection.setRequestProperty("Authorization", "mtls_pop " + accessToken);
+            // Set an explicit, valid Accept header. Without this the JDK's HttpURLConnection injects a
+            // default of "text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2" whose bare "*; q=.2" token
+            // has no "/" and is rejected by Graph's strict MIME parser with HTTP 400 BadRequest (a false
+            // negative unrelated to the mTLS binding). Other MSAL SDKs' HTTP clients don't send this
+            // malformed default, so this is a Java-only, test-helper-only fix.
+            connection.setRequestProperty("Accept", "application/json");
             connection.setConnectTimeout(30_000);
             connection.setReadTimeout(30_000);
 
