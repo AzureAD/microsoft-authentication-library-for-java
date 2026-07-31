@@ -10,6 +10,7 @@ import java.util.function.Function;
 final class ClientAssertion implements IClientAssertion {
 
     static final String ASSERTION_TYPE_JWT_BEARER = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
+    static final String ASSERTION_TYPE_JWT_POP = "urn:ietf:params:oauth:client-assertion-type:jwt-pop";
     private final String assertion;
     private final Callable<String> assertionProvider;
     private final Function<AssertionRequestOptions, String> contextAwareAssertionProvider;

@@ -146,6 +146,19 @@ class MtlsClientCertificateHelperTest {
     }
 
     @Test
+    void resolveBindingCertificate_assertionWithBindingCert_returnsBindingCert() throws Exception {
+        ConfidentialClientApplication app = ConfidentialClientApplication.builder("clientId",
+                        ClientCredentialFactory.createFromClientAssertion(TestHelper.signedAssertion))
+                .authority(AUTHORITY)
+                .mtlsBindingCertificate(certificate)
+                .instanceDiscovery(false)
+                .validateAuthority(false)
+                .build();
+
+        assertEquals(certificate, MtlsClientCertificateHelper.resolveBindingCertificate(app, null));
+    }
+
+    @Test
     void resolveBindingCertificate_assertionWithoutBindingCert_throwsMtlsPopError() throws Exception {
         ConfidentialClientApplication app = ConfidentialClientApplication.builder("clientId",
                         ClientCredentialFactory.createFromClientAssertion(TestHelper.signedAssertion))
@@ -159,8 +172,24 @@ class MtlsClientCertificateHelperTest {
         assertEquals(AuthenticationErrorCode.MTLS_POP_ERROR, ex.errorCode());
     }
 
-    // Regression: a custom IClientCertificate returning a non-base64 x5c entry must surface as a
-    // MsalClientException(MTLS_POP_ERROR), not a raw IllegalArgumentException from Base64 decoding.
+    // The mtlsBindingCertificate fallback only applies to assertion-authenticated apps (FIC Leg 2).
+    // A non-assertion credential such as a client secret must not silently pick up a binding cert;
+    // it should fail with MTLS_POP_ERROR.
+    @Test
+    void resolveBindingCertificate_secretWithBindingCert_throwsMtlsPopError() throws Exception {
+        ConfidentialClientApplication app = ConfidentialClientApplication.builder("clientId",
+                        ClientCredentialFactory.createFromSecret("secret"))
+                .authority(AUTHORITY)
+                .mtlsBindingCertificate(certificate)
+                .instanceDiscovery(false)
+                .validateAuthority(false)
+                .build();
+
+        MsalClientException ex = assertThrows(MsalClientException.class, () ->
+                MtlsClientCertificateHelper.resolveBindingCertificate(app, null));
+        assertEquals(AuthenticationErrorCode.MTLS_POP_ERROR, ex.errorCode());
+    }
+
     @Test
     void buildBindingCertificate_nonBase64Chain_throwsMtlsPopError() {
         IClientCertificate badChain = withCertificateChain("this is not base64!!!");

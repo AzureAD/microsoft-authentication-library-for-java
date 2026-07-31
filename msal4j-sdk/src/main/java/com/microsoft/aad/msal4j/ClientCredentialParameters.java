@@ -315,7 +315,9 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
          * Requests a mutual-TLS Proof-of-Possession (mTLS PoP) token instead of a bearer token.
          * <p>
          * When set, the app's client certificate (a Subject-Name/Issuer cert configured on the
-         * {@link ConfidentialClientApplication}) is presented as the client TLS certificate in the mutual-TLS
+         * {@link ConfidentialClientApplication}, or a certificate configured via
+         * {@link ConfidentialClientApplication.Builder#mtlsBindingCertificate(IClientCertificate)} for
+         * assertion-authenticated apps) is presented as the client TLS certificate in the mutual-TLS
          * handshake to the token endpoint. Entra ID returns a token that is cryptographically bound to
          * that certificate ({@code cnf}/{@code x5t#S256}), and {@code token_type=mtls_pop}.
          * <p>

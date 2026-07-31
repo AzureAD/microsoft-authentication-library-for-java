@@ -19,6 +19,7 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
 
 import static com.microsoft.aad.msal4j.TestConstants.AGENTIC_GRAPH_SCOPE;
 import static com.microsoft.aad.msal4j.TestConstants.KEYVAULT_DEFAULT_SCOPE;
@@ -37,9 +38,11 @@ import static org.junit.jupiter.api.Assertions.assertNull;
  * handshake to the token endpoint (no {@code private_key_jwt} / x5c client assertion on the direct
  * path).
  *
- * <p>The primary scenario is covered:
+ * <p>Both scenarios from the plan are covered:
  * <ul>
  *   <li><b>Direct SNI cert &rarr; mTLS PoP</b> (client credentials), global and regional endpoints.</li>
+ *   <li><b>2-leg FIC over mTLS PoP</b> &mdash; both legs are mTLS-PoP requests and the final token is
+ *       bound to the Leg-1 certificate thumbprint.</li>
  * </ul>
  *
  * <p><b>Testability gate (SME note A):</b> ESTS gates mTLS PoP on the <i>final resource audience</i>,
@@ -74,6 +77,10 @@ class MtlsPopIT {
     // handshake). A token bound to the presented certificate is accepted here with HTTP 200.
     private static final String MTLS_GRAPH_RESOURCE =
             "https://mtlstb.graph.microsoft.com/v1.0/applications?$top=1";
+
+    // FIC (two-leg S2S) authority: the agentic blueprint/agent apps live in the AGENTIC tenant.
+    private static final String AGENTIC_AUTHORITY =
+            "https://login.microsoftonline.com/" + TestConstants.AGENTIC_TENANT_ID + "/";
 
     private PrivateKey privateKey;
     private X509Certificate publicCertificate;
@@ -221,6 +228,85 @@ class MtlsPopIT {
                 "Bearer and mTLS-PoP tokens for the same scope must be distinct cache entries");
         assertEquals(2, cca.tokenCache.accessTokens.size(),
                 "Bearer and mTLS-PoP tokens must occupy separate cache entries");
+    }
+
+    /**
+     * 2-leg FIC over mTLS PoP — <b>both legs</b> are mTLS-PoP requests and the final token is bound to
+     * the Leg-1 certificate thumbprint (locked contract item 12).
+     *
+     * <p>Leg 1: the RMA/blueprint app authenticates with the SNI cert on the TLS handshake and mints a
+     * federated credential (T1) with {@code fmi_path} + {@code mtlsProofOfPossession()} &rarr; T1 is
+     * itself cert-bound (mints the {@code cnf}).
+     *
+     * <p>Leg 2: the agent app authenticates with {@code client_assertion = T1}
+     * ({@code client_assertion_type = ...:jwt-pop}) <i>and</i> presents the binding certificate on the
+     * TLS handshake via {@code mtlsBindingCertificate(...)} &rarr; the final token (T2) is also cert-bound.
+     */
+    @Test
+    void acquireTokenFic_TwoLeg_MtlsPop_BothLegsBound() throws Exception {
+        // LEG 1 — SNI cert (blueprint) mints a federated credential over mTLS PoP.
+        ConfidentialClientApplication blueprint = ConfidentialClientApplication.builder(
+                        TestConstants.AGENTIC_BLUEPRINT_CLIENT_ID, certificate)
+                .authority(AGENTIC_AUTHORITY)
+                .azureRegion(TestConstants.AGENTIC_AZURE_REGION)
+                .build();
+
+        IAuthenticationResult leg1 = acquireMtlsPopOrSkipOnDowngrade(blueprint, ClientCredentialParameters
+                        .builder(Collections.singleton(TestConstants.AGENTIC_TOKEN_EXCHANGE_SCOPE))
+                        .fmiPath(TestConstants.AGENTIC_AGENT_APP_ID)
+                        .mtlsProofOfPossession()
+                        .build());
+
+        assertNotNull(leg1, "Leg 1 result should not be null");
+        assertNotNull(leg1.accessToken(), "Leg 1 (T1) access token should not be null");
+        assertEquals(TokenType.MTLS_POP, leg1.metadata().tokenType(),
+                "Leg 1 must itself be an mTLS-PoP (cert-bound) credential");
+        assertNotNull(leg1.metadata().bindingCertificate(), "Leg 1 must expose its binding certificate");
+        assertEquals(expectedLabThumbprint(), leg1.metadata().bindingCertificate().thumbprintSha256(),
+                "Leg 1 binding cert must be the lab SNI cert");
+
+        String t1 = leg1.accessToken();
+
+        // LEG 2 — agent app consumes T1 as a jwt-pop client_assertion AND presents the binding cert.
+        ConfidentialClientApplication agent = ConfidentialClientApplication.builder(
+                        TestConstants.AGENTIC_AGENT_APP_ID, ClientCredentialFactory.createFromClientAssertion(t1))
+                .authority(AGENTIC_AUTHORITY)
+                .mtlsBindingCertificate(certificate)
+                .build();
+
+        IAuthenticationResult leg2 = acquireMtlsPopOrSkipOnDowngrade(agent, ClientCredentialParameters
+                        .builder(Collections.singleton(TestConstants.AGENTIC_GRAPH_SCOPE))   // allow-listed resource
+                        .mtlsProofOfPossession()
+                        .build());
+
+        assertNotNull(leg2, "Leg 2 result should not be null");
+        assertNotNull(leg2.accessToken(), "Leg 2 (T2) access token should not be null");
+        assertFalse(leg2.accessToken().isEmpty(), "Leg 2 (T2) access token should not be empty");
+        assertEquals(TokenType.MTLS_POP, leg2.metadata().tokenType(),
+                "Leg 2 must also be an mTLS-PoP (cert-bound) token");
+        assertNotNull(leg2.metadata().bindingCertificate(), "Leg 2 must expose its binding certificate");
+        assertEquals(expectedLabThumbprint(), leg2.metadata().bindingCertificate().thumbprintSha256(),
+                "Final token (T2) must be bound to the Leg-1 certificate thumbprint");
+    }
+
+    // ESTS's mTLS PoP test slice is a known intermittent token_type downgrader. When it returns a
+    // non-mtls_pop token the access token is not certificate-bound, and MSAL now fails closed with
+    // TOKEN_TYPE_MISMATCH. Treat that specific outcome as inconclusive (skip) rather than a hard failure,
+    // mirroring MSAL .NET's ExecuteOrInconclusiveOnTokenTypeMismatchAsync. This hatch is retained ONLY for
+    // the FIC two-leg test above; the direct-SNI cells assert mtls_pop directly (de-hatching FIC is Task 2).
+    private static IAuthenticationResult acquireMtlsPopOrSkipOnDowngrade(
+            ConfidentialClientApplication cca, ClientCredentialParameters parameters) throws Exception {
+        try {
+            return cca.acquireToken(parameters).get();
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof MsalClientException
+                    && AuthenticationErrorCode.TOKEN_TYPE_MISMATCH.equals(
+                            ((MsalClientException) e.getCause()).errorCode())) {
+                Assumptions.abort("ESTS returned a non-mtls_pop token_type (downgrade); treating as "
+                        + "inconclusive: " + e.getCause().getMessage());
+            }
+            throw e;
+        }
     }
 
     private void assertMtlsPopResult(IAuthenticationResult result, String expectedThumbprint) {

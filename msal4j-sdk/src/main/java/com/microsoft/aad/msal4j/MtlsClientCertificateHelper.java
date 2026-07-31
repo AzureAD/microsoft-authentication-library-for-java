@@ -28,9 +28,10 @@ import java.util.List;
  * mutual-TLS (mTLS) handshake to the token endpoint, and to describe that certificate as a public
  * {@link BindingCertificate} on the result.
  *
- * <p>The source certificate is resolved from the request/app credential (direct SN/I cert or FIC Leg 1).
- * Only public material is ever surfaced; the private key is used in place (through its own provider)
- * and is never exported or copied into a key store.
+ * <p>The source certificate is resolved from the request/app credential (direct SN/I cert or FIC Leg 1),
+ * or from a configured {@code mtlsBindingCertificate} (FIC Leg 2 where authentication is a federated
+ * assertion). Only public material is ever surfaced; the private key is used in place (through its own
+ * provider) and is never exported or copied into a key store.
  */
 final class MtlsClientCertificateHelper {
 
@@ -41,7 +42,8 @@ final class MtlsClientCertificateHelper {
 
     /**
      * Resolves the certificate to present as the client TLS certificate for an mTLS PoP request: the
-     * request/app authentication credential when it is a certificate (direct SN/I cert or FIC Leg 1).
+     * request/app authentication credential if it is a certificate (direct SN/I cert or FIC Leg 1),
+     * otherwise the application's configured {@code mtlsBindingCertificate} (FIC Leg 2, assertion-authenticated).
      *
      * @throws MsalClientException if no certificate can be resolved
      */
@@ -56,9 +58,14 @@ final class MtlsClientCertificateHelper {
             return (IClientCertificate) credential;
         }
 
+        if (credential instanceof IClientAssertion && application.mtlsBindingCertificate() != null) {
+            return application.mtlsBindingCertificate();
+        }
+
         throw new MsalClientException(
                 "mTLS Proof-of-Possession requires a client certificate. Configure the application with a " +
-                        "certificate credential.",
+                        "certificate credential, or set mtlsBindingCertificate(...) when authenticating with a " +
+                        "client assertion.",
                 AuthenticationErrorCode.MTLS_POP_ERROR);
     }
 

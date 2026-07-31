@@ -10,9 +10,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.MockedConstruction;
 
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -37,6 +40,8 @@ class MtlsProofOfPossessionTest {
     private static final String PKCS12_RESOURCE = "/mtls_test_cert.p12";
     private static final String PKCS12_PASSWORD = "password";
     private static final String AUTHORITY = "https://login.microsoftonline.com/contoso.onmicrosoft.com/";
+    private static final String JWT_POP_ASSERTION_TYPE =
+            "urn:ietf:params:oauth:client-assertion-type:jwt-pop";
 
     private IClientCertificate certificate;
 
@@ -103,6 +108,28 @@ class MtlsProofOfPossessionTest {
         return TestHelper.expectedResponse(HttpStatus.HTTP_OK, TestHelper.getSuccessfulTokenResponse(values));
     }
 
+    /**
+     * Parses an {@code application/x-www-form-urlencoded} request body into decoded key/value pairs so
+     * assertions can compare exact values instead of brittle substring matches against the encoded body.
+     */
+    private static Map<String, String> parseFormBody(String body) {
+        Map<String, String> params = new HashMap<>();
+        if (body == null || body.isEmpty()) {
+            return params;
+        }
+        for (String pair : body.split("&")) {
+            int eq = pair.indexOf('=');
+            String key = eq >= 0 ? pair.substring(0, eq) : pair;
+            String value = eq >= 0 ? pair.substring(eq + 1) : "";
+            try {
+                params.put(URLDecoder.decode(key, "UTF-8"), URLDecoder.decode(value, "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+        return params;
+    }
+
     @Test
     void directSniCert_mtlsPop_targetsMtlsEndpoint_omitsClientAssertion_returnsMtlsPopToken() throws Exception {
         ConfidentialClientApplication app = baseCertAppBuilder().build();
@@ -136,6 +163,49 @@ class MtlsProofOfPossessionTest {
         // Result: cert-bound PoP token, binding cert surfaced as public material only.
         assertEquals(TokenType.MTLS_POP, result.metadata().tokenType());
         assertNotNull(result.metadata().bindingCertificate());
+        assertEquals(MtlsClientCertificateHelper.computeCertificateKeyId(certificate),
+                result.metadata().bindingCertificate().thumbprintSha256());
+    }
+
+    @Test
+    void ficLeg2_assertionWithBindingCert_usesJwtPopAssertionType() throws Exception {
+        String leg1Token = TestHelper.signedAssertion;
+
+        ConfidentialClientApplication app = ConfidentialClientApplication.builder("agentClientId",
+                        ClientCredentialFactory.createFromClientAssertion(leg1Token))
+                .authority(AUTHORITY)
+                .mtlsBindingCertificate(certificate)
+                .instanceDiscovery(false)
+                .validateAuthority(false)
+                .executorService(SAME_THREAD_EXECUTOR)
+                .httpClient(mock(IHttpClient.class))
+                .build();
+
+        HttpRequest captured;
+        IAuthenticationResult result;
+        try (MockedConstruction<DefaultHttpClient> mocked = mockConstruction(DefaultHttpClient.class,
+                (m, ctx) -> when(m.send(any(HttpRequest.class))).thenReturn(successResponse("leg2-token", "mtls_pop")))) {
+
+            result = app.acquireToken(ClientCredentialParameters.builder(Collections.singleton("https://graph.microsoft.com/.default"))
+                    .mtlsProofOfPossession()
+                    .skipCache(true)
+                    .build()).get();
+
+            ArgumentCaptor<HttpRequest> requestCaptor = ArgumentCaptor.forClass(HttpRequest.class);
+            verify(mocked.constructed().get(0)).send(requestCaptor.capture());
+            captured = requestCaptor.getValue();
+        }
+
+        assertEquals("mtlsauth.microsoft.com", captured.url().getHost());
+
+        Map<String, String> params = parseFormBody(captured.body());
+        assertEquals(leg1Token, params.get("client_assertion"),
+                "Leg 2 must authenticate with the Leg-1 token");
+        assertEquals(JWT_POP_ASSERTION_TYPE, params.get("client_assertion_type"),
+                "Leg 2 must use the jwt-pop client_assertion_type");
+        assertEquals("mtls_pop", params.get("token_type"), "Leg 2 must request token_type=mtls_pop");
+
+        assertEquals(TokenType.MTLS_POP, result.metadata().tokenType());
         assertEquals(MtlsClientCertificateHelper.computeCertificateKeyId(certificate),
                 result.metadata().bindingCertificate().thumbprintSha256());
     }

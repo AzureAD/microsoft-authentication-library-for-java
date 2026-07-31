@@ -15,11 +15,17 @@ public final class AssertionRequestOptions {
     private final String clientId;
     private final String tokenEndpoint;
     private final String clientAssertionFmiPath;
+    private final boolean proofOfPossession;
 
     AssertionRequestOptions(String clientId, String tokenEndpoint, String clientAssertionFmiPath) {
+        this(clientId, tokenEndpoint, clientAssertionFmiPath, false);
+    }
+
+    AssertionRequestOptions(String clientId, String tokenEndpoint, String clientAssertionFmiPath, boolean proofOfPossession) {
         this.clientId = clientId;
         this.tokenEndpoint = tokenEndpoint;
         this.clientAssertionFmiPath = clientAssertionFmiPath;
+        this.proofOfPossession = proofOfPossession;
     }
 
     /**
@@ -49,5 +55,16 @@ public final class AssertionRequestOptions {
      */
     public String clientAssertionFmiPath() {
         return clientAssertionFmiPath;
+    }
+
+    /**
+     * Indicates whether the in-flight token request is an mTLS Proof-of-Possession (mTLS PoP) request.
+     * When true, a context-aware assertion provider can mint an appropriately bound assertion for the
+     * PoP flow (for example, FIC Leg 2).
+     *
+     * @return true if the request is an mTLS Proof-of-Possession request, false otherwise
+     */
+    public boolean proofOfPossession() {
+        return proofOfPossession;
     }
 }
