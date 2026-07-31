@@ -370,8 +370,11 @@ class BearerOverMtlsTest {
 
     @Test
     void onBehalfOf_bearerOverMtls_regionConfigured_stillTargetsGlobalMtlsEndpoint() throws Exception {
-        // Region is client-credentials-only in msal4j; user flows silently fall back to the global endpoint.
-        // Bearer-over-mTLS therefore routes OBO to the GLOBAL mTLS host even when a region is configured.
+        // Region is client-credentials-only in msal4j: AadInstanceDiscoveryProvider.shouldUseRegionalEndpoint
+        // gates regional routing on ClientCredentialRequest, so user flows (OBO/refresh/auth-code) fall back
+        // to the global endpoint. Bearer-over-mTLS must therefore route OBO to the GLOBAL mTLS host even when
+        // a region is configured — it must NOT accidentally introduce regional routing on a flow the SDK does
+        // not support there. (Behavioral parity with .NET's intent, adapted to msal4j's region architecture.)
         ConfidentialClientApplication app = ConfidentialClientApplication.builder("clientId", certificate)
                 .authority(AUTHORITY)
                 .instanceDiscovery(false)
