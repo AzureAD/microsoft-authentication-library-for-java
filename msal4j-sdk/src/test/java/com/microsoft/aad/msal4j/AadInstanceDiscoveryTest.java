@@ -140,45 +140,41 @@ class AadInstanceDiscoveryTest {
     }
 
     @Test
-    void aadInstanceDiscoveryTest_RegionSetByDeveloper_invalidRegion_throws() throws Exception {
-
-        ConfidentialClientApplication app = ConfidentialClientApplication.builder(
-                "client_id", ClientCredentialFactory.createFromSecret("secret"))
-                .aadInstanceDiscoveryResponse(instanceDiscoveryValidResponse)
-                .azureRegion("east.us")
-                .build();
-
-        MsalRequest msalRequest = clientCredentialRequest(app);
-        URL authority = new URL(app.authority());
+    void aadInstanceDiscoveryTest_RegionSetByDeveloper_invalidRegion_throws() {
 
         //A region containing a dot would add an unexpected subdomain to the authority host, so it must be rejected
-        //  before it is used to build a URL
+        //  as soon as it is set, rather than deferred to first use
         MsalClientException ex = assertThrows(MsalClientException.class, () ->
-                AadInstanceDiscoveryProvider.getMetadataEntry(authority, false, msalRequest, app.serviceBundle()));
+                ConfidentialClientApplication.builder("client_id", ClientCredentialFactory.createFromSecret("secret"))
+                        .aadInstanceDiscoveryResponse(instanceDiscoveryValidResponse)
+                        .azureRegion("east.us"));
 
         assertEquals(AuthenticationErrorCode.INVALID_REGION, ex.errorCode());
     }
 
     @Test
-    void aadInstanceDiscoveryTest_AutoDetectRegion_invalidRegionDetected_throws() throws Exception {
+    void aadInstanceDiscoveryTest_AutoDetectRegion_invalidRegionDetected_fallsBackToGlobal() throws Exception {
 
         ConfidentialClientApplication app = ConfidentialClientApplication.builder(
                 "client_id", ClientCredentialFactory.createFromSecret("secret"))
+                .aadInstanceDiscoveryResponse(instanceDiscoveryValidResponse)
                 .autoDetectRegion(true)
                 .build();
 
         MsalRequest msalRequest = clientCredentialRequest(app);
         URL authority = new URL(app.authority());
 
+        //discoverRegion() is responsible for validating autodetected values and never returns an invalid one, so it
+        //  is mocked here to return null, matching how it would behave for an invalid autodetected region
         try (MockedStatic<AadInstanceDiscoveryProvider> mocked = mockStatic(AadInstanceDiscoveryProvider.class, CALLS_REAL_METHODS)) {
 
             mocked.when(() -> AadInstanceDiscoveryProvider.discoverRegion(msalRequest,
-                    app.serviceBundle())).thenReturn("east.us");
+                    app.serviceBundle())).thenReturn(null);
 
-            MsalClientException ex = assertThrows(MsalClientException.class, () ->
-                    AadInstanceDiscoveryProvider.getMetadataEntry(authority, false, msalRequest, app.serviceBundle()));
+            InstanceDiscoveryMetadataEntry entry = AadInstanceDiscoveryProvider.getMetadataEntry(
+                    authority, false, msalRequest, app.serviceBundle());
 
-            assertEquals(AuthenticationErrorCode.INVALID_REGION, ex.errorCode());
+            assertValidResponse(entry);
             //An unusable region must not be stored on the application, where it would affect every later request
             assertNull(app.azureRegion());
         }

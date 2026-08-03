@@ -205,7 +205,7 @@ class AadInstanceDiscoveryProvider {
      * Regions which do not follow the Azure region naming convention are rejected, as they would otherwise be
      * used to build a malformed authority host and lead to failed or misdirected token requests.
      */
-    private static MsalClientException invalidRegionException(String region) {
+    static MsalClientException invalidRegionException(String region) {
         return new MsalClientException(String.format("Invalid region '%s': region must start with a lowercase " +
                 "letter and contain only lowercase alphanumeric characters and hyphens", region),
                 AuthenticationErrorCode.INVALID_REGION);
@@ -216,12 +216,6 @@ class AadInstanceDiscoveryProvider {
 
         if (region == null){
             return host;
-        }
-
-        //Last check before the region is used to build a host: regions from any source, such as one set by an
-        //  app developer, must follow the Azure region naming convention
-        if (!isValidRegion(region)) {
-            throw invalidRegionException(region);
         }
 
         //Cached calls may already have the regionalized authority, so if region info is already in the host just return as-is
@@ -337,11 +331,13 @@ class AadInstanceDiscoveryProvider {
             String region = System.getenv(REGION_NAME);
             LOG.info("Region found in environment variable: {}", region);
 
-            //A region is used to build an authority host, so an unexpected value is rejected rather than
-            //  used to make requests against a malformed URL
+            //An autodetected region that does not follow the Azure region naming convention is treated as a
+            //  failed autodetection rather than aborting the request, since it was not explicitly set by the caller
             if (!isValidRegion(region)) {
+                LOG.warn("Region '{}' from the REGION_NAME environment variable does not follow the Azure region " +
+                        "naming convention, ignoring it.", region);
                 currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_FAILED_AUTODETECT.telemetryValue);
-                throw invalidRegionException(region);
+                return null;
             }
 
             currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_ENV_VARIABLE.telemetryValue);
@@ -390,12 +386,14 @@ class AadInstanceDiscoveryProvider {
             return null;
         }
 
-        //A region is used to build an authority host, so an unexpected value from IMDS is rejected rather than
-        //  used to make requests against a malformed URL. Validation happens outside of the try/catch above so
+        //An autodetected region that does not follow the Azure region naming convention is treated as a failed
+        //  autodetection rather than aborting the request. Validation happens outside of the try/catch above so
         //  that it is not mistaken for an IMDS communication failure and silently swallowed
         if (!isValidRegion(detectedRegion)) {
+            LOG.warn("Region '{}' detected from the IMDS endpoint does not follow the Azure region naming " +
+                    "convention, ignoring it.", detectedRegion);
             currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_FAILED_AUTODETECT.telemetryValue);
-            throw invalidRegionException(detectedRegion);
+            return null;
         }
 
         return detectedRegion;
