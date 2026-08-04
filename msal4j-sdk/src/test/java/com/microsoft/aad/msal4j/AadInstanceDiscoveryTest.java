@@ -218,6 +218,24 @@ class AadInstanceDiscoveryTest {
                 new RequestContext(app, PublicApi.ACQUIRE_TOKEN_FOR_CLIENT, parameters), null);
     }
 
+    @Test
+    void instanceDiscoveryEndpointDoesNotCarryPortToDefaultTrustedHost() throws Exception {
+        URL authority = new URL("https://custom.example:8443/tenant");
+
+        String endpoint = AadInstanceDiscoveryProvider.getInstanceDiscoveryEndpoint(authority);
+
+        assertEquals("https://login.microsoftonline.com/common/discovery/instance", endpoint);
+    }
+
+    @Test
+    void instanceDiscoveryEndpointPreservesPortForTrustedHost() throws Exception {
+        URL authority = new URL("https://login.microsoftonline.com:8443/tenant");
+
+        String endpoint = AadInstanceDiscoveryProvider.getInstanceDiscoveryEndpoint(authority);
+
+        assertEquals("https://login.microsoftonline.com:8443/common/discovery/instance", endpoint);
+    }
+
     void assertValidResponse(InstanceDiscoveryMetadataEntry entry) {
         assertEquals(entry.preferredNetwork(), "login.microsoftonline.com");
         assertEquals(entry.preferredCache(), "login.windows.net");

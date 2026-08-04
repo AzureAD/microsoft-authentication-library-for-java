@@ -21,7 +21,7 @@ class AadInstanceDiscoveryProvider {
 
     private static final String DEFAULT_TRUSTED_HOST = "login.microsoftonline.com";
     private static final String AUTHORIZE_ENDPOINT_TEMPLATE = "https://{host}/{tenant}/oauth2/v2.0/authorize";
-    private static final String INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE = "https://{host}:{port}/common/discovery/instance";
+    private static final String INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE = "https://{host}/common/discovery/instance";
     private static final String INSTANCE_DISCOVERY_REQUEST_PARAMETERS_TEMPLATE = "?api-version=1.1&authorization_endpoint={authorizeEndpoint}";
     private static final String HOST_TEMPLATE_WITH_REGION = "{region}.login.microsoft.com";
     private static final String SOVEREIGN_HOST_TEMPLATE_WITH_REGION = "{region}.{host}";
@@ -244,19 +244,22 @@ class AadInstanceDiscoveryProvider {
                 replace("{tenant}", tenant);
     }
 
-    private static String getInstanceDiscoveryEndpoint(URL authorityUrl) {
+    static String getInstanceDiscoveryEndpoint(URL authorityUrl) {
 
         String discoveryHost = TRUSTED_HOSTS_SET.contains(authorityUrl.getHost()) ?
                 authorityUrl.getHost() :
                 DEFAULT_TRUSTED_HOST;
 
-        int port = authorityUrl.getPort() == PORT_NOT_SET ?
-                authorityUrl.getDefaultPort() :
-                authorityUrl.getPort();
+        if (discoveryHost.equalsIgnoreCase(authorityUrl.getHost())) {
+            int port = authorityUrl.getPort() == PORT_NOT_SET ?
+                    authorityUrl.getDefaultPort() :
+                    authorityUrl.getPort();
+
+            discoveryHost += ":" + port;
+        }
 
         return INSTANCE_DISCOVERY_ENDPOINT_TEMPLATE.
-                replace("{host}", discoveryHost).
-                replace("{port}", String.valueOf(port));
+                replace("{host}", discoveryHost);
     }
 
      static AadInstanceDiscoveryResponse sendInstanceDiscoveryRequest(URL authorityUrl,
