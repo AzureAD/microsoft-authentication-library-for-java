@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
@@ -18,6 +19,7 @@ import static org.mockito.Mockito.mockStatic;
 
 import java.net.URI;
 import java.net.URL;
+import java.util.Collections;
 
 @ExtendWith(MockitoExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -135,6 +137,85 @@ class AadInstanceDiscoveryTest {
 
             assertValidResponse(entry);
         }
+    }
+
+    @Test
+    void aadInstanceDiscoveryTest_RegionSetByDeveloper_invalidRegion_throws() {
+
+        //A region containing a dot would add an unexpected subdomain to the authority host, so it must be rejected
+        //  as soon as it is set, rather than deferred to first use
+        MsalClientException ex = assertThrows(MsalClientException.class, () ->
+                ConfidentialClientApplication.builder("client_id", ClientCredentialFactory.createFromSecret("secret"))
+                        .aadInstanceDiscoveryResponse(instanceDiscoveryValidResponse)
+                        .azureRegion("east.us"));
+
+        assertEquals(AuthenticationErrorCode.INVALID_REGION, ex.errorCode());
+    }
+
+    @Test
+    void aadInstanceDiscoveryTest_AutoDetectRegion_invalidRegionDetected_fallsBackToGlobal() throws Exception {
+
+        ConfidentialClientApplication app = ConfidentialClientApplication.builder(
+                "client_id", ClientCredentialFactory.createFromSecret("secret"))
+                .aadInstanceDiscoveryResponse(instanceDiscoveryValidResponse)
+                .autoDetectRegion(true)
+                .build();
+
+        MsalRequest msalRequest = clientCredentialRequest(app);
+        URL authority = new URL(app.authority());
+
+        //discoverRegion() is responsible for validating autodetected values and never returns an invalid one, so it
+        //  is mocked here to return null, matching how it would behave for an invalid autodetected region
+        try (MockedStatic<AadInstanceDiscoveryProvider> mocked = mockStatic(AadInstanceDiscoveryProvider.class, CALLS_REAL_METHODS)) {
+
+            mocked.when(() -> AadInstanceDiscoveryProvider.discoverRegion(msalRequest,
+                    app.serviceBundle())).thenReturn(null);
+
+            InstanceDiscoveryMetadataEntry entry = AadInstanceDiscoveryProvider.getMetadataEntry(
+                    authority, false, msalRequest, app.serviceBundle());
+
+            assertValidResponse(entry);
+            //An unusable region must not be stored on the application, where it would affect every later request
+            assertNull(app.azureRegion());
+        }
+    }
+
+    @Test
+    void aadInstanceDiscoveryTest_RegionSetByDeveloper_validRegion_buildsRegionalHost() throws Exception {
+
+        ConfidentialClientApplication app = ConfidentialClientApplication.builder(
+                "client_id", ClientCredentialFactory.createFromSecret("secret"))
+                .authority("https://login.microsoftonline.com/my_tenant")
+                .azureRegion("eastus")
+                .build();
+
+        MsalRequest msalRequest = clientCredentialRequest(app);
+        URL authority = new URL(app.authority());
+        AadInstanceDiscoveryResponse expectedResponse = JsonHelper.convertJsonStringToJsonSerializableObject(
+                instanceDiscoveryValidResponse, AadInstanceDiscoveryResponse::fromJson);
+
+        try (MockedStatic<AadInstanceDiscoveryProvider> mocked = mockStatic(AadInstanceDiscoveryProvider.class, CALLS_REAL_METHODS)) {
+
+            mocked.when(() -> AadInstanceDiscoveryProvider.discoverRegion(msalRequest,
+                    app.serviceBundle())).thenReturn(null);
+            mocked.when(() -> AadInstanceDiscoveryProvider.sendInstanceDiscoveryRequest(authority,
+                    msalRequest, app.serviceBundle())).thenReturn(expectedResponse);
+
+            InstanceDiscoveryMetadataEntry entry = AadInstanceDiscoveryProvider.getMetadataEntry(
+                    authority, false, msalRequest, app.serviceBundle());
+
+            assertEquals("eastus.login.microsoft.com", entry.preferredNetwork());
+            assertEquals("login.microsoftonline.com", entry.preferredCache());
+        }
+    }
+
+    private MsalRequest clientCredentialRequest(ConfidentialClientApplication app) {
+        //Regions are only used by the client credential flow, see AadInstanceDiscoveryProvider.shouldUseRegionalEndpoint
+        ClientCredentialParameters parameters = ClientCredentialParameters.builder(
+                Collections.singleton("scopes")).build();
+
+        return new ClientCredentialRequest(parameters, app,
+                new RequestContext(app, PublicApi.ACQUIRE_TOKEN_FOR_CLIENT, parameters), null);
     }
 
     @Test

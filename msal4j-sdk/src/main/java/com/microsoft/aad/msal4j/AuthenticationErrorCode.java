@@ -166,4 +166,13 @@ public class AuthenticationErrorCode {
      * This is returned by the instance discovery endpoint when the provided authority host is unknown.
      */
     public static final String INVALID_INSTANCE = "invalid_instance";
+
+    /**
+     * Indicates that a region does not follow the Azure region naming convention, which is lowercase alphanumeric
+     * characters and hyphens starting with a letter, such as 'westus' or 'east-us-2'. Regions are used to build
+     * authority hosts, so any other value could result in requests being made against a malformed URL. The region
+     * may have been set with the azureRegion API, or detected from the REGION_NAME environment variable or the
+     * IMDS endpoint. For more details, see https://aka.ms/msal4j-azure-regions
+     */
+    public static final String INVALID_REGION = "invalid_region";
 }

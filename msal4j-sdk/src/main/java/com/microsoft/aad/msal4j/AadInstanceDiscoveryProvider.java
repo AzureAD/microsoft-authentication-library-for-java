@@ -15,6 +15,7 @@ import java.util.TreeSet;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.concurrent.*;
+import java.util.regex.Pattern;
 
 class AadInstanceDiscoveryProvider {
 
@@ -26,6 +27,10 @@ class AadInstanceDiscoveryProvider {
     private static final String SOVEREIGN_HOST_TEMPLATE_WITH_REGION = "{region}.{host}";
     private static final String REGION_NAME = "REGION_NAME";
     private static final int PORT_NOT_SET = -1;
+
+    //Azure region names are lowercase alphanumeric characters and hyphens, starting with a letter (westus, east-us-2, etc.).
+    //Regions are used to build authority hosts, so anything outside of that set could produce a malformed URL
+    private static final Pattern VALID_REGION = Pattern.compile("^[a-z][a-z0-9-]*$");
 
     // For information of the current api-version refer: https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service#versioning
     private static final String DEFAULT_API_VERSION = "2021-02-01";
@@ -98,8 +103,10 @@ class AadInstanceDiscoveryProvider {
                         && detectedRegion != null) {
                     LOG.debug("Region autodetection found {}, this region will be used for future calls.", detectedRegion);
 
+                    //The regional host is built first so that a region which cannot be used is not stored on the
+                    //  application, where it would affect every later request made by that application
+                    host = getRegionalizedHost(authorityUrl.getHost(), detectedRegion);
                     ((AbstractClientApplicationBase) msalRequest.application()).azureRegion = detectedRegion;
-                    host = getRegionalizedHost(authorityUrl.getHost(), ((AbstractClientApplicationBase) msalRequest.application()).azureRegion());
                 }
 
                 cacheRegionInstanceMetadata(authorityUrl.getHost(), host);
@@ -184,6 +191,24 @@ class AadInstanceDiscoveryProvider {
         aliases.add(originalHost);
 
         cache.putIfAbsent(regionalHost,  new InstanceDiscoveryMetadataEntry(regionalHost, originalHost, aliases));
+    }
+
+    /**
+     * Checks a region against the Azure region naming convention: lowercase alphanumeric characters
+     * and hyphens, starting with a letter.
+     */
+    static boolean isValidRegion(String region) {
+        return region != null && VALID_REGION.matcher(region).matches();
+    }
+
+    /**
+     * Regions which do not follow the Azure region naming convention are rejected, as they would otherwise be
+     * used to build a malformed authority host and lead to failed or misdirected token requests.
+     */
+    static MsalClientException invalidRegionException(String region) {
+        return new MsalClientException(String.format("Invalid region '%s': region must start with a lowercase " +
+                "letter and contain only lowercase alphanumeric characters and hyphens", region),
+                AuthenticationErrorCode.INVALID_REGION);
     }
 
     private static String getRegionalizedHost(String host, String region) {
@@ -306,10 +331,21 @@ class AadInstanceDiscoveryProvider {
 
         //Check if the REGION_NAME environment variable has a value for the region
         if (System.getenv(REGION_NAME) != null) {
-            LOG.info("Region found in environment variable: {}", System.getenv(REGION_NAME));
+            String region = System.getenv(REGION_NAME);
+            LOG.info("Region found in environment variable: {}", region);
+
+            //An autodetected region that does not follow the Azure region naming convention is treated as a
+            //  failed autodetection rather than aborting the request, since it was not explicitly set by the caller
+            if (!isValidRegion(region)) {
+                LOG.warn("Region '{}' from the REGION_NAME environment variable does not follow the Azure region " +
+                        "naming convention, ignoring it.", region);
+                currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_FAILED_AUTODETECT.telemetryValue);
+                return null;
+            }
+
             currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_ENV_VARIABLE.telemetryValue);
 
-            return System.getenv(REGION_NAME);
+            return region;
         }
 
         //Check the IMDS endpoint to retrieve current region (will only work if application is running in an Azure VM)
@@ -319,21 +355,23 @@ class AadInstanceDiscoveryProvider {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Future<IHttpResponse> future = executor.submit(() -> executeRequest(IMDS_ENDPOINT, headers, msalRequest, serviceBundle));
 
+        String detectedRegion = null;
+
         try {
             LOG.info("Starting call to IMDS endpoint.");
             IHttpResponse httpResponse = future.get(IMDS_TIMEOUT, IMDS_TIMEOUT_UNIT);
             //If call to IMDS endpoint was successful, parse the region from the JSON response body
             if (httpResponse.statusCode() == HttpStatus.HTTP_OK) {
-                String region = parseRegionFromImdsResponse(httpResponse.body());
-                if (!StringHelper.isBlank(region)) {
-                    LOG.info("Region retrieved from IMDS endpoint: {}", region);
-                    currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_IMDS.telemetryValue);
-
-                    return region;
-                }
+                detectedRegion = parseRegionFromImdsResponse(httpResponse.body());
             }
-            LOG.warn("Call to local IMDS failed with status code: {}, or response was empty or missing a region", httpResponse.statusCode());
-            currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_FAILED_AUTODETECT.telemetryValue);
+
+            if (!StringHelper.isBlank(detectedRegion)) {
+                LOG.info("Region retrieved from IMDS endpoint: {}", detectedRegion);
+                currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_IMDS.telemetryValue);
+            } else {
+                LOG.warn("Call to local IMDS failed with status code: {}, or response was empty or missing a region", httpResponse.statusCode());
+                currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_FAILED_AUTODETECT.telemetryValue);
+            }
         } catch (Exception ex) {
             // handle other exceptions
             //IMDS call failed, cannot find region
@@ -347,7 +385,21 @@ class AadInstanceDiscoveryProvider {
             executor.shutdownNow();
         }
 
-        return null;
+        if (StringHelper.isBlank(detectedRegion)) {
+            return null;
+        }
+
+        //An autodetected region that does not follow the Azure region naming convention is treated as a failed
+        //  autodetection rather than aborting the request. Validation happens outside of the try/catch above so
+        //  that it is not mistaken for an IMDS communication failure and silently swallowed
+        if (!isValidRegion(detectedRegion)) {
+            LOG.warn("Region '{}' detected from the IMDS endpoint does not follow the Azure region naming " +
+                    "convention, ignoring it.", detectedRegion);
+            currentRequest.regionSource(RegionTelemetry.REGION_SOURCE_FAILED_AUTODETECT.telemetryValue);
+            return null;
+        }
+
+        return detectedRegion;
     }
 
     /**

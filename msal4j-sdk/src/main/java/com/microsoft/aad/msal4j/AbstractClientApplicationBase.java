@@ -421,6 +421,10 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
          * Regions must be valid Azure regions and their short names should be used, such as 'westus' for the West US Azure region,
          * 'centralus' for the Central US Azure region, etc.
          * <p>
+         * Because the region is used to build the authority host, it must follow the Azure region naming convention:
+         * lowercase alphanumeric characters and hyphens, starting with a letter. A region which does not will cause
+         * this method to throw a {@link MsalClientException} with the error code {@link AuthenticationErrorCode#INVALID_REGION}.
+         * <p>
          * Although you can set a specific region here and enable autodetection with {@link AbstractClientApplicationBase#autoDetectRegion} at the same time
          * the specific region set here will take priority over the autodetected region if there is a mismatch.
          * <p>
@@ -430,6 +434,9 @@ public abstract class AbstractClientApplicationBase extends AbstractApplicationB
          * @return instance of the Builder on which method was called
          */
         public T azureRegion(String val) {
+            if (val != null && !AadInstanceDiscoveryProvider.isValidRegion(val)) {
+                throw AadInstanceDiscoveryProvider.invalidRegionException(val);
+            }
             azureRegion = val;
             return self();
         }
