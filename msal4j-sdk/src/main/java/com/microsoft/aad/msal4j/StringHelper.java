@@ -83,8 +83,20 @@ final class StringHelper {
 
     /**
      * Computes an extended cache key hash from a sorted map of key-value components.
-     * Concatenates sorted key+value pairs, SHA-256 hashes, then Base64URL encodes without padding.
-     * This algorithm is cross-SDK compatible (same output for the same inputs in all MSAL SDKs).
+     * <p>
+     * Each entry is serialized using a length-prefix (netstring) encoding of the form
+     * {@code <byteLen(key)>:<key><byteLen(value)>:<value>}, where the lengths are the number of
+     * UTF-8 bytes (not UTF-16 code units) of the key/value. Entries are concatenated in the map's
+     * sorted-key order, then the result is SHA-256 hashed and Base64URL encoded without padding.
+     * <p>
+     * The length prefixes make the serialization injective, so semantically different component
+     * sets can never serialize to the same string. A naive delimiter-less concatenation of
+     * {@code key + value} is ambiguous (for example {@code {fmi_path:"value"}} and
+     * {@code {fmi_pat:"hvalue"}} both yield {@code "fmi_pathvalue"}), which would collide onto the
+     * same cache slot and cause redundant token re-fetches.
+     * <p>
+     * This scheme is byte-identical to the matching fixes in the other MSAL SDKs (Go/.NET/Python/JS),
+     * so the same inputs produce the same hash bytes across the SDK family.
      *
      * @param cacheKeyComponents a sorted map of component names to values
      * @return Base64URL-encoded SHA-256 hash, or empty string if the map is null/empty
@@ -96,8 +108,10 @@ final class StringHelper {
 
         StringBuilder sb = new StringBuilder();
         for (Map.Entry<String, String> entry : cacheKeyComponents.entrySet()) {
-            sb.append(entry.getKey());
-            sb.append(entry.getValue());
+            String key = entry.getKey();
+            String value = entry.getValue();
+            sb.append(key.getBytes(StandardCharsets.UTF_8).length).append(':').append(key);
+            sb.append(value.getBytes(StandardCharsets.UTF_8).length).append(':').append(value);
         }
 
         return createBase64EncodedSha256Hash(sb.toString());

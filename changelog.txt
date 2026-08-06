@@ -5,6 +5,7 @@ Version 1.25.1
 - Bump Azure Arc HIMDS api-version from 2019-11-01 to 2020-06-01 (#1045)
 - Extract shared ExtendedCacheKey helper to de-duplicate cache-key plumbing (#1046)
 - Fix refreshed tokens not staying in their client-claims cache partition (#1039)
+- Fix extended cache-key hash collision by using a length-prefix encoding of the sorted components (#1047)
 
 Version 1.25.0
 =============

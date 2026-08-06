@@ -93,7 +93,7 @@ class FmiIT {
                 "Cache key should use 'atext' credential type for FMI tokens, got: " + cacheKey);
 
         // Verify hash for "SomeFmiPath/FmiCredentialPath" matches expected value
-        String expectedHash = "zm2n0E62zwTsnNsozptLsoOoB_C7i-GfpxHYQQINJUw".toLowerCase();
+        String expectedHash = "cojvFy5tZae3nJPKVceBguvVx5vvMNJ8hPHQRbOgjOI".toLowerCase();
         assertTrue(cacheKey.endsWith(expectedHash),
                 "Cache key should end with the expected fmi_path hash, got: " + cacheKey);
     }
@@ -172,7 +172,7 @@ class FmiIT {
         String cacheKey = cca.tokenCache.accessTokens.keySet().iterator().next();
         assertTrue(cacheKey.contains("-atext-"),
                 "Cache key should use 'atext' credential type");
-        String expectedHash = "7CX57Q63os7benQ6ER0sxgJPtNQSv7TGb5zexcidFoI".toLowerCase();
+        String expectedHash = "HaI-Va57U1u3bj1ELRa_dz5BpgHfTDMYv5vUyFoPBQo".toLowerCase();
         assertTrue(cacheKey.endsWith(expectedHash),
                 "Cache key should end with expected fmi_path hash for 'SomeFmiPath/Path', got: " + cacheKey);
     }
