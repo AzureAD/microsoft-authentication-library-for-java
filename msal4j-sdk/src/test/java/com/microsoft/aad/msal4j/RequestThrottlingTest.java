@@ -7,6 +7,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
@@ -27,7 +29,7 @@ class RequestThrottlingTest {
     public final Integer THROTTLE_IN_SEC = 1;
     public TokenEndpointResponseType responseType;
     IHttpClient httpClientMock = mock(IHttpClient.class);
-
+    private boolean skipInvocationCountCheck = false;
 
     @BeforeEach
     void init() {
@@ -36,7 +38,9 @@ class RequestThrottlingTest {
 
     @AfterEach
     void check() throws Exception {
-
+        if (skipInvocationCountCheck) {
+            return;
+        }
         //throttlingTest() makes three non-throttled calls, so for a test without a retry there should be
         // 3 invocations of httpClientMock.send(), and 6 invocations if the calls are set to retry
         if (responseType == TokenEndpointResponseType.STATUS_CODE_500) {
@@ -198,5 +202,181 @@ class RequestThrottlingTest {
         // using big value for DEFAULT_THROTTLING_TIME_SEC to make sure that RetryAfterHeader value used instead
         ThrottlingCache.DEFAULT_THROTTLING_TIME_SEC = 1000;
         throttlingTest(TokenEndpointResponseType.STATUS_CODE_500_RETRY_AFTER_HEADER);
+    }
+
+    private UserNamePasswordParameters getUserNamePasswordApiParameters(String username, String scope) {
+        return UserNamePasswordParameters
+                .builder(Collections.singleton(scope), username, "password".toCharArray())
+                .build();
+    }
+
+    // Regression test for issue #1019: a failed request for one user must not throttle a different
+    // user under the same clientId/authority/scope.
+    @Test
+    void STSResponseContains_StatusCode500_DifferentUsersNotThrottledForEachOther() throws Exception {
+        skipInvocationCountCheck = true;
+        ThrottlingCache.clear();
+
+        // user A's request fails with a 500 -> gets cached as a throttled request
+        PublicClientApplication app =
+                getClientApplicationMockedWithOneTokenEndpointResponse(TokenEndpointResponseType.STATUS_CODE_500);
+        try {
+            app.acquireToken(getUserNamePasswordApiParameters("userA@contoso.com", "scope1")).join();
+        } catch (Exception ex) {
+            if (!(ex.getCause() instanceof MsalServiceException)) {
+                fail("Unexpected exception");
+            }
+        }
+
+        // repeating user A's request should be throttled
+        try {
+            app = getPublicClientApp();
+            app.acquireToken(getUserNamePasswordApiParameters("userA@contoso.com", "scope1")).join();
+            fail("Expected MsalThrottlingException");
+        } catch (Exception ex) {
+            if (!(ex.getCause() instanceof MsalThrottlingException)) {
+                fail("Unexpected exception");
+            }
+        }
+
+        // user B, same clientId/authority/scope, must NOT be throttled by user A's failure
+        app = getClientApplicationMockedWithOneTokenEndpointResponse(TokenEndpointResponseType.STATUS_CODE_500);
+        try {
+            app.acquireToken(getUserNamePasswordApiParameters("userB@contoso.com", "scope1")).join();
+        } catch (Exception ex) {
+            if (!(ex.getCause() instanceof MsalServiceException)) {
+                fail("User B should not be throttled by user A's failed request");
+            }
+        }
+    }
+
+    // Confirms that per-account throttling isolation for the silent flow (previously driven by the
+    // `instanceof SilentParameters` special case) is preserved now that the fingerprint is derived
+    // from RequestContext.userIdentifier() instead.
+    @Test
+    void SilentFlow_DifferentAccountsThrottledIndependently() throws Exception {
+        skipInvocationCountCheck = true;
+        ThrottlingCache.clear();
+
+        PublicClientApplication app = getPublicClientApp();
+
+        IHttpClient localHttpClientMock = mock(IHttpClient.class);
+        HttpResponse http500 = new HttpResponse();
+        http500.statusCode(HttpStatus.HTTP_INTERNAL_ERROR);
+        http500.body(TestConfiguration.TOKEN_ENDPOINT_INVALID_GRANT_ERROR_RESPONSE);
+        http500.addHeaders(Collections.singletonMap("Content-Type", Collections.singletonList("application/json")));
+        doReturn(http500).when(localHttpClientMock).send(any());
+
+        HttpHelper httpHelper = new HttpHelper(localHttpClientMock, new DefaultRetryPolicy());
+        ServiceBundle serviceBundle = new ServiceBundle(null, new TelemetryManager(null, false), httpHelper);
+
+        HttpRequest httpRequest = new HttpRequest(HttpMethod.POST,
+                "https://login.microsoftonline.com/common/oauth2/v2.0/token");
+
+        IAccount accountA = mock(IAccount.class);
+        doReturn("oidA.tidA").when(accountA).homeAccountId();
+        SilentParameters paramsA = SilentParameters.builder(Collections.singleton("scope1"), accountA).build();
+        RequestContext contextA = new RequestContext(app, PublicApi.ACQUIRE_TOKEN_SILENTLY, paramsA,
+                UserIdentifier.fromHomeAccountId(accountA.homeAccountId()));
+
+        // account A's request fails with a 500 -> gets cached as a throttled request
+        httpHelper.executeHttpRequest(httpRequest, contextA, serviceBundle);
+        // repeating account A's request should be throttled
+        assertThrows(MsalThrottlingException.class,
+                () -> httpHelper.executeHttpRequest(httpRequest, contextA, serviceBundle));
+
+        // account B, same clientId/authority/scope, must NOT be throttled by account A's failure
+        IAccount accountB = mock(IAccount.class);
+        doReturn("oidB.tidB").when(accountB).homeAccountId();
+        SilentParameters paramsB = SilentParameters.builder(Collections.singleton("scope1"), accountB).build();
+        RequestContext contextB = new RequestContext(app, PublicApi.ACQUIRE_TOKEN_SILENTLY, paramsB,
+                UserIdentifier.fromHomeAccountId(accountB.homeAccountId()));
+
+        assertDoesNotThrow(() -> httpHelper.executeHttpRequest(httpRequest, contextB, serviceBundle));
+    }
+
+    // Direct reproduction of issue #1019 at the throttle-key level, isolated from the multi-hop
+    // ROPC HTTP flow. Two different users of the same public-client flow (username/password) sharing
+    // clientId/authority/scope must be throttled independently: user B must not be throttled by user
+    // A's 500. Uses a large throttle window so the result is deterministic and unaffected by
+    // retry/timing.
+    @Test
+    void UserNamePassword_DifferentUsersThrottledIndependently() throws Exception {
+        skipInvocationCountCheck = true;
+        ThrottlingCache.clear();
+        ThrottlingCache.DEFAULT_THROTTLING_TIME_SEC = 1000;
+
+        PublicClientApplication app = getPublicClientApp();
+
+        IHttpClient localHttpClientMock = mock(IHttpClient.class);
+        HttpResponse http500 = new HttpResponse();
+        http500.statusCode(HttpStatus.HTTP_INTERNAL_ERROR);
+        http500.body(TestConfiguration.TOKEN_ENDPOINT_INVALID_GRANT_ERROR_RESPONSE);
+        http500.addHeaders(Collections.singletonMap("Content-Type", Collections.singletonList("application/json")));
+        doReturn(http500).when(localHttpClientMock).send(any());
+
+        HttpHelper httpHelper = new HttpHelper(localHttpClientMock, new DefaultRetryPolicy());
+        ServiceBundle serviceBundle = new ServiceBundle(null, new TelemetryManager(null, false), httpHelper);
+
+        HttpRequest httpRequest = new HttpRequest(HttpMethod.POST,
+                "https://login.microsoftonline.com/common/oauth2/v2.0/token");
+
+        UserNamePasswordParameters paramsA = getUserNamePasswordApiParameters("userA@contoso.com", "scope1");
+        RequestContext contextA = new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_USERNAME_PASSWORD, paramsA,
+                UserIdentifier.fromUpn("userA@contoso.com"));
+
+        // user A's request fails with a 500 -> gets cached as a throttled request
+        httpHelper.executeHttpRequest(httpRequest, contextA, serviceBundle);
+        // repeating user A's request should be throttled
+        assertThrows(MsalThrottlingException.class,
+                () -> httpHelper.executeHttpRequest(httpRequest, contextA, serviceBundle));
+
+        // user B, same clientId/authority/scope, must NOT be throttled by user A's failure
+        UserNamePasswordParameters paramsB = getUserNamePasswordApiParameters("userB@contoso.com", "scope1");
+        RequestContext contextB = new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_USERNAME_PASSWORD, paramsB,
+                UserIdentifier.fromUpn("userB@contoso.com"));
+
+        assertDoesNotThrow(() -> httpHelper.executeHttpRequest(httpRequest, contextB, serviceBundle));
+    }
+
+    // Companion to the 500 test above: verifies the response-type-aware design. A 429 (service-directed
+    // rate limiting) must remain app-wide, so a different user of the same clientId/authority/scope IS
+    // throttled by another user's 429. This guards against over-narrowing throttling to per-user for
+    // triggers that are meant to back off the whole client.
+    @Test
+    void UserNamePassword_429ThrottlesDifferentUsersAppWide() throws Exception {
+        skipInvocationCountCheck = true;
+        ThrottlingCache.clear();
+        ThrottlingCache.DEFAULT_THROTTLING_TIME_SEC = 1000;
+
+        PublicClientApplication app = getPublicClientApp();
+
+        IHttpClient localHttpClientMock = mock(IHttpClient.class);
+        HttpResponse http429 = new HttpResponse();
+        http429.statusCode(HttpStatus.HTTP_TOO_MANY_REQUESTS);
+        http429.body(TestConfiguration.TOKEN_ENDPOINT_INVALID_GRANT_ERROR_RESPONSE);
+        http429.addHeaders(Collections.singletonMap("Content-Type", Collections.singletonList("application/json")));
+        doReturn(http429).when(localHttpClientMock).send(any());
+
+        HttpHelper httpHelper = new HttpHelper(localHttpClientMock, new DefaultRetryPolicy());
+        ServiceBundle serviceBundle = new ServiceBundle(null, new TelemetryManager(null, false), httpHelper);
+
+        HttpRequest httpRequest = new HttpRequest(HttpMethod.POST,
+                "https://login.microsoftonline.com/common/oauth2/v2.0/token");
+
+        UserNamePasswordParameters paramsA = getUserNamePasswordApiParameters("userA@contoso.com", "scope1");
+        RequestContext contextA = new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_USERNAME_PASSWORD, paramsA,
+                UserIdentifier.fromUpn("userA@contoso.com"));
+
+        // user A's request gets a 429 -> cached as an app-wide throttled request
+        httpHelper.executeHttpRequest(httpRequest, contextA, serviceBundle);
+
+        // user B, same clientId/authority/scope, MUST also be throttled because 429 is app-wide
+        UserNamePasswordParameters paramsB = getUserNamePasswordApiParameters("userB@contoso.com", "scope1");
+        RequestContext contextB = new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_USERNAME_PASSWORD, paramsB,
+                UserIdentifier.fromUpn("userB@contoso.com"));
+
+        assertThrows(MsalThrottlingException.class,
+                () -> httpHelper.executeHttpRequest(httpRequest, contextB, serviceBundle));
     }
 }
