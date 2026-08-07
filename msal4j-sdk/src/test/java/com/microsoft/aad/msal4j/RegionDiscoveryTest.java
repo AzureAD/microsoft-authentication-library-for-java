@@ -61,7 +61,9 @@ class RegionDiscoveryTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"eastus", "westus2", "east-us-2", "centralus", "a", "a1", "a-1"})
+    @ValueSource(strings = {
+            "eastus", "westus2", "east-us-2", "centralus", "a", "a1", "a-1",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"})
     void isValidRegion_validRegionNames_returnsTrue(String region) {
         assertTrue(AadInstanceDiscoveryProvider.isValidRegion(region));
     }
@@ -75,8 +77,10 @@ class RegionDiscoveryTest {
             "east us",      //whitespace
             "1eastus",      //does not start with a letter
             "-eastus",      //does not start with a letter
+            "eastus-",      //DNS labels cannot end with a hyphen
             "east_us",      //underscore
-            "east$us"})     //other special characters
+            "east$us",      //other special characters
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}) //longer than a DNS label
     void isValidRegion_invalidRegionNames_returnsFalse(String region) {
         assertFalse(AadInstanceDiscoveryProvider.isValidRegion(region));
     }

@@ -28,9 +28,9 @@ class AadInstanceDiscoveryProvider {
     private static final String REGION_NAME = "REGION_NAME";
     private static final int PORT_NOT_SET = -1;
 
-    //Azure region names are lowercase alphanumeric characters and hyphens, starting with a letter (westus, east-us-2, etc.).
-    //Regions are used to build authority hosts, so anything outside of that set could produce a malformed URL
-    private static final Pattern VALID_REGION = Pattern.compile("^[a-z][a-z0-9-]*$");
+    //Azure region names form a single DNS label: lowercase alphanumeric characters and internal hyphens,
+    //starting with a letter and ending with an alphanumeric character (westus, east-us-2, etc.).
+    private static final Pattern VALID_REGION = Pattern.compile("^[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?$");
 
     // For information of the current api-version refer: https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service#versioning
     private static final String DEFAULT_API_VERSION = "2021-02-01";
@@ -194,8 +194,8 @@ class AadInstanceDiscoveryProvider {
     }
 
     /**
-     * Checks a region against the Azure region naming convention: lowercase alphanumeric characters
-     * and hyphens, starting with a letter.
+     * Checks a region against the Azure region naming convention and DNS-label constraints required
+     * when it is used to construct a regional authority host.
      */
     static boolean isValidRegion(String region) {
         return region != null && VALID_REGION.matcher(region).matches();
@@ -330,8 +330,8 @@ class AadInstanceDiscoveryProvider {
         CurrentRequest currentRequest = serviceBundle.getServerSideTelemetry().getCurrentRequest();
 
         //Check if the REGION_NAME environment variable has a value for the region
-        if (System.getenv(REGION_NAME) != null) {
-            String region = System.getenv(REGION_NAME);
+        String region = getRegionName();
+        if (region != null) {
             LOG.info("Region found in environment variable: {}", region);
 
             //An autodetected region that does not follow the Azure region naming convention is treated as a
@@ -400,6 +400,10 @@ class AadInstanceDiscoveryProvider {
         }
 
         return detectedRegion;
+    }
+
+    static String getRegionName() {
+        return System.getenv(REGION_NAME);
     }
 
     /**
