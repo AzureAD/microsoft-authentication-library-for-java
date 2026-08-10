@@ -216,6 +216,9 @@ class RequestThrottlingTest {
     void STSResponseContains_StatusCode500_DifferentUsersNotThrottledForEachOther() throws Exception {
         skipInvocationCountCheck = true;
         ThrottlingCache.clear();
+        // Large window so the second call is deterministically still within the throttle period,
+        // independent of CI timing.
+        ThrottlingCache.DEFAULT_THROTTLING_TIME_SEC = 1000;
 
         // user A's request fails with a 500 -> gets cached as a throttled request
         PublicClientApplication app =

@@ -197,7 +197,7 @@ class HttpHelper implements IHttpHelper {
             long retryInMs = ThrottlingCache.retryInMs(appWideThumbprint);
 
             if (retryInMs <= 0) {
-                String userAwareThumbprint = getRequestThumbprint(requestContext, true);
+                String userAwareThumbprint = getRequestThumbprint(requestContext);
                 if (!userAwareThumbprint.equals(appWideThumbprint)) {
                     retryInMs = ThrottlingCache.retryInMs(userAwareThumbprint);
                 }
