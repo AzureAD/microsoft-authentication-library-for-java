@@ -379,4 +379,50 @@ class RequestThrottlingTest {
         assertThrows(MsalThrottlingException.class,
                 () -> httpHelper.executeHttpRequest(httpRequest, contextB, serviceBundle));
     }
+
+    // A 5xx that carries a Retry-After header must still be scoped per-user: the status class (5xx)
+    // decides the scope, while the Retry-After header only sets the duration. This guards against a
+    // regression of issue #1019 for a federated STS that returns a user-specific 5xx together with a
+    // Retry-After header.
+    @Test
+    void UserNamePassword_500WithRetryAfterThrottlesUsersIndependently() throws Exception {
+        skipInvocationCountCheck = true;
+        ThrottlingCache.clear();
+        ThrottlingCache.DEFAULT_THROTTLING_TIME_SEC = 1000;
+
+        PublicClientApplication app = getPublicClientApp();
+
+        IHttpClient localHttpClientMock = mock(IHttpClient.class);
+        HttpResponse http500 = new HttpResponse();
+        http500.statusCode(HttpStatus.HTTP_INTERNAL_ERROR);
+        http500.body(TestConfiguration.TOKEN_ENDPOINT_INVALID_GRANT_ERROR_RESPONSE);
+        Map<String, List<String>> headers = new HashMap<>();
+        headers.put("Content-Type", Collections.singletonList("application/json"));
+        headers.put("Retry-After", Collections.singletonList("1000"));
+        http500.addHeaders(headers);
+        doReturn(http500).when(localHttpClientMock).send(any());
+
+        HttpHelper httpHelper = new HttpHelper(localHttpClientMock, new DefaultRetryPolicy());
+        ServiceBundle serviceBundle = new ServiceBundle(null, new TelemetryManager(null, false), httpHelper);
+
+        HttpRequest httpRequest = new HttpRequest(HttpMethod.POST,
+                "https://login.microsoftonline.com/common/oauth2/v2.0/token");
+
+        UserNamePasswordParameters paramsA = getUserNamePasswordApiParameters("userA@contoso.com", "scope1");
+        RequestContext contextA = new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_USERNAME_PASSWORD, paramsA,
+                UserIdentifier.fromUpn("userA@contoso.com"));
+
+        // user A's request fails with a 500 + Retry-After -> gets cached as a throttled request
+        httpHelper.executeHttpRequest(httpRequest, contextA, serviceBundle);
+        // repeating user A's request should be throttled
+        assertThrows(MsalThrottlingException.class,
+                () -> httpHelper.executeHttpRequest(httpRequest, contextA, serviceBundle));
+
+        // user B, same clientId/authority/scope, must NOT be throttled by user A's 500 + Retry-After
+        UserNamePasswordParameters paramsB = getUserNamePasswordApiParameters("userB@contoso.com", "scope1");
+        RequestContext contextB = new RequestContext(app, PublicApi.ACQUIRE_TOKEN_BY_USERNAME_PASSWORD, paramsB,
+                UserIdentifier.fromUpn("userB@contoso.com"));
+
+        assertDoesNotThrow(() -> httpHelper.executeHttpRequest(httpRequest, contextB, serviceBundle));
+    }
 }

@@ -127,13 +127,16 @@ class HttpHelper implements IHttpHelper {
      * Two throttle fingerprints are derived from a request:
      *
      *  - The app-wide thumbprint (includeUser == false) keys on clientId + authority + scope only.
-     *    It is used for service-directed rate limiting (HTTP 429 and explicit Retry-After), which
-     *    applies to the whole client regardless of which user made the request.
+     *    It is used for service-directed rate limiting (HTTP 429), which applies to the whole client
+     *    regardless of which user made the request.
      *
      *  - The user-aware thumbprint (includeUser == true) additionally folds in the request's user
-     *    component (UPN, else OID). It is used for error-class throttling (HTTP 5xx), which can be
+     *    component (OID, else UPN). It is used for error-class throttling (HTTP 5xx), which can be
      *    specific to a single user (e.g. ADFS returns HTTP 500 for one user's bad password) and must
      *    not block other users of the same client.
+     *
+     * An explicit Retry-After header only affects how long an entry is throttled, not which of the
+     * two fingerprints is used (that is decided by the response status class).
      */
     private String getRequestThumbprint(RequestContext requestContext) {
         return getRequestThumbprint(requestContext, true);
@@ -147,10 +150,11 @@ class HttpHelper implements IHttpHelper {
         if (includeUser) {
             UserIdentifier userIdentifier = requestContext.userIdentifier();
             if (userIdentifier != null) {
-                if (!StringHelper.isBlank(userIdentifier.upn())) {
-                    sb.append(userIdentifier.upn()).append(POINT_DELIMITER);
-                } else if (!StringHelper.isBlank(userIdentifier.oid())) {
+                // Prefer OID: it is the stable, guaranteed-unique user identifier
+                if (!StringHelper.isBlank(userIdentifier.oid())) {
                     sb.append(userIdentifier.oid()).append(POINT_DELIMITER);
+                } else if (!StringHelper.isBlank(userIdentifier.upn())) {
+                    sb.append(userIdentifier.upn()).append(POINT_DELIMITER);
                 }
             }
         }
@@ -208,18 +212,23 @@ class HttpHelper implements IHttpHelper {
     private void processThrottlingInstructions(IHttpResponse httpResponse, RequestContext requestContext) {
         if (requestContext.clientApplication() instanceof PublicClientApplication) {
             Long expirationTimestamp = null;
-            // 5xx errors can be user-specific, so they are throttled per-user; 429 and explicit
-            // Retry-After are service-directed and are throttled app-wide.
+            // Scope is determined by the status class, not by the presence of a Retry-After header:
+            // 5xx errors can be user-specific (e.g. ADFS returns HTTP 500 for one user's bad
+            // password), so they are throttled per-user; HTTP 429 is service-directed and is
+            // throttled app-wide. An explicit Retry-After header only overrides the throttle
+            // *duration*, leaving the scope decision to the status code.
             boolean userScoped = false;
 
             Integer retryAfterHeaderVal = getRetryAfterHeader(httpResponse);
-            if (retryAfterHeaderVal != null) {
-                expirationTimestamp = System.currentTimeMillis() + retryAfterHeaderVal * 1000;
-            } else if (httpResponse.statusCode() == HttpStatus.HTTP_TOO_MANY_REQUESTS) {
-                expirationTimestamp = System.currentTimeMillis() + ThrottlingCache.DEFAULT_THROTTLING_TIME_SEC * 1000;
-            } else if (httpResponse.statusCode() >= HttpStatus.HTTP_INTERNAL_ERROR) {
-                expirationTimestamp = System.currentTimeMillis() + ThrottlingCache.DEFAULT_THROTTLING_TIME_SEC * 1000;
-                userScoped = true;
+            boolean isServerError = httpResponse.statusCode() >= HttpStatus.HTTP_INTERNAL_ERROR;
+            boolean isTooManyRequests = httpResponse.statusCode() == HttpStatus.HTTP_TOO_MANY_REQUESTS;
+
+            if (retryAfterHeaderVal != null || isTooManyRequests || isServerError) {
+                int throttleDurationSec = retryAfterHeaderVal != null
+                        ? retryAfterHeaderVal
+                        : ThrottlingCache.DEFAULT_THROTTLING_TIME_SEC;
+                expirationTimestamp = System.currentTimeMillis() + throttleDurationSec * 1000;
+                userScoped = isServerError;
             }
             if (expirationTimestamp != null) {
                 ThrottlingCache.set(getRequestThumbprint(requestContext, userScoped), expirationTimestamp);
