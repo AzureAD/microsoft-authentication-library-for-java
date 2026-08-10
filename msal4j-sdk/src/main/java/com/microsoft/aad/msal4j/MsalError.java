@@ -18,6 +18,8 @@ public class MsalError {
      */
     public static final String USER_ASSIGNED_MANAGED_IDENTITY_NOT_SUPPORTED = "user_assigned_managed_identity_not_supported";
 
+    public static final String USER_ASSIGNED_MANAGED_IDENTITY_NOT_CONFIRMED = "user_assigned_managed_identity_not_confirmed";
+
     /**
      * Managed Identity error response was received.
      */

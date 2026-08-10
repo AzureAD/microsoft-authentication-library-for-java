@@ -65,9 +65,11 @@ class ManagedIdentityRequest extends MsalRequest {
                 break;
             case RESOURCE_ID:
                 LOG.info("[Managed Identity] Adding user assigned resource id to the request.");
-                if (ManagedIdentityClient.getManagedIdentitySource() == ManagedIdentitySourceType.IMDS) {
-                    // IMDS seems to accept both mi_res_id and msi_res_id but their API only documents msi_res_id,
-                    // and using mi_res_id leads to issues in some scenarios that use the IMDS code path.
+                if (ManagedIdentityClient.getManagedIdentitySource() == ManagedIdentitySourceType.IMDS
+                        || ManagedIdentityClient.getManagedIdentitySource() == ManagedIdentitySourceType.AZURE_ARC) {
+                    // IMDS and Azure Arc only document msi_res_id; the Azure Arc agent silently ignores
+                    // mi_res_id and falls back to the system-assigned identity, so always send msi_res_id
+                    // for these sources.
                     queryParameters.put(Constants.MANAGED_IDENTITY_RESOURCE_ID_IMDS, userAssignedId);
                 } else {
                     queryParameters.put(Constants.MANAGED_IDENTITY_RESOURCE_ID, userAssignedId);

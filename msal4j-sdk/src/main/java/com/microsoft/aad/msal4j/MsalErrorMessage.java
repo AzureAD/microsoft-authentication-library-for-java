@@ -19,6 +19,8 @@ class MsalErrorMessage {
 
     public static final String MANAGED_IDENTITY_USER_ASSIGNED_NOT_SUPPORTED = "[Managed Identity] User assigned identity is not supported by the %s Managed Identity. To authenticate with the system assigned identity use ManagedIdentityApplication.builder(ManagedIdentityId.systemAssigned()).build().";
 
+    public static final String MANAGED_IDENTITY_USER_ASSIGNED_NOT_CONFIRMED = "[Managed Identity] The %s endpoint did not confirm the requested user-assigned managed identity in the token response. The agent likely does not support user-assigned managed identities and returned the system-assigned identity; MSAL will not return a token for a different identity than the one requested.";
+
     public static final String SCOPES_REQUIRED = "At least one scope needs to be requested for this authentication flow. ";
 
     public static final String DEFAULT_MESSAGE = "[Managed Identity] Service request failed.";

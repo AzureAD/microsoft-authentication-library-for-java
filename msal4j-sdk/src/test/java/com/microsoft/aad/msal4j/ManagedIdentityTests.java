@@ -165,7 +165,8 @@ class ManagedIdentityTests {
                 queryParameters.put("client_id", id.getUserAssignedId());
                 break;
             case RESOURCE_ID:
-                if (ManagedIdentityClient.getManagedIdentitySource() == ManagedIdentitySourceType.IMDS) {
+                if (ManagedIdentityClient.getManagedIdentitySource() == ManagedIdentitySourceType.IMDS
+                        || ManagedIdentityClient.getManagedIdentitySource() == ManagedIdentitySourceType.AZURE_ARC) {
                     queryParameters.put(Constants.MANAGED_IDENTITY_RESOURCE_ID_IMDS, id.getUserAssignedId());
                 } else {
                     queryParameters.put(Constants.MANAGED_IDENTITY_RESOURCE_ID, id.getUserAssignedId());
@@ -904,6 +905,82 @@ class ManagedIdentityTests {
 
             assertMsalServiceException(MANAGED_IDENTITY_FILE_READ_ERROR,
                     MANAGED_IDENTITY_INVALID_FILEPATH);
+        }
+
+        @Test
+        void userAssignedClientId_Honored() throws Exception {
+            ManagedIdentityId id = ManagedIdentityId.userAssignedClientId(ManagedIdentityTestConstants.CLIENT_ID);
+            setUpCommonTest(AZURE_ARC, ManagedIdentityTestConstants.AZURE_ARC_ENDPOINT, id);
+
+            when(httpClientMock.send(expectedRequest(AZURE_ARC, ManagedIdentityTestConstants.RESOURCE, id)))
+                    .thenReturn(expectedResponse(HttpStatus.HTTP_OK,
+                            getSuccessfulResponseWithUserAssignedId(ManagedIdentityTestConstants.RESOURCE,
+                                    "client_id", ManagedIdentityTestConstants.CLIENT_ID)));
+
+            IAuthenticationResult result = acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE).get();
+
+            assertTokenFromIdentityProvider(result);
+            verify(httpClientMock, times(1)).send(any());
+        }
+
+        @Test
+        void userAssignedObjectId_Honored() throws Exception {
+            ManagedIdentityId id = ManagedIdentityId.userAssignedObjectId(ManagedIdentityTestConstants.OBJECT_ID);
+            setUpCommonTest(AZURE_ARC, ManagedIdentityTestConstants.AZURE_ARC_ENDPOINT, id);
+
+            when(httpClientMock.send(expectedRequest(AZURE_ARC, ManagedIdentityTestConstants.RESOURCE, id)))
+                    .thenReturn(expectedResponse(HttpStatus.HTTP_OK,
+                            getSuccessfulResponseWithUserAssignedId(ManagedIdentityTestConstants.RESOURCE,
+                                    "object_id", ManagedIdentityTestConstants.OBJECT_ID)));
+
+            IAuthenticationResult result = acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE).get();
+
+            assertTokenFromIdentityProvider(result);
+            verify(httpClientMock, times(1)).send(any());
+        }
+
+        @Test
+        void userAssignedResourceId_ForwardsMsiResIdAndHonored() throws Exception {
+            ManagedIdentityId id = ManagedIdentityId.userAssignedResourceId(ManagedIdentityTestConstants.RESOURCE_ID);
+            setUpCommonTest(AZURE_ARC, ManagedIdentityTestConstants.AZURE_ARC_ENDPOINT, id);
+
+            // expectedRequest asserts the resource id is forwarded as msi_res_id (not mi_res_id) for Azure Arc.
+            when(httpClientMock.send(expectedRequest(AZURE_ARC, ManagedIdentityTestConstants.RESOURCE, id)))
+                    .thenReturn(expectedResponse(HttpStatus.HTTP_OK,
+                            getSuccessfulResponseWithUserAssignedId(ManagedIdentityTestConstants.RESOURCE,
+                                    Constants.MANAGED_IDENTITY_RESOURCE_ID_IMDS, ManagedIdentityTestConstants.RESOURCE_ID)));
+
+            IAuthenticationResult result = acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE).get();
+
+            assertTokenFromIdentityProvider(result);
+            verify(httpClientMock, times(1)).send(any());
+        }
+
+        @Test
+        void userAssigned_NotConfirmed_FailsClosed() throws Exception {
+            ManagedIdentityId id = ManagedIdentityId.userAssignedClientId(ManagedIdentityTestConstants.CLIENT_ID);
+            setUpCommonTest(AZURE_ARC, ManagedIdentityTestConstants.AZURE_ARC_ENDPOINT, id);
+
+            // A legacy Azure Arc agent ignores the selector and returns the system-assigned identity, so the
+            // response does not echo the requested client_id. MSAL must fail closed rather than hand back a
+            // token that may belong to a different identity than the one requested.
+            when(httpClientMock.send(expectedRequest(AZURE_ARC, ManagedIdentityTestConstants.RESOURCE, id)))
+                    .thenReturn(expectedResponse(HttpStatus.HTTP_OK,
+                            getSuccessfulResponse(ManagedIdentityTestConstants.RESOURCE)));
+
+            CompletableFuture<IAuthenticationResult> future = acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE);
+
+            ExecutionException ex = assertThrows(ExecutionException.class, future::get);
+            assertInstanceOf(MsalServiceException.class, ex.getCause());
+            MsalServiceException msalException = (MsalServiceException) ex.getCause();
+            assertEquals(AZURE_ARC.name(), msalException.managedIdentitySource());
+            assertEquals(MsalError.USER_ASSIGNED_MANAGED_IDENTITY_NOT_CONFIRMED, msalException.errorCode());
+        }
+
+        private String getSuccessfulResponseWithUserAssignedId(String resource, String fieldName, String value) {
+            long expiresOn = (System.currentTimeMillis() / 1000) + (24 * 3600);
+            return "{\"access_token\":\"accesstoken\",\"expires_on\":\"" + expiresOn + "\",\"resource\":\""
+                    + resource + "\",\"token_type\":\"Bearer\",\"" + fieldName + "\":\"" + value + "\"}";
         }
 
         private void mockHttpResponse(Map<String, ? extends List<String>> responseHeaders) throws Exception {
