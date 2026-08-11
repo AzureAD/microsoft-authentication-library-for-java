@@ -1111,7 +1111,8 @@ class ManagedIdentityTests {
         private Path createArcSecretKeyFile() throws IOException {
             Path tokensDir = Paths.get(System.getenv("ProgramData"), "AzureConnectedMachineAgent", "Tokens");
             Files.createDirectories(tokensDir);
-            Path secretFile = tokensDir.resolve("msal4j-uami-test.key");
+            // Use a unique temp file so a test can't truncate an existing key or collide with a concurrent run.
+            Path secretFile = Files.createTempFile(tokensDir, "msal4j-uami-test-", ".key");
             Files.write(secretFile, "secret".getBytes(StandardCharsets.UTF_8));
             return secretFile;
         }
