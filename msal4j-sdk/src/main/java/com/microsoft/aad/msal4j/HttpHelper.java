@@ -123,20 +123,43 @@ class HttpHelper implements IHttpHelper {
         return httpResponse;
     }
 
+    /*
+     * Two throttle fingerprints are derived from a request:
+     *
+     *  - The app-wide thumbprint (includeUser == false) keys on clientId + authority + scope only.
+     *    It is used for service-directed rate limiting (HTTP 429), which applies to the whole client
+     *    regardless of which user made the request.
+     *
+     *  - The user-aware thumbprint (includeUser == true) additionally folds in the request's user
+     *    component (OID, else UPN). It is used for error-class throttling (HTTP 5xx), which can be
+     *    specific to a single user (e.g. ADFS returns HTTP 500 for one user's bad password) and must
+     *    not block other users of the same client.
+     *
+     * An explicit Retry-After header only affects how long an entry is throttled, not which of the
+     * two fingerprints is used (that is decided by the response status class).
+     */
     private String getRequestThumbprint(RequestContext requestContext) {
+        return getRequestThumbprint(requestContext, true);
+    }
+
+    private String getRequestThumbprint(RequestContext requestContext, boolean includeUser) {
         StringBuilder sb = new StringBuilder();
-        sb.append(requestContext.clientId() + POINT_DELIMITER);
-        sb.append(requestContext.authority() + POINT_DELIMITER);
+        sb.append(requestContext.clientId()).append(POINT_DELIMITER);
+        sb.append(requestContext.authority()).append(POINT_DELIMITER);
 
-        IAcquireTokenParameters apiParameters = requestContext.apiParameters();
-
-        if (apiParameters instanceof SilentParameters) {
-            IAccount account = ((SilentParameters) apiParameters).account();
-            if (account != null) {
-                sb.append(account.homeAccountId() + POINT_DELIMITER);
+        if (includeUser) {
+            UserIdentifier userIdentifier = requestContext.userIdentifier();
+            if (userIdentifier != null) {
+                // Prefer OID: it is the stable, guaranteed-unique user identifier
+                if (!StringHelper.isBlank(userIdentifier.oid())) {
+                    sb.append(userIdentifier.oid()).append(POINT_DELIMITER);
+                } else if (!StringHelper.isBlank(userIdentifier.upn())) {
+                    sb.append(userIdentifier.upn()).append(POINT_DELIMITER);
+                }
             }
         }
 
+        IAcquireTokenParameters apiParameters = requestContext.apiParameters();
         Set<String> sortedScopes = new TreeSet<>(apiParameters.scopes());
         sb.append(String.join(" ", sortedScopes));
 
@@ -168,9 +191,17 @@ class HttpHelper implements IHttpHelper {
     private void checkForThrottling(RequestContext requestContext) {
         if (requestContext.clientApplication() instanceof PublicClientApplication &&
                 requestContext.apiParameters() != null) {
-            String requestThumbprint = getRequestThumbprint(requestContext);
+            // Check the app-wide key first (429 / Retry-After entries), then the user-aware key
+            // (5xx entries) when it differs from the app-wide key.
+            String appWideThumbprint = getRequestThumbprint(requestContext, false);
+            long retryInMs = ThrottlingCache.retryInMs(appWideThumbprint);
 
-            long retryInMs = ThrottlingCache.retryInMs(requestThumbprint);
+            if (retryInMs <= 0) {
+                String userAwareThumbprint = getRequestThumbprint(requestContext);
+                if (!userAwareThumbprint.equals(appWideThumbprint)) {
+                    retryInMs = ThrottlingCache.retryInMs(userAwareThumbprint);
+                }
+            }
 
             if (retryInMs > 0) {
                 throw new MsalThrottlingException(retryInMs);
@@ -181,17 +212,26 @@ class HttpHelper implements IHttpHelper {
     private void processThrottlingInstructions(IHttpResponse httpResponse, RequestContext requestContext) {
         if (requestContext.clientApplication() instanceof PublicClientApplication) {
             Long expirationTimestamp = null;
+            // Scope is determined by the status class, not by the presence of a Retry-After header:
+            // 5xx errors can be user-specific (e.g. ADFS returns HTTP 500 for one user's bad
+            // password), so they are throttled per-user; HTTP 429 is service-directed and is
+            // throttled app-wide. An explicit Retry-After header only overrides the throttle
+            // *duration*, leaving the scope decision to the status code.
+            boolean userScoped = false;
 
             Integer retryAfterHeaderVal = getRetryAfterHeader(httpResponse);
-            if (retryAfterHeaderVal != null) {
-                expirationTimestamp = System.currentTimeMillis() + retryAfterHeaderVal * 1000;
-            } else if (httpResponse.statusCode() == HttpStatus.HTTP_TOO_MANY_REQUESTS ||
-                    (httpResponse.statusCode() >= HttpStatus.HTTP_INTERNAL_ERROR)) {
+            boolean isServerError = httpResponse.statusCode() >= HttpStatus.HTTP_INTERNAL_ERROR;
+            boolean isTooManyRequests = httpResponse.statusCode() == HttpStatus.HTTP_TOO_MANY_REQUESTS;
 
-                expirationTimestamp = System.currentTimeMillis() + ThrottlingCache.DEFAULT_THROTTLING_TIME_SEC * 1000;
+            if (retryAfterHeaderVal != null || isTooManyRequests || isServerError) {
+                int throttleDurationSec = retryAfterHeaderVal != null
+                        ? retryAfterHeaderVal
+                        : ThrottlingCache.DEFAULT_THROTTLING_TIME_SEC;
+                expirationTimestamp = System.currentTimeMillis() + throttleDurationSec * 1000;
+                userScoped = isServerError;
             }
             if (expirationTimestamp != null) {
-                ThrottlingCache.set(getRequestThumbprint(requestContext), expirationTimestamp);
+                ThrottlingCache.set(getRequestThumbprint(requestContext, userScoped), expirationTimestamp);
             }
         }
     }
