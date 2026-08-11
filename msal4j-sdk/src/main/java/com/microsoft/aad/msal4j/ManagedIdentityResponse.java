@@ -18,7 +18,8 @@ class ManagedIdentityResponse implements JsonSerializable<ManagedIdentityRespons
     String resource;
     String clientId;
     String objectId;
-    String resourceId;
+    String msiResId;
+    String miResId;
 
     public static ManagedIdentityResponse fromJson(JsonReader jsonReader) throws IOException {
         ManagedIdentityResponse response = new ManagedIdentityResponse();
@@ -46,8 +47,10 @@ class ManagedIdentityResponse implements JsonSerializable<ManagedIdentityRespons
                         response.objectId = reader.getString();
                         break;
                     case "msi_res_id":
+                        response.msiResId = reader.getString();
+                        break;
                     case "mi_res_id":
-                        response.resourceId = reader.getString();
+                        response.miResId = reader.getString();
                         break;
                     default:
                         reader.skipChildren();
@@ -67,7 +70,8 @@ class ManagedIdentityResponse implements JsonSerializable<ManagedIdentityRespons
         jsonWriter.writeStringField("resource", resource);
         jsonWriter.writeStringField("client_id", clientId);
         jsonWriter.writeStringField("object_id", objectId);
-        jsonWriter.writeStringField("msi_res_id", resourceId);
+        jsonWriter.writeStringField("msi_res_id", msiResId);
+        jsonWriter.writeStringField("mi_res_id", miResId);
         jsonWriter.writeEndObject();
         return jsonWriter;
     }
@@ -96,7 +100,11 @@ class ManagedIdentityResponse implements JsonSerializable<ManagedIdentityRespons
         return this.objectId;
     }
 
-    public String getResourceId() {
-        return this.resourceId;
+    public String getMsiResId() {
+        return this.msiResId;
+    }
+
+    public String getMiResId() {
+        return this.miResId;
     }
 }

@@ -174,9 +174,20 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
             case OBJECT_ID:
                 echoed = response.getObjectId();
                 break;
-            case RESOURCE_ID:
-                echoed = response.getResourceId();
+            case RESOURCE_ID: {
+                // Azure Arc returns the resource id under msi_res_id; mi_res_id is accepted as a
+                // safety net. If both aliases are present and disagree, the echo cannot be trusted,
+                // so fail closed rather than accept one alias that matches while the other contradicts it.
+                String msiResId = response.getMsiResId();
+                String miResId = response.getMiResId();
+                if (!StringHelper.isNullOrBlank(msiResId) && !StringHelper.isNullOrBlank(miResId)
+                        && !msiResId.equalsIgnoreCase(miResId)) {
+                    echoed = null;
+                } else {
+                    echoed = !StringHelper.isNullOrBlank(msiResId) ? msiResId : miResId;
+                }
                 break;
+            }
             default:
                 echoed = null;
                 break;
