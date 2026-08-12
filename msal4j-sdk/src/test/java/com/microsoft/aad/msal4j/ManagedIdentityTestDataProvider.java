@@ -62,10 +62,6 @@ class ManagedIdentityTestDataProvider {
                 Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTestConstants.CLOUDSHELL_ENDPOINT,
                         ManagedIdentityId.userAssignedClientId(ManagedIdentityTestConstants.CLIENT_ID)),
                 Arguments.of(ManagedIdentitySourceType.CLOUD_SHELL, ManagedIdentityTestConstants.CLOUDSHELL_ENDPOINT,
-                        ManagedIdentityId.userAssignedResourceId(ManagedIdentityTestConstants.RESOURCE_ID)),
-                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTestConstants.AZURE_ARC_ENDPOINT,
-                        ManagedIdentityId.userAssignedClientId(ManagedIdentityTestConstants.CLIENT_ID)),
-                Arguments.of(ManagedIdentitySourceType.AZURE_ARC, ManagedIdentityTestConstants.AZURE_ARC_ENDPOINT,
                         ManagedIdentityId.userAssignedResourceId(ManagedIdentityTestConstants.RESOURCE_ID)));
     }
 

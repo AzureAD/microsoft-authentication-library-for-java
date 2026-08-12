@@ -64,13 +64,6 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
     private AzureArcManagedIdentitySource(URI endpoint, MsalRequest msalRequest, ServiceBundle serviceBundle){
         super(msalRequest, serviceBundle, ManagedIdentitySourceType.AZURE_ARC);
         this.MSI_ENDPOINT = endpoint;
-
-        ManagedIdentityIdType idType =
-                ((ManagedIdentityApplication) msalRequest.application()).getManagedIdentityId().getIdType();
-        if (idType != ManagedIdentityIdType.SYSTEM_ASSIGNED) {
-            throw new MsalServiceException(String.format(MsalErrorMessage.MANAGED_IDENTITY_USER_ASSIGNED_NOT_SUPPORTED, AZURE_ARC), MsalError.USER_ASSIGNED_MANAGED_IDENTITY_NOT_SUPPORTED,
-                    ManagedIdentitySourceType.AZURE_ARC);
-        }
     }
 
     @Override
@@ -85,6 +78,12 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
         managedIdentityRequest.queryParameters = new HashMap<>();
         managedIdentityRequest.queryParameters.put("api-version", ARC_API_VERSION);
         managedIdentityRequest.queryParameters.put("resource", resource);
+
+        if (this.idType != null && this.idType != ManagedIdentityIdType.SYSTEM_ASSIGNED
+                && !StringHelper.isNullOrBlank(this.userAssignedId)) {
+            LOG.info("[Managed Identity] Adding user assigned ID to the request for Azure Arc Managed Identity.");
+            managedIdentityRequest.addUserAssignedIdToQuery(this.idType, this.userAssignedId);
+        }
     }
 
     @Override
@@ -144,10 +143,56 @@ class AzureArcManagedIdentitySource extends AbstractManagedIdentitySource{
                         managedIdentitySourceType);
             }
 
-            return  super.handleResponse(parameters, response);
+            ManagedIdentityResponse tokenResponse = super.handleResponse(parameters, response);
+            verifyUserAssignedIdentityWasHonored(tokenResponse);
+            return tokenResponse;
         }
 
-        return super.handleResponse(parameters, response);
+        ManagedIdentityResponse tokenResponse = super.handleResponse(parameters, response);
+        verifyUserAssignedIdentityWasHonored(tokenResponse);
+        return tokenResponse;
+    }
+
+    // verifyUserAssignedIdentityWasHonored fails closed when a user-assigned identity was requested but
+    // Azure Arc did not confirm it in the token response. A legacy Azure Arc agent ignores the
+    // client_id / msi_res_id / object_id selector and silently returns the machine's system-assigned
+    // identity. An agent that supports user-assigned managed identity echoes the identity it used in the
+    // token response; when that echo is missing or does not match the requested selector, MSAL must not
+    // hand back a token for a different identity than the one requested.
+    private void verifyUserAssignedIdentityWasHonored(ManagedIdentityResponse response) {
+        if (idType == null || idType == ManagedIdentityIdType.SYSTEM_ASSIGNED
+                || StringHelper.isNullOrBlank(userAssignedId)) {
+            // System-assigned: there is no requested identity to confirm.
+            return;
+        }
+
+        String echoed;
+        switch (idType) {
+            case CLIENT_ID:
+                echoed = response.getClientId();
+                break;
+            case OBJECT_ID:
+                echoed = response.getObjectId();
+                break;
+            case RESOURCE_ID:
+                // Azure Arc returns the resource id under msi_res_id; accept the mi_res_id spelling as a
+                // fallback. This matches MSAL .NET/Go/JS/Python, which prefer msi_res_id and fall back to
+                // mi_res_id.
+                echoed = !StringHelper.isNullOrBlank(response.getMsiResId())
+                        ? response.getMsiResId() : response.getMiResId();
+                break;
+            default:
+                echoed = null;
+                break;
+        }
+
+        // Compare case-insensitively: client_id / object_id are GUIDs, and an ARM resource id
+        // (msi_res_id) can legitimately differ in segment casing.
+        if (StringHelper.isNullOrBlank(echoed) || !echoed.equalsIgnoreCase(userAssignedId)) {
+            LOG.error("[Managed Identity] Azure Arc did not confirm the requested user-assigned managed identity in the token response.");
+            throw new MsalServiceException(String.format(MsalErrorMessage.MANAGED_IDENTITY_USER_ASSIGNED_NOT_CONFIRMED, AZURE_ARC),
+                    MsalError.USER_ASSIGNED_MANAGED_IDENTITY_NOT_CONFIRMED, ManagedIdentitySourceType.AZURE_ARC);
+        }
     }
 
     private Optional<String> readChallengeFrom(IHttpResponse response) {
