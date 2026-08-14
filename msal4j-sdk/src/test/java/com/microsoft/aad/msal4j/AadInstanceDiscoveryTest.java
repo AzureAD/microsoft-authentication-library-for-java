@@ -8,14 +8,22 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
 
 import java.net.URI;
 import java.net.URL;
@@ -139,15 +147,16 @@ class AadInstanceDiscoveryTest {
         }
     }
 
-    @Test
-    void aadInstanceDiscoveryTest_RegionSetByDeveloper_invalidRegion_throws() {
-
-        //A region containing a dot would add an unexpected subdomain to the authority host, so it must be rejected
-        //  as soon as it is set, rather than deferred to first use
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "east.us", "east/us", "../evil", "eastus:443", "east@us", "east us", "east\tus", "EastUS",
+            "east%2eus", "\uFF45astus", "eastus-",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"})
+    void aadInstanceDiscoveryTest_RegionSetByDeveloper_invalidRegion_throws(String region) {
         MsalClientException ex = assertThrows(MsalClientException.class, () ->
                 ConfidentialClientApplication.builder("client_id", ClientCredentialFactory.createFromSecret("secret"))
                         .aadInstanceDiscoveryResponse(instanceDiscoveryValidResponse)
-                        .azureRegion("east.us"));
+                        .azureRegion(region));
 
         assertEquals(AuthenticationErrorCode.INVALID_REGION, ex.errorCode());
     }
@@ -180,6 +189,83 @@ class AadInstanceDiscoveryTest {
         }
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "east.us", "east/us", "../evil", "eastus:443", "east@us", "east us", "EastUS", "east%2eus",
+            "\uFF45astus", "eastus-",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"})
+    void aadInstanceDiscoveryTest_InvalidEnvironmentRegion_fallsBackToGlobalWithoutCaching(String region)
+            throws Exception {
+        IHttpClient httpClient = mock(IHttpClient.class);
+        org.mockito.Mockito.when(httpClient.send(any(HttpRequest.class))).thenReturn(instanceDiscoveryResponse());
+
+        ConfidentialClientApplication app = autoDetectApplication(httpClient);
+        MsalRequest msalRequest = clientCredentialRequest(app);
+        URL authority = new URL(app.authority());
+
+        try (MockedStatic<AadInstanceDiscoveryProvider> mocked = mockStatic(AadInstanceDiscoveryProvider.class,
+                CALLS_REAL_METHODS)) {
+            mocked.when(AadInstanceDiscoveryProvider::getRegionName).thenReturn(region);
+
+            InstanceDiscoveryMetadataEntry entry = AadInstanceDiscoveryProvider.getMetadataEntry(
+                    authority, false, msalRequest, app.serviceBundle());
+
+            verify(httpClient).send(argThat(request -> request.url().getHost().equals("login.microsoftonline.com")));
+            assertGlobalFallback(app, entry, region);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "east.us", "east/us", "../evil", "eastus:443", "east@us", "east us", "EastUS", "east%2eus",
+            "\uFF45astus", "eastus-",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"})
+    void aadInstanceDiscoveryTest_InvalidImdsRegion_fallsBackToGlobalWithoutCaching(String region) throws Exception {
+        IHttpClient httpClient = mock(IHttpClient.class);
+        HttpResponse imdsResponse = new HttpResponse().statusCode(HttpStatus.HTTP_OK)
+                .body("{\"location\":\"" + region + "\"}");
+        mockImdsAndInstanceDiscoveryResponses(httpClient, imdsResponse);
+
+        ConfidentialClientApplication app = autoDetectApplication(httpClient);
+        MsalRequest msalRequest = clientCredentialRequest(app);
+        URL authority = new URL(app.authority());
+
+        try (MockedStatic<AadInstanceDiscoveryProvider> mocked = mockStatic(AadInstanceDiscoveryProvider.class,
+                CALLS_REAL_METHODS)) {
+            mocked.when(AadInstanceDiscoveryProvider::getRegionName).thenReturn(null);
+
+            InstanceDiscoveryMetadataEntry entry = AadInstanceDiscoveryProvider.getMetadataEntry(
+                    authority, false, msalRequest, app.serviceBundle());
+
+            verify(httpClient).send(argThat(request -> request.url().toString().startsWith(
+                    "http://169.254.169.254/metadata/instance/compute")));
+            assertGlobalFallback(app, entry, region);
+        }
+    }
+
+    @Test
+    void aadInstanceDiscoveryTest_MalformedImdsResponse_fallsBackToGlobalWithoutCaching() throws Exception {
+        IHttpClient httpClient = mock(IHttpClient.class);
+        HttpResponse imdsResponse = new HttpResponse().statusCode(HttpStatus.HTTP_OK).body("{ invalid json");
+        mockImdsAndInstanceDiscoveryResponses(httpClient, imdsResponse);
+
+        ConfidentialClientApplication app = autoDetectApplication(httpClient);
+        MsalRequest msalRequest = clientCredentialRequest(app);
+        URL authority = new URL(app.authority());
+
+        try (MockedStatic<AadInstanceDiscoveryProvider> mocked = mockStatic(AadInstanceDiscoveryProvider.class,
+                CALLS_REAL_METHODS)) {
+            mocked.when(AadInstanceDiscoveryProvider::getRegionName).thenReturn(null);
+
+            InstanceDiscoveryMetadataEntry entry = AadInstanceDiscoveryProvider.getMetadataEntry(
+                    authority, false, msalRequest, app.serviceBundle());
+
+            verify(httpClient).send(argThat(request -> request.url().toString().startsWith(
+                    "http://169.254.169.254/metadata/instance/compute")));
+            assertGlobalFallback(app, entry, null);
+        }
+    }
+
     @Test
     void aadInstanceDiscoveryTest_RegionSetByDeveloper_validRegion_buildsRegionalHost() throws Exception {
 
@@ -206,6 +292,72 @@ class AadInstanceDiscoveryTest {
 
             assertEquals("eastus.login.microsoft.com", entry.preferredNetwork());
             assertEquals("login.microsoftonline.com", entry.preferredCache());
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource(value = {
+            "https://login.chinacloudapi.cn/my_tenant|eastus.login.chinacloudapi.cn",
+            "https://login.microsoftonline.us/my_tenant|eastus.login.microsoftonline.us"}, delimiter = '|')
+    void aadInstanceDiscoveryTest_RegionSetByDeveloper_sovereignAuthorityBuildsRegionalHost(
+            String authorityValue, String expectedHost) throws Exception {
+        ConfidentialClientApplication app = ConfidentialClientApplication.builder(
+                "client_id", ClientCredentialFactory.createFromSecret("secret"))
+                .authority(authorityValue)
+                .azureRegion("eastus")
+                .build();
+
+        MsalRequest msalRequest = clientCredentialRequest(app);
+        URL authority = new URL(app.authority());
+        AadInstanceDiscoveryResponse expectedResponse = JsonHelper.convertJsonStringToJsonSerializableObject(
+                instanceDiscoveryValidResponse, AadInstanceDiscoveryResponse::fromJson);
+
+        try (MockedStatic<AadInstanceDiscoveryProvider> mocked = mockStatic(AadInstanceDiscoveryProvider.class,
+                CALLS_REAL_METHODS)) {
+            mocked.when(() -> AadInstanceDiscoveryProvider.discoverRegion(msalRequest,
+                    app.serviceBundle())).thenReturn(null);
+            mocked.when(() -> AadInstanceDiscoveryProvider.sendInstanceDiscoveryRequest(authority,
+                    msalRequest, app.serviceBundle())).thenReturn(expectedResponse);
+
+            InstanceDiscoveryMetadataEntry entry = AadInstanceDiscoveryProvider.getMetadataEntry(
+                    authority, false, msalRequest, app.serviceBundle());
+
+            assertEquals(expectedHost, entry.preferredNetwork());
+            assertEquals(authority.getHost(), entry.preferredCache());
+        }
+    }
+
+    private ConfidentialClientApplication autoDetectApplication(IHttpClient httpClient) {
+        ConfidentialClientApplication.Builder builder = ConfidentialClientApplication.builder(
+                        "client_id", ClientCredentialFactory.createFromSecret("secret"))
+                .autoDetectRegion(true);
+        if (httpClient != null) {
+            builder.httpClient(httpClient);
+        }
+        return builder.build();
+    }
+
+    private void mockImdsAndInstanceDiscoveryResponses(IHttpClient httpClient, HttpResponse imdsResponse)
+            throws Exception {
+        org.mockito.Mockito.when(httpClient.send(any(HttpRequest.class))).thenAnswer(invocation -> {
+            HttpRequest request = invocation.getArgument(0);
+            return request.url().toString().startsWith("http://169.254.169.254/metadata/instance/compute") ?
+                    imdsResponse : instanceDiscoveryResponse();
+        });
+    }
+
+    private HttpResponse instanceDiscoveryResponse() {
+        return new HttpResponse().statusCode(HttpStatus.HTTP_OK).body(instanceDiscoveryValidResponse);
+    }
+
+    private void assertGlobalFallback(ConfidentialClientApplication app, InstanceDiscoveryMetadataEntry entry,
+                                      String invalidRegion) {
+        assertValidResponse(entry);
+        assertNull(app.azureRegion());
+        if (invalidRegion != null) {
+            assertFalse(AadInstanceDiscoveryProvider.cache.containsKey(invalidRegion));
+            assertFalse(AadInstanceDiscoveryProvider.cache.keySet().stream()
+                    .anyMatch(host -> host.contains(invalidRegion)));
         }
     }
 
