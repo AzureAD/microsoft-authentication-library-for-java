@@ -10,6 +10,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.net.ssl.SSLSocketFactory;
 
 class OAuthHttpRequest {
 
@@ -19,6 +20,7 @@ class OAuthHttpRequest {
     private final Map<String, String> extraHeaderParams;
     private final ServiceBundle serviceBundle;
     private final RequestContext requestContext;
+    private SSLSocketFactory sslSocketFactory;
 
     OAuthHttpRequest(final HttpMethod method,
                      final URL url,
@@ -39,7 +41,8 @@ class OAuthHttpRequest {
                 HttpMethod.POST,
                 this.url.toString(),
                 httpHeaders,
-                this.query);
+                this.query)
+                .sslSocketFactory(sslSocketFactory);
 
         IHttpResponse httpResponse = serviceBundle.getHttpHelper().executeHttpRequest(
                 httpRequest,
@@ -106,5 +109,14 @@ class OAuthHttpRequest {
 
     Map<String, String> getExtraHeaderParams() {
         return this.extraHeaderParams;
+    }
+
+    OAuthHttpRequest sslSocketFactory(SSLSocketFactory sslSocketFactory) {
+        this.sslSocketFactory = sslSocketFactory;
+        return this;
+    }
+
+    SSLSocketFactory sslSocketFactory() {
+        return sslSocketFactory;
     }
 }

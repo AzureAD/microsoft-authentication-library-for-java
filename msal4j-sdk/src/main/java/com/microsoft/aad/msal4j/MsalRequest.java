@@ -9,6 +9,7 @@ abstract class MsalRequest {
     private final AbstractApplicationBase application;
     private final RequestContext requestContext;
     private final HttpHeaders headers;
+    private String extCacheKeyHash;
 
     MsalRequest(AbstractApplicationBase clientApplicationBase, AbstractMsalAuthorizationGrant abstractMsalAuthorizationGrant, RequestContext requestContext) {
         this.application = clientApplicationBase;
@@ -43,5 +44,13 @@ abstract class MsalRequest {
 
     HttpHeaders headers() {
         return this.headers;
+    }
+
+    String extCacheKeyHash() {
+        return extCacheKeyHash;
+    }
+
+    void extCacheKeyHash(String extCacheKeyHash) {
+        this.extCacheKeyHash = extCacheKeyHash;
     }
 }

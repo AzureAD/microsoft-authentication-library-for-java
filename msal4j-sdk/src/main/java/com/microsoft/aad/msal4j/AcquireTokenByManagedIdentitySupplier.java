@@ -6,8 +6,12 @@ package com.microsoft.aad.msal4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier {
@@ -39,10 +43,22 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
         );
 
         CacheRefreshReason cacheRefreshReason = CacheRefreshReason.NOT_APPLICABLE;
+        ManagedIdentityMtlsBinding mtlsBinding = null;
+
+        if (managedIdentityParameters.mtlsProofOfPossession()) {
+            mtlsBinding = resolveMtlsBinding();
+            String extCacheKeyHash = managedIdentityParameters
+                    .computeMtlsExtCacheKeyHash(
+                            mtlsBinding.bindingContext().keyId());
+            msalRequest.extCacheKeyHash(extCacheKeyHash);
+        }
 
         if (managedIdentityParameters.forceRefresh) {
             LOG.debug("ForceRefresh set to true. Skipping cache lookup and attempting to acquire new token");
-            return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor, CacheRefreshReason.FORCE_REFRESH);
+            return fetchNewAccessTokenAndSaveToCache(
+                    tokenRequestExecutor,
+                    CacheRefreshReason.FORCE_REFRESH,
+                    mtlsBinding);
         }
 
 
@@ -66,6 +82,7 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
                     this.clientApplication,
                     context,
                     null);
+            silentRequest.extCacheKeyHash(msalRequest.extCacheKeyHash());
 
             AcquireTokenSilentSupplier supplier = new AcquireTokenSilentSupplier(
                     this.clientApplication,
@@ -82,21 +99,32 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
             if (cacheRefreshReason == CacheRefreshReason.NOT_APPLICABLE) {
                 LOG.debug("Returning token from cache");
                 result.metadata().tokenSource(TokenSource.CACHE);
-                return result;
+                return mtlsBinding == null
+                        ? result
+                        : result.withMtlsBindingContext(mtlsBinding.bindingContext());
             } else {
                 if (cacheRefreshReason == CacheRefreshReason.CLAIMS) {
                     LOG.debug("Claims are passed, creating token hash and refreshing the token");
                     managedIdentityParameters.revokedTokenHash = StringHelper.createSha256HashHexString(result.accessToken());
-                    return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor, CacheRefreshReason.CLAIMS);
+                    return fetchNewAccessTokenAndSaveToCache(
+                            tokenRequestExecutor,
+                            CacheRefreshReason.CLAIMS,
+                            mtlsBinding);
                 }
 
                 LOG.debug("Refreshing access token. Cache refresh reason: {}", cacheRefreshReason);
-                return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor, cacheRefreshReason);
+                return fetchNewAccessTokenAndSaveToCache(
+                        tokenRequestExecutor,
+                        cacheRefreshReason,
+                        mtlsBinding);
             }
         } catch (MsalClientException ex) {
             if (ex.errorCode().equals(AuthenticationErrorCode.CACHE_MISS)) {
                 LOG.debug("Cache lookup failed: {}", ex.getMessage());
-                return fetchNewAccessTokenAndSaveToCache(tokenRequestExecutor, cacheRefreshReason);
+                return fetchNewAccessTokenAndSaveToCache(
+                        tokenRequestExecutor,
+                        cacheRefreshReason,
+                        mtlsBinding);
             } else {
                 LOG.error("Error occurred while cache lookup: {}", ex.getMessage());
                 throw ex;
@@ -104,24 +132,40 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
         }
     }
 
-    private AuthenticationResult fetchNewAccessTokenAndSaveToCache(TokenRequestExecutor tokenRequestExecutor, CacheRefreshReason cacheRefreshReason) {
+    private AuthenticationResult fetchNewAccessTokenAndSaveToCache(
+            TokenRequestExecutor tokenRequestExecutor,
+            CacheRefreshReason cacheRefreshReason,
+            ManagedIdentityMtlsBinding mtlsBinding) {
 
-        ManagedIdentityClient managedIdentityClient = new ManagedIdentityClient(msalRequest, tokenRequestExecutor.getServiceBundle());
+        AuthenticationResult authenticationResult;
+        if (mtlsBinding != null) {
+            authenticationResult = acquireMtlsPopToken(
+                    mtlsBinding,
+                    tokenRequestExecutor);
+        } else {
+            ManagedIdentityClient managedIdentityClient =
+                    new ManagedIdentityClient(msalRequest, tokenRequestExecutor.getServiceBundle());
 
-        LOG.debug("[Managed Identity] Managed Identity source and ID type identified and set successfully, request will use Managed Identity for {}",
-                managedIdentityClient.managedIdentitySource.managedIdentitySourceType.name());
+            LOG.debug("[Managed Identity] Managed Identity source and ID type identified and set successfully, request will use Managed Identity for {}",
+                    managedIdentityClient.managedIdentitySource.managedIdentitySourceType.name());
 
-        ManagedIdentityResponse managedIdentityResponse = managedIdentityClient
-                .getManagedIdentityResponse(managedIdentityParameters);
+            ManagedIdentityResponse managedIdentityResponse = managedIdentityClient
+                    .getManagedIdentityResponse(managedIdentityParameters);
+            authenticationResult =
+                    createFromManagedIdentityResponse(
+                            managedIdentityResponse,
+                            null);
+        }
 
-        AuthenticationResult authenticationResult = createFromManagedIdentityResponse(managedIdentityResponse);
         clientApplication.tokenCache.saveTokens(tokenRequestExecutor, authenticationResult, clientApplication.authenticationAuthority.host);
         authenticationResult.metadata().tokenSource(TokenSource.IDENTITY_PROVIDER);
         authenticationResult.metadata().cacheRefreshReason(cacheRefreshReason);
         return authenticationResult;
     }
 
-    private AuthenticationResult createFromManagedIdentityResponse(ManagedIdentityResponse managedIdentityResponse) {
+    private AuthenticationResult createFromManagedIdentityResponse(
+            ManagedIdentityResponse managedIdentityResponse,
+            ManagedIdentityMtlsBinding mtlsBinding) {
         long expiresOn = getExpiresOnFromManagedIdentityTimestamp(managedIdentityResponse.expiresOn);
         long refreshOn = calculateRefreshOn(expiresOn);
         AuthenticationResultMetadata metadata = AuthenticationResultMetadata.builder()
@@ -136,7 +180,166 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
                 .extExpiresOn(0)
                 .refreshOn(refreshOn)
                 .metadata(metadata)
+                .tokenType(managedIdentityResponse.getTokenType())
+                .isPopAuthorization(mtlsBinding == null ? null : Boolean.TRUE)
+                .mtlsBindingContext(mtlsBinding == null ? null : mtlsBinding.bindingContext())
                 .build();
+    }
+
+    private ManagedIdentityMtlsBinding resolveMtlsBinding() {
+        ManagedIdentitySourceType source =
+                ManagedIdentityClient.getManagedIdentitySource();
+        if (source != ManagedIdentitySourceType.DEFAULT_TO_IMDS
+                && source != ManagedIdentitySourceType.IMDS) {
+            throw new MsalClientException(
+                    "Managed identity mTLS PoP is supported only on the IMDS v2 VM/VMSS source.",
+                    MsalError.MANAGED_IDENTITY_MTLS_REQUEST_FAILED);
+        }
+
+        ManagedIdentityApplication application =
+                (ManagedIdentityApplication) msalRequest.application();
+        ManagedIdentityId identity = application.getManagedIdentityId();
+        String queryName = null;
+        String queryValue = identity.getUserAssignedId();
+        switch (identity.getIdType()) {
+            case CLIENT_ID:
+                queryName = Constants.MANAGED_IDENTITY_CLIENT_ID;
+                break;
+            case RESOURCE_ID:
+                queryName = Constants.MANAGED_IDENTITY_RESOURCE_ID_IMDS;
+                break;
+            case OBJECT_ID:
+                queryName = Constants.MANAGED_IDENTITY_OBJECT_ID;
+                break;
+            case SYSTEM_ASSIGNED:
+                queryValue = null;
+                break;
+            default:
+                throw new MsalClientException(
+                        "Unsupported managed identity selector for mTLS PoP.",
+                        MsalError.MANAGED_IDENTITY_MTLS_REQUEST_FAILED);
+        }
+
+        final ServiceBundle serviceBundle = clientApplication.serviceBundle();
+        final RequestContext requestContext = msalRequest.requestContext();
+        final HttpHelper imdsHttpHelper = new HttpHelper(
+                clientApplication,
+                new IMDSRetryPolicy());
+        IManagedIdentityMtlsHttpClient httpClient = createMtlsProviderHttpClient(
+                imdsHttpHelper,
+                serviceBundle,
+                requestContext);
+
+        String bindingCacheKey = identity.getIdType().name() + ":"
+                + (queryValue == null ? "" : queryValue)
+                + (managedIdentityParameters.attestationSupport()
+                        ? ":att1" : ":att0");
+        ManagedIdentityMtlsRequest request = new ManagedIdentityMtlsRequest(
+                queryName,
+                queryValue,
+                bindingCacheKey,
+                requestContext.correlationId(),
+                httpClient,
+                managedIdentityParameters.attestationSupport());
+        return getMtlsProviderBinding(
+                ManagedIdentityMtlsProviderLoader.load(),
+                request);
+    }
+
+    static ManagedIdentityMtlsBinding getMtlsProviderBinding(
+            IManagedIdentityMtlsProvider provider,
+            ManagedIdentityMtlsRequest request) {
+        try {
+            return provider.getOrCreateBinding(request);
+        } catch (MsalException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            MsalClientException wrapped = new MsalClientException(
+                    "The managed identity mTLS provider failed.",
+                    MsalError.MANAGED_IDENTITY_MTLS_REQUEST_FAILED);
+            wrapped.initCause(e);
+            throw wrapped;
+        }
+    }
+
+    static IManagedIdentityMtlsHttpClient createMtlsProviderHttpClient(
+            HttpHelper imdsHttpHelper,
+            ServiceBundle serviceBundle,
+            RequestContext requestContext) {
+        return request -> {
+            HttpMethod method;
+            if ("GET".equalsIgnoreCase(request.method())) {
+                method = HttpMethod.GET;
+            } else if ("POST".equalsIgnoreCase(request.method())) {
+                method = HttpMethod.POST;
+            } else {
+                throw new MsalClientException(
+                        "Unsupported IMDS mTLS provider HTTP method: " + request.method(),
+                        MsalError.MANAGED_IDENTITY_MTLS_REQUEST_FAILED);
+            }
+
+            HttpRequest httpRequest = new HttpRequest(
+                    method,
+                    request.url(),
+                    request.headers(),
+                    request.body());
+            IHttpResponse response = imdsHttpHelper
+                    .executeHttpRequest(httpRequest, requestContext, serviceBundle);
+            return new ManagedIdentityMtlsHttpResponse(
+                    response.statusCode(),
+                    response.body(),
+                    response.headers());
+        };
+    }
+
+    private AuthenticationResult acquireMtlsPopToken(
+            ManagedIdentityMtlsBinding binding,
+            TokenRequestExecutor tokenRequestExecutor) {
+        if (!(clientApplication.httpClient() instanceof IMtlsCapableHttpClient)) {
+            throw new MsalClientException(
+                    "The configured custom HTTP client does not declare support for request-specific mTLS. "
+                            + "Implement IMtlsCapableHttpClient and honor HttpRequest.sslSocketFactory().",
+                    MsalError.MANAGED_IDENTITY_MTLS_REQUEST_FAILED);
+        }
+
+        String scope = managedIdentityParameters.resource().endsWith("/.default")
+                ? managedIdentityParameters.resource()
+                : managedIdentityParameters.resource().replaceAll("/+$", "") + "/.default";
+        Map<String, String> body = new HashMap<>();
+        body.put("grant_type", "client_credentials");
+        body.put("client_id", binding.clientId());
+        body.put("scope", scope);
+        body.put("token_type", "mtls_pop");
+        AuthenticationResult result;
+        try {
+            result = tokenRequestExecutor.executeTokenRequest(
+                    new URL(binding.tokenEndpoint()),
+                    binding.bindingContext().sslContext().getSocketFactory(),
+                    body);
+        } catch (MalformedURLException e) {
+            throw new MsalClientException(
+                    "The managed identity mTLS token endpoint is invalid.",
+                    MsalError.MANAGED_IDENTITY_MTLS_REQUEST_FAILED);
+        } catch (java.io.IOException e) {
+            throw new MsalClientException(e);
+        }
+
+        validateMtlsTokenResponse(result);
+        return result.withMtlsBindingContext(
+                binding.bindingContext(),
+                managedIdentityParameters.resource());
+    }
+
+    static void validateMtlsTokenResponse(
+            IAuthenticationResult tokenResponse) {
+        if (tokenResponse == null
+                || StringHelper.isBlank(tokenResponse.accessToken())
+                || !"mtls_pop".equals(tokenResponse.tokenType())) {
+            throw new MsalServiceException(
+                    "The managed identity mTLS endpoint did not explicitly return token_type=mtls_pop.",
+                    MsalError.MANAGED_IDENTITY_MTLS_TOKEN_TYPE_INVALID,
+                    ManagedIdentitySourceType.IMDS);
+        }
     }
 
     static long getExpiresOnFromManagedIdentityTimestamp(String dateTimeStamp) {

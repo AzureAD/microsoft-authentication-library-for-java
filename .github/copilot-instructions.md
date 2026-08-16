@@ -28,10 +28,12 @@
 - Multi-cloud and B2C support
 
 ### Repository Structure
-This repository contains three Maven modules:
+This repository contains four default Maven modules plus one profile-only E2E module:
 - **`msal4j-sdk/`** - The main MSAL Java library (focus of development)
 - **`msal4j-brokers/`** - Broker integration for native authentication (Windows WAM)
 - **`msal4j-persistence-extension/`** - Cross-platform token cache persistence helpers
+- **`msal4j-mtls-extensions/`** - Optional Windows KeyGuard/attestation bridge for Managed Identity v2 mTLS PoP; bundles Microsoft.Azure.Security.KeyGuardAttestation 1.1.5 while Java JCA/JSSE performs TLS
+- **`msal4j-mtls-extensions-e2e/`** - Manual validation app, included only by the Maven `e2e` profile
 
 For most work, focus on **`msal4j-sdk/`**.
 
@@ -151,6 +153,7 @@ MSAL4J supports multiple authentication flows, each with a public `*Parameters` 
 - **Parameters**: `ManagedIdentityParameters` - For Azure resources (VMs, App Service, Functions)
 - **Internal**: `ManagedIdentityRequest` → `AcquireTokenByManagedIdentitySupplier`
 - **Key Classes**: `ManagedIdentitySource` implementations (`IMDSManagedIdentitySource`, `AppServiceManagedIdentitySource`, etc.)
+- **Optional mTLS PoP**: `withMtlsProofOfPossession()` requests a KeyGuard binding; `withAttestationSupport()` separately requires MAA attestation and fails closed. Core owns OAuth/HTTP/cache behavior; `msal4j-mtls-extensions` owns KeyGuard/CNG/optional attestation and returns a reusable process-local `IMtlsBindingContext`. Custom HTTP clients must implement `IMtlsCapableHttpClient`.
 
 ### Common Flows (All Application Types)
 
@@ -236,4 +239,3 @@ Update this file whenever you make changes that affect:
 By keeping these instructions current, you help ensure that future Copilot agents (and developers) can quickly understand and work with the MSAL Java library effectively.
 
 ---
-

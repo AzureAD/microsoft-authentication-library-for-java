@@ -37,6 +37,10 @@ class ManagedIdentityResponse implements JsonSerializable<ManagedIdentityRespons
                     case "expires_on":
                         response.expiresOn = reader.getString();
                         break;
+                    case "expires_in":
+                        response.expiresOn = String.valueOf(
+                                (System.currentTimeMillis() / 1000) + reader.getLong());
+                        break;
                     case "resource":
                         response.resource = reader.getString();
                         break;

@@ -5,6 +5,7 @@ package com.microsoft.aad.msal4j;
 
 import java.util.Date;
 import java.util.Objects;
+import java.security.cert.X509Certificate;
 
 final class AuthenticationResult implements IAuthenticationResult {
     private static final long serialVersionUID = 1L;
@@ -25,8 +26,10 @@ final class AuthenticationResult implements IAuthenticationResult {
     private final String scopes;
     private final AuthenticationResultMetadata metadata;
     private final Boolean isPopAuthorization;
+    private final String tokenType;
+    private final transient IMtlsBindingContext mtlsBindingContext;
 
-    AuthenticationResult(String accessToken, long expiresOn, long extExpiresOn, String refreshToken, Long refreshOn, String familyId, String idToken, AccountCacheEntity accountCacheEntity, String environment, String scopes, AuthenticationResultMetadata metadata, Boolean isPopAuthorization) {
+    AuthenticationResult(String accessToken, long expiresOn, long extExpiresOn, String refreshToken, Long refreshOn, String familyId, String idToken, AccountCacheEntity accountCacheEntity, String environment, String scopes, AuthenticationResultMetadata metadata, Boolean isPopAuthorization, String tokenType, IMtlsBindingContext mtlsBindingContext) {
         this.accessToken = accessToken;
         this.expiresOn = expiresOn;
         this.extExpiresOn = extExpiresOn;
@@ -39,6 +42,8 @@ final class AuthenticationResult implements IAuthenticationResult {
         this.scopes = scopes;
         this.metadata = metadata == null ? AuthenticationResultMetadata.builder().build() : metadata;
         this.isPopAuthorization = isPopAuthorization;
+        this.tokenType = StringHelper.isBlank(tokenType) ? "Bearer" : tokenType;
+        this.mtlsBindingContext = mtlsBindingContext;
         this.expiresOnDate = new Date(expiresOn * 1000);
     }
 
@@ -129,6 +134,59 @@ final class AuthenticationResult implements IAuthenticationResult {
         return this.isPopAuthorization;
     }
 
+    AuthenticationResult withMtlsBindingContext(IMtlsBindingContext bindingContext) {
+        return withMtlsBindingContext(
+                bindingContext,
+                null,
+                "mtls_pop");
+    }
+
+    AuthenticationResult withMtlsBindingContext(
+            IMtlsBindingContext bindingContext,
+            String defaultScopes) {
+        return withMtlsBindingContext(
+                bindingContext,
+                defaultScopes,
+                tokenType);
+    }
+
+    private AuthenticationResult withMtlsBindingContext(
+            IMtlsBindingContext bindingContext,
+            String defaultScopes,
+            String resultTokenType) {
+        return AuthenticationResult.builder()
+                .accessToken(accessToken)
+                .expiresOn(expiresOn)
+                .extExpiresOn(extExpiresOn)
+                .refreshToken(refreshToken)
+                .refreshOn(refreshOn)
+                .familyId(familyId)
+                .idToken(idToken)
+                .accountCacheEntity(accountCacheEntity)
+                .environment(environment)
+                .scopes(StringHelper.isBlank(scopes) ? defaultScopes : scopes)
+                .metadata(metadata)
+                .isPopAuthorization(Boolean.TRUE)
+                .tokenType(resultTokenType)
+                .mtlsBindingContext(bindingContext)
+                .build();
+    }
+
+    @Override
+    public String tokenType() {
+        return StringHelper.isBlank(tokenType) ? "Bearer" : tokenType;
+    }
+
+    @Override
+    public X509Certificate bindingCertificate() {
+        return mtlsBindingContext == null ? null : mtlsBindingContext.bindingCertificate();
+    }
+
+    @Override
+    public IMtlsBindingContext mtlsBindingContext() {
+        return mtlsBindingContext;
+    }
+
     static AuthenticationResultBuilder builder() {
         return new AuthenticationResultBuilder();
     }
@@ -146,6 +204,8 @@ final class AuthenticationResult implements IAuthenticationResult {
         private String scopes;
         private AuthenticationResultMetadata metadata;
         private Boolean isPopAuthorization;
+        private String tokenType;
+        private IMtlsBindingContext mtlsBindingContext;
 
         AuthenticationResultBuilder() {
         }
@@ -210,12 +270,28 @@ final class AuthenticationResult implements IAuthenticationResult {
             return this;
         }
 
+        public AuthenticationResultBuilder tokenType(String tokenType) {
+            this.tokenType = tokenType;
+            return this;
+        }
+
+        public AuthenticationResultBuilder mtlsBindingContext(IMtlsBindingContext mtlsBindingContext) {
+            this.mtlsBindingContext = mtlsBindingContext;
+            return this;
+        }
+
         public AuthenticationResult build() {
-            return new AuthenticationResult(this.accessToken, this.expiresOn, this.extExpiresOn, this.refreshToken, this.refreshOn, this.familyId, this.idToken, this.accountCacheEntity, this.environment, this.scopes, this.metadata, this.isPopAuthorization);
+            return new AuthenticationResult(this.accessToken, this.expiresOn, this.extExpiresOn, this.refreshToken, this.refreshOn, this.familyId, this.idToken, this.accountCacheEntity, this.environment, this.scopes, this.metadata, this.isPopAuthorization, this.tokenType, this.mtlsBindingContext);
         }
 
         public String toString() {
-            return "AuthenticationResult.AuthenticationResultBuilder(accessToken=" + this.accessToken + ", expiresOn=" + this.expiresOn + ", extExpiresOn=" + this.extExpiresOn + ", refreshToken=" + this.refreshToken + ", refreshOn=" + this.refreshOn + ", familyId=" + this.familyId + ", idToken=" + this.idToken + ", accountCacheEntity=" + this.accountCacheEntity + ", environment=" + this.environment + ", scopes=" + this.scopes + ", metadata=" + this.metadata + ", isPopAuthorization=" + this.isPopAuthorization + ")";
+            return "AuthenticationResult.AuthenticationResultBuilder(expiresOn=" + this.expiresOn
+                    + ", extExpiresOn=" + this.extExpiresOn
+                    + ", environment=" + this.environment
+                    + ", scopes=" + this.scopes
+                    + ", metadata=" + this.metadata
+                    + ", isPopAuthorization=" + this.isPopAuthorization
+                    + ", tokenType=" + this.tokenType + ")";
         }
     }
 
@@ -243,6 +319,7 @@ final class AuthenticationResult implements IAuthenticationResult {
         if (!Objects.equals(environment, other.environment)) return false;
         if (!Objects.equals(expiresOnDate, other.expiresOnDate)) return false;
         if (!Objects.equals(scopes, other.scopes)) return false;
+        if (!Objects.equals(tokenType, other.tokenType)) return false;
         return Objects.equals(metadata, other.metadata);
     }
 
@@ -264,6 +341,7 @@ final class AuthenticationResult implements IAuthenticationResult {
         result = result * 59 + (this.environment == null ? 43 : this.environment.hashCode());
         result = result * 59 + (this.expiresOnDate == null ? 43 : this.expiresOnDate.hashCode());
         result = result * 59 + (this.scopes == null ? 43 : this.scopes.hashCode());
+        result = result * 59 + (this.tokenType == null ? 43 : this.tokenType.hashCode());
         result = result * 59 + (this.metadata == null ? 43 : this.metadata.hashCode());
         return result;
     }
