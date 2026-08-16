@@ -8,7 +8,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
+import javax.net.ssl.SSLSocketFactory;
 
 class TokenRequestExecutor {
     private static final Logger LOG = LoggerFactory.getLogger(TokenRequestExecutor.class);
@@ -33,6 +35,18 @@ class TokenRequestExecutor {
         OAuthHttpRequest oAuthHttpRequest = createOauthHttpRequest();
         HttpResponse oauthHttpResponse = oAuthHttpRequest.send();
         return createAuthenticationResultFromOauthHttpResponse(oauthHttpResponse);
+    }
+
+    AuthenticationResult executeTokenRequest(
+            URL tokenEndpoint,
+            SSLSocketFactory sslSocketFactory,
+            Map<String, String> parameters) throws IOException {
+        LOG.debug("Sending token request to: {}", tokenEndpoint);
+        OAuthHttpRequest request = createOauthHttpRequest(
+                tokenEndpoint,
+                sslSocketFactory,
+                parameters);
+        return createAuthenticationResultFromOauthHttpResponse(request.send());
     }
 
     OAuthHttpRequest createOauthHttpRequest() throws MalformedURLException {
@@ -95,6 +109,65 @@ class TokenRequestExecutor {
             addQueryParameters(oauthHttpRequest);
         }
         return oauthHttpRequest;
+    }
+
+    OAuthHttpRequest createOauthHttpRequest(
+            URL tokenEndpoint,
+            SSLSocketFactory sslSocketFactory,
+            Map<String, String> parameters) {
+        if (tokenEndpoint == null) {
+            throw new MsalClientException("The endpoint URI is not specified",
+                    AuthenticationErrorCode.INVALID_ENDPOINT_URI);
+        }
+
+        OAuthHttpRequest request = new OAuthHttpRequest(
+                HttpMethod.POST,
+                tokenEndpoint,
+                msalRequest.headers().getReadonlyHeaderMap(),
+                msalRequest.requestContext(),
+                serviceBundle)
+                .sslSocketFactory(sslSocketFactory);
+
+        Map<String, String> params = new HashMap<>(parameters);
+        mergeClaimsAndCapabilities(params);
+        request.setQuery(StringHelper.serializeQueryParameters(params));
+        return request;
+    }
+
+    private void mergeClaimsAndCapabilities(Map<String, String> params) {
+        String claims = params.get("claims");
+        if (msalRequest.application() instanceof AbstractClientApplicationBase
+                && ((AbstractClientApplicationBase) msalRequest.application()).clientCapabilities() != null) {
+            claims = mergeClaims(
+                    claims,
+                    ((AbstractClientApplicationBase) msalRequest.application()).clientCapabilities());
+        } else if (msalRequest.application() instanceof ManagedIdentityApplication) {
+            List<String> capabilities =
+                    ((ManagedIdentityApplication) msalRequest.application()).getClientCapabilities();
+            if (capabilities != null && !capabilities.isEmpty()) {
+                claims = mergeClaims(
+                        claims,
+                        JsonHelper.formCapabilitiesJson(new HashSet<>(capabilities)));
+            }
+        }
+
+        ClaimsRequest requestClaims = msalRequest.requestContext().apiParameters().claims();
+        if (requestClaims != null) {
+            claims = mergeClaims(claims, requestClaims.formatAsJSONString());
+        }
+        if (!StringHelper.isBlank(claims)) {
+            params.put("claims", claims);
+        }
+    }
+
+    private static String mergeClaims(String first, String second) {
+        if (StringHelper.isBlank(first)) {
+            return second;
+        }
+        if (StringHelper.isBlank(second)) {
+            return first;
+        }
+        return JsonHelper.mergeJSONString(first, second);
     }
 
     private void addQueryParameters(OAuthHttpRequest oauthHttpRequest) {
@@ -240,6 +313,7 @@ class TokenRequestExecutor {
                     refreshOn(response.getRefreshIn() > 0 ? currTimestampSec + response.getRefreshIn() : 0).
                     accountCacheEntity(accountCacheEntity).
                     scopes(response.getScope()).
+                    tokenType(response.tokenType()).
                     metadata(AuthenticationResultMetadata.builder()
                             .tokenSource(TokenSource.IDENTITY_PROVIDER)
                             .refreshOn(response.getRefreshIn() > 0 ? currTimestampSec + response.getRefreshIn() : 0)

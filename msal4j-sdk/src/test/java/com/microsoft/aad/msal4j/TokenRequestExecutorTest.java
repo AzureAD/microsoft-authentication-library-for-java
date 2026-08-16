@@ -26,11 +26,53 @@ import java.net.URL;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import javax.net.ssl.SSLSocketFactory;
 
 @ExtendWith(MockitoExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TokenRequestExecutorTest {
+
+    @Test
+    void managedIdentityMtlsRequestUsesNormalClaimsPipelineAndSocketFactory()
+            throws Exception {
+        ManagedIdentityApplication app = ManagedIdentityApplication
+                .builder(ManagedIdentityId.systemAssigned())
+                .clientCapabilities(Collections.singletonList("cp1"))
+                .build();
+        ManagedIdentityParameters parameters = ManagedIdentityParameters
+                .builder("https://vault.azure.net")
+                .claims("{\"access_token\":{\"custom\":{\"essential\":true}}}")
+                .withMtlsProofOfPossession()
+                .build();
+        ManagedIdentityRequest managedIdentityRequest =
+                new ManagedIdentityRequest(
+                        app,
+                        new RequestContext(
+                                app,
+                                PublicApi.ACQUIRE_TOKEN_BY_SYSTEM_ASSIGNED_MANAGED_IDENTITY,
+                                parameters));
+        TokenRequestExecutor executor = new TokenRequestExecutor(
+                new AADAuthority(new URL(TestConstants.ORGANIZATIONS_AUTHORITY)),
+                managedIdentityRequest,
+                app.serviceBundle());
+        SSLSocketFactory socketFactory = mock(SSLSocketFactory.class);
+        Map<String, String> body = new HashMap<>();
+        body.put("grant_type", "client_credentials");
+        body.put("token_type", "mtls_pop");
+
+        OAuthHttpRequest request = executor.createOauthHttpRequest(
+                new URL("https://login.example/tenant/oauth2/v2.0/token"),
+                socketFactory,
+                body);
+        Map<String, String> query = StringHelper.parseQueryParameters(request.query);
+
+        assertEquals(socketFactory, request.sslSocketFactory());
+        assertEquals("mtls_pop", query.get("token_type"));
+        assertTrue(query.get("claims").contains("\"xms_cc\""));
+        assertTrue(query.get("claims").contains("\"custom\""));
+    }
 
     @Test
     void executeOAuthRequest_SCBadRequestErrorInvalidGrant_InteractionRequiredException()

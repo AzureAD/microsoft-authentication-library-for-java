@@ -5,6 +5,8 @@ package com.microsoft.aad.msal4j;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * Object containing parameters for managed identity flow. Can be used as parameter to
@@ -16,11 +18,20 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
     boolean forceRefresh;
     String claims;
     String revokedTokenHash;
+    boolean mtlsProofOfPossession;
+    boolean attestationSupport;
     
-    private ManagedIdentityParameters(String resource, boolean forceRefresh, String claims) {
+    private ManagedIdentityParameters(
+            String resource,
+            boolean forceRefresh,
+            String claims,
+            boolean mtlsProofOfPossession,
+            boolean attestationSupport) {
         this.resource = resource;
         this.forceRefresh = forceRefresh;
         this.claims = claims;
+        this.mtlsProofOfPossession = mtlsProofOfPossession;
+        this.attestationSupport = attestationSupport;
     }
 
     @Override
@@ -83,10 +94,36 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
         return this.revokedTokenHash;
     }
 
+    public boolean mtlsProofOfPossession() {
+        return mtlsProofOfPossession;
+    }
+
+    public boolean attestationSupport() {
+        return attestationSupport;
+    }
+
+    @Override
+    public String computeExtCacheKeyHash() {
+        return "";
+    }
+
+    String computeMtlsExtCacheKeyHash(String bindingKeyId) {
+        if (!mtlsProofOfPossession || StringHelper.isBlank(bindingKeyId)) {
+            return "";
+        }
+        SortedMap<String, String> components = new TreeMap<>();
+        components.put("token_type", "mtls_pop");
+        components.put("key_id", bindingKeyId);
+        components.put("attestation", attestationSupport ? "att1" : "att0");
+        return StringHelper.computeExtCacheKeyHash(components);
+    }
+
     public static class ManagedIdentityParametersBuilder {
         private String resource;
         private boolean forceRefresh;
         private String claims;
+        private boolean mtlsProofOfPossession;
+        private boolean attestationSupport;
 
         ManagedIdentityParametersBuilder() {
         }
@@ -118,12 +155,41 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
             return this;
         }
 
+        /**
+         * Requests the KeyGuard managed identity v2 mTLS PoP flow.
+         */
+        public ManagedIdentityParametersBuilder withMtlsProofOfPossession() {
+            this.mtlsProofOfPossession = true;
+            return this;
+        }
+
+        /**
+         * Requires MAA attestation for the KeyGuard binding key.
+         * This option requires {@link #withMtlsProofOfPossession()}.
+         */
+        public ManagedIdentityParametersBuilder withAttestationSupport() {
+            this.attestationSupport = true;
+            return this;
+        }
+
         public ManagedIdentityParameters build() {
-            return new ManagedIdentityParameters(this.resource, this.forceRefresh, this.claims);
+            if (attestationSupport && !mtlsProofOfPossession) {
+                throw new IllegalArgumentException(
+                        "Attestation support requires managed identity mTLS PoP.");
+            }
+            return new ManagedIdentityParameters(
+                    this.resource,
+                    this.forceRefresh,
+                    this.claims,
+                    this.mtlsProofOfPossession,
+                    this.attestationSupport);
         }
 
         public String toString() {
-            return "ManagedIdentityParameters.ManagedIdentityParametersBuilder(resource=" + this.resource + ", forceRefresh=" + this.forceRefresh + ")";
+            return "ManagedIdentityParameters.ManagedIdentityParametersBuilder(resource=" + this.resource
+                    + ", forceRefresh=" + this.forceRefresh
+                    + ", mtlsProofOfPossession=" + this.mtlsProofOfPossession
+                    + ", attestationSupport=" + this.attestationSupport + ")";
         }
     }
 }
