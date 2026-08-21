@@ -6,8 +6,10 @@ package com.microsoft.aad.msal4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 
 class TokenRequestExecutor {
@@ -17,6 +19,10 @@ class TokenRequestExecutor {
     final String tenant;
     private final MsalRequest msalRequest;
     private final ServiceBundle serviceBundle;
+
+    // For mTLS Proof-of-Possession requests, the certificate presented on the TLS handshake. Resolved once
+    // when building the request and reused to describe the binding certificate on the result.
+    private IClientCertificate resolvedBindingCertificate;
 
     TokenRequestExecutor(Authority requestAuthority, MsalRequest msalRequest, ServiceBundle serviceBundle) {
         this.requestAuthority = requestAuthority;
@@ -42,12 +48,33 @@ class TokenRequestExecutor {
                     AuthenticationErrorCode.INVALID_ENDPOINT_URI);
         }
 
+        URL tokenEndpointUrl = requestAuthority.tokenEndpointUrl();
+        IHttpClient mtlsHttpClient = null;
+
+        if (isMtlsProofOfPossession()) {
+            ConfidentialClientApplication application = (ConfidentialClientApplication) msalRequest.application();
+            this.resolvedBindingCertificate = resolveBindingCertificate(application);
+            tokenEndpointUrl = MtlsEndpointHelper.deriveMtlsTokenEndpoint(tokenEndpointUrl);
+            SSLSocketFactory mtlsSocketFactory =
+                    MtlsClientCertificateHelper.createMtlsSocketFactory(resolvedBindingCertificate);
+            mtlsHttpClient = new DefaultHttpClient(
+                    application.proxy(),
+                    mtlsSocketFactory,
+                    application.connectTimeoutForDefaultHttpClient(),
+                    application.readTimeoutForDefaultHttpClient());
+            LOG.debug("mTLS Proof-of-Possession requested; using mTLS token endpoint: {}", tokenEndpointUrl);
+        }
+
         final OAuthHttpRequest oauthHttpRequest = new OAuthHttpRequest(
                 HttpMethod.POST,
-                requestAuthority.tokenEndpointUrl(),
+                tokenEndpointUrl,
                 msalRequest.headers().getReadonlyHeaderMap(),
                 msalRequest.requestContext(),
                 this.serviceBundle);
+
+        if (mtlsHttpClient != null) {
+            oauthHttpRequest.setMtlsHttpClient(mtlsHttpClient);
+        }
 
         final Map<String, String> params = new HashMap<>(msalRequest.msalAuthorizationGrant().toParameters());
         if (msalRequest.application() instanceof AbstractClientApplicationBase
@@ -148,6 +175,8 @@ class TokenRequestExecutor {
             return;
         }
 
+        boolean mtlsPoP = isMtlsProofOfPossession();
+
         if (credentialToUse instanceof ClientSecret) {
             // For client secret, add client_secret parameter
             queryParameters.put("client_secret", ((ClientSecret) credentialToUse).clientSecret());
@@ -177,6 +206,12 @@ class TokenRequestExecutor {
                 addJWTBearerAssertionParams(queryParameters, clientAssertion.assertion());
             }
         } else if (credentialToUse instanceof ClientCertificate) {
+            if (mtlsPoP) {
+                // For mTLS PoP (direct SN/I cert / FIC Leg 1), the certificate is presented as the client
+                // TLS certificate and authenticates the client; no client_assertion is sent (ESTS resolves
+                // SN/I trust from the TLS-presented certificate and binds the token via x5t#S256/cnf).
+                return;
+            }
             // For client certificate, generate a new assertion and add it to the request
             ClientCertificate certificate = (ClientCertificate) credentialToUse;
             String assertion = certificate.getAssertion(
@@ -196,6 +231,25 @@ class TokenRequestExecutor {
     private void addJWTBearerAssertionParams(Map<String, String> queryParameters, String assertion) {
         queryParameters.put("client_assertion", assertion);
         queryParameters.put("client_assertion_type", ClientAssertion.ASSERTION_TYPE_JWT_BEARER);
+    }
+
+    /**
+     * @return true if this request opted into mTLS Proof-of-Possession via
+     * {@link ClientCredentialParameters.ClientCredentialParametersBuilder#mtlsProofOfPossession()}.
+     */
+    private boolean isMtlsProofOfPossession() {
+        return msalRequest instanceof ClientCredentialRequest
+                && ((ClientCredentialRequest) msalRequest).parameters.mtlsProofOfPossession();
+    }
+
+    /**
+     * Resolves the certificate to present as the client TLS certificate for an mTLS PoP request: the
+     * request/app authentication credential when it is a certificate (direct SN/I cert or FIC Leg 1).
+     */
+    private IClientCertificate resolveBindingCertificate(ConfidentialClientApplication application) {
+        ClientCredentialParameters parameters = msalRequest instanceof ClientCredentialRequest
+                ? ((ClientCredentialRequest) msalRequest).parameters : null;
+        return MtlsClientCertificateHelper.resolveBindingCertificate(application, parameters);
     }
 
     private AuthenticationResult createAuthenticationResultFromOauthHttpResponse(HttpResponse oauthHttpResponse) {
@@ -229,6 +283,25 @@ class TokenRequestExecutor {
             }
             long currTimestampSec = new Date().getTime() / 1000;
 
+            // The token type is taken from the identity provider's response, never assumed from the request.
+            TokenType tokenType = TokenType.fromString(response.tokenType());
+            BindingCertificate bindingCertificate = null;
+            if (isMtlsProofOfPossession()) {
+                // Fail closed: an mTLS Proof-of-Possession request MUST come back as an mtls_pop
+                // (certificate-bound) token. If ESTS returns a different token_type (for example a Bearer
+                // downgrade), the access token is not bound to the certificate; surfacing it as MTLS_POP
+                // would mask the downgrade, so reject it instead.
+                if (tokenType != TokenType.MTLS_POP) {
+                    throw new MsalClientException(
+                            String.format("An mTLS Proof-of-Possession token was requested, but the identity " +
+                                    "provider returned token_type '%s' instead of 'mtls_pop'. The access token is " +
+                                    "not certificate-bound.", response.tokenType()),
+                            AuthenticationErrorCode.TOKEN_TYPE_MISMATCH);
+                }
+                // Surface the binding certificate only after the token type has been validated.
+                bindingCertificate = MtlsClientCertificateHelper.buildBindingCertificate(resolvedBindingCertificate);
+            }
+
             result = AuthenticationResult.builder().
                     accessToken(response.accessToken()).
                     refreshToken(response.refreshToken()).
@@ -243,6 +316,8 @@ class TokenRequestExecutor {
                     metadata(AuthenticationResultMetadata.builder()
                             .tokenSource(TokenSource.IDENTITY_PROVIDER)
                             .refreshOn(response.getRefreshIn() > 0 ? currTimestampSec + response.getRefreshIn() : 0)
+                            .tokenType(tokenType)
+                            .bindingCertificate(bindingCertificate)
                             .build()).
                     build();
 

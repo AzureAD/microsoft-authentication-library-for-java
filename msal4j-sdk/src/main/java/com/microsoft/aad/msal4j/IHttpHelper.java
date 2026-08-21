@@ -25,4 +25,20 @@ interface IHttpHelper {
     IHttpResponse executeHttpRequest(HttpRequest httpRequest,
                                      RequestContext requestContext,
                                      ServiceBundle serviceBundle);
+
+    /**
+     * Executes an HTTP request using an explicitly-provided HTTP client and telemetry manager rather than
+     * the app-level {@link ServiceBundle} client. Used for requests that require a bespoke transport, such
+     * as mTLS Proof-of-Possession where the client certificate must be presented on the TLS handshake.
+     *
+     * @param httpRequest The HTTP request to be executed
+     * @param requestContext Context information about the current request, including correlation IDs for telemetry
+     * @param telemetryManager The telemetry manager to use for this request
+     * @param httpClient The HTTP client to send the request with
+     * @return An {@link IHttpResponse} object containing the response
+     */
+    IHttpResponse executeHttpRequest(HttpRequest httpRequest,
+                                     RequestContext requestContext,
+                                     TelemetryManager telemetryManager,
+                                     IHttpClient httpClient);
 }
