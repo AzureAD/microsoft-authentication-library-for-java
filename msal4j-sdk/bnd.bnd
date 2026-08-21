@@ -1,2 +1,2 @@
-Export-Package: com.microsoft.aad.msal4j;version="1.25.1"
+Export-Package: com.microsoft.aad.msal4j;version="1.26.0"
 Automatic-Module-Name: com.microsoft.aad.msal4j

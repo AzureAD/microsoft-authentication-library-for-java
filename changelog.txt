@@ -1,3 +1,12 @@
+Version 1.26.0
+=============
+- Add Azure Arc user-assigned managed identity support with validation that the requested identity was honored (#1057)
+- Scope HTTP 5xx throttling per user in public-client flows while preserving app-wide throttling for HTTP 429 responses (#1055)
+- Harden regional authority validation and fall back to the global endpoint for invalid region values (#1051, #1056)
+- Fix instance discovery incorrectly carrying a custom authority port to the default discovery host (#1053)
+- Fix custom IMDS endpoint URLs built from AZURE_POD_IDENTITY_AUTHORITY_HOST containing a double slash (#1060)
+- Fix extended cache-key hash collisions by using length-prefixed components (#1048)
+
 Version 1.25.1
 =============
 - Add claimsFromClient API for client-originated claims on confidential-client flows (#1039)
@@ -5,7 +14,6 @@ Version 1.25.1
 - Bump Azure Arc HIMDS api-version from 2019-11-01 to 2020-06-01 (#1045)
 - Extract shared ExtendedCacheKey helper to de-duplicate cache-key plumbing (#1046)
 - Fix refreshed tokens not staying in their client-claims cache partition (#1039)
-- Fix extended cache-key hash collision by using a length-prefix encoding of the sorted components (#1047)
 
 Version 1.25.0
 =============

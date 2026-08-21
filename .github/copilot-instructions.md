@@ -6,7 +6,7 @@
 - **Main Package**: `com.microsoft.aad.msal4j`
 - **Three Application Types**: `PublicClientApplication`, `ConfidentialClientApplication`, `ManagedIdentityApplication`
 - **Pattern**: Each auth flow has `*Parameters` (public API), `*Request` (internal), `*Supplier` (executor)
-- **Current Version**: 1.25.1
+- **Current Version**: 1.26.0
 
 ---
 
@@ -16,7 +16,7 @@
 
 - **Language**: Java 8+
 - **Build Tool**: Maven
-- **Current Version**: 1.25.1
+- **Current Version**: 1.26.0
 - **Artifact**: `com.microsoft.azure:msal4j`
 - **Key Protocols**: OAuth2, OpenID Connect
 
@@ -236,4 +236,3 @@ Update this file whenever you make changes that affect:
 By keeping these instructions current, you help ensure that future Copilot agents (and developers) can quickly understand and work with the MSAL Java library effectively.
 
 ---
-
