@@ -6,6 +6,7 @@ package com.microsoft.aad.msal4j.mtls;
 import com.microsoft.aad.msal4j.IManagedIdentityMtlsProvider;
 import com.microsoft.aad.msal4j.ManagedIdentityMtlsBinding;
 import com.microsoft.aad.msal4j.ManagedIdentityMtlsRequest;
+import com.microsoft.aad.msal4j.MtlsBindingStrength;
 
 import java.io.ByteArrayInputStream;
 import java.math.BigInteger;
@@ -64,15 +65,31 @@ public final class KeyGuardManagedIdentityMtlsProvider
         }
     }
 
+    @Override
+    public MtlsBindingStrength getMaxSupportedBindingStrength(
+            ManagedIdentityMtlsRequest request) {
+        validateRequest(request);
+        ImdsV2Client.PlatformMetadata metadata =
+                ImdsV2Client.getPlatformMetadata(request);
+        validateSelectedIdentity(request, metadata);
+        CngRsaPrivateKey privateKey = CngKeyGuard.getOrCreateKey(
+                keyName(request, metadata));
+        try {
+            CngKeyGuard.exportPublicKey(privateKey.nativeHandle());
+            return MtlsBindingStrength.KEY_GUARD;
+        } finally {
+            privateKey.close();
+        }
+    }
+
     private static BindingGeneration createBinding(
             ManagedIdentityMtlsRequest request) {
         ImdsV2Client.PlatformMetadata metadata =
                 ImdsV2Client.getPlatformMetadata(request);
         validateSelectedIdentity(request, metadata);
 
-        String keyName = "MSALJavaMtls_" + shortHash(
-                request.bindingCacheKey() + "|" + metadata.cuId());
-        CngRsaPrivateKey privateKey = CngKeyGuard.getOrCreateKey(keyName);
+        CngRsaPrivateKey privateKey = CngKeyGuard.getOrCreateKey(
+                keyName(request, metadata));
         try {
             BigInteger[] publicKey =
                     CngKeyGuard.exportPublicKey(privateKey.nativeHandle());
@@ -235,6 +252,13 @@ public final class KeyGuardManagedIdentityMtlsProvider
         } catch (Exception e) {
             throw new MtlsMsiException("Unable to derive the KeyGuard key name.", e);
         }
+    }
+
+    private static String keyName(
+            ManagedIdentityMtlsRequest request,
+            ImdsV2Client.PlatformMetadata metadata) {
+        return "MSALJavaMtls_" + shortHash(
+                request.bindingCacheKey() + "|" + metadata.cuId());
     }
 
     private static String hashBytes(byte[] value) {

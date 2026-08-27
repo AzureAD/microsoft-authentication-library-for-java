@@ -20,18 +20,21 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
     String revokedTokenHash;
     boolean mtlsProofOfPossession;
     boolean attestationSupport;
+    MtlsBindingStrength minimumBindingStrength;
     
     private ManagedIdentityParameters(
             String resource,
             boolean forceRefresh,
             String claims,
             boolean mtlsProofOfPossession,
-            boolean attestationSupport) {
+            boolean attestationSupport,
+            MtlsBindingStrength minimumBindingStrength) {
         this.resource = resource;
         this.forceRefresh = forceRefresh;
         this.claims = claims;
         this.mtlsProofOfPossession = mtlsProofOfPossession;
         this.attestationSupport = attestationSupport;
+        this.minimumBindingStrength = minimumBindingStrength;
     }
 
     @Override
@@ -102,6 +105,10 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
         return attestationSupport;
     }
 
+    public MtlsBindingStrength minimumBindingStrength() {
+        return minimumBindingStrength;
+    }
+
     @Override
     public String computeExtCacheKeyHash() {
         return "";
@@ -115,6 +122,9 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
         components.put("token_type", "mtls_pop");
         components.put("key_id", bindingKeyId);
         components.put("attestation", attestationSupport ? "att1" : "att0");
+        if (minimumBindingStrength != MtlsBindingStrength.NONE) {
+            components.put("min_strength", minimumBindingStrength.name());
+        }
         return StringHelper.computeExtCacheKeyHash(components);
     }
 
@@ -124,6 +134,8 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
         private String claims;
         private boolean mtlsProofOfPossession;
         private boolean attestationSupport;
+        private MtlsBindingStrength minimumBindingStrength =
+                MtlsBindingStrength.NONE;
 
         ManagedIdentityParametersBuilder() {
         }
@@ -159,7 +171,19 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
          * Requests the KeyGuard managed identity v2 mTLS PoP flow.
          */
         public ManagedIdentityParametersBuilder withMtlsProofOfPossession() {
+            return withMtlsProofOfPossession(MtlsPopOptions.builder().build());
+        }
+
+        /**
+         * Requests mTLS PoP and requires the configured minimum binding strength.
+         */
+        public ManagedIdentityParametersBuilder withMtlsProofOfPossession(
+                MtlsPopOptions options) {
+            if (options == null) {
+                throw new NullPointerException("options");
+            }
             this.mtlsProofOfPossession = true;
+            this.minimumBindingStrength = options.minimumBindingStrength();
             return this;
         }
 
@@ -182,14 +206,16 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
                     this.forceRefresh,
                     this.claims,
                     this.mtlsProofOfPossession,
-                    this.attestationSupport);
+                    this.attestationSupport,
+                    this.minimumBindingStrength);
         }
 
         public String toString() {
             return "ManagedIdentityParameters.ManagedIdentityParametersBuilder(resource=" + this.resource
                     + ", forceRefresh=" + this.forceRefresh
                     + ", mtlsProofOfPossession=" + this.mtlsProofOfPossession
-                    + ", attestationSupport=" + this.attestationSupport + ")";
+                    + ", attestationSupport=" + this.attestationSupport
+                    + ", minimumBindingStrength=" + this.minimumBindingStrength + ")";
         }
     }
 }

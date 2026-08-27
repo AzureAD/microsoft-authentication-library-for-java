@@ -22,6 +22,21 @@ class ManagedIdentityMtlsParametersTest {
     }
 
     @Test
+    void mtlsOptionsCarryMinimumBindingStrength() {
+        ManagedIdentityParameters parameters = ManagedIdentityParameters
+                .builder("https://vault.azure.net")
+                .withMtlsProofOfPossession(
+                        MtlsPopOptions.builder()
+                                .minimumBindingStrength(
+                                        MtlsBindingStrength.KEY_GUARD)
+                                .build())
+                .build();
+
+        assertEquals(MtlsBindingStrength.KEY_GUARD,
+                parameters.minimumBindingStrength());
+    }
+
+    @Test
     void bearerAndMtlsCachePartitionsCannotCollide() {
         ManagedIdentityParameters bearer =
                 ManagedIdentityParameters.builder("https://vault.azure.net").build();
@@ -65,6 +80,26 @@ class ManagedIdentityMtlsParametersTest {
         assertNotEquals(
                 unattested.computeMtlsExtCacheKeyHash("certificate-a"),
                 attested.computeMtlsExtCacheKeyHash("certificate-a"));
+    }
+
+    @Test
+    void minimumStrengthCreatesDistinctCachePartition() {
+        ManagedIdentityParameters noFloor = ManagedIdentityParameters
+                .builder("https://vault.azure.net")
+                .withMtlsProofOfPossession()
+                .build();
+        ManagedIdentityParameters keyGuardFloor = ManagedIdentityParameters
+                .builder("https://vault.azure.net")
+                .withMtlsProofOfPossession(
+                        MtlsPopOptions.builder()
+                                .minimumBindingStrength(
+                                        MtlsBindingStrength.KEY_GUARD)
+                                .build())
+                .build();
+
+        assertNotEquals(
+                noFloor.computeMtlsExtCacheKeyHash("certificate-a"),
+                keyGuardFloor.computeMtlsExtCacheKeyHash("certificate-a"));
     }
 
     @Test

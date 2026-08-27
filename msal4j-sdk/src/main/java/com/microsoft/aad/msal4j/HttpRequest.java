@@ -7,6 +7,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
 import java.util.Objects;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 
 /**
@@ -36,6 +37,7 @@ public class HttpRequest {
     private String body;
 
     private transient SSLSocketFactory sslSocketFactory;
+    private transient SSLContext sslContext;
 
     HttpRequest(HttpMethod httpMethod, String url) {
         this.httpMethod = httpMethod;
@@ -110,8 +112,25 @@ public class HttpRequest {
         return sslSocketFactory;
     }
 
+    /**
+     * Returns the request-specific JSSE context, when the request requires mTLS.
+     *
+     * <p>Async or engine-based custom HTTP clients can consume this context directly
+     * instead of adapting the socket factory.</p>
+     */
+    public SSLContext sslContext() {
+        return sslContext;
+    }
+
     HttpRequest sslSocketFactory(SSLSocketFactory sslSocketFactory) {
         this.sslSocketFactory = sslSocketFactory;
+        return this;
+    }
+
+    HttpRequest sslContext(SSLContext sslContext) {
+        this.sslContext = sslContext;
+        this.sslSocketFactory =
+                sslContext == null ? null : sslContext.getSocketFactory();
         return this;
     }
 

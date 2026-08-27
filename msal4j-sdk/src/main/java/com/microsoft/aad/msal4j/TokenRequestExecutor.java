@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 
 class TokenRequestExecutor {
@@ -45,6 +46,18 @@ class TokenRequestExecutor {
         OAuthHttpRequest request = createOauthHttpRequest(
                 tokenEndpoint,
                 sslSocketFactory,
+                parameters);
+        return createAuthenticationResultFromOauthHttpResponse(request.send());
+    }
+
+    AuthenticationResult executeTokenRequest(
+            URL tokenEndpoint,
+            SSLContext sslContext,
+            Map<String, String> parameters) throws IOException {
+        LOG.debug("Sending token request to: {}", tokenEndpoint);
+        OAuthHttpRequest request = createOauthHttpRequest(
+                tokenEndpoint,
+                sslContext,
                 parameters);
         return createAuthenticationResultFromOauthHttpResponse(request.send());
     }
@@ -127,6 +140,29 @@ class TokenRequestExecutor {
                 msalRequest.requestContext(),
                 serviceBundle)
                 .sslSocketFactory(sslSocketFactory);
+
+        Map<String, String> params = new HashMap<>(parameters);
+        mergeClaimsAndCapabilities(params);
+        request.setQuery(StringHelper.serializeQueryParameters(params));
+        return request;
+    }
+
+    OAuthHttpRequest createOauthHttpRequest(
+            URL tokenEndpoint,
+            SSLContext sslContext,
+            Map<String, String> parameters) {
+        if (tokenEndpoint == null) {
+            throw new MsalClientException("The endpoint URI is not specified",
+                    AuthenticationErrorCode.INVALID_ENDPOINT_URI);
+        }
+
+        OAuthHttpRequest request = new OAuthHttpRequest(
+                HttpMethod.POST,
+                tokenEndpoint,
+                msalRequest.headers().getReadonlyHeaderMap(),
+                msalRequest.requestContext(),
+                serviceBundle)
+                .sslContext(sslContext);
 
         Map<String, String> params = new HashMap<>(parameters);
         mergeClaimsAndCapabilities(params);

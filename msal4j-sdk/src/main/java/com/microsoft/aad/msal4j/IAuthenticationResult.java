@@ -73,4 +73,14 @@ public interface IAuthenticationResult extends Serializable {
     default IMtlsBindingContext mtlsBindingContext() {
         return null;
     }
+
+    /**
+     * @return strength of the live mTLS binding, or {@link MtlsBindingStrength#NONE}
+     */
+    default MtlsBindingStrength mtlsBindingStrength() {
+        IMtlsBindingContext context = mtlsBindingContext();
+        return context == null
+                ? MtlsBindingStrength.NONE
+                : context.bindingStrength();
+    }
 }

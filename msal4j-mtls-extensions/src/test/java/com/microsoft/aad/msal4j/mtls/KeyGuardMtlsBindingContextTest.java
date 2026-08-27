@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j.mtls;
 
+import com.microsoft.aad.msal4j.MtlsBindingStrength;
 import com.sun.jna.Pointer;
 import org.junit.jupiter.api.Test;
 
@@ -33,7 +34,10 @@ class KeyGuardMtlsBindingContextTest {
         assertArrayEquals(
                 new String[]{"TLSv1.2"},
                 context.sslContext().getDefaultSSLParameters().getProtocols());
+        assertNotNull(context.keyManager());
         assertSame(certificate, context.bindingCertificate());
+        assertEquals(MtlsBindingStrength.KEY_GUARD,
+                context.bindingStrength());
     }
 
     @Test

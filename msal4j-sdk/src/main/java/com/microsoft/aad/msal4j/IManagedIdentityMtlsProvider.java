@@ -12,4 +12,12 @@ package com.microsoft.aad.msal4j;
 public interface IManagedIdentityMtlsProvider {
 
     ManagedIdentityMtlsBinding getOrCreateBinding(ManagedIdentityMtlsRequest request);
+
+    /**
+     * Probes the strongest binding this provider can produce without acquiring a token.
+     */
+    default MtlsBindingStrength getMaxSupportedBindingStrength(
+            ManagedIdentityMtlsRequest request) {
+        return MtlsBindingStrength.NONE;
+    }
 }

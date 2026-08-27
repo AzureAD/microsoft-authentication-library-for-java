@@ -47,4 +47,13 @@ public class MsalError {
 
     public static final String MANAGED_IDENTITY_MTLS_REQUEST_FAILED =
             "managed_identity_mtls_request_failed";
+
+    public static final String MANAGED_IDENTITY_MTLS_UNSUPPORTED =
+            "managed_identity_mtls_unsupported";
+
+    public static final String MANAGED_IDENTITY_MTLS_HTTP_CLIENT_UNSUPPORTED =
+            "managed_identity_mtls_http_client_unsupported";
+
+    public static final String MANAGED_IDENTITY_MTLS_MINIMUM_STRENGTH_NOT_MET =
+            "managed_identity_mtls_minimum_strength_not_met";
 }
