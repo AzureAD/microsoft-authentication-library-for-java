@@ -32,6 +32,10 @@ attestation, or invalid attestation evidence fails closed. Platform support,
 credential issuance, certificate validation, and an explicit
 `token_type=mtls_pop` response are always required.
 
+The bundled native library is verified with both a pinned SHA-256 digest and
+Windows `WinVerifyTrust` Authenticode validation before loading. Its extraction
+directory is restricted to the current Windows user.
+
 ## Token acquisition
 
 ```java
@@ -41,7 +45,11 @@ ManagedIdentityApplication application = ManagedIdentityApplication
 
 ManagedIdentityParameters parameters = ManagedIdentityParameters
         .builder("https://vault.azure.net")
-        .withMtlsProofOfPossession()
+        .withMtlsProofOfPossession(
+                MtlsPopOptions.builder()
+                        .minimumBindingStrength(
+                                MtlsBindingStrength.KEY_GUARD)
+                        .build())
         .withAttestationSupport()
         .build();
 
@@ -49,6 +57,11 @@ IAuthenticationResult result = application
         .acquireTokenForManagedIdentity(parameters)
         .get();
 ```
+
+Before acquisition, credential chains can call
+`application.getManagedIdentityCapabilities()` and inspect
+`maxSupportedBindingStrength()` and `isMtlsPopSupportedByHost()`. Discovery verifies
+the IMDS v2 and KeyGuard capability without acquiring an access token.
 
 For a user-assigned identity:
 
@@ -62,7 +75,10 @@ The result exposes:
 - `tokenType()` - must be `mtls_pop`
 - `bindingCertificate()` - the IMDS-issued leaf certificate
 - `mtlsBindingContext()` - the live, process-local binding capability
+- `mtlsBindingStrength()` - the actual binding strength used by the result
 - `mtlsBindingContext().sslContext()` - a reusable Java JSSE `SSLContext`
+- `mtlsBindingContext().keyManager()` - the non-exportable-key
+  `X509ExtendedKeyManager` for custom TLS contexts
 - `mtlsBindingContext().keyId()` - Base64URL SHA-256 of the complete leaf DER
 
 Private key bytes and native handles are never exposed. Binding contexts are
@@ -106,8 +122,17 @@ native HTTP helper or a downstream request API.
   with a five-minute freshness buffer and per-key single-flight behavior.
 
 Custom application HTTP clients must implement `IMtlsCapableHttpClient`, honor
-the request-specific `SSLSocketFactory`, and disable redirects for mTLS token
-requests.
+the request-specific `SSLContext` or `SSLSocketFactory`, and disable redirects
+for mTLS token requests. The supplied `SSLContext` uses JVM default trust
+managers. Applications that need custom trust anchors can build a context from
+the exposed key manager.
+
+The current binding context uses TLS 1.2. TLS 1.3 support is being investigated
+with the service team because the service does not yet request the required
+client certificate during TLS 1.3 negotiation.
+
+The initial native package is Windows x64 only. Windows ARM64 callers receive a
+typed unsupported-architecture failure before native loading.
 
 ## Manual validation
 

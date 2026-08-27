@@ -5,6 +5,8 @@ package com.microsoft.aad.msal4j;
 
 import org.junit.jupiter.api.Test;
 
+import javax.net.ssl.SSLContext;
+import java.security.cert.X509Certificate;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -48,6 +50,30 @@ class AcquireTokenByManagedIdentitySupplierMtlsTest {
                 MsalClientException.class,
                 () -> AcquireTokenByManagedIdentitySupplier
                         .getMtlsProviderBinding(provider, request())));
+    }
+
+    @Test
+    void minimumBindingStrengthFailsClosed() {
+        ManagedIdentityMtlsBinding softwareBinding =
+                binding(MtlsBindingStrength.SOFTWARE);
+
+        MsalClientException exception = assertThrows(
+                MsalClientException.class,
+                () -> AcquireTokenByManagedIdentitySupplier
+                        .validateMinimumBindingStrength(
+                                softwareBinding,
+                                MtlsBindingStrength.KEY_GUARD));
+
+        assertEquals(
+                MsalError.MANAGED_IDENTITY_MTLS_MINIMUM_STRENGTH_NOT_MET,
+                exception.errorCode());
+    }
+
+    @Test
+    void minimumBindingStrengthAcceptsStrongerBinding() {
+        AcquireTokenByManagedIdentitySupplier.validateMinimumBindingStrength(
+                binding(MtlsBindingStrength.KEY_GUARD),
+                MtlsBindingStrength.SOFTWARE);
     }
 
     @Test
@@ -112,6 +138,40 @@ class AcquireTokenByManagedIdentitySupplierMtlsTest {
                         HttpStatus.HTTP_OK,
                         "{}",
                         Collections.emptyMap()));
+    }
+
+    private static ManagedIdentityMtlsBinding binding(
+            MtlsBindingStrength strength) {
+        IMtlsBindingContext context = new IMtlsBindingContext() {
+            @Override
+            public MtlsBindingStrength bindingStrength() {
+                return strength;
+            }
+
+            @Override
+            public SSLContext sslContext() {
+                return null;
+            }
+
+            @Override
+            public javax.net.ssl.X509ExtendedKeyManager keyManager() {
+                return null;
+            }
+
+            @Override
+            public X509Certificate bindingCertificate() {
+                return null;
+            }
+
+            @Override
+            public String keyId() {
+                return "key";
+            }
+        };
+        return new ManagedIdentityMtlsBinding(
+                context,
+                "client",
+                "https://login.example/token");
     }
 
     private static HttpResponse response(int status, String body) {

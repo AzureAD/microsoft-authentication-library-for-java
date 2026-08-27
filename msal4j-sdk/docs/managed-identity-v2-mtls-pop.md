@@ -28,6 +28,11 @@ The provider advertises the required RSA signature algorithms, but its services
 accept only `CngRsaPrivateKey`. Ordinary Java RSA keys continue to use the
 platform's normal providers.
 
+The current flow uses TLS 1.2 because the service does not yet request the
+required client certificate during TLS 1.3 negotiation. TLS 1.3 support is
+being investigated with the service team and can be enabled after the
+end-to-end client-certificate behavior is supported and validated.
+
 ## Current protocol contract
 
 Current MSAL.NET product behavior takes precedence over older design and
@@ -60,13 +65,57 @@ ManagedIdentityParameters.builder("https://vault.azure.net")
         .build();
 ```
 
+Credential chains can probe the host before acquiring a token:
+
+```java
+ManagedIdentityCapabilities capabilities = application
+        .getManagedIdentityCapabilities()
+        .get();
+
+if (capabilities.maxSupportedBindingStrength()
+        == MtlsBindingStrength.KEY_GUARD) {
+    // The host and optional extension can produce a KeyGuard binding.
+}
+```
+
+Successful capability discovery is cached per application instance and checks the selected managed identity source, optional
+provider availability, IMDS v2 platform metadata, and local KeyGuard
+availability. It may create or reopen a persisted KeyGuard probe key, but it does
+not issue a credential or acquire an access token.
+Failed IMDS/KeyGuard probes are not cached permanently and can be retried.
+
+Callers can also enforce a fail-closed minimum:
+
+```java
+MtlsPopOptions options = MtlsPopOptions.builder()
+        .minimumBindingStrength(MtlsBindingStrength.KEY_GUARD)
+        .build();
+
+ManagedIdentityParameters parameters = ManagedIdentityParameters
+        .builder("https://vault.azure.net")
+        .withMtlsProofOfPossession(options)
+        .withAttestationSupport()
+        .build();
+```
+
+The tiers are `NONE`, `SOFTWARE`, and `KEY_GUARD`. The current Java extension
+produces only `KEY_GUARD`; `SOFTWARE` is reserved for compatible future
+providers. A successful request with a minimum strength guarantees that the
+returned binding met that floor.
+
 `withMtlsProofOfPossession()` can be used without attestation.
 `withAttestationSupport()` requires mTLS PoP and makes any attestation failure
 fail closed.
 
-The returned `IMtlsBindingContext` contains an `SSLContext`, leaf certificate,
-and complete-certificate key ID. It contains no token-acquisition helper and no
-native HTTP surface.
+The returned `IMtlsBindingContext` contains an `SSLContext`,
+`X509ExtendedKeyManager`, leaf certificate, and complete-certificate key ID.
+It also reports the actual `bindingStrength()`;
+`IAuthenticationResult.mtlsBindingStrength()` exposes the same value.
+JSSE clients can consume the ready-to-use `SSLContext`. Async or engine-based
+transports can use the context directly, while applications that require custom
+trust anchors can combine the exposed key manager with their own trust
+configuration. It contains no token-acquisition helper and no native HTTP
+surface.
 
 Production source remains Java 8 compatible. Use `HttpsURLConnection` for the
 primary compatibility proof. Java 11 `java.net.http.HttpClient` may use the same
@@ -102,7 +151,8 @@ The flow fails closed when:
 - identity selection does not match IMDS metadata;
 - KeyGuard or CNG operations fail;
 - the bundled `Microsoft.Azure.Security.KeyGuardAttestation` 1.1.5 native
-  library is missing, corrupt, or cannot be loaded;
+  library is missing, corrupt, lacks a valid Windows Authenticode signature,
+  or cannot be loaded;
 - attestation is empty, malformed, expired, or insufficiently fresh;
 - the issued certificate does not match the KeyGuard public key;
 - the token endpoint does not explicitly return `token_type=mtls_pop`;
@@ -110,8 +160,12 @@ The flow fails closed when:
   `IMtlsCapableHttpClient`.
 
 Credential-bound token requests do not follow redirects. A custom HTTP client
-must honor `HttpRequest.sslSocketFactory()` and preserve that no-redirect
-behavior.
+must honor `HttpRequest.sslContext()` or `HttpRequest.sslSocketFactory()` and
+preserve that no-redirect behavior.
+
+The initial native package supports Windows x64. Windows ARM64 is not supported
+by this release and fails before native loading with an architecture-specific
+error.
 
 Errors and logs must not contain access tokens, attestation JWTs, private-key
 material, or native handles.

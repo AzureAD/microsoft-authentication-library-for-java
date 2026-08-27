@@ -15,6 +15,19 @@ import java.util.concurrent.CompletableFuture;
 public interface IManagedIdentityApplication extends IApplicationBase {
 
     /**
+     * Detects the managed identity source and strongest mTLS binding available
+     * without acquiring an access token.
+     */
+    default CompletableFuture<ManagedIdentityCapabilities>
+    getManagedIdentityCapabilities() {
+        return CompletableFuture.completedFuture(
+                new ManagedIdentityCapabilities(
+                        ManagedIdentitySourceType.NONE,
+                        MtlsBindingStrength.NONE,
+                        "Capability discovery is not implemented by this application."));
+    }
+
+    /**
      * Acquires tokens from the configured managed identity on an azure resource.
      *
      * @param parameters instance of {@link ManagedIdentityParameters}

@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class AuthenticationResultMtlsTest {
 
     @Test
-    void bindingContextIsProcessLocalAndNotSerialized() throws Exception {
+    void deserializedMtlsResultFailsClosedWithoutBindingContext() throws Exception {
         IMtlsBindingContext context = new TestBindingContext();
         AuthenticationResult result = AuthenticationResult.builder()
                 .accessToken("secret")
@@ -29,15 +29,13 @@ class AuthenticationResultMtlsTest {
             output.writeObject(result);
             serialized = bytes.toByteArray();
         }
-        AuthenticationResult restored;
         try (ObjectInputStream input = new ObjectInputStream(
                 new ByteArrayInputStream(serialized))) {
-            restored = (AuthenticationResult) input.readObject();
+            InvalidObjectException exception = assertThrows(
+                    InvalidObjectException.class,
+                    input::readObject);
+            assertTrue(exception.getMessage().contains("process-local binding context"));
         }
-
-        assertEquals("mtls_pop", restored.tokenType());
-        assertNull(restored.mtlsBindingContext());
-        assertNull(restored.bindingCertificate());
     }
 
     @Test
@@ -50,6 +48,10 @@ class AuthenticationResultMtlsTest {
         assertNotEquals(bearer, first);
         assertEquals(first, second);
         assertEquals(first.hashCode(), second.hashCode());
+        assertEquals(MtlsBindingStrength.NONE,
+                bearer.mtlsBindingStrength());
+        assertEquals(MtlsBindingStrength.KEY_GUARD,
+                first.mtlsBindingStrength());
     }
 
     private static AuthenticationResult result(
@@ -66,7 +68,17 @@ class AuthenticationResultMtlsTest {
 
     private static final class TestBindingContext implements IMtlsBindingContext {
         @Override
+        public MtlsBindingStrength bindingStrength() {
+            return MtlsBindingStrength.KEY_GUARD;
+        }
+
+        @Override
         public SSLContext sslContext() {
+            return null;
+        }
+
+        @Override
+        public javax.net.ssl.X509ExtendedKeyManager keyManager() {
             return null;
         }
 

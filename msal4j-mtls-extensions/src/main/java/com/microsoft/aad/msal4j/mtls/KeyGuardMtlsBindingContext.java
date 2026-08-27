@@ -4,9 +4,11 @@
 package com.microsoft.aad.msal4j.mtls;
 
 import com.microsoft.aad.msal4j.IMtlsBindingContext;
+import com.microsoft.aad.msal4j.MtlsBindingStrength;
 
-import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509ExtendedKeyManager;
 import java.security.MessageDigest;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
@@ -15,6 +17,7 @@ final class KeyGuardMtlsBindingContext implements IMtlsBindingContext {
 
     private final CngRsaPrivateKey privateKey;
     private final X509Certificate certificate;
+    private final X509ExtendedKeyManager keyManager;
     private final SSLContext sslContext;
     private final String keyId;
 
@@ -24,12 +27,29 @@ final class KeyGuardMtlsBindingContext implements IMtlsBindingContext {
         this.privateKey = privateKey;
         this.certificate = certificate;
         this.keyId = calculateKeyId(certificate);
-        this.sslContext = createSslContext(privateKey, certificate);
+        this.keyManager =
+                new CngX509ExtendedKeyManager(privateKey, certificate);
+        try {
+            this.sslContext = createSslContext(keyManager, null);
+        } catch (RuntimeException e) {
+            privateKey.close();
+            throw e;
+        }
     }
 
     @Override
     public SSLContext sslContext() {
         return sslContext;
+    }
+
+    @Override
+    public MtlsBindingStrength bindingStrength() {
+        return MtlsBindingStrength.KEY_GUARD;
+    }
+
+    @Override
+    public X509ExtendedKeyManager keyManager() {
+        return keyManager;
     }
 
     @Override
@@ -46,22 +66,19 @@ final class KeyGuardMtlsBindingContext implements IMtlsBindingContext {
         privateKey.close();
     }
 
-    private static SSLContext createSslContext(
-            CngRsaPrivateKey privateKey,
-            X509Certificate certificate) {
+    static SSLContext createSslContext(
+            X509ExtendedKeyManager keyManager,
+            TrustManager[] trustManagers) {
         try {
             CngProvider.installIfAbsent();
             SSLContext context = SSLContext.getInstance("TLSv1.2");
             context.init(
-                    new KeyManager[]{
-                            new CngX509ExtendedKeyManager(privateKey, certificate)
-                    },
-                    null,
+                    new X509ExtendedKeyManager[]{keyManager},
+                    trustManagers,
                     null);
             return context;
         } catch (Exception e) {
-            privateKey.close();
-            throw new MtlsMsiException("Unable to create KeyGuard JSSE SSLContext.", e);
+            throw new MtlsMsiException("Unable to create mTLS JSSE SSLContext.", e);
         }
     }
 

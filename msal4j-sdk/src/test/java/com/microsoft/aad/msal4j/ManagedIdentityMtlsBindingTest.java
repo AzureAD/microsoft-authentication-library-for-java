@@ -21,6 +21,11 @@ class ManagedIdentityMtlsBindingTest {
             }
 
             @Override
+            public javax.net.ssl.X509ExtendedKeyManager keyManager() {
+                return null;
+            }
+
+            @Override
             public X509Certificate bindingCertificate() {
                 return null;
             }

@@ -10,9 +10,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.AclEntry;
+import java.nio.file.attribute.AclEntryPermission;
+import java.nio.file.attribute.AclEntryType;
+import java.nio.file.attribute.AclFileAttributeView;
+import java.nio.file.attribute.UserPrincipal;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
+import java.util.EnumSet;
 
 final class AttestationLibraryLoader {
 
@@ -84,6 +91,7 @@ final class AttestationLibraryLoader {
             }
 
             directory = Files.createTempDirectory("msal4j-keyguard-attestation-");
+            restrictToCurrentUser(directory);
             library = directory.resolve("AttestationClientLib.dll");
             try (DigestInputStream verifiedResource =
                          new DigestInputStream(resource, digest)) {
@@ -98,6 +106,8 @@ final class AttestationLibraryLoader {
                         "Bundled Microsoft.Azure.Security.KeyGuardAttestation " + VERSION +
                                 " failed SHA-256 verification.");
             }
+
+            AuthenticodeVerifier.verify(library);
 
             File directoryFile = directory.toFile();
             File libraryFile = library.toFile();
@@ -124,6 +134,24 @@ final class AttestationLibraryLoader {
                             VERSION + " native library.",
                     e);
         }
+    }
+
+    private static void restrictToCurrentUser(Path directory) throws IOException {
+        AclFileAttributeView aclView = Files.getFileAttributeView(
+                directory,
+                AclFileAttributeView.class);
+        if (aclView == null) {
+            throw new IOException(
+                    "The temporary directory does not support Windows ACLs.");
+        }
+
+        UserPrincipal owner = Files.getOwner(directory);
+        AclEntry ownerAccess = AclEntry.newBuilder()
+                .setType(AclEntryType.ALLOW)
+                .setPrincipal(owner)
+                .setPermissions(EnumSet.allOf(AclEntryPermission.class))
+                .build();
+        aclView.setAcl(Collections.singletonList(ownerAccess));
     }
 
     private static String toHex(byte[] bytes) {

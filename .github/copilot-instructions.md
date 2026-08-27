@@ -153,7 +153,8 @@ MSAL4J supports multiple authentication flows, each with a public `*Parameters` 
 - **Parameters**: `ManagedIdentityParameters` - For Azure resources (VMs, App Service, Functions)
 - **Internal**: `ManagedIdentityRequest` → `AcquireTokenByManagedIdentitySupplier`
 - **Key Classes**: `ManagedIdentitySource` implementations (`IMDSManagedIdentitySource`, `AppServiceManagedIdentitySource`, etc.)
-- **Optional mTLS PoP**: `withMtlsProofOfPossession()` requests a KeyGuard binding; `withAttestationSupport()` separately requires MAA attestation and fails closed. Core owns OAuth/HTTP/cache behavior; `msal4j-mtls-extensions` owns KeyGuard/CNG/optional attestation and returns a reusable process-local `IMtlsBindingContext`. Custom HTTP clients must implement `IMtlsCapableHttpClient`.
+- **Optional mTLS PoP**: `withMtlsProofOfPossession()` requests a KeyGuard binding; `withAttestationSupport()` separately requires MAA attestation and fails closed. Core owns OAuth/HTTP/cache behavior; `msal4j-mtls-extensions` owns KeyGuard/CNG/optional attestation and returns a reusable process-local `IMtlsBindingContext` with an `SSLContext` and `X509ExtendedKeyManager`. Custom HTTP clients must implement `IMtlsCapableHttpClient` and consume the request-specific context or socket factory.
+- **mTLS capability discovery**: `getManagedIdentityCapabilities()` reports the detected source and maximum `MtlsBindingStrength`; `MtlsPopOptions` lets credential chains require a minimum strength before token acquisition succeeds.
 
 ### Common Flows (All Application Types)
 

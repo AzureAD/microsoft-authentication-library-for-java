@@ -5,6 +5,8 @@ package com.microsoft.aad.msal4j;
 
 import java.util.Date;
 import java.util.Objects;
+import java.io.InvalidObjectException;
+import java.io.ObjectStreamException;
 import java.security.cert.X509Certificate;
 
 final class AuthenticationResult implements IAuthenticationResult {
@@ -28,6 +30,15 @@ final class AuthenticationResult implements IAuthenticationResult {
     private final Boolean isPopAuthorization;
     private final String tokenType;
     private final transient IMtlsBindingContext mtlsBindingContext;
+
+    private Object readResolve() throws ObjectStreamException {
+        if ("mtls_pop".equals(tokenType) && mtlsBindingContext == null) {
+            throw new InvalidObjectException(
+                    "An mTLS PoP authentication result cannot be restored without "
+                            + "its process-local binding context.");
+        }
+        return this;
+    }
 
     AuthenticationResult(String accessToken, long expiresOn, long extExpiresOn, String refreshToken, Long refreshOn, String familyId, String idToken, AccountCacheEntity accountCacheEntity, String environment, String scopes, AuthenticationResultMetadata metadata, Boolean isPopAuthorization, String tokenType, IMtlsBindingContext mtlsBindingContext) {
         this.accessToken = accessToken;
