@@ -84,6 +84,10 @@ The result exposes:
 Private key bytes and native handles are never exposed. Binding contexts are
 transient and are not serialized into persistent token caches.
 
+The downstream resource call must use the same live binding context and leaf
+certificate returned with the token. A token acquired for one binding generation
+must not be sent over a TLS connection using another certificate.
+
 ## Independent Java 8 Key Vault call
 
 ```java
@@ -98,7 +102,7 @@ connection.setInstanceFollowRedirects(false);
 connection.setRequestMethod("GET");
 connection.setRequestProperty(
         "Authorization",
-        result.tokenType() + " " + result.accessToken());
+        "MTLS_POP " + result.accessToken());
 connection.setRequestProperty("x-ms-tokenboundauth", "true");
 
 if (connection.getResponseCode() != 200) {
@@ -108,6 +112,10 @@ if (connection.getResponseCode() != 200) {
 
 The application owns this downstream call. The extension does not expose a
 native HTTP helper or a downstream request API.
+
+`MTLS_POP` is the downstream HTTP authorization scheme. The token endpoint
+returns `token_type=mtls_pop`; authorization-scheme matching is case-insensitive,
+but the sample uses the conventional uppercase form explicitly.
 
 ## Caching and rotation
 
@@ -124,8 +132,9 @@ native HTTP helper or a downstream request API.
 Custom application HTTP clients must implement `IMtlsCapableHttpClient`, honor
 the request-specific `SSLContext` or `SSLSocketFactory`, and disable redirects
 for mTLS token requests. The supplied `SSLContext` uses JVM default trust
-managers. Applications that need custom trust anchors can build a context from
-the exposed key manager.
+managers and is safe to reuse for ordinary JSSE resource calls. Applications
+that need custom trust anchors or a non-JSSE transport should build their own
+TLS context from the exposed key manager.
 
 The current binding context uses TLS 1.2. TLS 1.3 support is being investigated
 with the service team because the service does not yet request the required

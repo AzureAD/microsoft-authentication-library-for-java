@@ -235,7 +235,7 @@ public final class ManagedIdentityMtlsPopKeyVaultDevApp {
         connection.setRequestMethod("GET");
         connection.setRequestProperty(
                 "Authorization",
-                "mtls_pop " + token.accessToken());
+                "MTLS_POP " + token.accessToken());
         connection.setRequestProperty("x-ms-tokenboundauth", "true");
         connection.setRequestProperty(
                 "x-ms-client-request-id",

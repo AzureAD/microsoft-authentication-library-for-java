@@ -50,7 +50,7 @@ class IMDSManagedIdentitySource extends AbstractManagedIdentitySource{
             }
 
             StringBuilder builder = new StringBuilder(environmentVariables.getEnvironmentVariable(Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST));
-            builder.append("/" + IMDS_TOKEN_PATH);
+            builder.append(IMDS_TOKEN_PATH);
             try {
                 imdsEndpoint = new URI(builder.toString());
             } catch (URISyntaxException e) {

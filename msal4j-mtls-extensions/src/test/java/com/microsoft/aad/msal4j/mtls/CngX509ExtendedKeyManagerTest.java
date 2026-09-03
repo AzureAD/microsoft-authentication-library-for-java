@@ -8,7 +8,9 @@ import org.junit.jupiter.api.Test;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
+import javax.security.auth.x500.X500Principal;
 import java.math.BigInteger;
+import java.security.Principal;
 import java.security.cert.X509Certificate;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,5 +39,42 @@ class CngX509ExtendedKeyManagerTest {
         assertSame(key, manager.getPrivateKey(alias));
         assertArrayEquals(new X509Certificate[]{certificate},
                 manager.getCertificateChain(alias));
+    }
+
+    @Test
+    void clientAliasSelectionIsIndependentOfIssuerHints() throws Exception {
+        CngX509ExtendedKeyManager manager =
+                new CngX509ExtendedKeyManager(key(), mock(X509Certificate.class));
+        SSLEngine engine = SSLContext.getDefault().createSSLEngine();
+        Principal[] nonMatchingIssuers = new Principal[]{
+                new X500Principal("CN=Unrelated Issuer")
+        };
+
+        String alias = manager.chooseClientAlias(
+                new String[]{"RSA"},
+                new Principal[0],
+                null);
+
+        assertNotNull(alias);
+        assertEquals(alias, manager.chooseClientAlias(
+                new String[]{"RSA"},
+                nonMatchingIssuers,
+                null));
+        assertEquals(alias, manager.chooseEngineClientAlias(
+                new String[]{"RSA"},
+                new Principal[0],
+                engine));
+        assertEquals(alias, manager.chooseEngineClientAlias(
+                new String[]{"RSA"},
+                nonMatchingIssuers,
+                engine));
+    }
+
+    private static CngRsaPrivateKey key() {
+        return new CngRsaPrivateKey(
+                Pointer.createConstant(42),
+                BigInteger.valueOf(17),
+                65537,
+                () -> { });
     }
 }

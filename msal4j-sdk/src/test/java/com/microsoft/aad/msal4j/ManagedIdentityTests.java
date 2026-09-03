@@ -366,6 +366,27 @@ class ManagedIdentityTests {
     class ManagedIdentityBehaviorTests extends BaseManagedIdentityTest {
         //Tests covering specific behavior/scenarios/use cases/etc. for Managed Identity flows
 
+        @Test
+        void managedIdentityTest_AzurePodIdentityAuthorityHostBuildsImdsEndpointWithoutDoubleSlash() throws Exception {
+            String authorityHost = "http://127.0.0.1:80";
+            EnvironmentVariablesHelper environmentVariables = new EnvironmentVariablesHelper(IMDS, null);
+            environmentVariables.mockedEnvironmentVariables.put(
+                    Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST, authorityHost);
+            ManagedIdentityApplication.setEnvironmentVariables(environmentVariables);
+            initHttpClientMock(IMDS);
+            initManagedIdentityApplication(ManagedIdentityId.systemAssigned());
+
+            when(httpClientMock.send(any()))
+                    .thenReturn(expectedResponse(HttpStatus.HTTP_OK,
+                            getSuccessfulResponse(ManagedIdentityTestConstants.RESOURCE)));
+
+            acquireTokenCommon(ManagedIdentityTestConstants.RESOURCE).get();
+
+            ArgumentCaptor<HttpRequest> captor = ArgumentCaptor.forClass(HttpRequest.class);
+            verify(httpClientMock).send(captor.capture());
+            assertEquals("/metadata/identity/oauth2/token", captor.getValue().url().getPath());
+        }
+
         @ParameterizedTest
         @MethodSource("com.microsoft.aad.msal4j.ManagedIdentityTestDataProvider#createDataError")
         void managedIdentityTest_WithClaims(ManagedIdentitySourceType source, String endpoint) throws Exception {

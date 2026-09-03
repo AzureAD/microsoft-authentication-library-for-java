@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier {
 
@@ -21,10 +22,19 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
     private static final int TWO_HOURS = 2 * 3600;
 
     private ManagedIdentityParameters managedIdentityParameters;
+    private final Supplier<ManagedIdentityMtlsBinding> mtlsBindingSupplier;
 
     AcquireTokenByManagedIdentitySupplier(ManagedIdentityApplication managedIdentityApplication, MsalRequest msalRequest) {
+        this(managedIdentityApplication, msalRequest, null);
+    }
+
+    AcquireTokenByManagedIdentitySupplier(
+            ManagedIdentityApplication managedIdentityApplication,
+            MsalRequest msalRequest,
+            Supplier<ManagedIdentityMtlsBinding> mtlsBindingSupplier) {
         super(managedIdentityApplication, msalRequest);
         this.managedIdentityParameters = (ManagedIdentityParameters) msalRequest.requestContext().apiParameters();
+        this.mtlsBindingSupplier = mtlsBindingSupplier;
     }
 
     @Override
@@ -192,6 +202,9 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
     }
 
     private ManagedIdentityMtlsBinding resolveMtlsBinding() {
+        if (mtlsBindingSupplier != null) {
+            return mtlsBindingSupplier.get();
+        }
         ManagedIdentityApplication application =
                 (ManagedIdentityApplication) msalRequest.application();
         ManagedIdentityMtlsRequest request = createMtlsProviderRequest(

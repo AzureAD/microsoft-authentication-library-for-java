@@ -141,6 +141,25 @@ This prevents:
 Native key state and `SSLContext` are process-local and excluded from serialized
 cache data.
 
+On every acquisition, MSAL resolves the current binding generation before the
+cache lookup. A persisted `mtls_pop` cache entry is returned only after the
+matching live binding context has been recreated and attached to the result.
+
+## Downstream resource contract
+
+The resource request must:
+
+- perform TLS client authentication with the same leaf certificate and
+  non-exportable key represented by `result.mtlsBindingContext()`;
+- send `Authorization: MTLS_POP <access-token>`;
+- avoid reusing the token after certificate rotation changes
+  `result.mtlsBindingContext().keyId()`.
+
+The supplied `sslContext()` is stable for the binding generation, uses JVM
+default trust, and is safe to reuse for ordinary JSSE resource calls.
+Applications that require custom trust anchors or a non-JSSE transport should
+construct their own TLS context from `keyManager()`.
+
 ## Failure behavior
 
 The flow fails closed when:

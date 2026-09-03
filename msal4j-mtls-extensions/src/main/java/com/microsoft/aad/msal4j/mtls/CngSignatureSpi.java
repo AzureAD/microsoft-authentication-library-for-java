@@ -3,8 +3,6 @@
 
 package com.microsoft.aad.msal4j.mtls;
 
-import com.sun.jna.Pointer;
-
 import java.security.AlgorithmParameters;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -61,7 +59,7 @@ abstract class CngSignatureSpi extends SignatureSpi {
     private final boolean pss;
 
     // CNG mode
-    private Pointer cngHandle;
+    private CngRsaPrivateKey cngKey;
     private MessageDigest digest;
     private String hashJce;   // Java algorithm name (e.g. "SHA-256")
     private String hashCng;   // CNG algorithm name (e.g. "SHA256")
@@ -93,16 +91,12 @@ abstract class CngSignatureSpi extends SignatureSpi {
     @Override
     protected void engineInitSign(PrivateKey key) throws InvalidKeyException {
         if (key instanceof CngRsaPrivateKey) {
-            Pointer h;
             try {
-                h = ((CngRsaPrivateKey) key).nativeHandle();
+                ((CngRsaPrivateKey) key).nativeHandle();
             } catch (IllegalStateException e) {
                 throw new InvalidKeyException("CNG key is closed: " + e.getMessage(), e);
             }
-            if (h == null) {
-                throw new InvalidKeyException("CNG key handle is null (key may be closed or invalid)");
-            }
-            cngHandle = h;
+            cngKey = (CngRsaPrivateKey) key;
             delegate  = null;
             try {
                 digest = MessageDigest.getInstance(hashJce);
@@ -111,7 +105,7 @@ abstract class CngSignatureSpi extends SignatureSpi {
             }
         } else {
             // Delegate to the next provider that handles this algorithm.
-            cngHandle = null;
+            cngKey = null;
             delegate   = null;
             try {
                 delegate = getNextProviderSignature();
@@ -124,7 +118,7 @@ abstract class CngSignatureSpi extends SignatureSpi {
 
     @Override
     protected void engineUpdate(byte b) throws SignatureException {
-        if (cngHandle != null) {
+        if (cngKey != null) {
             digest.update(b);
         } else if (delegate != null) {
             delegate.update(b);
@@ -137,7 +131,7 @@ abstract class CngSignatureSpi extends SignatureSpi {
 
     @Override
     protected void engineUpdate(byte[] b, int off, int len) throws SignatureException {
-        if (cngHandle != null) {
+        if (cngKey != null) {
             digest.update(b, off, len);
         } else if (delegate != null) {
             delegate.update(b, off, len);
@@ -150,15 +144,13 @@ abstract class CngSignatureSpi extends SignatureSpi {
 
     @Override
     protected byte[] engineSign() throws SignatureException {
-        if (cngHandle != null) {
+        if (cngKey != null) {
             byte[] hash = digest.digest();
             try {
-                if (pss) {
-                    return CngKeyGuard.signPss(cngHandle, hash, hashCng, saltLen);
-                } else {
-                    return CngKeyGuard.signPkcs1(cngHandle, hash, hashCng);
-                }
-            } catch (MtlsMsiException e) {
+                return cngKey.useNativeHandle(handle -> pss
+                        ? CngKeyGuard.signPss(handle, hash, hashCng, saltLen)
+                        : CngKeyGuard.signPkcs1(handle, hash, hashCng));
+            } catch (MtlsMsiException | IllegalStateException e) {
                 throw new SignatureException("CNG signing failed: " + e.getMessage(), e);
             }
         } else {
@@ -191,7 +183,7 @@ abstract class CngSignatureSpi extends SignatureSpi {
             hashJce  = pssSpec.getDigestAlgorithm();
             hashCng  = toCngHashName(pssSpec.getDigestAlgorithm());
             saltLen  = pssSpec.getSaltLength();
-            if (cngHandle != null) {
+            if (cngKey != null) {
                 // Re-initialize the digest with the new hash algorithm.
                 try {
                     digest = MessageDigest.getInstance(hashJce);

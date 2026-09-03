@@ -29,12 +29,15 @@ class KeyGuardMtlsBindingContextTest {
                 MessageDigest.getInstance("SHA-256").digest(certificateDer));
 
         assertEquals(expected, context.keyId());
+        assertEquals(expected, context.keyId());
         assertNotNull(context.sslContext());
+        assertSame(context.sslContext(), context.sslContext());
         assertEquals("TLSv1.2", context.sslContext().getProtocol());
         assertArrayEquals(
                 new String[]{"TLSv1.2"},
                 context.sslContext().getDefaultSSLParameters().getProtocols());
         assertNotNull(context.keyManager());
+        assertSame(context.keyManager(), context.keyManager());
         assertSame(certificate, context.bindingCertificate());
         assertEquals(MtlsBindingStrength.KEY_GUARD,
                 context.bindingStrength());

@@ -227,7 +227,19 @@ public final class KeyGuardManagedIdentityMtlsProvider
         if (generations == null) {
             return;
         }
-        long now = System.currentTimeMillis();
+        List<BindingGeneration> retained = cleanupRetiredGenerations(
+                generations,
+                System.currentTimeMillis());
+        if (retained.isEmpty()) {
+            RETIRED.remove(cacheKey);
+        } else {
+            RETIRED.put(cacheKey, retained);
+        }
+    }
+
+    static List<BindingGeneration> cleanupRetiredGenerations(
+            List<BindingGeneration> generations,
+            long now) {
         List<BindingGeneration> retained = new ArrayList<>();
         for (BindingGeneration generation : generations) {
             if (now >= generation.notAfterMillis) {
@@ -236,11 +248,7 @@ public final class KeyGuardManagedIdentityMtlsProvider
                 retained.add(generation);
             }
         }
-        if (retained.isEmpty()) {
-            RETIRED.remove(cacheKey);
-        } else {
-            RETIRED.put(cacheKey, retained);
-        }
+        return retained;
     }
 
     private static String shortHash(String value) {

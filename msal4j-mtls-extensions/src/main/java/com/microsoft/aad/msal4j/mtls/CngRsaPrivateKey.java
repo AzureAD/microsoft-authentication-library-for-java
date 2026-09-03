@@ -7,7 +7,7 @@ import com.sun.jna.Pointer;
 
 import java.math.BigInteger;
 import java.security.interfaces.RSAPrivateKey;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 /**
  * A non-exportable RSA private key backed by a Windows CNG {@code NCRYPT_KEY_HANDLE}.
@@ -29,7 +29,8 @@ public final class CngRsaPrivateKey implements RSAPrivateKey, AutoCloseable {
     private final Pointer handle;
     private final BigInteger modulus;
     private final int publicExponent;
-    private final AtomicBoolean closed = new AtomicBoolean();
+    private final Object nativeHandleLock = new Object();
+    private boolean closed;
     private final Runnable releaser;
 
     CngRsaPrivateKey(Pointer handle, BigInteger modulus, int publicExponent) {
@@ -49,8 +50,17 @@ public final class CngRsaPrivateKey implements RSAPrivateKey, AutoCloseable {
     }
 
     Pointer nativeHandle() {
-        if (closed.get()) throw new IllegalStateException("CNG key handle has been closed");
-        return handle;
+        synchronized (nativeHandleLock) {
+            ensureOpen();
+            return handle;
+        }
+    }
+
+    <T> T useNativeHandle(Function<Pointer, T> operation) {
+        synchronized (nativeHandleLock) {
+            ensureOpen();
+            return operation.apply(handle);
+        }
     }
 
     // ─── RSAKey ───────────────────────────────────────────────────────────────
@@ -91,13 +101,25 @@ public final class CngRsaPrivateKey implements RSAPrivateKey, AutoCloseable {
      */
     @Override
     public void close() {
-        if (closed.compareAndSet(false, true)) {
+        synchronized (nativeHandleLock) {
+            if (closed) {
+                return;
+            }
+            closed = true;
             releaser.run();
         }
     }
 
     boolean isClosed() {
-        return closed.get();
+        synchronized (nativeHandleLock) {
+            return closed;
+        }
+    }
+
+    private void ensureOpen() {
+        if (closed) {
+            throw new IllegalStateException("CNG key handle has been closed");
+        }
     }
 
     /** The public exponent (e.g. 65537 = 0x10001). */
