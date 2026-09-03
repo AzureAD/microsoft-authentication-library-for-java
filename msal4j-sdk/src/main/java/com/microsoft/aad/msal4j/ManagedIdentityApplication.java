@@ -6,7 +6,9 @@ package com.microsoft.aad.msal4j;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 
@@ -68,7 +70,11 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
     public synchronized CompletableFuture<ManagedIdentityCapabilities>
     getManagedIdentityCapabilities() {
         if (managedIdentityCapabilities != null) {
-            return managedIdentityCapabilities;
+            if (!shouldRetryCompletedDiscovery(
+                    managedIdentityCapabilities)) {
+                return managedIdentityCapabilities;
+            }
+            managedIdentityCapabilities = null;
         }
         Supplier<ManagedIdentityCapabilities> supplier =
                 this::detectManagedIdentityCapabilities;
@@ -90,6 +96,18 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
             }
         });
         return discovery;
+    }
+
+    private static boolean shouldRetryCompletedDiscovery(
+            CompletableFuture<ManagedIdentityCapabilities> discovery) {
+        if (!discovery.isDone()) {
+            return false;
+        }
+        try {
+            return shouldRetryCapabilityDiscovery(discovery.getNow(null));
+        } catch (CompletionException | CancellationException e) {
+            return true;
+        }
     }
 
     private static boolean shouldRetryCapabilityDiscovery(
