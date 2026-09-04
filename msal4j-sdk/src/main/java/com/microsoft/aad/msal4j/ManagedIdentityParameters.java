@@ -19,7 +19,8 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
     String claims;
     String revokedTokenHash;
     boolean mtlsProofOfPossession;
-    boolean attestationSupport;
+    boolean requestOverMtls;
+    IManagedIdentityMtlsProvider mtlsProvider;
     MtlsBindingStrength minimumBindingStrength;
     
     private ManagedIdentityParameters(
@@ -27,13 +28,15 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
             boolean forceRefresh,
             String claims,
             boolean mtlsProofOfPossession,
-            boolean attestationSupport,
+            boolean requestOverMtls,
+            IManagedIdentityMtlsProvider mtlsProvider,
             MtlsBindingStrength minimumBindingStrength) {
         this.resource = resource;
         this.forceRefresh = forceRefresh;
         this.claims = claims;
         this.mtlsProofOfPossession = mtlsProofOfPossession;
-        this.attestationSupport = attestationSupport;
+        this.requestOverMtls = requestOverMtls;
+        this.mtlsProvider = mtlsProvider;
         this.minimumBindingStrength = minimumBindingStrength;
     }
 
@@ -101,8 +104,16 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
         return mtlsProofOfPossession;
     }
 
-    public boolean attestationSupport() {
-        return attestationSupport;
+    public boolean requestOverMtls() {
+        return requestOverMtls;
+    }
+
+    boolean attestationSupport() {
+        return mtlsProvider != null && mtlsProvider.isAttestationEnabled();
+    }
+
+    IManagedIdentityMtlsProvider mtlsProvider() {
+        return mtlsProvider;
     }
 
     public MtlsBindingStrength minimumBindingStrength() {
@@ -115,13 +126,20 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
     }
 
     String computeMtlsExtCacheKeyHash(String bindingKeyId) {
-        if (!mtlsProofOfPossession || StringHelper.isBlank(bindingKeyId)) {
+        if (!mtlsProofOfPossession && !requestOverMtls) {
             return "";
         }
         SortedMap<String, String> components = new TreeMap<>();
-        components.put("token_type", "mtls_pop");
-        components.put("key_id", bindingKeyId);
-        components.put("attestation", attestationSupport ? "att1" : "att0");
+        if (mtlsProofOfPossession) {
+            if (StringHelper.isBlank(bindingKeyId)) {
+                return "";
+            }
+            components.put("token_type", "mtls_pop");
+            components.put("key_id", bindingKeyId);
+        } else {
+            components.put("token_type", "mtls_bearer");
+        }
+        components.put("attestation", attestationSupport() ? "att1" : "att0");
         if (minimumBindingStrength != MtlsBindingStrength.NONE) {
             components.put("min_strength", minimumBindingStrength.name());
         }
@@ -133,7 +151,8 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
         private boolean forceRefresh;
         private String claims;
         private boolean mtlsProofOfPossession;
-        private boolean attestationSupport;
+        private boolean requestOverMtls;
+        private IManagedIdentityMtlsProvider mtlsProvider;
         private MtlsBindingStrength minimumBindingStrength =
                 MtlsBindingStrength.NONE;
 
@@ -182,31 +201,62 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
             if (options == null) {
                 throw new NullPointerException("options");
             }
+            if (requestOverMtls) {
+                throw new IllegalStateException(
+                        "withMtlsProofOfPossession() and withRequestOverMtls() "
+                                + "are mutually exclusive.");
+            }
             this.mtlsProofOfPossession = true;
             this.minimumBindingStrength = options.minimumBindingStrength();
             return this;
         }
 
         /**
-         * Requires MAA attestation for the KeyGuard binding key.
-         * This option requires {@link #withMtlsProofOfPossession()}.
+         * Uses the managed identity v2 KeyGuard mTLS flow to request an ordinary
+         * bearer token. The binding certificate authenticates the token request,
+         * but the returned token is not certificate-bound.
          */
-        public ManagedIdentityParametersBuilder withAttestationSupport() {
-            this.attestationSupport = true;
+        public ManagedIdentityParametersBuilder withRequestOverMtls() {
+            if (mtlsProofOfPossession) {
+                throw new IllegalStateException(
+                        "withMtlsProofOfPossession() and withRequestOverMtls() "
+                                + "are mutually exclusive.");
+            }
+            this.requestOverMtls = true;
+            return this;
+        }
+
+        /**
+         * Configures the optional provider that supplies the managed identity mTLS binding.
+         *
+         * <p>This is an extension integration point. Applications enabling Microsoft
+         * KeyGuard attestation should use the public helper from the optional
+         * {@code msal4j-key-attestation} artifact instead of calling this method directly.</p>
+         */
+        public ManagedIdentityParametersBuilder withManagedIdentityMtlsProvider(
+                IManagedIdentityMtlsProvider mtlsProvider) {
+            if (mtlsProvider == null) {
+                throw new NullPointerException("mtlsProvider");
+            }
+            this.mtlsProvider = mtlsProvider;
             return this;
         }
 
         public ManagedIdentityParameters build() {
-            if (attestationSupport && !mtlsProofOfPossession) {
+            if (mtlsProvider != null
+                    && mtlsProvider.isAttestationEnabled()
+                    && !mtlsProofOfPossession
+                    && !requestOverMtls) {
                 throw new IllegalArgumentException(
-                        "Attestation support requires managed identity mTLS PoP.");
+                        "Attestation support requires managed identity mTLS.");
             }
             return new ManagedIdentityParameters(
                     this.resource,
                     this.forceRefresh,
                     this.claims,
                     this.mtlsProofOfPossession,
-                    this.attestationSupport,
+                    this.requestOverMtls,
+                    this.mtlsProvider,
                     this.minimumBindingStrength);
         }
 
@@ -214,7 +264,10 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
             return "ManagedIdentityParameters.ManagedIdentityParametersBuilder(resource=" + this.resource
                     + ", forceRefresh=" + this.forceRefresh
                     + ", mtlsProofOfPossession=" + this.mtlsProofOfPossession
-                    + ", attestationSupport=" + this.attestationSupport
+                    + ", requestOverMtls=" + this.requestOverMtls
+                    + ", attestationSupport="
+                    + (this.mtlsProvider != null
+                    && this.mtlsProvider.isAttestationEnabled())
                     + ", minimumBindingStrength=" + this.minimumBindingStrength + ")";
         }
     }

@@ -65,8 +65,15 @@ interface AttestationLibrary extends Library {
         public Pointer ctx;
 
         public AttestationLogInfo() {
-            logFunc = NOOP_LOG;   // DLL requires a non-null log function pointer
-            ctx     = Pointer.NULL;
+            this(NOOP_LOG);
+        }
+
+        public AttestationLogInfo(LogCallback logFunc) {
+            if (logFunc == null) {
+                throw new NullPointerException("logFunc");
+            }
+            this.logFunc = logFunc;
+            this.ctx = Pointer.NULL;
         }
 
         @Override

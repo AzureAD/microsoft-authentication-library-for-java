@@ -23,7 +23,7 @@
         </dependency>
         <dependency>
             <groupId>com.microsoft.azure</groupId>
-            <artifactId>msal4j-mtls-extensions</artifactId>
+            <artifactId>msal4j-key-attestation</artifactId>
             <version>1.0.0</version>
         </dependency>
     </dependencies>

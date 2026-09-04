@@ -14,6 +14,16 @@ public interface IManagedIdentityMtlsProvider {
     ManagedIdentityMtlsBinding getOrCreateBinding(ManagedIdentityMtlsRequest request);
 
     /**
+     * Indicates whether this provider instance requires attestation for bindings it creates.
+     *
+     * <p>This is an extension integration contract. Applications should use the public
+     * attestation entry point supplied by the optional provider package.</p>
+     */
+    default boolean isAttestationEnabled() {
+        return false;
+    }
+
+    /**
      * Probes the strongest binding this provider can produce without acquiring a token.
      */
     default MtlsBindingStrength getMaxSupportedBindingStrength(

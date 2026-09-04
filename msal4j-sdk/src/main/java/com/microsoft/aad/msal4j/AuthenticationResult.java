@@ -158,7 +158,26 @@ final class AuthenticationResult implements IAuthenticationResult {
         return withMtlsBindingContext(
                 bindingContext,
                 defaultScopes,
-                tokenType);
+                "mtls_pop");
+    }
+
+    AuthenticationResult withScopes(String defaultScopes) {
+        return AuthenticationResult.builder()
+                .accessToken(accessToken)
+                .expiresOn(expiresOn)
+                .extExpiresOn(extExpiresOn)
+                .refreshToken(refreshToken)
+                .refreshOn(refreshOn)
+                .familyId(familyId)
+                .idToken(idToken)
+                .accountCacheEntity(accountCacheEntity)
+                .environment(environment)
+                .scopes(StringHelper.isBlank(scopes) ? defaultScopes : scopes)
+                .metadata(metadata)
+                .isPopAuthorization(isPopAuthorization)
+                .tokenType(tokenType)
+                .mtlsBindingContext(mtlsBindingContext)
+                .build();
     }
 
     private AuthenticationResult withMtlsBindingContext(

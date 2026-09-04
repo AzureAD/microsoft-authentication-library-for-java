@@ -18,7 +18,7 @@ final class ManagedIdentityMtlsProviderLoader {
         if (!providers.hasNext()) {
             throw new MsalClientException(
                     "Managed identity mTLS PoP requires the optional "
-                            + "com.microsoft.azure:msal4j-mtls-extensions dependency.",
+                            + "com.microsoft.azure:msal4j-key-attestation dependency.",
                     MsalError.MANAGED_IDENTITY_MTLS_PROVIDER_UNAVAILABLE);
         }
 

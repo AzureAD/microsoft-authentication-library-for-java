@@ -9,6 +9,20 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ManagedIdentityMtlsParametersTest {
 
+    private static final IManagedIdentityMtlsProvider ATTESTED_PROVIDER =
+            new IManagedIdentityMtlsProvider() {
+                @Override
+                public ManagedIdentityMtlsBinding getOrCreateBinding(
+                        ManagedIdentityMtlsRequest request) {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public boolean isAttestationEnabled() {
+                    return true;
+                }
+            };
+
     @Test
     void attestationRequiresMtlsButMtlsCanBeRequestedAlone() {
         assertDoesNotThrow(
@@ -17,7 +31,7 @@ class ManagedIdentityMtlsParametersTest {
                         .build());
         assertThrows(IllegalArgumentException.class,
                 () -> ManagedIdentityParameters.builder("https://vault.azure.net")
-                        .withAttestationSupport()
+                        .withManagedIdentityMtlsProvider(ATTESTED_PROVIDER)
                         .build());
     }
 
@@ -43,7 +57,7 @@ class ManagedIdentityMtlsParametersTest {
         ManagedIdentityParameters mtls = ManagedIdentityParameters
                 .builder("https://vault.azure.net")
                 .withMtlsProofOfPossession()
-                .withAttestationSupport()
+                .withManagedIdentityMtlsProvider(ATTESTED_PROVIDER)
                 .build();
 
         assertEquals("", bearer.computeExtCacheKeyHash());
@@ -57,7 +71,7 @@ class ManagedIdentityMtlsParametersTest {
         ManagedIdentityParameters parameters = ManagedIdentityParameters
                 .builder("https://vault.azure.net")
                 .withMtlsProofOfPossession()
-                .withAttestationSupport()
+                .withManagedIdentityMtlsProvider(ATTESTED_PROVIDER)
                 .build();
         String first = parameters.computeMtlsExtCacheKeyHash("certificate-a");
 
@@ -74,7 +88,7 @@ class ManagedIdentityMtlsParametersTest {
         ManagedIdentityParameters attested = ManagedIdentityParameters
                 .builder("https://vault.azure.net")
                 .withMtlsProofOfPossession()
-                .withAttestationSupport()
+                .withManagedIdentityMtlsProvider(ATTESTED_PROVIDER)
                 .build();
 
         assertNotEquals(
@@ -108,9 +122,45 @@ class ManagedIdentityMtlsParametersTest {
                 ManagedIdentityParameters.builder("https://vault.azure.net")
                 .claims("{\"access_token\":\"secret\"}")
                 .withMtlsProofOfPossession()
-                .withAttestationSupport();
+                .withManagedIdentityMtlsProvider(ATTESTED_PROVIDER);
 
         assertFalse(builder.toString().contains("secret"));
+    }
+
+    @Test
+    void bearerOverMtlsIsMutuallyExclusiveWithMtlsPop() {
+        assertThrows(IllegalStateException.class,
+                () -> ManagedIdentityParameters.builder("https://vault.azure.net")
+                        .withMtlsProofOfPossession()
+                        .withRequestOverMtls());
+        assertThrows(IllegalStateException.class,
+                () -> ManagedIdentityParameters.builder("https://vault.azure.net")
+                        .withRequestOverMtls()
+                        .withMtlsProofOfPossession());
+    }
+
+    @Test
+    void bearerOverMtlsHasDistinctCachePartitionAndSupportsAttestation() {
+        ManagedIdentityParameters ordinaryBearer =
+                ManagedIdentityParameters.builder("https://vault.azure.net").build();
+        ManagedIdentityParameters mtlsBearer =
+                ManagedIdentityParameters.builder("https://vault.azure.net")
+                        .withRequestOverMtls()
+                        .withManagedIdentityMtlsProvider(ATTESTED_PROVIDER)
+                        .build();
+
+        assertTrue(mtlsBearer.requestOverMtls());
+        assertTrue(mtlsBearer.attestationSupport());
+        assertNotEquals(
+                ordinaryBearer.computeExtCacheKeyHash(),
+                mtlsBearer.computeMtlsExtCacheKeyHash(null));
+    }
+
+    @Test
+    void coreBuilderDoesNotExposeAttestationConvenienceMethod() {
+        assertThrows(NoSuchMethodException.class,
+                () -> ManagedIdentityParameters.ManagedIdentityParametersBuilder.class
+                        .getMethod("withAttestationSupport"));
     }
 
     @Test
@@ -136,5 +186,23 @@ class ManagedIdentityMtlsParametersTest {
                 .build();
         assertDoesNotThrow(() -> AcquireTokenByManagedIdentitySupplier
                 .validateMtlsTokenResponse(mtlsPop));
+    }
+
+    @Test
+    void bearerOverMtlsMustExplicitlyReturnBearer() {
+        AuthenticationResult bearer = AuthenticationResult.builder()
+                .accessToken("token")
+                .tokenType("Bearer")
+                .build();
+        assertDoesNotThrow(() -> AcquireTokenByManagedIdentitySupplier
+                .validateMtlsTokenResponse(bearer, "bearer"));
+
+        AuthenticationResult mtlsPop = AuthenticationResult.builder()
+                .accessToken("token")
+                .tokenType("mtls_pop")
+                .build();
+        assertThrows(MsalServiceException.class,
+                () -> AcquireTokenByManagedIdentitySupplier
+                        .validateMtlsTokenResponse(mtlsPop, "bearer"));
     }
 }

@@ -35,6 +35,24 @@ public final class KeyGuardManagedIdentityMtlsProvider
     private static final Map<String, List<BindingGeneration>> RETIRED =
             new ConcurrentHashMap<>();
     private static final Map<String, Object> LOCKS = new ConcurrentHashMap<>();
+    private final boolean attestationEnabled;
+
+    public KeyGuardManagedIdentityMtlsProvider() {
+        this(false);
+    }
+
+    private KeyGuardManagedIdentityMtlsProvider(boolean attestationEnabled) {
+        this.attestationEnabled = attestationEnabled;
+    }
+
+    static KeyGuardManagedIdentityMtlsProvider withAttestationSupport() {
+        return new KeyGuardManagedIdentityMtlsProvider(true);
+    }
+
+    @Override
+    public boolean isAttestationEnabled() {
+        return attestationEnabled;
+    }
 
     @Override
     public ManagedIdentityMtlsBinding getOrCreateBinding(
@@ -110,7 +128,8 @@ public final class KeyGuardManagedIdentityMtlsProvider
                             () -> CngKeyGuard.getAttestationToken(
                                     privateKey.nativeHandle(),
                                     metadata.attestationEndpoint,
-                                    metadata.clientId))
+                                    metadata.clientId,
+                                    request.correlationId()))
                     : null;
             ImdsV2Client.CredentialResponse credential =
                     ImdsV2Client.issueCredential(request, csr, attestationToken);

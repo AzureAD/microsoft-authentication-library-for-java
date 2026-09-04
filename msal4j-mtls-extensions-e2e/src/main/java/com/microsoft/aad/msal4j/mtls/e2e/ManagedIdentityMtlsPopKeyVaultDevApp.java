@@ -8,6 +8,7 @@ import com.microsoft.aad.msal4j.IMtlsBindingContext;
 import com.microsoft.aad.msal4j.ManagedIdentityApplication;
 import com.microsoft.aad.msal4j.ManagedIdentityId;
 import com.microsoft.aad.msal4j.ManagedIdentityParameters;
+import com.microsoft.aad.msal4j.mtls.ManagedIdentityAttestationExtensions;
 import com.microsoft.aad.msal4j.TokenSource;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -31,6 +32,13 @@ public final class ManagedIdentityMtlsPopKeyVaultDevApp {
     public static void main(String[] args) throws Exception {
         boolean tokenOnly = Boolean.parseBoolean(
                 System.getenv("MSAL_JAVA_MTLS_TOKEN_ONLY"));
+        boolean bearerOverMtls = Boolean.parseBoolean(
+                System.getenv("MSAL_JAVA_MTLS_REQUEST_OVER_MTLS"));
+        if (bearerOverMtls && !tokenOnly) {
+            throw new IllegalArgumentException(
+                    "Bearer-over-mTLS validation requires "
+                            + "MSAL_JAVA_MTLS_TOKEN_ONLY=true.");
+        }
         String vaultUrl = tokenOnly
                 ? null : required("MSAL_JAVA_MTLS_AKV_URL");
         String secretName = tokenOnly
@@ -50,21 +58,47 @@ public final class ManagedIdentityMtlsPopKeyVaultDevApp {
         ManagedIdentityApplication application =
                 ManagedIdentityApplication.builder(identity).build();
 
-        System.out.println("Java Managed Identity v2 mTLS PoP manual validation");
+        System.out.println("Java Managed Identity v2 mTLS manual validation");
         System.out.println();
         System.out.println("Platform: " + System.getProperty("os.name"));
         System.out.println("JVM: " + System.getProperty("java.version"));
         System.out.println("Identity: " + (isBlank(identityClientId)
                 ? "SystemAssigned" : "UserAssigned"));
         System.out.println("Attestation: enabled");
+        System.out.println("Mode: " + (bearerOverMtls
+                ? "bearer-over-mTLS" : "mTLS PoP"));
         System.out.println("Resource: " + RESOURCE);
         if (!tokenOnly) {
             System.out.println("AKV host: " + new URL(vaultUrl).getHost());
         }
         System.out.println("Correlation ID: " + runId);
 
-        System.out.println("\n[1] Acquiring attested mTLS PoP token...");
-        IAuthenticationResult first = acquire(application, false);
+        System.out.println("\n[1] Acquiring attested "
+                + (bearerOverMtls ? "bearer token over mTLS..."
+                : "mTLS PoP token..."));
+        IAuthenticationResult first = acquire(
+                application,
+                false,
+                bearerOverMtls);
+        if (bearerOverMtls) {
+            verifyBearerOverMtlsResult(first);
+            System.out.println("PASS: token_type = Bearer");
+            System.out.println("PASS: no downstream binding context exposed");
+
+            System.out.println("\n[2] Reacquiring...");
+            IAuthenticationResult cached = acquire(
+                    application,
+                    false,
+                    true);
+            verifyBearerOverMtlsResult(cached);
+            if (cached.metadata().tokenSource() != TokenSource.CACHE) {
+                throw new IllegalStateException(
+                        "Second bearer-over-mTLS acquisition was not a cache hit.");
+            }
+            System.out.println("PASS: TokenSource = CACHE");
+            System.out.println("\nRESULT: PASS - bearer token acquired over attested mTLS");
+            return;
+        }
         verifyResult(first);
         System.out.println("PASS: token_type = mtls_pop");
         System.out.println("PASS: binding certificate returned");
@@ -107,7 +141,7 @@ public final class ManagedIdentityMtlsPopKeyVaultDevApp {
                                     mismatchIdentityClientId))
                             .build();
             IAuthenticationResult mismatchBinding =
-                    acquire(mismatchApplication, false);
+                    acquire(mismatchApplication, false, false);
             verifyResult(mismatchBinding);
             if (first.mtlsBindingContext().keyId().equals(
                     mismatchBinding.mtlsBindingContext().keyId())) {
@@ -129,7 +163,7 @@ public final class ManagedIdentityMtlsPopKeyVaultDevApp {
         }
 
         System.out.println("\n[" + nextStep++ + "] Reacquiring...");
-        IAuthenticationResult cached = acquire(application, false);
+        IAuthenticationResult cached = acquire(application, false, false);
         verifyResult(cached);
         if (cached.metadata().tokenSource() != TokenSource.CACHE) {
             throw new IllegalStateException("Second acquisition was not a cache hit.");
@@ -144,7 +178,10 @@ public final class ManagedIdentityMtlsPopKeyVaultDevApp {
 
         if (forceRefresh) {
             System.out.println("\n[" + nextStep + "] Force refresh...");
-            IAuthenticationResult refreshed = acquire(application, true);
+            IAuthenticationResult refreshed = acquire(
+                    application,
+                    true,
+                    false);
             verifyResult(refreshed);
             if (refreshed.metadata().tokenSource() != TokenSource.IDENTITY_PROVIDER) {
                 throw new IllegalStateException(
@@ -160,14 +197,33 @@ public final class ManagedIdentityMtlsPopKeyVaultDevApp {
 
     private static IAuthenticationResult acquire(
             ManagedIdentityApplication application,
-            boolean forceRefresh) throws Exception {
-        ManagedIdentityParameters parameters = ManagedIdentityParameters
-                .builder(RESOURCE)
-                .withMtlsProofOfPossession()
-                .withAttestationSupport()
-                .forceRefresh(forceRefresh)
-                .build();
+            boolean forceRefresh,
+            boolean bearerOverMtls) throws Exception {
+        ManagedIdentityParameters.ManagedIdentityParametersBuilder builder =
+                ManagedIdentityParameters.builder(RESOURCE);
+        if (bearerOverMtls) {
+            builder.withRequestOverMtls();
+        } else {
+            builder.withMtlsProofOfPossession();
+        }
+        ManagedIdentityParameters parameters =
+                ManagedIdentityAttestationExtensions
+                        .withAttestationSupport(builder)
+                        .forceRefresh(forceRefresh)
+                        .build();
         return application.acquireTokenForManagedIdentity(parameters).get();
+    }
+
+    private static void verifyBearerOverMtlsResult(
+            IAuthenticationResult result) {
+        if (result == null
+                || isBlank(result.accessToken())
+                || !"Bearer".equalsIgnoreCase(result.tokenType())
+                || result.bindingCertificate() != null
+                || result.mtlsBindingContext() != null) {
+            throw new IllegalStateException(
+                    "Managed identity bearer-over-mTLS result was invalid.");
+        }
     }
 
     private static void verifyResult(IAuthenticationResult result) {
