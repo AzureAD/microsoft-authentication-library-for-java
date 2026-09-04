@@ -1,3 +1,17 @@
+Unreleased
+==========
+- Add Managed Identity v2 KeyGuard mTLS PoP support.
+  - Custom `IHttpClient` implementations must explicitly implement
+    `IMtlsCapableHttpClient`, consume the request-specific `SSLContext` or
+    `SSLSocketFactory`, and disable redirects for credential-bound requests.
+  - Existing custom HTTP clients fail closed until they opt into this contract.
+  - The initial native KeyGuard attestation package supports Windows x64 only.
+  - Credential chains can discover IMDS v2/KeyGuard capability and require a
+    minimum `MtlsBindingStrength` before token acquisition succeeds.
+  - Results expose the actual binding strength with the reusable context.
+  - The native attestation DLL is verified with SHA-256 and Windows
+    Authenticode before it is loaded.
+
 Version 1.26.0
 =============
 - Add Azure Arc user-assigned managed identity support with validation that the requested identity was honored (#1057)

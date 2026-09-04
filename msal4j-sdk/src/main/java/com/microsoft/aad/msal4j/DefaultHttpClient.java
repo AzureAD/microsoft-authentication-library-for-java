@@ -20,7 +20,7 @@ import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-class DefaultHttpClient implements IHttpClient {
+class DefaultHttpClient implements IMtlsCapableHttpClient {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultHttpClient.class);
 
     final Proxy proxy;
@@ -50,7 +50,7 @@ class DefaultHttpClient implements IHttpClient {
 
     private HttpResponse executeHttpGet(HttpRequest httpRequest) throws Exception {
 
-        final HttpURLConnection conn = openConnection(httpRequest.url());
+        final HttpURLConnection conn = openConnection(httpRequest.url(), httpRequest.sslSocketFactory());
         configureAdditionalHeaders(conn, httpRequest);
 
         return readResponseFromConnection(conn);
@@ -58,7 +58,7 @@ class DefaultHttpClient implements IHttpClient {
 
     private HttpResponse executeHttpPost(HttpRequest httpRequest) throws Exception {
 
-        final HttpURLConnection conn = openConnection(httpRequest.url());
+        final HttpURLConnection conn = openConnection(httpRequest.url(), httpRequest.sslSocketFactory());
         configureAdditionalHeaders(conn, httpRequest);
         conn.setRequestMethod("POST");
         conn.setDoOutput(true);
@@ -79,6 +79,11 @@ class DefaultHttpClient implements IHttpClient {
 
     HttpURLConnection openConnection(final URL finalURL)
             throws IOException {
+        return openConnection(finalURL, null);
+    }
+
+    HttpURLConnection openConnection(final URL finalURL, SSLSocketFactory requestSslSocketFactory)
+            throws IOException {
         URLConnection connection;
 
         if (proxy != null) {
@@ -93,8 +98,13 @@ class DefaultHttpClient implements IHttpClient {
         if (connection instanceof HttpsURLConnection) {
             HttpsURLConnection httpsConnection = (HttpsURLConnection) connection;
 
-            if (sslSocketFactory != null) {
-                httpsConnection.setSSLSocketFactory(sslSocketFactory);
+            SSLSocketFactory effectiveSslSocketFactory =
+                    requestSslSocketFactory != null ? requestSslSocketFactory : sslSocketFactory;
+            if (effectiveSslSocketFactory != null) {
+                httpsConnection.setSSLSocketFactory(effectiveSslSocketFactory);
+            }
+            if (requestSslSocketFactory != null) {
+                httpsConnection.setInstanceFollowRedirects(false);
             }
 
             return httpsConnection;

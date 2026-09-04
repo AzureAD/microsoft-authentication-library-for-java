@@ -28,10 +28,12 @@
 - Multi-cloud and B2C support
 
 ### Repository Structure
-This repository contains three Maven modules:
+This repository contains four default Maven modules plus one profile-only E2E module:
 - **`msal4j-sdk/`** - The main MSAL Java library (focus of development)
 - **`msal4j-brokers/`** - Broker integration for native authentication (Windows WAM)
 - **`msal4j-persistence-extension/`** - Cross-platform token cache persistence helpers
+- **`msal4j-mtls-extensions/`** - Optional Windows KeyGuard/attestation bridge for Managed Identity v2 mTLS PoP; bundles Microsoft.Azure.Security.KeyGuardAttestation 1.1.5 while Java JCA/JSSE performs TLS
+- **`msal4j-mtls-extensions-e2e/`** - Manual validation app, included only by the Maven `e2e` profile
 
 For most work, focus on **`msal4j-sdk/`**.
 
@@ -151,6 +153,8 @@ MSAL4J supports multiple authentication flows, each with a public `*Parameters` 
 - **Parameters**: `ManagedIdentityParameters` - For Azure resources (VMs, App Service, Functions)
 - **Internal**: `ManagedIdentityRequest` → `AcquireTokenByManagedIdentitySupplier`
 - **Key Classes**: `ManagedIdentitySource` implementations (`IMDSManagedIdentitySource`, `AppServiceManagedIdentitySource`, etc.)
+- **Optional mTLS**: `withMtlsProofOfPossession()` requests a certificate-bound token; `withRequestOverMtls()` requests an ordinary bearer token over the same KeyGuard-authenticated ESTS channel. The optional `msal4j-key-attestation` artifact supplies `ManagedIdentityAttestationExtensions.withAttestationSupport(builder)` to require MAA attestation and fail closed. Core owns OAuth/HTTP/cache behavior; the optional artifact owns the public attestation opt-in plus KeyGuard/CNG/attestation and returns a reusable process-local `IMtlsBindingContext` for PoP results. Custom HTTP clients must implement `IMtlsCapableHttpClient` and consume the request-specific context or socket factory.
+- **mTLS capability discovery**: `getManagedIdentityCapabilities()` reports the detected source and maximum `MtlsBindingStrength`; `MtlsPopOptions` lets credential chains require a minimum strength before token acquisition succeeds.
 
 ### Common Flows (All Application Types)
 
