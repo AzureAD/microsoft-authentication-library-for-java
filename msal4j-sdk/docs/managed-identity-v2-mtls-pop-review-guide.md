@@ -4,6 +4,10 @@ This guide is the recommended entry point for reviewing the Managed Identity v2
 mTLS Proof-of-Possession change. It explains the intended architecture, security
 boundaries, protocol flow, review order, test coverage, and manual validation.
 
+For a feature-by-feature comparison with current MSAL.NET, including intentional
+platform differences and the remaining release gaps, see
+[`managed-identity-v2-dotnet-java-parity-gap-analysis.md`](managed-identity-v2-dotnet-java-parity-gap-analysis.md).
+
 The implementation is intentionally split between the portable MSAL core and an
 optional Windows extension. Reviewers should verify that this separation remains
 intact: native code performs only platform cryptographic operations, while Java
