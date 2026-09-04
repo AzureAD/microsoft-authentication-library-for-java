@@ -125,17 +125,22 @@ ManagedIdentityParameters.builder(resource)
 ```
 
 ```java
-ManagedIdentityParameters.builder(resource)
-        .withMtlsProofOfPossession()
-        .withAttestationSupport()
-        .build();
+ManagedIdentityParameters.ManagedIdentityParametersBuilder builder =
+        ManagedIdentityParameters.builder(resource)
+                .withMtlsProofOfPossession();
+
+ManagedIdentityParameters parameters =
+        ManagedIdentityAttestationExtensions
+                .withAttestationSupport(builder)
+                .build();
 ```
 
 The following must be rejected:
 
 ```java
-ManagedIdentityParameters.builder(resource)
-        .withAttestationSupport()
+ManagedIdentityAttestationExtensions
+        .withAttestationSupport(
+                ManagedIdentityParameters.builder(resource))
         .build();
 ```
 
@@ -341,7 +346,8 @@ Review that:
 
 ## Attestation
 
-Attestation is requested only when `.withAttestationSupport()` is present.
+Attestation is requested only when the optional extension's
+`ManagedIdentityAttestationExtensions.withAttestationSupport(builder)` is used.
 
 When selected:
 

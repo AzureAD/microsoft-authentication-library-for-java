@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.microsoft.azure</groupId>
-    <artifactId>msal4j-mtls-extensions</artifactId>
+    <artifactId>msal4j-key-attestation</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>Microsoft Authentication Library for Java - mTLS Extensions</name>
+    <name>Microsoft Authentication Library for Java - Key Attestation</name>
     <description>
         Extension package that enables mTLS Proof-of-Possession (mTLS PoP) token acquisition
         for Azure Managed Identity scenarios requiring KeyGuard-bound certificates. Uses JNA
@@ -38,6 +38,11 @@
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>
             <version>5.14.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.36</version>
         </dependency>
 
         <!-- Test dependencies -->

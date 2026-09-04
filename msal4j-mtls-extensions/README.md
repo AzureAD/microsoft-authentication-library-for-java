@@ -1,7 +1,8 @@
-# MSAL4J Managed Identity v2 mTLS extension
+# MSAL4J Key Attestation
 
-`msal4j-mtls-extensions` adds Managed Identity v2 mTLS
-Proof-of-Possession (PoP) to `ManagedIdentityApplication`.
+`com.microsoft.azure:msal4j-key-attestation` adds Managed Identity v2 mTLS
+Proof-of-Possession (PoP) and bearer-over-mTLS to
+`ManagedIdentityApplication`.
 
 The extension keeps native interop limited to Windows KeyGuard/CNG signing and
 Microsoft Azure Attestation. OAuth, HTTP policy, token caching, TLS, and
@@ -27,14 +28,34 @@ ManagedIdentityApplication
 - A resource and tenant enrolled for Managed Identity mTLS PoP
 
 Attestation is optional at the public API. When
-`withAttestationSupport()` is enabled, bundled DLL extraction/loading, KeyGuard
-attestation, or invalid attestation evidence fails closed. Platform support,
+`ManagedIdentityAttestationExtensions.withAttestationSupport(builder)` is used,
+bundled DLL extraction/loading, KeyGuard attestation, or invalid attestation
+evidence fails closed. Platform support,
 credential issuance, certificate validation, and an explicit
 `token_type=mtls_pop` response are always required.
+
+The attestation convenience API is intentionally declared in this optional
+artifact, matching the MSAL.NET `Microsoft.Identity.Client.KeyAttestation`
+package boundary. Core MSAL contains only the provider integration contract.
+
+For bearer-over-mTLS, replace `withMtlsProofOfPossession(...)` with
+`withRequestOverMtls()`. The KeyGuard certificate authenticates the ESTS
+connection, while the returned token remains an ordinary bearer token and has
+no binding context.
 
 The bundled native library is verified with both a pinned SHA-256 digest and
 Windows `WinVerifyTrust` Authenticode validation before loading. Its extraction
 directory is restricted to the current Windows user.
+
+## Dependency
+
+```xml
+<dependency>
+  <groupId>com.microsoft.azure</groupId>
+  <artifactId>msal4j-key-attestation</artifactId>
+  <version>${msal4j.version}</version>
+</dependency>
+```
 
 ## Token acquisition
 
@@ -43,15 +64,19 @@ ManagedIdentityApplication application = ManagedIdentityApplication
         .builder(ManagedIdentityId.systemAssigned())
         .build();
 
-ManagedIdentityParameters parameters = ManagedIdentityParameters
+ManagedIdentityParameters.ManagedIdentityParametersBuilder builder =
+        ManagedIdentityParameters
         .builder("https://vault.azure.net")
         .withMtlsProofOfPossession(
                 MtlsPopOptions.builder()
                         .minimumBindingStrength(
                                 MtlsBindingStrength.KEY_GUARD)
-                        .build())
-        .withAttestationSupport()
-        .build();
+                        .build());
+
+ManagedIdentityParameters parameters =
+        ManagedIdentityAttestationExtensions
+                .withAttestationSupport(builder)
+                .build();
 
 IAuthenticationResult result = application
         .acquireTokenForManagedIdentity(parameters)
@@ -143,6 +168,10 @@ client certificate during TLS 1.3 negotiation.
 The initial native package is Windows x64 only. Windows ARM64 callers receive a
 typed unsupported-architecture failure before native loading.
 
+Set `MSAL_MI_DISABLE_IMDS_V2=true` (or `1`) and restart the process to disable
+Managed Identity v2. Explicit PoP and bearer-over-mTLS requests then fail closed,
+while capability discovery reports no available mTLS binding.
+
 ## Manual validation
 
 From the repository root:
@@ -159,6 +188,14 @@ $env:MSAL_JAVA_MTLS_TOKEN_ONLY = "true"
 .\run-java-msi-v2-mtls-devapp.ps1
 ```
 
+To validate bearer-over-mTLS token acquisition and its cache partition:
+
+```powershell
+$env:MSAL_JAVA_MTLS_TOKEN_ONLY = "true"
+$env:MSAL_JAVA_MTLS_REQUEST_OVER_MTLS = "true"
+.\run-java-msi-v2-mtls-devapp.ps1
+```
+
 For the negative certificate-binding proof, attach a distinct user-assigned
 managed identity to the VM and set:
 
@@ -172,3 +209,6 @@ token A with binding B to be rejected.
 See
 [`msal4j-sdk/docs/managed-identity-v2-mtls-pop.md`](../msal4j-sdk/docs/managed-identity-v2-mtls-pop.md)
 for architecture, protocol reconciliation, and troubleshooting.
+See the
+[DevEx guide](../msal4j-sdk/docs/managed-identity-v2-devex.md)
+for a concise before/after API migration.

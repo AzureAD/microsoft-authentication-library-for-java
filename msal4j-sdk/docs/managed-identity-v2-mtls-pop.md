@@ -59,11 +59,19 @@ and three-day rotation window are not used.
 Request mTLS PoP and opt into attestation separately:
 
 ```java
-ManagedIdentityParameters.builder("https://vault.azure.net")
-        .withMtlsProofOfPossession()
-        .withAttestationSupport()
-        .build();
+ManagedIdentityParameters.ManagedIdentityParametersBuilder builder =
+        ManagedIdentityParameters.builder("https://vault.azure.net")
+                .withMtlsProofOfPossession();
+
+ManagedIdentityParameters parameters =
+        ManagedIdentityAttestationExtensions
+                .withAttestationSupport(builder)
+                .build();
 ```
+
+`ManagedIdentityAttestationExtensions` is supplied only by the optional
+`com.microsoft.azure:msal4j-key-attestation` artifact. Core MSAL does not expose
+the attestation opt-in API.
 
 Credential chains can probe the host before acquiring a token:
 
@@ -91,11 +99,14 @@ MtlsPopOptions options = MtlsPopOptions.builder()
         .minimumBindingStrength(MtlsBindingStrength.KEY_GUARD)
         .build();
 
-ManagedIdentityParameters parameters = ManagedIdentityParameters
-        .builder("https://vault.azure.net")
-        .withMtlsProofOfPossession(options)
-        .withAttestationSupport()
-        .build();
+ManagedIdentityParameters.ManagedIdentityParametersBuilder builder =
+        ManagedIdentityParameters.builder("https://vault.azure.net")
+                .withMtlsProofOfPossession(options);
+
+ManagedIdentityParameters parameters =
+        ManagedIdentityAttestationExtensions
+                .withAttestationSupport(builder)
+                .build();
 ```
 
 The tiers are `NONE`, `SOFTWARE`, and `KEY_GUARD`. The current Java extension
@@ -104,8 +115,13 @@ providers. A successful request with a minimum strength guarantees that the
 returned binding met that floor.
 
 `withMtlsProofOfPossession()` can be used without attestation.
-`withAttestationSupport()` requires mTLS PoP and makes any attestation failure
-fail closed.
+`ManagedIdentityAttestationExtensions.withAttestationSupport(builder)` requires
+an mTLS flow and makes any attestation failure fail closed.
+
+Use `withRequestOverMtls()` instead of `withMtlsProofOfPossession()` when the
+KeyGuard certificate should authenticate only the ESTS connection. That mode
+requests `token_type=bearer`; its result has no binding context because the
+access token itself is not certificate-bound.
 
 The returned `IMtlsBindingContext` contains an `SSLContext`,
 `X509ExtendedKeyManager`, leaf certificate, and complete-certificate key ID.

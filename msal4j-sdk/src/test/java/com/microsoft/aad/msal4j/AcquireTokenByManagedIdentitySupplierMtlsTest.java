@@ -4,6 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
 
 import javax.net.ssl.SSLContext;
 import java.security.cert.X509Certificate;
@@ -20,6 +21,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AcquireTokenByManagedIdentitySupplierMtlsTest {
+
+    @AfterEach
+    void resetEnvironment() {
+        ManagedIdentityApplication.setEnvironmentVariables(null);
+    }
 
     @Test
     void providerRuntimeFailureIsNormalized() {
@@ -76,6 +82,67 @@ class AcquireTokenByManagedIdentitySupplierMtlsTest {
         AcquireTokenByManagedIdentitySupplier.validateMinimumBindingStrength(
                 binding(MtlsBindingStrength.KEY_GUARD),
                 MtlsBindingStrength.SOFTWARE);
+    }
+
+    @Test
+    void killSwitchRejectsMtlsPopBeforeBindingResolution() throws Exception {
+        setKillSwitch();
+        AtomicInteger bindingResolutions = new AtomicInteger();
+        ManagedIdentityParameters parameters = ManagedIdentityParameters
+                .builder("https://vault.azure.net")
+                .withMtlsProofOfPossession()
+                .build();
+
+        MsalClientException exception = assertThrows(
+                MsalClientException.class,
+                () -> supplier(parameters, bindingResolutions).execute());
+
+        assertEquals(MsalError.MANAGED_IDENTITY_MTLS_UNSUPPORTED,
+                exception.errorCode());
+        assertEquals(0, bindingResolutions.get());
+    }
+
+    @Test
+    void killSwitchRejectsBearerOverMtlsBeforeBindingResolution()
+            throws Exception {
+        setKillSwitch();
+        AtomicInteger bindingResolutions = new AtomicInteger();
+        ManagedIdentityParameters parameters = ManagedIdentityParameters
+                .builder("https://vault.azure.net")
+                .withRequestOverMtls()
+                .build();
+
+        MsalClientException exception = assertThrows(
+                MsalClientException.class,
+                () -> supplier(parameters, bindingResolutions).execute());
+
+        assertEquals(MsalError.MANAGED_IDENTITY_MTLS_UNSUPPORTED,
+                exception.errorCode());
+        assertEquals(0, bindingResolutions.get());
+    }
+
+    @Test
+    void killSwitchUsesMinimumStrengthErrorWhenFloorIsSet()
+            throws Exception {
+        setKillSwitch();
+        AtomicInteger bindingResolutions = new AtomicInteger();
+        ManagedIdentityParameters parameters = ManagedIdentityParameters
+                .builder("https://vault.azure.net")
+                .withMtlsProofOfPossession(
+                        MtlsPopOptions.builder()
+                                .minimumBindingStrength(
+                                        MtlsBindingStrength.KEY_GUARD)
+                                .build())
+                .build();
+
+        MsalClientException exception = assertThrows(
+                MsalClientException.class,
+                () -> supplier(parameters, bindingResolutions).execute());
+
+        assertEquals(
+                MsalError.MANAGED_IDENTITY_MTLS_MINIMUM_STRENGTH_NOT_MET,
+                exception.errorCode());
+        assertEquals(0, bindingResolutions.get());
     }
 
     @Test
@@ -208,6 +275,34 @@ class AcquireTokenByManagedIdentitySupplierMtlsTest {
                         HttpStatus.HTTP_OK,
                         "{}",
                         Collections.emptyMap()));
+    }
+
+    private static AcquireTokenByManagedIdentitySupplier supplier(
+            ManagedIdentityParameters parameters,
+            AtomicInteger bindingResolutions) {
+        ManagedIdentityApplication application =
+                ManagedIdentityApplication
+                        .builder(ManagedIdentityId.systemAssigned())
+                        .build();
+        RequestContext context = new RequestContext(
+                application,
+                PublicApi.ACQUIRE_TOKEN_BY_SYSTEM_ASSIGNED_MANAGED_IDENTITY,
+                parameters);
+        ManagedIdentityRequest request =
+                new ManagedIdentityRequest(application, context);
+        return new AcquireTokenByManagedIdentitySupplier(
+                application,
+                request,
+                () -> {
+                    bindingResolutions.incrementAndGet();
+                    return binding(MtlsBindingStrength.KEY_GUARD);
+                });
+    }
+
+    private static void setKillSwitch() {
+        ManagedIdentityApplication.setEnvironmentVariables(
+                name -> Constants.MSAL_MI_DISABLE_IMDS_V2.equals(name)
+                        ? "true" : null);
     }
 
     private static ManagedIdentityMtlsBinding binding(

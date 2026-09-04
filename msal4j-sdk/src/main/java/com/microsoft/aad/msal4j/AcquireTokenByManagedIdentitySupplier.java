@@ -55,6 +55,27 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
         CacheRefreshReason cacheRefreshReason = CacheRefreshReason.NOT_APPLICABLE;
         ManagedIdentityMtlsBinding mtlsBinding = null;
 
+        if ((managedIdentityParameters.mtlsProofOfPossession()
+                || managedIdentityParameters.requestOverMtls())
+                && ManagedIdentityEnvironment.isImdsV2Disabled()) {
+            if (managedIdentityParameters.minimumBindingStrength()
+                    != MtlsBindingStrength.NONE) {
+                throw new MsalClientException(
+                        "The managed identity host produced mTLS binding strength NONE, "
+                                + "which does not meet the required "
+                                + managedIdentityParameters.minimumBindingStrength()
+                                + " minimum because "
+                                + Constants.MSAL_MI_DISABLE_IMDS_V2
+                                + " is enabled.",
+                        MsalError.MANAGED_IDENTITY_MTLS_MINIMUM_STRENGTH_NOT_MET);
+            }
+            throw new MsalClientException(
+                    "Managed identity mTLS is unavailable because "
+                            + Constants.MSAL_MI_DISABLE_IMDS_V2
+                            + " is enabled for this process.",
+                    MsalError.MANAGED_IDENTITY_MTLS_UNSUPPORTED);
+        }
+
         if (managedIdentityParameters.mtlsProofOfPossession()) {
             mtlsBinding = resolveMtlsBinding();
             MtlsBindingStrength requiredStrength =
@@ -66,6 +87,9 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
                     .computeMtlsExtCacheKeyHash(
                             mtlsBinding.bindingContext().keyId());
             msalRequest.extCacheKeyHash(extCacheKeyHash);
+        } else if (managedIdentityParameters.requestOverMtls()) {
+            msalRequest.extCacheKeyHash(
+                    managedIdentityParameters.computeMtlsExtCacheKeyHash(null));
         }
 
         if (managedIdentityParameters.forceRefresh) {
@@ -116,7 +140,9 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
                 result.metadata().tokenSource(TokenSource.CACHE);
                 return mtlsBinding == null
                         ? result
-                        : result.withMtlsBindingContext(mtlsBinding.bindingContext());
+                        : result.withMtlsBindingContext(
+                                mtlsBinding.bindingContext(),
+                                managedIdentityParameters.resource());
             } else {
                 if (cacheRefreshReason == CacheRefreshReason.CLAIMS) {
                     LOG.debug("Claims are passed, creating token hash and refreshing the token");
@@ -153,8 +179,15 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
             ManagedIdentityMtlsBinding mtlsBinding) {
 
         AuthenticationResult authenticationResult;
-        if (mtlsBinding != null) {
-            authenticationResult = acquireMtlsPopToken(
+        if (managedIdentityParameters.mtlsProofOfPossession()
+                || managedIdentityParameters.requestOverMtls()) {
+            if (mtlsBinding == null) {
+                mtlsBinding = resolveMtlsBinding();
+                validateMinimumBindingStrength(
+                        mtlsBinding,
+                        MtlsBindingStrength.KEY_GUARD);
+            }
+            authenticationResult = acquireTokenOverMtls(
                     mtlsBinding,
                     tokenRequestExecutor);
         } else {
@@ -211,8 +244,12 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
                 application,
                 msalRequest.requestContext(),
                 managedIdentityParameters.attestationSupport());
+        IManagedIdentityMtlsProvider provider =
+                managedIdentityParameters.mtlsProvider();
         return getMtlsProviderBinding(
-                ManagedIdentityMtlsProviderLoader.load(),
+                provider == null
+                        ? ManagedIdentityMtlsProviderLoader.load()
+                        : provider,
                 request);
     }
 
@@ -222,6 +259,13 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
             boolean attestationEnabled) {
         ManagedIdentitySourceType source =
                 ManagedIdentityClient.getManagedIdentitySource();
+        if (ManagedIdentityEnvironment.isImdsV2Disabled()) {
+            throw new MsalClientException(
+                    "Managed identity mTLS is unavailable because "
+                            + Constants.MSAL_MI_DISABLE_IMDS_V2
+                            + " is enabled for this process.",
+                    MsalError.MANAGED_IDENTITY_MTLS_UNSUPPORTED);
+        }
         if (source != ManagedIdentitySourceType.DEFAULT_TO_IMDS
                 && source != ManagedIdentitySourceType.IMDS) {
             throw new MsalClientException(
@@ -333,7 +377,7 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
         };
     }
 
-    private AuthenticationResult acquireMtlsPopToken(
+    private AuthenticationResult acquireTokenOverMtls(
             ManagedIdentityMtlsBinding binding,
             TokenRequestExecutor tokenRequestExecutor) {
         if (!(clientApplication.httpClient() instanceof IMtlsCapableHttpClient)) {
@@ -351,7 +395,9 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
         body.put("grant_type", "client_credentials");
         body.put("client_id", binding.clientId());
         body.put("scope", scope);
-        body.put("token_type", "mtls_pop");
+        String requestedTokenType = managedIdentityParameters.requestOverMtls()
+                ? "bearer" : "mtls_pop";
+        body.put("token_type", requestedTokenType);
         AuthenticationResult result;
         try {
             result = tokenRequestExecutor.executeTokenRequest(
@@ -366,19 +412,28 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
             throw new MsalClientException(e);
         }
 
-        validateMtlsTokenResponse(result);
-        return result.withMtlsBindingContext(
-                binding.bindingContext(),
-                managedIdentityParameters.resource());
+        validateMtlsTokenResponse(result, requestedTokenType);
+        return managedIdentityParameters.mtlsProofOfPossession()
+                ? result.withMtlsBindingContext(
+                        binding.bindingContext(),
+                        managedIdentityParameters.resource())
+                : result.withScopes(managedIdentityParameters.resource());
     }
 
     static void validateMtlsTokenResponse(
             IAuthenticationResult tokenResponse) {
+        validateMtlsTokenResponse(tokenResponse, "mtls_pop");
+    }
+
+    static void validateMtlsTokenResponse(
+            IAuthenticationResult tokenResponse,
+            String expectedTokenType) {
         if (tokenResponse == null
                 || StringHelper.isBlank(tokenResponse.accessToken())
-                || !"mtls_pop".equals(tokenResponse.tokenType())) {
+                || !expectedTokenType.equalsIgnoreCase(tokenResponse.tokenType())) {
             throw new MsalServiceException(
-                    "The managed identity mTLS endpoint did not explicitly return token_type=mtls_pop.",
+                    "The managed identity mTLS endpoint did not explicitly return token_type="
+                            + expectedTokenType + ".",
                     MsalError.MANAGED_IDENTITY_MTLS_TOKEN_TYPE_INVALID,
                     ManagedIdentitySourceType.IMDS);
         }

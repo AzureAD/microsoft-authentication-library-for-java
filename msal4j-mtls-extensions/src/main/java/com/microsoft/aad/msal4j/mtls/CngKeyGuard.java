@@ -8,6 +8,8 @@ import com.sun.jna.Pointer;
 import com.sun.jna.WString;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -28,6 +30,7 @@ import java.nio.ByteOrder;
  */
 final class CngKeyGuard {
 
+    private static final Logger LOG = LoggerFactory.getLogger(CngKeyGuard.class);
     private static final Object ATTESTATION_LIBRARY_LOCK = new Object();
     private static final String MS_SOFTWARE_KSP = "Microsoft Software Key Storage Provider";
     private static final String RSA_ALG          = "RSA";
@@ -87,21 +90,33 @@ final class CngKeyGuard {
      * @return the MAA JWT string
      * @throws MtlsMsiException if the DLL is not present, or attestation fails
      */
-    static String getAttestationToken(Pointer keyHandle, String endpoint, String clientId)
+    static String getAttestationToken(
+            Pointer keyHandle,
+            String endpoint,
+            String clientId,
+            String correlationId)
             throws MtlsMsiException {
         synchronized (ATTESTATION_LIBRARY_LOCK) {
-            return getAttestationTokenSynchronized(keyHandle, endpoint, clientId);
+            return getAttestationTokenSynchronized(
+                    keyHandle,
+                    endpoint,
+                    clientId,
+                    correlationId);
         }
     }
 
     private static String getAttestationTokenSynchronized(
             Pointer keyHandle,
             String endpoint,
-            String clientId) throws MtlsMsiException {
+            String clientId,
+            String correlationId) throws MtlsMsiException {
 
         AttestationLibrary attestLib = AttestationLibraryLoader.load();
 
-        AttestationLibrary.AttestationLogInfo logInfo = new AttestationLibrary.AttestationLogInfo();
+        AttestationLibrary.LogCallback logCallback =
+                AttestationLogger.create(LOG, correlationId);
+        AttestationLibrary.AttestationLogInfo logInfo =
+                new AttestationLibrary.AttestationLogInfo(logCallback);
         int ret = attestLib.InitAttestationLib(logInfo);
         if (ret != 0) {
             throw new MtlsMsiException(

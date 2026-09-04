@@ -24,6 +24,7 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
     private List<String> clientCapabilities;
     private volatile CompletableFuture<ManagedIdentityCapabilities>
             managedIdentityCapabilities;
+    private volatile Boolean managedIdentityCapabilitiesImdsV2Disabled;
     static TokenCache sharedTokenCache = new TokenCache();
 
     //Deprecated the field in favor of the static getManagedIdentitySource method
@@ -69,15 +70,21 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
     @Override
     public synchronized CompletableFuture<ManagedIdentityCapabilities>
     getManagedIdentityCapabilities() {
+        boolean imdsV2Disabled =
+                ManagedIdentityEnvironment.isImdsV2Disabled();
         if (managedIdentityCapabilities != null) {
-            if (!shouldRetryCompletedDiscovery(
-                    managedIdentityCapabilities)) {
+            if (managedIdentityCapabilitiesImdsV2Disabled != null
+                    && managedIdentityCapabilitiesImdsV2Disabled
+                    == imdsV2Disabled
+                    && (imdsV2Disabled
+                    || !shouldRetryCompletedDiscovery(
+                            managedIdentityCapabilities))) {
                 return managedIdentityCapabilities;
             }
             managedIdentityCapabilities = null;
         }
         Supplier<ManagedIdentityCapabilities> supplier =
-                this::detectManagedIdentityCapabilities;
+                () -> detectManagedIdentityCapabilities(imdsV2Disabled);
         ExecutorService executorService =
                 serviceBundle().getExecutorService();
         CompletableFuture<ManagedIdentityCapabilities> discovery =
@@ -85,12 +92,15 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
                 ? CompletableFuture.supplyAsync(supplier)
                 : CompletableFuture.supplyAsync(supplier, executorService);
         managedIdentityCapabilities = discovery;
+        managedIdentityCapabilitiesImdsV2Disabled = imdsV2Disabled;
         discovery.whenComplete((capabilities, error) -> {
             if (error != null
-                    || shouldRetryCapabilityDiscovery(capabilities)) {
+                    || (!imdsV2Disabled
+                    && shouldRetryCapabilityDiscovery(capabilities))) {
                 synchronized (ManagedIdentityApplication.this) {
                     if (managedIdentityCapabilities == discovery) {
                         managedIdentityCapabilities = null;
+                        managedIdentityCapabilitiesImdsV2Disabled = null;
                     }
                 }
             }
@@ -121,7 +131,8 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
                 == ManagedIdentitySourceType.DEFAULT_TO_IMDS;
     }
 
-    private ManagedIdentityCapabilities detectManagedIdentityCapabilities() {
+    private ManagedIdentityCapabilities detectManagedIdentityCapabilities(
+            boolean imdsV2Disabled) {
         ManagedIdentitySourceType source =
                 ManagedIdentityClient.getManagedIdentitySource();
         if (source != ManagedIdentitySourceType.DEFAULT_TO_IMDS
@@ -130,6 +141,13 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
                     source,
                     MtlsBindingStrength.NONE,
                     "Managed identity mTLS PoP is supported only on the IMDS v2 VM/VMSS source.");
+        }
+        if (imdsV2Disabled) {
+            return new ManagedIdentityCapabilities(
+                    source,
+                    MtlsBindingStrength.NONE,
+                    Constants.MSAL_MI_DISABLE_IMDS_V2
+                            + " disables IMDS v2 for this process.");
         }
 
         ManagedIdentityParameters parameters = ManagedIdentityParameters
