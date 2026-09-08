@@ -9,6 +9,7 @@ Version 1.26.0
 
 Version 1.25.1
 =============
+- Add SN/I certificate support over mTLS Proof-of-Possession (PoP) for confidential clients, presenting the certificate as the client TLS cert to obtain an mTLS-bound token. The response token_type is validated, so a request that is not honored as mtls_pop fails closed rather than surfacing an unbound token
 - Add claimsFromClient API for client-originated claims on confidential-client flows (#1039)
 - Migrate region discovery to IMDS /compute JSON endpoint (#1038)
 - Bump Azure Arc HIMDS api-version from 2019-11-01 to 2020-06-01 (#1045)

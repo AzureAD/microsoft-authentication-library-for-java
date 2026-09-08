@@ -71,7 +71,7 @@ class HttpHelper implements IHttpHelper {
 
     //Overloaded version of the more commonly used HTTP executor. It does not use ServiceBundle, allowing an HTTP call to be
     // made only with more bespoke request-level parameters rather than those from the app-level ServiceBundle
-    IHttpResponse executeHttpRequest(HttpRequest httpRequest,
+    public IHttpResponse executeHttpRequest(HttpRequest httpRequest,
                                             RequestContext requestContext,
                                             TelemetryManager telemetryManager,
                                             IHttpClient httpClient) {

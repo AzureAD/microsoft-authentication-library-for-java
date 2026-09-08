@@ -61,7 +61,7 @@ class TestHelper {
     private static final String successfulResponseFormat = "{\"access_token\":\"%s\",\"id_token\":\"%s\",\"refresh_token\":\"%s\"," +
             "\"client_id\":\"%s\",\"client_info\":\"%s\"," +
             "\"refresh_in\": %d,\"expires_on\": %d,\"expires_in\": %d," +
-            "\"token_type\":\"Bearer\"}";
+            "\"token_type\":\"%s\"}";
 
     static final String idTokenFormat = "{\"aud\": \"%s\"," +
             "\"iss\": \"%s\"," +
@@ -167,7 +167,8 @@ class TestHelper {
                 responseValues.getOrDefault("client_info", "eyJ1aWQiOiI1OTdmODZjZC0xM2YzLTQ0YzAtYmVjZS1hMWU3N2JhNDMyMjgiLCJ1dGlkIjoiZjY0NWFkOTItZTM4ZC00ZDFhLWI1MTAtZDFiMDlhNzRhOGNhIn0"),
                 refreshIn,
                 expiresOn,
-                expiresIn
+                expiresIn,
+                responseValues.getOrDefault("token_type", "Bearer")
         );
     }
 

@@ -19,6 +19,9 @@ class OAuthHttpRequest {
     private final Map<String, String> extraHeaderParams;
     private final ServiceBundle serviceBundle;
     private final RequestContext requestContext;
+    // When set (mTLS Proof-of-Possession), the token request is sent with this client instead of the
+    // app-level HTTP client so the client certificate is presented on the TLS handshake.
+    private IHttpClient mtlsHttpClient;
 
     OAuthHttpRequest(final HttpMethod method,
                      final URL url,
@@ -41,10 +44,19 @@ class OAuthHttpRequest {
                 httpHeaders,
                 this.query);
 
-        IHttpResponse httpResponse = serviceBundle.getHttpHelper().executeHttpRequest(
-                httpRequest,
-                this.requestContext,
-                this.serviceBundle);
+        IHttpResponse httpResponse;
+        if (mtlsHttpClient != null) {
+            httpResponse = serviceBundle.getHttpHelper().executeHttpRequest(
+                    httpRequest,
+                    this.requestContext,
+                    serviceBundle.getTelemetryManager(),
+                    mtlsHttpClient);
+        } else {
+            httpResponse = serviceBundle.getHttpHelper().executeHttpRequest(
+                    httpRequest,
+                    this.requestContext,
+                    this.serviceBundle);
+        }
 
         return createOauthHttpResponseFromHttpResponse(httpResponse);
     }
@@ -102,6 +114,10 @@ class OAuthHttpRequest {
 
     void setQuery(String query) {
         this.query = query;
+    }
+
+    void setMtlsHttpClient(IHttpClient mtlsHttpClient) {
+        this.mtlsHttpClient = mtlsHttpClient;
     }
 
     Map<String, String> getExtraHeaderParams() {

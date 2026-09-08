@@ -1,5 +1,9 @@
 {
   "tool": "Credential Scanner",
   "suppressions": [
+    {
+      "file": "msal4j-sdk/src/test/resources/mtls_test_cert.p12",
+      "_justification": "Self-signed, test-only certificate (CN=msal4j-mtls-test) used by unit tests for mTLS Proof-of-Possession. Contains no production secret."
+    }
   ]
 }

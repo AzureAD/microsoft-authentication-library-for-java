@@ -32,6 +32,8 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
 
     private String fmiPath;
 
+    private boolean mtlsProofOfPossession;
+
     private String clientClaims;
 
     // Generic extended cache key. Any optional or flow-specific parameters that should influence
@@ -39,7 +41,7 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
     // components is used as part of the cache key in relevant scenarios.
     private final ExtendedCacheKey extendedCacheKey;
 
-    private ClientCredentialParameters(Set<String> scopes, Boolean skipCache, ClaimsRequest claims, Map<String, String> extraHttpHeaders, Map<String, String> extraQueryParameters, String tenant, IClientCredential clientCredential, String fmiPath, String clientClaims) {
+    private ClientCredentialParameters(Set<String> scopes, Boolean skipCache, ClaimsRequest claims, Map<String, String> extraHttpHeaders, Map<String, String> extraQueryParameters, String tenant, IClientCredential clientCredential, String fmiPath, String clientClaims, boolean mtlsProofOfPossession) {
         this.scopes = scopes;
         this.skipCache = skipCache;
         this.claims = claims;
@@ -49,6 +51,7 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         this.clientCredential = clientCredential;
         this.fmiPath = fmiPath;
         this.clientClaims = clientClaims;
+        this.mtlsProofOfPossession = mtlsProofOfPossession;
 
         // Build cache key components from any parameters that require cache isolation.
         this.extendedCacheKey = new ExtendedCacheKey(buildCacheKeyComponents());
@@ -125,6 +128,32 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
     }
 
     /**
+     * Indicates whether this request should acquire a mutual-TLS Proof-of-Possession (mTLS PoP) token,
+     * where the client certificate is presented on the TLS handshake to the token endpoint and the
+     * resulting token is cryptographically bound to that certificate.
+     *
+     * @return true if mTLS Proof-of-Possession was requested, false for a standard bearer token
+     */
+    public boolean mtlsProofOfPossession() {
+        return this.mtlsProofOfPossession;
+    }
+
+    /**
+     * Stamps the resolved binding-certificate KeyId ({@code x5t#S256}) onto this request so the access
+     * token is cache-isolated by certificate, in addition to the {@code token_type} dimension.
+     * <p>
+     * Called once (before the silent cache lookup) so both cache reads and writes observe the same
+     * components. The underlying {@link ExtendedCacheKey#putComponent(String, String)} update is
+     * copy-on-write and synchronized, and clears the memoized hash so it is recomputed.
+     */
+    void bindingCertificateKeyId(String keyId) {
+        if (StringHelper.isBlank(keyId)) {
+            return;
+        }
+        extendedCacheKey.putComponent("cert_kid", keyId);
+    }
+
+    /**
      * Builds the sorted map of cache key components from the parameters that require
      * cache isolation. Returns null if no components are present.
      * <p>
@@ -143,6 +172,12 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
             }
             components.put("client_claims", clientClaims);
         }
+        if (mtlsProofOfPossession) {
+            if (components == null) {
+                components = new TreeMap<>();
+            }
+            components.put("token_type", TokenType.MTLS_POP.value());
+        }
         return components;
     }
 
@@ -150,7 +185,8 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
      * Computes the extended cache key hash from all cache key components.
      * Returns an empty string if no components are present.
      * <p>
-     * The result is memoized since ClientCredentialParameters is immutable after construction.
+     * The result is lazily memoized; the memoized value is invalidated when a component is stamped
+     * after construction (see {@link #bindingCertificateKeyId(String)}) so it is recomputed.
      * Used by both cache writes ({@link TokenCache}) and cache reads (silent lookup).
      */
     @Override
@@ -168,6 +204,7 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
         private IClientCredential clientCredential;
         private String fmiPath;
         private String clientClaims;
+        private boolean mtlsProofOfPossession;
 
         ClientCredentialParametersBuilder() {
         }
@@ -274,12 +311,33 @@ public class ClientCredentialParameters implements IAcquireTokenParameters {
             return this;
         }
 
+        /**
+         * Requests a mutual-TLS Proof-of-Possession (mTLS PoP) token instead of a bearer token.
+         * <p>
+         * When set, the app's client certificate (a Subject-Name/Issuer cert configured on the
+         * {@link ConfidentialClientApplication}) is presented as the client TLS certificate in the mutual-TLS
+         * handshake to the token endpoint. Entra ID returns a token that is cryptographically bound to
+         * that certificate ({@code cnf}/{@code x5t#S256}), and {@code token_type=mtls_pop}.
+         * <p>
+         * Requirements: the authority must be tenanted (not {@code /common} or {@code /organizations}),
+         * a binding certificate must be available, and the cloud must support mTLS PoP (public cloud
+         * today). A region is optional — when omitted, the global {@code mtlsauth.microsoft.com} endpoint
+         * is used. This mirrors MSAL.NET's {@code WithMtlsProofOfPossession()}. For more details, see
+         * https://aka.ms/msal4j-pop
+         *
+         * @return builder that can be used to construct ClientCredentialParameters
+         */
+        public ClientCredentialParametersBuilder mtlsProofOfPossession() {
+            this.mtlsProofOfPossession = true;
+            return this;
+        }
+
         public ClientCredentialParameters build() {
-            return new ClientCredentialParameters(this.scopes, this.skipCache, this.claims, this.extraHttpHeaders, this.extraQueryParameters, this.tenant, this.clientCredential, this.fmiPath, this.clientClaims);
+            return new ClientCredentialParameters(this.scopes, this.skipCache, this.claims, this.extraHttpHeaders, this.extraQueryParameters, this.tenant, this.clientCredential, this.fmiPath, this.clientClaims, this.mtlsProofOfPossession);
         }
 
         public String toString() {
-            return "ClientCredentialParameters.ClientCredentialParametersBuilder(scopes=" + this.scopes + ", skipCache=" + this.skipCache + ", claims=" + this.claims + ", extraHttpHeaders=" + this.extraHttpHeaders + ", extraQueryParameters=" + this.extraQueryParameters + ", tenant=" + this.tenant + ", clientCredential=" + this.clientCredential + ", fmiPath=" + this.fmiPath + ")";
+            return "ClientCredentialParameters.ClientCredentialParametersBuilder(scopes=" + this.scopes + ", skipCache=" + this.skipCache + ", claims=" + this.claims + ", extraHttpHeaders=" + this.extraHttpHeaders + ", extraQueryParameters=" + this.extraQueryParameters + ", tenant=" + this.tenant + ", clientCredential=" + this.clientCredential + ", fmiPath=" + this.fmiPath + ", mtlsProofOfPossession=" + this.mtlsProofOfPossession + ")";
         }
     }
 }
