@@ -7,9 +7,6 @@ pr:
   branches:
     include:
       - dev
-      - avdunn/nimbus-removal
-  forks:
-    enabled: false
 
 schedules:
   - cron: "0 23 * * *"
