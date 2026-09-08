@@ -1,0 +1,98 @@
+trigger: none
+
+pr:
+  autoCancel: false
+  branches:
+    include:
+      - dev
+
+variables:
+  skip.unit.tests: false
+  skip.integration.tests: false
+  system.debug: false
+
+pool:
+  vmImage: windows-latest
+
+jobs:
+  - job: build_and_test
+    displayName: Unit and Integration Tests
+    timeoutInMinutes: 60
+    steps:
+      - task: DownloadSecureFile@1
+        displayName: Download LabAuth certificate
+        name: LabAuth
+        inputs:
+          secureFile: msidlabs-LabAuth-20260130.pfx
+          retryCount: 8
+
+      - task: PowerShell@2
+        displayName: Save certificate in store
+        inputs:
+          targetType: inline
+          script: |
+            Get-ChildItem -Path "$(LabAuth.secureFilePath)" |
+              Import-PfxCertificate -CertStoreLocation Cert:\CurrentUser\My -Exportable
+
+      - task: PowerShell@2
+        displayName: Install Chrome and ChromeDriver
+        inputs:
+          targetType: inline
+          script: |
+            $installer = Join-Path $env:TEMP 'chrome_installer.exe'
+            Invoke-WebRequest 'https://dl.google.com/chrome/install/latest/chrome_installer.exe' -OutFile $installer
+            Start-Process -FilePath $installer -ArgumentList '/silent', '/install' -Wait
+            Remove-Item $installer
+
+            Start-Sleep -Seconds 5
+            $chromeVersion = (Get-Item 'C:\Program Files\Google\Chrome\Application\chrome.exe').VersionInfo.ProductVersion
+            Write-Host "Installed Chrome version: $chromeVersion"
+
+            $majorVersion = $chromeVersion.Split('.')[0]
+            $chromeDriverVersion = (Invoke-RestMethod "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_$majorVersion").Trim()
+            Write-Host "Using ChromeDriver version: $chromeDriverVersion"
+
+            $archive = Join-Path $env:TEMP 'chromedriver-win64.zip'
+            $destination = [Environment]::GetFolderPath('Windows')
+            Invoke-WebRequest "https://storage.googleapis.com/chrome-for-testing-public/$chromeDriverVersion/win64/chromedriver-win64.zip" -OutFile $archive
+            Expand-Archive $archive -DestinationPath $destination -Force
+            Move-Item "$destination\chromedriver-win64\chromedriver.exe" $destination -Force
+            Remove-Item $archive
+
+      - task: Maven@4
+        displayName: Unit Tests
+        inputs:
+          mavenPomFile: pom.xml
+          goals: verify
+          options: -fae -Drevapi.failBuildOnProblemsFound=false -Dskip.unit.tests=$(skip.unit.tests) -Dskip.integration.tests=true -Dadfs.disabled=true
+          publishJUnitResults: true
+          testResultsFiles: '**/TEST-*.xml'
+          javaHomeOption: JDKVersion
+          jdkVersionOption: '1.8'
+          jdkArchitectureOption: x64
+          mavenVersionOption: Default
+          mavenAuthenticateFeed: true
+          effectivePomSkip: false
+          sonarQubeRunAnalysis: false
+
+      - task: Maven@4
+        displayName: Integration Tests
+        inputs:
+          mavenPomFile: pom.xml
+          goals: verify
+          options: -fae -Drevapi.failBuildOnProblemsFound=false -Dskip.unit.tests=true -Dskip.integration.tests=$(skip.integration.tests) -Dadfs.disabled=true
+          publishJUnitResults: true
+          testResultsFiles: '**/TEST-*.xml'
+          javaHomeOption: JDKVersion
+          jdkVersionOption: '1.8'
+          jdkArchitectureOption: x64
+          mavenVersionOption: Default
+          mavenAuthenticateFeed: true
+          effectivePomSkip: false
+          sonarQubeRunAnalysis: false
+
+      - task: PublishCodeCoverageResults@2
+        displayName: Publish code coverage results
+        inputs:
+          summaryFileLocation: $(System.DefaultWorkingDirectory)/msal4j-sdk/target/jacoco.exec
+          pathToSources: $(System.DefaultWorkingDirectory)/msal4j-sdk/src/main/java
