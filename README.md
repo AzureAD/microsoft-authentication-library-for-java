@@ -1,4 +1,4 @@
-# Microsoft Authentication Library (MSAL) for Java
+# Microsoft Authentication Library (MSAL) for Java by MSAL team
 
 Build    | Reference Docs
 -----------------|---------------
