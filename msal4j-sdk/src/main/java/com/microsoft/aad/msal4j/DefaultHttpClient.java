@@ -50,7 +50,10 @@ class DefaultHttpClient implements IMtlsCapableHttpClient {
 
     private HttpResponse executeHttpGet(HttpRequest httpRequest) throws Exception {
 
-        final HttpURLConnection conn = openConnection(httpRequest.url(), httpRequest.sslSocketFactory());
+        final HttpURLConnection conn = openConnection(
+                httpRequest.url(),
+                httpRequest.sslSocketFactory(),
+                httpRequest.followRedirects());
         configureAdditionalHeaders(conn, httpRequest);
 
         return readResponseFromConnection(conn);
@@ -58,7 +61,10 @@ class DefaultHttpClient implements IMtlsCapableHttpClient {
 
     private HttpResponse executeHttpPost(HttpRequest httpRequest) throws Exception {
 
-        final HttpURLConnection conn = openConnection(httpRequest.url(), httpRequest.sslSocketFactory());
+        final HttpURLConnection conn = openConnection(
+                httpRequest.url(),
+                httpRequest.sslSocketFactory(),
+                httpRequest.followRedirects());
         configureAdditionalHeaders(conn, httpRequest);
         conn.setRequestMethod("POST");
         conn.setDoOutput(true);
@@ -84,6 +90,14 @@ class DefaultHttpClient implements IMtlsCapableHttpClient {
 
     HttpURLConnection openConnection(final URL finalURL, SSLSocketFactory requestSslSocketFactory)
             throws IOException {
+        return openConnection(finalURL, requestSslSocketFactory, true);
+    }
+
+    HttpURLConnection openConnection(
+            final URL finalURL,
+            SSLSocketFactory requestSslSocketFactory,
+            boolean followRedirects)
+            throws IOException {
         URLConnection connection;
 
         if (proxy != null) {
@@ -94,6 +108,8 @@ class DefaultHttpClient implements IMtlsCapableHttpClient {
 
         connection.setConnectTimeout(connectTimeout);
         connection.setReadTimeout(readTimeout);
+        ((HttpURLConnection) connection).setInstanceFollowRedirects(
+                followRedirects && requestSslSocketFactory == null);
 
         if (connection instanceof HttpsURLConnection) {
             HttpsURLConnection httpsConnection = (HttpsURLConnection) connection;
@@ -103,10 +119,6 @@ class DefaultHttpClient implements IMtlsCapableHttpClient {
             if (effectiveSslSocketFactory != null) {
                 httpsConnection.setSSLSocketFactory(effectiveSslSocketFactory);
             }
-            if (requestSslSocketFactory != null) {
-                httpsConnection.setInstanceFollowRedirects(false);
-            }
-
             return httpsConnection;
         } else {
             return (HttpURLConnection) connection;

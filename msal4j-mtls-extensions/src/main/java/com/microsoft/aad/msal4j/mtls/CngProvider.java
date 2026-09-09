@@ -39,8 +39,16 @@ public final class CngProvider extends Provider {
                 "SHA-384withRSA");
         putSignature("SHA512withRSA", CngSignatureSpi.Sha512WithRsa.class,
                 "SHA-512withRSA");
-        putSignature("RSASSA-PSS", CngSignatureSpi.RsaSsaPss.class,
-                "SHA256withRSAandMGF1", "SHA384withRSAandMGF1", "SHA512withRSAandMGF1");
+        putSignature("RSASSA-PSS", CngSignatureSpi.RsaSsaPss.class);
+        putSignature("SHA256withRSAandMGF1",
+                CngSignatureSpi.Sha256WithRsaPss.class,
+                "SHA-256withRSAandMGF1");
+        putSignature("SHA384withRSAandMGF1",
+                CngSignatureSpi.Sha384WithRsaPss.class,
+                "SHA-384withRSAandMGF1");
+        putSignature("SHA512withRSAandMGF1",
+                CngSignatureSpi.Sha512WithRsaPss.class,
+                "SHA-512withRSAandMGF1");
     }
 
     private void putSignature(

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
+import java.net.HttpURLConnection;
 import java.net.URL;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -23,6 +24,19 @@ class DefaultHttpClientMtlsTest {
                 client.openConnection(
                         new URL("https://localhost/token"),
                         mock(SSLSocketFactory.class));
+
+        assertFalse(connection.getInstanceFollowRedirects());
+    }
+
+    @Test
+    void requestPolicyDisablesRedirectsForPlainHttp() throws Exception {
+        DefaultHttpClient client =
+                new DefaultHttpClient(null, null, null, null);
+
+        HttpURLConnection connection = client.openConnection(
+                new URL("http://localhost/metadata/identity/issuecredential"),
+                null,
+                false);
 
         assertFalse(connection.getInstanceFollowRedirects());
     }

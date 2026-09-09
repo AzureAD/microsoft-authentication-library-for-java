@@ -38,6 +38,7 @@ public class HttpRequest {
 
     private transient SSLSocketFactory sslSocketFactory;
     private transient SSLContext sslContext;
+    private boolean followRedirects = true;
 
     HttpRequest(HttpMethod httpMethod, String url) {
         this.httpMethod = httpMethod;
@@ -122,6 +123,13 @@ public class HttpRequest {
         return sslContext;
     }
 
+    /**
+     * Returns whether the HTTP client may follow redirects for this request.
+     */
+    public boolean followRedirects() {
+        return followRedirects;
+    }
+
     HttpRequest sslSocketFactory(SSLSocketFactory sslSocketFactory) {
         this.sslSocketFactory = sslSocketFactory;
         return this;
@@ -131,6 +139,11 @@ public class HttpRequest {
         this.sslContext = sslContext;
         this.sslSocketFactory =
                 sslContext == null ? null : sslContext.getSocketFactory();
+        return this;
+    }
+
+    HttpRequest followRedirects(boolean followRedirects) {
+        this.followRedirects = followRedirects;
         return this;
     }
 
@@ -147,7 +160,8 @@ public class HttpRequest {
         if (!Objects.equals(httpMethod(), other.httpMethod())) return false;
         if (!Objects.equals(url(), other.url())) return false;
         if (!Objects.equals(headers(), other.headers())) return false;
-        return Objects.equals(body(), other.body());
+        if (!Objects.equals(body(), other.body())) return false;
+        return followRedirects() == other.followRedirects();
     }
 
     protected boolean canEqual(Object other) {
@@ -161,6 +175,7 @@ public class HttpRequest {
         result = result * 59 + (this.url == null ? 43 : this.url.hashCode());
         result = result * 59 + (this.headers == null ? 43 : this.headers.hashCode());
         result = result * 59 + (this.body == null ? 43 : this.body.hashCode());
+        result = result * 59 + (this.followRedirects ? 79 : 97);
         return result;
     }
 }

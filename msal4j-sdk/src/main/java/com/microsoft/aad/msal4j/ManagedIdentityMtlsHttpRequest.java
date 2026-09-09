@@ -16,18 +16,29 @@ public final class ManagedIdentityMtlsHttpRequest {
     private final String url;
     private final Map<String, String> headers;
     private final String body;
+    private final boolean followRedirects;
 
     public ManagedIdentityMtlsHttpRequest(
             String method,
             String url,
             Map<String, String> headers,
             String body) {
+        this(method, url, headers, body, true);
+    }
+
+    public ManagedIdentityMtlsHttpRequest(
+            String method,
+            String url,
+            Map<String, String> headers,
+            String body,
+            boolean followRedirects) {
         this.method = method;
         this.url = url;
         this.headers = headers == null
                 ? Collections.<String, String>emptyMap()
                 : Collections.unmodifiableMap(new LinkedHashMap<>(headers));
         this.body = body;
+        this.followRedirects = followRedirects;
     }
 
     public String method() {
@@ -44,5 +55,9 @@ public final class ManagedIdentityMtlsHttpRequest {
 
     public String body() {
         return body;
+    }
+
+    public boolean followRedirects() {
+        return followRedirects;
     }
 }

@@ -7,12 +7,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
+import java.net.SocketException;
 import java.net.URL;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import javax.net.ssl.SSLException;
 
 class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier {
 
@@ -21,10 +25,21 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
     private static final int TWO_HOURS = 2 * 3600;
 
     private ManagedIdentityParameters managedIdentityParameters;
+    private final Supplier<ManagedIdentityMtlsBinding> mtlsBindingSupplier;
+    private IManagedIdentityMtlsProvider resolvedMtlsProvider;
+    private ManagedIdentityMtlsRequest resolvedMtlsRequest;
 
     AcquireTokenByManagedIdentitySupplier(ManagedIdentityApplication managedIdentityApplication, MsalRequest msalRequest) {
+        this(managedIdentityApplication, msalRequest, null);
+    }
+
+    AcquireTokenByManagedIdentitySupplier(
+            ManagedIdentityApplication managedIdentityApplication,
+            MsalRequest msalRequest,
+            Supplier<ManagedIdentityMtlsBinding> mtlsBindingSupplier) {
         super(managedIdentityApplication, msalRequest);
         this.managedIdentityParameters = (ManagedIdentityParameters) msalRequest.requestContext().apiParameters();
+        this.mtlsBindingSupplier = mtlsBindingSupplier;
     }
 
     @Override
@@ -177,9 +192,30 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
                         mtlsBinding,
                         MtlsBindingStrength.KEY_GUARD);
             }
-            authenticationResult = acquireTokenOverMtls(
+            authenticationResult = executeWithBoundedMtlsRemint(
                     mtlsBinding,
-                    tokenRequestExecutor);
+                    binding -> acquireTokenOverMtls(
+                            binding,
+                            tokenRequestExecutor),
+                    this::invalidateMtlsBinding,
+                    () -> {
+                        LOG.info("The managed identity mTLS binding was rejected; "
+                                + "minting a replacement and retrying once.");
+                        ManagedIdentityMtlsBinding replacement =
+                                resolveMtlsBinding();
+                        validateMinimumBindingStrength(
+                                replacement,
+                                managedIdentityParameters.requestOverMtls()
+                                        || managedIdentityParameters.attestationSupport()
+                                        ? MtlsBindingStrength.KEY_GUARD
+                                        : managedIdentityParameters.minimumBindingStrength());
+                        if (managedIdentityParameters.mtlsProofOfPossession()) {
+                            msalRequest.extCacheKeyHash(
+                                    managedIdentityParameters.computeMtlsExtCacheKeyHash(
+                                            replacement.bindingContext().keyId()));
+                        }
+                        return replacement;
+                    });
         } else {
             ManagedIdentityClient managedIdentityClient =
                     new ManagedIdentityClient(msalRequest, tokenRequestExecutor.getServiceBundle());
@@ -225,19 +261,42 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
     }
 
     private ManagedIdentityMtlsBinding resolveMtlsBinding() {
+        if (mtlsBindingSupplier != null) {
+            return mtlsBindingSupplier.get();
+        }
+        ensureMtlsProviderResolutionContext();
+        return getMtlsProviderBinding(
+                resolvedMtlsProvider,
+                resolvedMtlsRequest);
+    }
+
+    private void ensureMtlsProviderResolutionContext() {
+        if (resolvedMtlsProvider != null && resolvedMtlsRequest != null) {
+            return;
+        }
         ManagedIdentityApplication application =
                 (ManagedIdentityApplication) msalRequest.application();
-        ManagedIdentityMtlsRequest request = createMtlsProviderRequest(
+        resolvedMtlsRequest = createMtlsProviderRequest(
                 application,
                 msalRequest.requestContext(),
                 managedIdentityParameters.attestationSupport());
         IManagedIdentityMtlsProvider provider =
                 managedIdentityParameters.mtlsProvider();
-        return getMtlsProviderBinding(
-                provider == null
-                        ? ManagedIdentityMtlsProviderLoader.load()
-                        : provider,
-                request);
+        resolvedMtlsProvider = provider == null
+                ? ManagedIdentityMtlsProviderLoader.load()
+                : provider;
+    }
+
+    private boolean invalidateMtlsBinding(
+            ManagedIdentityMtlsBinding rejectedBinding) {
+        if (mtlsBindingSupplier != null) {
+            return false;
+        }
+        ensureMtlsProviderResolutionContext();
+        return invalidateMtlsProviderBinding(
+                resolvedMtlsProvider,
+                resolvedMtlsRequest,
+                rejectedBinding);
     }
 
     static ManagedIdentityMtlsRequest createMtlsProviderRequest(
@@ -320,6 +379,70 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
         }
     }
 
+    static boolean invalidateMtlsProviderBinding(
+            IManagedIdentityMtlsProvider provider,
+            ManagedIdentityMtlsRequest request,
+            ManagedIdentityMtlsBinding rejectedBinding) {
+        try {
+            return provider.invalidateBinding(request, rejectedBinding);
+        } catch (MsalException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            MsalClientException wrapped = new MsalClientException(
+                    "The managed identity mTLS provider failed to invalidate "
+                            + "a rejected binding.",
+                    MsalError.MANAGED_IDENTITY_MTLS_REQUEST_FAILED);
+            wrapped.initCause(e);
+            throw wrapped;
+        }
+    }
+
+    static boolean shouldRemintMtlsBinding(Throwable failure) {
+        for (Throwable current = failure;
+                current != null;
+                current = current.getCause()) {
+            if (current instanceof MsalServiceException
+                    && AuthenticationErrorCode.INVALID_CLIENT.equalsIgnoreCase(
+                            ((MsalServiceException) current).errorCode())) {
+                return true;
+            }
+            if (current instanceof SSLException) {
+                return true;
+            }
+            if (current instanceof SocketException
+                    && isConnectionReset((SocketException) current)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static AuthenticationResult executeWithBoundedMtlsRemint(
+            ManagedIdentityMtlsBinding initialBinding,
+            Function<ManagedIdentityMtlsBinding, AuthenticationResult> tokenRequest,
+            Function<ManagedIdentityMtlsBinding, Boolean> invalidator,
+            Supplier<ManagedIdentityMtlsBinding> replacementSupplier) {
+        try {
+            return tokenRequest.apply(initialBinding);
+        } catch (RuntimeException ex) {
+            if (!shouldRemintMtlsBinding(ex)
+                    || !invalidator.apply(initialBinding)) {
+                throw ex;
+            }
+            return tokenRequest.apply(replacementSupplier.get());
+        }
+    }
+
+    private static boolean isConnectionReset(SocketException exception) {
+        String message = exception.getMessage();
+        if (message == null) {
+            return false;
+        }
+        String normalized = message.toLowerCase(java.util.Locale.ROOT);
+        return normalized.contains("connection reset")
+                || normalized.contains("forcibly closed by the remote host");
+    }
+
     static void validateMinimumBindingStrength(
             ManagedIdentityMtlsBinding binding,
             MtlsBindingStrength requiredStrength) {
@@ -354,7 +477,8 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
                     method,
                     request.url(),
                     request.headers(),
-                    request.body());
+                    request.body())
+                    .followRedirects(request.followRedirects());
             IHttpResponse response = imdsHttpHelper
                     .executeHttpRequest(httpRequest, requestContext, serviceBundle);
             return new ManagedIdentityMtlsHttpResponse(

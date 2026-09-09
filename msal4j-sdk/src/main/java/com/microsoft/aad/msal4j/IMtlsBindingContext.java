@@ -10,9 +10,10 @@ import java.security.cert.X509Certificate;
 /**
  * Process-local mTLS binding capability associated with an mTLS PoP access token.
  *
- * <p>The private key is not exportable. Applications can use the returned
- * {@link SSLContext} with a Java JSSE HTTP stack, or use the returned
- * {@link X509ExtendedKeyManager} to build a transport-specific TLS context.</p>
+ * <p>The private key is not exportable. Applications can reuse the returned
+ * {@link SSLContext} for ordinary JSSE resource calls that use JVM default trust.
+ * Applications that require custom trust or a non-JSSE transport can use the returned
+ * {@link X509ExtendedKeyManager} to build the appropriate TLS context.</p>
  */
 public interface IMtlsBindingContext {
 
@@ -24,16 +25,23 @@ public interface IMtlsBindingContext {
     }
 
     /**
-     * Returns a ready-to-use JSSE context. The context uses the JVM's default trust
-     * managers.
+     * Returns a stable, ready-to-use JSSE context for this binding generation.
+     * The context presents {@link #bindingCertificate()} and uses the JVM's default
+     * trust managers.
+     *
+     * <p>It is safe to reuse this context across resource calls. Applications that
+     * require custom trust anchors should instead initialize their own context with
+     * {@link #keyManager()}.</p>
      */
     SSLContext sslContext();
 
     /**
-     * Returns the key manager backed by the non-exportable binding key.
+     * Returns the stable key manager backed by the non-exportable binding key.
      *
-     * <p>Applications that require custom trust anchors or a transport-specific TLS
-     * context can combine this key manager with their own trust configuration.</p>
+     * <p>Applications that require custom trust anchors or a non-JSSE transport can
+     * combine this key manager with their own trust configuration. The key manager
+     * always selects the binding certificate for compatible RSA client-auth requests,
+     * independent of issuer hints from the server.</p>
      */
     X509ExtendedKeyManager keyManager();
 

@@ -6,7 +6,7 @@
 - **Main Package**: `com.microsoft.aad.msal4j`
 - **Three Application Types**: `PublicClientApplication`, `ConfidentialClientApplication`, `ManagedIdentityApplication`
 - **Pattern**: Each auth flow has `*Parameters` (public API), `*Request` (internal), `*Supplier` (executor)
-- **Current Version**: 1.26.0
+- **Current Version**: 1.27.0-SNAPSHOT
 
 ---
 
@@ -16,7 +16,7 @@
 
 - **Language**: Java 8+
 - **Build Tool**: Maven
-- **Current Version**: 1.26.0
+- **Current Version**: 1.27.0-SNAPSHOT
 - **Artifact**: `com.microsoft.azure:msal4j`
 - **Key Protocols**: OAuth2, OpenID Connect
 
@@ -155,6 +155,7 @@ MSAL4J supports multiple authentication flows, each with a public `*Parameters` 
 - **Key Classes**: `ManagedIdentitySource` implementations (`IMDSManagedIdentitySource`, `AppServiceManagedIdentitySource`, etc.)
 - **Optional mTLS**: `withMtlsProofOfPossession()` requests a certificate-bound token; `withRequestOverMtls()` requests an ordinary bearer token over the same KeyGuard-authenticated ESTS channel. The optional `msal4j-key-attestation` artifact supplies `ManagedIdentityAttestationExtensions.withAttestationSupport(builder)` to require MAA attestation and fail closed. Core owns OAuth/HTTP/cache behavior; the optional artifact owns the public attestation opt-in plus KeyGuard/CNG/attestation and returns a reusable process-local `IMtlsBindingContext` for PoP results. Custom HTTP clients must implement `IMtlsCapableHttpClient` and consume the request-specific context or socket factory.
 - **mTLS capability discovery**: `getManagedIdentityCapabilities()` reports the detected source and maximum `MtlsBindingStrength`; `MtlsPopOptions` lets credential chains require a minimum strength before token acquisition succeeds.
+- **mTLS recovery**: A qualifying `invalid_client` response or TLS failure invalidates the current provider binding, remints it, and retries the token leg once. Providers opt into this behavior through `invalidateBinding`; retries are bounded.
 
 ### Common Flows (All Application Types)
 

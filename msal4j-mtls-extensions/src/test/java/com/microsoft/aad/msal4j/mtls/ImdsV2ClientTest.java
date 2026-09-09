@@ -41,6 +41,7 @@ class ImdsV2ClientTest {
     void issueCredentialRequiresAttestationAndCurrentFields() {
         ManagedIdentityMtlsRequest request = request(null, null, http -> {
             assertEquals("POST", http.method());
+            assertFalse(http.followRedirects());
             assertTrue(http.body().contains("\"attestation_token\":\"jwt\""));
             return response("{\"certificate\":\"cert\","
                     + "\"mtls_authentication_endpoint\":\"https://login.example/token\","
@@ -99,6 +100,24 @@ class ImdsV2ClientTest {
                                                 + "\"cuId\":{\"vmId\":\"vm\"},"
                                                 + "\"attestationEndpoint\":\"https://maa.example\"}",
                                         Collections.emptyMap()))));
+    }
+
+    @Test
+    void issueCredentialRejectsResponsesWithoutImdsServerMarker() {
+        ManagedIdentityMtlsRequest request = request(null, null, http ->
+                new ManagedIdentityMtlsHttpResponse(
+                        200,
+                        "{\"certificate\":\"cert\","
+                                + "\"mtls_authentication_endpoint\":\"https://login.example/token\","
+                                + "\"client_id\":\"client\",\"tenant_id\":\"tenant\","
+                                + "\"identity_type\":\"SystemAssigned\"}",
+                        Collections.emptyMap()));
+
+        MtlsMsiException exception = assertThrows(
+                MtlsMsiException.class,
+                () -> ImdsV2Client.issueCredential(request, "csr", "jwt"));
+
+        assertTrue(exception.getMessage().contains("expected Server header"));
     }
 
     private static ManagedIdentityMtlsRequest request(

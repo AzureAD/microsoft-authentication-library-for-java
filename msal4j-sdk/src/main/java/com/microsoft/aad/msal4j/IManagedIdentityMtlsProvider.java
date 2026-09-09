@@ -14,6 +14,18 @@ public interface IManagedIdentityMtlsProvider {
     ManagedIdentityMtlsBinding getOrCreateBinding(ManagedIdentityMtlsRequest request);
 
     /**
+     * Invalidates a rejected binding so the next acquisition can mint a replacement.
+     *
+     * @return {@code true} when the provider supports invalidation and the caller
+     * should retry binding acquisition once
+     */
+    default boolean invalidateBinding(
+            ManagedIdentityMtlsRequest request,
+            ManagedIdentityMtlsBinding rejectedBinding) {
+        return false;
+    }
+
+    /**
      * Indicates whether this provider instance requires attestation for bindings it creates.
      *
      * <p>This is an extension integration contract. Applications should use the public

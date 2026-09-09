@@ -54,6 +54,22 @@ class AuthenticationResultMtlsTest {
                 first.mtlsBindingStrength());
     }
 
+    @Test
+    void managedIdentityHelpersPreserveOriginalResource() {
+        AuthenticationResult response = AuthenticationResult.builder()
+                .accessToken("secret")
+                .expiresOn(123)
+                .scopes("https://vault.azure.net/.default")
+                .tokenType("Bearer")
+                .build();
+        String resource = "https://vault.azure.net";
+
+        assertEquals(resource, response.withScopes(resource).scopes());
+        assertEquals(resource,
+                response.withMtlsBindingContext(new TestBindingContext(), resource)
+                        .scopes());
+    }
+
     private static AuthenticationResult result(
             String tokenType,
             IMtlsBindingContext context) {

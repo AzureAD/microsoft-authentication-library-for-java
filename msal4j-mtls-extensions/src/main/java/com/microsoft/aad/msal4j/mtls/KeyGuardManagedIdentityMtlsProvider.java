@@ -28,6 +28,7 @@ public final class KeyGuardManagedIdentityMtlsProvider
         implements IManagedIdentityMtlsProvider {
 
     private static final long ROTATION_BUFFER_MILLIS = 24L * 60L * 60L * 1000L;
+    private static final int MAX_REJECTED_GENERATIONS = 2;
     private static final AttestationTokenCache ATTESTATION_CACHE =
             new AttestationTokenCache();
     private static final Map<String, BindingGeneration> CURRENT =
@@ -80,6 +81,29 @@ public final class KeyGuardManagedIdentityMtlsProvider
                         .add(previous);
             }
             return created.binding;
+        }
+    }
+
+    @Override
+    public boolean invalidateBinding(
+            ManagedIdentityMtlsRequest request,
+            ManagedIdentityMtlsBinding rejectedBinding) {
+        validateRequest(request);
+        String cacheKey = request.bindingCacheKey();
+        Object lock = LOCKS.computeIfAbsent(cacheKey, ignored -> new Object());
+        synchronized (lock) {
+            BindingGeneration current = CURRENT.get(cacheKey);
+            if (current != null && current.binding == rejectedBinding) {
+                CURRENT.remove(cacheKey, current);
+                List<BindingGeneration> retired =
+                        RETIRED.computeIfAbsent(
+                                cacheKey,
+                                ignored -> new ArrayList<>());
+                retired.add(current);
+                trimRejectedGenerations(retired);
+            }
+            cleanupRetired(cacheKey);
+            return true;
         }
     }
 
@@ -246,7 +270,19 @@ public final class KeyGuardManagedIdentityMtlsProvider
         if (generations == null) {
             return;
         }
-        long now = System.currentTimeMillis();
+        List<BindingGeneration> retained = cleanupRetiredGenerations(
+                generations,
+                System.currentTimeMillis());
+        if (retained.isEmpty()) {
+            RETIRED.remove(cacheKey);
+        } else {
+            RETIRED.put(cacheKey, retained);
+        }
+    }
+
+    static List<BindingGeneration> cleanupRetiredGenerations(
+            List<BindingGeneration> generations,
+            long now) {
         List<BindingGeneration> retained = new ArrayList<>();
         for (BindingGeneration generation : generations) {
             if (now >= generation.notAfterMillis) {
@@ -255,10 +291,13 @@ public final class KeyGuardManagedIdentityMtlsProvider
                 retained.add(generation);
             }
         }
-        if (retained.isEmpty()) {
-            RETIRED.remove(cacheKey);
-        } else {
-            RETIRED.put(cacheKey, retained);
+        return retained;
+    }
+
+    static void trimRejectedGenerations(
+            List<BindingGeneration> generations) {
+        while (generations.size() > MAX_REJECTED_GENERATIONS) {
+            generations.remove(0).context.closeNativeKey();
         }
     }
 

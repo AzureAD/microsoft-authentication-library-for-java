@@ -7,16 +7,23 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLHandshakeException;
+import java.net.SocketException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.mockito.ArgumentCaptor;
 
 class AcquireTokenByManagedIdentitySupplierMtlsTest {
 
@@ -56,6 +63,111 @@ class AcquireTokenByManagedIdentitySupplierMtlsTest {
                 MsalClientException.class,
                 () -> AcquireTokenByManagedIdentitySupplier
                         .getMtlsProviderBinding(provider, request())));
+    }
+
+    @Test
+    void providerInvalidationFailureIsNormalized() {
+        RuntimeException providerFailure =
+                new RuntimeException("invalidation failure");
+        IManagedIdentityMtlsProvider provider =
+                new IManagedIdentityMtlsProvider() {
+                    @Override
+                    public ManagedIdentityMtlsBinding getOrCreateBinding(
+                            ManagedIdentityMtlsRequest request) {
+                        return binding(MtlsBindingStrength.KEY_GUARD);
+                    }
+
+                    @Override
+                    public boolean invalidateBinding(
+                            ManagedIdentityMtlsRequest request,
+                            ManagedIdentityMtlsBinding rejectedBinding) {
+                        throw providerFailure;
+                    }
+                };
+
+        MsalClientException exception = assertThrows(
+                MsalClientException.class,
+                () -> AcquireTokenByManagedIdentitySupplier
+                        .invalidateMtlsProviderBinding(
+                                provider,
+                                request(),
+                                binding(MtlsBindingStrength.KEY_GUARD)));
+
+        assertEquals(MsalError.MANAGED_IDENTITY_MTLS_REQUEST_FAILED,
+                exception.errorCode());
+        assertSame(providerFailure, exception.getCause());
+    }
+
+    @Test
+    void remintQualificationIsLimitedToInvalidClientAndTlsFailures() {
+        assertTrue(
+                AcquireTokenByManagedIdentitySupplier.shouldRemintMtlsBinding(
+                        new MsalServiceException(
+                                "rejected",
+                                AuthenticationErrorCode.INVALID_CLIENT)));
+        assertTrue(
+                AcquireTokenByManagedIdentitySupplier.shouldRemintMtlsBinding(
+                        new MsalClientException(
+                                new SSLHandshakeException("handshake failed"))));
+        assertTrue(
+                AcquireTokenByManagedIdentitySupplier.shouldRemintMtlsBinding(
+                        new MsalClientException(
+                                new SocketException("Connection reset"))));
+        assertTrue(
+                AcquireTokenByManagedIdentitySupplier.shouldRemintMtlsBinding(
+                        new MsalClientException(
+                                new SocketException(
+                                        "An existing connection was forcibly closed by the remote host"))));
+        assertFalse(
+                AcquireTokenByManagedIdentitySupplier.shouldRemintMtlsBinding(
+                        new MsalServiceException(
+                                "unauthorized",
+                                "unauthorized_client")));
+        assertFalse(
+                AcquireTokenByManagedIdentitySupplier.shouldRemintMtlsBinding(
+                        new MsalClientException(
+                                new SocketException("Network is unreachable"))));
+    }
+
+    @Test
+    void rejectedBindingIsInvalidatedRemintedAndRetriedExactlyOnce() {
+        ManagedIdentityMtlsBinding first =
+                binding("first", MtlsBindingStrength.KEY_GUARD);
+        ManagedIdentityMtlsBinding second =
+                binding("second", MtlsBindingStrength.KEY_GUARD);
+        AtomicInteger requests = new AtomicInteger();
+        AtomicInteger invalidations = new AtomicInteger();
+        AtomicInteger replacements = new AtomicInteger();
+
+        AuthenticationResult result =
+                AcquireTokenByManagedIdentitySupplier.executeWithBoundedMtlsRemint(
+                        first,
+                        binding -> {
+                            if (requests.getAndIncrement() == 0) {
+                                throw new MsalServiceException(
+                                        "rejected",
+                                        AuthenticationErrorCode.INVALID_CLIENT);
+                            }
+                            assertSame(second, binding);
+                            return AuthenticationResult.builder()
+                                    .accessToken("replacement-token")
+                                    .expiresOn(123)
+                                    .build();
+                        },
+                        binding -> {
+                            invalidations.incrementAndGet();
+                            assertSame(first, binding);
+                            return true;
+                        },
+                        () -> {
+                            replacements.incrementAndGet();
+                            return second;
+                        });
+
+        assertEquals("replacement-token", result.accessToken());
+        assertEquals(2, requests.get());
+        assertEquals(1, invalidations.get());
+        assertEquals(1, replacements.get());
     }
 
     @Test
@@ -185,13 +297,86 @@ class AcquireTokenByManagedIdentitySupplierMtlsTest {
                             "GET",
                             "http://169.254.169.254/metadata/identity/getplatformmetadata",
                             Collections.singletonMap("Metadata", "true"),
-                            null));
+                            null,
+                            false));
 
             assertEquals(HttpStatus.HTTP_OK, result.statusCode());
-            verify(httpClient,
-                    org.mockito.Mockito.times(2)).send(any(HttpRequest.class));
+            ArgumentCaptor<HttpRequest> requests =
+                    ArgumentCaptor.forClass(HttpRequest.class);
+            verify(httpClient, org.mockito.Mockito.times(2))
+                    .send(requests.capture());
+            assertTrue(requests.getAllValues().stream()
+                    .noneMatch(HttpRequest::followRedirects));
         } finally {
             IMDSRetryPolicy.resetToDefaults();
+        }
+    }
+
+    @Test
+    void persistedMtlsTokenIsReloadedOnlyAfterBindingIsResolved() throws Exception {
+        TokenCache original = ManagedIdentityApplication.sharedTokenCache;
+        try {
+            ManagedIdentityApplication application =
+                    ManagedIdentityApplication
+                            .builder(ManagedIdentityId.systemAssigned())
+                            .build();
+            ManagedIdentityParameters parameters =
+                    ManagedIdentityParameters
+                            .builder("https://vault.azure.net")
+                            .withMtlsProofOfPossession()
+                            .build();
+            ManagedIdentityMtlsBinding binding =
+                    binding(MtlsBindingStrength.KEY_GUARD);
+            String extCacheKeyHash = parameters.computeMtlsExtCacheKeyHash(
+                    binding.bindingContext().keyId());
+
+            TokenCache persisted = new TokenCache();
+            AccessTokenCacheEntity accessToken = new AccessTokenCacheEntity();
+            accessToken.credentialType(
+                    CredentialTypeEnum.ACCESS_TOKEN_EXTENDED.value());
+            accessToken.environment(application.authenticationAuthority.host());
+            accessToken.clientId(application.clientId());
+            accessToken.realm(Constants.MANAGED_IDENTITY_DEFAULT_TENTANT);
+            accessToken.target(parameters.resource());
+            accessToken.secret("persisted-mtls-token");
+            accessToken.cachedAt(Long.toString(
+                    System.currentTimeMillis() / 1000));
+            accessToken.expiresOn(Long.toString(
+                    System.currentTimeMillis() / 1000 + 3600));
+            accessToken.extCacheKeyHash(extCacheKeyHash);
+            persisted.accessTokens.put(accessToken.getKey(), accessToken);
+
+            TokenCache reloaded = new TokenCache();
+            reloaded.deserialize(persisted.serialize());
+            ManagedIdentityApplication.sharedTokenCache = reloaded;
+            application.tokenCache = reloaded;
+
+            RequestContext context = new RequestContext(
+                    application,
+                    PublicApi.ACQUIRE_TOKEN_BY_SYSTEM_ASSIGNED_MANAGED_IDENTITY,
+                    parameters);
+            ManagedIdentityRequest request =
+                    new ManagedIdentityRequest(application, context);
+            AtomicInteger bindingResolutions = new AtomicInteger();
+            AcquireTokenByManagedIdentitySupplier supplier =
+                    new AcquireTokenByManagedIdentitySupplier(
+                            application,
+                            request,
+                            () -> {
+                                bindingResolutions.incrementAndGet();
+                                return binding;
+                            });
+
+            AuthenticationResult result = supplier.execute();
+
+            assertEquals(1, bindingResolutions.get());
+            assertEquals("persisted-mtls-token", result.accessToken());
+            assertEquals("mtls_pop", result.tokenType());
+            assertEquals(TokenSource.CACHE, result.metadata().tokenSource());
+            assertSame(binding.bindingContext(), result.mtlsBindingContext());
+            assertNotNull(result.bindingCertificate());
+        } finally {
+            ManagedIdentityApplication.sharedTokenCache = original;
         }
     }
 
@@ -237,6 +422,13 @@ class AcquireTokenByManagedIdentitySupplierMtlsTest {
 
     private static ManagedIdentityMtlsBinding binding(
             MtlsBindingStrength strength) {
+        return binding("key", strength);
+    }
+
+    private static ManagedIdentityMtlsBinding binding(
+            String keyId,
+            MtlsBindingStrength strength) {
+        X509Certificate certificate = mock(X509Certificate.class);
         IMtlsBindingContext context = new IMtlsBindingContext() {
             @Override
             public MtlsBindingStrength bindingStrength() {
@@ -255,12 +447,12 @@ class AcquireTokenByManagedIdentitySupplierMtlsTest {
 
             @Override
             public X509Certificate bindingCertificate() {
-                return null;
+                return certificate;
             }
 
             @Override
             public String keyId() {
-                return "key";
+                return keyId;
             }
         };
         return new ManagedIdentityMtlsBinding(

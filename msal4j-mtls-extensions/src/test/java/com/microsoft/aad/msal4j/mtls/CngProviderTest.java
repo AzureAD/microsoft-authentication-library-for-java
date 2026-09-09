@@ -13,6 +13,7 @@ import java.security.Security;
 import java.security.Signature;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.spec.PSSParameterSpec;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -92,6 +93,15 @@ class CngProviderTest {
     }
 
     @Test
+    void pssAliasesUseDigestSpecificDefaults() throws Exception {
+        Provider provider = new CngProvider();
+
+        assertPssDefaults(provider, "SHA256withRSAandMGF1", "SHA-256", 32);
+        assertPssDefaults(provider, "SHA384withRSAandMGF1", "SHA-384", 48);
+        assertPssDefaults(provider, "SHA512withRSAandMGF1", "SHA-512", 64);
+    }
+
+    @Test
     void provider_name_isCng() {
         assertEquals("CNG", new CngProvider().getName());
     }
@@ -115,5 +125,18 @@ class CngProviderTest {
         signature.initSign(keyPair.getPrivate());
 
         assertNotEquals("CNG", signature.getProvider().getName());
+    }
+
+    private static void assertPssDefaults(
+            Provider provider,
+            String algorithm,
+            String digest,
+            int saltLength) throws Exception {
+        Signature signature = Signature.getInstance(algorithm, provider);
+        PSSParameterSpec parameters = signature.getParameters()
+                .getParameterSpec(PSSParameterSpec.class);
+
+        assertEquals(digest, parameters.getDigestAlgorithm());
+        assertEquals(saltLength, parameters.getSaltLength());
     }
 }

@@ -3,7 +3,7 @@
 This document compares the Managed Identity v2 implementation in current
 MSAL.NET `main` with the implementation proposed by MSAL Java PR
 [#1059](https://github.com/AzureAD/microsoft-authentication-library-for-java/pull/1059)
-at commit `c768c057abf21a08e43fb2a9b10fbb8af3551f82`.
+including the September 2026 review fixes.
 
 The comparison is source-based. The Java implementation remains an open pull
 request and is not a released Maven artifact. References to MSAL.NET describe
@@ -24,14 +24,16 @@ IMDS platform metadata
   -> mtls_pop or bearer token
 ```
 
-The material remaining gaps are lifecycle and recovery features:
+The material remaining difference is certificate lifecycle:
 
 1. MSAL.NET can persist an issued binding certificate in `CurrentUser\My` and
    reuse it across processes. Java intentionally keeps issued certificates and
    binding contexts in process memory.
-2. MSAL.NET evicts the current certificate, remints it, and retries the token
-   request once after `invalid_client` or a recognized SCHANNEL failure. Java
-   currently fails the request without an equivalent remint-and-retry path.
+
+Java now matches .NET's rejected-binding recovery shape: it invalidates the
+current generation, remints, and retries the token request once after
+`invalid_client`, a TLS failure, or a recognized connection reset. It does not
+downgrade to an ordinary bearer flow.
 
 Java additionally exposes a reusable `IMtlsBindingContext` containing standard
 JSSE material for independent downstream Java HTTP calls. This is a
@@ -166,6 +168,7 @@ directory restricted to the current Windows user.
 | Interprocess coordination | Alias-scoped short-timeout lock | Process-local keyed synchronization | Missing cross-process capability |
 | Post-reboot stale key detection | Signing liveness plus cert/key orphan checks | Native signing liveness | Core parity |
 | Old generation lifetime | Persistent store selection and pruning | Retired in-memory generations survive until certificate expiry | Java-specific parity |
+| Rejected generation | Evicted before one remint retry | Invalidated and retired before one remint retry | Full parity |
 
 Java does not need a Windows certificate-store entry for TLS. The binding
 certificate is supplied directly to JSSE by `X509ExtendedKeyManager`, while the
@@ -173,26 +176,27 @@ corresponding private-key operation remains in KeyGuard.
 
 ## Rejected-certificate recovery
 
-This is the most important remaining resilience gap.
-
 MSAL.NET recognizes:
 
 - ESTS `invalid_client`;
 - socket reset error 10054; and
 - TLS authentication failures.
 
-It then:
+Both implementations then:
 
-1. Removes the certificate from the memory cache.
-2. Deletes persistent entries for the alias.
+1. Remove the certificate from the memory cache.
+2. Remove any reusable current entry for the rejected generation.
 3. Forces a new CSR and `/issuecredential` call.
 4. Retries the token request once.
 
-Java currently detects stale KeyGuard key material during binding creation, but
-does not classify token-leg TLS or `invalid_client` failures and remint the
-certificate. The request fails without downgrading to ordinary bearer, so this
-is an availability and recovery gap rather than a loss of token-binding
-security.
+Java classifies `invalid_client`, JSSE `SSLException` failures, and Java socket
+reset messages corresponding to connection reset/Windows 10054. The provider
+SPI invalidates the rejected generation, the KeyGuard provider retires it, and
+core resolves a new binding and retries exactly once. The replacement
+certificate identity is applied to subsequent PoP cache storage.
+
+`bypass_cache=true` is not sent to `/issuecredential`; current MSAL.NET source
+also retains this as a TODO, so it is not a current parity gap.
 
 ## HTTP and downstream integration
 
@@ -232,8 +236,8 @@ introduced `MSAL_MI_DISABLE_IMDS_V2`. Java implements the same behavior.
 | Runtime architecture | Platform/package dependent | Bundled native library is Windows x64 only | Java gap for ARM64 |
 | Java compatibility | Not applicable | Java 8 source and target compatibility | Meets repository requirement |
 | Release status | Compared against current `main` | Open PR, not published to Maven Central | Not released |
-| PR checks at comparison time | Not applicable | CodeQL and CLA passed; integration/unit CI queued | Pending completion |
-| Review state at comparison time | Not applicable | `REVIEW_REQUIRED`; latest Azure SDK review described remaining questions as non-blocking | Pending approval |
+| PR checks at comparison time | Not applicable | Local full reactor tests and E2E packaging pass; hosted checks rerun after push | Pending completion |
+| Review state at comparison time | Not applicable | Review fixes implemented; maintainer approval remains | Pending approval |
 
 ## Live Java validation
 
@@ -263,8 +267,8 @@ IMDS and token protocol.
 
 | Priority | Recommendation |
 | --- | --- |
-| P0 | Add rejected-certificate eviction, remint, and one bounded retry with precise failure classification |
 | P0 | Complete required CI and maintainer review |
+| P0 | Re-run the manual KeyGuard VM flow and exercise rejected-binding recovery against a real token-leg failure |
 | P1 | Validate TLS 1.3 service behavior and remove the TLS 1.2 restriction if safe |
 | P1 | Add Windows ARM64 packaging if required by the supported-host matrix |
 | P2 | Design a total capability-discovery timeout only when Azure SDK credential-chain integration requires it |
@@ -294,4 +298,3 @@ IMDS and token protocol.
 - `msal4j-mtls-extensions/src/main/java/com/microsoft/aad/msal4j/mtls/CngKeyGuard.java`
 - `msal4j-mtls-extensions/src/main/java/com/microsoft/aad/msal4j/mtls/CngSignatureSpi.java`
 - `msal4j-mtls-extensions/src/main/java/com/microsoft/aad/msal4j/mtls/AttestationTokenCache.java`
-

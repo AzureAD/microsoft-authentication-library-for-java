@@ -63,11 +63,13 @@ final class ImdsV2Client {
                     : ",\"attestation_token\":\""
                         + escapeJson(attestationToken) + "\"")
                 + "}";
-        String response = execute(
+        ManagedIdentityMtlsHttpResponse httpResponse = execute(
                 request,
                 "POST",
                 buildUrl(ISSUE_CREDENTIAL_PATH, request),
-                body).body();
+                body);
+        validateImdsOrigin(httpResponse);
+        String response = httpResponse.body();
         CredentialResponse credential = new CredentialResponse(
                 extractString(response, "certificate"),
                 extractString(response, "mtls_authentication_endpoint"),
@@ -97,7 +99,8 @@ final class ImdsV2Client {
             headers.put("Content-Type", "application/json");
         }
         ManagedIdentityMtlsHttpResponse response = request.httpClient().execute(
-                new ManagedIdentityMtlsHttpRequest(method, url, headers, body));
+                new ManagedIdentityMtlsHttpRequest(
+                        method, url, headers, body, false));
         if (response.statusCode() != 200) {
             throw new MtlsMsiException(
                     "IMDS " + method + " " + url + " failed with HTTP "
@@ -127,7 +130,7 @@ final class ImdsV2Client {
             }
         }
         throw new MtlsMsiException(
-                "IMDS getplatformmetadata response did not contain the expected Server header.");
+                "IMDS response did not contain the expected Server header.");
     }
 
     private static String buildUrl(String path, ManagedIdentityMtlsRequest request) {
