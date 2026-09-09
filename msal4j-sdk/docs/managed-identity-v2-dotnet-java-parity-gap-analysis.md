@@ -236,7 +236,7 @@ introduced `MSAL_MI_DISABLE_IMDS_V2`. Java implements the same behavior.
 | Runtime architecture | Platform/package dependent | Bundled native library is Windows x64 only | Java gap for ARM64 |
 | Java compatibility | Not applicable | Java 8 source and target compatibility | Meets repository requirement |
 | Release status | Compared against current `main` | Open PR, not published to Maven Central | Not released |
-| PR checks at comparison time | Not applicable | Local full reactor tests and E2E packaging pass; hosted checks rerun after push | Pending completion |
+| PR checks at comparison time | Not applicable | Local full reactor tests and E2E packaging pass; dedicated IMDS v1 and IMDS v2 jobs are wired into the PR pipeline | Pending first hosted VM run |
 | Review state at comparison time | Not applicable | Review fixes implemented; maintainer approval remains | Pending approval |
 
 ## Live Java validation
@@ -244,6 +244,15 @@ introduced `MSAL_MI_DISABLE_IMDS_V2`. Java implements the same behavior.
 The Java implementation was run on a Windows Server 2025 Trusted Launch Azure
 VM with Secure Boot, vTPM, VBS/KeyGuard, a system-assigned identity, and an
 attached user-assigned identity.
+
+The PR pipeline now has separate jobs on the `MISEManagedIdentity` VM pool:
+
+- IMDS v1 acquires a system-assigned token for ARM, proves the first result came
+  from the identity provider, and proves the second acquisition is a cache hit.
+- IMDS v2 acquires an attested `mtls_pop` token, verifies the certificate
+  thumbprint binding, calls the token-bound Key Vault with the returned JSSE
+  binding context, verifies rejection without the certificate, and proves cache
+  reuse preserves the binding generation.
 
 | Scenario | Result |
 | --- | --- |
