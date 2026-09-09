@@ -227,7 +227,7 @@ $env:MSAL_JAVA_MTLS_TOKEN_ONLY = "true"    # optional: skip Key Vault call
 Run:
 
 ```powershell
-.\run-java-msi-v2-mtls-devapp.ps1
+.\build\run-java-msi-v2-mtls-devapp.ps1
 ```
 
 The app verifies:

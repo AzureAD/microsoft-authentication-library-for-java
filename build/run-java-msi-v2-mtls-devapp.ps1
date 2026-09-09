@@ -5,7 +5,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$repoRoot = $PSScriptRoot
+$repoRoot = Split-Path -Parent $PSScriptRoot
 
 function Assert-EnvironmentVariable {
     param([string]$Name)
@@ -62,7 +62,8 @@ if (-not $SkipBuild) {
     Push-Location $repoRoot
     try {
         & $Maven -q -pl msal4j-mtls-extensions-e2e -am `
-            '-Pe2e' '-DskipTests' '-Dmaven.javadoc.skip=true' package
+            '-Pe2e' '-DskipTests' '-Dskip.unit.tests=true' `
+            '-Dskip.integration.tests=true' '-Dmaven.javadoc.skip=true' package
         if ($LASTEXITCODE -ne 0) {
             throw "Maven build failed with exit code $LASTEXITCODE."
         }

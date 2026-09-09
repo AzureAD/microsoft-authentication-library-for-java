@@ -595,7 +595,7 @@ $env:MSAL_JAVA_MTLS_MISMATCH_IDENTITY_CLIENT_ID = "<second-uami-client-id>"
 Run:
 
 ```powershell
-.\run-java-msi-v2-mtls-devapp.ps1
+.\build\run-java-msi-v2-mtls-devapp.ps1
 ```
 
 No standalone attestation DLL or native library path is required.

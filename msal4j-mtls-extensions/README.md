@@ -177,7 +177,7 @@ while capability discovery reports no available mTLS binding.
 From the repository root:
 
 ```powershell
-.\run-java-msi-v2-mtls-devapp.ps1
+.\build\run-java-msi-v2-mtls-devapp.ps1
 ```
 
 To validate only token acquisition and certificate binding without calling a
@@ -185,7 +185,7 @@ downstream resource:
 
 ```powershell
 $env:MSAL_JAVA_MTLS_TOKEN_ONLY = "true"
-.\run-java-msi-v2-mtls-devapp.ps1
+.\build\run-java-msi-v2-mtls-devapp.ps1
 ```
 
 To validate bearer-over-mTLS token acquisition and its cache partition:
@@ -193,7 +193,7 @@ To validate bearer-over-mTLS token acquisition and its cache partition:
 ```powershell
 $env:MSAL_JAVA_MTLS_TOKEN_ONLY = "true"
 $env:MSAL_JAVA_MTLS_REQUEST_OVER_MTLS = "true"
-.\run-java-msi-v2-mtls-devapp.ps1
+.\build\run-java-msi-v2-mtls-devapp.ps1
 ```
 
 For the negative certificate-binding proof, attach a distinct user-assigned
