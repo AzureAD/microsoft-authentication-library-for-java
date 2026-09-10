@@ -6,7 +6,11 @@ package com.microsoft.aad.msal4j;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutorService;
+import java.util.function.Supplier;
 
 /**
  * Class to be used to acquire tokens for managed identity.
@@ -18,6 +22,9 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
 
     private final ManagedIdentityId managedIdentityId;
     private List<String> clientCapabilities;
+    private volatile CompletableFuture<ManagedIdentityCapabilities>
+            managedIdentityCapabilities;
+    private volatile Boolean managedIdentityCapabilitiesImdsV2Disabled;
     static TokenCache sharedTokenCache = new TokenCache();
 
     //Deprecated the field in favor of the static getManagedIdentitySource method
@@ -59,6 +66,127 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
     }
 
     public List<String> getClientCapabilities() { return this.clientCapabilities; }
+
+    @Override
+    public synchronized CompletableFuture<ManagedIdentityCapabilities>
+    getManagedIdentityCapabilities() {
+        boolean imdsV2Disabled =
+                ManagedIdentityEnvironment.isImdsV2Disabled();
+        if (managedIdentityCapabilities != null) {
+            if (managedIdentityCapabilitiesImdsV2Disabled != null
+                    && managedIdentityCapabilitiesImdsV2Disabled
+                    == imdsV2Disabled
+                    && (imdsV2Disabled
+                    || !shouldRetryCompletedDiscovery(
+                            managedIdentityCapabilities))) {
+                return managedIdentityCapabilities;
+            }
+            managedIdentityCapabilities = null;
+        }
+        Supplier<ManagedIdentityCapabilities> supplier =
+                () -> detectManagedIdentityCapabilities(imdsV2Disabled);
+        ExecutorService executorService =
+                serviceBundle().getExecutorService();
+        CompletableFuture<ManagedIdentityCapabilities> discovery =
+                executorService == null
+                ? CompletableFuture.supplyAsync(supplier)
+                : CompletableFuture.supplyAsync(supplier, executorService);
+        managedIdentityCapabilities = discovery;
+        managedIdentityCapabilitiesImdsV2Disabled = imdsV2Disabled;
+        discovery.whenComplete((capabilities, error) -> {
+            if (error != null
+                    || (!imdsV2Disabled
+                    && shouldRetryCapabilityDiscovery(capabilities))) {
+                synchronized (ManagedIdentityApplication.this) {
+                    if (managedIdentityCapabilities == discovery) {
+                        managedIdentityCapabilities = null;
+                        managedIdentityCapabilitiesImdsV2Disabled = null;
+                    }
+                }
+            }
+        });
+        return discovery;
+    }
+
+    private static boolean shouldRetryCompletedDiscovery(
+            CompletableFuture<ManagedIdentityCapabilities> discovery) {
+        if (!discovery.isDone()) {
+            return false;
+        }
+        try {
+            return shouldRetryCapabilityDiscovery(discovery.getNow(null));
+        } catch (CompletionException | CancellationException e) {
+            return true;
+        }
+    }
+
+    private static boolean shouldRetryCapabilityDiscovery(
+            ManagedIdentityCapabilities capabilities) {
+        if (capabilities == null
+                || capabilities.isMtlsPopSupportedByHost()) {
+            return false;
+        }
+        return capabilities.source() == ManagedIdentitySourceType.IMDS
+                || capabilities.source()
+                == ManagedIdentitySourceType.DEFAULT_TO_IMDS;
+    }
+
+    private ManagedIdentityCapabilities detectManagedIdentityCapabilities(
+            boolean imdsV2Disabled) {
+        ManagedIdentitySourceType source =
+                ManagedIdentityClient.getManagedIdentitySource();
+        if (source != ManagedIdentitySourceType.DEFAULT_TO_IMDS
+                && source != ManagedIdentitySourceType.IMDS) {
+            return new ManagedIdentityCapabilities(
+                    source,
+                    MtlsBindingStrength.NONE,
+                    "Managed identity mTLS PoP is supported only on the IMDS v2 VM/VMSS source.");
+        }
+        if (imdsV2Disabled) {
+            return new ManagedIdentityCapabilities(
+                    source,
+                    MtlsBindingStrength.NONE,
+                    Constants.MSAL_MI_DISABLE_IMDS_V2
+                            + " disables IMDS v2 for this process.");
+        }
+
+        ManagedIdentityParameters parameters = ManagedIdentityParameters
+                .builder("https://management.azure.com")
+                .build();
+        RequestContext requestContext = new RequestContext(
+                this,
+                managedIdentityId.getIdType()
+                        == ManagedIdentityIdType.SYSTEM_ASSIGNED
+                        ? PublicApi.ACQUIRE_TOKEN_BY_SYSTEM_ASSIGNED_MANAGED_IDENTITY
+                        : PublicApi.ACQUIRE_TOKEN_BY_USER_ASSIGNED_MANAGED_IDENTITY,
+                parameters);
+
+        try {
+            IManagedIdentityMtlsProvider provider =
+                    ManagedIdentityMtlsProviderLoader.load();
+            ManagedIdentityMtlsRequest request =
+                    AcquireTokenByManagedIdentitySupplier
+                            .createMtlsProviderRequest(
+                                    this,
+                                    requestContext,
+                                    false);
+            MtlsBindingStrength strength =
+                    provider.getMaxSupportedBindingStrength(request);
+            return new ManagedIdentityCapabilities(
+                    strength == MtlsBindingStrength.NONE
+                            ? source
+                            : ManagedIdentitySourceType.IMDS,
+                    strength,
+                    strength == MtlsBindingStrength.NONE
+                            ? "The configured mTLS provider did not report a supported binding."
+                            : null);
+        } catch (RuntimeException e) {
+            return new ManagedIdentityCapabilities(
+                    source,
+                    MtlsBindingStrength.NONE,
+                    e.getMessage());
+        }
+    }
     
     @Override
     public CompletableFuture<IAuthenticationResult> acquireTokenForManagedIdentity(ManagedIdentityParameters managedIdentityParameters)
