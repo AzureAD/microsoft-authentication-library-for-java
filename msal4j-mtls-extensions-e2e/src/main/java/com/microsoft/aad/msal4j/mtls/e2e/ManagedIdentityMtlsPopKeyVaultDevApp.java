@@ -28,19 +28,8 @@ import java.util.UUID;
 public final class ManagedIdentityMtlsPopKeyVaultDevApp {
 
     private static final String RESOURCE = "https://vault.azure.net";
-    private static final String ARM_RESOURCE = "https://management.azure.com";
 
     public static void main(String[] args) throws Exception {
-        String mode = System.getenv("MSAL_JAVA_MI_E2E_MODE");
-        if ("v1".equalsIgnoreCase(mode)) {
-            runManagedIdentityV1();
-            return;
-        }
-        if (!isBlank(mode) && !"v2".equalsIgnoreCase(mode)) {
-            throw new IllegalArgumentException(
-                    "MSAL_JAVA_MI_E2E_MODE must be 'v1' or 'v2'.");
-        }
-
         boolean tokenOnly = Boolean.parseBoolean(
                 System.getenv("MSAL_JAVA_MTLS_TOKEN_ONLY"));
         boolean bearerOverMtls = Boolean.parseBoolean(
@@ -204,57 +193,6 @@ public final class ManagedIdentityMtlsPopKeyVaultDevApp {
         }
 
         System.out.println("\nRESULT: PASS");
-    }
-
-    private static void runManagedIdentityV1() throws Exception {
-        ManagedIdentityApplication application = ManagedIdentityApplication.builder(
-                ManagedIdentityId.systemAssigned()).build();
-        ManagedIdentityParameters parameters =
-                ManagedIdentityParameters.builder(ARM_RESOURCE).build();
-
-        System.out.println("Java Managed Identity v1 E2E validation");
-        System.out.println();
-        System.out.println("Platform: " + System.getProperty("os.name"));
-        System.out.println("JVM: " + System.getProperty("java.version"));
-        System.out.println("Identity: SystemAssigned");
-        System.out.println("Resource: " + ARM_RESOURCE);
-
-        System.out.println("\n[1] Acquiring token from IMDS...");
-        IAuthenticationResult first =
-                application.acquireTokenForManagedIdentity(parameters).get();
-        verifyManagedIdentityV1Result(first);
-        if (first.metadata().tokenSource() != TokenSource.IDENTITY_PROVIDER) {
-            throw new IllegalStateException(
-                    "First Managed Identity v1 acquisition did not use IMDS.");
-        }
-        System.out.println("PASS: TokenSource = IDENTITY_PROVIDER");
-
-        System.out.println("\n[2] Reacquiring...");
-        IAuthenticationResult cached =
-                application.acquireTokenForManagedIdentity(parameters).get();
-        verifyManagedIdentityV1Result(cached);
-        if (cached.metadata().tokenSource() != TokenSource.CACHE) {
-            throw new IllegalStateException(
-                    "Second Managed Identity v1 acquisition was not a cache hit.");
-        }
-        if (!first.accessToken().equals(cached.accessToken())) {
-            throw new IllegalStateException(
-                    "Managed Identity v1 cache hit returned a different token.");
-        }
-        System.out.println("PASS: TokenSource = CACHE");
-        System.out.println("\nRESULT: PASS - Managed Identity v1");
-    }
-
-    private static void verifyManagedIdentityV1Result(
-            IAuthenticationResult result) {
-        if (result == null
-                || isBlank(result.accessToken())
-                || !"Bearer".equalsIgnoreCase(result.tokenType())
-                || result.bindingCertificate() != null
-                || result.mtlsBindingContext() != null) {
-            throw new IllegalStateException(
-                    "Managed Identity v1 result was invalid.");
-        }
     }
 
     private static IAuthenticationResult acquire(

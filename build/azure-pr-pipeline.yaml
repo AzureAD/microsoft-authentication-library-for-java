@@ -136,44 +136,6 @@ jobs:
             $(System.DefaultWorkingDirectory)\msal4j-sdk\src\main\java
           failIfCoverageEmpty: false
 
-  - job: ManagedIdentityV1
-    displayName: Managed Identity E2E - IMDS v1
-    pool:
-      name: MISEManagedIdentity
-    variables:
-      runCodesignValidationInjection: false
-      Codeql.SkipTaskAutoInjection: true
-    steps:
-      - checkout: self
-        clean: true
-        fetchDepth: 1
-
-      - task: PowerShell@2
-        displayName: Build Managed Identity E2E app
-        inputs:
-          filePath: build/build-managed-identity-e2e.ps1
-
-      - task: PowerShell@2
-        displayName: Run Managed Identity v1 E2E
-        env:
-          MSAL_JAVA_MI_E2E_MODE: v1
-        inputs:
-          targetType: inline
-          script: |
-            $ErrorActionPreference = "Stop"
-            $jar = Get-ChildItem `
-              "$(System.DefaultWorkingDirectory)\msal4j-mtls-extensions-e2e\target" `
-              -Filter "*-e2e.jar" |
-              Sort-Object LastWriteTime -Descending |
-              Select-Object -First 1
-            if ($null -eq $jar) {
-              throw "Managed Identity E2E JAR was not produced."
-            }
-            & java -jar $jar.FullName
-            if ($LASTEXITCODE -ne 0) {
-              throw "Managed Identity v1 E2E failed with exit code $LASTEXITCODE."
-            }
-
   - job: ManagedIdentityV2
     displayName: Managed Identity E2E - IMDS v2 mTLS PoP
     pool:
@@ -208,7 +170,6 @@ jobs:
       - task: PowerShell@2
         displayName: Run Managed Identity v2 mTLS PoP E2E
         env:
-          MSAL_JAVA_MI_E2E_MODE: v2
           MSAL_JAVA_MTLS_AKV_URL: https://tokenbinding.vault.azure.net
           MSAL_JAVA_MTLS_AKV_SECRET_NAME: boundsecret
         inputs:
