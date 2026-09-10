@@ -28,7 +28,6 @@ public final class KeyGuardManagedIdentityMtlsProvider
         implements IManagedIdentityMtlsProvider {
 
     private static final long ROTATION_BUFFER_MILLIS = 24L * 60L * 60L * 1000L;
-    private static final int MAX_REJECTED_GENERATIONS = 2;
     private static final AttestationTokenCache ATTESTATION_CACHE =
             new AttestationTokenCache();
     private static final Map<String, BindingGeneration> CURRENT =
@@ -100,7 +99,6 @@ public final class KeyGuardManagedIdentityMtlsProvider
                                 cacheKey,
                                 ignored -> new ArrayList<>());
                 retired.add(current);
-                trimRejectedGenerations(retired);
             }
             cleanupRetired(cacheKey);
             return true;
@@ -292,13 +290,6 @@ public final class KeyGuardManagedIdentityMtlsProvider
             }
         }
         return retained;
-    }
-
-    static void trimRejectedGenerations(
-            List<BindingGeneration> generations) {
-        while (generations.size() > MAX_REJECTED_GENERATIONS) {
-            generations.remove(0).context.closeNativeKey();
-        }
     }
 
     private static String shortHash(String value) {

@@ -97,7 +97,7 @@ class KeyGuardManagedIdentityMtlsProviderTest {
     }
 
     @Test
-    void rejectedGenerationRetentionIsBounded() throws Exception {
+    void unexpiredRejectedGenerationsRemainUsable() throws Exception {
         AtomicInteger oldestReleases = new AtomicInteger();
         AtomicInteger middleReleases = new AtomicInteger();
         AtomicInteger newestReleases = new AtomicInteger();
@@ -113,11 +113,13 @@ class KeyGuardManagedIdentityMtlsProviderTest {
                                 Instant.now().plus(Duration.ofHours(48)).toEpochMilli(),
                                 newestReleases)));
 
-        KeyGuardManagedIdentityMtlsProvider.trimRejectedGenerations(
-                generations);
+        List<KeyGuardManagedIdentityMtlsProvider.BindingGeneration> retained =
+                KeyGuardManagedIdentityMtlsProvider.cleanupRetiredGenerations(
+                        generations,
+                        Instant.now().toEpochMilli());
 
-        assertEquals(2, generations.size());
-        assertEquals(1, oldestReleases.get());
+        assertEquals(3, retained.size());
+        assertEquals(0, oldestReleases.get());
         assertEquals(0, middleReleases.get());
         assertEquals(0, newestReleases.get());
     }

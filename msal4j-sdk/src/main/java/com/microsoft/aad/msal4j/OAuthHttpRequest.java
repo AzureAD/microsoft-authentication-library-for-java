@@ -49,6 +49,9 @@ class OAuthHttpRequest {
         } else {
             httpRequest.sslSocketFactory(sslSocketFactory);
         }
+        if (sslContext != null || sslSocketFactory != null) {
+            httpRequest.followRedirects(false);
+        }
 
         IHttpResponse httpResponse = serviceBundle.getHttpHelper().executeHttpRequest(
                 httpRequest,

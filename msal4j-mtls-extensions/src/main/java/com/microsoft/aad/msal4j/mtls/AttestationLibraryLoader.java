@@ -114,25 +114,32 @@ final class AttestationLibraryLoader {
             directoryFile.deleteOnExit();
             libraryFile.deleteOnExit();
             return library;
+        } catch (RuntimeException e) {
+            cleanupExtractedLibrary(library, directory);
+            throw e;
         } catch (IOException e) {
-            if (library != null) {
-                try {
-                    Files.deleteIfExists(library);
-                } catch (IOException ignored) {
-                    // Preserve the original extraction failure.
-                }
-            }
-            if (directory != null) {
-                try {
-                    Files.deleteIfExists(directory);
-                } catch (IOException ignored) {
-                    // Preserve the original extraction failure.
-                }
-            }
+            cleanupExtractedLibrary(library, directory);
             throw new MtlsMsiException(
                     "Could not extract bundled Microsoft.Azure.Security.KeyGuardAttestation " +
                             VERSION + " native library.",
                     e);
+        }
+    }
+
+    static void cleanupExtractedLibrary(Path library, Path directory) {
+        if (library != null) {
+            try {
+                Files.deleteIfExists(library);
+            } catch (IOException ignored) {
+                // Preserve the original extraction or verification failure.
+            }
+        }
+        if (directory != null) {
+            try {
+                Files.deleteIfExists(directory);
+            } catch (IOException ignored) {
+                // Preserve the original extraction or verification failure.
+            }
         }
     }
 
