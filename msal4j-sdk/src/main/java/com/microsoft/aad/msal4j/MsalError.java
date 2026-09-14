@@ -38,4 +38,22 @@ public class MsalError {
     public static final String MANAGED_IDENTITY_FILE_READ_ERROR = "managed_identity_file_read_error";
 
     public static final String MANAGED_IDENTITY_RESPONSE_PARSE_FAILURE = "managed_identity_response_parse_failure";
+
+    public static final String MANAGED_IDENTITY_MTLS_PROVIDER_UNAVAILABLE =
+            "managed_identity_mtls_provider_unavailable";
+
+    public static final String MANAGED_IDENTITY_MTLS_TOKEN_TYPE_INVALID =
+            "managed_identity_mtls_token_type_invalid";
+
+    public static final String MANAGED_IDENTITY_MTLS_REQUEST_FAILED =
+            "managed_identity_mtls_request_failed";
+
+    public static final String MANAGED_IDENTITY_MTLS_UNSUPPORTED =
+            "managed_identity_mtls_unsupported";
+
+    public static final String MANAGED_IDENTITY_MTLS_HTTP_CLIENT_UNSUPPORTED =
+            "managed_identity_mtls_http_client_unsupported";
+
+    public static final String MANAGED_IDENTITY_MTLS_MINIMUM_STRENGTH_NOT_MET =
+            "managed_identity_mtls_minimum_strength_not_met";
 }

@@ -7,7 +7,16 @@
 	<packaging>pom</packaging>
 	<modules>
 		<module>msal4j-sdk</module>
+		<module>msal4j-mtls-extensions</module>
 		<module>msal4j-brokers</module>
         <module>msal4j-persistence-extension</module>
     </modules>
+	<profiles>
+	    <profile>
+	        <id>e2e</id>
+	        <modules>
+	            <module>msal4j-mtls-extensions-e2e</module>
+	        </modules>
+	    </profile>
+	</profiles>
 </project>

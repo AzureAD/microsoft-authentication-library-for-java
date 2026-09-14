@@ -10,6 +10,8 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
 
 class OAuthHttpRequest {
 
@@ -19,6 +21,8 @@ class OAuthHttpRequest {
     private final Map<String, String> extraHeaderParams;
     private final ServiceBundle serviceBundle;
     private final RequestContext requestContext;
+    private SSLSocketFactory sslSocketFactory;
+    private SSLContext sslContext;
 
     OAuthHttpRequest(final HttpMethod method,
                      final URL url,
@@ -40,6 +44,14 @@ class OAuthHttpRequest {
                 this.url.toString(),
                 httpHeaders,
                 this.query);
+        if (sslContext != null) {
+            httpRequest.sslContext(sslContext);
+        } else {
+            httpRequest.sslSocketFactory(sslSocketFactory);
+        }
+        if (sslContext != null || sslSocketFactory != null) {
+            httpRequest.followRedirects(false);
+        }
 
         IHttpResponse httpResponse = serviceBundle.getHttpHelper().executeHttpRequest(
                 httpRequest,
@@ -106,5 +118,25 @@ class OAuthHttpRequest {
 
     Map<String, String> getExtraHeaderParams() {
         return this.extraHeaderParams;
+    }
+
+    OAuthHttpRequest sslSocketFactory(SSLSocketFactory sslSocketFactory) {
+        this.sslSocketFactory = sslSocketFactory;
+        return this;
+    }
+
+    SSLSocketFactory sslSocketFactory() {
+        return sslSocketFactory;
+    }
+
+    OAuthHttpRequest sslContext(SSLContext sslContext) {
+        this.sslContext = sslContext;
+        this.sslSocketFactory =
+                sslContext == null ? null : sslContext.getSocketFactory();
+        return this;
+    }
+
+    SSLContext sslContext() {
+        return sslContext;
     }
 }

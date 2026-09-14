@@ -26,6 +26,8 @@ final class Constants {
     public static final String IMDS_ENDPOINT = "IMDS_ENDPOINT";
     public static final String MSI_ENDPOINT = "MSI_ENDPOINT";
     public static final String IDENTITY_SERVER_THUMBPRINT = "IDENTITY_SERVER_THUMBPRINT";
+    public static final String MSAL_MI_DISABLE_IMDS_V2 =
+            "MSAL_MI_DISABLE_IMDS_V2";
 
     // Constants for token revocation and client capabilities
     public static final String TOKEN_HASH_CLAIM = "token_sha256_to_refresh";
