@@ -21,115 +21,224 @@ variables:
   skip.integration.tests: false
   system.debug: false
 
-pool:
-  vmImage: windows-2025
+jobs:
+  - job: BuildAndTest
+    displayName: Build and test
+    pool:
+      vmImage: windows-2025
+    steps:
+      - checkout: self
+        clean: false
+        fetchDepth: 0
+        fetchTags: false
 
-steps:
-  - checkout: self
-    clean: false
-    fetchDepth: 0
-    fetchTags: false
+      - task: DownloadSecureFile@1
+        name: LabAuth
+        displayName: Download LabAuth certificate
+        inputs:
+          secureFile: 6cfea379-ebe1-4e95-b2b8-1b509a4e70c4
+          retryCount: "8"
 
-  - task: DownloadSecureFile@1
-    name: LabAuth
-    displayName: Download LabAuth certificate
-    inputs:
-      secureFile: 6cfea379-ebe1-4e95-b2b8-1b509a4e70c4
-      retryCount: "8"
+      - task: PowerShell@2
+        displayName: Save certificate in store
+        inputs:
+          targetType: inline
+          script: |
+            $ErrorActionPreference = "Stop"
 
-  - task: PowerShell@2
-    displayName: Save certificate in store
-    inputs:
-      targetType: inline
-      script: |
-        $ErrorActionPreference = "Stop"
+            Import-PfxCertificate `
+              -FilePath "$(LabAuth.secureFilePath)" `
+              -CertStoreLocation "Cert:\CurrentUser\My" `
+              -Exportable
 
-        Import-PfxCertificate `
-          -FilePath "$(LabAuth.secureFilePath)" `
-          -CertStoreLocation "Cert:\CurrentUser\My" `
-          -Exportable
+      - task: PowerShell@2
+        displayName: Install Chrome and ChromeDriver
+        inputs:
+          targetType: inline
+          script: |
+            $ErrorActionPreference = "Stop"
 
-  - task: PowerShell@2
-    displayName: Install Chrome and ChromeDriver
-    inputs:
-      targetType: inline
-      script: |
-        $ErrorActionPreference = "Stop"
+            $installer = Join-Path `
+              $env:Agent_TempDirectory `
+              "chrome-installer.exe"
+            Invoke-WebRequest `
+              -Uri "https://dl.google.com/chrome/install/latest/chrome_installer.exe" `
+              -OutFile $installer
 
-        $installer = Join-Path $env:Agent_TempDirectory "chrome-installer.exe"
-        Invoke-WebRequest `
-          -Uri "https://dl.google.com/chrome/install/latest/chrome_installer.exe" `
-          -OutFile $installer
+            Start-Process `
+              -FilePath $installer `
+              -ArgumentList "/silent", "/install" `
+              -Wait
 
-        Start-Process `
-          -FilePath $installer `
-          -ArgumentList "/silent", "/install" `
-          -Wait
+            $chromePath = `
+              "${env:ProgramFiles}\Google\Chrome\Application\chrome.exe"
+            $chromeVersion = (Get-Item $chromePath).VersionInfo.ProductVersion
+            $chromeBuild = ($chromeVersion.Split(".")[0..2] -join ".")
 
-        $chromePath = "${env:ProgramFiles}\Google\Chrome\Application\chrome.exe"
-        $chromeVersion = (Get-Item $chromePath).VersionInfo.ProductVersion
-        $chromeBuild = ($chromeVersion.Split(".")[0..2] -join ".")
+            Write-Host "Installed Chrome version: $chromeVersion"
 
-        Write-Host "Installed Chrome version: $chromeVersion"
+            $driverVersion = Invoke-RestMethod `
+              "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_$chromeBuild"
 
-        $driverVersion = Invoke-RestMethod `
-          "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_$chromeBuild"
+            Write-Host "Using ChromeDriver version: $driverVersion"
 
-        Write-Host "Using ChromeDriver version: $driverVersion"
+            $zip = Join-Path `
+              $env:Agent_TempDirectory `
+              "chromedriver.zip"
+            $extract = Join-Path `
+              $env:Agent_TempDirectory `
+              "chromedriver"
 
-        $zip = Join-Path $env:Agent_TempDirectory "chromedriver.zip"
-        $extract = Join-Path $env:Agent_TempDirectory "chromedriver"
+            Invoke-WebRequest `
+              -Uri "https://storage.googleapis.com/chrome-for-testing-public/$driverVersion/win64/chromedriver-win64.zip" `
+              -OutFile $zip
 
-        Invoke-WebRequest `
-          -Uri "https://storage.googleapis.com/chrome-for-testing-public/$driverVersion/win64/chromedriver-win64.zip" `
-          -OutFile $zip
+            Expand-Archive -Path $zip -DestinationPath $extract -Force
+            Copy-Item `
+              "$extract\chromedriver-win64\chromedriver.exe" `
+              "C:\Windows\chromedriver.exe" `
+              -Force
 
-        Expand-Archive -Path $zip -DestinationPath $extract -Force
-        Copy-Item `
-          "$extract\chromedriver-win64\chromedriver.exe" `
-          "C:\Windows\chromedriver.exe" `
-          -Force
+      - task: Maven@4
+        displayName: Run unit tests
+        inputs:
+          mavenPomFile: pom.xml
+          goals: verify
+          options: >-
+            -fae
+            -Drevapi.failBuildOnProblemsFound=false
+            -Dskip.unit.tests=$(skip.unit.tests)
+            -Dskip.integration.tests=true
+            -Dadfs.disabled=true
+          publishJUnitResults: true
+          testResultsFiles: "**/surefire-reports/TEST-*.xml"
+          javaHomeOption: JDKVersion
+          jdkVersionOption: "1.8"
+          jdkArchitectureOption: x64
 
-  - task: Maven@4
-    displayName: Run unit tests
-    inputs:
-      mavenPomFile: pom.xml
-      goals: verify
-      options: >-
-        -fae
-        -Drevapi.failBuildOnProblemsFound=false
-        -Dskip.unit.tests=$(skip.unit.tests)
-        -Dskip.integration.tests=true
-        -Dadfs.disabled=true
-      publishJUnitResults: true
-      testResultsFiles: "**/surefire-reports/TEST-*.xml"
-      javaHomeOption: JDKVersion
-      jdkVersionOption: "1.8"
-      jdkArchitectureOption: x64
+      - task: Maven@4
+        displayName: Run integration tests
+        inputs:
+          mavenPomFile: pom.xml
+          goals: verify
+          options: >-
+            -fae
+            -Drevapi.failBuildOnProblemsFound=false
+            -Dskip.unit.tests=true
+            -Dskip.integration.tests=$(skip.integration.tests)
+            -Dadfs.disabled=true
+          publishJUnitResults: true
+          testResultsFiles: "**/failsafe-reports/TEST-*.xml"
+          javaHomeOption: JDKVersion
+          jdkVersionOption: "1.8"
+          jdkArchitectureOption: x64
 
-  - task: Maven@4
-    displayName: Run integration tests
-    inputs:
-      mavenPomFile: pom.xml
-      goals: verify
-      options: >-
-        -fae
-        -Drevapi.failBuildOnProblemsFound=false
-        -Dskip.unit.tests=true
-        -Dskip.integration.tests=$(skip.integration.tests)
-        -Dadfs.disabled=true
-      publishJUnitResults: true
-      testResultsFiles: "**/failsafe-reports/TEST-*.xml"
-      javaHomeOption: JDKVersion
-      jdkVersionOption: "1.8"
-      jdkArchitectureOption: x64
+      - task: PublishCodeCoverageResults@2
+        displayName: Publish JaCoCo coverage
+        condition: succeededOrFailed()
+        inputs:
+          summaryFileLocation: >-
+            $(System.DefaultWorkingDirectory)\msal4j-sdk\target\site\jacoco\jacoco.xml
+          pathToSources: >-
+            $(System.DefaultWorkingDirectory)\msal4j-sdk\src\main\java
+          failIfCoverageEmpty: false
 
-  - task: PublishCodeCoverageResults@2
-    displayName: Publish JaCoCo coverage
-    condition: succeededOrFailed()
-    inputs:
-      summaryFileLocation: >-
-        $(System.DefaultWorkingDirectory)\msal4j-sdk\target\site\jacoco\jacoco.xml
-      pathToSources: >-
-        $(System.DefaultWorkingDirectory)\msal4j-sdk\src\main\java
-      failIfCoverageEmpty: false
+  - job: PrepareManagedIdentityTools
+    displayName: Prepare Managed Identity E2E tools
+    pool:
+      vmImage: windows-2025
+    steps:
+      - checkout: self
+        clean: false
+        fetchDepth: 1
+
+      - task: PowerShell@2
+        displayName: Download verified JDK and Maven archives
+        inputs:
+          filePath: build/prepare-managed-identity-e2e-tools.ps1
+          arguments: >-
+            -OutputDirectory
+            "$(Build.ArtifactStagingDirectory)\managed-identity-e2e-tools"
+
+      - task: PublishPipelineArtifact@1
+        displayName: Publish Managed Identity E2E tools
+        inputs:
+          targetPath: >-
+            $(Build.ArtifactStagingDirectory)\managed-identity-e2e-tools
+          artifact: managed-identity-e2e-tools
+
+  - job: ManagedIdentityImds
+    displayName: Managed Identity E2E - IMDS
+    dependsOn: PrepareManagedIdentityTools
+    pool:
+      name: MISEManagedIdentity
+    variables:
+      runCodesignValidationInjection: false
+      Codeql.SkipTaskAutoInjection: true
+    steps:
+      - checkout: self
+        clean: true
+        fetchDepth: 1
+
+      - task: DownloadPipelineArtifact@2
+        displayName: Download Managed Identity E2E tools
+        inputs:
+          artifact: managed-identity-e2e-tools
+          path: $(Pipeline.Workspace)\managed-identity-e2e-tools
+
+      - task: PowerShell@2
+        displayName: Run Managed Identity IMDS E2E
+        inputs:
+          filePath: build/run-managed-identity-e2e.ps1
+          arguments: >-
+            -TestClass ManagedIdentityImdsE2E
+            -ToolsArchiveDirectory
+            "$(Pipeline.Workspace)\managed-identity-e2e-tools"
+
+      - task: PublishTestResults@2
+        displayName: Publish Managed Identity IMDS results
+        condition: succeededOrFailed()
+        inputs:
+          testResultsFormat: JUnit
+          testResultsFiles: >-
+            **/failsafe-reports/TEST-*.xml
+          failTaskOnFailedTests: true
+          testRunTitle: Managed Identity IMDS E2E
+
+  - job: ManagedIdentityAzureArc
+    displayName: Managed Identity E2E - Azure Arc
+    dependsOn: PrepareManagedIdentityTools
+    pool:
+      name: MISEAZUREARC
+    variables:
+      runCodesignValidationInjection: false
+      Codeql.SkipTaskAutoInjection: true
+    steps:
+      - checkout: self
+        clean: true
+        fetchDepth: 1
+
+      - task: DownloadPipelineArtifact@2
+        displayName: Download Managed Identity E2E tools
+        inputs:
+          artifact: managed-identity-e2e-tools
+          path: $(Pipeline.Workspace)\managed-identity-e2e-tools
+
+      - task: PowerShell@2
+        displayName: Run Managed Identity Azure Arc E2E
+        inputs:
+          filePath: build/run-managed-identity-e2e.ps1
+          arguments: >-
+            -TestClass ManagedIdentityAzureArcE2E
+            -ToolsArchiveDirectory
+            "$(Pipeline.Workspace)\managed-identity-e2e-tools"
+
+      - task: PublishTestResults@2
+        displayName: Publish Managed Identity Azure Arc results
+        condition: succeededOrFailed()
+        inputs:
+          testResultsFormat: JUnit
+          testResultsFiles: >-
+            **/failsafe-reports/TEST-*.xml
+          failTaskOnFailedTests: true
+          testRunTitle: Managed Identity Azure Arc E2E
