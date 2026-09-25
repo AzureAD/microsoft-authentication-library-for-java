@@ -99,13 +99,64 @@ class SniMtlsPopE2E {
         assertEquals("MissingClientCertificate", error.get("message"));
     }
 
+    @Test
+    void nonExportableVbsKeySignsClassicSniBearerAssertion() throws Exception {
+        CertificateCredential credential = findLocalMachineCertificate();
+        validateNonExportableVbsKey(credential);
+
+        IAuthenticationResult result = awaitAcquisition(
+                application(credential, false).acquireToken(
+                        ClientCredentialParameters.builder(
+                                Collections.singleton(GRAPH_SCOPE)).build()),
+                TOKEN_ACQUISITION_TIMEOUT_SECONDS,
+                TimeUnit.SECONDS);
+
+        assertFalse(result.accessToken().isEmpty());
+        assertEquals("Bearer", result.tokenType());
+        assertNull(result.bindingCertificate());
+        assertNull(result.mtlsBindingContext());
+    }
+
+    @Test
+    void nonExportableVbsKeyAcquiresAndCachesBearerOverMtls() throws Exception {
+        CertificateCredential credential = findLocalMachineCertificate();
+        validateNonExportableVbsKey(credential);
+        ConfidentialClientApplication application = application(credential, true);
+
+        IAuthenticationResult first = awaitAcquisition(
+                application.acquireToken(ClientCredentialParameters
+                        .builder(Collections.singleton(GRAPH_SCOPE)).build()),
+                TOKEN_ACQUISITION_TIMEOUT_SECONDS,
+                TimeUnit.SECONDS);
+        IAuthenticationResult cached = awaitAcquisition(
+                application.acquireToken(ClientCredentialParameters
+                        .builder(Collections.singleton(GRAPH_SCOPE)).build()),
+                TOKEN_ACQUISITION_TIMEOUT_SECONDS,
+                TimeUnit.SECONDS);
+
+        assertEquals("Bearer", first.tokenType());
+        assertEquals(TokenSource.IDENTITY_PROVIDER, first.metadata().tokenSource());
+        assertNull(first.bindingCertificate());
+        assertNull(first.mtlsBindingContext());
+        assertEquals(TokenSource.CACHE, cached.metadata().tokenSource());
+        assertEquals(first.accessToken(), cached.accessToken());
+        assertNull(cached.mtlsBindingContext());
+    }
+
     private static ConfidentialClientApplication application(
             CertificateCredential credential) throws Exception {
+        return application(credential, false);
+    }
+
+    private static ConfidentialClientApplication application(
+            CertificateCredential credential,
+            boolean sendCertificateOverMtls) throws Exception {
         IClientCertificate certificate = ClientCredentialFactory
                 .createFromCertificateChain(credential.privateKey, credential.chain);
         return ConfidentialClientApplication.builder(CLIENT_ID, certificate)
                 .authority(AUTHORITY)
                 .sendX5c(true)
+                .sendCertificateOverMtls(sendCertificateOverMtls)
                 .connectTimeoutForDefaultHttpClient(
                         HTTP_CONNECT_TIMEOUT_MILLISECONDS)
                 .readTimeoutForDefaultHttpClient(

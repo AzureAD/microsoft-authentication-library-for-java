@@ -127,12 +127,12 @@ if (-not (Test-Path -LiteralPath $reportPath -PathType Leaf)) {
 }
 [xml] $report = Get-Content -LiteralPath $reportPath -Raw
 $suite = $report.testsuite
-if ([int] $suite.tests -ne 2 -or
+if ([int] $suite.tests -ne 4 -or
     [int] $suite.skipped -ne 0 -or
     [int] $suite.failures -ne 0 -or
     [int] $suite.errors -ne 0) {
     throw (
-        "Expected exactly two passing SNI mTLS E2E tests; " +
+        "Expected exactly four passing SNI mTLS E2E tests; " +
         "tests=$($suite.tests), skipped=$($suite.skipped), " +
         "failures=$($suite.failures), errors=$($suite.errors)."
     )

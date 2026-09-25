@@ -18,6 +18,7 @@ class TokenRequestExecutor {
     final String tenant;
     private final MsalRequest msalRequest;
     private final ServiceBundle serviceBundle;
+    private MtlsBindingContext bearerOverMtlsContext;
 
     TokenRequestExecutor(Authority requestAuthority, MsalRequest msalRequest, ServiceBundle serviceBundle) {
         this.requestAuthority = requestAuthority;
@@ -44,7 +45,7 @@ class TokenRequestExecutor {
         }
 
         URL tokenEndpoint = requestAuthority.tokenEndpointUrl();
-        MtlsBindingContext mtlsBindingContext = mtlsBindingContext();
+        MtlsBindingContext mtlsBindingContext = transportMtlsBindingContext();
         if (mtlsBindingContext != null) {
             tokenEndpoint = MtlsEndpointHelper.deriveMtlsTokenEndpoint(tokenEndpoint);
         }
@@ -60,7 +61,7 @@ class TokenRequestExecutor {
         }
 
         final Map<String, String> params = new HashMap<>(msalRequest.msalAuthorizationGrant().toParameters());
-        if (mtlsBindingContext != null) {
+        if (mtlsProofOfPossessionContext() != null) {
             params.put("token_type", TokenType.MTLS_POP.value());
         }
         if (msalRequest.application() instanceof AbstractClientApplicationBase
@@ -136,25 +137,7 @@ class TokenRequestExecutor {
      */
     private void addCredentialToRequest(Map<String, String> queryParameters,
                                        ConfidentialClientApplication application) {
-        IClientCredential credentialToUse = application.clientCredential;
-        Authority authorityToUse = application.authenticationAuthority;
-
-        // A ClientCredentialRequest may have parameters which override the credentials used to build the application.
-        if (msalRequest instanceof ClientCredentialRequest) {
-            ClientCredentialParameters parameters = ((ClientCredentialRequest) msalRequest).parameters;
-
-            if (parameters.clientCredential() != null) {
-                credentialToUse = parameters.clientCredential();
-            }
-
-            if (parameters.tenant() != null) {
-                try {
-                    authorityToUse = Authority.replaceTenant(authorityToUse, parameters.tenant());
-                } catch (MalformedURLException e) {
-                    LOG.warn("Could not create authority with tenant override: {}", e.getMessage());
-                }
-            }
-        }
+        IClientCredential credentialToUse = effectiveCredential(application);
 
         // Quick return if no credential is provided
         if (credentialToUse == null) {
@@ -175,8 +158,8 @@ class TokenRequestExecutor {
                 }
                 String tokenEndpoint = null;
                 try {
-                    tokenEndpoint = authorityToUse.tokenEndpointUrl() != null
-                            ? authorityToUse.tokenEndpointUrl().toString() : null;
+                    tokenEndpoint = requestAuthority.tokenEndpointUrl() != null
+                            ? requestAuthority.tokenEndpointUrl().toString() : null;
                 } catch (MalformedURLException e) {
                     LOG.warn("Could not resolve token endpoint URL for assertion context: {}", e.getMessage());
                 }
@@ -189,16 +172,20 @@ class TokenRequestExecutor {
             } else {
                 addJWTBearerAssertionParams(queryParameters, clientAssertion.assertion());
             }
-        } else if (credentialToUse instanceof ClientCertificate) {
-            if (mtlsBindingContext() != null) {
+        } else if (credentialToUse instanceof IClientCertificate) {
+            if (mtlsProofOfPossessionContext() != null) {
                 return;
             }
-            // For client certificate, generate a new assertion and add it to the request
-            ClientCertificate certificate = (ClientCertificate) credentialToUse;
-            String assertion = certificate.getAssertion(
-                authorityToUse,
-                application.clientId(),
-                application.sendX5c());
+            IClientCertificate certificate = bearerOverMtlsContext != null
+                    ? bearerOverMtlsContext : (IClientCertificate) credentialToUse;
+            boolean useSha1 = Authority.detectAuthorityType(
+                    requestAuthority.canonicalAuthorityUrl()) == AuthorityType.ADFS;
+            String assertion = JwtHelper.buildJwt(
+                    application.clientId(),
+                    certificate,
+                    requestAuthority.selfSignedJwtAudience(),
+                    application.sendX5c() || bearerOverMtlsContext != null,
+                    useSha1).assertion();
             addJWTBearerAssertionParams(queryParameters, assertion);
         }
     }
@@ -219,12 +206,19 @@ class TokenRequestExecutor {
 
         if (oauthHttpResponse.statusCode() == HttpStatus.HTTP_OK) {
             final TokenResponse response = TokenResponse.parseHttpResponse(oauthHttpResponse);
-            MtlsBindingContext mtlsBindingContext = mtlsBindingContext();
+            MtlsBindingContext mtlsBindingContext = mtlsProofOfPossessionContext();
             if (mtlsBindingContext != null
-                    && !TokenType.MTLS_POP.value().equals(response.tokenType())) {
+                    && !TokenType.MTLS_POP.value().equalsIgnoreCase(response.tokenType())) {
                 throw new MsalClientException(
                         "An mTLS Proof-of-Possession token was requested, but token_type was '"
                                 + response.tokenType() + "' instead of 'mtls_pop'.",
+                        AuthenticationErrorCode.TOKEN_TYPE_MISMATCH);
+            }
+            if (bearerOverMtlsContext != null
+                    && !"Bearer".equalsIgnoreCase(response.tokenType())) {
+                throw new MsalClientException(
+                        "Bearer-over-mTLS was requested, but token_type was '"
+                                + response.tokenType() + "' instead of 'Bearer'.",
                         AuthenticationErrorCode.TOKEN_TYPE_MISMATCH);
             }
 
@@ -306,11 +300,71 @@ class TokenRequestExecutor {
         return this.msalRequest;
     }
 
-    private MtlsBindingContext mtlsBindingContext() {
+    private MtlsBindingContext mtlsProofOfPossessionContext() {
         if (msalRequest instanceof ClientCredentialRequest) {
             return ((ClientCredentialRequest) msalRequest).mtlsBindingContext();
         }
         return null;
+    }
+
+    private MtlsBindingContext transportMtlsBindingContext() throws MalformedURLException {
+        MtlsBindingContext popContext = mtlsProofOfPossessionContext();
+        if (popContext != null) {
+            return popContext;
+        }
+        if (!(msalRequest.application() instanceof ConfidentialClientApplication)) {
+            return null;
+        }
+        ConfidentialClientApplication application =
+                (ConfidentialClientApplication) msalRequest.application();
+        IClientCredential credential = effectiveCredential(application);
+        if (!application.sendCertificateOverMtls()
+                || !(credential instanceof IClientCertificate)) {
+            return null;
+        }
+        if (!(application.httpClient() instanceof IMtlsCapableHttpClient)) {
+            throw new MsalClientException(
+                    "The configured custom HTTP client does not support request-specific mTLS.",
+                    AuthenticationErrorCode.MTLS_POP_ERROR);
+        }
+        if (application.httpClient() instanceof DefaultHttpClient
+                && application.sslSocketFactory() != null) {
+            throw new MsalClientException(
+                    "sendCertificateOverMtls cannot safely compose the configured application "
+                            + "SSLSocketFactory with the client certificate.",
+                    AuthenticationErrorCode.MTLS_POP_ERROR);
+        }
+        rejectBearerOverMtlsProtocolOverrides();
+        MtlsEndpointHelper.deriveMtlsTokenEndpoint(requestAuthority.tokenEndpointUrl());
+        bearerOverMtlsContext = MtlsBindingContext.create((IClientCertificate) credential);
+        return bearerOverMtlsContext;
+    }
+
+    private void rejectBearerOverMtlsProtocolOverrides() {
+        Map<String, String> extraParameters =
+                msalRequest.requestContext().apiParameters().extraQueryParameters();
+        if (extraParameters == null) {
+            return;
+        }
+        for (String name : extraParameters.keySet()) {
+            if ("token_type".equalsIgnoreCase(name) || "req_cnf".equalsIgnoreCase(name)) {
+                throw new MsalClientException(
+                        "extraQueryParameters cannot override protocol-owned parameter '"
+                                + name + "'.",
+                        AuthenticationErrorCode.MTLS_POP_ERROR);
+            }
+        }
+    }
+
+    private IClientCredential effectiveCredential(ConfidentialClientApplication application) {
+        if (msalRequest instanceof ClientCredentialRequest) {
+            IClientCredential override =
+                    ((ClientCredentialRequest) msalRequest).parameters.clientCredential();
+            if (override != null) {
+                return override;
+            }
+        }
+        return application.clientCredential;
     }
 
     ServiceBundle getServiceBundle() {

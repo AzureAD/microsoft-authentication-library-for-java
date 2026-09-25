@@ -14,7 +14,7 @@ import java.util.UUID;
 
 final class JwtHelper {
 
-    static ClientAssertion buildJwt(String clientId, final ClientCertificate credential,
+    static ClientAssertion buildJwt(String clientId, final IClientCertificate credential,
                                     final String jwtAudience, boolean sendX5c,
                                     boolean useSha1) throws MsalClientException {
 
