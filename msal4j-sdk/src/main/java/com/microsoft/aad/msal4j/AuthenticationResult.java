@@ -4,6 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import java.util.Date;
+import java.util.Locale;
 import java.util.Objects;
 import java.io.InvalidObjectException;
 import java.io.ObjectStreamException;
@@ -32,7 +33,8 @@ final class AuthenticationResult implements IAuthenticationResult {
     private final transient IMtlsBindingContext mtlsBindingContext;
 
     private Object readResolve() throws ObjectStreamException {
-        if (TokenType.MTLS_POP.value().equals(tokenType) && mtlsBindingContext == null) {
+        if (TokenType.MTLS_POP.value().equalsIgnoreCase(tokenType)
+                && mtlsBindingContext == null) {
             throw new InvalidObjectException(
                     "An mTLS PoP result cannot be restored without its process-local binding context.");
         }
@@ -331,7 +333,7 @@ final class AuthenticationResult implements IAuthenticationResult {
         if (!Objects.equals(expiresOnDate, other.expiresOnDate)) return false;
         if (!Objects.equals(scopes, other.scopes)) return false;
         if (!Objects.equals(metadata, other.metadata)) return false;
-        if (!Objects.equals(tokenType(), other.tokenType())) return false;
+        if (!Objects.equals(normalizedTokenType(), other.normalizedTokenType())) return false;
         return Objects.equals(bindingCertificateIdentity(bindingCertificate),
                 bindingCertificateIdentity(other.bindingCertificate));
     }
@@ -355,7 +357,7 @@ final class AuthenticationResult implements IAuthenticationResult {
         result = result * 59 + (this.expiresOnDate == null ? 43 : this.expiresOnDate.hashCode());
         result = result * 59 + (this.scopes == null ? 43 : this.scopes.hashCode());
         result = result * 59 + (this.metadata == null ? 43 : this.metadata.hashCode());
-        result = result * 59 + tokenType().hashCode();
+        result = result * 59 + normalizedTokenType().hashCode();
         String bindingIdentity = bindingCertificateIdentity(bindingCertificate);
         result = result * 59 + (bindingIdentity == null ? 43 : bindingIdentity.hashCode());
         return result;
@@ -363,5 +365,9 @@ final class AuthenticationResult implements IAuthenticationResult {
 
     private static String bindingCertificateIdentity(BindingCertificate certificate) {
         return certificate == null ? null : certificate.thumbprintSha256();
+    }
+
+    private String normalizedTokenType() {
+        return tokenType().toLowerCase(Locale.ROOT);
     }
 }

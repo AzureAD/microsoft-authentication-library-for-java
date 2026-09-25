@@ -21,6 +21,7 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
 
     IClientCredential clientCredential;
     private boolean sendX5c;
+    private boolean sendCertificateOverMtls;
 
     /** AppTokenProvider creates a Credential from a function that provides access tokens. The function
      must be concurrency safe. This is intended only to allow the Azure SDK to cache MSI tokens. It isn't
@@ -84,6 +85,7 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
     private ConfidentialClientApplication(Builder builder) {
         super(builder);
         sendX5c = builder.sendX5c;
+        sendCertificateOverMtls = builder.sendCertificateOverMtls;
         appTokenProvider = builder.appTokenProvider;
 
         log = LoggerFactory.getLogger(ConfidentialClientApplication.class);
@@ -110,11 +112,17 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
         return this.sendX5c;
     }
 
+    @Override
+    public boolean sendCertificateOverMtls() {
+        return sendCertificateOverMtls;
+    }
+
     public static class Builder extends AbstractClientApplicationBase.Builder<Builder> {
 
         private IClientCredential clientCredential;
 
         private boolean sendX5c = true;
+        private boolean sendCertificateOverMtls;
 
         private Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> appTokenProvider;
 
@@ -139,6 +147,23 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
             return self();
         }
 
+        /**
+         * Configures certificate-authenticated token requests to present the same certificate over
+         * mTLS while retaining ordinary Bearer token semantics. Per-request mTLS Proof-of-Possession
+         * takes precedence. This requires a concrete tenanted AAD authority in a supported cloud and
+         * routes requests to its {@code mtlsauth} endpoint without following redirects. The assertion
+         * always includes {@code x5c}. Custom HTTP clients must implement
+         * {@link IMtlsCapableHttpClient}; a custom application SSL socket factory cannot be safely
+         * combined with this option. The default is {@code false}.
+         *
+         * @param val whether to send the certificate over mTLS
+         * @return this builder
+         */
+        public ConfidentialClientApplication.Builder sendCertificateOverMtls(boolean val) {
+            this.sendCertificateOverMtls = val;
+            return self();
+        }
+
         /// <summary>
         /// Allows setting a callback which returns an access token, based on the passed-in parameters.
         /// MSAL will pass in its authentication parameters to the callback and it is expected that the callback
@@ -159,6 +184,11 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
 
         @Override
         public ConfidentialClientApplication build() {
+            if (sendCertificateOverMtls && !(clientCredential instanceof IClientCertificate)) {
+                throw new MsalClientException(
+                        "sendCertificateOverMtls(true) requires an IClientCertificate credential.",
+                        AuthenticationErrorCode.MTLS_POP_ERROR);
+            }
 
             return new ConfidentialClientApplication(this);
         }

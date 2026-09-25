@@ -6,12 +6,16 @@ package com.microsoft.aad.msal4j;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Base64;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class AuthenticationResultCompatibilityTest {
     private static final AuthenticationResultMetadata SHARED_METADATA =
@@ -55,12 +59,41 @@ class AuthenticationResultCompatibilityTest {
         IMtlsBindingContext contextB = org.mockito.Mockito.mock(IMtlsBindingContext.class);
         AuthenticationResult popA = result(TokenType.MTLS_POP.value(), bindingA, contextA);
         AuthenticationResult popB = result(TokenType.MTLS_POP.value(), bindingB, contextB);
+        AuthenticationResult uppercasePop = result("MTLS_POP", bindingB, contextB);
 
         assertEquals(legacyNull, bearer);
         assertEquals(legacyNull.hashCode(), bearer.hashCode());
         assertNotEquals(bearer, popA);
         assertEquals(popA, popB);
         assertEquals(popA.hashCode(), popB.hashCode());
+        assertEquals(popA, uppercasePop);
+        assertEquals(popA.hashCode(), uppercasePop.hashCode());
+    }
+
+    @Test
+    void deserializationRejectsMtlsPopWithoutBindingContextRegardlessOfCase()
+            throws Exception {
+        for (String tokenType : new String[]{"mtls_pop", "MTLS_POP", "MtLs_PoP"}) {
+            byte[] serialized = serialize(result(
+                    tokenType,
+                    new BindingCertificate(
+                            Collections.singletonList(TestHelper.getX509Cert()),
+                            "binding"),
+                    org.mockito.Mockito.mock(IMtlsBindingContext.class)));
+
+            try (ObjectInputStream input = new ObjectInputStream(
+                    new ByteArrayInputStream(serialized))) {
+                assertThrows(InvalidObjectException.class, input::readObject);
+            }
+        }
+    }
+
+    private static byte[] serialize(AuthenticationResult result) throws Exception {
+        try (ByteArrayOutputStream output = new ByteArrayOutputStream();
+             ObjectOutputStream objectOutput = new ObjectOutputStream(output)) {
+            objectOutput.writeObject(result);
+            return output.toByteArray();
+        }
     }
 
     private static AuthenticationResult result(

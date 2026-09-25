@@ -10,10 +10,12 @@ import javax.net.ssl.X509ExtendedKeyManager;
 import java.io.ByteArrayInputStream;
 import java.net.Socket;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.Signature;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -50,7 +52,7 @@ final class MtlsBindingContext implements IMtlsBindingContext {
                 chain.add((X509Certificate) factory.generateCertificate(new ByteArrayInputStream(der)));
             }
             if (chain.isEmpty() || privateKey == null) {
-                throw new MsalClientException("mTLS Proof-of-Possession requires a certificate chain and private key.",
+                throw new MsalClientException("Certificate-based mTLS requires a certificate chain and private key.",
                         AuthenticationErrorCode.MTLS_POP_ERROR);
             }
             chain.get(0).checkValidity();
@@ -66,7 +68,7 @@ final class MtlsBindingContext implements IMtlsBindingContext {
         } catch (MsalClientException e) {
             throw e;
         } catch (Exception e) {
-            throw new MsalClientException("Failed to resolve mTLS binding certificate: " + e.getMessage(),
+            throw new MsalClientException("Failed to resolve the mTLS client certificate: " + e.getMessage(),
                     AuthenticationErrorCode.MTLS_POP_ERROR);
         }
     }
@@ -115,7 +117,7 @@ final class MtlsBindingContext implements IMtlsBindingContext {
         if (!"RSA".equalsIgnoreCase(privateKey.getAlgorithm())
                 || !"RSA".equalsIgnoreCase(leafCertificate.getPublicKey().getAlgorithm())) {
             throw new MsalClientException(
-                    "mTLS Proof-of-Possession requires an RSA certificate and private key.",
+                    "Certificate-based mTLS requires an RSA certificate and private key.",
                     AuthenticationErrorCode.MTLS_POP_ERROR);
         }
 
@@ -131,9 +133,34 @@ final class MtlsBindingContext implements IMtlsBindingContext {
         verifier.update(challenge);
         if (!verifier.verify(signature)) {
             throw new MsalClientException(
-                    "The mTLS private key does not match the leaf certificate.",
+                    "The mTLS client private key does not match the leaf certificate.",
                     AuthenticationErrorCode.MTLS_POP_ERROR);
         }
+    }
+
+    PrivateKey privateKey() {
+        return keyManager.getPrivateKey(ALIAS);
+    }
+
+    String publicCertificateHash()
+            throws CertificateEncodingException, NoSuchAlgorithmException {
+        return Base64.getEncoder().encodeToString(
+                MessageDigest.getInstance("SHA-1").digest(bindingCertificate().getEncoded()));
+    }
+
+    String publicCertificateHash256()
+            throws CertificateEncodingException, NoSuchAlgorithmException {
+        return Base64.getEncoder().encodeToString(
+                MessageDigest.getInstance("SHA-256").digest(bindingCertificate().getEncoded()));
+    }
+
+    List<String> getEncodedPublicKeyCertificateChain()
+            throws CertificateEncodingException {
+        List<String> encoded = new ArrayList<>();
+        for (X509Certificate certificate : certificateChain) {
+            encoded.add(Base64.getEncoder().encodeToString(certificate.getEncoded()));
+        }
+        return encoded;
     }
 
     private static final class SingleCertificateKeyManager extends X509ExtendedKeyManager {

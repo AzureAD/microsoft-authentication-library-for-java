@@ -246,7 +246,6 @@ jobs:
   - job: PrepareSniMtlsTools
     displayName: Prepare SNI mTLS E2E tools
     dependsOn: PrepareManagedIdentityTools
-    condition: and(succeeded(), eq(variables['RunSniMtlsE2EVmTests'], 'true'))
     pool:
       vmImage: windows-2025
     steps:
@@ -278,7 +277,6 @@ jobs:
   - job: SniMtlsNonExportableVbs
     displayName: SNI mTLS E2E - non-exportable VBS key
     dependsOn: PrepareSniMtlsTools
-    condition: and(succeeded(), eq(variables['RunSniMtlsE2EVmTests'], 'true'))
     pool:
       name: MISEManagedIdentity
     variables:
