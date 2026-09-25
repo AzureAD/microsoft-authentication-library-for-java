@@ -15,6 +15,8 @@ class ClientCredentialRequest extends MsalRequest {
        must be concurrency safe. This is intended only to allow the Azure SDK to cache MSI tokens. It isn't
      useful to applications in general because the token provider must implement all authentication logic. */
     Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> appTokenProvider;
+    private MtlsBindingContext mtlsBindingContext;
+    private String acquisitionCacheKeyHash;
 
     ClientCredentialRequest(ClientCredentialParameters parameters,
                             ConfidentialClientApplication application,
@@ -23,6 +25,22 @@ class ClientCredentialRequest extends MsalRequest {
         super(application, createMsalGrant(parameters), requestContext);
         this.parameters = parameters;
         this.appTokenProvider = appTokenProvider;
+    }
+
+    MtlsBindingContext mtlsBindingContext() {
+        return mtlsBindingContext;
+    }
+
+    void mtlsBindingContext(MtlsBindingContext mtlsBindingContext) {
+        this.mtlsBindingContext = mtlsBindingContext;
+    }
+
+    String acquisitionCacheKeyHash() {
+        return acquisitionCacheKeyHash;
+    }
+
+    void acquisitionCacheKeyHash(String acquisitionCacheKeyHash) {
+        this.acquisitionCacheKeyHash = acquisitionCacheKeyHash;
     }
 
     private static OAuthAuthorizationGrant createMsalGrant(ClientCredentialParameters parameters) {

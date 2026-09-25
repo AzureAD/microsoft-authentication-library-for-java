@@ -137,6 +137,7 @@ MSAL4J supports multiple authentication flows, each with a public `*Parameters` 
 - **Parameters**: `ClientCredentialParameters` - App-only authentication (daemon apps)
 - **Internal**: `ClientCredentialRequest` → `AcquireTokenByClientCredentialSupplier`
 - **Key Classes**: `IClientCredential`, `ClientSecret`, `ClientCertificate`, `ClientAssertion`
+- **Optional mTLS PoP**: `mtlsProofOfPossession()` resolves one acquisition-local `IMtlsBindingContext`, requests `token_type=mtls_pop` over request-specific mTLS, isolates the cache by certificate DER hash, and exposes the live context on `IAuthenticationResult`
 
 **On-Behalf-Of (OBO)**
 - **Public API**: `acquireToken(OnBehalfOfParameters)`

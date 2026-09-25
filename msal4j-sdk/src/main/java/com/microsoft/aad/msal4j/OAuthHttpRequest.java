@@ -10,6 +10,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.net.ssl.SSLContext;
 
 class OAuthHttpRequest {
 
@@ -19,6 +20,7 @@ class OAuthHttpRequest {
     private final Map<String, String> extraHeaderParams;
     private final ServiceBundle serviceBundle;
     private final RequestContext requestContext;
+    private SSLContext sslContext;
 
     OAuthHttpRequest(final HttpMethod method,
                      final URL url,
@@ -40,6 +42,9 @@ class OAuthHttpRequest {
                 this.url.toString(),
                 httpHeaders,
                 this.query);
+        if (sslContext != null) {
+            httpRequest.sslContext(sslContext).followRedirects(false);
+        }
 
         IHttpResponse httpResponse = serviceBundle.getHttpHelper().executeHttpRequest(
                 httpRequest,
@@ -106,5 +111,10 @@ class OAuthHttpRequest {
 
     Map<String, String> getExtraHeaderParams() {
         return this.extraHeaderParams;
+    }
+
+    OAuthHttpRequest sslContext(SSLContext sslContext) {
+        this.sslContext = sslContext;
+        return this;
     }
 }
