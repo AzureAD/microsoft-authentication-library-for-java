@@ -47,6 +47,7 @@ class MtlsProofOfPossessionTest {
         assertFalse(request.getValue().body().contains("req_cnf"));
 
         assertEquals("mtls_pop", first.tokenType());
+        assertEquals(TokenSource.IDENTITY_PROVIDER, first.metadata().tokenSource());
         assertNotNull(first.bindingCertificate());
         assertNotNull(first.mtlsBindingContext());
         assertNotNull(first.mtlsBindingContext().sslContext());
@@ -55,6 +56,7 @@ class MtlsProofOfPossessionTest {
         assertTrue(first.expiresOnDate().getTime()
                 <= first.mtlsBindingContext().notAfter().getTime());
         assertEquals("mtls_pop", cached.tokenType());
+        assertEquals(TokenSource.CACHE, cached.metadata().tokenSource());
         assertNotNull(cached.mtlsBindingContext());
         assertEquals(first.mtlsBindingContext().keyId(), cached.mtlsBindingContext().keyId());
     }
