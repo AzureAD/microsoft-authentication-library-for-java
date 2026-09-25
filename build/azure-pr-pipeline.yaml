@@ -242,3 +242,74 @@ jobs:
             **/failsafe-reports/TEST-*.xml
           failTaskOnFailedTests: true
           testRunTitle: Managed Identity Azure Arc E2E
+
+  - job: PrepareSniMtlsTools
+    displayName: Prepare SNI mTLS E2E tools
+    dependsOn: PrepareManagedIdentityTools
+    condition: and(succeeded(), eq(variables['RunSniMtlsE2EVmTests'], 'true'))
+    pool:
+      vmImage: windows-2025
+    steps:
+      - checkout: self
+        clean: false
+        fetchDepth: 1
+
+      - task: DownloadPipelineArtifact@2
+        displayName: Download shared E2E tools
+        inputs:
+          artifact: managed-identity-e2e-tools
+          path: $(Build.ArtifactStagingDirectory)\sni-mtls-e2e-tools
+
+      - task: PowerShell@2
+        displayName: Download verified JDK 21 archive
+        inputs:
+          filePath: build/prepare-sni-mtls-e2e-tools.ps1
+          arguments: >-
+            -OutputDirectory
+            "$(Build.ArtifactStagingDirectory)\sni-mtls-e2e-tools"
+
+      - task: PublishPipelineArtifact@1
+        displayName: Publish SNI mTLS E2E tools
+        inputs:
+          targetPath: >-
+            $(Build.ArtifactStagingDirectory)\sni-mtls-e2e-tools
+          artifact: sni-mtls-e2e-tools
+
+  - job: SniMtlsNonExportableVbs
+    displayName: SNI mTLS E2E - non-exportable VBS key
+    dependsOn: PrepareSniMtlsTools
+    condition: and(succeeded(), eq(variables['RunSniMtlsE2EVmTests'], 'true'))
+    pool:
+      name: MISEManagedIdentity
+    variables:
+      runCodesignValidationInjection: false
+      Codeql.SkipTaskAutoInjection: true
+    steps:
+      - checkout: self
+        clean: true
+        fetchDepth: 1
+
+      - task: DownloadPipelineArtifact@2
+        displayName: Download SNI mTLS E2E tools
+        inputs:
+          artifact: sni-mtls-e2e-tools
+          path: $(Pipeline.Workspace)\sni-mtls-e2e-tools
+
+      - task: PowerShell@2
+        displayName: Run SNI mTLS E2E with non-exportable VBS key
+        inputs:
+          filePath: build/run-sni-mtls-e2e.ps1
+          arguments: >-
+            -ToolsArchiveDirectory
+            "$(Pipeline.Workspace)\sni-mtls-e2e-tools"
+
+      - task: PublishTestResults@2
+        displayName: Publish SNI mTLS E2E results
+        condition: succeededOrFailed()
+        inputs:
+          testResultsFormat: JUnit
+          testResultsFiles: >-
+            **/failsafe-reports/TEST-com.microsoft.aad.msal4j.SniMtlsPopE2E.xml
+          failTaskOnFailedTests: true
+          failTaskOnMissingResultsFile: true
+          testRunTitle: SNI mTLS E2E - non-exportable VBS key
