@@ -113,18 +113,9 @@ public class AuthorizationRequestUrlParameters {
         }
 
         if (builder.responseMode != null) {
-            // Override QUERY with FORM_POST as QUERY is deprecated
-            if (builder.responseMode == ResponseMode.QUERY) {
-                LOG.warn("ResponseMode.QUERY is deprecated and will be removed in a future release. " +
-                        "Automatically overriding to ResponseMode.FORM_POST.");
-                this.responseMode = ResponseMode.FORM_POST;
-                requestParameters.put("response_mode",
-                        ResponseMode.FORM_POST.toString());
-            } else {
-                this.responseMode = builder.responseMode;
-                requestParameters.put("response_mode",
-                        builder.responseMode.toString());
-            }
+            this.responseMode = builder.responseMode;
+            requestParameters.put("response_mode",
+                    builder.responseMode.toString());
         } else {
             this.responseMode = ResponseMode.FORM_POST;
             requestParameters.put("response_mode",
@@ -377,9 +368,7 @@ public class AuthorizationRequestUrlParameters {
 
         /**
          * Specifies the method that should be used to send the authentication result to your app.
-         * @deprecated ResponseMode.QUERY is deprecated. If you pass ResponseMode.QUERY, it will be automatically overridden to ResponseMode.FORM_POST.
          */
-        @Deprecated
         public Builder responseMode(ResponseMode val) {
             this.responseMode = val;
             return self();
