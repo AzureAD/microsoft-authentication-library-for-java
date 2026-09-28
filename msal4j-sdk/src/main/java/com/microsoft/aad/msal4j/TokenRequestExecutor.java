@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 
 class TokenRequestExecutor {
@@ -42,14 +43,26 @@ class TokenRequestExecutor {
                     AuthenticationErrorCode.INVALID_ENDPOINT_URI);
         }
 
+        URL tokenEndpoint = requestAuthority.tokenEndpointUrl();
+        MtlsBindingContext mtlsBindingContext = mtlsBindingContext();
+        if (mtlsBindingContext != null) {
+            tokenEndpoint = MtlsEndpointHelper.deriveMtlsTokenEndpoint(tokenEndpoint);
+        }
+
         final OAuthHttpRequest oauthHttpRequest = new OAuthHttpRequest(
                 HttpMethod.POST,
-                requestAuthority.tokenEndpointUrl(),
+                tokenEndpoint,
                 msalRequest.headers().getReadonlyHeaderMap(),
                 msalRequest.requestContext(),
                 this.serviceBundle);
+        if (mtlsBindingContext != null) {
+            oauthHttpRequest.sslContext(mtlsBindingContext.sslContext());
+        }
 
         final Map<String, String> params = new HashMap<>(msalRequest.msalAuthorizationGrant().toParameters());
+        if (mtlsBindingContext != null) {
+            params.put("token_type", TokenType.MTLS_POP.value());
+        }
         if (msalRequest.application() instanceof AbstractClientApplicationBase
                 && ((AbstractClientApplicationBase) msalRequest.application()).clientCapabilities() != null) {
             params.put("claims", ((AbstractClientApplicationBase) msalRequest.application()).clientCapabilities());
@@ -177,6 +190,9 @@ class TokenRequestExecutor {
                 addJWTBearerAssertionParams(queryParameters, clientAssertion.assertion());
             }
         } else if (credentialToUse instanceof ClientCertificate) {
+            if (mtlsBindingContext() != null) {
+                return;
+            }
             // For client certificate, generate a new assertion and add it to the request
             ClientCertificate certificate = (ClientCertificate) credentialToUse;
             String assertion = certificate.getAssertion(
@@ -203,6 +219,14 @@ class TokenRequestExecutor {
 
         if (oauthHttpResponse.statusCode() == HttpStatus.HTTP_OK) {
             final TokenResponse response = TokenResponse.parseHttpResponse(oauthHttpResponse);
+            MtlsBindingContext mtlsBindingContext = mtlsBindingContext();
+            if (mtlsBindingContext != null
+                    && !TokenType.MTLS_POP.value().equals(response.tokenType())) {
+                throw new MsalClientException(
+                        "An mTLS Proof-of-Possession token was requested, but token_type was '"
+                                + response.tokenType() + "' instead of 'mtls_pop'.",
+                        AuthenticationErrorCode.TOKEN_TYPE_MISMATCH);
+            }
 
             AccountCacheEntity accountCacheEntity = null;
             if (!StringHelper.isNullOrBlank(response.idToken())) {
@@ -228,6 +252,11 @@ class TokenRequestExecutor {
                 }
             }
             long currTimestampSec = new Date().getTime() / 1000;
+            long expiresOn = currTimestampSec + response.getExpiresIn();
+            if (mtlsBindingContext != null) {
+                expiresOn = Math.min(expiresOn,
+                        mtlsBindingContext.notAfter().getTime() / 1000);
+            }
 
             result = AuthenticationResult.builder().
                     accessToken(response.accessToken()).
@@ -235,7 +264,7 @@ class TokenRequestExecutor {
                     familyId(response.getFoci()).
                     idToken(response.idToken()).
                     environment(requestAuthority.host()).
-                    expiresOn(currTimestampSec + response.getExpiresIn()).
+                    expiresOn(expiresOn).
                     extExpiresOn(response.getExtExpiresIn() > 0 ? currTimestampSec + response.getExtExpiresIn() : 0).
                     refreshOn(response.getRefreshIn() > 0 ? currTimestampSec + response.getRefreshIn() : 0).
                     accountCacheEntity(accountCacheEntity).
@@ -244,6 +273,9 @@ class TokenRequestExecutor {
                             .tokenSource(TokenSource.IDENTITY_PROVIDER)
                             .refreshOn(response.getRefreshIn() > 0 ? currTimestampSec + response.getRefreshIn() : 0)
                             .build()).
+                    tokenType(response.tokenType()).
+                    bindingCertificate(mtlsBindingContext == null ? null : mtlsBindingContext.diagnostics()).
+                    mtlsBindingContext(mtlsBindingContext).
                     build();
 
         } else {
@@ -272,6 +304,13 @@ class TokenRequestExecutor {
 
     MsalRequest getMsalRequest() {
         return this.msalRequest;
+    }
+
+    private MtlsBindingContext mtlsBindingContext() {
+        if (msalRequest instanceof ClientCredentialRequest) {
+            return ((ClientCredentialRequest) msalRequest).mtlsBindingContext();
+        }
+        return null;
     }
 
     ServiceBundle getServiceBundle() {
