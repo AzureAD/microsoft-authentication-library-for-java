@@ -33,6 +33,10 @@ class AccessTokenCacheEntity extends Credential implements JsonSerializable<Cred
         keyParts.add(realm);
         keyParts.add(target);
 
+        if (!StringHelper.isBlank(userAssertionHash)) {
+            keyParts.add(userAssertionHash);
+        }
+
         if (!StringHelper.isBlank(extCacheKeyHash)) {
             keyParts.add(extCacheKeyHash);
         }

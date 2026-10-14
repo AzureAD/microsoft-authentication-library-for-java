@@ -42,7 +42,9 @@ class RefreshTokenCacheEntity extends Credential {
                     case "secret":
                         entity.secret = reader.getString();
                         break;
-                    // Add other Credential fields as needed
+                    case "user_assertion_hash":
+                        entity.userAssertionHash = reader.getString();
+                        break;
                     default:
                         reader.skipChildren();
                         break;
@@ -62,6 +64,9 @@ class RefreshTokenCacheEntity extends Credential {
         jsonWriter.writeStringField("environment", environment);
         jsonWriter.writeStringField("client_id", clientId);
         jsonWriter.writeStringField("secret", secret);
+        if (!StringHelper.isBlank(userAssertionHash)) {
+            jsonWriter.writeStringField("user_assertion_hash", userAssertionHash);
+        }
 
         jsonWriter.writeEndObject();
 
