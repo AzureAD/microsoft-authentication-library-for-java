@@ -14,6 +14,7 @@ class RefreshTokenRequest extends MsalRequest {
 
     private SilentRequest parentSilentRequest;
     private RefreshTokenParameters parameters;
+    private AuthenticationResult cachedResult;
 
     RefreshTokenRequest(RefreshTokenParameters parameters,
                         AbstractApplicationBase application,
@@ -25,9 +26,11 @@ class RefreshTokenRequest extends MsalRequest {
     RefreshTokenRequest(RefreshTokenParameters parameters,
                         AbstractApplicationBase application,
                         RequestContext requestContext,
-                        SilentRequest silentRequest) {
+                        SilentRequest silentRequest,
+                        AuthenticationResult cachedResult) {
         this(parameters, application, requestContext);
         this.parentSilentRequest = silentRequest;
+        this.cachedResult = cachedResult;
     }
 
     private static AbstractMsalAuthorizationGrant createAuthenticationGrant(RefreshTokenParameters parameters) {
@@ -41,6 +44,14 @@ class RefreshTokenRequest extends MsalRequest {
 
     String extCacheKeyHash() {
         return parentSilentRequest != null ? parentSilentRequest.extCacheKeyHash() : null;
+    }
+
+    AccountCacheEntity accountCacheEntity() {
+        return cachedResult != null ? cachedResult.accountCacheEntity() : null;
+    }
+
+    String userAssertionHash() {
+        return cachedResult != null ? cachedResult.userAssertionHash() : null;
     }
 
     String getFullThumbprint() {
@@ -60,6 +71,10 @@ class RefreshTokenRequest extends MsalRequest {
 
         Set<String> sortedScopes = new TreeSet<>(parameters.scopes());
         sb.append(String.join(" ", sortedScopes) + POINT_DELIMITER);
+
+        if (parameters.claims() != null) {
+            sb.append(parameters.claims().formatAsJSONString() + POINT_DELIMITER);
+        }
 
         return StringHelper.createSha256Hash(sb.toString());
     }

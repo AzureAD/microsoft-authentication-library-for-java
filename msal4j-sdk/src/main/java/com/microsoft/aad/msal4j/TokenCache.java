@@ -236,6 +236,11 @@ public class TokenCache implements ITokenCache {
                 if (!StringHelper.isBlank(authenticationResult.accessToken())) {
                     AccessTokenCacheEntity atEntity = createAccessTokenCacheEntity
                             (tokenRequestExecutor, authenticationResult, environment);
+                    if (!StringHelper.isBlank(atEntity.userAssertionHash())) {
+                        // Replace entries written with cache keys that omitted the assertion hash.
+                        accessTokens.entrySet().removeIf(entry ->
+                                atEntity.getKey().equals(entry.getValue().getKey()));
+                    }
                     accessTokens.put(atEntity.getKey(), atEntity);
                 }
                 if (!StringHelper.isBlank(authenticationResult.familyId())) {
@@ -283,10 +288,7 @@ public class TokenCache implements ITokenCache {
         rt.clientId(tokenRequestExecutor.getMsalRequest().application().clientId());
         rt.secret(authenticationResult.refreshToken());
 
-        if (tokenRequestExecutor.getMsalRequest() instanceof OnBehalfOfRequest) {
-            OnBehalfOfRequest onBehalfOfRequest = (OnBehalfOfRequest) tokenRequestExecutor.getMsalRequest();
-            rt.userAssertionHash(onBehalfOfRequest.parameters.userAssertion().getAssertionHash());
-        }
+        rt.userAssertionHash(getUserAssertionHash(tokenRequestExecutor.getMsalRequest()));
 
         return rt;
     }
@@ -319,10 +321,7 @@ public class TokenCache implements ITokenCache {
 
         at.target(scopes);
 
-        if (tokenRequestExecutor.getMsalRequest() instanceof OnBehalfOfRequest) {
-            OnBehalfOfRequest onBehalfOfRequest = (OnBehalfOfRequest) tokenRequestExecutor.getMsalRequest();
-            at.userAssertionHash(onBehalfOfRequest.parameters.userAssertion().getAssertionHash());
-        }
+        at.userAssertionHash(getUserAssertionHash(tokenRequestExecutor.getMsalRequest()));
 
         long currTimestampSec = System.currentTimeMillis() / 1000;
         at.cachedAt(Long.toString(currTimestampSec));
@@ -379,12 +378,19 @@ public class TokenCache implements ITokenCache {
         idToken.secret(authenticationResult.idToken());
         idToken.realm(tokenRequestExecutor.tenant);
 
-        if (tokenRequestExecutor.getMsalRequest() instanceof OnBehalfOfRequest) {
-            OnBehalfOfRequest onBehalfOfRequest = (OnBehalfOfRequest) tokenRequestExecutor.getMsalRequest();
-            idToken.userAssertionHash(onBehalfOfRequest.parameters.userAssertion().getAssertionHash());
-        }
+        idToken.userAssertionHash(getUserAssertionHash(tokenRequestExecutor.getMsalRequest()));
 
         return idToken;
+    }
+
+    private static String getUserAssertionHash(MsalRequest request) {
+        if (request instanceof OnBehalfOfRequest) {
+            return ((OnBehalfOfRequest) request).parameters.userAssertion().getAssertionHash();
+        }
+        if (request instanceof RefreshTokenRequest) {
+            return ((RefreshTokenRequest) request).userAssertionHash();
+        }
+        return null;
     }
 
     private static AppMetadataCacheEntity createAppMetadataCacheEntity(TokenRequestExecutor tokenRequestExecutor,
@@ -538,7 +544,8 @@ public class TokenCache implements ITokenCache {
 
     private boolean userAssertionHashMatches(Credential credential, String userAssertionHash) {
         if (userAssertionHash == null) {
-            return true;
+            return StringHelper.isBlank(credential.userAssertionHash()) &&
+                    StringHelper.isBlank(credential.homeAccountId());
         }
 
         return credential.userAssertionHash() != null &&
@@ -547,7 +554,7 @@ public class TokenCache implements ITokenCache {
 
     private boolean userAssertionHashMatches(AccountCacheEntity accountCacheEntity, String userAssertionHash) {
         if (userAssertionHash == null) {
-            return true;
+            return false;
         }
 
         return accountCacheEntity.userAssertionHash() != null &&
@@ -770,6 +777,11 @@ public class TokenCache implements ITokenCache {
                 } else {
                     builder.environment(authority.host());
                 }
+                if (atCacheEntity.isPresent()) {
+                    builder.userAssertionHash(atCacheEntity.get().userAssertionHash());
+                } else if (rtCacheEntity.isPresent()) {
+                    builder.userAssertionHash(rtCacheEntity.get().userAssertionHash());
+                }
                 idTokenCacheEntity.ifPresent(tokenCacheEntity -> builder.idToken(tokenCacheEntity.secret));
                 rtCacheEntity.ifPresent(refreshTokenCacheEntity ->
                         builder.refreshToken(refreshTokenCacheEntity.secret));
@@ -811,32 +823,33 @@ public class TokenCache implements ITokenCache {
 
                 String userAssertionHash = assertion == null ? null : assertion.getAssertionHash();
 
-                Optional<AccountCacheEntity> accountCacheEntity =
-                        getAccountCacheEntity(environmentAliases, userAssertionHash);
-
-                accountCacheEntity.ifPresent(builder::accountCacheEntity);
-
                 Optional<AccessTokenCacheEntity> atCacheEntity =
                         getApplicationAccessTokenCacheEntity(authority, scopes, clientId, environmentAliases, userAssertionHash, extCacheKeyHash);
 
                 if (atCacheEntity.isPresent()) {
                     builder.
                             accessToken(atCacheEntity.get().secret).
+                            userAssertionHash(atCacheEntity.get().userAssertionHash()).
                             expiresOn(Long.parseLong(atCacheEntity.get().expiresOn()));
                     if (atCacheEntity.get().refreshOn() != null) {
                         builder.refreshOn(Long.parseLong(atCacheEntity.get().refreshOn()));
                     }
                 }
 
-                Optional<IdTokenCacheEntity> idTokenCacheEntity =
-                        getIdTokenCacheEntity(authority, clientId, environmentAliases, userAssertionHash);
+                if (assertion != null) {
+                    Optional<AccountCacheEntity> accountCacheEntity =
+                            getAccountCacheEntity(environmentAliases, userAssertionHash);
+                    accountCacheEntity.ifPresent(builder::accountCacheEntity);
 
-                idTokenCacheEntity.ifPresent(tokenCacheEntity -> builder.idToken(tokenCacheEntity.secret));
+                    Optional<IdTokenCacheEntity> idTokenCacheEntity =
+                            getIdTokenCacheEntity(authority, clientId, environmentAliases, userAssertionHash);
+                    idTokenCacheEntity.ifPresent(tokenCacheEntity -> builder.idToken(tokenCacheEntity.secret));
 
-                Optional<RefreshTokenCacheEntity> rtCacheEntity = getRefreshTokenCacheEntity(clientId, environmentAliases, userAssertionHash);
-
-                rtCacheEntity.ifPresent(refreshTokenCacheEntity ->
-                        builder.refreshToken(refreshTokenCacheEntity.secret));
+                    Optional<RefreshTokenCacheEntity> rtCacheEntity =
+                            getRefreshTokenCacheEntity(clientId, environmentAliases, userAssertionHash);
+                    rtCacheEntity.ifPresent(refreshTokenCacheEntity ->
+                            builder.refreshToken(refreshTokenCacheEntity.secret));
+                }
             } finally {
                 lock.readLock().unlock();
             }
