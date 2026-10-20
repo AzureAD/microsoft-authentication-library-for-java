@@ -157,7 +157,7 @@ class AcquireTokenByClientCredentialSupplier extends AuthenticationResultSupplie
 
             String claims = "";
             if (null != clientCredentialRequest.parameters.claims()) {
-                claims = clientCredentialRequest.parameters.claims().toString();
+                claims = clientCredentialRequest.parameters.claims().formatAsJSONString();
             }
 
             AppTokenProviderParameters appTokenProviderParameters = new AppTokenProviderParameters(

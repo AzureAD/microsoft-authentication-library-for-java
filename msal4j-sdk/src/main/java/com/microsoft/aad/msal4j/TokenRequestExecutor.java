@@ -251,6 +251,10 @@ class TokenRequestExecutor {
                     accountCacheEntity = AccountCacheEntity.createADFSAccount(requestAuthority, idToken);
                 }
             }
+            // Refresh responses may omit identity metadata; retain the account used for the refresh.
+            if (accountCacheEntity == null && msalRequest instanceof RefreshTokenRequest) {
+                accountCacheEntity = ((RefreshTokenRequest) msalRequest).accountCacheEntity();
+            }
             long currTimestampSec = new Date().getTime() / 1000;
             long expiresOn = currTimestampSec + response.getExpiresIn();
             if (mtlsBindingContext != null) {
