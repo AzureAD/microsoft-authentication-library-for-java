@@ -28,6 +28,7 @@ final class AuthenticationResult implements IAuthenticationResult {
     private final String scopes;
     private final AuthenticationResultMetadata metadata;
     private final Boolean isPopAuthorization;
+    private final String userAssertionHash;
     private final String tokenType;
     private final BindingCertificate bindingCertificate;
     private final transient IMtlsBindingContext mtlsBindingContext;
@@ -52,6 +53,7 @@ final class AuthenticationResult implements IAuthenticationResult {
                     .scopes(scopes)
                     .metadata(metadata)
                     .isPopAuthorization(isPopAuthorization)
+                    .userAssertionHash(userAssertionHash)
                     .tokenType(TokenType.BEARER.value())
                     .bindingCertificate(bindingCertificate)
                     .build();
@@ -59,7 +61,7 @@ final class AuthenticationResult implements IAuthenticationResult {
         return this;
     }
 
-    AuthenticationResult(String accessToken, long expiresOn, long extExpiresOn, String refreshToken, Long refreshOn, String familyId, String idToken, AccountCacheEntity accountCacheEntity, String environment, String scopes, AuthenticationResultMetadata metadata, Boolean isPopAuthorization, String tokenType, BindingCertificate bindingCertificate, IMtlsBindingContext mtlsBindingContext) {
+    AuthenticationResult(String accessToken, long expiresOn, long extExpiresOn, String refreshToken, Long refreshOn, String familyId, String idToken, AccountCacheEntity accountCacheEntity, String environment, String scopes, AuthenticationResultMetadata metadata, Boolean isPopAuthorization, String userAssertionHash, String tokenType, BindingCertificate bindingCertificate, IMtlsBindingContext mtlsBindingContext) {
         this.accessToken = accessToken;
         this.expiresOn = expiresOn;
         this.extExpiresOn = extExpiresOn;
@@ -72,6 +74,7 @@ final class AuthenticationResult implements IAuthenticationResult {
         this.scopes = scopes;
         this.metadata = metadata == null ? AuthenticationResultMetadata.builder().build() : metadata;
         this.isPopAuthorization = isPopAuthorization;
+        this.userAssertionHash = userAssertionHash;
         this.tokenType = StringHelper.isBlank(tokenType) ? TokenType.BEARER.value() : tokenType;
         this.bindingCertificate = bindingCertificate;
         this.mtlsBindingContext = mtlsBindingContext;
@@ -149,6 +152,10 @@ final class AuthenticationResult implements IAuthenticationResult {
         return this.accountCacheEntity;
     }
 
+    String userAssertionHash() {
+        return userAssertionHash;
+    }
+
     public IAccount account() {
         return getAccount();
     }
@@ -194,6 +201,7 @@ final class AuthenticationResult implements IAuthenticationResult {
                 .scopes(scopes)
                 .metadata(metadata)
                 .isPopAuthorization(isPopAuthorization)
+                .userAssertionHash(userAssertionHash)
                 .tokenType(TokenType.MTLS_POP.value())
                 .bindingCertificate(context.diagnostics())
                 .mtlsBindingContext(context)
@@ -217,6 +225,7 @@ final class AuthenticationResult implements IAuthenticationResult {
         private String scopes;
         private AuthenticationResultMetadata metadata;
         private Boolean isPopAuthorization;
+        private String userAssertionHash;
         private String tokenType;
         private BindingCertificate bindingCertificate;
         private IMtlsBindingContext mtlsBindingContext;
@@ -284,6 +293,11 @@ final class AuthenticationResult implements IAuthenticationResult {
             return this;
         }
 
+        AuthenticationResultBuilder userAssertionHash(String userAssertionHash) {
+            this.userAssertionHash = userAssertionHash;
+            return this;
+        }
+
         public AuthenticationResultBuilder tokenType(String tokenType) {
             this.tokenType = tokenType;
             return this;
@@ -300,7 +314,7 @@ final class AuthenticationResult implements IAuthenticationResult {
         }
 
         public AuthenticationResult build() {
-            return new AuthenticationResult(this.accessToken, this.expiresOn, this.extExpiresOn, this.refreshToken, this.refreshOn, this.familyId, this.idToken, this.accountCacheEntity, this.environment, this.scopes, this.metadata, this.isPopAuthorization, this.tokenType, this.bindingCertificate, this.mtlsBindingContext);
+            return new AuthenticationResult(this.accessToken, this.expiresOn, this.extExpiresOn, this.refreshToken, this.refreshOn, this.familyId, this.idToken, this.accountCacheEntity, this.environment, this.scopes, this.metadata, this.isPopAuthorization, this.userAssertionHash, this.tokenType, this.bindingCertificate, this.mtlsBindingContext);
         }
 
         public String toString() {
@@ -332,6 +346,7 @@ final class AuthenticationResult implements IAuthenticationResult {
         if (!Objects.equals(environment, other.environment)) return false;
         if (!Objects.equals(expiresOnDate, other.expiresOnDate)) return false;
         if (!Objects.equals(scopes, other.scopes)) return false;
+        if (!Objects.equals(userAssertionHash, other.userAssertionHash)) return false;
         if (!Objects.equals(metadata, other.metadata)) return false;
         if (!Objects.equals(normalizedTokenType(), other.normalizedTokenType())) return false;
         return Objects.equals(bindingCertificateIdentity(bindingCertificate),
@@ -356,6 +371,7 @@ final class AuthenticationResult implements IAuthenticationResult {
         result = result * 59 + (this.environment == null ? 43 : this.environment.hashCode());
         result = result * 59 + (this.expiresOnDate == null ? 43 : this.expiresOnDate.hashCode());
         result = result * 59 + (this.scopes == null ? 43 : this.scopes.hashCode());
+        result = result * 59 + (this.userAssertionHash == null ? 43 : this.userAssertionHash.hashCode());
         result = result * 59 + (this.metadata == null ? 43 : this.metadata.hashCode());
         result = result * 59 + normalizedTokenType().hashCode();
         String bindingIdentity = bindingCertificateIdentity(bindingCertificate);

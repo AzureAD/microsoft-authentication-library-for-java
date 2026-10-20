@@ -34,6 +34,11 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
                     clientApplication.clientId(),
                     silentRequest.assertion(),
                     silentRequest.extCacheKeyHash());
+            // Managed identity needs the cached token to compute its revoked-token hash before renewal.
+            if (!(clientApplication instanceof ManagedIdentityApplication) && res != null &&
+                    shouldRefresh(silentRequest.parameters(), res)) {
+                throw new MsalClientException(AuthenticationErrorMessage.NO_TOKEN_IN_CACHE, AuthenticationErrorCode.CACHE_MISS);
+            }
             if (res != null) {
                 res.metadata().tokenSource(TokenSource.CACHE);
             }
@@ -87,10 +92,13 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
     private AuthenticationResult makeRefreshRequest(AuthenticationResult cachedResult, Authority requestAuthority, CacheRefreshReason refreshReason) throws Exception {
 
         RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest(
-                RefreshTokenParameters.builder(silentRequest.parameters().scopes(), cachedResult.refreshToken()).build(),
+                RefreshTokenParameters.builder(silentRequest.parameters().scopes(), cachedResult.refreshToken())
+                        .claims(silentRequest.parameters().claims())
+                        .build(),
                 silentRequest.application(),
                 silentRequest.requestContext(),
-                silentRequest);
+                silentRequest,
+                cachedResult);
 
         //The ServiceBundle will have a new CurrentRequest object when the RefreshTokenRequest is made, so the telemetry value needs to be set again
         setCacheTelemetry(refreshReason);
