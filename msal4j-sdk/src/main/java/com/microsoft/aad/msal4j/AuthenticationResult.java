@@ -5,6 +5,8 @@ package com.microsoft.aad.msal4j;
 
 import java.util.Date;
 import java.util.Objects;
+import java.io.InvalidObjectException;
+import java.io.ObjectStreamException;
 
 final class AuthenticationResult implements IAuthenticationResult {
     private static final long serialVersionUID = 1L;
@@ -26,8 +28,38 @@ final class AuthenticationResult implements IAuthenticationResult {
     private final AuthenticationResultMetadata metadata;
     private final Boolean isPopAuthorization;
     private final String userAssertionHash;
+    private final String tokenType;
+    private final BindingCertificate bindingCertificate;
+    private final transient IMtlsBindingContext mtlsBindingContext;
 
-    AuthenticationResult(String accessToken, long expiresOn, long extExpiresOn, String refreshToken, Long refreshOn, String familyId, String idToken, AccountCacheEntity accountCacheEntity, String environment, String scopes, AuthenticationResultMetadata metadata, Boolean isPopAuthorization, String userAssertionHash) {
+    private Object readResolve() throws ObjectStreamException {
+        if (TokenType.MTLS_POP.value().equals(tokenType) && mtlsBindingContext == null) {
+            throw new InvalidObjectException(
+                    "An mTLS PoP result cannot be restored without its process-local binding context.");
+        }
+        if (StringHelper.isBlank(tokenType)) {
+            return AuthenticationResult.builder()
+                    .accessToken(accessToken)
+                    .expiresOn(expiresOn)
+                    .extExpiresOn(extExpiresOn)
+                    .refreshToken(refreshToken)
+                    .refreshOn(refreshOn)
+                    .familyId(familyId)
+                    .idToken(idToken)
+                    .accountCacheEntity(accountCacheEntity)
+                    .environment(environment)
+                    .scopes(scopes)
+                    .metadata(metadata)
+                    .isPopAuthorization(isPopAuthorization)
+                    .userAssertionHash(userAssertionHash)
+                    .tokenType(TokenType.BEARER.value())
+                    .bindingCertificate(bindingCertificate)
+                    .build();
+        }
+        return this;
+    }
+
+    AuthenticationResult(String accessToken, long expiresOn, long extExpiresOn, String refreshToken, Long refreshOn, String familyId, String idToken, AccountCacheEntity accountCacheEntity, String environment, String scopes, AuthenticationResultMetadata metadata, Boolean isPopAuthorization, String userAssertionHash, String tokenType, BindingCertificate bindingCertificate, IMtlsBindingContext mtlsBindingContext) {
         this.accessToken = accessToken;
         this.expiresOn = expiresOn;
         this.extExpiresOn = extExpiresOn;
@@ -41,6 +73,9 @@ final class AuthenticationResult implements IAuthenticationResult {
         this.metadata = metadata == null ? AuthenticationResultMetadata.builder().build() : metadata;
         this.isPopAuthorization = isPopAuthorization;
         this.userAssertionHash = userAssertionHash;
+        this.tokenType = StringHelper.isBlank(tokenType) ? TokenType.BEARER.value() : tokenType;
+        this.bindingCertificate = bindingCertificate;
+        this.mtlsBindingContext = mtlsBindingContext;
         this.expiresOnDate = new Date(expiresOn * 1000);
     }
 
@@ -135,6 +170,42 @@ final class AuthenticationResult implements IAuthenticationResult {
         return this.isPopAuthorization;
     }
 
+    @Override
+    public String tokenType() {
+        return StringHelper.isBlank(tokenType) ? TokenType.BEARER.value() : tokenType;
+    }
+
+    @Override
+    public BindingCertificate bindingCertificate() {
+        return bindingCertificate;
+    }
+
+    @Override
+    public IMtlsBindingContext mtlsBindingContext() {
+        return mtlsBindingContext;
+    }
+
+    AuthenticationResult withMtlsBindingContext(MtlsBindingContext context) {
+        return AuthenticationResult.builder()
+                .accessToken(accessToken)
+                .expiresOn(expiresOn)
+                .extExpiresOn(extExpiresOn)
+                .refreshToken(refreshToken)
+                .refreshOn(refreshOn)
+                .familyId(familyId)
+                .idToken(idToken)
+                .accountCacheEntity(accountCacheEntity)
+                .environment(environment)
+                .scopes(scopes)
+                .metadata(metadata)
+                .isPopAuthorization(isPopAuthorization)
+                .userAssertionHash(userAssertionHash)
+                .tokenType(TokenType.MTLS_POP.value())
+                .bindingCertificate(context.diagnostics())
+                .mtlsBindingContext(context)
+                .build();
+    }
+
     static AuthenticationResultBuilder builder() {
         return new AuthenticationResultBuilder();
     }
@@ -153,6 +224,9 @@ final class AuthenticationResult implements IAuthenticationResult {
         private AuthenticationResultMetadata metadata;
         private Boolean isPopAuthorization;
         private String userAssertionHash;
+        private String tokenType;
+        private BindingCertificate bindingCertificate;
+        private IMtlsBindingContext mtlsBindingContext;
 
         AuthenticationResultBuilder() {
         }
@@ -222,8 +296,23 @@ final class AuthenticationResult implements IAuthenticationResult {
             return this;
         }
 
+        public AuthenticationResultBuilder tokenType(String tokenType) {
+            this.tokenType = tokenType;
+            return this;
+        }
+
+        public AuthenticationResultBuilder bindingCertificate(BindingCertificate bindingCertificate) {
+            this.bindingCertificate = bindingCertificate;
+            return this;
+        }
+
+        public AuthenticationResultBuilder mtlsBindingContext(IMtlsBindingContext mtlsBindingContext) {
+            this.mtlsBindingContext = mtlsBindingContext;
+            return this;
+        }
+
         public AuthenticationResult build() {
-            return new AuthenticationResult(this.accessToken, this.expiresOn, this.extExpiresOn, this.refreshToken, this.refreshOn, this.familyId, this.idToken, this.accountCacheEntity, this.environment, this.scopes, this.metadata, this.isPopAuthorization, this.userAssertionHash);
+            return new AuthenticationResult(this.accessToken, this.expiresOn, this.extExpiresOn, this.refreshToken, this.refreshOn, this.familyId, this.idToken, this.accountCacheEntity, this.environment, this.scopes, this.metadata, this.isPopAuthorization, this.userAssertionHash, this.tokenType, this.bindingCertificate, this.mtlsBindingContext);
         }
 
         public String toString() {
@@ -256,7 +345,10 @@ final class AuthenticationResult implements IAuthenticationResult {
         if (!Objects.equals(expiresOnDate, other.expiresOnDate)) return false;
         if (!Objects.equals(scopes, other.scopes)) return false;
         if (!Objects.equals(userAssertionHash, other.userAssertionHash)) return false;
-        return Objects.equals(metadata, other.metadata);
+        if (!Objects.equals(metadata, other.metadata)) return false;
+        if (!Objects.equals(tokenType(), other.tokenType())) return false;
+        return Objects.equals(bindingCertificateIdentity(bindingCertificate),
+                bindingCertificateIdentity(other.bindingCertificate));
     }
 
     @Override
@@ -279,6 +371,13 @@ final class AuthenticationResult implements IAuthenticationResult {
         result = result * 59 + (this.scopes == null ? 43 : this.scopes.hashCode());
         result = result * 59 + (this.userAssertionHash == null ? 43 : this.userAssertionHash.hashCode());
         result = result * 59 + (this.metadata == null ? 43 : this.metadata.hashCode());
+        result = result * 59 + tokenType().hashCode();
+        String bindingIdentity = bindingCertificateIdentity(bindingCertificate);
+        result = result * 59 + (bindingIdentity == null ? 43 : bindingIdentity.hashCode());
         return result;
+    }
+
+    private static String bindingCertificateIdentity(BindingCertificate certificate) {
+        return certificate == null ? null : certificate.thumbprintSha256();
     }
 }

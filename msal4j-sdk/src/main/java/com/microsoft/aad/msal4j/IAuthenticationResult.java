@@ -51,4 +51,25 @@ public interface IAuthenticationResult extends Serializable {
     default AuthenticationResultMetadata metadata() {
         return AuthenticationResultMetadata.builder().build();
     }
+
+    /**
+     * @return raw token type returned by the identity provider
+     */
+    default String tokenType() {
+        return TokenType.BEARER.value();
+    }
+
+    /**
+     * @return public diagnostics for the binding certificate, or null for bearer results
+     */
+    default BindingCertificate bindingCertificate() {
+        return null;
+    }
+
+    /**
+     * @return process-local capability for downstream mTLS, or null for bearer results
+     */
+    default IMtlsBindingContext mtlsBindingContext() {
+        return null;
+    }
 }
