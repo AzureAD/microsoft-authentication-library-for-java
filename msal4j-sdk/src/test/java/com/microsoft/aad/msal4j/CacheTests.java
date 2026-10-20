@@ -77,6 +77,7 @@ class CacheTests {
 
         //Ensure the correct access tokens were returned from each silent call
         assertEquals("accessTokenNoAccount", resultNoAccount.accessToken());
+        assertEquals(TokenSource.CACHE, resultNoAccount.metadata().tokenSource());
         assertEquals("accessTokenWithAccount", resultWithAccount.accessToken());
     }
 
