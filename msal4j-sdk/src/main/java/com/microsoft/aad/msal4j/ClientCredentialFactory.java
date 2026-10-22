@@ -125,4 +125,26 @@ public class ClientCredentialFactory {
 
         return new ClientAssertion(assertionProvider);
     }
+
+    /**
+     * Creates a client assertion credential whose provider can also return the certificate that
+     * binds the assertion to an mTLS connection.
+     *
+     * <p>For client credentials, the provider is invoked during request preflight, including cache
+     * hits, and again when a network request needs credential material. Other grants invoke the
+     * provider only for network requests and reject results containing a binding certificate.
+     * Providers should return pre-generated or cached assertion material and follow the
+     * certificate transition rules in {@link ClientSignedAssertion}.</p>
+     *
+     * @param signedAssertionProvider provider for the signed assertion and optional binding certificate
+     * @return a client assertion credential
+     */
+    public static IClientAssertion createFromSignedAssertionCallback(
+            IClientSignedAssertionProvider signedAssertionProvider) {
+        if (signedAssertionProvider == null) {
+            throw new NullPointerException("signedAssertionProvider");
+        }
+
+        return new ClientAssertion(signedAssertionProvider);
+    }
 }

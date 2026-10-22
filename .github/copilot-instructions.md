@@ -136,9 +136,10 @@ MSAL4J supports multiple authentication flows, each with a public `*Parameters` 
 - **Public API**: `acquireToken(ClientCredentialParameters)`
 - **Parameters**: `ClientCredentialParameters` - App-only authentication (daemon apps)
 - **Internal**: `ClientCredentialRequest` → `AcquireTokenByClientCredentialSupplier`
-- **Key Classes**: `IClientCredential`, `ClientSecret`, `ClientCertificate`, `ClientAssertion`
+- **Key Classes**: `IClientCredential`, `ClientSecret`, `ClientCertificate`, `ClientAssertion`, `ClientSignedAssertion`, `IClientSignedAssertionProvider`
 - **Optional mTLS PoP**: `mtlsProofOfPossession()` resolves one acquisition-local `IMtlsBindingContext`, requests `token_type=mtls_pop` over request-specific mTLS, isolates the cache by certificate DER hash, and exposes the live context on `IAuthenticationResult`
 - **Optional Bearer-over-mTLS**: `ConfidentialClientApplication.Builder.sendCertificateOverMtls(true)` presents the certificate on the global or configured regional `mtlsauth` token endpoint while sending the normal RS256 certificate assertion (with `x5c`) and retaining ordinary Bearer/cache semantics. Regional routing applies to client credentials, OBO, authorization-code redemption, and refresh-token redemption; per-request mTLS PoP takes precedence.
+- **Certificate-bound FIC leg 2**: `ClientCredentialFactory.createFromSignedAssertionCallback(IClientSignedAssertionProvider)` accepts a pre-signed assertion plus an optional `IClientCertificate`. Certificate-bound results are client-credentials-only; other grants reject them locally. Preflight fixes TLS/cache binding; the network callback receives the actual selected endpoint and cannot introduce a certificate absent in preflight. Without PoP, runtime may omit the certificate to select `jwt-bearer` over preflight mTLS, and Bearer safeguards still apply. `mtlsProofOfPossession()` requires certificates in both phases, requests `mtls_pop`, isolates the cache by certificate DER, and restores binding on cache hits. Providers own cross-invocation certificate/assertion consistency; callbacks are not exactly-once.
 
 **On-Behalf-Of (OBO)**
 - **Public API**: `acquireToken(OnBehalfOfParameters)`

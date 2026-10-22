@@ -106,12 +106,12 @@ class TokenRequestExecutor {
 
         //Certain query parameters are required by Public and Confidential client applications, but not Managed Identity
         if (msalRequest.application() instanceof AbstractClientApplicationBase) {
-            addQueryParameters(oauthHttpRequest);
+            addQueryParameters(oauthHttpRequest, tokenEndpoint);
         }
         return oauthHttpRequest;
     }
 
-    private void addQueryParameters(OAuthHttpRequest oauthHttpRequest) {
+    private void addQueryParameters(OAuthHttpRequest oauthHttpRequest, URL tokenEndpoint) {
         Map<String, String> queryParameters = StringHelper.parseQueryParameters(oauthHttpRequest.query);
         String clientID = msalRequest.application().clientId();
         queryParameters.put("client_id", clientID);
@@ -121,7 +121,7 @@ class TokenRequestExecutor {
             ConfidentialClientApplication application = (ConfidentialClientApplication) msalRequest.application();
 
             // Consolidated credential and tenant override handling
-            addCredentialToRequest(queryParameters, application);
+            addCredentialToRequest(queryParameters, application, tokenEndpoint);
         }
 
         oauthHttpRequest.setQuery(StringHelper.serializeQueryParameters(queryParameters));
@@ -134,9 +134,11 @@ class TokenRequestExecutor {
      *
      * @param queryParameters The map of query parameters to add to
      * @param application The confidential client application
+     * @param tokenEndpoint The selected transport endpoint
      */
     private void addCredentialToRequest(Map<String, String> queryParameters,
-                                       ConfidentialClientApplication application) {
+                                       ConfidentialClientApplication application,
+                                       URL tokenEndpoint) {
         IClientCredential credentialToUse = effectiveCredential(application);
 
         // Quick return if no credential is provided
@@ -150,25 +152,40 @@ class TokenRequestExecutor {
         } else if (credentialToUse instanceof ClientAssertion) {
             // For client assertion, add client_assertion and client_assertion_type parameters
             ClientAssertion clientAssertion = (ClientAssertion) credentialToUse;
-            if (clientAssertion.isContextAware()) {
+            if (clientAssertion.isSignedAssertionProvider()) {
+                ClientSignedAssertion signedAssertion =
+                        clientAssertion.signedAssertion(assertionRequestOptions(application, tokenEndpoint));
+                boolean certificateBound = signedAssertion.getTokenBindingCertificate() != null;
+                if (certificateBound && !(msalRequest instanceof ClientCredentialRequest)) {
+                    throw new MsalClientException(
+                            "Certificate-bound signed assertions are supported only for client credential requests.",
+                            AuthenticationErrorCode.MTLS_POP_ERROR);
+                }
+                if (certificateBound && mtlsProofOfPossessionContext() == null
+                        && bearerOverMtlsContext == null) {
+                    throw new MsalClientException(
+                            "A binding certificate cannot be introduced after request preflight. "
+                                    + "Return the certificate during preflight to initialize mTLS transport.",
+                            AuthenticationErrorCode.MTLS_POP_ERROR);
+                }
+                if (mtlsProofOfPossessionContext() != null
+                        && !certificateBound) {
+                    throw new MsalClientException(
+                            "mTLS Proof-of-Possession requires a certificate for this request. "
+                                    + "Either configure the application with a certificate or return a "
+                                    + "certificate-bound client assertion and request mTLS Proof-of-Possession. "
+                                    + "See https://aka.ms/msal-net-pop for details.",
+                            AuthenticationErrorCode.MTLS_CERTIFICATE_NOT_PROVIDED);
+                }
+                addJWTAssertionParams(
+                        queryParameters,
+                        signedAssertion.getAssertion(),
+                        certificateBound);
+            } else if (clientAssertion.isContextAware()) {
                 // Build assertion context with client assertion FMI path if available
-                String clientAssertionFmiPath = null;
-                if (msalRequest instanceof ClientCredentialRequest) {
-                    clientAssertionFmiPath = ((ClientCredentialRequest) msalRequest).parameters.fmiPath();
-                }
-                String tokenEndpoint = null;
-                try {
-                    tokenEndpoint = requestAuthority.tokenEndpointUrl() != null
-                            ? requestAuthority.tokenEndpointUrl().toString() : null;
-                } catch (MalformedURLException e) {
-                    LOG.warn("Could not resolve token endpoint URL for assertion context: {}", e.getMessage());
-                }
-                AssertionRequestOptions options = new AssertionRequestOptions(
-                        application.clientId(),
-                        tokenEndpoint,
-                        clientAssertionFmiPath);
-
-                addJWTBearerAssertionParams(queryParameters, clientAssertion.assertion(options));
+                addJWTBearerAssertionParams(
+                        queryParameters,
+                        clientAssertion.assertion(assertionRequestOptions(application, tokenEndpoint)));
             } else {
                 addJWTBearerAssertionParams(queryParameters, clientAssertion.assertion());
             }
@@ -203,8 +220,28 @@ class TokenRequestExecutor {
      * @param assertion The JWT assertion string
      */
     private void addJWTBearerAssertionParams(Map<String, String> queryParameters, String assertion) {
+        addJWTAssertionParams(queryParameters, assertion, false);
+    }
+
+    private void addJWTAssertionParams(
+            Map<String, String> queryParameters, String assertion, boolean proofOfPossession) {
         queryParameters.put("client_assertion", assertion);
-        queryParameters.put("client_assertion_type", ClientAssertion.ASSERTION_TYPE_JWT_BEARER);
+        queryParameters.put(
+                "client_assertion_type",
+                proofOfPossession
+                        ? ClientAssertion.ASSERTION_TYPE_JWT_POP
+                        : ClientAssertion.ASSERTION_TYPE_JWT_BEARER);
+    }
+
+    private AssertionRequestOptions assertionRequestOptions(
+            ConfidentialClientApplication application, URL tokenEndpoint) {
+        String clientAssertionFmiPath = null;
+        if (msalRequest instanceof ClientCredentialRequest) {
+            clientAssertionFmiPath =
+                    ((ClientCredentialRequest) msalRequest).parameters.fmiPath();
+        }
+        return new AssertionRequestOptions(
+                application.clientId(), tokenEndpoint.toString(), clientAssertionFmiPath);
     }
 
     private AuthenticationResult createAuthenticationResultFromOauthHttpResponse(HttpResponse oauthHttpResponse) {
@@ -321,6 +358,15 @@ class TokenRequestExecutor {
         MtlsBindingContext popContext = mtlsProofOfPossessionContext();
         if (popContext != null) {
             return popContext;
+        }
+        if (msalRequest instanceof ClientCredentialRequest) {
+            MtlsBindingContext assertionContext =
+                    ((ClientCredentialRequest) msalRequest).clientAssertionMtlsBindingContext();
+            if (assertionContext != null) {
+                rejectBearerOverMtlsProtocolOverrides();
+                bearerOverMtlsContext = assertionContext;
+                return bearerOverMtlsContext;
+            }
         }
         if (!(msalRequest.application() instanceof ConfidentialClientApplication)) {
             return null;

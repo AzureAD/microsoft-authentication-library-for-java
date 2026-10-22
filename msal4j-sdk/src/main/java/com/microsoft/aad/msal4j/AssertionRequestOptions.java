@@ -34,6 +34,11 @@ public final class AssertionRequestOptions {
     /**
      * Gets the token endpoint URL that the assertion will be sent to.
      *
+     * <p>For signed-assertion client credentials, preflight receives the configured authority's
+     * token endpoint, including any tenant override. The network callback receives the selected
+     * transport endpoint, including regional or mTLS routing. This value does not specify or
+     * rewrite the assertion's audience claim.</p>
+     *
      * @return the token endpoint URL
      */
     public String tokenEndpoint() {

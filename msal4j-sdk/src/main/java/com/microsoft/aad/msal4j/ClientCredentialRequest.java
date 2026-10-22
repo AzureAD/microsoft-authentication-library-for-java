@@ -16,6 +16,7 @@ class ClientCredentialRequest extends MsalRequest {
      useful to applications in general because the token provider must implement all authentication logic. */
     Function<AppTokenProviderParameters, CompletableFuture<TokenProviderResult>> appTokenProvider;
     private MtlsBindingContext mtlsBindingContext;
+    private MtlsBindingContext clientAssertionMtlsBindingContext;
     private String acquisitionCacheKeyHash;
 
     ClientCredentialRequest(ClientCredentialParameters parameters,
@@ -33,6 +34,14 @@ class ClientCredentialRequest extends MsalRequest {
 
     void mtlsBindingContext(MtlsBindingContext mtlsBindingContext) {
         this.mtlsBindingContext = mtlsBindingContext;
+    }
+
+    MtlsBindingContext clientAssertionMtlsBindingContext() {
+        return clientAssertionMtlsBindingContext;
+    }
+
+    void clientAssertionMtlsBindingContext(MtlsBindingContext clientAssertionMtlsBindingContext) {
+        this.clientAssertionMtlsBindingContext = clientAssertionMtlsBindingContext;
     }
 
     String acquisitionCacheKeyHash() {
