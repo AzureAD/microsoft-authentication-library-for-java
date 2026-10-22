@@ -27,7 +27,7 @@ class AcquireTokenByClientCredentialSupplier extends AuthenticationResultSupplie
 
     @Override
     AuthenticationResult execute() throws Exception {
-        prepareMtlsProofOfPossession();
+        prepareMtls();
 
         if (clientCredentialRequest.parameters.skipCache() != null &&
                 !clientCredentialRequest.parameters.skipCache()) {
@@ -75,80 +75,124 @@ class AcquireTokenByClientCredentialSupplier extends AuthenticationResultSupplie
         return acquireTokenByClientCredential();
     }
 
-    private void prepareMtlsProofOfPossession() throws MalformedURLException {
-                ClientCredentialParameters parameters = clientCredentialRequest.parameters;
-                if (!parameters.mtlsProofOfPossession()) {
-                    return;
-                }
-                if (clientCredentialRequest.appTokenProvider != null) {
-                    throw new MsalClientException(
-                            "mTLS Proof-of-Possession cannot be used with appTokenProvider.",
-                            AuthenticationErrorCode.MTLS_POP_ERROR);
-                }
+    private void prepareMtls() throws MalformedURLException {
+        ClientCredentialParameters parameters = clientCredentialRequest.parameters;
+        if (clientCredentialRequest.appTokenProvider != null) {
+            if (!parameters.mtlsProofOfPossession()) {
+                return;
+            }
+            throw new MsalClientException(
+                    "mTLS Proof-of-Possession cannot be used with appTokenProvider.",
+                    AuthenticationErrorCode.MTLS_POP_ERROR);
+        }
 
-                Set<String> protocolOwned = new HashSet<>(Arrays.asList(
-                        "token_type", "client_assertion", "client_assertion_type", "req_cnf"));
-                if (parameters.extraQueryParameters() != null) {
-                    for (String name : parameters.extraQueryParameters().keySet()) {
-                        if (protocolOwned.contains(name.toLowerCase(Locale.ROOT))) {
-                            throw new MsalClientException(
-                                    "extraQueryParameters cannot override protocol-owned parameter '" + name + "'.",
-                                    AuthenticationErrorCode.MTLS_POP_ERROR);
-                        }
+        ConfidentialClientApplication application = (ConfidentialClientApplication) clientApplication;
+        IClientCredential credential = parameters.clientCredential() != null
+                ? parameters.clientCredential() : application.clientCredential;
+        IClientCertificate bindingCertificate = null;
+        if (credential instanceof ClientAssertion
+                && ((ClientAssertion) credential).isSignedAssertionProvider()) {
+            ClientSignedAssertion preflight = ((ClientAssertion) credential).signedAssertion(
+                    assertionRequestOptions(application));
+            bindingCertificate = preflight.getTokenBindingCertificate();
+        }
+
+        if (!parameters.mtlsProofOfPossession() && bindingCertificate == null) {
+            return;
+        }
+
+        if (parameters.mtlsProofOfPossession()) {
+            Set<String> protocolOwned = new HashSet<>(Arrays.asList(
+                    "token_type", "client_assertion", "client_assertion_type", "req_cnf"));
+            if (parameters.extraQueryParameters() != null) {
+                for (String name : parameters.extraQueryParameters().keySet()) {
+                    if (protocolOwned.contains(name.toLowerCase(Locale.ROOT))) {
+                        throw new MsalClientException(
+                                "extraQueryParameters cannot override protocol-owned parameter '" + name + "'.",
+                                AuthenticationErrorCode.MTLS_POP_ERROR);
                     }
                 }
-
-                ConfidentialClientApplication application = (ConfidentialClientApplication) clientApplication;
-                Authority authority = application.authenticationAuthority;
-                if (parameters.tenant() != null) {
-                    authority = Authority.replaceTenant(authority, parameters.tenant());
-                }
-                if (authority.authorityType() != AuthorityType.AAD) {
-                    throw new MsalClientException(
-                            "mTLS Proof-of-Possession requires a Microsoft Entra AAD authority.",
-                            AuthenticationErrorCode.MTLS_POP_ERROR);
-                }
-                MtlsEndpointHelper.deriveMtlsTokenEndpoint(authority.tokenEndpointUrl());
-
-                IClientCredential credential = parameters.clientCredential() != null
-                        ? parameters.clientCredential() : application.clientCredential;
-                if (!(credential instanceof IClientCertificate)) {
-                    throw new MsalClientException(
-                            "mTLS Proof-of-Possession requires a certificate credential.",
-                            AuthenticationErrorCode.MTLS_POP_ERROR);
-                }
-                if (!(application.httpClient() instanceof IMtlsCapableHttpClient)) {
-                    throw new MsalClientException(
-                            "The configured custom HTTP client does not support request-specific mTLS. "
-                                    + "Implement IMtlsCapableHttpClient and honor the request TLS and redirect settings.",
-                            AuthenticationErrorCode.MTLS_POP_ERROR);
-                }
-                if (application.httpClient() instanceof DefaultHttpClient
-                        && application.sslSocketFactory() != null) {
-                    throw new MsalClientException(
-                            "mTLS Proof-of-Possession cannot safely compose the configured application "
-                                    + "SSLSocketFactory with the binding certificate. Use an "
-                                    + "IMtlsCapableHttpClient that combines HttpRequest.sslContext() with "
-                                    + "the application's trust policy.",
-                            AuthenticationErrorCode.MTLS_POP_ERROR);
-                }
-
-                MtlsBindingContext bindingContext = MtlsBindingContext.create((IClientCertificate) credential);
-                clientCredentialRequest.mtlsBindingContext(bindingContext);
-                SortedMap<String, String> components = new TreeMap<>();
-                components.put("token_type", TokenType.MTLS_POP.value());
-                components.put("cert_der_hash", bindingContext.keyId());
-                String baseHash = parameters.computeExtCacheKeyHash();
-                if (!StringHelper.isBlank(baseHash)) {
-                    components.put("parameters", baseHash);
-                }
-                clientCredentialRequest.acquisitionCacheKeyHash(
-                        StringHelper.computeExtCacheKeyHash(components));
             }
+        }
+
+        Authority authority = application.authenticationAuthority;
+        if (parameters.tenant() != null) {
+            authority = Authority.replaceTenant(authority, parameters.tenant());
+        }
+        if (authority.authorityType() != AuthorityType.AAD) {
+            throw new MsalClientException(
+                    "mTLS authentication requires a Microsoft Entra AAD authority.",
+                    AuthenticationErrorCode.MTLS_POP_ERROR);
+        }
+        MtlsEndpointHelper.deriveMtlsTokenEndpoint(authority.tokenEndpointUrl());
+
+        if (bindingCertificate == null && credential instanceof IClientCertificate) {
+            bindingCertificate = (IClientCertificate) credential;
+        }
+        if (bindingCertificate == null) {
+            if (credential instanceof ClientAssertion
+                    && ((ClientAssertion) credential).isSignedAssertionProvider()) {
+                throw new MsalClientException(
+                        "mTLS Proof-of-Possession requires a certificate for this request. "
+                                + "Either configure the application with a certificate or return a "
+                                + "certificate-bound client assertion and request mTLS Proof-of-Possession. "
+                                + "See https://aka.ms/msal-net-pop for details.",
+                        AuthenticationErrorCode.MTLS_CERTIFICATE_NOT_PROVIDED);
+            }
+            throw new MsalClientException(
+                    "mTLS Proof-of-Possession requires a certificate credential.",
+                    AuthenticationErrorCode.MTLS_POP_ERROR);
+        }
+        if (!(application.httpClient() instanceof IMtlsCapableHttpClient)) {
+            throw new MsalClientException(
+                    "The configured custom HTTP client does not support request-specific mTLS. "
+                            + "Implement IMtlsCapableHttpClient and honor the request TLS and redirect settings.",
+                    AuthenticationErrorCode.MTLS_POP_ERROR);
+        }
+        if (application.httpClient() instanceof DefaultHttpClient
+                && application.sslSocketFactory() != null) {
+            throw new MsalClientException(
+                    "mTLS authentication cannot safely compose the configured application "
+                            + "SSLSocketFactory with the binding certificate. Use an "
+                            + "IMtlsCapableHttpClient that combines HttpRequest.sslContext() with "
+                            + "the application's trust policy.",
+                    AuthenticationErrorCode.MTLS_POP_ERROR);
+        }
+
+        MtlsBindingContext bindingContext = MtlsBindingContext.create(bindingCertificate);
+        if (parameters.mtlsProofOfPossession()) {
+            clientCredentialRequest.mtlsBindingContext(bindingContext);
+        } else {
+            clientCredentialRequest.clientAssertionMtlsBindingContext(bindingContext);
+            return;
+        }
+        SortedMap<String, String> components = new TreeMap<>();
+        components.put("token_type", TokenType.MTLS_POP.value());
+        components.put("cert_der_hash", bindingContext.keyId());
+        String baseHash = parameters.computeExtCacheKeyHash();
+        if (!StringHelper.isBlank(baseHash)) {
+            components.put("parameters", baseHash);
+        }
+        clientCredentialRequest.acquisitionCacheKeyHash(
+                StringHelper.computeExtCacheKeyHash(components));
+    }
+
+    private AssertionRequestOptions assertionRequestOptions(
+            ConfidentialClientApplication application) throws MalformedURLException {
+        Authority authority = application.authenticationAuthority;
+        if (clientCredentialRequest.parameters.tenant() != null) {
+            authority = Authority.replaceTenant(
+                    authority, clientCredentialRequest.parameters.tenant());
+        }
+        return new AssertionRequestOptions(
+                application.clientId(),
+                authority.tokenEndpointUrl().toString(),
+                clientCredentialRequest.parameters.fmiPath());
+    }
 
     private AuthenticationResult reattachMtlsBinding(AuthenticationResult result) {
-                MtlsBindingContext context = clientCredentialRequest.mtlsBindingContext();
-                return context == null ? result : result.withMtlsBindingContext(context);
+        MtlsBindingContext context = clientCredentialRequest.mtlsBindingContext();
+        return context == null ? result : result.withMtlsBindingContext(context);
     }
 
     private AuthenticationResult acquireTokenByClientCredential() throws Exception {

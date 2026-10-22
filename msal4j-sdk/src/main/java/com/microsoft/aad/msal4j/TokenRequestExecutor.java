@@ -150,25 +150,28 @@ class TokenRequestExecutor {
         } else if (credentialToUse instanceof ClientAssertion) {
             // For client assertion, add client_assertion and client_assertion_type parameters
             ClientAssertion clientAssertion = (ClientAssertion) credentialToUse;
-            if (clientAssertion.isContextAware()) {
+            if (clientAssertion.isSignedAssertionProvider()) {
+                ClientSignedAssertion signedAssertion =
+                        clientAssertion.signedAssertion(assertionRequestOptions(application));
+                if (mtlsProofOfPossessionContext() != null
+                        && signedAssertion.getTokenBindingCertificate() == null) {
+                    throw new MsalClientException(
+                            "mTLS Proof-of-Possession requires a certificate for this request. "
+                                    + "Either configure the application with a certificate or return a "
+                                    + "certificate-bound client assertion and request mTLS Proof-of-Possession. "
+                                    + "See https://aka.ms/msal-net-pop for details.",
+                            AuthenticationErrorCode.MTLS_CERTIFICATE_NOT_PROVIDED);
+                }
+                addJWTAssertionParams(
+                        queryParameters,
+                        signedAssertion.getAssertion(),
+                        mtlsProofOfPossessionContext() != null
+                                || signedAssertion.getTokenBindingCertificate() != null);
+            } else if (clientAssertion.isContextAware()) {
                 // Build assertion context with client assertion FMI path if available
-                String clientAssertionFmiPath = null;
-                if (msalRequest instanceof ClientCredentialRequest) {
-                    clientAssertionFmiPath = ((ClientCredentialRequest) msalRequest).parameters.fmiPath();
-                }
-                String tokenEndpoint = null;
-                try {
-                    tokenEndpoint = requestAuthority.tokenEndpointUrl() != null
-                            ? requestAuthority.tokenEndpointUrl().toString() : null;
-                } catch (MalformedURLException e) {
-                    LOG.warn("Could not resolve token endpoint URL for assertion context: {}", e.getMessage());
-                }
-                AssertionRequestOptions options = new AssertionRequestOptions(
-                        application.clientId(),
-                        tokenEndpoint,
-                        clientAssertionFmiPath);
-
-                addJWTBearerAssertionParams(queryParameters, clientAssertion.assertion(options));
+                addJWTBearerAssertionParams(
+                        queryParameters,
+                        clientAssertion.assertion(assertionRequestOptions(application)));
             } else {
                 addJWTBearerAssertionParams(queryParameters, clientAssertion.assertion());
             }
@@ -203,8 +206,35 @@ class TokenRequestExecutor {
      * @param assertion The JWT assertion string
      */
     private void addJWTBearerAssertionParams(Map<String, String> queryParameters, String assertion) {
+        addJWTAssertionParams(queryParameters, assertion, false);
+    }
+
+    private void addJWTAssertionParams(
+            Map<String, String> queryParameters, String assertion, boolean proofOfPossession) {
         queryParameters.put("client_assertion", assertion);
-        queryParameters.put("client_assertion_type", ClientAssertion.ASSERTION_TYPE_JWT_BEARER);
+        queryParameters.put(
+                "client_assertion_type",
+                proofOfPossession
+                        ? ClientAssertion.ASSERTION_TYPE_JWT_POP
+                        : ClientAssertion.ASSERTION_TYPE_JWT_BEARER);
+    }
+
+    private AssertionRequestOptions assertionRequestOptions(
+            ConfidentialClientApplication application) {
+        String clientAssertionFmiPath = null;
+        if (msalRequest instanceof ClientCredentialRequest) {
+            clientAssertionFmiPath =
+                    ((ClientCredentialRequest) msalRequest).parameters.fmiPath();
+        }
+        String tokenEndpoint = null;
+        try {
+            tokenEndpoint = requestAuthority.tokenEndpointUrl() != null
+                    ? requestAuthority.tokenEndpointUrl().toString() : null;
+        } catch (MalformedURLException e) {
+            LOG.warn("Could not resolve token endpoint URL for assertion context: {}", e.getMessage());
+        }
+        return new AssertionRequestOptions(
+                application.clientId(), tokenEndpoint, clientAssertionFmiPath);
     }
 
     private AuthenticationResult createAuthenticationResultFromOauthHttpResponse(HttpResponse oauthHttpResponse) {
@@ -321,6 +351,13 @@ class TokenRequestExecutor {
         MtlsBindingContext popContext = mtlsProofOfPossessionContext();
         if (popContext != null) {
             return popContext;
+        }
+        if (msalRequest instanceof ClientCredentialRequest) {
+            MtlsBindingContext assertionContext =
+                    ((ClientCredentialRequest) msalRequest).clientAssertionMtlsBindingContext();
+            if (assertionContext != null) {
+                return assertionContext;
+            }
         }
         if (!(msalRequest.application() instanceof ConfidentialClientApplication)) {
             return null;

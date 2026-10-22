@@ -8,7 +8,9 @@ package com.microsoft.aad.msal4j;
  */
 public class AuthenticationErrorCode {
     public static final String MTLS_POP_ERROR = "mtls_pop_error";
+    public static final String MTLS_CERTIFICATE_NOT_PROVIDED = "mtls_certificate_not_provided";
     public static final String TOKEN_TYPE_MISMATCH = "token_type_mismatch";
+    public static final String INVALID_CLIENT_ASSERTION = "invalid_client_assertion";
 
     /**
      * In the context of device code user has not yet authenticated via browser. For more details,

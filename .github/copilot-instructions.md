@@ -136,9 +136,10 @@ MSAL4J supports multiple authentication flows, each with a public `*Parameters` 
 - **Public API**: `acquireToken(ClientCredentialParameters)`
 - **Parameters**: `ClientCredentialParameters` - App-only authentication (daemon apps)
 - **Internal**: `ClientCredentialRequest` → `AcquireTokenByClientCredentialSupplier`
-- **Key Classes**: `IClientCredential`, `ClientSecret`, `ClientCertificate`, `ClientAssertion`
+- **Key Classes**: `IClientCredential`, `ClientSecret`, `ClientCertificate`, `ClientAssertion`, `ClientSignedAssertion`, `IClientSignedAssertionProvider`
 - **Optional mTLS PoP**: `mtlsProofOfPossession()` resolves one acquisition-local `IMtlsBindingContext`, requests `token_type=mtls_pop` over request-specific mTLS, isolates the cache by certificate DER hash, and exposes the live context on `IAuthenticationResult`
 - **Optional Bearer-over-mTLS**: `ConfidentialClientApplication.Builder.sendCertificateOverMtls(true)` presents the certificate on the global or configured regional `mtlsauth` token endpoint while sending the normal RS256 certificate assertion (with `x5c`) and retaining ordinary Bearer/cache semantics. Regional routing applies to client credentials, OBO, authorization-code redemption, and refresh-token redemption; per-request mTLS PoP takes precedence.
+- **Certificate-bound FIC leg 2**: `ClientCredentialFactory.createFromSignedAssertionCallback(IClientSignedAssertionProvider)` accepts a pre-signed assertion plus an optional `IClientCertificate`. A certificate selects `jwt-pop` and the `mtlsauth` endpoint without rewriting the assertion; `mtlsProofOfPossession()` additionally requests `mtls_pop`, isolates the cache by certificate DER, and restores the binding context on cache hits. The callback runs once before cache lookup and again for network credential resolution.
 
 **On-Behalf-Of (OBO)**
 - **Public API**: `acquireToken(OnBehalfOfParameters)`

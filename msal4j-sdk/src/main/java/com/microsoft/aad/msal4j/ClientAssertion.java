@@ -10,9 +10,11 @@ import java.util.function.Function;
 final class ClientAssertion implements IClientAssertion {
 
     static final String ASSERTION_TYPE_JWT_BEARER = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
+    static final String ASSERTION_TYPE_JWT_POP = "urn:ietf:params:oauth:client-assertion-type:jwt-pop";
     private final String assertion;
     private final Callable<String> assertionProvider;
     private final Function<AssertionRequestOptions, String> contextAwareAssertionProvider;
+    private final IClientSignedAssertionProvider signedAssertionProvider;
 
     /**
      * Constructor that accepts a static assertion string
@@ -28,6 +30,7 @@ final class ClientAssertion implements IClientAssertion {
         this.assertion = assertion;
         this.assertionProvider = null;
         this.contextAwareAssertionProvider = null;
+        this.signedAssertionProvider = null;
     }
 
     /**
@@ -44,6 +47,7 @@ final class ClientAssertion implements IClientAssertion {
         this.assertion = null;
         this.assertionProvider = assertionProvider;
         this.contextAwareAssertionProvider = null;
+        this.signedAssertionProvider = null;
     }
 
     /**
@@ -62,6 +66,18 @@ final class ClientAssertion implements IClientAssertion {
         this.assertion = null;
         this.assertionProvider = null;
         this.contextAwareAssertionProvider = contextAwareAssertionProvider;
+        this.signedAssertionProvider = null;
+    }
+
+    ClientAssertion(final IClientSignedAssertionProvider signedAssertionProvider) {
+        if (signedAssertionProvider == null) {
+            throw new NullPointerException("signedAssertionProvider");
+        }
+
+        this.assertion = null;
+        this.assertionProvider = null;
+        this.contextAwareAssertionProvider = null;
+        this.signedAssertionProvider = signedAssertionProvider;
     }
 
     /**
@@ -78,6 +94,10 @@ final class ClientAssertion implements IClientAssertion {
      * @throws MsalClientException if the assertion provider returns null/empty or throws an exception
      */
     public String assertion() {
+        if (signedAssertionProvider != null) {
+            return signedAssertion(new AssertionRequestOptions(null, null, null)).getAssertion();
+        }
+
         if (contextAwareAssertionProvider != null) {
             return assertion(new AssertionRequestOptions(null, null, null));
         }
@@ -135,6 +155,27 @@ final class ClientAssertion implements IClientAssertion {
         return contextAwareAssertionProvider != null;
     }
 
+    boolean isSignedAssertionProvider() {
+        return signedAssertionProvider != null;
+    }
+
+    ClientSignedAssertion signedAssertion(AssertionRequestOptions options) {
+        try {
+            ClientSignedAssertion result = signedAssertionProvider.getAssertion(options);
+            if (result == null || StringHelper.isBlank(result.getAssertion())) {
+                throw new MsalClientException(
+                        "Client-assertion JWT cannot be null or empty. Verify the assertion provider "
+                                + "returns a valid signed JWT.",
+                        AuthenticationErrorCode.INVALID_CLIENT_ASSERTION);
+            }
+            return result;
+        } catch (MsalClientException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new MsalClientException(ex);
+        }
+    }
+
     private String invokeCallable() {
         try {
             String generatedAssertion = assertionProvider.call();
@@ -167,6 +208,10 @@ final class ClientAssertion implements IClientAssertion {
             return this.contextAwareAssertionProvider == other.contextAwareAssertionProvider;
         }
 
+        if (this.signedAssertionProvider != null && other.signedAssertionProvider != null) {
+            return this.signedAssertionProvider == other.signedAssertionProvider;
+        }
+
         // For assertion providers, we consider them equal if they're the same object
         if (this.assertionProvider != null && other.assertionProvider != null) {
             return this.assertionProvider == other.assertionProvider;
@@ -181,6 +226,10 @@ final class ClientAssertion implements IClientAssertion {
         // For context-aware providers, use the provider's identity hash code
         if (contextAwareAssertionProvider != null) {
             return System.identityHashCode(contextAwareAssertionProvider);
+        }
+
+        if (signedAssertionProvider != null) {
+            return System.identityHashCode(signedAssertionProvider);
         }
 
         // For assertion providers, use the provider's identity hash code
