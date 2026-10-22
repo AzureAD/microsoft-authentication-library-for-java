@@ -11,7 +11,9 @@ import org.junit.jupiter.api.TestInstance;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
+import java.net.URL;
 import java.util.Collections;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -123,6 +125,42 @@ class OnBehalfOfIT {
         assertNotEquals(result6.accessToken(), result2.accessToken());
     }
 
+    @Test
+    void acquireTokenWithOBO_BearerOverRegionalMtls() throws Exception {
+        String accessToken = getAccessToken();
+        AppConfig oboService = LabResponseHelper.getAppConfig(APP_OBO_SERVICE);
+        UserConfig user = LabResponseHelper.getUserConfig(USER_PUBLIC_CLOUD);
+        RecordingMtlsHttpClient httpClient = new RecordingMtlsHttpClient();
+        ConfidentialClientApplication cca = ConfidentialClientApplication
+                .builder(oboService.getAppId(), certificate)
+                .authority(TestConstants.MICROSOFT_AUTHORITY_HOST
+                        + user.getTenantId())
+                .azureRegion("eastus")
+                .sendCertificateOverMtls(true)
+                .httpClient(httpClient)
+                .build();
+        OnBehalfOfParameters parameters = OnBehalfOfParameters.builder(
+                        Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
+                        new UserAssertion(accessToken))
+                .build();
+
+        IAuthenticationResult first = cca.acquireToken(parameters).get();
+        IAuthenticationResult cached = cca.acquireToken(parameters).get();
+
+        assertResultNotNull(first);
+        assertEquals("Bearer", first.tokenType());
+        assertNull(first.bindingCertificate());
+        assertNull(first.mtlsBindingContext());
+        assertEquals(TokenSource.CACHE, cached.metadata().tokenSource());
+        assertEquals(first.accessToken(), cached.accessToken());
+        assertEquals(1, httpClient.tokenRequestCount);
+        assertNotNull(httpClient.tokenRequestUrl);
+        assertEquals("eastus.mtlsauth.microsoft.com",
+                httpClient.tokenRequestUrl.getHost());
+        assertEquals("slice=testslice",
+                httpClient.tokenRequestUrl.getQuery());
+    }
+
     private void assertResultNotNull(IAuthenticationResult result) {
         assertNotNull(result);
         assertNotNull(result.accessToken());
@@ -147,5 +185,30 @@ class OnBehalfOfIT {
                         user.getPassword().toCharArray()).build()).get();
 
         return result.accessToken();
+    }
+
+    private static final class RecordingMtlsHttpClient
+            implements IMtlsCapableHttpClient {
+        private final DefaultHttpClient delegate =
+                new DefaultHttpClient(null, null, 30000, 30000);
+        private URL tokenRequestUrl;
+        private int tokenRequestCount;
+
+        @Override
+        public IHttpResponse send(HttpRequest httpRequest) throws Exception {
+            if (httpRequest.url().getPath().endsWith("/oauth2/v2.0/token")) {
+                // Temporary until the mTLS thumbprint-auth setting reaches production in approximately 2-3 weeks.
+                httpRequest = new HttpRequest(
+                        httpRequest.httpMethod(),
+                        httpRequest.url().toString() + "?slice=testslice",
+                        httpRequest.headers(),
+                        httpRequest.body())
+                        .sslContext(httpRequest.sslContext())
+                        .followRedirects(httpRequest.followRedirects());
+                tokenRequestUrl = httpRequest.url();
+                tokenRequestCount++;
+            }
+            return delegate.send(httpRequest);
+        }
     }
 }

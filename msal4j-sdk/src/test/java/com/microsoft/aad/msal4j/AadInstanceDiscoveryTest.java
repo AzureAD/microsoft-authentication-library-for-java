@@ -362,7 +362,7 @@ class AadInstanceDiscoveryTest {
     }
 
     private MsalRequest clientCredentialRequest(ConfidentialClientApplication app) {
-        //Regions are only used by the client credential flow, see AadInstanceDiscoveryProvider.shouldUseRegionalEndpoint
+        //Client credentials always support regions; Bearer-over-mTLS also enables selected user flows.
         ClientCredentialParameters parameters = ClientCredentialParameters.builder(
                 Collections.singleton("scopes")).build();
 

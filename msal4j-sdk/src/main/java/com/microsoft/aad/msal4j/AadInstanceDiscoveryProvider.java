@@ -172,17 +172,30 @@ class AadInstanceDiscoveryProvider {
             //ESTS-R only supports a small, but growing, number of scenarios, and the original design failed silently whenever
             //  regions could not be used. To avoid a breaking change this check will allow supported flows to use regions,
             //  and unsupported flows will continue to fall back to global, but with an added warning and a link to more info
-            if (msalRequest.getClass() == ClientCredentialRequest.class) {
+            if (msalRequest.getClass() == ClientCredentialRequest.class
+                    || isBearerOverMtlsUserFlow(msalRequest)) {
                 return true;
             } else {
                 //Avoid unnecessary warnings when looking for cached tokens by checking if request was a silent call
                 if (msalRequest.getClass() != SilentRequest.class) {
-                    LOG.warn("Regional endpoints are only available for client credential flow, request will fall back to using the global endpoint. See here for more information about supported scenarios: https://aka.ms/msal4j-azure-regions");
+                    LOG.warn("Regional endpoints are not available for this authentication flow, request will fall back to using the global endpoint. See here for more information about supported scenarios: https://aka.ms/msal4j-azure-regions");
                 }
                 return false;
             }
         }
         return false;
+    }
+
+    private static boolean isBearerOverMtlsUserFlow(MsalRequest msalRequest) {
+        if (!(msalRequest.application() instanceof ConfidentialClientApplication)
+                || !((ConfidentialClientApplication) msalRequest.application())
+                .sendCertificateOverMtls()) {
+            return false;
+        }
+        Class<?> requestType = msalRequest.getClass();
+        return requestType == OnBehalfOfRequest.class
+                || requestType == AuthorizationCodeRequest.class
+                || requestType == RefreshTokenRequest.class;
     }
 
     static void cacheRegionInstanceMetadata(String originalHost, String regionalHost) {
