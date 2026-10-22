@@ -142,9 +142,6 @@ class OnBehalfOfIT {
         OnBehalfOfParameters parameters = OnBehalfOfParameters.builder(
                         Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
                         new UserAssertion(accessToken))
-                // Temporary until the mTLS thumbprint-auth setting reaches production in approximately 2-3 weeks.
-                .extraQueryParameters(Collections.singletonMap(
-                        "slice", "testslice"))
                 .build();
 
         IAuthenticationResult first = cca.acquireToken(parameters).get();
@@ -200,6 +197,14 @@ class OnBehalfOfIT {
         @Override
         public IHttpResponse send(HttpRequest httpRequest) throws Exception {
             if (httpRequest.url().getPath().endsWith("/oauth2/v2.0/token")) {
+                // Temporary until the mTLS thumbprint-auth setting reaches production in approximately 2-3 weeks.
+                httpRequest = new HttpRequest(
+                        httpRequest.httpMethod(),
+                        httpRequest.url().toString() + "?slice=testslice",
+                        httpRequest.headers(),
+                        httpRequest.body())
+                        .sslContext(httpRequest.sslContext())
+                        .followRedirects(httpRequest.followRedirects());
                 tokenRequestUrl = httpRequest.url();
                 tokenRequestCount++;
             }
