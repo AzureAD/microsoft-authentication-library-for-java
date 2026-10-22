@@ -12,7 +12,15 @@ package com.microsoft.aad.msal4j;
  * also calls {@link ClientCredentialParameters.ClientCredentialParametersBuilder#mtlsProofOfPossession()}.</p>
  *
  * <p>Providers are responsible for signing and caching the assertion. MSAL can invoke the provider
- * once during request preflight and again when a network request is sent.</p>
+ * once during client-credentials preflight and again when a network request is sent. Preflight
+ * selects the TLS certificate and cache binding. A certificate cannot first appear in the
+ * network callback. Without mTLS PoP, the network callback may omit the certificate to select
+ * {@code jwt-bearer} while retaining preflight's mTLS transport. With mTLS PoP, both invocations
+ * must return a certificate. Providers must keep the runtime assertion consistent with the
+ * preflight certificate; MSAL does not compare certificate identities across invocations.</p>
+ *
+ * <p>Certificate-bound results are supported only for client-credentials requests. Other grants
+ * may use this provider only without a binding certificate and do not invoke preflight.</p>
  *
  * @see ClientCredentialFactory#createFromSignedAssertionCallback(IClientSignedAssertionProvider)
  */

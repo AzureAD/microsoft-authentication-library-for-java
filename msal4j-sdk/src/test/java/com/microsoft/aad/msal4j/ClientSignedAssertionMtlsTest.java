@@ -4,16 +4,21 @@
 package com.microsoft.aad.msal4j;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 
+import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.cert.CertificateEncodingException;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -61,14 +66,15 @@ class ClientSignedAssertionMtlsTest {
         assertEquals(TokenSource.CACHE, cached.metadata().tokenSource());
     }
 
-    @Test
-    void noCertificateWithPopFailsLocallyWithDotNetErrorContract() throws Exception {
+    @ParameterizedTest
+    @ValueSource(strings = {"tenant", "common", "organizations", "consumers"})
+    void noCertificateWithPopFailsBeforeMtlsAuthorityValidation(String tenant) throws Exception {
         DefaultHttpClient client = mock(DefaultHttpClient.class);
         AtomicInteger calls = new AtomicInteger();
         ConfidentialClientApplication app = application(client, options -> {
             calls.incrementAndGet();
             return signedAssertion("assertion", null);
-        });
+        }, "https://login.microsoftonline.com/" + tenant + "/");
 
         ExecutionException failure = assertThrows(ExecutionException.class,
                 () -> app.acquireToken(parameters(true, true)).get());
@@ -186,6 +192,150 @@ class ClientSignedAssertionMtlsTest {
                 parameter(request.getValue().body(), "client_assertion_type"));
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"token_type", "TOKEN_TYPE", "req_cnf", "REQ_CNF"})
+    void certificateWithoutPopRejectsProtocolOverrides(String name) throws Exception {
+        DefaultHttpClient client = mock(DefaultHttpClient.class);
+        IClientCertificate certificate = providerBackedCertificate();
+        ConfidentialClientApplication app = application(client,
+                options -> signedAssertion("assertion", certificate));
+
+        ExecutionException failure = assertThrows(ExecutionException.class,
+                () -> app.acquireToken(ClientCredentialParameters.builder(
+                                Collections.singleton(SCOPE))
+                        .extraQueryParameters(Collections.singletonMap(name, "mtls_pop"))
+                        .skipCache(true).build()).get());
+
+        assertEquals(AuthenticationErrorCode.MTLS_POP_ERROR,
+                ((MsalClientException) failure.getCause()).errorCode());
+        verify(client, times(0)).send(any(HttpRequest.class));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"mtls_pop", "PoP"})
+    void certificateWithoutPopRejectsUnexpectedTokenTypesBeforeCaching(String tokenType)
+            throws Exception {
+        DefaultHttpClient client = mock(DefaultHttpClient.class);
+        when(client.send(any(HttpRequest.class)))
+                .thenReturn(response("unexpected", tokenType))
+                .thenReturn(response("bearer", "Bearer"));
+        IClientCertificate certificate = providerBackedCertificate();
+        ConfidentialClientApplication app = application(client,
+                options -> signedAssertion("assertion", certificate));
+
+        ExecutionException failure = assertThrows(ExecutionException.class,
+                () -> app.acquireToken(parameters(false, false)).get());
+        assertEquals(AuthenticationErrorCode.TOKEN_TYPE_MISMATCH,
+                ((MsalClientException) failure.getCause()).errorCode());
+
+        assertEquals("bearer", app.acquireToken(parameters(false, false)).get().accessToken());
+        IAuthenticationResult cached = app.acquireToken(parameters(false, false)).get();
+        assertEquals("bearer", cached.accessToken());
+        assertEquals(TokenSource.CACHE, cached.metadata().tokenSource());
+        verify(client, times(2)).send(any(HttpRequest.class));
+    }
+
+    @Test
+    void certificateCannotFirstAppearInNetworkCallback() throws Exception {
+        DefaultHttpClient client = mock(DefaultHttpClient.class);
+        IClientCertificate certificate = providerBackedCertificate();
+        AtomicInteger calls = new AtomicInteger();
+        ConfidentialClientApplication app = application(client, options ->
+                signedAssertion("assertion", calls.incrementAndGet() == 1 ? null : certificate));
+
+        ExecutionException failure = assertThrows(ExecutionException.class,
+                () -> app.acquireToken(parameters(false, true)).get());
+
+        assertEquals(AuthenticationErrorCode.MTLS_POP_ERROR,
+                ((MsalClientException) failure.getCause()).errorCode());
+        assertTrue(failure.getCause().getMessage().contains("after request preflight"));
+        assertEquals(2, calls.get());
+        verify(client, times(0)).send(any(HttpRequest.class));
+    }
+
+    @Test
+    void popRequiresCertificateInNetworkCallbackDespitePreflightBinding() throws Exception {
+        DefaultHttpClient client = mock(DefaultHttpClient.class);
+        IClientCertificate certificate = providerBackedCertificate();
+        AtomicInteger calls = new AtomicInteger();
+        ConfidentialClientApplication app = application(client, options ->
+                signedAssertion("assertion", calls.incrementAndGet() == 1 ? certificate : null));
+
+        ExecutionException failure = assertThrows(ExecutionException.class,
+                () -> app.acquireToken(parameters(true, true)).get());
+
+        assertEquals(AuthenticationErrorCode.MTLS_CERTIFICATE_NOT_PROVIDED,
+                ((MsalClientException) failure.getCause()).errorCode());
+        assertEquals(2, calls.get());
+        verify(client, times(0)).send(any(HttpRequest.class));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void networkCallbackReceivesSelectedTransportEndpoint(boolean pop) throws Exception {
+        DefaultHttpClient client = mock(DefaultHttpClient.class);
+        when(client.send(any(HttpRequest.class)))
+                .thenReturn(response("token", pop ? "mtls_pop" : "Bearer"));
+        IClientCertificate certificate = providerBackedCertificate();
+        List<AssertionRequestOptions> contexts = new ArrayList<>();
+        ConfidentialClientApplication app = application(client, options -> {
+            contexts.add(options);
+            return signedAssertion("unchanged.assertion.signature", certificate);
+        });
+        ClientCredentialParameters.ClientCredentialParametersBuilder builder =
+                ClientCredentialParameters.builder(Collections.singleton(SCOPE))
+                        .tenant("override-tenant").skipCache(true);
+
+        app.acquireToken(pop ? builder.mtlsProofOfPossession().build() : builder.build()).get();
+
+        ArgumentCaptor<HttpRequest> request = ArgumentCaptor.forClass(HttpRequest.class);
+        verify(client).send(request.capture());
+        assertEquals(2, contexts.size());
+        assertEquals("https://login.microsoftonline.com/override-tenant/oauth2/v2.0/token",
+                contexts.get(0).tokenEndpoint());
+        assertEquals("https://mtlsauth.microsoft.com/override-tenant/oauth2/v2.0/token",
+                contexts.get(1).tokenEndpoint());
+        assertEquals(request.getValue().url().toString(), contexts.get(1).tokenEndpoint());
+        assertEquals("client", contexts.get(1).clientId());
+        assertEquals("unchanged.assertion.signature",
+                parameter(request.getValue().body(), "client_assertion"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"obo", "authorization_code", "refresh_token"})
+    void otherGrantsRejectBindingCertificatesButAllowOrdinaryAssertions(String grant)
+            throws Exception {
+        for (boolean certificateBound : new boolean[]{false, true}) {
+            DefaultHttpClient client = mock(DefaultHttpClient.class);
+            when(client.send(any(HttpRequest.class))).thenReturn(response("bearer", "Bearer"));
+            IClientCertificate certificate = certificateBound ? providerBackedCertificate() : null;
+            AtomicInteger calls = new AtomicInteger();
+            ConfidentialClientApplication app = application(client, options -> {
+                calls.incrementAndGet();
+                return signedAssertion("assertion", certificate);
+            });
+
+            if (certificateBound) {
+                ExecutionException failure = assertThrows(ExecutionException.class,
+                        () -> acquireOtherGrant(app, grant).get());
+                assertEquals(AuthenticationErrorCode.MTLS_POP_ERROR,
+                        ((MsalClientException) failure.getCause()).errorCode());
+                assertTrue(failure.getCause().getMessage().contains(
+                        "supported only for client credential requests"));
+                verify(client, times(0)).send(any(HttpRequest.class));
+            } else {
+                assertEquals("bearer", acquireOtherGrant(app, grant).get().accessToken());
+                ArgumentCaptor<HttpRequest> request = ArgumentCaptor.forClass(HttpRequest.class);
+                verify(client).send(request.capture());
+                assertEquals("login.microsoftonline.com", request.getValue().url().getHost());
+                assertNull(request.getValue().sslContext());
+                assertEquals(ClientAssertion.ASSERTION_TYPE_JWT_BEARER,
+                        parameter(request.getValue().body(), "client_assertion_type"));
+            }
+            assertEquals(1, calls.get());
+        }
+    }
+
     @Test
     void nullOrEmptySignedAssertionUsesDotNetErrorCode() throws Exception {
         for (ClientSignedAssertion invalid : new ClientSignedAssertion[]{
@@ -204,14 +354,38 @@ class ClientSignedAssertionMtlsTest {
 
     private static ConfidentialClientApplication application(
             IHttpClient client, IClientSignedAssertionProvider provider) throws Exception {
+        return application(client, provider, AUTHORITY);
+    }
+
+    private static ConfidentialClientApplication application(
+            IHttpClient client, IClientSignedAssertionProvider provider, String authority)
+            throws Exception {
         return ConfidentialClientApplication
                 .builder("client",
                         ClientCredentialFactory.createFromSignedAssertionCallback(provider))
-                .authority(AUTHORITY)
+                .authority(authority)
                 .instanceDiscovery(false)
                 .validateAuthority(false)
                 .httpClient(client)
                 .build();
+    }
+
+    private static CompletableFuture<IAuthenticationResult> acquireOtherGrant(
+            ConfidentialClientApplication app, String grant) throws Exception {
+        switch (grant) {
+            case "obo":
+                return app.acquireToken(OnBehalfOfParameters.builder(
+                                Collections.singleton(SCOPE), new UserAssertion(TestHelper.signedAssertion))
+                        .skipCache(true).build());
+            case "authorization_code":
+                return app.acquireToken(AuthorizationCodeParameters.builder(
+                        "code", new URI("http://localhost")).scopes(Collections.singleton(SCOPE)).build());
+            case "refresh_token":
+                return app.acquireToken(RefreshTokenParameters.builder(
+                        Collections.singleton(SCOPE), "refresh-token").build());
+            default:
+                throw new IllegalArgumentException("Unsupported test grant: " + grant);
+        }
     }
 
     private static ClientCredentialParameters parameters(boolean pop, boolean skipCache) {

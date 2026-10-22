@@ -43,6 +43,37 @@ discover the optional certificate. A cache hit invokes it once. A network reques
 it again to obtain the assertion sent on the wire. Providers should therefore return
 pre-generated or cached material.
 
+Certificate-bound results are supported only for client-credentials requests. OBO,
+authorization-code redemption, and refresh-token redemption may use this provider without
+a binding certificate; returning a certificate for these grants fails locally with
+`mtls_pop_error` before the token request is sent. These grants invoke the provider only
+when a network request needs credential material, without client-credentials preflight.
+
+Preflight fixes the TLS certificate and, for PoP, the certificate-specific cache partition.
+The network callback supplies the assertion actually sent and selects its assertion type:
+
+| Preflight certificate | Network callback certificate | Without PoP | With PoP |
+|---|---|---|---|
+| absent | absent | `jwt-bearer` over the regular endpoint | preflight fails with `mtls_certificate_not_provided` |
+| absent | present | local `mtls_pop_error`; mTLS cannot be introduced after preflight | preflight fails with `mtls_certificate_not_provided` |
+| present | absent | `jwt-bearer` over preflight's mTLS transport | local `mtls_certificate_not_provided` |
+| present | present | `jwt-pop` over preflight's mTLS transport | `jwt-pop` over preflight's mTLS transport |
+
+Providers must keep runtime assertions consistent with the preflight certificate. MSAL
+does not compare certificate identities across invocations or guarantee exactly-once
+callback execution. Rotate certificate/assertion material between acquisitions, not
+between an acquisition's preflight and network callback.
+
+`AssertionRequestOptions.tokenEndpoint()` identifies the configured authority endpoint
+(with any tenant override) during preflight and the actual selected transport endpoint
+during the network callback, including regional and `mtlsauth` routing. It does not
+specify or rewrite the signed assertion's audience claim.
+
+Without PoP, certificate-backed requests reject `token_type` and `req_cnf` overrides and
+require a Bearer response. Unexpected bound tokens fail before being cached. With PoP,
+a missing preflight certificate is reported before validating the mTLS authority, including
+when a tenantless authority such as `common` is configured.
+
 Java uses `IClientCertificate` instead of .NET's `X509Certificate2` so provider-backed and
 non-exportable private keys remain usable through the existing Java certificate abstraction.
 The Java callback is synchronous, matching the existing MSAL Java assertion-provider model.

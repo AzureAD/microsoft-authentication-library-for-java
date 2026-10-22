@@ -115,17 +115,6 @@ class AcquireTokenByClientCredentialSupplier extends AuthenticationResultSupplie
             }
         }
 
-        Authority authority = application.authenticationAuthority;
-        if (parameters.tenant() != null) {
-            authority = Authority.replaceTenant(authority, parameters.tenant());
-        }
-        if (authority.authorityType() != AuthorityType.AAD) {
-            throw new MsalClientException(
-                    "mTLS authentication requires a Microsoft Entra AAD authority.",
-                    AuthenticationErrorCode.MTLS_POP_ERROR);
-        }
-        MtlsEndpointHelper.deriveMtlsTokenEndpoint(authority.tokenEndpointUrl());
-
         if (bindingCertificate == null && credential instanceof IClientCertificate) {
             bindingCertificate = (IClientCertificate) credential;
         }
@@ -143,6 +132,17 @@ class AcquireTokenByClientCredentialSupplier extends AuthenticationResultSupplie
                     "mTLS Proof-of-Possession requires a certificate credential.",
                     AuthenticationErrorCode.MTLS_POP_ERROR);
         }
+        Authority authority = application.authenticationAuthority;
+        if (parameters.tenant() != null) {
+            authority = Authority.replaceTenant(authority, parameters.tenant());
+        }
+        if (authority.authorityType() != AuthorityType.AAD) {
+            throw new MsalClientException(
+                    "mTLS authentication requires a Microsoft Entra AAD authority.",
+                    AuthenticationErrorCode.MTLS_POP_ERROR);
+        }
+        MtlsEndpointHelper.deriveMtlsTokenEndpoint(authority.tokenEndpointUrl());
+
         if (!(application.httpClient() instanceof IMtlsCapableHttpClient)) {
             throw new MsalClientException(
                     "The configured custom HTTP client does not support request-specific mTLS. "
