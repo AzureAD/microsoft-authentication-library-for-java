@@ -142,6 +142,9 @@ class OnBehalfOfIT {
         OnBehalfOfParameters parameters = OnBehalfOfParameters.builder(
                         Collections.singleton(TestConstants.GRAPH_DEFAULT_SCOPE),
                         new UserAssertion(accessToken))
+                // Temporary until the mTLS thumbprint-auth setting reaches production in approximately 2-3 weeks.
+                .extraQueryParameters(Collections.singletonMap(
+                        "slice", "testslice"))
                 .build();
 
         IAuthenticationResult first = cca.acquireToken(parameters).get();
@@ -157,6 +160,8 @@ class OnBehalfOfIT {
         assertNotNull(httpClient.tokenRequestUrl);
         assertEquals("eastus.mtlsauth.microsoft.com",
                 httpClient.tokenRequestUrl.getHost());
+        assertEquals("slice=testslice",
+                httpClient.tokenRequestUrl.getQuery());
     }
 
     private void assertResultNotNull(IAuthenticationResult result) {
