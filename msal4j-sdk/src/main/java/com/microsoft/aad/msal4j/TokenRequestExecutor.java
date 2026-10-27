@@ -183,7 +183,7 @@ class TokenRequestExecutor {
                             application.clientId(),
                             bearerOverMtlsContext,
                             requestAuthority.selfSignedJwtAudience(),
-                            true,
+                            application.sendX5c(),
                             useSha1)
                     : JwtHelper.buildJwt(
                             application.clientId(),

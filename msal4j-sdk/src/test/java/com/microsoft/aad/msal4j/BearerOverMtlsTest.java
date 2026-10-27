@@ -79,7 +79,7 @@ class BearerOverMtlsTest {
 
         SignedJWT assertion = SignedJWT.parse(parameter(request.getValue().body(), "client_assertion"));
         assertEquals("RS256", assertion.getHeader().getAlgorithm().getName());
-        assertNotNull(assertion.getHeader().getX509CertChain());
+        assertNull(assertion.getHeader().getX509CertChain());
         assertNotNull(assertion.getHeader().getX509CertSHA256Thumbprint());
         assertEquals("client", assertion.getJWTClaimsSet().getIssuer());
         assertEquals("client", assertion.getJWTClaimsSet().getSubject());

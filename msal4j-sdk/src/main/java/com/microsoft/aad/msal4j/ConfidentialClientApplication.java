@@ -152,7 +152,7 @@ public class ConfidentialClientApplication extends AbstractClientApplicationBase
          * mTLS while retaining ordinary Bearer token semantics. Per-request mTLS Proof-of-Possession
          * takes precedence. This requires a concrete tenanted AAD authority in a supported cloud and
          * routes requests to its {@code mtlsauth} endpoint without following redirects. The assertion
-         * always includes {@code x5c}. Custom HTTP clients must implement
+         * respects the configured {@link #sendX5c(boolean)} value. Custom HTTP clients must implement
          * {@link IMtlsCapableHttpClient}; a custom application SSL socket factory cannot be safely
          * combined with this option. The default is {@code false}.
          *
