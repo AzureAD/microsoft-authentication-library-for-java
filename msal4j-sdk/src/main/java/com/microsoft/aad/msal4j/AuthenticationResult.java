@@ -30,6 +30,7 @@ final class AuthenticationResult implements IAuthenticationResult {
     private final Boolean isPopAuthorization;
     private final String tokenType;
     private final transient IMtlsBindingContext mtlsBindingContext;
+    private final String userAssertionHash;
 
     private Object readResolve() throws ObjectStreamException {
         if ("mtls_pop".equals(tokenType) && mtlsBindingContext == null) {
@@ -40,7 +41,7 @@ final class AuthenticationResult implements IAuthenticationResult {
         return this;
     }
 
-    AuthenticationResult(String accessToken, long expiresOn, long extExpiresOn, String refreshToken, Long refreshOn, String familyId, String idToken, AccountCacheEntity accountCacheEntity, String environment, String scopes, AuthenticationResultMetadata metadata, Boolean isPopAuthorization, String tokenType, IMtlsBindingContext mtlsBindingContext) {
+    AuthenticationResult(String accessToken, long expiresOn, long extExpiresOn, String refreshToken, Long refreshOn, String familyId, String idToken, AccountCacheEntity accountCacheEntity, String environment, String scopes, AuthenticationResultMetadata metadata, Boolean isPopAuthorization, String tokenType, IMtlsBindingContext mtlsBindingContext, String userAssertionHash) {
         this.accessToken = accessToken;
         this.expiresOn = expiresOn;
         this.extExpiresOn = extExpiresOn;
@@ -55,6 +56,7 @@ final class AuthenticationResult implements IAuthenticationResult {
         this.isPopAuthorization = isPopAuthorization;
         this.tokenType = StringHelper.isBlank(tokenType) ? "Bearer" : tokenType;
         this.mtlsBindingContext = mtlsBindingContext;
+        this.userAssertionHash = userAssertionHash;
         this.expiresOnDate = new Date(expiresOn * 1000);
     }
 
@@ -129,6 +131,10 @@ final class AuthenticationResult implements IAuthenticationResult {
         return this.accountCacheEntity;
     }
 
+    String userAssertionHash() {
+        return userAssertionHash;
+    }
+
     public IAccount account() {
         return getAccount();
     }
@@ -177,6 +183,7 @@ final class AuthenticationResult implements IAuthenticationResult {
                 .isPopAuthorization(isPopAuthorization)
                 .tokenType(tokenType)
                 .mtlsBindingContext(mtlsBindingContext)
+                .userAssertionHash(userAssertionHash)
                 .build();
     }
 
@@ -199,6 +206,7 @@ final class AuthenticationResult implements IAuthenticationResult {
                 .isPopAuthorization(Boolean.TRUE)
                 .tokenType(resultTokenType)
                 .mtlsBindingContext(bindingContext)
+                .userAssertionHash(userAssertionHash)
                 .build();
     }
 
@@ -236,6 +244,7 @@ final class AuthenticationResult implements IAuthenticationResult {
         private Boolean isPopAuthorization;
         private String tokenType;
         private IMtlsBindingContext mtlsBindingContext;
+        private String userAssertionHash;
 
         AuthenticationResultBuilder() {
         }
@@ -310,8 +319,13 @@ final class AuthenticationResult implements IAuthenticationResult {
             return this;
         }
 
+        AuthenticationResultBuilder userAssertionHash(String userAssertionHash) {
+            this.userAssertionHash = userAssertionHash;
+            return this;
+        }
+
         public AuthenticationResult build() {
-            return new AuthenticationResult(this.accessToken, this.expiresOn, this.extExpiresOn, this.refreshToken, this.refreshOn, this.familyId, this.idToken, this.accountCacheEntity, this.environment, this.scopes, this.metadata, this.isPopAuthorization, this.tokenType, this.mtlsBindingContext);
+            return new AuthenticationResult(this.accessToken, this.expiresOn, this.extExpiresOn, this.refreshToken, this.refreshOn, this.familyId, this.idToken, this.accountCacheEntity, this.environment, this.scopes, this.metadata, this.isPopAuthorization, this.tokenType, this.mtlsBindingContext, this.userAssertionHash);
         }
 
         public String toString() {
@@ -350,6 +364,7 @@ final class AuthenticationResult implements IAuthenticationResult {
         if (!Objects.equals(expiresOnDate, other.expiresOnDate)) return false;
         if (!Objects.equals(scopes, other.scopes)) return false;
         if (!Objects.equals(tokenType, other.tokenType)) return false;
+        if (!Objects.equals(userAssertionHash, other.userAssertionHash)) return false;
         return Objects.equals(metadata, other.metadata);
     }
 
@@ -372,6 +387,7 @@ final class AuthenticationResult implements IAuthenticationResult {
         result = result * 59 + (this.expiresOnDate == null ? 43 : this.expiresOnDate.hashCode());
         result = result * 59 + (this.scopes == null ? 43 : this.scopes.hashCode());
         result = result * 59 + (this.tokenType == null ? 43 : this.tokenType.hashCode());
+        result = result * 59 + (this.userAssertionHash == null ? 43 : this.userAssertionHash.hashCode());
         result = result * 59 + (this.metadata == null ? 43 : this.metadata.hashCode());
         return result;
     }

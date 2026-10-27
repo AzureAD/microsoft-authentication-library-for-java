@@ -70,6 +70,46 @@ class AuthenticationResultMtlsTest {
                         .scopes());
     }
 
+    @Test
+    void resultCopiesPreserveUserAssertionHash() {
+        String resource = "https://vault.azure.net";
+        AuthenticationResult response = AuthenticationResult.builder()
+                .accessToken("secret")
+                .expiresOn(123)
+                .scopes(resource)
+                .userAssertionHash("assertion-hash")
+                .build();
+
+        AuthenticationResult scoped = response.withScopes(resource);
+        assertEquals("assertion-hash", scoped.userAssertionHash());
+        assertEquals(response, scoped);
+        assertEquals(response.hashCode(), scoped.hashCode());
+
+        AuthenticationResult bound =
+                response.withMtlsBindingContext(new TestBindingContext(), resource);
+        assertEquals("assertion-hash", bound.userAssertionHash());
+        assertEquals("mtls_pop", bound.tokenType());
+        assertEquals("assertion-hash",
+                bound.withMtlsBindingContext(new TestBindingContext()).userAssertionHash());
+    }
+
+    @Test
+    void equalityIncludesUserAssertionHashAlongsideTokenType() {
+        AuthenticationResult.AuthenticationResultBuilder builder = AuthenticationResult.builder()
+                .accessToken("secret")
+                .expiresOn(123)
+                .tokenType("Bearer")
+                .metadata(AuthenticationResultMetadata.builder().build())
+                .userAssertionHash("first-assertion");
+        AuthenticationResult first = builder.build();
+        AuthenticationResult same = builder.build();
+        AuthenticationResult different = builder.userAssertionHash("second-assertion").build();
+
+        assertEquals(first, same);
+        assertEquals(first.hashCode(), same.hashCode());
+        assertNotEquals(first, different);
+    }
+
     private static AuthenticationResult result(
             String tokenType,
             IMtlsBindingContext context) {

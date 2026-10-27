@@ -23,11 +23,7 @@ class OnBehalfOfRequest extends MsalRequest {
         params.put(GrantConstants.ASSERTION_PARAMETER, parameters.userAssertion().getAssertion());
         params.put("requested_token_use", "on_behalf_of");
 
-        if (parameters.claims() != null) {
-            params.put("claims", parameters.claims().formatAsJSONString());
-        }
-
-        return new OAuthAuthorizationGrant(params, parameters.scopes());
+        return new OAuthAuthorizationGrant(params, parameters.scopes(), parameters.claims());
     }
 
     OnBehalfOfParameters parameters() {

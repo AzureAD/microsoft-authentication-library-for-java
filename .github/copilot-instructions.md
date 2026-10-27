@@ -97,6 +97,7 @@ AbstractApplicationBase (base for all applications)
 - In-memory cache with five entity types: `AccessTokenCacheEntity`, `RefreshTokenCacheEntity`, `IdTokenCacheEntity`, `AccountCacheEntity`, `AppMetadataCacheEntity`
 - Implements `ITokenCache` with serialization hooks via `ITokenCacheAccessAspect`
 - Thread-safe with read-write locks
+- `AuthenticationResult` copy helpers must retain the user assertion hash alongside mTLS token type and binding metadata; merging cache fixes must not drop either identity dimension.
 
 **Service Bundle**: Internal `ServiceBundle` class provides shared services (HTTP client, telemetry, executor service) to all requests
 
