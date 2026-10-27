@@ -32,7 +32,7 @@ This repository contains four default Maven modules plus one profile-only E2E mo
 - **`msal4j-sdk/`** - The main MSAL Java library (focus of development)
 - **`msal4j-brokers/`** - Broker integration for native authentication (Windows WAM)
 - **`msal4j-persistence-extension/`** - Cross-platform token cache persistence helpers
-- **`msal4j-mtls-extensions/`** - Optional Windows KeyGuard/attestation bridge for Managed Identity v2 mTLS PoP; bundles Microsoft.Azure.Security.KeyGuardAttestation 1.1.5 while Java JCA/JSSE performs TLS
+- **`msal4j-mtls-extensions/`** - Optional Windows KeyGuard/attestation bridge for Managed Identity v2 mTLS PoP. Applications bring the native Microsoft.Azure.Security.KeyGuardAttestation package and configure the absolute DLL path with `MSAL_KEY_ATTESTATION_LIBRARY_PATH`; Java JCA/JSSE performs TLS. Production and shaded E2E JARs must not contain the attestation DLL. Only the test harness provisions a pinned native package separately.
 - **`msal4j-mtls-extensions-e2e/`** - Managed Identity v2 validation app, included only by the Maven `e2e` profile and used by the VM-based PR pipeline job
 
 For most work, focus on **`msal4j-sdk/`**.

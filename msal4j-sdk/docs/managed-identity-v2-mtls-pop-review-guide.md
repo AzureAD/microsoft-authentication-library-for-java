@@ -426,36 +426,28 @@ Review:
 
 ## Native DLL packaging
 
-The optional extension bundles the x64 native DLL from:
+The application developer brings the native
+`Microsoft.Azure.Security.KeyGuardAttestation` package separately. The Java
+artifact contains integration code only, not the native project or DLL.
+Applications configure `MSAL_KEY_ATTESTATION_LIBRARY_PATH` with the absolute
+Windows x64 DLL path before starting Java and own compatible-version selection,
+package provenance, protected deployment and servicing.
 
-```text
-Microsoft.Azure.Security.KeyGuardAttestation 1.1.5
-```
-
-This matches the version pinned by current MSAL.NET.
-
-The DLL is stored at:
-
-```text
-META-INF/native/win-x64/AttestationClientLib.dll
-```
-
-Expected SHA-256:
-
-```text
-90dfcce20e1a74519b49796eeee17e6e59a257c3acf754f454a49380d28a568b
-```
+Only `build/prepare-key-attestation-test-dependency.ps1` provisions a pinned,
+hash-verified package for tests, outside either JAR. The manual test wrapper and
+the PR E2E job use this helper; production loading performs no download.
 
 Review:
 
-- resource exists in the production extension JAR;
-- resource also survives E2E shading;
-- runtime extraction uses a unique temporary directory;
-- extracted bytes are verified before loading;
+- attestation DLL is absent from both the production extension and shaded E2E JAR;
+- runtime uses only the explicitly configured absolute DLL path;
+- Authenticode trust is verified before loading (not a version or publisher pin);
+- missing configuration or invalid files fail closed when attestation is requested;
 - architecture mismatch fails clearly;
-- manual `PATH` or `java.library.path` configuration is unnecessary;
-- package license and notice are included;
-- only the optional extension carries the native payload.
+- no `PATH` or `java.library.path` search or automatic download is used;
+- application-owned files are not copied, deleted or replaced by MSAL;
+- ordinary unit tests run without the native package;
+- native E2E provisioning failures are failures, not skipped tests.
 
 ## Test inventory
 
@@ -641,13 +633,13 @@ token A + binding B -> rejected
 
 The app verifies that the two key IDs differ before making the negative call.
 
-## Live validation completed
+## Historical live validation
 
-The current implementation has been validated on a Windows Server 2025 Trusted
-Launch Azure VM:
+The earlier bundled-DLL implementation was validated on a Windows Server 2025
+Trusted Launch Azure VM. These results predate application-supplied native
+deployment and must not be treated as validation of the new loading path.
+Rerun the same scenarios with the separately provisioned DLL:
 
-- the extension JAR loaded the bundled attestation DLL;
-- no standalone DLL was placed beside the app;
 - attestation completed;
 - ESTS returned `mtls_pop`;
 - token `cnf.x5t#S256` matched the full certificate DER hash;
@@ -667,7 +659,7 @@ identifiers are intentionally omitted.
 | Multiple providers found | Duplicate extension implementations | Classpath |
 | KeyGuard unavailable | VBS or Trusted Launch missing | Secure Boot, vTPM, VBS status |
 | Stale key after reboot | Per-boot private material lost | Signing liveness probe and recreation logs |
-| Attestation DLL load failure | Corrupt or wrong architecture resource | JAR resource, hash, Windows x64 |
+| Attestation DLL load failure | Missing, untrusted or incompatible application-supplied DLL | Absolute `MSAL_KEY_ATTESTATION_LIBRARY_PATH`, native dependencies, Authenticode trust, Windows x64 |
 | Attestation failure | TPM not provisioned | TPM attestation capability |
 | IMDS metadata rejected | Missing IMDS response marker | Response headers and endpoint |
 | Credential issuance rejected | CSR, CUID, identity, or attestation mismatch | IMDS response body and correlation ID |

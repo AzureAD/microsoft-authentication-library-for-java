@@ -51,6 +51,12 @@ Java 8 compatibility. MSAL returns an `IMtlsBindingContext` whose standard JSSE
 `SSLContext` can be used by the application for independent downstream mTLS
 calls.
 
+Applications must obtain and deploy the native
+`Microsoft.Azure.Security.KeyGuardAttestation` package separately and set
+`MSAL_KEY_ATTESTATION_LIBRARY_PATH` to the absolute `AttestationClientLib.dll`
+path before starting Java. The Java artifact does not bundle or download the
+native package; applications own its version, deployment and servicing.
+
 See [the extension guide](msal4j-mtls-extensions/README.md). Reviewers can use
 the [detailed review guide](msal4j-sdk/docs/managed-identity-v2-mtls-pop-review-guide.md)
 for architecture diagrams, security checklists, file order, and manual validation.

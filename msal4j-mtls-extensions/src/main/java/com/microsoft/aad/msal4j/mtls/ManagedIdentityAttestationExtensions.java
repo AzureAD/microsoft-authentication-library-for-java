@@ -20,6 +20,12 @@ public final class ManagedIdentityAttestationExtensions {
      * <p>Call this after enabling either mTLS Proof-of-Possession or bearer-over-mTLS
      * on the supplied builder.</p>
      *
+     * <p>The application must obtain and deploy the native
+     * Microsoft.Azure.Security.KeyGuardAttestation package separately and set
+     * {@code MSAL_KEY_ATTESTATION_LIBRARY_PATH} to the absolute DLL path before
+     * starting Java. The optional Java artifact does not include or download it.
+     * Missing or invalid native dependencies fail when attestation is requested.</p>
+     *
      * @param builder managed identity parameter builder
      * @return the same builder for continued configuration
      */

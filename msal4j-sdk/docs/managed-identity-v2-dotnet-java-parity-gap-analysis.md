@@ -152,9 +152,12 @@ container remains the same.
 | Native logging | MSAL logger bridge | SLF4J bridge with correlation ID | Java-specific parity |
 | Raw debug payloads | May use the protected logger channel | Suppressed by Java | Intentional, more conservative |
 
-The Java artifact validates the bundled native library with a fixed SHA-256
-digest and Authenticode verification, then extracts it into a temporary
-directory restricted to the current Windows user.
+The Java artifact does not bundle or download the native attestation package.
+The application developer obtains, verifies, deploys and services it separately,
+configuring its absolute DLL path with `MSAL_KEY_ATTESTATION_LIBRARY_PATH`.
+MSAL validates Authenticode trust before loading that exact file; it does not
+pin the application to a package version or publisher. Only the test harness
+provisions a pinned, hash-verified native package outside the JAR.
 
 ## Certificate and key lifecycle
 

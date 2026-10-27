@@ -29,8 +29,9 @@ import java.util.List;
  * </pre>
  *
  * <p>This interface is loaded lazily via {@link AttestationLibraryLoader} from the
- * Microsoft-signed DLL bundled in the optional extension. It is only extracted and loaded
- * when MAA attestation is requested.</p>
+ * application-supplied DLL configured by {@code MSAL_KEY_ATTESTATION_LIBRARY_PATH}.
+ * It is verified and loaded only when MAA attestation is requested; MSAL does not
+ * distribute or download the native package.</p>
  */
 interface AttestationLibrary extends Library {
 

@@ -81,7 +81,11 @@ if ($null -eq $jar) {
     throw "The manual validation JAR was not found. Run without -SkipBuild."
 }
 
-Write-Host "Attestation DLL: bundled Microsoft.Azure.Security.KeyGuardAttestation 1.1.5"
+if ([string]::IsNullOrWhiteSpace($env:MSAL_KEY_ATTESTATION_LIBRARY_PATH)) {
+    $env:MSAL_KEY_ATTESTATION_LIBRARY_PATH =
+        & (Join-Path $PSScriptRoot "prepare-key-attestation-test-dependency.ps1")
+}
+Write-Host "External test attestation DLL: $env:MSAL_KEY_ATTESTATION_LIBRARY_PATH"
 Write-Host "Validation JAR: $($jar.FullName)"
 & $java.Source -jar $jar.FullName
 if ($LASTEXITCODE -ne 0) {

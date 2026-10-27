@@ -5,9 +5,9 @@ package com.microsoft.aad.msal4j.mtls;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.OS;
 
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -51,17 +51,10 @@ class AuthenticodeVerifierTest {
 
     @Test
     @EnabledOnOs(OS.WINDOWS)
-    void bundledLibraryHasValidAuthenticodeSignature() throws Exception {
-        Path file = Files.createTempFile("attestation-", ".dll");
-        try (InputStream resource = AuthenticodeVerifierTest.class
-                .getResourceAsStream(AttestationLibraryLoader.RESOURCE_PATH)) {
-            if (resource == null) {
-                throw new IllegalStateException("Bundled DLL is missing.");
-            }
-            Files.copy(resource, file, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-            assertDoesNotThrow(() -> AuthenticodeVerifier.verify(file));
-        } finally {
-            Files.deleteIfExists(file);
-        }
+    @EnabledIfEnvironmentVariable(named = "MSAL_KEY_ATTESTATION_LIBRARY_PATH", matches = ".+")
+    void applicationSuppliedLibraryHasValidAuthenticodeSignature() {
+        Path file = AttestationLibraryLoader.resolveLibraryPath(
+                System.getenv(AttestationLibraryLoader.LIBRARY_PATH_ENV));
+        assertDoesNotThrow(() -> AuthenticodeVerifier.verify(file));
     }
 }

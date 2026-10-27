@@ -22,8 +22,6 @@
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <keyguard.attestation.version>1.1.5</keyguard.attestation.version>
-        <keyguard.attestation.sha256>90dfcce20e1a74519b49796eeee17e6e59a257c3acf754f454a49380d28a568b</keyguard.attestation.sha256>
     </properties>
 
     <dependencies>
@@ -79,12 +77,9 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.3.0</version>
                 <configuration>
-                    <archive>
-                        <manifestEntries>
-                            <KeyGuard-Attestation-Version>${keyguard.attestation.version}</KeyGuard-Attestation-Version>
-                            <KeyGuard-Attestation-SHA256>${keyguard.attestation.sha256}</KeyGuard-Attestation-SHA256>
-                        </manifestEntries>
-                    </archive>
+                    <excludes>
+                        <exclude>**/AttestationClientLib.dll</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
             <plugin>

@@ -21,6 +21,26 @@ optional `com.microsoft.azure:msal4j-key-attestation` artifact.
 
 ## Before and after
 
+### Native deployment prerequisite
+
+The application developer must separately obtain and deploy the native
+`Microsoft.Azure.Security.KeyGuardAttestation` package. Adding the Java Maven
+dependency does not install the DLL. Before starting Java, set
+`MSAL_KEY_ATTESTATION_LIBRARY_PATH` to its absolute Windows x64
+`AttestationClientLib.dll` path. Applications own package provenance, compatible
+version selection, protected deployment and servicing. MSAL verifies
+Authenticode trust and loads this exact path only when attestation is requested;
+it does not bundle or download the package.
+
+```powershell
+$env:MSAL_KEY_ATTESTATION_LIBRARY_PATH = "C:\my-app\native\AttestationClientLib.dll"
+java -jar my-app.jar
+```
+
+See [native setup and test-only provisioning](../../msal4j-mtls-extensions/README.md#bring-the-native-package).
+
+### Attestation API
+
 **Before:** attestation opt-in was incorrectly exposed from the core request
 builder.
 

@@ -184,6 +184,8 @@ jobs:
             if ($null -eq $jar) {
               throw "Managed Identity E2E JAR was not produced."
             }
+            $env:MSAL_KEY_ATTESTATION_LIBRARY_PATH =
+              & "$(System.DefaultWorkingDirectory)\build\prepare-key-attestation-test-dependency.ps1"
             & java -jar $jar.FullName
             if ($LASTEXITCODE -ne 0) {
               throw "Managed Identity v2 E2E failed with exit code $LASTEXITCODE."

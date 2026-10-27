@@ -48,7 +48,7 @@ final class AuthenticodeVerifier {
                 trustData);
         if (result != ERROR_SUCCESS) {
             throw new MtlsMsiException(String.format(
-                    "The bundled attestation library failed Windows Authenticode "
+                    "The application-supplied attestation library failed Windows Authenticode "
                             + "verification (WinVerifyTrust=0x%08x).",
                     result));
         }

@@ -190,9 +190,9 @@ The flow fails closed when:
 - platform metadata or credential responses are incomplete;
 - identity selection does not match IMDS metadata;
 - KeyGuard or CNG operations fail;
-- the bundled `Microsoft.Azure.Security.KeyGuardAttestation` 1.1.5 native
-  library is missing, corrupt, lacks a valid Windows Authenticode signature,
-  or cannot be loaded;
+- attestation is requested and the application-supplied
+  `Microsoft.Azure.Security.KeyGuardAttestation` native library is unconfigured,
+  missing, lacks a valid Windows Authenticode signature, or cannot be loaded;
 - attestation is empty, malformed, expired, or insufficiently fresh;
 - the issued certificate does not match the KeyGuard public key;
 - the token endpoint does not explicitly return `token_type=mtls_pop`;
@@ -203,7 +203,14 @@ Credential-bound token requests do not follow redirects. A custom HTTP client
 must honor `HttpRequest.sslContext()` or `HttpRequest.sslSocketFactory()` and
 preserve that no-redirect behavior.
 
-The initial native package supports Windows x64. Windows ARM64 is not supported
+Applications bring the native package separately, deploy it and its dependencies
+to a protected directory, and set `MSAL_KEY_ATTESTATION_LIBRARY_PATH` to the
+absolute DLL path before starting Java. MSAL does not bundle, download or extract
+the package, nor search for the attestation DLL. Applications own its provenance,
+version and servicing; restart after updates. See the
+[extension setup guide](../../msal4j-mtls-extensions/README.md#bring-the-native-package).
+
+The current native integration supports Windows x64. Windows ARM64 is not supported
 by this release and fails before native loading with an architecture-specific
 error.
 

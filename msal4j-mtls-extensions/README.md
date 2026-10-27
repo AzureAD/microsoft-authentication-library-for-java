@@ -23,13 +23,13 @@ ManagedIdentityApplication
 - Java 8 or later
 - Windows x64 Trusted Launch Azure VM or VMSS instance
 - Secure Boot, vTPM, VBS KeyGuard, and Managed Identity enabled
-- The extension bundles the Microsoft-signed x64 `AttestationClientLib.dll` from
-  `Microsoft.Azure.Security.KeyGuardAttestation` 1.1.5, matching MSAL.NET
+- For attestation, an application-supplied Windows x64 `AttestationClientLib.dll`
+  from `Microsoft.Azure.Security.KeyGuardAttestation`, deployed separately
 - A resource and tenant enrolled for Managed Identity mTLS PoP
 
 Attestation is optional at the public API. When
 `ManagedIdentityAttestationExtensions.withAttestationSupport(builder)` is used,
-bundled DLL extraction/loading, KeyGuard attestation, or invalid attestation
+external DLL configuration/loading, KeyGuard attestation, or invalid attestation
 evidence fails closed. Platform support,
 credential issuance, certificate validation, and an explicit
 `token_type=mtls_pop` response are always required.
@@ -43,9 +43,36 @@ For bearer-over-mTLS, replace `withMtlsProofOfPossession(...)` with
 connection, while the returned token remains an ordinary bearer token and has
 no binding context.
 
-The bundled native library is verified with both a pinned SHA-256 digest and
-Windows `WinVerifyTrust` Authenticode validation before loading. Its extraction
-directory is restricted to the current Windows user.
+The application owns obtaining a trusted native package, selecting a compatible
+version, verifying its provenance, deploying its dependencies, and servicing it.
+MSAL verifies Windows `WinVerifyTrust` Authenticode trust before loading the
+configured DLL. This trust check is not a package-version or publisher pin.
+The application must protect the DLL and its directory against modification by
+untrusted users.
+
+## Bring the native package
+
+The Java Maven dependency contains the integration code, **not the native DLL or
+native project**. MSAL does not download, extract, or search `PATH` or
+`java.library.path` for the attestation DLL.
+
+Obtain the native
+[`Microsoft.Azure.Security.KeyGuardAttestation` package](https://www.nuget.org/packages/Microsoft.Azure.Security.KeyGuardAttestation)
+through your approved package-management process. Deploy its Windows x64 native
+payload and required dependencies outside the application JAR, then configure
+the exact DLL before starting Java:
+
+```powershell
+$env:MSAL_KEY_ATTESTATION_LIBRARY_PATH = "C:\my-app\native\AttestationClientLib.dll"
+java -jar my-app.jar
+```
+
+An absolute, readable file path is required. The library is loaded lazily on the
+first attestation request and reused for the process lifetime. Restart the
+application after changing its native package or configuration. Missing
+configuration, invalid signatures and load failures produce errors; there is no
+fallback to an unverified DLL or to unattested authentication. Flows that do not
+request attestation do not require this DLL.
 
 ## Dependency
 
@@ -165,7 +192,7 @@ The current binding context uses TLS 1.2. TLS 1.3 support is being investigated
 with the service team because the service does not yet request the required
 client certificate during TLS 1.3 negotiation.
 
-The initial native package is Windows x64 only. Windows ARM64 callers receive a
+The current Java native integration supports Windows x64 only. Windows ARM64 callers receive a
 typed unsupported-architecture failure before native loading.
 
 Set `MSAL_MI_DISABLE_IMDS_V2=true` (or `1`) and restart the process to disable
@@ -179,6 +206,25 @@ From the repository root:
 ```powershell
 .\build\run-java-msi-v2-mtls-devapp.ps1
 ```
+
+This **test-only** wrapper downloads and verifies a pinned native test package
+into `msal4j-mtls-extensions\target\key-attestation-test` when
+`MSAL_KEY_ATTESTATION_LIBRARY_PATH` is unset. The PR E2E job provisions the same
+dependency separately. Neither the production JAR nor the shaded E2E JAR
+contains `AttestationClientLib.dll`.
+
+For offline test setup, supply a DLL already obtained from the approved native
+package (the helper enforces its test-version hash and Authenticode signature):
+
+```powershell
+$env:MSAL_KEY_ATTESTATION_LIBRARY_PATH = .\build\prepare-key-attestation-test-dependency.ps1 `
+    -LibraryPath "C:\approved-packages\keyguard-1.1.5\AttestationClientLib.dll"
+```
+
+Ordinary unit tests do not need the package. The external-DLL signature test
+runs only on Windows when the path is configured; configured errors fail rather
+than skipping. Live attestation E2E tests require the DLL and fail if provisioning
+or loading fails.
 
 To validate only token acquisition and certificate binding without calling a
 downstream resource:
