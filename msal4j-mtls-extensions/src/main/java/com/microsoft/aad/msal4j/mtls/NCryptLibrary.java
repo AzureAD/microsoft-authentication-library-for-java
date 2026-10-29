@@ -107,7 +107,7 @@ interface NCryptLibrary extends Library {
      * (returned in {@code pcbResult}).
      * Second call: pass a {@code Memory} buffer of that size.
      */
-    int NCryptSignHash(Pointer hKey, Pointer pPaddingInfo,
+    int NCryptSignHash(Pointer hKey, Structure pPaddingInfo,
                        byte[] pbHashValue, int cbHashValue,
                        Pointer pbSignature, int cbSignature,
                        IntByReference pcbResult, int dwFlags);

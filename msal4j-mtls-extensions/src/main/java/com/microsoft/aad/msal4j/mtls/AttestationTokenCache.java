@@ -3,6 +3,11 @@
 
 package com.microsoft.aad.msal4j.mtls;
 
+import com.azure.json.JsonProviders;
+import com.azure.json.JsonReader;
+import com.azure.json.JsonToken;
+
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
@@ -59,23 +64,29 @@ final class AttestationTokenCache {
             String payload = new String(
                     Base64.getUrlDecoder().decode(padBase64(segments[1])),
                     StandardCharsets.UTF_8);
-            String marker = "\"exp\"";
-            int index = payload.indexOf(marker);
-            int colon = index < 0 ? -1 : payload.indexOf(':', index + marker.length());
-            if (colon < 0) {
-                throw new IllegalArgumentException("JWT has no exp claim");
+            try (JsonReader jsonReader = JsonProviders.createReader(payload)) {
+                Long expiresOn = jsonReader.readObject(reader -> {
+                    Long expiry = null;
+                    while (reader.nextToken() != JsonToken.END_OBJECT) {
+                        String field = reader.getFieldName();
+                        JsonToken token = reader.nextToken();
+                        if ("exp".equals(field)) {
+                            if (token != JsonToken.NUMBER) {
+                                throw new IllegalArgumentException("JWT exp claim must be numeric.");
+                            }
+                            expiry = reader.getLong();
+                        } else {
+                            reader.skipChildren();
+                        }
+                    }
+                    return expiry;
+                });
+                if (expiresOn == null || jsonReader.nextToken() != JsonToken.END_DOCUMENT) {
+                    throw new IllegalArgumentException("JWT must contain a numeric exp claim.");
+                }
+                return expiresOn;
             }
-            int start = colon + 1;
-            while (start < payload.length()
-                    && Character.isWhitespace(payload.charAt(start))) {
-                start++;
-            }
-            int end = start;
-            while (end < payload.length() && Character.isDigit(payload.charAt(end))) {
-                end++;
-            }
-            return Long.parseLong(payload.substring(start, end));
-        } catch (Exception e) {
+        } catch (IOException | IllegalArgumentException | IllegalStateException e) {
             throw new MtlsMsiException(
                     "Unable to determine KeyGuard attestation token expiry.", e);
         }

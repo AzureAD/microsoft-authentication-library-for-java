@@ -83,11 +83,7 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
 
         if (managedIdentityParameters.mtlsProofOfPossession()) {
             mtlsBinding = resolveMtlsBinding();
-            MtlsBindingStrength requiredStrength =
-                    managedIdentityParameters.attestationSupport()
-                            ? MtlsBindingStrength.KEY_GUARD
-                            : managedIdentityParameters.minimumBindingStrength();
-            validateMinimumBindingStrength(mtlsBinding, requiredStrength);
+            validateMinimumBindingStrength(mtlsBinding, requiredBindingStrength());
             String extCacheKeyHash = managedIdentityParameters
                     .computeMtlsExtCacheKeyHash(
                             mtlsBinding.bindingContext().keyId());
@@ -190,7 +186,7 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
                 mtlsBinding = resolveMtlsBinding();
                 validateMinimumBindingStrength(
                         mtlsBinding,
-                        MtlsBindingStrength.KEY_GUARD);
+                        requiredBindingStrength());
             }
             authenticationResult = executeWithBoundedMtlsRemint(
                     mtlsBinding,
@@ -205,10 +201,7 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
                                 resolveMtlsBinding();
                         validateMinimumBindingStrength(
                                 replacement,
-                                managedIdentityParameters.requestOverMtls()
-                                        || managedIdentityParameters.attestationSupport()
-                                        ? MtlsBindingStrength.KEY_GUARD
-                                        : managedIdentityParameters.minimumBindingStrength());
+                                requiredBindingStrength());
                         if (managedIdentityParameters.mtlsProofOfPossession()) {
                             msalRequest.extCacheKeyHash(
                                     managedIdentityParameters.computeMtlsExtCacheKeyHash(
@@ -235,6 +228,13 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
         authenticationResult.metadata().tokenSource(TokenSource.IDENTITY_PROVIDER);
         authenticationResult.metadata().cacheRefreshReason(cacheRefreshReason);
         return authenticationResult;
+    }
+
+    private MtlsBindingStrength requiredBindingStrength() {
+        return managedIdentityParameters.requestOverMtls()
+                || managedIdentityParameters.attestationSupport()
+                ? MtlsBindingStrength.KEY_GUARD
+                : managedIdentityParameters.minimumBindingStrength();
     }
 
     private AuthenticationResult createFromManagedIdentityResponse(

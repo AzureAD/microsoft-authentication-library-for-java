@@ -9,6 +9,14 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.microsoft.aad.msal4j.ManagedIdentityMtlsBinding;
@@ -36,6 +44,59 @@ class KeyGuardManagedIdentityMtlsProviderTest {
                 now + Duration.ofHours(24).toMillis(), now));
         assertFalse(KeyGuardManagedIdentityMtlsProvider.isCertificateCurrent(
                 now + Duration.ofHours(1).toMillis(), now));
+    }
+
+    @Test
+    void capabilityProbeAndBindingCreationShareTheSameKeyLock() throws Exception {
+        KeyGuardManagedIdentityMtlsProvider provider =
+                new KeyGuardManagedIdentityMtlsProvider();
+        CountDownLatch probeEntered = new CountDownLatch(1);
+        CountDownLatch releaseProbe = new CountDownLatch(1);
+        CountDownLatch acquisitionStarted = new CountDownLatch(1);
+        AtomicInteger httpCalls = new AtomicInteger();
+        ManagedIdentityMtlsRequest request = new ManagedIdentityMtlsRequest(
+                null, null, UUID.randomUUID().toString(), "correlation",
+                ignored -> {
+                    if (httpCalls.incrementAndGet() == 1) {
+                        probeEntered.countDown();
+                        try {
+                            if (!releaseProbe.await(5, TimeUnit.SECONDS)) {
+                                throw new IllegalStateException("Timed out releasing capability probe.");
+                            }
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            throw new IllegalStateException(e);
+                        }
+                    }
+                    throw new MtlsMsiException("Stop before accessing native keys.");
+                }, false);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            Future<?> probe = executor.submit(
+                    () -> provider.getMaxSupportedBindingStrength(request));
+            assertTrue(probeEntered.await(5, TimeUnit.SECONDS));
+            Future<?> acquisition = executor.submit(() -> {
+                acquisitionStarted.countDown();
+                return provider.getOrCreateBinding(request);
+            });
+            assertTrue(acquisitionStarted.await(5, TimeUnit.SECONDS));
+            assertThrows(TimeoutException.class,
+                    () -> acquisition.get(250, TimeUnit.MILLISECONDS));
+            assertEquals(1, httpCalls.get());
+
+            releaseProbe.countDown();
+
+            assertInstanceOf(MtlsMsiException.class,
+                    assertThrows(ExecutionException.class,
+                            () -> probe.get(5, TimeUnit.SECONDS)).getCause());
+            assertInstanceOf(MtlsMsiException.class,
+                    assertThrows(ExecutionException.class,
+                            () -> acquisition.get(5, TimeUnit.SECONDS)).getCause());
+            assertEquals(2, httpCalls.get());
+        } finally {
+            releaseProbe.countDown();
+            executor.shutdownNow();
+        }
     }
 
     @Test

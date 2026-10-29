@@ -91,7 +91,7 @@ final class AuthenticodeVerifier {
         }
     }
 
-    public static final class WinTrustFileInfo extends Structure {
+    public static final class WinTrustFileInfo extends Structure implements Structure.ByReference {
         public int cbStruct;
         public WString filePath;
         public Pointer fileHandle;
@@ -124,7 +124,7 @@ final class AuthenticodeVerifier {
         public int uiChoice;
         public int revocationChecks;
         public int unionChoice;
-        public Pointer fileInfo;
+        public WinTrustFileInfo fileInfo;
         public int stateAction;
         public Pointer stateData;
         public WString urlReference;
@@ -141,7 +141,7 @@ final class AuthenticodeVerifier {
             uiChoice = WTD_UI_NONE;
             revocationChecks = WTD_REVOKE_NONE;
             unionChoice = WTD_CHOICE_FILE;
-            fileInfo = file.getPointer();
+            fileInfo = file;
             stateAction = WTD_STATEACTION_IGNORE;
             stateData = Pointer.NULL;
             urlReference = null;

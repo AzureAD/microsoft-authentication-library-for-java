@@ -38,6 +38,33 @@ class ImdsV2ClientTest {
     }
 
     @Test
+    void metadataDecodesEscapesAndReadsFieldsAtTheirActualScope() {
+        ManagedIdentityMtlsRequest request = request(null, null, http ->
+                response("{\"description\":\"clientId\","
+                        + "\"unrelated\":{\"clientId\":\"wrong\"},"
+                        + "\"clientId\":\"cl\\u0069ent\",\"tenantId\":\"tenant\","
+                        + "\"cuId\":{\"extra\":{\"vmId\":\"wrong\"},\"vmId\":\"vm\"},"
+                        + "\"attestationEndpoint\":\"https:\\u002f\\u002fmaa.example\"}"));
+
+        ImdsV2Client.PlatformMetadata metadata = ImdsV2Client.getPlatformMetadata(request);
+
+        assertEquals("client", metadata.clientId);
+        assertEquals("vm", metadata.cuId());
+        assertEquals("https://maa.example", metadata.attestationEndpoint);
+    }
+
+    @Test
+    void malformedJsonIsRejectedEvenWhenRequiredFieldsAppearEarlier() {
+        ManagedIdentityMtlsRequest request = request(null, null, http ->
+                response("{\"clientId\":\"client\",\"tenantId\":\"tenant\","
+                        + "\"cuId\":{\"vmId\":\"vm\"},"
+                        + "\"attestationEndpoint\":\"https://maa.example\","));
+
+        assertThrows(MtlsMsiException.class,
+                () -> ImdsV2Client.getPlatformMetadata(request));
+    }
+
+    @Test
     void issueCredentialRequiresAttestationAndCurrentFields() {
         ManagedIdentityMtlsRequest request = request(null, null, http -> {
             assertEquals("POST", http.method());

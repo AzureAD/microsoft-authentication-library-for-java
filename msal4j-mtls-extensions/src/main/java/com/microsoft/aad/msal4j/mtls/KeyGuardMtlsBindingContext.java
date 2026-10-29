@@ -7,25 +7,36 @@ import com.microsoft.aad.msal4j.IMtlsBindingContext;
 import com.microsoft.aad.msal4j.MtlsBindingStrength;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509ExtendedKeyManager;
 import java.security.MessageDigest;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
+import java.util.Enumeration;
 
 final class KeyGuardMtlsBindingContext implements IMtlsBindingContext {
 
     private final CngRsaPrivateKey privateKey;
     private final X509Certificate certificate;
-    private final X509ExtendedKeyManager keyManager;
+    private final CngX509ExtendedKeyManager keyManager;
     private final SSLContext sslContext;
     private final String keyId;
+    private final RotatingTlsContext rotatingContext;
 
     KeyGuardMtlsBindingContext(
             CngRsaPrivateKey privateKey,
             X509Certificate certificate) {
+        this(privateKey, certificate, null);
+    }
+
+    KeyGuardMtlsBindingContext(
+            CngRsaPrivateKey privateKey,
+            X509Certificate certificate,
+            RotatingTlsContext rotatingContext) {
         this.privateKey = privateKey;
         this.certificate = certificate;
+        this.rotatingContext = rotatingContext;
         this.keyId = calculateKeyId(certificate);
         this.keyManager =
                 new CngX509ExtendedKeyManager(privateKey, certificate);
@@ -53,6 +64,16 @@ final class KeyGuardMtlsBindingContext implements IMtlsBindingContext {
     }
 
     @Override
+    public SSLContext rotatingSslContext() {
+        return rotatingContext == null ? sslContext : rotatingContext.sslContext;
+    }
+
+    @Override
+    public X509ExtendedKeyManager rotatingKeyManager() {
+        return rotatingContext == null ? keyManager : rotatingContext.keyManager;
+    }
+
+    @Override
     public X509Certificate bindingCertificate() {
         return certificate;
     }
@@ -63,7 +84,30 @@ final class KeyGuardMtlsBindingContext implements IMtlsBindingContext {
     }
 
     void closeNativeKey() {
+        if (rotatingContext != null) {
+            rotatingContext.keyManager.retire(keyManager);
+        }
         privateKey.close();
+    }
+
+    void activate() {
+        if (rotatingContext != null) {
+            rotatingContext.keyManager.activate(keyManager);
+            Enumeration<byte[]> sessions =
+                    rotatingContext.sslContext.getClientSessionContext().getIds();
+            while (sessions.hasMoreElements()) {
+                SSLSession session = rotatingContext.sslContext
+                        .getClientSessionContext().getSession(sessions.nextElement());
+                if (session != null) {
+                    session.invalidate();
+                }
+            }
+        }
+    }
+
+    static final class RotatingTlsContext {
+        final CngX509ExtendedKeyManager keyManager = new CngX509ExtendedKeyManager();
+        final SSLContext sslContext = createSslContext(keyManager, null);
     }
 
     static SSLContext createSslContext(

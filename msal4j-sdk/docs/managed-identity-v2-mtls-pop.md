@@ -86,10 +86,13 @@ if (capabilities.maxSupportedBindingStrength()
 }
 ```
 
-Successful capability discovery is cached per application instance and checks the selected managed identity source, optional
-provider availability, IMDS v2 platform metadata, and local KeyGuard
+Successful capability discovery is cached per application instance and checks the selected managed identity source, mTLS-capable
+HTTP transport, optional provider availability, IMDS v2 platform metadata, and local KeyGuard
 availability. It may create or reopen a persisted KeyGuard probe key, but it does
 not issue a credential or acquire an access token.
+Unsupported HTTP transports report `NONE` with an error reason before any probe.
+Capability probes and binding creation share the per-key lock; a current cached
+binding avoids reopening the key or contacting IMDS.
 Failed IMDS/KeyGuard probes are not cached permanently and can be retried.
 
 Callers can also enforce a fail-closed minimum:
@@ -178,8 +181,22 @@ The resource request must:
 
 The supplied `sslContext()` is stable for the binding generation, uses JVM
 default trust, and is safe to reuse for ordinary JSSE resource calls.
-Applications that require custom trust anchors or a non-JSSE transport should
+Applications that require custom trust anchors or a JSSE-backed custom transport should
 construct their own TLS context from `keyManager()`.
+
+Long-lived clients may instead retain `rotatingSslContext()` or initialize their
+custom context once with `rotatingKeyManager()`. These are shared across binding
+generations for the same identity and attestation mode, and select the active
+generation on new handshakes. Previously selected aliases keep their matching
+certificate and key until certificate expiry; `sslContext()` and `keyManager()`
+remain generation-specific.
+
+Acquire a current token before resource calls. When its binding key ID changes,
+retire pooled connections, which still use their original certificate. Custom
+contexts must also invalidate cached TLS sessions; the supplied rotating context
+invalidates its session cache on activation. Custom contexts must enable only
+TLS 1.2 and use a JSSE-backed provider (for example Netty `SslProvider.JDK`,
+not `SslProvider.OPENSSL`) because the non-exportable CNG key signs through JCA.
 
 ## Failure behavior
 

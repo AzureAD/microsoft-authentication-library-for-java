@@ -149,6 +149,13 @@ public class ManagedIdentityApplication extends AbstractApplicationBase implemen
                     Constants.MSAL_MI_DISABLE_IMDS_V2
                             + " disables IMDS v2 for this process.");
         }
+        if (!(httpClient() instanceof IMtlsCapableHttpClient)) {
+            return new ManagedIdentityCapabilities(
+                    source,
+                    MtlsBindingStrength.NONE,
+                    "The configured HTTP client must implement IMtlsCapableHttpClient "
+                            + "to support managed identity mTLS.");
+        }
 
         ManagedIdentityParameters parameters = ManagedIdentityParameters
                 .builder("https://management.azure.com")

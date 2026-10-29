@@ -9,23 +9,42 @@ import java.net.Socket;
 import java.security.Principal;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 final class CngX509ExtendedKeyManager extends X509ExtendedKeyManager {
 
-    private static final String ALIAS = "msal-keyguard-mtls";
-    private final CngRsaPrivateKey privateKey;
-    private final X509Certificate[] certificateChain;
+    private static final AtomicLong ALIASES = new AtomicLong();
+    private final Map<String, KeyMaterial> generations = new ConcurrentHashMap<>();
+    private volatile KeyMaterial current;
+
+    CngX509ExtendedKeyManager() {
+    }
 
     CngX509ExtendedKeyManager(
             CngRsaPrivateKey privateKey,
             X509Certificate certificate) {
-        this.privateKey = privateKey;
-        this.certificateChain = new X509Certificate[]{certificate};
+        current = new KeyMaterial(privateKey, certificate);
+        generations.put(current.alias, current);
+    }
+
+    void activate(CngX509ExtendedKeyManager generation) {
+        KeyMaterial material = generation.current;
+        generations.put(material.alias, material);
+        current = material;
+    }
+
+    void retire(CngX509ExtendedKeyManager generation) {
+        KeyMaterial material = generation.current;
+        generations.remove(material.alias, material);
     }
 
     @Override
     public String[] getClientAliases(String keyType, Principal[] issuers) {
-        return supportsKeyType(keyType) ? new String[]{ALIAS} : null;
+        KeyMaterial material = current;
+        return material != null && supportsKeyType(keyType)
+                ? new String[]{material.alias} : null;
     }
 
     @Override
@@ -33,7 +52,8 @@ final class CngX509ExtendedKeyManager extends X509ExtendedKeyManager {
             String[] keyTypes,
             Principal[] issuers,
             Socket socket) {
-        return supportsAnyKeyType(keyTypes) ? ALIAS : null;
+        KeyMaterial material = current;
+        return material != null && supportsAnyKeyType(keyTypes) ? material.alias : null;
     }
 
     @Override
@@ -41,17 +61,19 @@ final class CngX509ExtendedKeyManager extends X509ExtendedKeyManager {
             String[] keyTypes,
             Principal[] issuers,
             SSLEngine engine) {
-        return supportsAnyKeyType(keyTypes) ? ALIAS : null;
+        return chooseClientAlias(keyTypes, issuers, null);
     }
 
     @Override
     public X509Certificate[] getCertificateChain(String alias) {
-        return ALIAS.equals(alias) ? certificateChain.clone() : null;
+        KeyMaterial material = alias == null ? null : generations.get(alias);
+        return material == null ? null : material.certificateChain.clone();
     }
 
     @Override
     public PrivateKey getPrivateKey(String alias) {
-        return ALIAS.equals(alias) ? privateKey : null;
+        KeyMaterial material = alias == null ? null : generations.get(alias);
+        return material == null ? null : material.privateKey;
     }
 
     @Override
@@ -91,5 +113,16 @@ final class CngX509ExtendedKeyManager extends X509ExtendedKeyManager {
         return keyType != null
                 && ("RSA".equalsIgnoreCase(keyType)
                 || "RSASSA-PSS".equalsIgnoreCase(keyType));
+    }
+
+    private static final class KeyMaterial {
+        final String alias = "msal-keyguard-mtls-" + ALIASES.incrementAndGet();
+        final CngRsaPrivateKey privateKey;
+        final X509Certificate[] certificateChain;
+
+        KeyMaterial(CngRsaPrivateKey privateKey, X509Certificate certificate) {
+            this.privateKey = privateKey;
+            this.certificateChain = new X509Certificate[]{certificate};
+        }
     }
 }

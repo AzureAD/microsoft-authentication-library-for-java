@@ -35,6 +35,8 @@ public final class KeyGuardManagedIdentityMtlsProvider
     private static final Map<String, List<BindingGeneration>> RETIRED =
             new ConcurrentHashMap<>();
     private static final Map<String, Object> LOCKS = new ConcurrentHashMap<>();
+    private static final Map<String, KeyGuardMtlsBindingContext.RotatingTlsContext>
+            ROTATING_CONTEXTS = new ConcurrentHashMap<>();
     private final boolean attestationEnabled;
 
     public KeyGuardManagedIdentityMtlsProvider() {
@@ -74,6 +76,7 @@ public final class KeyGuardManagedIdentityMtlsProvider
                 return cached.binding;
             }
             BindingGeneration created = createBinding(request);
+            created.context.activate();
             BindingGeneration previous = CURRENT.put(cacheKey, created);
             if (previous != null) {
                 RETIRED.computeIfAbsent(cacheKey, ignored -> new ArrayList<>())
@@ -109,16 +112,24 @@ public final class KeyGuardManagedIdentityMtlsProvider
     public MtlsBindingStrength getMaxSupportedBindingStrength(
             ManagedIdentityMtlsRequest request) {
         validateRequest(request);
-        ImdsV2Client.PlatformMetadata metadata =
-                ImdsV2Client.getPlatformMetadata(request);
-        validateSelectedIdentity(request, metadata);
-        CngRsaPrivateKey privateKey = CngKeyGuard.getOrCreateKey(
-                keyName(request, metadata));
-        try {
-            CngKeyGuard.exportPublicKey(privateKey.nativeHandle());
-            return MtlsBindingStrength.KEY_GUARD;
-        } finally {
-            privateKey.close();
+        String cacheKey = request.bindingCacheKey();
+        Object lock = LOCKS.computeIfAbsent(cacheKey, ignored -> new Object());
+        synchronized (lock) {
+            cleanupRetired(cacheKey);
+            if (isCurrent(CURRENT.get(cacheKey))) {
+                return MtlsBindingStrength.KEY_GUARD;
+            }
+            ImdsV2Client.PlatformMetadata metadata =
+                    ImdsV2Client.getPlatformMetadata(request);
+            validateSelectedIdentity(request, metadata);
+            CngRsaPrivateKey privateKey = CngKeyGuard.getOrCreateKey(
+                    keyName(request, metadata));
+            try {
+                CngKeyGuard.exportPublicKey(privateKey.nativeHandle());
+                return MtlsBindingStrength.KEY_GUARD;
+            } finally {
+                privateKey.close();
+            }
         }
     }
 
@@ -160,7 +171,12 @@ public final class KeyGuardManagedIdentityMtlsProvider
             X509Certificate certificate = parseCertificate(credential.certificate);
             validateCertificateMatchesKey(certificate, publicKey);
             KeyGuardMtlsBindingContext context =
-                    new KeyGuardMtlsBindingContext(privateKey, certificate);
+                    new KeyGuardMtlsBindingContext(
+                            privateKey,
+                            certificate,
+                            ROTATING_CONTEXTS.computeIfAbsent(
+                                    request.bindingCacheKey(),
+                                    ignored -> new KeyGuardMtlsBindingContext.RotatingTlsContext()));
             String endpoint = trimTrailingSlash(
                     credential.mtlsAuthenticationEndpoint)
                     + "/" + trimSlashes(credential.tenantId)

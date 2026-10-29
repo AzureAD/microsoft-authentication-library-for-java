@@ -80,6 +80,32 @@ class AttestationTokenCacheTest {
     }
 
     @Test
+    void expiryIgnoresNestedClaimsAndDecodesEscapedFieldNames() {
+        AttestationTokenCache cache = new AttestationTokenCache();
+        String jwt = encode("{\"alg\":\"none\"}") + "."
+                + encode("{\"nested\":{\"exp\":1},\"\\u0065xp\":"
+                        + (Instant.now().getEpochSecond() + 3600) + "}")
+                + ".signature";
+
+        assertEquals(jwt, cache.getOrAttest("https://example.com", "key", () -> jwt));
+    }
+
+    @Test
+    void malformedExpiryIsRejectedAndNotCached() {
+        AttestationTokenCache cache = new AttestationTokenCache();
+        for (String payload : new String[]{
+                "{\"nested\":{\"exp\":4102444800}}",
+                "{\"exp\":4102444800,",
+                "{\"exp\":\"4102444800\"}"}) {
+            String jwt = encode("{}") + "." + encode(payload) + ".signature";
+            assertThrows(MtlsMsiException.class,
+                    () -> cache.getOrAttest("https://example.com", "key", () -> jwt));
+        }
+        assertNotNull(cache.getOrAttest("https://example.com", "key",
+                () -> token(1, 3600)));
+    }
+
+    @Test
     void failedLoadIsNotCached() {
         AttestationTokenCache cache = new AttestationTokenCache();
         AtomicInteger attempts = new AtomicInteger();

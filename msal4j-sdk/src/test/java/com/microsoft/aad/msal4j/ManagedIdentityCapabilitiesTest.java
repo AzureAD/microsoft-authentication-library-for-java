@@ -13,6 +13,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 class ManagedIdentityCapabilitiesTest {
 
@@ -78,6 +80,24 @@ class ManagedIdentityCapabilitiesTest {
         CompletableFuture<ManagedIdentityCapabilities> retry =
                 application.getManagedIdentityCapabilities();
         assertTrue(retry != first);
+    }
+
+    @Test
+    void nonMtlsHttpClientReportsNoSupportWithoutProbing() throws Exception {
+        IHttpClient httpClient = mock(IHttpClient.class);
+        ManagedIdentityApplication application = ManagedIdentityApplication
+                .builder(ManagedIdentityId.systemAssigned())
+                .httpClient(httpClient)
+                .build();
+
+        ManagedIdentityCapabilities capabilities =
+                application.getManagedIdentityCapabilities().get();
+
+        assertEquals(MtlsBindingStrength.NONE,
+                capabilities.maxSupportedBindingStrength());
+        assertFalse(capabilities.isMtlsPopSupportedByHost());
+        assertTrue(capabilities.errorReason().contains("IMtlsCapableHttpClient"));
+        verifyNoInteractions(httpClient);
     }
 
     @Test

@@ -3,10 +3,14 @@
 
 package com.microsoft.aad.msal4j.mtls;
 
+import com.azure.json.JsonProviders;
+import com.azure.json.JsonReader;
+import com.azure.json.JsonToken;
 import com.microsoft.aad.msal4j.ManagedIdentityMtlsHttpRequest;
 import com.microsoft.aad.msal4j.ManagedIdentityMtlsHttpResponse;
 import com.microsoft.aad.msal4j.ManagedIdentityMtlsRequest;
 
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,13 +35,15 @@ final class ImdsV2Client {
                 buildUrl(PLATFORM_METADATA_PATH, request),
                 null);
         validateImdsOrigin(httpResponse);
-        String response = httpResponse.body();
+        Map<String, Object> response = parseResponse(httpResponse.body());
+        Object identity = response.get("cuId");
+        Map<?, ?> identityFields = identity instanceof Map ? (Map<?, ?>) identity : null;
         PlatformMetadata metadata = new PlatformMetadata(
-                extractString(response, "clientId"),
-                extractString(response, "tenantId"),
-                extractNestedString(response, "cuId", "vmId"),
-                extractNestedString(response, "cuId", "vmssId"),
-                extractString(response, "attestationEndpoint"));
+                stringField(response, "clientId"),
+                stringField(response, "tenantId"),
+                stringField(identityFields, "vmId"),
+                stringField(identityFields, "vmssId"),
+                stringField(response, "attestationEndpoint"));
         if (isBlank(metadata.clientId)
                 || isBlank(metadata.tenantId)
                 || isBlank(metadata.cuId())
@@ -69,13 +75,13 @@ final class ImdsV2Client {
                 buildUrl(ISSUE_CREDENTIAL_PATH, request),
                 body);
         validateImdsOrigin(httpResponse);
-        String response = httpResponse.body();
+        Map<String, Object> response = parseResponse(httpResponse.body());
         CredentialResponse credential = new CredentialResponse(
-                extractString(response, "certificate"),
-                extractString(response, "mtls_authentication_endpoint"),
-                extractString(response, "client_id"),
-                extractString(response, "tenant_id"),
-                extractString(response, "identity_type"));
+                stringField(response, "certificate"),
+                stringField(response, "mtls_authentication_endpoint"),
+                stringField(response, "client_id"),
+                stringField(response, "tenant_id"),
+                stringField(response, "identity_type"));
         if (isBlank(credential.certificate)
                 || isBlank(credential.mtlsAuthenticationEndpoint)
                 || isBlank(credential.clientId)
@@ -155,60 +161,21 @@ final class ImdsV2Client {
         }
     }
 
-    static String extractString(String json, String key) {
-        if (json == null) {
-            return null;
-        }
-        String marker = "\"" + key + "\"";
-        int keyIndex = json.indexOf(marker);
-        if (keyIndex < 0) {
-            return null;
-        }
-        int colon = json.indexOf(':', keyIndex + marker.length());
-        if (colon < 0) {
-            return null;
-        }
-        int quote = skipWhitespace(json, colon + 1);
-        if (quote >= json.length() || json.charAt(quote) != '"') {
-            return null;
-        }
-        StringBuilder value = new StringBuilder();
-        for (int i = quote + 1; i < json.length(); i++) {
-            char c = json.charAt(i);
-            if (c == '"') {
-                return value.toString();
+    private static Map<String, Object> parseResponse(String response) {
+        try (JsonReader reader = JsonProviders.createReader(response)) {
+            Map<String, Object> fields = reader.readMap(JsonReader::readUntyped);
+            if (fields == null || reader.nextToken() != JsonToken.END_DOCUMENT) {
+                throw new IOException("Expected one IMDS JSON object.");
             }
-            if (c == '\\' && i + 1 < json.length()) {
-                char escaped = json.charAt(++i);
-                value.append(escaped == 'n' ? '\n'
-                        : escaped == 'r' ? '\r'
-                        : escaped == 't' ? '\t' : escaped);
-            } else {
-                value.append(c);
-            }
+            return fields;
+        } catch (IOException | IllegalStateException e) {
+            throw new MtlsMsiException("Unable to parse the IMDS JSON response.", e);
         }
-        return null;
     }
 
-    private static String extractNestedString(String json, String objectKey, String key) {
-        String marker = "\"" + objectKey + "\"";
-        int objectIndex = json == null ? -1 : json.indexOf(marker);
-        if (objectIndex < 0) {
-            return null;
-        }
-        int start = json.indexOf('{', objectIndex + marker.length());
-        if (start < 0) {
-            return null;
-        }
-        int end = json.indexOf('}', start + 1);
-        return end < 0 ? null : extractString(json.substring(start, end + 1), key);
-    }
-
-    private static int skipWhitespace(String value, int index) {
-        while (index < value.length() && Character.isWhitespace(value.charAt(index))) {
-            index++;
-        }
-        return index;
+    private static String stringField(Map<?, ?> fields, String name) {
+        Object value = fields == null ? null : fields.get(name);
+        return value instanceof String ? (String) value : null;
     }
 
     private static String escapeJson(String value) {

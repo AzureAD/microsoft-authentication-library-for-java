@@ -12,7 +12,7 @@ import java.security.cert.X509Certificate;
  *
  * <p>The private key is not exportable. Applications can reuse the returned
  * {@link SSLContext} for ordinary JSSE resource calls that use JVM default trust.
- * Applications that require custom trust or a non-JSSE transport can use the returned
+ * Applications that require custom trust or a JSSE-backed custom transport can use the returned
  * {@link X509ExtendedKeyManager} to build the appropriate TLS context.</p>
  */
 public interface IMtlsBindingContext {
@@ -38,12 +38,39 @@ public interface IMtlsBindingContext {
     /**
      * Returns the stable key manager backed by the non-exportable binding key.
      *
-     * <p>Applications that require custom trust anchors or a non-JSSE transport can
+     * <p>Applications that require custom trust anchors or a JSSE-backed custom transport can
      * combine this key manager with their own trust configuration. The key manager
      * always selects the binding certificate for compatible RSA client-auth requests,
-     * independent of issuer hints from the server.</p>
+     * independent of issuer hints from the server. Custom contexts must enable only
+     * TLS 1.2 and use a JSSE-backed provider, such as Netty {@code SslProvider.JDK},
+     * not {@code SslProvider.OPENSSL}; the non-exportable key signs through JCA.</p>
      */
     X509ExtendedKeyManager keyManager();
+
+    /**
+     * Returns a JSSE context that follows the provider's active binding generation.
+     * Providers without rotation support return {@link #sslContext()}.
+     *
+     * <p>Long-lived clients may retain this context, but must acquire a current token
+     * and establish a new TLS connection when its binding key ID changes. Existing
+     * connections remain authenticated with their original certificate.</p>
+     */
+    default SSLContext rotatingSslContext() {
+        return sslContext();
+    }
+
+    /**
+     * Returns a key manager that follows the provider's active binding generation.
+     * Providers without rotation support return {@link #keyManager()}.
+     *
+     * <p>The TLS 1.2 and JSSE requirements of {@link #keyManager()} also apply here.
+     * Custom transports must retire pooled connections and cached TLS sessions when
+     * the token's binding key ID changes. The generation-specific {@link #keyManager()}
+     * remains available for calls that must use an older, still-valid token.</p>
+     */
+    default X509ExtendedKeyManager rotatingKeyManager() {
+        return keyManager();
+    }
 
     X509Certificate bindingCertificate();
 

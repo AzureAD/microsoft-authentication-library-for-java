@@ -7,6 +7,7 @@ import com.microsoft.aad.msal4j.MtlsBindingStrength;
 import com.sun.jna.Pointer;
 import org.junit.jupiter.api.Test;
 
+import javax.net.ssl.X509ExtendedKeyManager;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.cert.X509Certificate;
@@ -41,6 +42,52 @@ class KeyGuardMtlsBindingContextTest {
         assertSame(certificate, context.bindingCertificate());
         assertEquals(MtlsBindingStrength.KEY_GUARD,
                 context.bindingStrength());
+    }
+
+    @Test
+    void rotatingTlsFollowsNewGenerationWhileOldTokenBindingStaysFixed() throws Exception {
+        X509Certificate firstCertificate = mock(X509Certificate.class);
+        X509Certificate secondCertificate = mock(X509Certificate.class);
+        when(firstCertificate.getEncoded()).thenReturn(new byte[]{1});
+        when(secondCertificate.getEncoded()).thenReturn(new byte[]{2});
+        CngRsaPrivateKey firstKey = key();
+        CngRsaPrivateKey secondKey = key();
+        KeyGuardMtlsBindingContext.RotatingTlsContext rotating =
+                new KeyGuardMtlsBindingContext.RotatingTlsContext();
+        KeyGuardMtlsBindingContext first =
+                new KeyGuardMtlsBindingContext(firstKey, firstCertificate, rotating);
+        KeyGuardMtlsBindingContext second =
+                new KeyGuardMtlsBindingContext(secondKey, secondCertificate, rotating);
+
+        first.activate();
+        X509ExtendedKeyManager manager = first.rotatingKeyManager();
+        String firstAlias = manager.chooseClientAlias(new String[]{"RSA"}, null, null);
+        second.activate();
+        String secondAlias = manager.chooseEngineClientAlias(new String[]{"RSA"}, null, null);
+
+        assertSame(manager, second.rotatingKeyManager());
+        assertSame(first.rotatingSslContext(), second.rotatingSslContext());
+        assertEquals("TLSv1.2", first.rotatingSslContext().getProtocol());
+        assertNotSame(first.sslContext(), second.sslContext());
+        assertNotEquals(firstAlias, secondAlias);
+        assertSame(secondKey, manager.getPrivateKey(secondAlias));
+        assertArrayEquals(new X509Certificate[]{secondCertificate},
+                manager.getCertificateChain(secondAlias));
+        assertSame(firstKey, manager.getPrivateKey(firstAlias));
+        assertArrayEquals(new X509Certificate[]{firstCertificate},
+                manager.getCertificateChain(firstAlias));
+        assertEquals(firstAlias,
+                first.keyManager().chooseClientAlias(new String[]{"RSA"}, null, null));
+        assertSame(firstCertificate, first.bindingCertificate());
+        assertNotEquals(first.keyId(), second.keyId());
+
+        first.closeNativeKey();
+
+        assertNull(manager.getPrivateKey(firstAlias));
+        assertNull(manager.getCertificateChain(firstAlias));
+        assertSame(secondKey, manager.getPrivateKey(secondAlias));
+        assertEquals(secondAlias, manager.chooseClientAlias(new String[]{"RSA"}, null, null));
+        second.closeNativeKey();
     }
 
     @Test

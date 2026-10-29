@@ -114,6 +114,8 @@ Before acquisition, credential chains can call
 `application.getManagedIdentityCapabilities()` and inspect
 `maxSupportedBindingStrength()` and `isMtlsPopSupportedByHost()`. Discovery verifies
 the IMDS v2 and KeyGuard capability without acquiring an access token.
+An HTTP client that does not implement `IMtlsCapableHttpClient` reports no
+mTLS support without probing IMDS or KeyGuard.
 
 For a user-assigned identity:
 
@@ -131,6 +133,8 @@ The result exposes:
 - `mtlsBindingContext().sslContext()` - a reusable Java JSSE `SSLContext`
 - `mtlsBindingContext().keyManager()` - the non-exportable-key
   `X509ExtendedKeyManager` for custom TLS contexts
+- `mtlsBindingContext().rotatingSslContext()` / `rotatingKeyManager()` -
+  stable TLS capabilities that follow the provider's active binding generation
 - `mtlsBindingContext().keyId()` - Base64URL SHA-256 of the complete leaf DER
 
 Private key bytes and native handles are never exposed. Binding contexts are
@@ -139,6 +143,16 @@ transient and are not serialized into persistent token caches.
 The downstream resource call must use the same live binding context and leaf
 certificate returned with the token. A token acquired for one binding generation
 must not be sent over a TLS connection using another certificate.
+
+Long-lived HTTP clients can retain `rotatingSslContext()` or build a custom
+context once with `rotatingKeyManager()`. These follow certificate renewal and
+reminting for the same identity and attestation mode. Acquire a current token
+before resource calls and retire pooled connections when the returned binding
+key ID changes: an existing connection still uses its original certificate.
+Custom TLS contexts must also invalidate cached TLS sessions on that change.
+Generation-specific `sslContext()` and `keyManager()` remain available for
+requests using an older, still-valid token. Aliases selected before rotation
+continue to resolve to that generation until its certificate expires.
 
 ## Independent Java 8 Key Vault call
 
@@ -185,10 +199,13 @@ Custom application HTTP clients must implement `IMtlsCapableHttpClient`, honor
 the request-specific `SSLContext` or `SSLSocketFactory`, and disable redirects
 for mTLS token requests. The supplied `SSLContext` uses JVM default trust
 managers and is safe to reuse for ordinary JSSE resource calls. Applications
-that need custom trust anchors or a non-JSSE transport should build their own
+that need custom trust anchors or a JSSE-backed custom transport should build their own
 TLS context from the exposed key manager.
 
-The current binding context uses TLS 1.2. TLS 1.3 support is being investigated
+Custom TLS contexts must enable only TLS 1.2 and use a JSSE-backed provider
+(for example, Netty `SslProvider.JDK`, not `SslProvider.OPENSSL`). The
+non-exportable CNG key signs through JCA and cannot be exported to OpenSSL.
+The supplied binding contexts use TLS 1.2. TLS 1.3 support is being investigated
 with the service team because the service does not yet request the required
 client certificate during TLS 1.3 negotiation.
 

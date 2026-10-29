@@ -5,6 +5,7 @@ package com.microsoft.aad.msal4j.mtls;
 
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
+import com.sun.jna.Structure;
 import com.sun.jna.WString;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
@@ -166,7 +167,7 @@ final class CngKeyGuard {
             throws MtlsMsiException {
         NCryptLibrary.BcryptPkcs1PaddingInfo padding =
                 new NCryptLibrary.BcryptPkcs1PaddingInfo(hashAlgCng);
-        return ncryptSign(keyHandle, padding.getPointer(), NCryptLibrary.NCRYPT_PAD_PKCS1_FLAG, digest, "PKCS1v15");
+        return ncryptSign(keyHandle, padding, NCryptLibrary.NCRYPT_PAD_PKCS1_FLAG, digest, "PKCS1v15");
     }
 
     /**
@@ -183,15 +184,15 @@ final class CngKeyGuard {
             throws MtlsMsiException {
         NCryptLibrary.BcryptPssPaddingInfo padding =
                 new NCryptLibrary.BcryptPssPaddingInfo(hashAlgCng, saltLen);
-        return ncryptSign(keyHandle, padding.getPointer(), NCryptLibrary.NCRYPT_PAD_PSS_FLAG, digest, "PSS");
+        return ncryptSign(keyHandle, padding, NCryptLibrary.NCRYPT_PAD_PSS_FLAG, digest, "PSS");
     }
 
-    private static byte[] ncryptSign(Pointer hKey, Pointer paddingPtr, int paddingFlag,
+    private static byte[] ncryptSign(Pointer hKey, Structure padding, int paddingFlag,
                                       byte[] digest, String label) throws MtlsMsiException {
         IntByReference sigLen = new IntByReference(0);
         // First call: query the signature buffer size.
         int ret = NCryptLibrary.INSTANCE.NCryptSignHash(
-                hKey, paddingPtr, digest, digest.length,
+                hKey, padding, digest, digest.length,
                 null, 0, sigLen, paddingFlag);
         if (ret != NCryptLibrary.ERROR_SUCCESS) {
             throw new MtlsMsiException(
@@ -200,7 +201,7 @@ final class CngKeyGuard {
 
         Memory sigBuf = new Memory(sigLen.getValue());
         ret = NCryptLibrary.INSTANCE.NCryptSignHash(
-                hKey, paddingPtr, digest, digest.length,
+                hKey, padding, digest, digest.length,
                 sigBuf, sigLen.getValue(), sigLen, paddingFlag);
         if (ret != NCryptLibrary.ERROR_SUCCESS) {
             throw new MtlsMsiException(
