@@ -242,3 +242,58 @@ jobs:
             **/failsafe-reports/TEST-*.xml
           failTaskOnFailedTests: true
           testRunTitle: Managed Identity Azure Arc E2E
+
+  - job: ManagedIdentityV2
+    displayName: Managed Identity E2E - IMDS v2 mTLS PoP
+    pool:
+      name: MISEManagedIdentity
+    variables:
+      runCodesignValidationInjection: false
+      Codeql.SkipTaskAutoInjection: true
+    steps:
+      - checkout: self
+        clean: true
+        fetchDepth: 1
+
+      - task: PowerShell@2
+        displayName: Build Managed Identity E2E app
+        inputs:
+          filePath: build/build-managed-identity-e2e.ps1
+
+      - task: PowerShell@2
+        displayName: Verify KeyGuard prerequisites
+        inputs:
+          targetType: inline
+          script: |
+            $ErrorActionPreference = "Stop"
+            $tpm = Get-Tpm
+            if (-not $tpm.TpmPresent -or -not $tpm.TpmReady) {
+              throw "A present and ready TPM is required."
+            }
+            if (-not (Confirm-SecureBootUEFI)) {
+              throw "Secure Boot is not enabled."
+            }
+
+      - task: PowerShell@2
+        displayName: Run Managed Identity v2 mTLS PoP E2E
+        env:
+          MSAL_JAVA_MTLS_AKV_URL: https://tokenbinding.vault.azure.net
+          MSAL_JAVA_MTLS_AKV_SECRET_NAME: boundsecret
+        inputs:
+          targetType: inline
+          script: |
+            $ErrorActionPreference = "Stop"
+            $jar = Get-ChildItem `
+              "$(System.DefaultWorkingDirectory)\msal4j-mtls-extensions-e2e\target" `
+              -Filter "*-e2e.jar" |
+              Sort-Object LastWriteTime -Descending |
+              Select-Object -First 1
+            if ($null -eq $jar) {
+              throw "Managed Identity E2E JAR was not produced."
+            }
+            $env:MSAL_KEY_ATTESTATION_LIBRARY_PATH =
+              & "$(System.DefaultWorkingDirectory)\build\prepare-key-attestation-test-dependency.ps1"
+            & java -jar $jar.FullName
+            if ($LASTEXITCODE -ne 0) {
+              throw "Managed Identity v2 E2E failed with exit code $LASTEXITCODE."
+            }

@@ -43,6 +43,26 @@ MSAL4J supports multiple [application types and authentication scenarios](https:
 
 Refer the [Wiki](https://github.com/AzureAD/microsoft-authentication-library-for-java/wiki) pages for more details on the usage of MSAL Java and the supported scenarios.
 
+### Managed Identity v2 attested mTLS PoP
+
+The optional `com.microsoft.azure:msal4j-key-attestation` artifact provides a
+Windows KeyGuard-backed, attested Managed Identity v2 flow while preserving
+Java 8 compatibility. MSAL returns an `IMtlsBindingContext` whose standard JSSE
+`SSLContext` can be used by the application for independent downstream mTLS
+calls.
+
+Applications must obtain and deploy the native
+`Microsoft.Azure.Security.KeyGuardAttestation` package separately and set
+`MSAL_KEY_ATTESTATION_LIBRARY_PATH` to the absolute `AttestationClientLib.dll`
+path before starting Java. The Java artifact does not bundle or download the
+native package; applications own its version, deployment and servicing.
+
+See [the extension guide](msal4j-mtls-extensions/README.md). Reviewers can use
+the [detailed review guide](msal4j-sdk/docs/managed-identity-v2-mtls-pop-review-guide.md)
+for architecture diagrams, security checklists, file order, and manual validation.
+The [DevEx guide](msal4j-sdk/docs/managed-identity-v2-devex.md) shows the
+before/after API and the two supported mTLS request modes.
+
 ## Migrating from ADAL
 If your application is using ADAL for Java (ADAL4J), we recommend you to update to use MSAL4J. No new feature work will be done in ADAL4J.
 

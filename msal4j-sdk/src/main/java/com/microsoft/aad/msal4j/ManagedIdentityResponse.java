@@ -20,13 +20,14 @@ class ManagedIdentityResponse implements JsonSerializable<ManagedIdentityRespons
     String objectId;
     String msiResId;
     String miResId;
+    private Long expiresIn;
 
     public static ManagedIdentityResponse fromJson(JsonReader jsonReader) throws IOException {
         ManagedIdentityResponse response = new ManagedIdentityResponse();
         return jsonReader.readObject(reader -> {
             while (reader.nextToken() != JsonToken.END_OBJECT) {
                 String fieldName = reader.getFieldName();
-                reader.nextToken();
+                JsonToken token = reader.nextToken();
                 switch (fieldName) {
                     case "token_type":
                         response.tokenType = reader.getString();
@@ -35,7 +36,11 @@ class ManagedIdentityResponse implements JsonSerializable<ManagedIdentityRespons
                         response.accessToken = reader.getString();
                         break;
                     case "expires_on":
-                        response.expiresOn = reader.getString();
+                        response.expiresOn = readLongValue(reader, token, "expires_on");
+                        break;
+                    case "expires_in":
+                        response.expiresIn = Long.parseLong(
+                                readLongValue(reader, token, "expires_in"));
                         break;
                     case "resource":
                         response.resource = reader.getString();
@@ -57,8 +62,25 @@ class ManagedIdentityResponse implements JsonSerializable<ManagedIdentityRespons
                         break;
                 }
             }
+            if (response.expiresOn == null && response.expiresIn != null) {
+                response.expiresOn = String.valueOf(
+                        (System.currentTimeMillis() / 1000) + response.expiresIn);
+            }
             return response;
         });
+    }
+
+    private static String readLongValue(
+            JsonReader reader,
+            JsonToken token,
+            String fieldName) throws IOException {
+        if (token == JsonToken.NUMBER) {
+            return String.valueOf(reader.getLong());
+        }
+        if (token == JsonToken.STRING) {
+            return reader.getString();
+        }
+        throw new IOException(fieldName + " must be a JSON string or number.");
     }
 
     @Override
