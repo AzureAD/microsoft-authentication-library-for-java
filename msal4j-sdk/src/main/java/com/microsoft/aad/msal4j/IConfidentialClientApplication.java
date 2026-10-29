@@ -20,6 +20,13 @@ public interface IConfidentialClientApplication extends IClientApplicationBase {
     boolean sendX5c();
 
     /**
+     * @return whether certificate-authenticated token requests present the certificate over mTLS
+     */
+    default boolean sendCertificateOverMtls() {
+        return false;
+    }
+
+    /**
      * Acquires tokens from the authority configured in the application, for the confidential client
      * itself. It will by default attempt to get tokens from the token cache. If no tokens are found,
      * it falls back to acquiring them via client credentials from the STS

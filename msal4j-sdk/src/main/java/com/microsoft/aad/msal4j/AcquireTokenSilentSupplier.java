@@ -34,7 +34,6 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
                     clientApplication.clientId(),
                     silentRequest.assertion(),
                     silentRequest.extCacheKeyHash());
-
             // Managed identity needs the cached token to compute its revoked-token hash before renewal.
             if (!(clientApplication instanceof ManagedIdentityApplication) && res != null &&
                     shouldRefresh(silentRequest.parameters(), res)) {

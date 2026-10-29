@@ -22,22 +22,22 @@ final class MtlsEndpointHelper {
 
     static URL deriveMtlsTokenEndpoint(URL tokenEndpoint) {
         if (!"https".equalsIgnoreCase(tokenEndpoint.getProtocol())) {
-            throw error("mTLS Proof-of-Possession requires an HTTPS token endpoint.");
+            throw error("Certificate-based mTLS requires an HTTPS token endpoint.");
         }
         String tenant = firstPathSegment(tokenEndpoint);
         if (tenant.indexOf('%') >= 0) {
-            throw error("mTLS Proof-of-Possession does not accept percent-encoded tenant path segments.");
+            throw error("Certificate-based mTLS does not accept percent-encoded tenant path segments.");
         }
         if (StringHelper.isBlank(tenant)
                 || "common".equalsIgnoreCase(tenant)
                 || "organizations".equalsIgnoreCase(tenant)
                 || "consumers".equalsIgnoreCase(tenant)) {
-            throw error("mTLS Proof-of-Possession requires a concrete tenanted AAD authority.");
+            throw error("Certificate-based mTLS requires a concrete tenanted AAD authority.");
         }
 
         String host = tokenEndpoint.getHost().toLowerCase(Locale.ROOT);
         if (UNSUPPORTED_HOSTS.contains(host)) {
-            throw error("mTLS Proof-of-Possession is not supported for authority host '" + host + "'.");
+            throw error("Certificate-based mTLS is not supported for authority host '" + host + "'.");
         }
         String mtlsHost = deriveMtlsHost(host);
         if (mtlsHost == null) {
