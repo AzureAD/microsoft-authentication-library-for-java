@@ -136,7 +136,6 @@ class OnBehalfOfIT {
                 .authority(TestConstants.MICROSOFT_AUTHORITY_HOST
                         + user.getTenantId())
                 .azureRegion("eastus")
-                .sendX5c(false)
                 .sendCertificateOverMtls(true)
                 .httpClient(httpClient)
                 .build();
