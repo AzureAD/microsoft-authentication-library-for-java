@@ -11,6 +11,7 @@ import javax.net.ssl.SSLHandshakeException;
 import java.net.SocketException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -26,6 +27,97 @@ import static org.mockito.Mockito.when;
 import org.mockito.ArgumentCaptor;
 
 class AcquireTokenByManagedIdentitySupplierMtlsTest {
+
+    @Test
+    void forceRefreshReachesTheProviderForPopAndBearerOverMtls() throws Exception {
+        ManagedIdentityApplication.setEnvironmentVariables(name -> null);
+        for (boolean bearer : new boolean[]{false, true}) {
+            DefaultHttpClient httpClient = mock(DefaultHttpClient.class);
+            when(httpClient.send(any(HttpRequest.class))).thenReturn(response(
+                    200, "{\"access_token\":\"fresh-token\",\"expires_in\":3600,"
+                            + "\"token_type\":\"" + (bearer ? "Bearer" : "mtls_pop") + "\"}"));
+            IManagedIdentityMtlsProvider provider = mock(IManagedIdentityMtlsProvider.class);
+            IMtlsBindingContext context = mock(IMtlsBindingContext.class);
+            when(context.bindingStrength()).thenReturn(MtlsBindingStrength.KEY_GUARD);
+            when(context.sslContext()).thenReturn(SSLContext.getDefault());
+            when(context.keyId()).thenReturn(UUID.randomUUID().toString());
+            when(context.bindingCertificate()).thenReturn(mock(X509Certificate.class));
+            when(provider.getOrCreateBinding(any())).thenReturn(new ManagedIdentityMtlsBinding(
+                    context, "client", "https://login.example/tenant/oauth2/v2.0/token"));
+            ManagedIdentityApplication application = ManagedIdentityApplication
+                    .builder(ManagedIdentityId.userAssignedClientId(UUID.randomUUID().toString()))
+                    .httpClient(httpClient)
+                    .build();
+            ManagedIdentityParameters.ManagedIdentityParametersBuilder builder =
+                    ManagedIdentityParameters.builder("https://vault.azure.net")
+                            .withManagedIdentityMtlsProvider(provider);
+            if (bearer) {
+                builder.withRequestOverMtls();
+            } else {
+                builder.withMtlsProofOfPossession();
+            }
+
+            application.acquireTokenForManagedIdentity(builder.build()).get();
+            IAuthenticationResult cached =
+                    application.acquireTokenForManagedIdentity(builder.build()).get();
+            IAuthenticationResult refreshed = application.acquireTokenForManagedIdentity(
+                    builder.forceRefresh(true).build()).get();
+
+            assertEquals(TokenSource.CACHE, cached.metadata().tokenSource());
+            assertEquals(TokenSource.IDENTITY_PROVIDER, refreshed.metadata().tokenSource());
+            ArgumentCaptor<ManagedIdentityMtlsRequest> requests =
+                    ArgumentCaptor.forClass(ManagedIdentityMtlsRequest.class);
+            verify(provider, org.mockito.Mockito.times(bearer ? 2 : 3))
+                    .getOrCreateBinding(requests.capture());
+            assertFalse(requests.getAllValues().get(0).forceRefresh());
+            assertTrue(requests.getValue().forceRefresh());
+            verify(httpClient, org.mockito.Mockito.times(2)).send(any(HttpRequest.class));
+            if (bearer) {
+                org.junit.jupiter.api.Assertions.assertNull(refreshed.mtlsBindingContext());
+            } else {
+                assertSame(context, refreshed.mtlsBindingContext());
+            }
+        }
+    }
+
+    @Test
+    void unsupportedHttpClientFailsBeforeBindingResolutionInBothMtlsModes() {
+        ManagedIdentityApplication.setEnvironmentVariables(name -> null);
+        for (boolean bearer : new boolean[]{false, true}) {
+            IHttpClient httpClient = mock(IHttpClient.class);
+            ManagedIdentityApplication application = ManagedIdentityApplication
+                    .builder(ManagedIdentityId.systemAssigned())
+                    .httpClient(httpClient)
+                    .build();
+            ManagedIdentityParameters.ManagedIdentityParametersBuilder builder =
+                    ManagedIdentityParameters.builder("https://vault.azure.net");
+            if (bearer) {
+                builder.withRequestOverMtls();
+            } else {
+                builder.withMtlsProofOfPossession();
+            }
+            RequestContext context = new RequestContext(
+                    application,
+                    PublicApi.ACQUIRE_TOKEN_BY_SYSTEM_ASSIGNED_MANAGED_IDENTITY,
+                    builder.build());
+            AtomicInteger bindings = new AtomicInteger();
+            AcquireTokenByManagedIdentitySupplier supplier =
+                    new AcquireTokenByManagedIdentitySupplier(
+                            application, new ManagedIdentityRequest(application, context),
+                            () -> {
+                                bindings.incrementAndGet();
+                                return binding(MtlsBindingStrength.KEY_GUARD);
+                            });
+
+            MsalClientException exception = assertThrows(
+                    MsalClientException.class, supplier::execute);
+
+            assertEquals(MsalError.MANAGED_IDENTITY_MTLS_HTTP_CLIENT_UNSUPPORTED,
+                    exception.errorCode());
+            assertEquals(0, bindings.get());
+            org.mockito.Mockito.verifyNoInteractions(httpClient);
+        }
+    }
 
     @AfterEach
     void resetEnvironment() {

@@ -169,6 +169,18 @@ exchange fails, MSAL invalidates the provider's current generation, mints a
 replacement, and retries the token leg once. The retry is deliberately bounded;
 other service errors are returned without reminting.
 
+`forceRefresh(true)` also evicts the current binding certificate before minting
+a replacement, for both PoP and bearer-over-mTLS requests. The current KeyGuard
+key and a still-valid MAA JWT can be reused. If replacement fails, subsequent
+acquisitions cannot fall back to the evicted certificate.
+
+Newly minted attested bindings resolve a regional MAA endpoint using IMDS
+compute `azEnvironment` and `location`. Public, US Government, China, and Bleu
+clouds have separate endpoint suffixes. Missing, unsupported, or unavailable
+compute metadata retains the platform endpoint with a diagnostic log;
+cancellation is not treated as a fallback. MAA telemetry uses the tenant ID
+for `client_id`, without changing the identity in the CSR or token request.
+
 ## Downstream resource contract
 
 The resource request must:
@@ -214,7 +226,7 @@ The flow fails closed when:
 - the issued certificate does not match the KeyGuard public key;
 - the token endpoint does not explicitly return `token_type=mtls_pop`;
 - a configured custom HTTP client does not implement
-  `IMtlsCapableHttpClient`.
+  `IMtlsCapableHttpClient` (rejected before metadata or native work).
 
 Credential-bound token requests do not follow redirects. A custom HTTP client
 must honor `HttpRequest.sslContext()` or `HttpRequest.sslSocketFactory()` and
@@ -262,8 +274,9 @@ The app verifies:
 - independent Java 8 `HttpsURLConnection` receives Key Vault HTTP 200;
 - the same valid `mtls_pop` token without its binding certificate receives
   HTTP 401 `Unauthorized`;
-- token A with binding B is rejected when a distinct second managed identity
-  client ID is supplied;
+- token A with binding B receives HTTP 401 `Unauthorized` when a distinct
+  second managed identity client ID is supplied, after proving token B with
+  binding B receives HTTP 200; both identities need access to the test secret;
 - second acquisition is `TokenSource.CACHE` with the same binding generation;
-- optional force refresh is `TokenSource.IDENTITY_PROVIDER` and still receives
-  HTTP 200.
+- optional force refresh is `TokenSource.IDENTITY_PROVIDER`, returns a different
+  certificate with a matching token `cnf`, and still receives HTTP 200.

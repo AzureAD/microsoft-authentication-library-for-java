@@ -62,7 +62,7 @@ public final class KeyGuardManagedIdentityMtlsProvider
         validateRequest(request);
         String cacheKey = request.bindingCacheKey();
         BindingGeneration cached = CURRENT.get(cacheKey);
-        if (canReturnWithoutCleanup(
+        if (!request.forceRefresh() && canReturnWithoutCleanup(
                 cached,
                 RETIRED.containsKey(cacheKey))) {
             return cached.binding;
@@ -72,16 +72,18 @@ public final class KeyGuardManagedIdentityMtlsProvider
         synchronized (lock) {
             cleanupRetired(cacheKey);
             cached = CURRENT.get(cacheKey);
-            if (isCurrent(cached)) {
+            if (request.forceRefresh()) {
+                if (cached != null) {
+                    CURRENT.remove(cacheKey, cached);
+                    retire(cacheKey, cached);
+                }
+            } else if (isCurrent(cached)) {
                 return cached.binding;
             }
             BindingGeneration created = createBinding(request);
             created.context.activate();
             BindingGeneration previous = CURRENT.put(cacheKey, created);
-            if (previous != null) {
-                RETIRED.computeIfAbsent(cacheKey, ignored -> new ArrayList<>())
-                        .add(previous);
-            }
+            retire(cacheKey, previous);
             return created.binding;
         }
     }
@@ -97,11 +99,7 @@ public final class KeyGuardManagedIdentityMtlsProvider
             BindingGeneration current = CURRENT.get(cacheKey);
             if (current != null && current.binding == rejectedBinding) {
                 CURRENT.remove(cacheKey, current);
-                List<BindingGeneration> retired =
-                        RETIRED.computeIfAbsent(
-                                cacheKey,
-                                ignored -> new ArrayList<>());
-                retired.add(current);
+                retire(cacheKey, current);
             }
             cleanupRetired(cacheKey);
             return true;
@@ -154,14 +152,18 @@ public final class KeyGuardManagedIdentityMtlsProvider
                     metadata.tenantId,
                     metadata.vmId,
                     metadata.vmssId);
+            String attestationEndpoint = request.attestationEnabled()
+                    ? ImdsV2Client.resolveAttestationEndpoint(
+                            request, metadata.attestationEndpoint)
+                    : null;
             String attestationToken = request.attestationEnabled()
                     ? ATTESTATION_CACHE.getOrAttest(
-                            metadata.attestationEndpoint,
+                            attestationEndpoint,
                             attestationKeyId,
                             () -> CngKeyGuard.getAttestationToken(
                                     privateKey.nativeHandle(),
-                                    metadata.attestationEndpoint,
-                                    metadata.clientId,
+                                    attestationEndpoint,
+                                    metadata.tenantId,
                                     request.correlationId()))
                     : null;
             ImdsV2Client.CredentialResponse credential =
@@ -277,6 +279,13 @@ public final class KeyGuardManagedIdentityMtlsProvider
 
     static boolean isCertificateCurrent(long notAfterMillis, long nowMillis) {
         return nowMillis < notAfterMillis - ROTATION_BUFFER_MILLIS;
+    }
+
+    private static void retire(String cacheKey, BindingGeneration generation) {
+        if (generation != null) {
+            RETIRED.computeIfAbsent(cacheKey, ignored -> new ArrayList<>())
+                    .add(generation);
+        }
     }
 
     private static void cleanupRetired(String cacheKey) {

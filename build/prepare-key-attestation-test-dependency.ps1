@@ -8,8 +8,8 @@ $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
 # This pin belongs to the test harness, not to the production Java artifact.
-$version = "1.1.5"
-$expectedHash = "90dfcce20e1a74519b49796eeee17e6e59a257c3acf754f454a49380d28a568b"
+$version = "1.1.8"
+$expectedHash = "1c3cd187a44ca5d2f48aea30e7142aa93435de45ed47a60fd3eaad9107f93973"
 $destination = [IO.Path]::GetFullPath($DestinationDirectory)
 New-Item -ItemType Directory -Path $destination -Force | Out-Null
 $library = Join-Path $destination "AttestationClientLib.dll"

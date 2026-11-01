@@ -9,15 +9,21 @@ import com.azure.json.JsonToken;
 import com.microsoft.aad.msal4j.ManagedIdentityMtlsHttpRequest;
 import com.microsoft.aad.msal4j.ManagedIdentityMtlsHttpResponse;
 import com.microsoft.aad.msal4j.ManagedIdentityMtlsRequest;
+import com.microsoft.aad.msal4j.MsalException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 
 final class ImdsV2Client {
 
+    private static final Logger LOG = LoggerFactory.getLogger(ImdsV2Client.class);
     private static final String IMDS_BASE = "http://169.254.169.254";
     private static final String PLATFORM_METADATA_PATH =
             "/metadata/identity/getplatformmetadata";
@@ -93,6 +99,54 @@ final class ImdsV2Client {
         return credential;
     }
 
+    static String resolveAttestationEndpoint(
+            ManagedIdentityMtlsRequest request,
+            String platformEndpoint) {
+        try {
+            ManagedIdentityMtlsHttpResponse response = execute(
+                    request,
+                    "GET",
+                    IMDS_BASE + "/metadata/instance/compute?api-version=2021-02-01",
+                    null);
+            validateImdsOrigin(response);
+            Map<String, Object> metadata = parseResponse(response.body());
+            String environment = stringField(metadata, "azEnvironment");
+            String location = stringField(metadata, "location");
+            String suffix = null;
+            if ("AzurePublicCloud".equalsIgnoreCase(environment)) {
+                suffix = "attestation.microsoft.com";
+            } else if ("AzureUSGovernmentCloud".equalsIgnoreCase(environment)) {
+                suffix = "attestation.microsoftonline.us";
+            } else if ("AzureChinaCloud".equalsIgnoreCase(environment)) {
+                suffix = "attestation.partner.microsoftonline.cn";
+            } else if ("AzureBleuCloud".equalsIgnoreCase(environment)) {
+                suffix = "attestation.sovcloud-identity.fr";
+            }
+            if (suffix != null && location != null
+                    && location.matches("[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?")) {
+                return "https://" + location.toLowerCase(Locale.ROOT) + "." + suffix;
+            }
+            LOG.info("IMDS compute metadata has an unsupported cloud or region; "
+                    + "using the platform-provided attestation endpoint.");
+        } catch (MtlsMsiException | MsalException e) {
+            for (Throwable cause = e; cause != null; cause = cause.getCause()) {
+                if (cause instanceof CancellationException) {
+                    throw (CancellationException) cause;
+                }
+                if (cause instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                    throw e;
+                }
+            }
+            if (Thread.currentThread().isInterrupted()) {
+                throw e;
+            }
+            LOG.warn("IMDS compute metadata is unavailable; "
+                    + "using the platform-provided attestation endpoint.", e);
+        }
+        return platformEndpoint;
+    }
+
     private static ManagedIdentityMtlsHttpResponse execute(
             ManagedIdentityMtlsRequest request,
             String method,
@@ -128,7 +182,7 @@ final class ImdsV2Client {
             }
             for (String value : header.getValue()) {
                 String normalized = value == null
-                        ? "" : value.trim().toUpperCase();
+                        ? "" : value.trim().toUpperCase(Locale.ROOT);
                 if ("IMDS".equals(normalized)
                         || normalized.startsWith("IMDS/")) {
                     return;

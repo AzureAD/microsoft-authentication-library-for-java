@@ -194,6 +194,14 @@ but the sample uses the conventional uppercase form explicitly.
 - Certificates enter rotation 24 hours before expiry.
 - Attestation JWTs are cached by normalized attestation endpoint and key ID,
   with a five-minute freshness buffer and per-key single-flight behavior.
+- `forceRefresh(true)` bypasses both token and binding-certificate caches for
+  PoP and bearer-over-mTLS. The existing KeyGuard key and a still-valid
+  attestation JWT may be reused. A failed refresh does not restore the old binding.
+- Newly minted attested bindings use the regional MAA endpoint for Public,
+  US Government, China, and Bleu clouds, based on IMDS compute metadata.
+  Unavailable or unsupported metadata produces a logged fallback to the
+  platform-provided endpoint. MAA `client_id` telemetry receives the tenant ID;
+  CSR identity and OAuth `client_id` remain the managed-identity client ID.
 
 Custom application HTTP clients must implement `IMtlsCapableHttpClient`, honor
 the request-specific `SSLContext` or `SSLSocketFactory`, and disable redirects
@@ -201,6 +209,7 @@ for mTLS token requests. The supplied `SSLContext` uses JVM default trust
 managers and is safe to reuse for ordinary JSSE resource calls. Applications
 that need custom trust anchors or a JSSE-backed custom transport should build their own
 TLS context from the exposed key manager.
+Unsupported clients fail before IMDS, KeyGuard, or attestation work.
 
 Custom TLS contexts must enable only TLS 1.2 and use a JSSE-backed provider
 (for example, Netty `SslProvider.JDK`, not `SslProvider.OPENSSL`). The
@@ -224,7 +233,7 @@ From the repository root:
 .\build\run-java-msi-v2-mtls-devapp.ps1
 ```
 
-This **test-only** wrapper downloads and verifies a pinned native test package
+This **test-only** wrapper downloads and verifies native test package version 1.1.8
 into `msal4j-mtls-extensions\target\key-attestation-test` when
 `MSAL_KEY_ATTESTATION_LIBRARY_PATH` is unset. The PR E2E job provisions the same
 dependency separately. Neither the production JAR nor the shaded E2E JAR
@@ -235,7 +244,7 @@ package (the helper enforces its test-version hash and Authenticode signature):
 
 ```powershell
 $env:MSAL_KEY_ATTESTATION_LIBRARY_PATH = .\build\prepare-key-attestation-test-dependency.ps1 `
-    -LibraryPath "C:\approved-packages\keyguard-1.1.5\AttestationClientLib.dll"
+    -LibraryPath "C:\approved-packages\keyguard-1.1.8\AttestationClientLib.dll"
 ```
 
 Ordinary unit tests do not need the package. The external-DLL signature test
@@ -266,8 +275,10 @@ managed identity to the VM and set:
 $env:MSAL_JAVA_MTLS_MISMATCH_IDENTITY_CLIENT_ID = "<second-uami-client-id>"
 ```
 
-The app first proves token A with binding A returns HTTP 200, then requires
-token A with binding B to be rejected.
+Both identities must have permission to read the test secret. The app first
+proves token A with binding A and token B with binding B return HTTP 200, then
+requires token A with binding B to return HTTP 401 `Unauthorized`. Throttling,
+authorization failures, and server errors do not count as binding rejection.
 
 See
 [`msal4j-sdk/docs/managed-identity-v2-mtls-pop.md`](../msal4j-sdk/docs/managed-identity-v2-mtls-pop.md)

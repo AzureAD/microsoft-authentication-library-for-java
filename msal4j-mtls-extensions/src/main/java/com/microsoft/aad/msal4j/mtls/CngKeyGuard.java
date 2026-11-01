@@ -86,8 +86,8 @@ final class CngKeyGuard {
      * Produces a MAA JWT by calling {@code AttestationClientLib.dll}.
      *
      * @param keyHandle       CNG key handle owned by the binding generation
-     * @param endpoint        MAA attestation endpoint URL (from IMDS platform metadata)
-     * @param clientId        managed identity client ID (from IMDS platform metadata)
+     * @param endpoint        resolved regional MAA endpoint or IMDS fallback
+     * @param clientId        tenant ID sent as the native library's client_id telemetry metadata
      * @return the MAA JWT string
      * @throws MtlsMsiException if the DLL is not present, or attestation fails
      */

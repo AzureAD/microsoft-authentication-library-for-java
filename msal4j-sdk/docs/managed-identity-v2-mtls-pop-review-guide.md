@@ -172,7 +172,7 @@ Primary file:
 
 Review these invariants:
 
-- The extension is invoked only for mTLS PoP requests.
+- The extension is invoked only for mTLS PoP or bearer-over-mTLS requests.
 - Provider exceptions are normalized to MSAL exceptions.
 - Existing MSAL exceptions retain their original error codes.
 - IMDS calls use request-scoped IMDS retry behavior.
@@ -256,7 +256,9 @@ Review these cases:
 - certificate A cannot satisfy certificate B;
 - same-key certificate renewal changes the cache partition;
 - attested and unattested bindings never cross-hit;
-- force refresh bypasses the access-token cache;
+- force refresh bypasses the access-token and binding-certificate caches,
+  while reusing the current key and a still-valid attestation JWT;
+- a failed forced refresh cannot restore the evicted binding;
 - cache hits still return a live binding context.
 
 ## KeyGuard private-key bridge
@@ -294,6 +296,8 @@ Review that:
 - salt lengths must be supported;
 - trailer field must be one;
 - non-KeyGuard keys delegate to another provider;
+- PSS parameters set before key initialization survive provider delegation;
+- verification works even when parameters have already selected the CNG provider;
 - provider delegation cannot recurse into `CngProvider`;
 - signatures are produced only through `NCryptSignHash`.
 
@@ -361,6 +365,10 @@ When selected:
 - expired evidence fails;
 - stale evidence inside the freshness buffer is not reused;
 - failures never downgrade to unattested issuance.
+- newly minted attested bindings resolve regional MAA endpoints from compute
+  metadata for Public, US Government, China, and Bleu clouds;
+- unavailable or unsupported compute metadata logs a platform-endpoint fallback;
+- MAA `client_id` telemetry receives the tenant ID, not the CSR client identity.
 
 ### Attestation cache
 
@@ -590,7 +598,9 @@ Run:
 .\build\run-java-msi-v2-mtls-devapp.ps1
 ```
 
-No standalone attestation DLL or native library path is required.
+The test wrapper provisions the separately distributed, hash- and
+signature-verified 1.1.8 attestation DLL when the library path is unset.
+Production applications must supply their own native package and path.
 
 ## Expected positive output
 
@@ -628,10 +638,13 @@ When a distinct second UAMI is configured:
 
 ```text
 token A + binding A -> HTTP 200
-token A + binding B -> rejected
+token B + binding B -> HTTP 200
+token A + binding B -> HTTP 401 Unauthorized
 ```
 
-The app verifies that the two key IDs differ before making the negative call.
+Both identities need permission to read the test secret. The app verifies that
+the two key IDs differ and that each token works with its own certificate before
+making the negative call. HTTP 403, 429, or 5xx responses do not pass this control.
 
 ## Historical live validation
 

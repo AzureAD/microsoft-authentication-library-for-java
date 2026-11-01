@@ -14,6 +14,7 @@ import java.security.Signature;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.spec.PSSParameterSpec;
+import java.security.spec.MGF1ParameterSpec;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -125,6 +126,52 @@ class CngProviderTest {
         signature.initSign(keyPair.getPrivate());
 
         assertNotEquals("CNG", signature.getProvider().getName());
+    }
+
+    @Test
+    void installedProviderPreservesPssParametersSetBeforeTheSigningKey() throws Exception {
+        CngProvider.installIfAbsent();
+        KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+        generator.initialize(2048);
+        KeyPair keyPair = generator.generateKeyPair();
+        PSSParameterSpec parameters = new PSSParameterSpec(
+                "SHA-384", "MGF1", MGF1ParameterSpec.SHA384, 48, 1);
+        byte[] message = new byte[]{1, 2, 3};
+        Signature signer = Signature.getInstance("RSASSA-PSS");
+        signer.setParameter(parameters);
+        signer.initSign(keyPair.getPrivate());
+        signer.update(message);
+
+        byte[] signature = signer.sign();
+
+        Signature verifier = Signature.getInstance("RSASSA-PSS", "SunRsaSign");
+        verifier.setParameter(parameters);
+        verifier.initVerify(keyPair.getPublic());
+        verifier.update(message);
+        assertTrue(verifier.verify(signature));
+    }
+
+    @Test
+    void installedProviderCanVerifyAfterPssParametersSelectIt() throws Exception {
+        CngProvider.installIfAbsent();
+        KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+        generator.initialize(2048);
+        KeyPair keyPair = generator.generateKeyPair();
+        PSSParameterSpec parameters = new PSSParameterSpec(
+                "SHA-256", "MGF1", MGF1ParameterSpec.SHA256, 32, 1);
+        byte[] message = new byte[]{4, 5, 6};
+        Signature signer = Signature.getInstance("RSASSA-PSS", "SunRsaSign");
+        signer.setParameter(parameters);
+        signer.initSign(keyPair.getPrivate());
+        signer.update(message);
+        byte[] signature = signer.sign();
+
+        Signature verifier = Signature.getInstance("RSASSA-PSS");
+        verifier.setParameter(parameters);
+        verifier.initVerify(keyPair.getPublic());
+        verifier.update(message);
+
+        assertTrue(verifier.verify(signature));
     }
 
     private static void assertPssDefaults(

@@ -81,6 +81,16 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
                     MsalError.MANAGED_IDENTITY_MTLS_UNSUPPORTED);
         }
 
+        if ((managedIdentityParameters.mtlsProofOfPossession()
+                || managedIdentityParameters.requestOverMtls())
+                && !(clientApplication.httpClient() instanceof IMtlsCapableHttpClient)) {
+            throw new MsalClientException(
+                    "The configured custom HTTP client does not declare support for request-specific mTLS. "
+                            + "Implement IMtlsCapableHttpClient and honor HttpRequest.sslContext() "
+                            + "or HttpRequest.sslSocketFactory().",
+                    MsalError.MANAGED_IDENTITY_MTLS_HTTP_CLIENT_UNSUPPORTED);
+        }
+
         if (managedIdentityParameters.mtlsProofOfPossession()) {
             mtlsBinding = resolveMtlsBinding();
             validateMinimumBindingStrength(mtlsBinding, requiredBindingStrength());
@@ -360,7 +370,9 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
                 bindingCacheKey,
                 requestContext.correlationId(),
                 httpClient,
-                attestationEnabled);
+                attestationEnabled,
+                ((ManagedIdentityParameters) requestContext.apiParameters())
+                        .forceRefresh());
     }
 
     static ManagedIdentityMtlsBinding getMtlsProviderBinding(
@@ -491,14 +503,6 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
     private AuthenticationResult acquireTokenOverMtls(
             ManagedIdentityMtlsBinding binding,
             TokenRequestExecutor tokenRequestExecutor) {
-        if (!(clientApplication.httpClient() instanceof IMtlsCapableHttpClient)) {
-            throw new MsalClientException(
-                    "The configured custom HTTP client does not declare support for request-specific mTLS. "
-                            + "Implement IMtlsCapableHttpClient and honor HttpRequest.sslContext() "
-                            + "or HttpRequest.sslSocketFactory().",
-                    MsalError.MANAGED_IDENTITY_MTLS_HTTP_CLIENT_UNSUPPORTED);
-        }
-
         String scope = managedIdentityParameters.resource().endsWith("/.default")
                 ? managedIdentityParameters.resource()
                 : managedIdentityParameters.resource().replaceAll("/+$", "") + "/.default";

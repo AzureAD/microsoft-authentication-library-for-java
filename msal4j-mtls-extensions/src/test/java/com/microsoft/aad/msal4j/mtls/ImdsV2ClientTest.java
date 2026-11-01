@@ -5,6 +5,7 @@ package com.microsoft.aad.msal4j.mtls;
 
 import com.microsoft.aad.msal4j.ManagedIdentityMtlsHttpResponse;
 import com.microsoft.aad.msal4j.ManagedIdentityMtlsRequest;
+import com.microsoft.aad.msal4j.MsalClientException;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -12,10 +13,100 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.CancellationException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class ImdsV2ClientTest {
+
+    @Test
+    void attestationEndpointUsesTheRegionInEachSupportedCloud() {
+        String[][] clouds = {
+                {"AzurePublicCloud", "westus2", "attestation.microsoft.com"},
+                {"AzureUSGovernmentCloud", "usgovvirginia", "attestation.microsoftonline.us"},
+                {"AzureChinaCloud", "chinaeast2", "attestation.partner.microsoftonline.cn"},
+                {"AzureBleuCloud", "francecentral", "attestation.sovcloud-identity.fr"},
+                {"azurepubliccloud", "WESTUS2", "attestation.microsoft.com"}
+        };
+        for (String[] cloud : clouds) {
+            ManagedIdentityMtlsRequest request = request("client_id", "client", http -> {
+                assertEquals("GET", http.method());
+                assertEquals("http://169.254.169.254/metadata/instance/compute"
+                        + "?api-version=2021-02-01", http.url());
+                assertEquals("true", http.headers().get("Metadata"));
+                assertFalse(http.followRedirects());
+                return response("{\"azEnvironment\":\"" + cloud[0]
+                        + "\",\"location\":\"" + cloud[1] + "\"}");
+            });
+
+            assertEquals("https://" + cloud[1].toLowerCase(java.util.Locale.ROOT)
+                            + "." + cloud[2],
+                    ImdsV2Client.resolveAttestationEndpoint(
+                            request, "https://platform.example"),
+                    cloud[0]);
+        }
+    }
+
+    @Test
+    void attestationEndpointFallsBackForUnavailableOrUnsupportedComputeMetadata() {
+        String[] bodies = {
+                "{}",
+                "{\"azEnvironment\":\"UnsupportedCloud\",\"location\":\"westus2\"}",
+                "{\"azEnvironment\":\"AzurePublicCloud\"}",
+                "{\"azEnvironment\":\"AzurePublicCloud\",\"location\":\"\"}",
+                "{\"azEnvironment\":\"AzurePublicCloud\",\"location\":\"invalid/region\"}",
+                "{\"azEnvironment\":\"AzurePublicCloud\",\"location\":42}",
+                "{"
+        };
+        for (String body : bodies) {
+            assertEquals("https://platform.example",
+                    ImdsV2Client.resolveAttestationEndpoint(
+                            request(null, null, http -> response(body)),
+                            "https://platform.example"));
+        }
+        assertEquals("https://platform.example",
+                ImdsV2Client.resolveAttestationEndpoint(
+                        request(null, null, http -> new ManagedIdentityMtlsHttpResponse(
+                                503, "", Collections.emptyMap())),
+                        "https://platform.example"));
+        assertEquals("https://platform.example",
+                ImdsV2Client.resolveAttestationEndpoint(
+                        request(null, null, http -> {
+                            throw new MsalClientException(new java.net.SocketTimeoutException());
+                        }),
+                        "https://platform.example"));
+        assertEquals("https://platform.example",
+                ImdsV2Client.resolveAttestationEndpoint(
+                        request(null, null, http -> new ManagedIdentityMtlsHttpResponse(
+                                200,
+                                "{\"azEnvironment\":\"AzurePublicCloud\",\"location\":\"westus2\"}",
+                                Collections.emptyMap())),
+                        "https://platform.example"));
+    }
+
+    @Test
+    void attestationEndpointFallbackDoesNotSwallowCancellationOrInterruption() {
+        CancellationException cancellation = new CancellationException();
+        assertSame(cancellation, assertThrows(CancellationException.class,
+                () -> ImdsV2Client.resolveAttestationEndpoint(
+                        request(null, null, http -> {
+                            throw new MsalClientException(cancellation);
+                        }),
+                        "https://platform.example")));
+        MsalClientException interruption =
+                new MsalClientException(new InterruptedException());
+        try {
+            assertSame(interruption, assertThrows(MsalClientException.class,
+                    () -> ImdsV2Client.resolveAttestationEndpoint(
+                            request(null, null, http -> {
+                                throw interruption;
+                            }),
+                            "https://platform.example")));
+            assertTrue(Thread.currentThread().isInterrupted());
+        } finally {
+            Thread.interrupted();
+        }
+    }
 
     @Test
     void metadataUsesCurrentV2ContractAndIdentitySelector() {

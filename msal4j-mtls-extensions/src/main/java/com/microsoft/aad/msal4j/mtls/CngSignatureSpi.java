@@ -22,7 +22,7 @@ import java.security.spec.PSSParameterSpec;
  *
  * <p>Two families are provided:</p>
  * <ul>
- *   <li>{@link Sha256WithRsa} / {@link Sha1WithRsa} — PKCS#1 v1.5 padding</li>
+ *   <li>{@link Sha256WithRsa}, {@link Sha384WithRsa}, {@link Sha512WithRsa} — PKCS#1 v1.5 padding</li>
  *   <li>{@link RsaSsaPss} — RSASSA-PSS with configurable parameters</li>
  * </ul>
  *
@@ -95,12 +95,15 @@ abstract class CngSignatureSpi extends SignatureSpi {
     @Override
     protected void engineInitVerify(java.security.PublicKey publicKey)
             throws InvalidKeyException {
-        // CNG only handles signing (NCryptSignHash). For verification (server cert
-        // validation, etc.) we deliberately throw InvalidKeyException so that
-        // Signature.Delegate.chooseProvider() skips this SPI and falls through to
-        // SunRsaSign or another standard provider that handles RSA/ECDSA verification.
-        throw new InvalidKeyException(
-                "CngSignatureSpi does not support verification; use SunRsaSign");
+        cngKey = null;
+        delegate = null;
+        try {
+            // Setting PSS parameters can select this provider before JCA sees the key.
+            delegate = getNextProviderSignature();
+            delegate.initVerify(publicKey);
+        } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
+            throw new InvalidKeyException("No fallback provider: " + e.getMessage(), e);
+        }
     }
 
     @Override
@@ -125,7 +128,7 @@ abstract class CngSignatureSpi extends SignatureSpi {
             try {
                 delegate = getNextProviderSignature();
                 delegate.initSign(key);
-            } catch (NoSuchAlgorithmException e) {
+            } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
                 throw new InvalidKeyException("No fallback provider: " + e.getMessage(), e);
             }
         }
@@ -252,12 +255,19 @@ abstract class CngSignatureSpi extends SignatureSpi {
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
-    private java.security.Signature getNextProviderSignature() throws NoSuchAlgorithmException {
+    private java.security.Signature getNextProviderSignature()
+            throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
         String algName = pss ? "RSASSA-PSS" : hashCng + "withRSA";
         for (Provider p : Security.getProviders()) {
             if (p instanceof CngProvider) continue;
             if (p.getService("Signature", algName) != null) {
-                return java.security.Signature.getInstance(algName, p);
+                java.security.Signature signature =
+                        java.security.Signature.getInstance(algName, p);
+                if (pss) {
+                    signature.setParameter(new PSSParameterSpec(
+                            hashJce, "MGF1", new MGF1ParameterSpec(hashJce), saltLen, 1));
+                }
+                return signature;
             }
         }
         throw new NoSuchAlgorithmException(

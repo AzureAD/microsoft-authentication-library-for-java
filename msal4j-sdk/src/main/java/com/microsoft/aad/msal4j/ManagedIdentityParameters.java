@@ -164,6 +164,14 @@ public class ManagedIdentityParameters implements IAcquireTokenParameters {
             return this;
         }
 
+        /**
+         * Bypasses the token cache. For managed identity v2 mTLS, also requests
+         * a new binding certificate while allowing reuse of the current
+         * KeyGuard key and a still-valid attestation token.
+         *
+         * @param forceRefresh whether to request a fresh token and mTLS binding
+         * @return this builder instance
+         */
         public ManagedIdentityParametersBuilder forceRefresh(boolean forceRefresh) {
             this.forceRefresh = forceRefresh;
             return this;

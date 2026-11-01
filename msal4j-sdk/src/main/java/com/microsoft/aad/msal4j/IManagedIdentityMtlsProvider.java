@@ -11,6 +11,11 @@ package com.microsoft.aad.msal4j;
  */
 public interface IManagedIdentityMtlsProvider {
 
+    /**
+     * Returns a binding, bypassing cached certificates when
+     * {@link ManagedIdentityMtlsRequest#forceRefresh()} is set.
+     * A failed forced acquisition must not make the evicted binding reusable.
+     */
     ManagedIdentityMtlsBinding getOrCreateBinding(ManagedIdentityMtlsRequest request);
 
     /**

@@ -143,23 +143,22 @@ public final class ManagedIdentityMtlsPopKeyVaultDevApp {
             IAuthenticationResult mismatchBinding =
                     acquire(mismatchApplication, false, false);
             verifyResult(mismatchBinding);
+            verifyTokenBinding(mismatchBinding);
             if (first.mtlsBindingContext().keyId().equals(
                     mismatchBinding.mtlsBindingContext().keyId())) {
                 throw new IllegalStateException(
                         "Negative binding acquisition returned the same certificate.");
             }
+            callKeyVault(mismatchBinding, vaultUrl, secretName);
             KeyVaultResponse rejection = callKeyVault(
                     first,
                     mismatchBinding.mtlsBindingContext(),
                     vaultUrl,
                     secretName,
                     false);
-            if (rejection.status == 200) {
-                throw new IllegalStateException(
-                        "AKV accepted token A with mismatched binding B.");
-            }
-            System.out.println("PASS: token A + binding B rejected with HTTP "
-                    + rejection.status);
+            verifyBindingRejected(rejection, "with a different binding certificate");
+            System.out.println("PASS: token B + binding B returned HTTP 200");
+            System.out.println("PASS: token A + binding B rejected with HTTP 401 Unauthorized");
         }
 
         System.out.println("\n[" + nextStep++ + "] Reacquiring...");
@@ -183,12 +182,19 @@ public final class ManagedIdentityMtlsPopKeyVaultDevApp {
                     true,
                     false);
             verifyResult(refreshed);
+            verifyTokenBinding(refreshed);
             if (refreshed.metadata().tokenSource() != TokenSource.IDENTITY_PROVIDER) {
                 throw new IllegalStateException(
                         "Force refresh did not use the identity provider.");
             }
+            if (first.mtlsBindingContext().keyId()
+                    .equals(refreshed.mtlsBindingContext().keyId())) {
+                throw new IllegalStateException(
+                        "Force refresh reused the previous binding certificate.");
+            }
             callKeyVault(refreshed, vaultUrl, secretName);
             System.out.println("PASS: TokenSource = IDENTITY_PROVIDER");
+            System.out.println("PASS: force refresh returned a new certificate-bound token");
             System.out.println("PASS: force-refreshed binding context returned HTTP 200");
         }
 
@@ -318,15 +324,21 @@ public final class ManagedIdentityMtlsPopKeyVaultDevApp {
                 vaultUrl,
                 secretName,
                 false);
+        verifyBindingRejected(response, "without its binding certificate");
+        System.out.println(
+                "PASS: token without certificate rejected with HTTP 401 Unauthorized");
+    }
+
+    static void verifyBindingRejected(
+            KeyVaultResponse response,
+            String scenario) {
         String errorCode = extractJsonString(response.body, "code");
         if (response.status != 401 || !"Unauthorized".equals(errorCode)) {
             throw new IllegalStateException(
                     "AKV returned an unexpected response for an mtls_pop token " +
-                            "without its binding certificate: HTTP " +
+                            scenario + ": HTTP " +
                             response.status + ", code=" + errorCode);
         }
-        System.out.println(
-                "PASS: token without certificate rejected with HTTP 401 Unauthorized");
     }
 
     private static SSLContext createTls12ContextWithoutClientCertificate()
@@ -403,7 +415,7 @@ public final class ManagedIdentityMtlsPopKeyVaultDevApp {
         return value == null || value.trim().isEmpty();
     }
 
-    private static final class KeyVaultResponse {
+    static final class KeyVaultResponse {
         final int status;
         final String body;
 
