@@ -6,16 +6,18 @@ optional `com.microsoft.azure:msal4j-key-attestation` artifact.
 
 ## Dependency
 
+The core and optional attestation artifact use independent preview versions:
+
 ```xml
 <dependency>
   <groupId>com.microsoft.azure</groupId>
   <artifactId>msal4j</artifactId>
-  <version>${msal4j.version}</version>
+  <version>1.26.1-preview1</version>
 </dependency>
 <dependency>
   <groupId>com.microsoft.azure</groupId>
   <artifactId>msal4j-key-attestation</artifactId>
-  <version>${msal4j.version}</version>
+  <version>1.0.0-preview1</version>
 </dependency>
 ```
 

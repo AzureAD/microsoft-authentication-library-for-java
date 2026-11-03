@@ -1,3 +1,9 @@
+Version 1.26.1-preview1
+======================
+- Preview Managed Identity v2 mTLS PoP with a reusable Java JSSE binding context and certificate-bound token caching (#1059).
+- Preview ordinary bearer-token acquisition over mTLS and the MSAL_MI_DISABLE_IMDS_V2 kill switch (#1059).
+- Add the optional com.microsoft.azure:msal4j-key-attestation:1.0.0-preview1 artifact for Windows KeyGuard and Microsoft Azure Attestation integration; applications deploy the native attestation DLL separately (#1059).
+
 Version 1.26.0
 =============
 - Add Azure Arc user-assigned managed identity support with validation that the requested identity was honored (#1057)

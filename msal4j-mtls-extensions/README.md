@@ -76,13 +76,20 @@ request attestation do not require this DLL.
 
 ## Dependency
 
+This preview pairs `msal4j:1.26.1-preview1` with
+`msal4j-key-attestation:1.0.0-preview1`. The extension uses an independent
+version and declares the matching core dependency transitively.
+
 ```xml
 <dependency>
   <groupId>com.microsoft.azure</groupId>
   <artifactId>msal4j-key-attestation</artifactId>
-  <version>${msal4j.version}</version>
+  <version>1.0.0-preview1</version>
 </dependency>
 ```
+
+See [release preparation](../RELEASES.md#preview-release-preparation) for the
+separate publication inputs and required release artifacts.
 
 ## Token acquisition
 

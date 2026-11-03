@@ -2,6 +2,45 @@
 
 We have adopted the semantic versioning flow that is industry standard for OSS projects. It gives the maximum amount of control on what risk you take with what versions.
 
+## Preview release preparation
+
+This branch prepares two independently versioned preview artifacts:
+
+| Module POM | Maven coordinates | Release pipeline version input |
+| --- | --- | --- |
+| `msal4j-sdk/pom.xml` | `com.microsoft.azure:msal4j:1.26.1-preview1` | `1.26.1-preview1` |
+| `msal4j-mtls-extensions/pom.xml` | `com.microsoft.azure:msal4j-key-attestation:1.0.0-preview1` | `1.0.0-preview1` |
+
+The attestation artifact depends on the exact core preview above. Publish core
+first, then publish the optional artifact through the approved release/signing
+process. Each publication must include the module POM, binary JAR, sources JAR,
+and Javadoc JAR, with the signatures required by that process. The optional
+artifact declares Maven publication metadata and attaches sources and Javadoc
+during `package`.
+
+The hosted release pipeline's version input must exactly match the selected
+module POM. `-preview1` is an explicit preview version, not a `-SNAPSHOT`.
+Changing the POM does not change a queued pipeline's variables or module
+selection: queue a fresh run against the updated branch/commit with the matching
+version. A core-only pipeline does not publish the optional artifact; its
+release configuration must separately target the extension POM and version.
+Do not publish the root aggregator, unrelated modules, or the profile-only E2E
+application as part of this preview.
+
+For a local Java 8 build of the matching core, extension and E2E application,
+run this from the repository root:
+
+```shell
+mvn -Pe2e -pl msal4j-mtls-extensions-e2e -am -Drevapi.failBuildOnProblemsFound=false -Dskip.integration.tests=true clean verify
+```
+
+This runs unit tests and packages all three modules, using the PR pipeline's
+existing nonblocking Revapi reporting policy; API analysis still runs. Live Azure
+integration tests remain a separate release check. Verify the resulting core and
+extension POMs use the coordinates above and their JARs contain no
+`AttestationClientLib.dll`. Native attestation remains an application-deployed
+dependency, not a Maven payload.
+
 ## Semantic Versioning and API stability promises
 
 Microsoft Authentication Libraries are independent open source libraries that are used by  both internal and external Microsoft partners. As with the rest of Microsoft, we have moved to a rapid iteration model where bugs are fixed daily and new versions are produced as required. To communicate these frequent changes to external partners and customers, we follow the practices of other open source libraries and use semantic versioning for all our public Microsoft Authentication SDK libraries. This allows us to support our downstream partners which will lock on certain versions for stability purposes, as well as providing for the distribution over NuGet, CocoaPods, and Maven.

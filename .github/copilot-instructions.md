@@ -6,7 +6,7 @@
 - **Main Package**: `com.microsoft.aad.msal4j`
 - **Three Application Types**: `PublicClientApplication`, `ConfidentialClientApplication`, `ManagedIdentityApplication`
 - **Pattern**: Each auth flow has `*Parameters` (public API), `*Request` (internal), `*Supplier` (executor)
-- **Current Version**: 1.27.0-SNAPSHOT
+- **Current Version**: 1.26.1-preview1
 
 ---
 
@@ -16,7 +16,7 @@
 
 - **Language**: Java 8+
 - **Build Tool**: Maven
-- **Current Version**: 1.27.0-SNAPSHOT
+- **Current Version**: 1.26.1-preview1
 - **Artifact**: `com.microsoft.azure:msal4j`
 - **Key Protocols**: OAuth2, OpenID Connect
 
@@ -34,6 +34,11 @@ This repository contains four default Maven modules plus one profile-only E2E mo
 - **`msal4j-persistence-extension/`** - Cross-platform token cache persistence helpers
 - **`msal4j-mtls-extensions/`** - Optional Windows KeyGuard/attestation bridge for Managed Identity v2 mTLS PoP. Applications bring the native Microsoft.Azure.Security.KeyGuardAttestation package and configure the absolute DLL path with `MSAL_KEY_ATTESTATION_LIBRARY_PATH`; Java JCA/JSSE performs TLS. Production and shaded E2E JARs must not contain the attestation DLL. Only the test harness provisions a pinned native package separately.
 - **`msal4j-mtls-extensions-e2e/`** - Managed Identity v2 validation app, included only by the Maven `e2e` profile and used by the VM-based PR pipeline job
+
+The optional `msal4j-key-attestation` artifact has its own version,
+`1.0.0-preview1`, and depends on core `msal4j:1.26.1-preview1`. Keep both
+dependency coordinates aligned in the E2E module and examples. See
+`RELEASES.md` for the separate module/version inputs required for publication.
 
 For most work, focus on **`msal4j-sdk/`**.
 

@@ -43,7 +43,14 @@ MSAL4J supports multiple [application types and authentication scenarios](https:
 
 Refer the [Wiki](https://github.com/AzureAD/microsoft-authentication-library-for-java/wiki) pages for more details on the usage of MSAL Java and the supported scenarios.
 
-### Managed Identity v2 attested mTLS PoP
+### Managed Identity v2 attested mTLS PoP (preview)
+
+This branch prepares `com.microsoft.azure:msal4j:1.26.1-preview1` and the
+separately versioned
+`com.microsoft.azure:msal4j-key-attestation:1.0.0-preview1`. These are preview
+coordinates, not a replacement for the stable dependency examples above.
+See [release preparation](RELEASES.md#preview-release-preparation) for the
+matching pipeline versions and publishable modules.
 
 The optional `com.microsoft.azure:msal4j-key-attestation` artifact provides a
 Windows KeyGuard-backed, attested Managed Identity v2 flow while preserving
