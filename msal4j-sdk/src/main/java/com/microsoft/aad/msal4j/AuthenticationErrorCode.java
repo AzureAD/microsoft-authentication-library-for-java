@@ -27,6 +27,8 @@ public class AuthenticationErrorCode {
      */
     public static final String INVALID_GRANT = "invalid_grant";
 
+    public static final String INVALID_CLIENT = "invalid_client";
+
     /**
      * WS-Trust Endpoint not found in Metadata document
      */

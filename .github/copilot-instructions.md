@@ -6,7 +6,7 @@
 - **Main Package**: `com.microsoft.aad.msal4j`
 - **Three Application Types**: `PublicClientApplication`, `ConfidentialClientApplication`, `ManagedIdentityApplication`
 - **Pattern**: Each auth flow has `*Parameters` (public API), `*Request` (internal), `*Supplier` (executor)
-- **Current Version**: 1.26.0
+- **Current Version**: 1.26.1-preview1
 
 ---
 
@@ -16,7 +16,7 @@
 
 - **Language**: Java 8+
 - **Build Tool**: Maven
-- **Current Version**: 1.26.0
+- **Current Version**: 1.26.1-preview1
 - **Artifact**: `com.microsoft.azure:msal4j`
 - **Key Protocols**: OAuth2, OpenID Connect
 
@@ -28,10 +28,17 @@
 - Multi-cloud and B2C support
 
 ### Repository Structure
-This repository contains three Maven modules:
+This repository contains four default Maven modules plus one profile-only E2E module:
 - **`msal4j-sdk/`** - The main MSAL Java library (focus of development)
 - **`msal4j-brokers/`** - Broker integration for native authentication (Windows WAM)
 - **`msal4j-persistence-extension/`** - Cross-platform token cache persistence helpers
+- **`msal4j-mtls-extensions/`** - Optional Windows KeyGuard/attestation bridge for Managed Identity v2 mTLS PoP. Applications bring the native Microsoft.Azure.Security.KeyGuardAttestation package and configure the absolute DLL path with `MSAL_KEY_ATTESTATION_LIBRARY_PATH`; Java JCA/JSSE performs TLS. Production and shaded E2E JARs must not contain the attestation DLL. Only the test harness provisions a pinned native package separately.
+- **`msal4j-mtls-extensions-e2e/`** - Managed Identity v2 validation app, included only by the Maven `e2e` profile and used by the VM-based PR pipeline job
+
+The optional `msal4j-key-attestation` artifact has its own version,
+`1.0.0-preview1`, and depends on core `msal4j:1.26.1-preview1`. Keep both
+dependency coordinates aligned in the E2E module and examples. See
+`RELEASES.md` for the separate module/version inputs required for publication.
 
 For most work, focus on **`msal4j-sdk/`**.
 
@@ -95,6 +102,7 @@ AbstractApplicationBase (base for all applications)
 - In-memory cache with five entity types: `AccessTokenCacheEntity`, `RefreshTokenCacheEntity`, `IdTokenCacheEntity`, `AccountCacheEntity`, `AppMetadataCacheEntity`
 - Implements `ITokenCache` with serialization hooks via `ITokenCacheAccessAspect`
 - Thread-safe with read-write locks
+- `AuthenticationResult` copy helpers must retain the user assertion hash alongside mTLS token type and binding metadata; merging cache fixes must not drop either identity dimension.
 
 **Service Bundle**: Internal `ServiceBundle` class provides shared services (HTTP client, telemetry, executor service) to all requests
 
@@ -151,6 +159,13 @@ MSAL4J supports multiple authentication flows, each with a public `*Parameters` 
 - **Parameters**: `ManagedIdentityParameters` - For Azure resources (VMs, App Service, Functions)
 - **Internal**: `ManagedIdentityRequest` → `AcquireTokenByManagedIdentitySupplier`
 - **Key Classes**: `ManagedIdentitySource` implementations (`IMDSManagedIdentitySource`, `AppServiceManagedIdentitySource`, etc.)
+- **Optional mTLS**: `withMtlsProofOfPossession()` requests a certificate-bound token; `withRequestOverMtls()` requests an ordinary bearer token over the same KeyGuard-authenticated ESTS channel. The optional `msal4j-key-attestation` artifact supplies `ManagedIdentityAttestationExtensions.withAttestationSupport(builder)` to require MAA attestation and fail closed. Core owns OAuth/HTTP/cache behavior; the optional artifact owns the public attestation opt-in plus KeyGuard/CNG/attestation and returns a reusable process-local `IMtlsBindingContext` for PoP results. Custom HTTP clients must implement `IMtlsCapableHttpClient` and consume the request-specific context or socket factory.
+- **mTLS capability discovery**: `getManagedIdentityCapabilities()` reports the detected source and maximum `MtlsBindingStrength`; unsupported HTTP clients return `NONE` before any probe. Capability probes share the provider's per-key creation lock and reuse current bindings. `MtlsPopOptions` lets credential chains require a minimum strength before token acquisition succeeds.
+- **mTLS recovery**: A qualifying `invalid_client` response or TLS failure invalidates the current provider binding, remints it, and retries the token leg once. Providers opt into this behavior through `invalidateBinding`; retries are bounded.
+- **mTLS force refresh**: `forceRefresh(true)` reaches the provider through `ManagedIdentityMtlsRequest.forceRefresh()` and evicts the current certificate before minting. Reuse the current KeyGuard key and a fresh cached attestation JWT; a failed refresh must not restore the evicted binding.
+- **Regional attestation**: Newly minted attested bindings resolve the MAA endpoint from compute `azEnvironment` and `location`, with a logged platform-endpoint fallback. MAA `client_id` telemetry carries the tenant ID, not the managed-identity client ID. Ordinary and cached bindings do not perform this lookup.
+- **JCA coexistence**: PSS parameters can select the CNG provider before JCA receives a key. Preserve those parameters and delegate both signing and verification for ordinary RSA keys.
+- **mTLS resource TLS**: `sslContext()` / `keyManager()` remain generation-specific. `rotatingSslContext()` / `rotatingKeyManager()` follow active generations for long-lived clients while keeping previously selected aliases valid until certificate expiry. Custom contexts require TLS 1.2 and a JSSE-backed provider. Callers must acquire current tokens and retire pooled connections/cached custom TLS sessions when binding key IDs change.
 
 ### Common Flows (All Application Types)
 

@@ -37,6 +37,15 @@ Find [the latest package in the Maven repository](https://mvnrepository.com/arti
 compile group: 'com.microsoft.azure', name: 'msal4j', version: '1.26.0'
 ```
 
+### Managed Identity v2 preview
+
+This branch prepares `com.microsoft.azure:msal4j:1.26.1-preview1`. The optional
+Windows attestation integration is separately versioned as
+`com.microsoft.azure:msal4j-key-attestation:1.0.0-preview1`; see the
+[extension guide](../msal4j-mtls-extensions/README.md) and
+[release preparation](../RELEASES.md#preview-release-preparation).
+The dependency examples above continue to show the stable release.
+
 ## Usage
 
 MSAL4J supports multiple [application types and authentication scenarios](https://docs.microsoft.com/azure/active-directory/develop/authentication-flows-app-scenarios).
