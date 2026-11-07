@@ -4,9 +4,11 @@
 package com.microsoft.aad.msal4j;
 
 import com.azure.json.JsonProviders;
+import com.azure.json.JsonReader;
 import com.azure.json.JsonWriter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.skyscreamer.jsonassert.JSONAssert;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -19,6 +21,44 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ClaimsTest {
+
+    @Test
+    void additionalPropertiesSurviveRoundTripAndMerge() throws Exception {
+        for (String section : Arrays.asList("id_token", "access_token", "userinfo")) {
+            String json = "{\"" + section + "\":{\"xms_agvs\":{\"essential\":true,"
+                    + "\"value\":\"one\",\"values\":[\"two\"],"
+                    + "\"additionalProperties\":[\"interrupt-if-not-verified\",\"target-mc\"]},\"email\":null}}";
+            ClaimsRequest parsed = ClaimsRequest.formatAsClaimsRequest(json);
+            assertEquals(json, parsed.formatAsJSONString());
+            String merged = JsonHelper.mergeJSONString(json, "{\"access_token\":{\"xms_cc\":{\"values\":[\"cp1\"]}}}");
+            JSONAssert.assertEquals(merged, ClaimsRequest.formatAsClaimsRequest(merged).formatAsJSONString(), true);
+        }
+    }
+
+    @Test
+    void additionalPropertiesOnlyAndEmptyArraysArePreserved() {
+        for (String properties : Arrays.asList("[\"target-mc\"]", "[]")) {
+            String json = "{\"id_token\":{\"xms_agvs\":{\"additionalProperties\":" + properties + "}}}";
+            assertEquals(json, ClaimsRequest.formatAsClaimsRequest(json).formatAsJSONString());
+        }
+        assertEquals("{\"id_token\":{\"email\":null}}",
+                ClaimsRequest.formatAsClaimsRequest("{\"id_token\":{\"email\":null}}").formatAsJSONString());
+        assertEquals("{}", ClaimsRequest.formatAsClaimsRequest("{\"id_token\":null}").formatAsJSONString());
+    }
+
+    @Test
+    void additionalPropertiesModelSerialization() throws IOException {
+        RequestedClaimAdditionalInfo info = new RequestedClaimAdditionalInfo(false, null, null);
+        info.setAdditionalProperties(Arrays.asList("interrupt-if-not-verified", "target-mc"));
+        String json = serializeAdditionalInfo(info);
+        try (JsonReader reader = JsonProviders.createReader(json)) {
+            RequestedClaimAdditionalInfo parsed = new RequestedClaimAdditionalInfo(false, null, null).fromJson(reader);
+            assertEquals(info.getAdditionalProperties(), parsed.getAdditionalProperties());
+            assertEquals(json, serializeAdditionalInfo(parsed));
+        }
+        info.setAdditionalProperties(null);
+        assertEquals("{}", serializeAdditionalInfo(info));
+    }
 
     @Test
     void testClaimsRequest_Format() {
