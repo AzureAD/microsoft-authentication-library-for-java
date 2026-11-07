@@ -91,6 +91,15 @@ AbstractApplicationBase (base for all applications)
 4. Supplier checks cache, executes HTTP requests via `TokenRequestExecutor`
 5. Returns `AuthenticationResult` with tokens and account info
 
+**ID-token target binding**: `RequestContext` captures an immutable `AgeAssuranceTargetValidation`
+for explicit `id_token.xms_agvs.additionalProperties` `target-*` requests. Preserve this binding in
+child requests, including interactive redemption and silent refresh/cache lookups. Network responses
+are checked in `TokenRequestExecutor` before identity parsing and in `TokenCache.saveTokens` before
+cache mutation; suppliers and broker completion handlers check results before returning success.
+`age_assurance_target_mismatch` must not be swallowed as a cache miss. This is exact receipt-identity
+binding (`xms_agvt`), not authorization: access tokens and `xms_agvs` status remain uninterpreted.
+Native broker-owned cache writes are outside this SDK's validation boundary.
+
 **Token Cache**: 
 - In-memory cache with five entity types: `AccessTokenCacheEntity`, `RefreshTokenCacheEntity`, `IdTokenCacheEntity`, `AccountCacheEntity`, `AppMetadataCacheEntity`
 - Implements `ITokenCache` with serialization hooks via `ITokenCacheAccessAspect`

@@ -43,6 +43,30 @@ MSAL4J supports multiple [application types and authentication scenarios](https:
 
 Refer the [Wiki](https://github.com/AzureAD/microsoft-authentication-library-for-java/wiki) pages for more details on the usage of MSAL Java and the supported scenarios.
 
+### Age-assurance target receipts
+
+An explicit ID-token request such as
+`{"id_token":{"xms_agvs":{"additionalProperties":["interrupt-if-not-verified","target-mc","target-sm"]}}}`
+requires the returned ID token to contain a string `xms_agvt` receipt with exactly those target identities.
+For example, `+mc,-sm` and `-SM,+MC` both match. This checks request/response binding, **not authorization**:
+MSAL does not interpret the signs as permission, inspect access tokens, or use `xms_agvs` status to allow access.
+Requests without explicit ID-token targets, including access-token-only target requests, do not enable this check.
+
+The `target-` prefix and identities are case-insensitive; JSON field names are case-sensitive.
+Identities are not allowlisted, and `target-all` means the literal identity `all`, not a wildcard.
+Identities must be nonempty and contain no comma, whitespace, or leading sign; values are not trimmed.
+Other request directives are ignored, and repeated requested identities form a set.
+Receipt entries must each start with exactly one `+` or `-`, and duplicate receipt identities are rejected.
+Missing, empty, malformed, non-string, missing-target, or extra-target receipts fail, including when `xms_agvs` is `0`.
+The failure is an `MsalClientException` with error code `age_assurance_target_mismatch`.
+
+Use `RequestedClaimAdditionalInfo.setAdditionalProperties(...)` with `ClaimsRequest`, or the flow's raw claims API.
+MSAL captures targets per acquisition operation and checks network responses before writing its token cache,
+cached results before returning success, and broker results before returning them to the application.
+MSAL cannot prevent cache writes performed internally by a native broker.
+When generating an authorization URL separately, also supply the same claims when redeeming the authorization
+code; the URL-building and redemption calls are independent operations.
+
 ## Migrating from ADAL
 If your application is using ADAL for Java (ADAL4J), we recommend you to update to use MSAL4J. No new feature work will be done in ADAL4J.
 

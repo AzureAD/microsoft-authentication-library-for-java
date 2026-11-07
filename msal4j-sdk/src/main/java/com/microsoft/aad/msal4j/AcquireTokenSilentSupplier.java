@@ -85,6 +85,7 @@ class AcquireTokenSilentSupplier extends AuthenticationResultSupplier {
             throw new MsalClientException(AuthenticationErrorMessage.NO_TOKEN_IN_CACHE, AuthenticationErrorCode.CACHE_MISS);
         }
 
+        silentRequest.requestContext().ageAssuranceTargetValidation().validate(res);
         LOG.debug("Returning token from cache");
 
         return res;
