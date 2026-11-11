@@ -25,9 +25,9 @@ class ClaimsTest {
     @Test
     void additionalPropertiesSurviveRoundTripAndMerge() throws Exception {
         for (String section : Arrays.asList("id_token", "access_token", "userinfo")) {
-            String json = "{\"" + section + "\":{\"xms_agvs\":{\"essential\":true,"
+            String json = "{\"" + section + "\":{\"custom_claim\":{\"essential\":true,"
                     + "\"value\":\"one\",\"values\":[\"two\"],"
-                    + "\"additionalProperties\":[\"interrupt-if-not-verified\",\"target-mc\"]},\"email\":null}}";
+                    + "\"additionalProperties\":[\"extra-property\",\"property-one\"]},\"email\":null}}";
             ClaimsRequest parsed = ClaimsRequest.formatAsClaimsRequest(json);
             assertEquals(json, parsed.formatAsJSONString());
             String merged = JsonHelper.mergeJSONString(json, "{\"access_token\":{\"xms_cc\":{\"values\":[\"cp1\"]}}}");
@@ -37,8 +37,8 @@ class ClaimsTest {
 
     @Test
     void additionalPropertiesOnlyAndEmptyArraysArePreserved() {
-        for (String properties : Arrays.asList("[\"target-mc\"]", "[]")) {
-            String json = "{\"id_token\":{\"xms_agvs\":{\"additionalProperties\":" + properties + "}}}";
+        for (String properties : Arrays.asList("[\"property-one\"]", "[]")) {
+            String json = "{\"id_token\":{\"custom_claim\":{\"additionalProperties\":" + properties + "}}}";
             assertEquals(json, ClaimsRequest.formatAsClaimsRequest(json).formatAsJSONString());
         }
         assertEquals("{\"id_token\":{\"email\":null}}",
@@ -49,7 +49,7 @@ class ClaimsTest {
     @Test
     void additionalPropertiesModelSerialization() throws IOException {
         RequestedClaimAdditionalInfo info = new RequestedClaimAdditionalInfo(false, null, null);
-        info.setAdditionalProperties(Arrays.asList("interrupt-if-not-verified", "target-mc"));
+        info.setAdditionalProperties(Arrays.asList("extra-property", "property-one"));
         String json = serializeAdditionalInfo(info);
         try (JsonReader reader = JsonProviders.createReader(json)) {
             RequestedClaimAdditionalInfo parsed = new RequestedClaimAdditionalInfo(false, null, null).fromJson(reader);
