@@ -1,3 +1,11 @@
+Version 1.26.1
+=============
+- Fix token cache selection to keep application tokens separate from user and on-behalf-of tokens and prevent entries for different user assertions from overwriting one another (#1077)
+- Preserve account and user-assertion bindings when serializing refresh tokens and refreshing cached tokens, including responses without identity metadata (#1077)
+- Fix claims propagation in on-behalf-of and silent refresh requests, and pass claims as JSON to application token providers (#1077)
+- Honor claims, forced refresh, and proactive refresh requirements when looking up cached application tokens (#1077)
+- Distinguish claims-specific requests from others in the interaction-required error cache (#1077)
+
 Version 1.26.0
 =============
 - Add Azure Arc user-assigned managed identity support with validation that the requested identity was honored (#1057)
