@@ -59,7 +59,8 @@ class AcquireTokenByManagedIdentitySupplier extends AuthenticationResultSupplier
             RequestContext context = new RequestContext(
                     this.clientApplication,
                     PublicApi.ACQUIRE_TOKEN_SILENTLY,
-                    parameters);
+                    parameters, null,
+                    msalRequest.requestContext().ageAssuranceTargetValidation());
 
             SilentRequest silentRequest = new SilentRequest(
                     parameters,

@@ -93,6 +93,11 @@ class InteractiveRequest extends MsalRequest {
         AuthorizationRequestUrlParameters authorizationRequestUrlParameters =
                 authorizationRequestUrlBuilder.build();
 
+        if (requestContext().ageAssuranceTargetValidation().isRequired()) {
+            authorizationRequestUrlParameters.requestParameters.put("claims",
+                    requestContext().ageAssuranceTargetValidation().claims());
+        }
+
         return publicClientApplication.getAuthorizationRequestUrl(
                 authorizationRequestUrlParameters);
     }

@@ -72,6 +72,9 @@ class DeviceCodeFlowRequest extends MsalRequest {
                 AbstractMsalAuthorizationGrant.SCOPES_DELIMITER + scopesStr;
 
         queryParameters.put("scope", scopesParam);
+        if (requestContext().ageAssuranceTargetValidation().isRequired()) {
+            queryParameters.put("claims", requestContext().ageAssuranceTargetValidation().claims());
+        }
 
         return StringHelper.serializeQueryParameters(queryParameters);
     }

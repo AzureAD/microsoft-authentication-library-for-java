@@ -243,7 +243,8 @@ class AcquireTokenByInteractiveFlowSupplier extends AuthenticationResultSupplier
                 clientApplication,
                 PublicApi.ACQUIRE_TOKEN_BY_AUTHORIZATION_CODE,
                 parameters,
-                interactiveRequest.requestContext().userIdentifier());
+                interactiveRequest.requestContext().userIdentifier(),
+                interactiveRequest.requestContext().ageAssuranceTargetValidation());
 
         AuthorizationCodeRequest authCodeRequest = new AuthorizationCodeRequest(
                 parameters,
