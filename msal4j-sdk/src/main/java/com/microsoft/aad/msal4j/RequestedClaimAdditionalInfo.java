@@ -22,6 +22,7 @@ public class RequestedClaimAdditionalInfo implements JsonSerializable<RequestedC
     private boolean essential;
     private String value;
     private List<String> values;
+    private List<String> additionalProperties;
 
     public RequestedClaimAdditionalInfo(boolean essential, String value, List<String> values) {
         this.essential = essential;
@@ -54,6 +55,9 @@ public class RequestedClaimAdditionalInfo implements JsonSerializable<RequestedC
                         values.add(jsonReader.getString());
                     }
                     break;
+                case "additionalProperties":
+                    additionalProperties = jsonReader.readArray(JsonReader::getString);
+                    break;
                 default:
                     jsonReader.skipChildren();
                     break;
@@ -83,6 +87,10 @@ public class RequestedClaimAdditionalInfo implements JsonSerializable<RequestedC
             jsonWriter.writeEndArray();
         }
 
+        if (additionalProperties != null) {
+            jsonWriter.writeArrayField("additionalProperties", additionalProperties, JsonWriter::writeString);
+        }
+
         jsonWriter.writeEndObject();
         return jsonWriter;
     }
@@ -109,5 +117,21 @@ public class RequestedClaimAdditionalInfo implements JsonSerializable<RequestedC
 
     public void setValues(List<String> values) {
         this.values = values;
+    }
+
+    /**
+     * Gets the additional properties to send for this claim.
+     * @return the properties, or null when not specified
+     */
+    public List<String> getAdditionalProperties() {
+        return this.additionalProperties;
+    }
+
+    /**
+     * Sets additional properties to send for this claim, independently of value and values.
+     * @param additionalProperties the properties, or null to omit them
+     */
+    public void setAdditionalProperties(List<String> additionalProperties) {
+        this.additionalProperties = additionalProperties;
     }
 }

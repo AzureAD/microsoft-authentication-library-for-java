@@ -155,6 +155,7 @@ public class ClaimsRequest implements JsonSerializable<ClaimsRequest> {
                 boolean essential = false;
                 String value = null;
                 List<String> values = null;
+                List<String> additionalProperties = null;
 
                 while (jsonReader.nextToken() != JsonToken.END_OBJECT) {
                     String fieldName = jsonReader.getFieldName();
@@ -163,6 +164,9 @@ public class ClaimsRequest implements JsonSerializable<ClaimsRequest> {
                     switch (fieldName) {
                         case "essential": essential = jsonReader.getBoolean(); break;
                         case "value": value = jsonReader.getString(); break;
+                        case "additionalProperties":
+                            additionalProperties = jsonReader.readArray(JsonReader::getString);
+                            break;
                         case "values":
                             values = new ArrayList<>();
                             if (jsonReader.currentToken() == JsonToken.START_ARRAY) {
@@ -175,8 +179,9 @@ public class ClaimsRequest implements JsonSerializable<ClaimsRequest> {
                     }
                 }
 
-                if (essential || value != null || values != null) {
+                if (essential || value != null || values != null || additionalProperties != null) {
                     claimInfo = new RequestedClaimAdditionalInfo(essential, value, values);
+                    claimInfo.setAdditionalProperties(additionalProperties);
                 }
             }
 
