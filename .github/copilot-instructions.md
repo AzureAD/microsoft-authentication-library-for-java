@@ -151,6 +151,7 @@ MSAL4J supports multiple authentication flows, each with a public `*Parameters` 
 - **Parameters**: `ManagedIdentityParameters` - For Azure resources (VMs, App Service, Functions)
 - **Internal**: `ManagedIdentityRequest` → `AcquireTokenByManagedIdentitySupplier`
 - **Key Classes**: `ManagedIdentitySource` implementations (`IMDSManagedIdentitySource`, `AppServiceManagedIdentitySource`, etc.)
+- **Service Fabric TLS**: `DefaultHttpClientManagedIdentity` requires HTTPS and a nonblank `IDENTITY_SERVER_THUMBPRINT` before opening a connection, then pins the server certificate. Read the thumbprint through the shared managed-identity environment-variable provider; never fall back to unpinned TLS or plain HTTP.
 
 ### Common Flows (All Application Types)
 
