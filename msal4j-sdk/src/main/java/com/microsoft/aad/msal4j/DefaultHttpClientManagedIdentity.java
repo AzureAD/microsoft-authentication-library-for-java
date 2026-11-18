@@ -12,6 +12,7 @@ import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
@@ -25,7 +26,7 @@ import java.security.cert.X509Certificate;
 
 /** An extension for the default HttpClient which is meant to perform any extra HTTP behavior needed for a managed identity flow.
  * <p>
- * Currently the only extra behavior is the Service Fabric flow, where we must add a certificate thumbprint to the HTTP connection.
+ * The Service Fabric flow requires HTTPS and a configured server certificate thumbprint.
  */
 class DefaultHttpClientManagedIdentity extends DefaultHttpClient {
 
@@ -44,6 +45,16 @@ class DefaultHttpClientManagedIdentity extends DefaultHttpClient {
     @Override
     HttpURLConnection openConnection(final URL finalURL)
             throws IOException {
+        if (!"https".equalsIgnoreCase(finalURL.getProtocol())) {
+            throw new SSLException("[Managed Identity] The Service Fabric managed identity endpoint must use HTTPS.");
+        }
+
+        String thumbprint = AbstractManagedIdentitySource.getEnvironmentVariables()
+                .getEnvironmentVariable(Constants.IDENTITY_SERVER_THUMBPRINT);
+        if (StringHelper.isNullOrBlank(thumbprint)) {
+            throw new SSLException("[Managed Identity] IDENTITY_SERVER_THUMBPRINT must be configured for Service Fabric managed identity.");
+        }
+
         URLConnection connection;
 
         if (proxy != null) {
@@ -52,24 +63,20 @@ class DefaultHttpClientManagedIdentity extends DefaultHttpClient {
             connection = finalURL.openConnection();
         }
 
-        connection.setConnectTimeout(connectTimeout);
-        connection.setReadTimeout(readTimeout);
-
-        if (connection instanceof HttpURLConnection) {
-            return (HttpURLConnection) connection;
-        } else {
-            HttpsURLConnection httpsConnection = (HttpsURLConnection) connection;
-
-            if (sslSocketFactory != null) {
-                httpsConnection.setSSLSocketFactory(sslSocketFactory);
-            }
-
-            if (System.getenv(Constants.IDENTITY_SERVER_THUMBPRINT) != null) {
-                addTrustedCertificateThumbprint(httpsConnection, System.getenv(Constants.IDENTITY_SERVER_THUMBPRINT));
-            }
-
-            return httpsConnection;
+        if (!(connection instanceof HttpsURLConnection)) {
+            throw new SSLException("[Managed Identity] The Service Fabric managed identity endpoint must provide an HTTPS connection.");
         }
+
+        HttpsURLConnection httpsConnection = (HttpsURLConnection) connection;
+        httpsConnection.setConnectTimeout(connectTimeout);
+        httpsConnection.setReadTimeout(readTimeout);
+
+        if (sslSocketFactory != null) {
+            httpsConnection.setSSLSocketFactory(sslSocketFactory);
+        }
+
+        addTrustedCertificateThumbprint(httpsConnection, thumbprint);
+        return httpsConnection;
     }
 
     /**
