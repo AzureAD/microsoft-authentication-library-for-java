@@ -16,10 +16,7 @@ final class AuthenticationResult implements IAuthenticationResult {
     private final Long refreshOn;
     private final String familyId;
     private final String idToken;
-    private final IdToken idTokenObject = getIdTokenObj();
     private final AccountCacheEntity accountCacheEntity;
-    private final IAccount account = getAccount();
-    private final ITenantProfile tenantProfile = getTenantProfile();
     private String environment;
     private final Date expiresOnDate;
     private final String scopes;
@@ -64,7 +61,9 @@ final class AuthenticationResult implements IAuthenticationResult {
             return null;
         }
 
-        return new TenantProfile(JsonHelper.parseJsonToMap(JsonHelper.getTokenPayloadClaims(idToken)), getAccount().environment());
+        IAccount resultAccount = getAccount();
+        return new TenantProfile(JsonHelper.parseJsonToMap(JsonHelper.getTokenPayloadClaims(idToken)),
+                resultAccount != null ? resultAccount.environment() : environment);
     }
 
     public String accessToken() {
@@ -107,8 +106,11 @@ final class AuthenticationResult implements IAuthenticationResult {
         return this.familyId;
     }
 
+    // The ID token object, account and tenant profile are derived from idToken and
+    // accountCacheEntity on access. They cannot be field initializers: those run before the
+    // constructor body, while idToken is still null.
     IdToken idTokenObject() {
-        return this.idTokenObject;
+        return getIdTokenObj();
     }
 
     AccountCacheEntity accountCacheEntity() {
@@ -124,7 +126,7 @@ final class AuthenticationResult implements IAuthenticationResult {
     }
 
     public ITenantProfile tenantProfile() {
-        return this.tenantProfile;
+        return getTenantProfile();
     }
 
     public Date expiresOnDate() {
@@ -248,10 +250,7 @@ final class AuthenticationResult implements IAuthenticationResult {
         if (!Objects.equals(refreshToken, other.refreshToken)) return false;
         if (!Objects.equals(familyId, other.familyId)) return false;
         if (!Objects.equals(idToken, other.idToken)) return false;
-        if (!Objects.equals(idTokenObject, other.idTokenObject)) return false;
         if (!Objects.equals(accountCacheEntity, other.accountCacheEntity)) return false;
-        if (!Objects.equals(account, other.account)) return false;
-        if (!Objects.equals(tenantProfile, other.tenantProfile)) return false;
         if (!Objects.equals(environment, other.environment)) return false;
         if (!Objects.equals(expiresOnDate, other.expiresOnDate)) return false;
         if (!Objects.equals(scopes, other.scopes)) return false;
@@ -270,10 +269,7 @@ final class AuthenticationResult implements IAuthenticationResult {
         result = result * 59 + (this.refreshToken == null ? 43 : this.refreshToken.hashCode());
         result = result * 59 + (this.familyId == null ? 43 : this.familyId.hashCode());
         result = result * 59 + (this.idToken == null ? 43 : this.idToken.hashCode());
-        result = result * 59 + (this.idTokenObject == null ? 43 : this.idTokenObject.hashCode());
         result = result * 59 + (this.accountCacheEntity == null ? 43 : this.accountCacheEntity.hashCode());
-        result = result * 59 + (this.account == null ? 43 : this.account.hashCode());
-        result = result * 59 + (this.tenantProfile == null ? 43 : this.tenantProfile.hashCode());
         result = result * 59 + (this.environment == null ? 43 : this.environment.hashCode());
         result = result * 59 + (this.expiresOnDate == null ? 43 : this.expiresOnDate.hashCode());
         result = result * 59 + (this.scopes == null ? 43 : this.scopes.hashCode());
