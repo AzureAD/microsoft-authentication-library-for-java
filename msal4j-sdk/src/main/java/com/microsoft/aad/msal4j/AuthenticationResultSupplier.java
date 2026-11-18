@@ -67,6 +67,7 @@ abstract class AuthenticationResultSupplier implements Supplier<IAuthenticationR
                              true)) {
             try {
                 result = execute();
+                msalRequest.requestContext().ageAssuranceTargetValidation().validate(result);
                 apiEvent.setWasSuccessful(true);
 
                 if (result != null) {

@@ -225,6 +225,7 @@ public class TokenCache implements ITokenCache {
     }
 
     void saveTokens(TokenRequestExecutor tokenRequestExecutor, AuthenticationResult authenticationResult, String environment) {
+        tokenRequestExecutor.getMsalRequest().requestContext().ageAssuranceTargetValidation().validate(authenticationResult);
         try (CacheAspect cacheAspect = new CacheAspect(
                 TokenCacheAccessContext.builder().
                         clientId(tokenRequestExecutor.getMsalRequest().application().clientId()).

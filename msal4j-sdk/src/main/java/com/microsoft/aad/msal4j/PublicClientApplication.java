@@ -38,7 +38,8 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
         CompletableFuture<IAuthenticationResult> future;
 
         if (validateBrokerUsage(parameters)) {
-            future = broker.acquireToken(this, parameters);
+            future = broker.acquireToken(this, parameters)
+                    .thenApply(context.ageAssuranceTargetValidation()::validate);
         } else {
             UserNamePasswordRequest userNamePasswordRequest =
                     new UserNamePasswordRequest(parameters,
@@ -122,7 +123,8 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
         CompletableFuture<IAuthenticationResult> future;
 
         if (validateBrokerUsage(parameters)) {
-            future = broker.acquireToken(this, parameters);
+            future = broker.acquireToken(this, parameters)
+                    .thenApply(context.ageAssuranceTargetValidation()::validate);
         } else {
             future = executeRequest(interactiveRequest);
         }
@@ -137,7 +139,8 @@ public class PublicClientApplication extends AbstractClientApplicationBase imple
         CompletableFuture<IAuthenticationResult> future;
 
         if (validateBrokerUsage(parameters)) {
-            future = broker.acquireToken(this, parameters);
+            AgeAssuranceTargetValidation targetValidation = AgeAssuranceTargetValidation.fromParameters(parameters);
+            future = broker.acquireToken(this, parameters).thenApply(targetValidation::validate);
         } else {
             future = super.acquireTokenSilently(parameters);
         }

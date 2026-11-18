@@ -88,6 +88,14 @@ class TokenRequestExecutor {
             }
         }
 
+        AgeAssuranceTargetValidation targetValidation = msalRequest.requestContext().ageAssuranceTargetValidation();
+        if (targetValidation.isRequired()) {
+            String capabilities = msalRequest.application() instanceof AbstractClientApplicationBase
+                    ? ((AbstractClientApplicationBase) msalRequest.application()).clientCapabilities() : null;
+            params.put("claims", StringHelper.isBlank(capabilities) ? targetValidation.claims()
+                    : JsonHelper.mergeJSONString(capabilities, targetValidation.claims()));
+        }
+
         oauthHttpRequest.setQuery(StringHelper.serializeQueryParameters(params));
 
         //Certain query parameters are required by Public and Confidential client applications, but not Managed Identity
@@ -203,6 +211,7 @@ class TokenRequestExecutor {
 
         if (oauthHttpResponse.statusCode() == HttpStatus.HTTP_OK) {
             final TokenResponse response = TokenResponse.parseHttpResponse(oauthHttpResponse);
+            msalRequest.requestContext().ageAssuranceTargetValidation().validateIdToken(response.idToken());
 
             AccountCacheEntity accountCacheEntity = null;
             if (!StringHelper.isNullOrBlank(response.idToken())) {

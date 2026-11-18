@@ -17,11 +17,23 @@ class RequestContext {
     private IAcquireTokenParameters apiParameters;
     private IApplicationBase clientApplication;
     private UserIdentifier userIdentifier;
+    private final AgeAssuranceTargetValidation ageAssuranceTargetValidation;
 
     public RequestContext(AbstractApplicationBase clientApplication,
                           PublicApi publicApi,
                           IAcquireTokenParameters apiParameters) {
+        this(clientApplication, publicApi, apiParameters, null,
+                AgeAssuranceTargetValidation.fromParameters(apiParameters));
+    }
+
+    RequestContext(AbstractApplicationBase clientApplication,
+                   PublicApi publicApi,
+                   IAcquireTokenParameters apiParameters,
+                   UserIdentifier userIdentifier,
+                   AgeAssuranceTargetValidation ageAssuranceTargetValidation) {
         this.clientApplication = clientApplication;
+        this.ageAssuranceTargetValidation = ageAssuranceTargetValidation;
+        this.userIdentifier = userIdentifier;
 
         this.clientId = StringHelper.isBlank(clientApplication.clientId()) ?
                 "unset_client_id" :
@@ -81,6 +93,10 @@ class RequestContext {
 
     IAcquireTokenParameters apiParameters() {
         return this.apiParameters;
+    }
+
+    AgeAssuranceTargetValidation ageAssuranceTargetValidation() {
+        return ageAssuranceTargetValidation;
     }
 
     IApplicationBase clientApplication() {

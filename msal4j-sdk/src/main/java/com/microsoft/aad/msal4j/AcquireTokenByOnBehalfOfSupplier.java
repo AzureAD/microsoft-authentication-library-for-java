@@ -32,7 +32,8 @@ class AcquireTokenByOnBehalfOfSupplier extends AuthenticationResultSupplier {
                 RequestContext context = new RequestContext(
                         this.clientApplication,
                         PublicApi.ACQUIRE_TOKEN_SILENTLY,
-                        parameters);
+                        parameters, null,
+                        onBehalfOfRequest.requestContext().ageAssuranceTargetValidation());
 
                 SilentRequest silentRequest = new SilentRequest(
                         parameters,
@@ -52,6 +53,9 @@ class AcquireTokenByOnBehalfOfSupplier extends AuthenticationResultSupplier {
 
                 return supplier.execute();
             } catch (MsalClientException ex) {
+                if (AuthenticationErrorCode.AGE_ASSURANCE_TARGET_MISMATCH.equals(ex.errorCode())) {
+                    throw ex;
+                }
                 LOG.debug("Cache lookup failed: {}", ex.getMessage());
                 return acquireTokenOnBehalfOf();
             }
