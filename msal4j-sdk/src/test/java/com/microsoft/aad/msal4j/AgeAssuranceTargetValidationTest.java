@@ -162,19 +162,33 @@ class AgeAssuranceTargetValidationTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"obo", "user-fic"})
-    void nestedConfidentialCacheDoesNotSwallowReceiptMismatch(String flow) throws Exception {
+    void clientClaimsIsolateAccessTokensButNotIdTokenReceipts(String flow) throws Exception {
         AtomicInteger calls = new AtomicInteger();
         ConfidentialClientApplication app = ConfidentialClientApplication
                 .builder("client", ClientCredentialFactory.createFromSecret("synthetic-secret"))
                 .authority("https://login.microsoftonline.com/tenant")
                 .instanceDiscovery(false).validateAuthority(false)
-                .httpClient(request -> response(token(calls.getAndIncrement() == 0 ? "+mc" : "+sm", 0)))
+                .httpClient(request -> {
+                    calls.incrementAndGet();
+                    String sentClaims = StringHelper.parseQueryParameters(request.body()).get("claims");
+                    return response(token(sentClaims.contains("target-mc") ? "+mc" : "+sm", 0));
+                })
                 .build();
         assertNotNull(acquireConfidential(app, flow, "mc", true).join());
         assertNotNull(acquireConfidential(app, flow, "sm", true).join());
+        assertEquals(2, app.tokenCache().accessTokens.size());
+        assertEquals(1, app.tokenCache().idTokens.size());
         String before = app.tokenCache().serialize();
         assertFutureMismatch(acquireConfidential(app, flow, "mc", false));
+        assertEquals(token("+sm", 0), acquireConfidential(app, flow, "sm", false).join().idToken());
         assertEquals(2, calls.get());
+        assertEquals(before, app.tokenCache().serialize());
+
+        assertEquals(token("+mc", 0), acquireConfidential(app, flow, "mc", true).join().idToken());
+        before = app.tokenCache().serialize();
+        assertFutureMismatch(acquireConfidential(app, flow, "sm", false));
+        assertEquals(token("+mc", 0), acquireConfidential(app, flow, "mc", false).join().idToken());
+        assertEquals(3, calls.get());
         assertEquals(before, app.tokenCache().serialize());
     }
 

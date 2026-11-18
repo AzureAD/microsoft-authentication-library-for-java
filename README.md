@@ -60,12 +60,20 @@ Receipt entries must each start with exactly one `+` or `-`, and duplicate recei
 Missing, empty, malformed, non-string, missing-target, or extra-target receipts fail, including when `xms_agvs` is `0`.
 The failure is an `MsalClientException` with error code `age_assurance_target_mismatch`.
 
-Use `RequestedClaimAdditionalInfo.setAdditionalProperties(...)` with `ClaimsRequest`, or the flow's raw claims API.
+For client-driven requests, use `claimsFromClient(json)` on flows that expose it. The existing typed
+`ClaimsRequest` path also preserves `additionalProperties`; no new JSON-building helper is required.
 MSAL captures targets per acquisition operation and checks network responses before writing its token cache,
 cached results before returning success, and broker results before returning them to the application.
 MSAL cannot prevent cache writes performed internally by a native broker.
 When generating an authorization URL separately, also supply the same claims when redeeming the authorization
 code; the URL-building and redemption calls are independent operations.
+
+Client claims isolate **access-token** cache entries, not ID tokens or refresh tokens. A later request
+for different targets can replace the shared ID token while the earlier access token remains cached.
+This proposal fails closed with `age_assurance_target_mismatch` if that cached ID token does not match;
+it does not automatically retry, evict tokens, or initiate interaction. SDK-owner agreement on recovery
+and validation placement remains a prerequisite to shipping. Approval of claims preservation alone
+does not establish that agreement.
 
 ## Migrating from ADAL
 If your application is using ADAL for Java (ADAL4J), we recommend you to update to use MSAL4J. No new feature work will be done in ADAL4J.

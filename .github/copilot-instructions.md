@@ -99,6 +99,9 @@ cache mutation; suppliers and broker completion handlers check results before re
 `age_assurance_target_mismatch` must not be swallowed as a cache miss. This is exact receipt-identity
 binding (`xms_agvt`), not authorization: access tokens and `xms_agvs` status remain uninterpreted.
 Native broker-owned cache writes are outside this SDK's validation boundary.
+Client-originated `claimsFromClient` contributes to access-token cache keys only; ID and refresh tokens
+remain shared. Do not treat an access-token cache hit as receipt binding or automatically retry a
+target mismatch. Recovery behavior and validation placement require SDK-owner agreement.
 
 **Token Cache**: 
 - In-memory cache with five entity types: `AccessTokenCacheEntity`, `RefreshTokenCacheEntity`, `IdTokenCacheEntity`, `AccountCacheEntity`, `AppMetadataCacheEntity`
