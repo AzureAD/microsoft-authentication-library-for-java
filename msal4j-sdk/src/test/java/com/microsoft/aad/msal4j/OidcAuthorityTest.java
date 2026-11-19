@@ -259,6 +259,80 @@ class OidcAuthorityTest {
         assertRejectedWithoutEndpoints(authority);
     }
 
+    static Stream<Arguments> rootDotAuthorityCases() {
+        return AadInstanceDiscoveryProvider.TRUSTED_HOSTS_SET.stream().flatMap(host -> Stream.of(
+                Arguments.of("https://" + host.toUpperCase(Locale.ROOT) + "./contoso/",
+                        "https://arbitrary-label." + host + "/contoso", true),
+                Arguments.of("https://" + host + "./contoso/",
+                        "https://contoso.ciamlogin.com/contoso/v2.0", false),
+                Arguments.of("https://" + host + "../contoso/",
+                        "https://arbitrary-label." + host + "/contoso", false),
+                Arguments.of("https://" + host + "./contoso/",
+                        "https://" + host + "./contoso", true)));
+    }
+
+    @ParameterizedTest
+    @MethodSource("rootDotAuthorityCases")
+    void testRootDotOnlyAffectsKnownAuthorityEligibility(String configuredAuthority, String issuer, boolean accepted)
+            throws MalformedURLException {
+        URL configuredUrl = new URL(configuredAuthority);
+        assertTrue(configuredUrl.getHost().endsWith("."));
+        OidcAuthority authority = new OidcAuthority(configuredUrl);
+        when(mockDiscoveryResponse.issuer()).thenReturn(issuer);
+        if (accepted) {
+            assertDoesNotThrow(() -> authority.setAuthorityProperties(mockDiscoveryResponse));
+        } else {
+            assertRejectedWithoutEndpoints(authority);
+        }
+        assertEquals(configuredAuthority + ".well-known/openid-configuration",
+                authority.canonicalAuthorityUrl().toString());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "https://login.microsoftonline.com./contoso",
+            "https://eastus.login.microsoftonline.com./contoso",
+            "https://login.microsoftonline.com../contoso"
+    })
+    void testNewMicrosoftIssuerAcceptanceDoesNotNormalizeIssuerRootDot(String issuer) throws MalformedURLException {
+        OidcAuthority authority = new OidcAuthority(new URL("https://login.microsoftonline.com/contoso/"));
+        when(mockDiscoveryResponse.issuer()).thenReturn(issuer);
+        assertRejectedWithoutEndpoints(authority);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "https://custom.example.com./contoso/",
+            "https://eastus.login.microsoftonline.com./contoso/",
+            "https://login.microsoftonline.com.evil.example./contoso/"
+    })
+    void testRootDotDoesNotPromoteUnknownAuthority(String configuredAuthority) throws MalformedURLException {
+        OidcAuthority authority = new OidcAuthority(new URL(configuredAuthority));
+        when(mockDiscoveryResponse.issuer()).thenReturn("https://westus.login.microsoftonline.com/contoso");
+        assertRejectedWithoutEndpoints(authority);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "https://eastus.login.microsoftonline.com/contoso",
+            "https://contoso.ciamlogin.com/contoso/v2.0"
+    })
+    void testPublicRootDotAuthorityPreservesDiscoveryOrigin(String issuer) throws Exception {
+        IHttpClient httpClient = mock(IHttpClient.class);
+        when(httpClient.send(any(HttpRequest.class))).thenReturn(discoveryResponse(issuer));
+        PublicClientApplication.Builder builder = PublicClientApplication.builder("client-id")
+                .httpClient(httpClient).oidcAuthority("https://LOGIN.MICROSOFTONLINE.COM./contoso");
+        if (issuer.contains("ciamlogin.com")) {
+            assertEquals("issuer_validation", assertThrows(MsalClientException.class, builder::build).errorCode());
+        } else {
+            assertDoesNotThrow(builder::build);
+        }
+        verify(httpClient).send(argThat(request -> request.httpMethod() == HttpMethod.GET
+                && request.url().toString().equals(
+                        "https://login.microsoftonline.com./contoso/.well-known/openid-configuration")));
+        verifyNoMoreInteractions(httpClient);
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {
             "http://login.microsoftonline.com/tenant",

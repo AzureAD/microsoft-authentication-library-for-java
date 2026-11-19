@@ -77,7 +77,7 @@ public class OidcAuthority extends Authority {
         }
 
         // A known Microsoft authority must not reach the cross-host CIAM fallback.
-        if (AadInstanceDiscoveryProvider.TRUSTED_HOSTS_SET.contains(canonicalAuthorityUrl.getHost())) {
+        if (isKnownMicrosoftAuthority()) {
             return false;
         }
 
@@ -109,8 +109,17 @@ public class OidcAuthority extends Authority {
         }
 
         int firstDot = issuerHost.indexOf('.');
-        return AadInstanceDiscoveryProvider.TRUSTED_HOSTS_SET.contains(canonicalAuthorityUrl.getHost())
+        return isKnownMicrosoftAuthority()
                 && firstDot > 0
                 && AadInstanceDiscoveryProvider.TRUSTED_HOSTS_SET.contains(issuerHost.substring(firstDot + 1));
+    }
+
+    private boolean isKnownMicrosoftAuthority() {
+        String authorityHost = canonicalAuthorityUrl.getHost();
+        // A final DNS root dot changes neither host identity nor eligibility; preserve the discovery URL.
+        if (authorityHost.endsWith(".")) {
+            authorityHost = authorityHost.substring(0, authorityHost.length() - 1);
+        }
+        return AadInstanceDiscoveryProvider.TRUSTED_HOSTS_SET.contains(authorityHost);
     }
 }

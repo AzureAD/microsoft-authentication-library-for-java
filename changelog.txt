@@ -1,6 +1,7 @@
 Unreleased
 ==========
 - Expand explicit OIDC issuer acceptance to known Microsoft hosts and, only for known Microsoft authorities, single-label regional hosts; reject cross-host CIAM mappings for known Microsoft authorities before publishing discovery endpoints.
+- Treat one optional terminal DNS root dot as the same host for built-in OIDC authority eligibility, without rewriting discovery URLs or changing issuer normalization.
 
 Version 1.26.1
 =============
