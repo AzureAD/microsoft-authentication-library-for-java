@@ -4,6 +4,7 @@
 package com.microsoft.aad.msal4j;
 
 import com.microsoft.aad.msal4j.labapi.*;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.BeforeAll;
@@ -60,6 +61,7 @@ class ClientCredentialsIT {
     }
 
     @Test
+    @Disabled("Temporarily disabled until the CIAM application's LabAuth certificate registration is updated.")
     void acquireTokenClientCredentials_Certificate_CiamCud() throws Exception {
         String authorityCud = "https://login.msidlabsciam.com/fe362aec-5d43-45d1-b730-9755e60dc3b9/v2.0/";
 
