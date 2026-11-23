@@ -5,6 +5,7 @@ package com.microsoft.aad.msal4j;
 
 import com.microsoft.aad.msal4j.labapi.*;
 import static com.microsoft.aad.msal4j.labapi.KeyVaultSecrets.*;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,6 +36,7 @@ class UsernamePasswordIT {
     }
 
     @Test
+    @Disabled("Temporarily disabled until the CIAM application's LabAuth certificate registration is updated.")
     void acquireTokenWithUsernamePassword_Ciam() throws Exception {
         Map<String, String> extraQueryParameters = new HashMap<>();
 

@@ -77,6 +77,15 @@ AbstractApplicationBase (base for all applications)
 
 ### Key Architectural Patterns
 
+**Pipeline test credentials**: `build/azure-pr-pipeline.yaml` retrieves the latest
+`LabAuth` secret from `msidlabs` using `AzureKeyVault@2` and the
+`AuthSdkResourceManager` workload-identity service connection. The Java pipeline
+must be authorized to use that connection. The certificate is imported into
+`CurrentUser\My` with friendly name `LabAuth.MSIDLab.com` for SunMSCAPI lookup;
+do not replace this with a manually uploaded or version-pinned PFX.
+CIAM integration tests are temporarily disabled pending the CIAM application's
+LabAuth certificate registration update.
+
 **Builder Pattern**: All application types use fluent builders (e.g., `PublicClientApplication.builder(clientId).authority(...).build()`)
 
 **Request/Parameters Pattern**: Each token acquisition flow has:

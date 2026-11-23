@@ -32,12 +32,12 @@ jobs:
         fetchDepth: 0
         fetchTags: false
 
-      - task: DownloadSecureFile@1
-        name: LabAuth
-        displayName: Download LabAuth certificate
+      - task: AzureKeyVault@2
+        displayName: Retrieve latest LabAuth certificate
         inputs:
-          secureFile: 6cfea379-ebe1-4e95-b2b8-1b509a4e70c4
-          retryCount: "8"
+          azureSubscription: AuthSdkResourceManager
+          KeyVaultName: msidlabs
+          SecretsFilter: LabAuth
 
       - task: PowerShell@2
         displayName: Save certificate in store
@@ -46,10 +46,30 @@ jobs:
           script: |
             $ErrorActionPreference = "Stop"
 
-            Import-PfxCertificate `
-              -FilePath "$(LabAuth.secureFilePath)" `
-              -CertStoreLocation "Cert:\CurrentUser\My" `
-              -Exportable
+            $certBytes = [Convert]::FromBase64String($env:LAB_AUTH_PFX)
+            $flags = [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::UserKeySet `
+              -bor [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::PersistKeySet `
+              -bor [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable
+            $certificate = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2
+            $store = New-Object System.Security.Cryptography.X509Certificates.X509Store "My", "CurrentUser"
+            try {
+              $certificate.Import($certBytes, $null, $flags)
+              if (-not $certificate.HasPrivateKey) {
+                throw "The LabAuth certificate does not contain a private key."
+              }
+
+              # SunMSCAPI uses the friendly name as the Java keystore alias.
+              $certificate.FriendlyName = "LabAuth.MSIDLab.com"
+              $store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
+              $store.Add($certificate)
+              Write-Host "Installed LabAuth certificate: $($certificate.Thumbprint)"
+            } finally {
+              $store.Close()
+              $certificate.Dispose()
+              [Array]::Clear($certBytes, 0, $certBytes.Length)
+            }
+        env:
+          LAB_AUTH_PFX: $(LabAuth)
 
       - task: PowerShell@2
         displayName: Install Chrome and ChromeDriver
