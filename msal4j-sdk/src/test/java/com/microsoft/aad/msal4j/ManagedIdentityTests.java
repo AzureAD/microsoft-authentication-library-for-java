@@ -3,6 +3,7 @@
 
 package com.microsoft.aad.msal4j;
 
+import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
@@ -20,6 +22,8 @@ import org.mockito.ArgumentCaptor;
 
 import java.io.IOException;
 import java.net.SocketException;
+import java.net.InetSocketAddress;
+import javax.net.ssl.SSLException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,6 +34,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.microsoft.aad.msal4j.ManagedIdentitySourceType.*;
 import static com.microsoft.aad.msal4j.MsalError.MANAGED_IDENTITY_FILE_READ_ERROR;
@@ -64,6 +70,63 @@ class ManagedIdentityTests {
     @AfterAll
     static void resetServiceFabricHttpClient() {
         ServiceFabricManagedIdentitySource.resetHttpClient();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManagedIdentitySourceType.class,
+            names = {"SERVICE_FABRIC", "IMDS", "APP_SERVICE", "CLOUD_SHELL", "AZURE_ARC"})
+    void httpsRequirementAppliesOnlyToServiceFabric(ManagedIdentitySourceType source) throws Exception {
+        IEnvironmentVariables previousEnvironment = ManagedIdentityApplication.getEnvironmentVariables();
+        AtomicBoolean requestReceived = new AtomicBoolean();
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/", exchange -> {
+            requestReceived.set(true);
+            byte[] response = getSuccessfulResponse(ManagedIdentityTestConstants.RESOURCE)
+                    .getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, response.length);
+            try {
+                exchange.getResponseBody().write(response);
+            } finally {
+                exchange.close();
+            }
+        });
+        server.start();
+
+        ManagedIdentityApplication application = null;
+        try {
+            String endpoint = "http://127.0.0.1:" + server.getAddress().getPort() + "/";
+            EnvironmentVariablesHelper environment = new EnvironmentVariablesHelper(source, endpoint);
+            if (source == IMDS) {
+                environment.mockedEnvironmentVariables.put(Constants.AZURE_POD_IDENTITY_AUTHORITY_HOST,
+                        "http://127.0.0.1:" + server.getAddress().getPort());
+            }
+            ManagedIdentityApplication.setEnvironmentVariables(environment);
+            ServiceFabricManagedIdentitySource.resetHttpClient();
+            application = ManagedIdentityApplication.builder(ManagedIdentityId.systemAssigned()).build();
+            application.tokenCache().accessTokens.clear();
+
+            CompletableFuture<IAuthenticationResult> result = application.acquireTokenForManagedIdentity(
+                    ManagedIdentityParameters.builder(ManagedIdentityTestConstants.RESOURCE).build());
+
+            if (source == SERVICE_FABRIC) {
+                ExecutionException exception = assertThrows(ExecutionException.class,
+                        () -> result.get(15, TimeUnit.SECONDS));
+                assertInstanceOf(MsalClientException.class, exception.getCause());
+                assertInstanceOf(SSLException.class, exception.getCause().getCause());
+                assertTrue(exception.getCause().getCause().getMessage().contains("HTTPS"));
+                assertFalse(requestReceived.get(), "Service Fabric must reject HTTP before sending a request");
+            } else {
+                assertEquals("accesstoken", result.get(15, TimeUnit.SECONDS).accessToken());
+                assertTrue(requestReceived.get(), source + " must still support its HTTP endpoint");
+            }
+        } finally {
+            if (application != null) {
+                application.tokenCache().accessTokens.clear();
+            }
+            ManagedIdentityApplication.setEnvironmentVariables(previousEnvironment);
+            ServiceFabricManagedIdentitySource.resetHttpClient();
+            server.stop(0);
+        }
     }
 
     private String getSuccessfulResponse(String resource) {
